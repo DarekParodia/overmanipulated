@@ -99,41 +99,6 @@
 
   /* Text scaling setting multiplies the root size (see settings store) */
   --text-scale: 1;
-
-  /* --- Deprecated aliases (old "newsroom paper" names). Do not use in new code; they map
-   * onto the new palette until every component is migrated, then they are removed. ------ */
-  --paper: var(--surface);
-  --paper-shade: var(--surface-soft);
-  --paper-deep: var(--surface-sunk);
-  --manila: #ffe08a;
-  --manila-dark: var(--yellow-dark);
-  --ink: var(--outline);
-  --ink-soft: var(--text-soft);
-  --ink-faint: var(--text-faint);
-  --cork: var(--sky);
-  --cork-dark: var(--sky-deep);
-  --wood: var(--sky-deep);
-  --editorial-red: var(--red);
-  --copy-blue: var(--blue);
-  --ochre: var(--orange);
-  --ink-a10: rgb(30 42 74 / 0.1);
-  --ink-a20: var(--outline-a20);
-  --ink-a40: rgb(30 42 74 / 0.4);
-  --ink-a70: var(--outline-a70);
-  --paper-a85: rgb(255 255 255 / 0.9);
-  --font-serif: var(--font-display);
-  --font-grotesk: var(--font-body);
-  --font-typewriter: var(--font-body);
-  --text-xs: var(--text-sm);
-  --text-masthead: var(--text-logo);
-  --tracking-label: 0.02em;
-  --rule-thin: 2px solid var(--outline);
-  --rule-thick: var(--outline-border);
-  --rule-double: var(--outline-border);
-  --radius-paper: var(--radius-md);
-  --shadow-paper: var(--pop);
-  --shadow-lifted: var(--pop-lg);
-  --ease-settle: var(--ease-bounce);
 }
 
 :root[data-reduced-motion="true"] {

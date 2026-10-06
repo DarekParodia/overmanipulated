@@ -12,12 +12,12 @@ import styles from './kit.module.css';
 
 /** The icon shown next to each station's name (overlay header, desk stamps, missed list). */
 export const STATION_ICON: Record<StationKind, IconName> = {
-  imageSearch: 'photo',
-  archive: 'clock',
-  sourceRegistry: 'post',
-  phone: 'recording',
-  aiScanner: 'settings',
-  dataLibrary: 'statistic',
+  imageSearch: 'imageSearch',
+  archive: 'archive',
+  sourceRegistry: 'sourceRegistry',
+  phone: 'phone',
+  aiScanner: 'aiScanner',
+  dataLibrary: 'dataLibrary',
 };
 
 /** One key cap: a small white chip with a thick outline, like a physical key. */

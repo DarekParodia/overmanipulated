@@ -4,16 +4,16 @@
 }
 
 .red {
-  color: var(--editorial-red);
+  color: var(--red-dark);
 }
 .blue {
-  color: var(--copy-blue);
+  color: var(--blue-dark);
 }
 .ochre {
-  color: var(--ochre);
+  color: var(--orange-dark);
 }
 .ink {
-  color: var(--ink);
+  color: var(--outline);
 }
 
 .text {
@@ -38,7 +38,7 @@
 
 /* Slam: comes down fast from above, overshoots, settles (design-rules §8). */
 .slam {
-  animation: slam var(--motion-slow) var(--ease-settle) both;
+  animation: slam var(--motion-slow) var(--ease-bounce) both;
 }
 
 @keyframes slam {

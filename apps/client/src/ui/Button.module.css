@@ -72,13 +72,11 @@
   box-shadow: var(--pop-lg);
 }
 
-.primary,
-.stamp {
+.primary {
   background: var(--yellow);
 }
 
-.secondary,
-.key {
+.secondary {
   background: var(--surface);
 }
 
@@ -94,14 +92,7 @@
   background: var(--orange);
 }
 
-.tab {
-  min-height: 2.5rem;
-  padding: var(--space-1) var(--space-4);
-  font-size: var(--text-md);
-}
-
-.ghost,
-.quiet {
+.ghost {
   border-color: transparent;
   background: transparent;
   box-shadow: none;
@@ -111,7 +102,6 @@
   text-underline-offset: 4px;
 }
 
-.ghost:not(:disabled):active,
-.quiet:not(:disabled):active {
+.ghost:not(:disabled):active {
   box-shadow: none;
 }

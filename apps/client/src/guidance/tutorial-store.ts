@@ -20,6 +20,11 @@ export function tutorialSeen(): boolean {
   return readStored('local', DONE_KEY) === '1';
 }
 
+/** Makes the tutorial run again at the start of the next game (settings button). */
+export function resetTutorial(): void {
+  writeStored('local', DONE_KEY, null);
+}
+
 export const useTutorial = create<TutorialStore>((set, get) => ({
   step: null,
   start() {

@@ -1,6 +1,8 @@
 // Settings dialog: one white panel with three simple groups (Dźwięk / Obraz / Dostępność),
 // big sliders, ticks and pill choices; one yellow "Gotowe" button closes it.
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useGuidance } from '../guidance/store.ts';
+import { resetTutorial } from '../guidance/tutorial-store.ts';
 import { useApp } from '../store/app.ts';
 import { type QualityPreset, qualityPresets, useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
@@ -21,6 +23,9 @@ export function SettingsPanel() {
   const setOpen = useApp((s) => s.setSettingsOpen);
   const settings = useSettings();
   const dialog = useRef<HTMLDialogElement>(null);
+  const hintsEnabled = useGuidance((s) => s.hintsEnabled);
+  const setHintsEnabled = useGuidance((s) => s.setHintsEnabled);
+  const [tutorialReset, setTutorialReset] = useState(false);
 
   useEffect(() => {
     const element = dialog.current;
@@ -126,6 +131,17 @@ export function SettingsPanel() {
 
           <fieldset className={styles.group}>
             <legend className={styles.legend}>{pl.settings.access}</legend>
+            <Checkbox label={pl.settings.hints} checked={hintsEnabled} onChange={setHintsEnabled} />
+            <Button
+              variant="ghost"
+              disabled={tutorialReset}
+              onClick={() => {
+                resetTutorial();
+                setTutorialReset(true);
+              }}
+            >
+              {tutorialReset ? pl.settings.tutorialQueued : pl.settings.tutorialAgain}
+            </Button>
             <Checkbox
               label={pl.settings.reducedMotion}
               checked={settings.reducedMotion}

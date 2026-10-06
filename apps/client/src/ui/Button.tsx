@@ -14,12 +14,7 @@ export type ButtonVariant =
   | 'red'
   | 'orange'
   /** Text-only, for minor actions. */
-  | 'ghost'
-  /** Deprecated names from the old paper style. */
-  | 'key'
-  | 'stamp'
-  | 'tab'
-  | 'quiet';
+  | 'ghost';
 
 export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & {
   variant?: ButtonVariant;

@@ -74,11 +74,6 @@ input {
   color: var(--text-soft);
 }
 
-/* Deprecated: the typewriter face is gone; kept so old markup still renders. */
-.typed {
-  font-family: var(--font-body);
-}
-
 .tabular {
   font-variant-numeric: tabular-nums;
 }

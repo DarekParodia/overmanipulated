@@ -35,7 +35,7 @@ export function Slider({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
       />
-      <output htmlFor={id} className="typed tabular">
+      <output htmlFor={id} className="tabular">
         {format(value)}
       </output>
     </div>

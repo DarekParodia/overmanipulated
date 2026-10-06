@@ -24,9 +24,9 @@ import {
 
 /** Icon per ping: archive (clock = dates), fake (✗), mine (✓). */
 const PING_ICON: Record<PingKind, IconName> = {
-  needArchive: 'clock',
-  fake: 'reject',
-  mine: 'publish',
+  needArchive: 'archive',
+  fake: 'cross',
+  mine: 'hand',
 };
 
 function send(ping: PingKind): void {
