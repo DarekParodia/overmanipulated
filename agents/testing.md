@@ -11,7 +11,9 @@
 | `apps/server` routes | `bun test` + Hono `app.request()` | Each REST route: happy path, validation error, not found. No real network needed. |
 | `apps/server` DB | `bun test` with in-memory SQLite (`new Database(':memory:')`) and migrations applied via `migrate()` | Every query function; a test that all migrations apply cleanly from empty. |
 | `apps/client` | `bun test` for pure helpers (interpolation, input mapping); Playwright for flows | UI components only where logic is non-trivial. |
-| Multiplayer flows | Playwright (several browser contexts) | Join by code, movement sync, a full verdict round, level end. |
+| Multiplayer flows | Playwright (several browser contexts) | Join by code, movement sync, a full verdict round, level end. Run in a **desktop** project and a **mobile** project (device emulation, `hasTouch`, landscape); mixed rooms with both. |
+| `apps/client/src/fx` | `bun test` | Cue catalogue is complete (every cue id referenced in code exists, every sound/particle id resolves to an asset), tween/easing maths, particle pool reuse, settings (mute, reduced motion) suppress the right layers. |
+| Real devices | Manual, device matrix in [`platforms.md`](platforms.md) | Before every stage exit. |
 
 ## Rules
 
@@ -32,8 +34,12 @@
 bun run test                 # all unit tests
 bun test packages/shared     # one package
 bun run validate:content     # content checks
-bunx playwright test         # e2e (once set up in stage 1)
+bun run test:e2e             # e2e, desktop + mobile projects
 ```
 
-Playwright uses the pre-installed Chromium; do not run `playwright install` in CI images that
-already ship browsers.
+In CI, Playwright installs its own Chromium (`playwright install --with-deps chromium`). In a
+sandbox that ships a different Chromium build, point Playwright at it instead of downloading:
+`PW_CHROMIUM_PATH=/opt/pw-browsers/chromium bun run test:e2e`.
+
+The e2e tests read avatar positions from the scene exposed as `window.__scene` when the page is
+opened with `?debug`; avatar groups are named `player:<nickname>`.

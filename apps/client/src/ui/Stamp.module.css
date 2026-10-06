@@ -1,0 +1,60 @@
+.stamp {
+  display: block;
+  transform: rotate(var(--stamp-rotation));
+  mix-blend-mode: multiply;
+}
+
+.red {
+  color: var(--editorial-red);
+}
+.blue {
+  color: var(--copy-blue);
+}
+.ochre {
+  color: var(--ochre);
+}
+.ink {
+  color: var(--ink);
+}
+
+.text {
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  font-stretch: 62%;
+  font-size: 34px;
+  letter-spacing: 0.04em;
+}
+
+.circleText {
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  font-stretch: 62%;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+}
+
+.subtext {
+  font-family: var(--font-typewriter);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Slam: comes down fast from above, overshoots, settles (design-rules §8). */
+.slam {
+  animation: slam var(--motion-slow) var(--ease-settle) both;
+}
+
+@keyframes slam {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--stamp-rotation)) scale(1.9) translateY(-12%);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--stamp-rotation)) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--stamp-rotation)) scale(1);
+  }
+}

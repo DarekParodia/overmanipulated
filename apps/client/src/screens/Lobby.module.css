@@ -1,0 +1,210 @@
+.board {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(18rem, 1.6fr);
+  align-items: start;
+  gap: var(--space-6);
+  padding: max(var(--space-6), env(safe-area-inset-top))
+    max(var(--space-5), env(safe-area-inset-right)) max(var(--space-6), env(safe-area-inset-bottom))
+    max(var(--space-5), env(safe-area-inset-left));
+  background-color: var(--cork);
+  /* Cork grain: speckles from procedural noise. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0.55 -0.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3C/svg%3E");
+}
+
+.codeCard,
+.roster {
+  position: relative;
+  background: var(--paper);
+  box-shadow: var(--shadow-lifted);
+  padding: var(--space-5);
+}
+
+.codeCard {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  transform: rotate(-1.5deg);
+  max-width: 22rem;
+  justify-self: end;
+}
+
+.roster {
+  display: grid;
+  gap: var(--space-3);
+  transform: rotate(0.6deg);
+  max-width: 36rem;
+}
+
+.pin {
+  position: absolute;
+  top: -0.55rem;
+  left: 50%;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-left: -0.55rem;
+  border-radius: 50%;
+  background: var(--editorial-red);
+  box-shadow: 1px 2px 0 var(--ink-a40);
+}
+
+.code {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-3xl);
+  letter-spacing: 0.3em;
+  line-height: 1;
+  padding: var(--space-2) 0;
+  border-top: var(--rule-thin);
+  border-bottom: var(--rule-thin);
+}
+
+.codeHint {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.rosterTitle {
+  font-size: var(--text-2xl);
+  border-bottom: var(--rule-thick);
+  padding-bottom: var(--space-2);
+}
+
+.strips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 3.25rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper-shade);
+  border-left: 4px solid var(--ink);
+  transform: rotate(var(--tilt, 0deg));
+  animation: pin-in var(--motion-slow) var(--ease-settle) both;
+}
+
+.empty {
+  background: transparent;
+  border: 1.5px dashed var(--ink-a40);
+  border-left-width: 4px;
+  color: var(--ink-faint);
+  animation: none;
+}
+
+.away {
+  opacity: 0.6;
+}
+
+.playerPin {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+}
+
+.name {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tags {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+.disconnected {
+  color: var(--editorial-red);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+}
+
+.waiting {
+  font-family: var(--font-typewriter);
+  color: var(--ink-soft);
+}
+
+/* A strip being pinned: drops onto the board and settles. */
+@keyframes pin-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) rotate(calc(var(--tilt, 0deg) * 3));
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--tilt, 0deg));
+  }
+}
+
+@media (max-width: 760px) {
+  .board {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+  .codeCard {
+    justify-self: stretch;
+    max-width: none;
+  }
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .board {
+    grid-template-columns: 1fr 1.6fr;
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-3);
+  }
+  .codeCard,
+  .roster {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-1);
+  }
+  .code {
+    font-size: var(--text-2xl);
+  }
+  .codeHint {
+    display: none;
+  }
+  .rosterTitle {
+    font-size: var(--text-lg);
+    padding-bottom: var(--space-1);
+  }
+  .strips {
+    gap: var(--space-1);
+  }
+  .strip {
+    min-height: 2.5rem;
+    padding: var(--space-1) var(--space-3);
+  }
+  .empty {
+    min-height: 1.75rem;
+  }
+  .actions {
+    margin-top: var(--space-1);
+  }
+}

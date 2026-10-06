@@ -124,9 +124,14 @@ apps/server/drizzle/   generated SQL migrations (committed)
 ## Rendering and performance budget
 
 - Low-poly 3D at an angled top-down camera; UI is 2D DOM layered on top.
-- Budget: **60 FPS on Intel UHD 620** (Chrome, Edge, Firefox), ≤ 100k triangles, ~150 draw calls,
-  repeated furniture via instancing, ≤ 10 MB initial download with a progress bar for assets.
-- Quality setting toggles shadows and render resolution.
+- Budget: **60 FPS on Intel UHD 620** (Chrome, Edge, Firefox) and on mid-range phones (never
+  below 30 FPS), ≤ 100k triangles, ~150 draw calls on desktop / ~100 on mobile, repeated
+  furniture via instancing, ≤ 10 MB initial download with a progress bar for assets.
+- Quality presets (`low` / `medium` / `high`) control shadows, DPR (capped ≤ 1.5 on phones),
+  particle cap and ambient effects; adaptive quality steps down when frame time rises. Details in
+  [`platforms.md`](platforms.md).
+- Particles, tweens, camera shake and audio live in `apps/client/src/fx/` and are triggered only
+  through feedback cues; they never touch the simulation. See [`game-feel.md`](game-feel.md).
 - Models are glTF (`.glb`), optimised with gltf-transform, stored in `apps/client/public/assets/`.
   Base assets from Kenney (CC0) or self-made; record the source and licence of every asset in
   `apps/client/public/assets/CREDITS.md`.
@@ -135,7 +140,10 @@ apps/server/drizzle/   generated SQL migrations (committed)
 
 - Folder type is recognisable by **icon and colour**, never colour alone; colour-blind safe palette.
 - Text scaling setting; a no-flashing mode that disables blinking alarms and screen shake.
-- All controls work with keyboard (WASD/arrows, E, Space, Q) and gamepad.
+- All controls work with keyboard (WASD/arrows, E, Space, Q), gamepad and touch (virtual
+  joystick + action buttons). See [`platforms.md`](platforms.md).
+- Reduced-motion setting (no shake, no squash, fewer particles) and visual equivalents for every
+  informative sound.
 
 ## Deployment
 

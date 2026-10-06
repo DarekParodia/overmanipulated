@@ -1,0 +1,93 @@
+/*
+ * Design tokens — the only place where colours, fonts, spacing, radii and shadows are defined
+ * (agents/design-rules.md §3–4). Mirrored for three.js in tokens.ts; keep both in sync.
+ */
+:root {
+  /* Paper and ink */
+  --paper: #efe8d8;
+  --paper-shade: #e2d8c2;
+  --paper-deep: #d6caae;
+  --manila: #d9b77a;
+  --manila-dark: #b8954f;
+  --ink: #1f1c18;
+  --ink-soft: #4a443c;
+  --ink-faint: #8a8173;
+  --cork: #a97c50;
+  --cork-dark: #7d5a37;
+  --wood: #8b6a4a;
+
+  /* Accents: rare, each with one meaning */
+  --editorial-red: #b3261e; /* danger, false, reject */
+  --copy-blue: #2c4a7a; /* confirmed, publish, focus */
+  --ochre: #c98a1b; /* context, caution */
+
+  /* Player identity colours (Okabe–Ito based, muted for paper) */
+  --player-0: #d9822b;
+  --player-1: #4f9fd1;
+  --player-2: #2e8b6e;
+  --player-3: #b26b9a;
+
+  /* Translucent ink for shadows, rules and overlays */
+  --ink-a10: rgb(31 28 24 / 0.1);
+  --ink-a20: rgb(31 28 24 / 0.2);
+  --ink-a40: rgb(31 28 24 / 0.4);
+  --ink-a70: rgb(31 28 24 / 0.7);
+  --paper-a85: rgb(239 232 216 / 0.85);
+
+  /* Type */
+  --font-serif: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+  --font-grotesk: "Archivo Variable", "Arial Narrow", sans-serif;
+  --font-typewriter: "Courier Prime", "Courier New", monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.5rem;
+  --text-3xl: 3.75rem;
+  --text-masthead: clamp(2.25rem, 7vw, 5.5rem);
+
+  --leading-tight: 1.05;
+  --leading-snug: 1.25;
+  --leading-body: 1.45;
+
+  --tracking-label: 0.08em;
+
+  /* Spacing (4 px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+
+  /* Rules, radii, shadows: paper has hard edges */
+  --rule-thin: 1px solid var(--ink);
+  --rule-thick: 3px solid var(--ink);
+  --rule-double: 4px double var(--ink);
+  --radius-paper: 1px;
+  --shadow-paper: 2px 3px 0 var(--ink-a20);
+  --shadow-lifted: 4px 6px 0 var(--ink-a20);
+
+  /* Touch */
+  --touch-target: 2.75rem;
+
+  /* Motion */
+  --motion-fast: 120ms;
+  --motion-base: 220ms;
+  --motion-slow: 420ms;
+  --ease-settle: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Text scaling setting multiplies the root size (see settings store) */
+  --text-scale: 1;
+}
+
+:root[data-reduced-motion="true"] {
+  --motion-fast: 0ms;
+  --motion-base: 0ms;
+  --motion-slow: 0ms;
+}

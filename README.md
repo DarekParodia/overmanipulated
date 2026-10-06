@@ -16,4 +16,7 @@ bun install
 bun run check        # lint, typecheck, tests, content validation
 bun run dev:server   # game server
 bun run dev:client   # client on http://localhost:5173
+bun run test:e2e     # multiplayer end-to-end tests (desktop + mobile)
 ```
+
+Deployment: [`docs/deploy.md`](docs/deploy.md).
