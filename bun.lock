@@ -15,9 +15,8 @@
       "name": "@redakcja/client",
       "version": "0.0.0",
       "dependencies": {
-        "@fontsource-variable/archivo": "^5.3.0",
-        "@fontsource-variable/newsreader": "^5.3.0",
-        "@fontsource/courier-prime": "^5.3.0",
+        "@fontsource-variable/baloo-2": "^5.3.0",
+        "@fontsource-variable/nunito": "^5.3.0",
         "@react-three/drei": "^10.7.9",
         "@react-three/fiber": "^9.8.1",
         "@redakcja/content": "workspace:*",
@@ -162,11 +161,9 @@
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.25.12", "", { "os": "win32", "cpu": "x64" }, "sha512-alJC0uCZpTFrSL0CCDjcgleBXPnCrEAhTBILpeAp7M/OFgoqtAetfBzX0xM00MUsVVPpVjlPuMbREqnZCXaTnA=="],
 
-    "@fontsource-variable/archivo": ["@fontsource-variable/archivo@5.3.0", "", {}, "sha512-HogK8FJelrD1o7TlZlkIVtHgc20bO5PZRWE7mUeUTdMN055alznQV6/00J00IBeu8FQAH4s3zW9UJNvKExXf+g=="],
+    "@fontsource-variable/baloo-2": ["@fontsource-variable/baloo-2@5.3.0", "", {}, "sha512-F7UfemLyAzp22LWRuy0IumnAPy/us+H5sxlDUsJ5a6LxinGf1BZaauL5kxBiLkvsfvoQWpY7DuUZ7GSdz+cR7g=="],
 
-    "@fontsource-variable/newsreader": ["@fontsource-variable/newsreader@5.3.0", "", {}, "sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw=="],
-
-    "@fontsource/courier-prime": ["@fontsource/courier-prime@5.3.0", "", {}, "sha512-KIi1k4VG1Wv+/CGpb1AUpLkUuOAQA6zmvthqxOZGN0AV8BEgQgbK7qAtquv14zsBJAY1bb5BHIEbWVFLgENh0w=="],
+    "@fontsource-variable/nunito": ["@fontsource-variable/nunito@5.3.0", "", {}, "sha512-tw0ch7evIDSwoeUy+0XzocYHfbRWLeCRPJy22KgbrLjDLAbNw/fErBiil10Ssrs3Sjr55zaZrr36a975j8cBkQ=="],
 
     "@hono/bun": ["@hono/bun@1.0.0", "", { "peerDependencies": { "hono": ">=4.13.9" } }, "sha512-akUaWoKyW2wv+WKZZQCeRqZEN3NovPF8z/60dEBNJJ2ini9HBNo/0jLZLFyJW8xOiipncYyzGKgOuM+NZsaOzA=="],
 

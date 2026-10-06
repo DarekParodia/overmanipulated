@@ -4,34 +4,40 @@
   align-items: center;
   gap: var(--space-3);
   min-height: var(--touch-target);
+  font-weight: 700;
 }
 
 .range {
   appearance: none;
   width: 100%;
-  height: var(--touch-target);
-  background:
-    repeating-linear-gradient(to right, var(--ink) 0 1px, transparent 1px 10%) center / 100% 10px
-    no-repeat,
-    linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat;
+  height: 14px;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunk);
   cursor: pointer;
 }
 
 .range::-webkit-slider-thumb {
   appearance: none;
-  width: 10px;
+  width: 28px;
   height: 28px;
-  background: var(--copy-blue);
-  border: none;
-  border-radius: 0;
+  border: var(--outline-border);
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 3px 0 var(--outline);
 }
 
 .range::-moz-range-thumb {
-  width: 10px;
-  height: 28px;
-  background: var(--copy-blue);
-  border: none;
-  border-radius: 0;
+  width: 24px;
+  height: 24px;
+  border: var(--outline-border);
+  border-radius: 50%;
+  background: var(--yellow);
+}
+
+.range:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 4px;
 }
 
 @media (max-width: 540px) {

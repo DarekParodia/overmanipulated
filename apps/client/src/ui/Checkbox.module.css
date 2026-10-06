@@ -3,6 +3,7 @@
   align-items: center;
   gap: var(--space-3);
   min-height: var(--touch-target);
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -15,24 +16,32 @@
 
 .box {
   flex: none;
-  width: 1.5rem;
-  height: 1.5rem;
-  border: 2px solid var(--ink);
+  width: 2rem;
+  height: 2rem;
+  border: var(--outline-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--outline);
   display: grid;
   place-items: center;
+  transition: background var(--motion-fast);
+}
+
+.native:checked + .box {
+  background: var(--green);
 }
 
 .native:focus-visible + .box {
-  outline: 3px solid var(--copy-blue);
+  outline: 4px solid var(--blue);
   outline-offset: 2px;
 }
 
 .tick {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.4rem;
+  height: 1.4rem;
   fill: none;
-  stroke: var(--copy-blue);
-  stroke-width: 2.6;
+  stroke: var(--text-on-dark);
+  stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 30;

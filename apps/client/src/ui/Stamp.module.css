@@ -1,7 +1,6 @@
 .stamp {
   display: block;
   transform: rotate(var(--stamp-rotation));
-  mix-blend-mode: multiply;
 }
 
 .red {
@@ -18,25 +17,23 @@
 }
 
 .text {
-  font-family: var(--font-grotesk);
+  font-family: var(--font-display);
   font-weight: 800;
-  font-stretch: 62%;
-  font-size: 34px;
-  letter-spacing: 0.04em;
+  font-size: 30px;
+  letter-spacing: 0.02em;
 }
 
 .circleText {
-  font-family: var(--font-grotesk);
+  font-family: var(--font-display);
   font-weight: 800;
-  font-stretch: 62%;
-  font-size: 22px;
-  letter-spacing: 0.04em;
+  font-size: 19px;
+  letter-spacing: 0.02em;
 }
 
 .subtext {
-  font-family: var(--font-typewriter);
-  font-size: 13px;
-  font-weight: 700;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 800;
 }
 
 /* Slam: comes down fast from above, overshoots, settles (design-rules §8). */
