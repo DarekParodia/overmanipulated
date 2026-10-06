@@ -7,7 +7,7 @@ import { installGameHook } from '../debug/game-hook.ts';
 import { perfStats } from '../debug/perf-stats.ts';
 import { useApp } from '../store/app.ts';
 import { useSettings } from '../store/settings.ts';
-import { palette } from '../ui/tokens.ts';
+import { colors } from '../ui/tokens.ts';
 import { CameraRig } from './CameraRig.tsx';
 import { Driver } from './Driver.tsx';
 import { Fixtures } from './Fixtures.tsx';
@@ -70,12 +70,12 @@ export function GameCanvas() {
       }}
       style={{ touchAction: 'none' }}
     >
-      <color attach="background" args={[palette.paperShade]} />
-      <hemisphereLight args={[palette.paper, palette.wood, 1.6]} />
+      <color attach="background" args={[colors.sky]} />
+      <hemisphereLight args={[colors.surface, colors.furniture, 1.6]} />
       <directionalLight
         position={[4, 12, 6]}
         intensity={1.5}
-        color={palette.paper}
+        color={colors.surface}
         castShadow={profile.shadows}
         shadow-mapSize={[1024, 1024]}
         shadow-camera-left={-14}
