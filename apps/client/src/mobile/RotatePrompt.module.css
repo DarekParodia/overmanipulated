@@ -8,29 +8,51 @@
     inset: 0;
     z-index: 40;
     display: grid;
-    place-content: center;
-    justify-items: center;
-    gap: var(--space-3);
+    place-items: center;
     padding: var(--space-5);
-    text-align: center;
-    background: var(--paper);
+    background: var(--sky);
   }
 }
 
+.card {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 22rem;
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+
 .phone {
-  width: 5rem;
-  height: 5rem;
+  width: 7rem;
+  height: 7rem;
   fill: none;
-  stroke: var(--ink);
-  stroke-width: 2.5;
+  stroke: var(--outline);
+  stroke-width: 3.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  animation: tilt 2.4s var(--ease-settle) infinite;
+  animation: tilt 2.4s var(--ease-bounce) infinite;
+}
+
+.body {
+  fill: var(--surface);
+}
+
+.screen {
+  fill: var(--sky);
+  stroke-width: 2.5;
 }
 
 .title {
+  font-family: var(--font-display);
   font-size: var(--text-xl);
-  font-weight: 700;
+  font-weight: 800;
+  line-height: var(--leading-snug);
+}
+
+.hint {
+  font-size: var(--text-md);
+  color: var(--text-soft);
 }
 
 @keyframes tilt {

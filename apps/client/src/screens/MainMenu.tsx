@@ -1,5 +1,5 @@
-// Main menu as the front page of the Kurier Nowobrzeski (design-rules §1): masthead, lead
-// headline, and the two ways in as article columns.
+// Title screen (design-rules §5): the game logo on the sky, one centred panel with the
+// nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner.
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -7,19 +7,13 @@ import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
-import { formatDate, formatWeekday, typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Field } from '../ui/Field.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
+import { GameLogo } from './GameLogo.tsx';
 import styles from './MainMenu.module.css';
 
 const CODE_FILTER = new RegExp(`[^${ROOM_CODE_ALPHABET}]`, 'g');
-
-/** Edition number: days since the fictional paper's first issue. */
-function editionNumber(date: Date): number {
-  const first = new Date(1991, 4, 3);
-  return Math.floor((date.getTime() - first.getTime()) / 86_400_000);
-}
 
 export function MainMenu() {
   const nickname = useApp((s) => s.nickname);
@@ -30,7 +24,6 @@ export function MainMenu() {
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
-  const today = new Date();
   const busy = connection === 'connecting';
 
   useEffect(() => requestMusic('menu'), []);
@@ -69,60 +62,45 @@ export function MainMenu() {
   }
 
   const serverError = error ? pl.errors[error] : null;
+  const message = localError ?? serverError;
 
   return (
     <main className={styles.page}>
-      <header className={styles.masthead}>
-        <div className={styles.dateline}>
-          <span className="label">
-            {formatWeekday(today)}, {formatDate(today)}
-          </span>
-          <span className="label">{pl.masthead.edition(editionNumber(today))}</span>
-          <span className="label">{pl.masthead.price}</span>
-          <Button
-            variant="quiet"
-            icon={<Icon name="settings" size={20} />}
-            onClick={() => setSettingsOpen(true)}
-          >
-            {pl.menu.settings}
-          </Button>
-        </div>
-        <p className={styles.paperName}>{pl.masthead.paper}</p>
-        <p className={styles.motto}>{pl.masthead.motto}</p>
+      <div className={styles.corner}>
+        <Button
+          icon={<Icon name="settings" size={28} label={pl.menu.settings} />}
+          onClick={() => setSettingsOpen(true)}
+        />
+      </div>
+
+      <header className={styles.header}>
+        <GameLogo />
+        <p className={styles.tagline}>{pl.menu.tagline}</p>
       </header>
 
-      <section className={styles.lead}>
-        <h1 className={styles.headline}>{pl.menu.headline}</h1>
-        <p className={styles.lede}>{typeset(pl.menu.lede)}</p>
-      </section>
+      <section className={`panel ${styles.card}`}>
+        <Field
+          label={pl.menu.bylineLabel}
+          placeholder={pl.menu.bylinePlaceholder}
+          value={nickname}
+          maxLength={16}
+          autoComplete="nickname"
+          onChange={(event) => setNickname(event.target.value)}
+        />
 
-      <div className={styles.columns}>
-        <section className={styles.byline}>
-          <Field
-            label={pl.menu.bylineLabel}
-            placeholder={pl.menu.bylinePlaceholder}
-            hint={typeset(pl.menu.bylineHint)}
-            value={nickname}
-            maxLength={16}
-            autoComplete="nickname"
-            onChange={(event) => setNickname(event.target.value)}
-          />
-        </section>
+        <Button variant="primary" big wide disabled={busy} onClick={create}>
+          {pl.menu.createAction}
+        </Button>
 
-        <section className={styles.article}>
-          <p className="label">{pl.menu.createKicker}</p>
-          <h2 className={styles.articleTitle}>{typeset(pl.menu.createTitle)}</h2>
-          <Button variant="stamp" disabled={busy} onClick={create}>
-            {pl.menu.createAction}
-          </Button>
-        </section>
+        <p className={styles.or}>
+          <span>{pl.menu.or}</span>
+        </p>
 
-        <form className={styles.article} onSubmit={join}>
-          <p className="label">{pl.menu.joinKicker}</p>
-          <h2 className={styles.articleTitle}>{pl.menu.joinTitle}</h2>
+        <form className={styles.join} onSubmit={join}>
           <Field
             label={pl.menu.joinCodeLabel}
             large
+            placeholder={pl.menu.joinCodePlaceholder}
             value={code}
             maxLength={ROOM_CODE_LENGTH}
             autoCapitalize="characters"
@@ -131,27 +109,24 @@ export function MainMenu() {
             inputMode="text"
             onChange={(event) => setCode(event.target.value.toUpperCase().replace(CODE_FILTER, ''))}
           />
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" big disabled={busy}>
             {pl.menu.joinAction}
           </Button>
         </form>
 
-        <aside className={styles.side}>
-          <p className="label">{pl.menu.sideKicker}</p>
-          <p className={styles.sideText}>{typeset(pl.menu.sideText)}</p>
-          {health && health !== 'ok' && (
-            <p className={styles.press} role="status">
-              {pl.menu.pressDown}
-            </p>
-          )}
-        </aside>
-      </div>
-
-      {(localError || serverError) && (
-        <p className={styles.error} role="alert">
-          {localError ?? serverError}
-        </p>
-      )}
+        {message && (
+          <p className={styles.error} role="alert">
+            <Icon name="reject" size={22} />
+            {message}
+          </p>
+        )}
+        {health && health !== 'ok' && (
+          <p className={styles.error} role="status">
+            <Icon name="expired" size={22} />
+            {pl.menu.pressDown}
+          </p>
+        )}
+      </section>
     </main>
   );
 }
