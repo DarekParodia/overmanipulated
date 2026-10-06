@@ -72,6 +72,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `ping.*` | Q signal | bubble pop above player | short ping per type | icon bubble | — | ● |
 | `event.*` | random events (stage 4) | per event | announce stinger | per event (shares, sparks, glitch, smoke) | per event | ●●–●●● |
 | `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
+| `archive.tick` / `stop` / `miss` / `found` | archive minigame: card passes the frame, drawer braked, wrong card pulled, first mention found | card wobble / card lifts with stamp | riffle tick / click / nope / stamp thud | „Nie ta” stamp on the card | tick / buzz / thud (mobile) | ● → ●● |
 
 Add a row here when you add a cue, in the same commit.
 

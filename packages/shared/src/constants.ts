@@ -122,3 +122,12 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- S2-05 Archive minigame ----------------------------------------------------------------
+
+/** Index cards in one archive drawer (the timeline the player scrolls through). */
+export const ARCHIVE_CARD_COUNT = 14;
+/** How many cards carry the searched topic; only the earliest one is the right answer. */
+export const ARCHIVE_TOPIC_MENTIONS = 3;
+/** Wrong cards pulled before the minigame counts as failed. */
+export const ARCHIVE_MAX_MISTAKES = 2;
