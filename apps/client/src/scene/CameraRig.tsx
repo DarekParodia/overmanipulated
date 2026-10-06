@@ -12,7 +12,7 @@ import { renderState } from './render-state.ts';
 const MIN_TILE_PX = 40;
 const FOV = 32;
 /** Camera elevation angle above the floor. */
-const ELEVATION = (58 * Math.PI) / 180;
+export const ELEVATION = (58 * Math.PI) / 180;
 const FOLLOW_SMOOTHING = 6;
 /** In follow mode the view may extend this far past the room so HUD plates don't hide players. */
 const FOLLOW_EDGE_MARGIN = 1.5;

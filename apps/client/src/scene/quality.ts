@@ -7,6 +7,8 @@ export type QualityProfile = {
   preset: QualityPreset;
   maxDpr: number;
   shadows: boolean;
+  /** Small decorative props (slides, cards, lamp) and the moving conveyor belt. */
+  detail: boolean;
 };
 
 export function isCoarsePointer(): boolean {
@@ -40,6 +42,7 @@ export function profileFor(
     preset,
     maxDpr: Math.min(cap, dprByPreset[preset], Math.max(1, deviceDpr)),
     shadows: preset === 'high',
+    detail: preset !== 'low',
   };
 }
 
