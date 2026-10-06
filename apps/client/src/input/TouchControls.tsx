@@ -3,6 +3,7 @@
 // left-handed players.
 import { type PointerEvent, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
+import { pressPingAgain, usePings } from '../pings/ping-store.ts';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { touchInput } from './input-manager.ts';
@@ -115,7 +116,15 @@ export function TouchControls() {
         <button
           type="button"
           className={`${styles.action} ${styles.ping}`}
-          onPointerDown={() => touchInput.pressPing()}
+          data-testid="touch-ping"
+          onPointerDown={() => {
+            // Open through the input tick like Q; a press while open re-sends or closes.
+            if (usePings.getState().open) {
+              pressPingAgain(performance.now());
+            } else {
+              touchInput.pressPing();
+            }
+          }}
           onContextMenu={(event) => event.preventDefault()}
         >
           {pl.touch.ping}

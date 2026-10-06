@@ -122,3 +122,8 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- S2-11 Pings (client picker) -----------------------------------------------------------
+
+/** Pressing the ping button again this soon after opening the picker re-sends the last ping. */
+export const PING_QUICK_REPEAT_MS = 350;

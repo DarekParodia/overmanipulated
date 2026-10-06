@@ -11,6 +11,7 @@ import {
   type TileMap,
 } from '@redakcja/shared';
 import { sampleInput } from '../input/input-manager.ts';
+import { openPingPicker } from '../pings/ping-store.ts';
 import { createPredictor, type Predictor } from './prediction.ts';
 import {
   createSnapshotBuffer,
@@ -86,6 +87,9 @@ export function createRuntime(
         accumulator -= TICK_MS;
         ticks++;
         const sample = sampleInput();
+        if (sample.ping) {
+          openPingPicker(now);
+        }
         if (!localKnown) {
           continue;
         }

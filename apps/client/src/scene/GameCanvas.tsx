@@ -11,6 +11,7 @@ import { Driver } from './Driver.tsx';
 import { Newsroom } from './Newsroom.tsx';
 import { Particles } from './Particles.tsx';
 import { PerfProbe } from './PerfProbe.tsx';
+import { PingBubbles } from './PingBubbles.tsx';
 import { Players } from './Players.tsx';
 import { detectPreset, isCoarsePointer, profileFor, useQuality } from './quality.ts';
 import { Warmup } from './Warmup.tsx';
@@ -76,6 +77,7 @@ export function GameCanvas() {
       <CameraRig />
       <Newsroom shadows={profile.shadows} />
       <Players shadows={profile.shadows} />
+      <PingBubbles />
       <Particles />
       <PerfProbe />
       <Warmup />

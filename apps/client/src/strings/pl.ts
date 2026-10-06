@@ -168,8 +168,13 @@ export const pl = {
     archive: {},
     sourceRegistry: {},
   },
-  /** Ping picker (S2-11). */
-  pings: {},
+  /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
+  pings: {
+    title: 'Sygnał do zespołu',
+    hintKeys: 'Esc lub Q zamyka',
+    hintPad: 'B zamyka',
+    hintTouch: 'Sygnał zamyka',
+  },
   /** Level results (S2-08/S2-09). */
   results: {},
 } as const;
