@@ -122,3 +122,15 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- Minigame: source registry (S2-06) -----------------------------------------------------
+
+/** Wrong marks or premature filings that end the source-registry minigame as a failure. */
+export const SOURCE_REGISTRY_MAX_MISTAKES = 2;
+/** Fields on one source card (account or website). */
+export const SOURCE_REGISTRY_FIELDS = 7;
+/** Red flags on a suspicious card: between min and max inclusive. */
+export const SOURCE_REGISTRY_MIN_FLAGS = 1;
+export const SOURCE_REGISTRY_MAX_FLAGS = 3;
+/** Chance that a card for a folder without a source-registry stamp is clean. */
+export const SOURCE_REGISTRY_CLEAN_CHANCE = 0.3;

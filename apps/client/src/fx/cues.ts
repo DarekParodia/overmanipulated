@@ -78,6 +78,27 @@ export const cues = {
     haptic: 'thud',
     animation: 'stampSlam',
   },
+  // Source registry minigame (S2-06): red pencil on an index card.
+  'sourceRegistry.circle': {
+    severity: 1,
+    sound: { ids: ['click'], bus: 'ui', rateJitter: 0.1 },
+    haptic: 'tick',
+  },
+  'sourceRegistry.uncircle': {
+    severity: 1,
+    sound: { ids: ['hover'], bus: 'ui', volume: 0.7, rateJitter: 0.1 },
+    haptic: 'tick',
+  },
+  'sourceRegistry.mistake': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'sourceRegistry.file': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;
