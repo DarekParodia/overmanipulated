@@ -1,7 +1,7 @@
-// Level-end plate: tomorrow's front page. Masthead, a won/lost headline, the editor's rating as
-// rubber-stamped stars, score and credibility, and the list of folders with their fate. The host
-// takes the team back to the newsroom; guests wait. The full debrief (Kolegium) is Stage 3.
-import { getLevel } from '@redakcja/content';
+// Results panel at the end of a level: a big won/lost headline on a green or red ribbon, three
+// big stars, points and credibility, and a short list of folders with their fate. The host's
+// yellow button takes the team back to the newsroom; guests see a waiting line. The full
+// debrief (Kolegium) is Stage 3.
 import type { LevelEndMessage } from '@redakcja/shared';
 import { useEffect, useRef } from 'react';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
@@ -10,13 +10,15 @@ import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
+import { Icon } from '../ui/icons/Icon.tsx';
+import { HudGlyph } from './HudGlyph.tsx';
 import { formatScore } from './hud-model.ts';
+import { RatingStar } from './RatingStar.tsx';
 import { ResultRow } from './ResultRow.tsx';
 import styles from './ResultsPlate.module.css';
-import { StarStamp } from './StarStamp.tsx';
 
 const STAR_COUNT = 3;
-const STAR_STAGGER_MS = 320;
+const STAR_STAGGER_MS = 280;
 
 /** Mounted only while the level-end message is set, so it owns navigation only while shown. */
 export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
@@ -35,55 +37,64 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
       ?.focus({ preventScroll: true });
   }, []);
 
-  const level = getLevel(levelEnd.levelId);
   return (
     <div className={styles.backdrop}>
       <article
-        className={`${styles.page} ${levelEnd.won ? styles.won : styles.lost}`}
+        className={`${styles.panel} ${levelEnd.won ? styles.won : styles.lost}`}
         data-testid="results"
         aria-labelledby="results-headline"
       >
-        <header className={styles.masthead}>
-          <span className={styles.kicker}>{pl.results.kicker}</span>
-          <span className={styles.paper}>{pl.masthead.paper}</span>
-          {level && <span className={styles.kicker}>{level.title}</span>}
+        <header className={styles.ribbon}>
+          <span className={styles.ribbonMark}>
+            <Icon name={levelEnd.won ? 'publish' : 'reject'} size={30} />
+          </span>
+          <div>
+            <h1 id="results-headline" className={styles.headline}>
+              {levelEnd.won ? pl.results.wonHeadline : pl.results.lostHeadline}
+            </h1>
+            <p className={styles.lede}>
+              {typeset(levelEnd.won ? pl.results.wonLede : pl.results.lostLede)}
+            </p>
+          </div>
         </header>
 
-        <h1 id="results-headline" className={styles.headline}>
-          {levelEnd.won ? pl.results.wonHeadline : pl.results.lostHeadline}
-        </h1>
-        <p className={styles.lede}>
-          {typeset(levelEnd.won ? pl.results.wonLede : pl.results.lostLede)}
-        </p>
-
-        <div className={styles.columns}>
-          <aside className={styles.rating}>
+        <div className={styles.body}>
+          <div className={styles.summary}>
             <div className={styles.stars} role="img" aria-label={pl.results.stars(levelEnd.stars)}>
               {Array.from({ length: STAR_COUNT }, (_, i) => (
-                <StarStamp
+                <RatingStar
                   // biome-ignore lint/suspicious/noArrayIndexKey: the three stars are positional
                   key={i}
                   earned={i < levelEnd.stars}
-                  seed={i * 7919 + 17}
                   delayMs={i * STAR_STAGGER_MS}
                 />
               ))}
             </div>
-            <p className={styles.starsLabel}>{pl.results.stars(levelEnd.stars)}</p>
             <dl className={styles.figures}>
-              <div>
-                <dt>{pl.results.score}</dt>
+              <div className={styles.figure}>
+                <dt>
+                  <HudGlyph name="star" size={28} fill="var(--yellow)" label={pl.results.score} />
+                </dt>
                 <dd>{formatScore(levelEnd.score)}</dd>
               </div>
-              <div>
-                <dt>{pl.results.credibility}</dt>
+              <div className={styles.figure}>
+                <dt>
+                  <HudGlyph
+                    name="shield"
+                    size={28}
+                    fill="var(--green)"
+                    label={pl.results.credibility}
+                  />
+                </dt>
                 <dd>{levelEnd.credibility}</dd>
               </div>
             </dl>
-          </aside>
+          </div>
 
-          <section className={styles.list} aria-label={pl.results.folders}>
-            <h2 className={styles.listTitle}>{pl.results.folders}</h2>
+          <section className={styles.list} aria-labelledby="results-folders">
+            <h2 id="results-folders" className={styles.listTitle}>
+              {pl.results.folders}
+            </h2>
             {levelEnd.results.length === 0 ? (
               <p className={styles.empty}>{pl.results.noFolders}</p>
             ) : (
@@ -97,15 +108,16 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
         </div>
 
         <footer ref={footer} className={styles.footer}>
-          <Button variant="quiet" back onClick={leaveRoom}>
+          <Button variant="ghost" back icon={<Icon name="leave" size={22} />} onClick={leaveRoom}>
             {pl.game.leave}
           </Button>
           {isHost ? (
-            <Button variant="stamp" data-primary onClick={backToLobby}>
+            <Button variant="primary" big data-primary onClick={backToLobby}>
               {pl.results.backToLobby}
             </Button>
           ) : (
             <p className={styles.waiting} role="status">
+              <Icon name="clock" size={24} />
               {pl.results.waitingForHost}
             </p>
           )}

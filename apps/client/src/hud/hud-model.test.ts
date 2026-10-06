@@ -7,6 +7,7 @@ import {
   formatDelta,
   formatScore,
   isDeadlineWarning,
+  locationKind,
   locationLabel,
   pushToast,
   type StoryInfo,
@@ -60,6 +61,15 @@ describe('queue', () => {
     );
     expect(locationLabel(folder('a', 0, { kind: 'floor', x: 1, y: 2 }), nick)).toBe('na podłodze');
   });
+
+  test('sorts a location into one of the status icons', () => {
+    const kind = (location: Folder['location']) => locationKind(folder('a', 0, location));
+    expect(kind({ kind: 'carried', playerId: 'p1' })).toBe('carried');
+    expect(kind({ kind: 'fixture', fixtureId: 'archive-1' })).toBe('station');
+    expect(kind({ kind: 'fixture', fixtureId: 'desk-0' })).toBe('desk');
+    expect(kind(onConveyor)).toBe('waiting');
+    expect(kind({ kind: 'floor', x: 1, y: 2 })).toBe('waiting');
+  });
 });
 
 describe('formatting', () => {
@@ -101,7 +111,7 @@ describe('toasts', () => {
 
   test('a published fake reads as such, in red', () => {
     const slip = verdictToast({ ...base, verdict: 'publish', outcome: 'wrong' }, story, 0);
-    expect(slip.title).toBe('Opublikowana fałszywka');
+    expect(slip.title).toBe('Fałszywka!');
     expect(slip.tone).toBe('bad');
     expect(slip.mark).toBe('reject');
     expect(slip.headline).toBe(story.headline);
@@ -109,14 +119,14 @@ describe('toasts', () => {
 
   test('a rejected truth and a correct verdict', () => {
     expect(verdictToast({ ...base, verdict: 'reject', outcome: 'wrong' }, story, 0).title).toBe(
-      'Odrzucona prawdziwa wiadomość',
+      'To była prawda!',
     );
     const good = verdictToast(
       { ...base, verdict: 'reject', outcome: 'correct', scoreDelta: 30 },
       undefined,
       1,
     );
-    expect(good.title).toBe('Trafny werdykt');
+    expect(good.title).toBe('Dobrze!');
     expect(good.tone).toBe('good');
     expect(good.headline).toBe('Teczka bez opisu');
   });

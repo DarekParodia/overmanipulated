@@ -75,6 +75,26 @@ export function formatScore(score: number): string {
   return Math.round(score) < 0 ? `\u2212${grouped}` : grouped;
 }
 
+/** Where a folder is, as one of the status icons on its queue card. */
+export type LocationKind = 'carried' | 'station' | 'desk' | 'waiting';
+
+export function locationKind(folder: Folder): LocationKind {
+  const { location } = folder;
+  if (location.kind === 'carried') {
+    return 'carried';
+  }
+  if (location.kind === 'fixture') {
+    const prefix = location.fixtureId.replace(/-\d+$/, '');
+    if ((STATION_KINDS as readonly string[]).includes(prefix)) {
+      return 'station';
+    }
+    if (prefix === 'desk') {
+      return 'desk';
+    }
+  }
+  return 'waiting';
+}
+
 /** Where a folder is, in a few words, e.g. "niesie Zośka", "Archiwum", "na taśmie". */
 export function locationLabel(
   folder: Folder,
@@ -107,6 +127,7 @@ export type ToastTone = 'good' | 'caution' | 'bad';
 export type ToastSlip = {
   id: string;
   title: string;
+  /** Story headline, read out by screen readers only. */
   headline: string;
   /** Score delta, or null when the event carries none worth showing. */
   scoreDelta: number | null;

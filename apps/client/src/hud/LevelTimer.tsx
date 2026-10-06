@@ -1,5 +1,5 @@
-// Level timer: the newsroom wall clock reduced to a printed "closing in" box. The last 30 s
-// are emphasised (bigger, red, a ticking nudge each second unless reduced motion).
+// Level timer: a big clock in the HUD pill. In the last 30 s it turns red and wobbles gently
+// (no wobble with reduced motion; the colour and the clock icon stay, nothing blinks).
 import { LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
@@ -13,10 +13,8 @@ export function LevelTimer() {
   const clock = formatClock(timeLeftMs);
   return (
     <div className={`${styles.timer} ${last ? styles.lastSeconds : ''}`} data-testid="hud-timer">
-      <Icon name="clock" size={18} />
-      <span className={styles.label}>{pl.hud.timer}</span>
-      {/* Keyed by the shown second so the tick nudge replays once per second. */}
-      <span key={last ? clock : 'calm'} className={styles.clock} role="timer">
+      <Icon name="clock" size={28} className={styles.timerIcon ?? ''} />
+      <span className={styles.clock} role="timer" aria-label={`${pl.hud.timer}: ${clock}`}>
         {clock}
       </span>
     </div>

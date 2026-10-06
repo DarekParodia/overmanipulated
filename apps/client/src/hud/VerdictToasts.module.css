@@ -1,15 +1,15 @@
 /*
- * Verdict slips: phone-message forms torn off a pad, sliding down under the folder queue.
- * Centred between the joystick half and the action buttons on phones.
+ * Verdict toasts: chunky pills under the folder queue, centred between the joystick half and
+ * the action buttons on phones. The coloured disc carries the outcome icon (✓, ✗, hourglass).
  */
 .toasts {
   position: absolute;
-  top: calc(var(--hud-top) + var(--hud-queue-h) + var(--space-2));
+  top: calc(var(--hud-top) + var(--hud-queue-h) + var(--space-3));
   left: 50%;
-  width: min(24rem, 46vw);
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  align-items: center;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -17,114 +17,140 @@
   pointer-events: none;
 }
 
-.slip {
+.toast {
   display: flex;
-  align-items: stretch;
-  background: var(--paper);
-  border: var(--rule-thin);
-  box-shadow: var(--shadow-paper);
-  animation: slide-in var(--motion-base) var(--ease-settle) both;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-1);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  white-space: nowrap;
+  animation: pop-in var(--motion-base) var(--ease-bounce) both;
 }
 
-.slip:nth-child(2) {
-  rotate: 0.5deg;
-}
-
-.slip:nth-child(3) {
-  rotate: -0.4deg;
-}
-
-@keyframes slide-in {
-  from {
-    transform: translateY(-60%);
+@keyframes pop-in {
+  0% {
+    transform: scale(0.6);
     opacity: 0;
   }
-  to {
-    transform: none;
+  60% {
+    transform: scale(1.08);
     opacity: 1;
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
-:root[data-reduced-motion="true"] .slip {
+/* Mistakes shake once as they land. */
+.bad {
+  animation:
+    pop-in var(--motion-base) var(--ease-bounce) both,
+    shake 360ms ease-in-out var(--motion-base) 1;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    translate: 0;
+  }
+  25% {
+    translate: -6px 0;
+  }
+  75% {
+    translate: 6px 0;
+  }
+}
+
+:root[data-reduced-motion="true"] .toast {
   animation: none;
 }
 
-/* The mark column carries the outcome shape (tick, cross, context, hourglass) in ink. */
 .mark {
   display: grid;
   place-items: center;
   flex: none;
-  width: 2.25rem;
-  border-right: var(--rule-thin);
-  color: var(--paper);
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
 }
 
 .good .mark {
-  background: var(--copy-blue);
+  background: var(--green);
 }
 
 .caution .mark {
-  background: var(--ochre);
-  color: var(--ink);
+  background: var(--orange);
 }
 
 .bad .mark {
-  background: var(--editorial-red);
+  background: var(--red);
 }
 
-.body {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: var(--space-1) var(--space-2);
-}
-
-.title {
-  font-family: var(--font-grotesk);
-  font-stretch: 75%;
+.title,
+.delta {
+  padding-top: 0.12em;
+  font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-md);
-  line-height: var(--leading-snug);
+  font-size: var(--text-xl);
+  line-height: 1;
 }
 
 .delta {
-  font-family: var(--font-typewriter);
-  font-weight: 700;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+}
+
+.good .delta {
+  color: var(--green-dark);
 }
 
 .bad .delta {
-  color: var(--editorial-red);
+  color: var(--red-dark);
 }
 
-.headline {
-  overflow: hidden;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: var(--ink-soft);
+.cred {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-height: 500px), (max-width: 760px) {
   .toasts {
-    width: min(18rem, 46vw);
+    top: calc(var(--hud-top) + var(--hud-queue-h) + var(--space-2));
+    gap: var(--space-1);
+  }
+
+  .toast {
+    gap: var(--space-2);
+    padding-right: var(--space-3);
+    border-width: var(--stroke);
   }
 
   .mark {
-    width: 1.75rem;
+    width: 2.125rem;
+    height: 2.125rem;
   }
 
-  .body {
-    padding: 2px var(--space-1);
+  .mark svg {
+    width: 22px;
+    height: 22px;
   }
 
-  .title {
+  .title,
+  .delta {
+    font-size: var(--text-lg);
+  }
+
+  .cred {
     font-size: var(--text-sm);
-  }
-
-  .headline {
-    font-size: 0.625rem;
   }
 }

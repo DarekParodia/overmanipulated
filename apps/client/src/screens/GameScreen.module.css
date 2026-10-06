@@ -9,13 +9,29 @@
   overscroll-behavior: none;
 }
 
+/* Top-right: round icon tools, the room chip under them (hud/RoomChip). The HUD's
+   --hud-tools-w mirrors this width so the folder queue never runs under them. */
 .tools {
   position: absolute;
   top: max(var(--space-3), env(safe-area-inset-top));
   right: max(var(--space-3), env(safe-area-inset-right));
   z-index: 10;
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: var(--space-2);
+}
+
+.toolRow {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Round icon buttons (ui/Button with only an icon). */
+.toolRow button {
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
 }
 
 .banner {
@@ -23,11 +39,33 @@
   top: 30%;
   left: 50%;
   z-index: 20;
-  transform: translateX(-50%) rotate(-1deg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
   padding: var(--space-3) var(--space-5);
-  background: var(--paper);
-  border: 3px solid var(--editorial-red);
-  color: var(--editorial-red);
-  font-family: var(--font-typewriter);
-  font-weight: 700;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--red-dark);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  white-space: nowrap;
+}
+
+@media (max-height: 500px), (max-width: 760px) {
+  .tools {
+    top: max(var(--space-2), env(safe-area-inset-top));
+    right: max(var(--space-2), env(safe-area-inset-right));
+    gap: var(--space-1);
+  }
+
+  .toolRow button {
+    width: 3rem;
+    height: 3rem;
+    border-width: var(--stroke);
+  }
 }

@@ -1,11 +1,14 @@
 // On-screen touch controls (agents/platforms.md): a floating joystick appears where the thumb
-// lands on the movement half; action buttons sit under the other thumb. Mirrored for
+// lands on the movement half (a faint one rests in the corner to show where); chunky round
+// action buttons with an icon and a short label sit under the other thumb. Mirrored for
 // left-handed players.
 import { type PointerEvent, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
+import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { pressPingAgain, usePings } from '../pings/ping-store.ts';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
+import { Icon } from '../ui/icons/Icon.tsx';
 import { touchInput } from './input-manager.ts';
 import styles from './TouchControls.module.css';
 import { JOYSTICK_RADIUS_PX, joystickVector, knobOffset } from './touch.ts';
@@ -71,6 +74,11 @@ export function TouchControls() {
         onPointerUp={onStickUp}
         onPointerCancel={onStickUp}
       >
+        {!stick && (
+          <div className={`${styles.ring} ${styles.idle}`} aria-hidden>
+            <div className={styles.knob} />
+          </div>
+        )}
         {stick && (
           <div
             className={styles.ring}
@@ -100,7 +108,8 @@ export function TouchControls() {
           onPointerCancel={() => touchInput.setWork(false)}
           onContextMenu={(event) => event.preventDefault()}
         >
-          {pl.touch.work}
+          <HudGlyph name="work" size={30} fill="var(--surface)" />
+          <span className={styles.label}>{pl.touch.work}</span>
         </button>
         <button
           type="button"
@@ -111,7 +120,8 @@ export function TouchControls() {
           }}
           onContextMenu={(event) => event.preventDefault()}
         >
-          {pl.touch.interact}
+          <HudGlyph name="hand" size={30} fill="var(--surface)" />
+          <span className={styles.label}>{pl.touch.interact}</span>
         </button>
         <button
           type="button"
@@ -127,7 +137,8 @@ export function TouchControls() {
           }}
           onContextMenu={(event) => event.preventDefault()}
         >
-          {pl.touch.ping}
+          <Icon name="ping" size={24} />
+          <span className={styles.label}>{pl.touch.ping}</span>
         </button>
       </div>
     </div>
