@@ -15,12 +15,14 @@
     "typecheck": "bun run --filter '*' typecheck",
     "test": "bun test --pass-with-no-tests",
     "validate:content": "bun run --filter @redakcja/content validate",
-    "check": "bun run lint && bun run typecheck && bun run test && bun run validate:content",
+    "check": "bun run lint && bun run lint:design && bun run typecheck && bun run test && bun run validate:content",
     "db:generate": "bun run --filter @redakcja/server db:generate",
-    "db:studio": "bun run --filter @redakcja/server db:studio"
+    "db:studio": "bun run --filter @redakcja/server db:studio",
+    "lint:design": "bun tools/design/check-tokens.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
+    "@playwright/test": "^1.63.0",
     "@types/bun": "^1.4.2",
     "typescript": "^7.0.2"
   },

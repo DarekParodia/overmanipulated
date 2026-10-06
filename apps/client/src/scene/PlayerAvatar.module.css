@@ -1,0 +1,18 @@
+.labelWrap {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Typed name strip, like a label from a label maker. */
+.label {
+  display: block;
+  padding: 1px 6px;
+  background: var(--paper-a85);
+  border-left: 4px solid;
+  font-family: var(--font-typewriter);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--ink);
+  box-shadow: 1px 1px 0 var(--ink-a20);
+}

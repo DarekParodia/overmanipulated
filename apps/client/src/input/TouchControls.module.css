@@ -1,0 +1,109 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.stickZone {
+  position: absolute;
+  left: 0;
+  top: 25%;
+  bottom: 0;
+  width: 50%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.ring {
+  position: fixed;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--ink-a40);
+  border-radius: 50%;
+  background: var(--paper-a85);
+  opacity: 0.85;
+}
+
+.knob {
+  width: 46%;
+  height: 46%;
+  border-radius: 50%;
+  background: var(--ink-a70);
+}
+
+.buttons {
+  position: absolute;
+  right: max(var(--space-4), env(safe-area-inset-right));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "ping interact"
+    "work work";
+  gap: var(--space-3);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* Thumb buttons: round rubber-stamp handles seen from above, semi-transparent. */
+.action {
+  min-width: 4.25rem;
+  min-height: 4.25rem;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--paper-a85);
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  font-stretch: 70%;
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0.88;
+}
+
+.action:active {
+  transform: scale(0.92);
+  background: var(--paper-shade);
+}
+
+.work {
+  grid-area: work;
+  justify-self: end;
+  min-width: 5.25rem;
+  min-height: 5.25rem;
+  border-color: var(--copy-blue);
+  color: var(--copy-blue);
+}
+
+.interact {
+  grid-area: interact;
+}
+
+.ping {
+  grid-area: ping;
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+  align-self: end;
+}
+
+.mirrored .stickZone {
+  left: auto;
+  right: 0;
+}
+
+.mirrored .buttons {
+  right: auto;
+  left: max(var(--space-4), env(safe-area-inset-left));
+  grid-template-areas:
+    "interact ping"
+    "work work";
+}
+
+.mirrored .work {
+  justify-self: start;
+}

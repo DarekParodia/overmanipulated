@@ -1,0 +1,102 @@
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  max-width: min(40rem, calc(100vw - 2 * var(--space-3)));
+  max-height: calc(100dvh - 2 * var(--space-3));
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--ink-a40);
+}
+
+.sheet {
+  display: grid;
+  gap: var(--space-4);
+  max-height: calc(100dvh - 2 * var(--space-3));
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--paper);
+  box-shadow: var(--shadow-lifted);
+  border-top: var(--rule-thick);
+}
+
+.dialog[open] .sheet {
+  animation: sheet-in var(--motion-base) var(--ease-settle) both;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: var(--rule-double);
+  padding-bottom: var(--space-2);
+}
+
+.header h2 {
+  font-size: var(--text-2xl);
+}
+
+.group {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-3) 0 0;
+  border: none;
+  border-top: var(--rule-thin);
+}
+
+.group legend {
+  padding-right: var(--space-2);
+}
+
+.choice {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  border: 1.5px solid var(--ink);
+  cursor: pointer;
+  font-family: var(--font-grotesk);
+  font-stretch: 85%;
+  font-weight: 600;
+}
+
+.option input {
+  accent-color: var(--copy-blue);
+}
+
+.option:has(input:checked) {
+  background: var(--paper-shade);
+  border-width: 2.5px;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) rotate(-1deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

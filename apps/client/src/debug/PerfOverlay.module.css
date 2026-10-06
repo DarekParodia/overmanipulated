@@ -1,0 +1,24 @@
+.overlay {
+  position: fixed;
+  left: max(var(--space-2), env(safe-area-inset-left));
+  bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  z-index: 50;
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper-a85);
+  border: var(--rule-thin);
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.row dd {
+  margin: 0;
+}

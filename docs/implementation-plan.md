@@ -77,7 +77,7 @@ feedback.
   *Done when:* test drives a room for N ticks with scripted inputs and checks positions; loop stops
   when the room is empty.
 
-- [ ] **S1-05 — Client shell, store and screens (minimal).**
+- [x] **S1-05 — Client shell, store and screens (minimal).**
   *Depends on:* S1-01
   *Scope:* React app root, screen router in Zustand (`mainMenu`, `lobby`, `game`), strings module
   `src/strings/pl.ts`, main menu (Graj / Dołącz kodem), nickname entry, lobby list of players with
@@ -87,20 +87,20 @@ feedback.
   *Done when:* can create/join a room against the dev server and see the player list update, on a
   desktop browser and on a phone-sized viewport.
 
-- [ ] **S1-06 — Network client.**
+- [x] **S1-06 — Network client.**
   *Depends on:* S1-01, S1-05
   *Scope:* `net/connection.ts` (connect via same-origin `/ws`, reconnect with token, message
   validation), snapshot buffer, connection status UI.
   *Done when:* unit tests for snapshot buffer; reconnect after a dropped socket works manually.
 
-- [ ] **S1-07 — Greybox scene.**
+- [x] **S1-07 — Greybox scene.**
   *Depends on:* S1-02, S1-05
   *Scope:* R3F `Canvas`, angled top-down camera, tile floor and walls from the shared map data
   (instanced boxes), player capsules coloured per player with nickname labels, quality setting
   stub (shadows on/off, DPR).
   *Done when:* scene renders the shared layout; draw calls < 50 in the greybox.
 
-- [ ] **S1-08 — Input (keyboard, gamepad, touch).**
+- [~] **S1-08 — Input (keyboard, gamepad, touch).**
   *Depends on:* S1-05
   *Scope:* `input/` keyboard (WASD/arrows, E, Space hold, Q), Gamepad API and **touch controls**
   (floating virtual joystick on the left half, action buttons Podnieś / Pracuj (hold) / Sygnał on
@@ -109,8 +109,10 @@ feedback.
   buttons / touch icons); sent to server at tick rate with sequence numbers.
   *Done when:* pure mapping functions tested (incl. joystick dead zone and normalisation); gamepad
   works in Chrome; touch controls work on a real Android phone and iOS Safari.
+  *Status:* implemented and verified in mobile emulation; **real-device check pending (needs a
+  human with an Android phone, an iPhone and a gamepad).**
 
-- [ ] **S1-09 — Prediction and interpolation.**
+- [x] **S1-09 — Prediction and interpolation.**
   *Depends on:* S1-04, S1-06, S1-07, S1-08
   *Scope:* local player predicted with shared movement code, reconciled on snapshot (replay
   unacknowledged inputs); remote players interpolated ~100 ms behind.
@@ -146,14 +148,14 @@ feedback.
   *Done when:* migrations apply on an empty DB in tests (`:memory:`) and on server start; query
   functions for the table tested.
 
-- [ ] **S1-13 — Typed REST client.**
+- [x] **S1-13 — Typed REST client.**
   *Depends on:* S1-03, S1-06
   *Scope:* `apps/client/src/net/api.ts` using Hono `hc<AppType>` with same-origin base URL;
   Vite dev proxy for `/api`.
   *Done when:* client calls `/health` through the typed client; a type error appears if a route
   changes shape.
 
-- [ ] **S1-14 — Mobile shell.**
+- [~] **S1-14 — Mobile shell.**
   *Depends on:* S1-05, S1-07
   *Scope:* viewport meta (no pinch zoom), disable page scroll/pull-to-refresh/long-press menus
   and text selection on the game surface; "rotate your device" prompt in portrait during gameplay;
@@ -162,8 +164,9 @@ feedback.
   GPUs; web app manifest + icons so it can be added to the home screen (no offline mode).
   *Done when:* a full join-and-move session works on a mid-range Android phone (Chrome) and an
   iPhone (Safari) without accidental zoom/scroll, at ≥ 30 FPS (target 60).
+  *Status:* implemented and verified in mobile emulation; **real-device check pending.**
 
-- [ ] **S1-15 — Feedback (FX) framework.**
+- [x] **S1-15 — Feedback (FX) framework.**
   *Depends on:* S1-07
   *Scope:* `apps/client/src/fx/`:
   - `feedback.ts` — client-side event bus; game/server events and local actions map to feedback
@@ -184,14 +187,14 @@ feedback.
   *Done when:* cues fire from the event bus, unit tests for cue mapping, tweens and particle pool;
   reduced-motion and mute verified; particle and audio cost visible in the dev perf overlay.
 
-- [ ] **S1-16 — Dev perf overlay.**
+- [x] **S1-16 — Dev perf overlay.**
   *Depends on:* S1-07
   *Scope:* toggleable overlay (FPS, frame time, draw calls, triangles, particles alive, ping,
   snapshot buffer depth) via `r3f-perf`-style stats built on `renderer.info`; hidden in production
   unless `?debug`.
   *Done when:* usable on desktop and phone to check budgets.
 
-- [ ] **S1-17 — Design foundation.**
+- [x] **S1-17 — Design foundation.**
   *Depends on:* —
   *Scope:* `apps/client/src/ui/tokens.css` + `tokens.ts` (palette, type scale, spacing, rules,
   shadows per [`../agents/design-rules.md`](../agents/design-rules.md)); self-hosted fonts
@@ -450,6 +453,10 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | `@hono/bun` adapter instead of the deprecated `hono/bun` export | `hono/bun` is scheduled for removal in Hono v5 |
 | 2026-10-06 | Room broadcasts through a `Hub` interface backed by Bun pub/sub (`server.publish`) | Same production path as planned, but the registry is testable with a fake hub |
 | 2026-10-06 | Close code 1000 from the client = intentional leave (slot freed at once); anything else holds the slot 60 s | Distinguishes "Wyjdź" from network drops / app switches on phones |
+| 2026-10-06 | Placeholder SFX synthesised in-repo (`tools/audio/synth_placeholders.py`) instead of Kenney packs | Kenney is unreachable from the build environment; self-made sounds have no licence questions; ids stay stable for real sounds in stage 5 |
+| 2026-10-06 | Scene uses flat Lambert materials, `flat` (no tone mapping) | Colours stay true to design tokens; cheapest lighting model for UHD 620 and phones |
+| 2026-10-06 | Game screen (three.js) is lazy-loaded | Menu bundle 122 KB gzip vs 372 KB; faster first load on phones |
+| 2026-10-06 | Fonts via `@fontsource` (Newsreader, Archivo, Courier Prime), Polish glyphs verified | Self-hosted, OFL, full ą ć ę ł ń ó ś ź ż and „ ” – coverage |
 | 2026-10-06 | Package sources under `src/` (`packages/shared/src/sim`, …) | Uniform layout across packages; minor deviation from the design-doc tree |
 
 ---

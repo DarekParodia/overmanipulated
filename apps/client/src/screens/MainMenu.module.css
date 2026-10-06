@@ -1,0 +1,198 @@
+.page {
+  min-height: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right)) max(var(--space-6), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+}
+
+.masthead {
+  border-bottom: var(--rule-double);
+  padding-bottom: var(--space-3);
+  text-align: center;
+}
+
+.dateline {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  border-top: var(--rule-thin);
+  border-bottom: var(--rule-thin);
+  padding: 0 var(--space-1);
+}
+
+.paperName {
+  margin-top: var(--space-3);
+  font-family: var(--font-serif);
+  font-size: var(--text-masthead);
+  font-weight: 800;
+  font-variation-settings: "opsz" 72;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.motto {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.lead {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5) 0 var(--space-4);
+  border-bottom: var(--rule-thin);
+}
+
+.headline {
+  font-size: var(--text-3xl);
+  font-variation-settings: "opsz" 60;
+  max-width: 18ch;
+}
+
+.lede {
+  font-size: var(--text-lg);
+  max-width: 46ch;
+}
+
+/* Newspaper columns: byline is narrow marginalia, two article columns, a side column. */
+.columns {
+  display: grid;
+  grid-template-columns: 1.1fr 1.4fr 1.4fr 1fr;
+  gap: 0;
+  margin-top: var(--space-4);
+}
+
+.columns > * {
+  padding: 0 var(--space-4);
+  border-left: var(--rule-thin);
+}
+
+.columns > :first-child {
+  padding-left: 0;
+  border-left: none;
+}
+
+.article {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: var(--space-3);
+}
+
+.articleTitle {
+  font-size: var(--text-xl);
+}
+
+.byline {
+  align-self: start;
+}
+
+.side {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.sideText {
+  font-size: var(--text-sm);
+  column-rule: var(--rule-thin);
+}
+
+.press {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-sm);
+  color: var(--editorial-red);
+}
+
+.error {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--editorial-red);
+  color: var(--editorial-red);
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  max-width: 40rem;
+}
+
+@media (max-width: 960px) {
+  .columns {
+    grid-template-columns: 1fr 1fr;
+    row-gap: var(--space-5);
+  }
+  .columns > :nth-child(3) {
+    padding-left: 0;
+    border-left: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .columns {
+    grid-template-columns: 1fr;
+  }
+  .columns > * {
+    padding: 0;
+    border-left: none;
+  }
+  .headline {
+    font-size: var(--text-2xl);
+  }
+  .side {
+    display: none;
+  }
+}
+
+/* Short landscape phones: compress the masthead so the actions fit without scrolling much. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .page {
+    padding-top: max(var(--space-2), env(safe-area-inset-top));
+  }
+  /* Keep only the settings link from the dateline. */
+  .dateline > :not(button) {
+    display: none;
+  }
+  .dateline {
+    border: none;
+    justify-content: flex-end;
+    position: absolute;
+    right: max(var(--space-4), env(safe-area-inset-right));
+  }
+  .masthead {
+    position: relative;
+    text-align: left;
+  }
+  .paperName {
+    font-size: var(--text-xl);
+    margin-top: 0;
+  }
+  .motto,
+  .lede {
+    display: none;
+  }
+  .lead {
+    padding: var(--space-2) 0;
+  }
+  .headline {
+    font-size: var(--text-lg);
+    max-width: none;
+  }
+  .columns {
+    grid-template-columns: 1fr 1fr 1fr;
+    margin-top: var(--space-2);
+  }
+  .articleTitle {
+    font-size: var(--text-md);
+  }
+  .article {
+    gap: var(--space-2);
+  }
+  .side {
+    display: none;
+  }
+  .columns > :nth-child(3) {
+    padding-left: var(--space-4);
+    border-left: var(--rule-thin);
+  }
+}

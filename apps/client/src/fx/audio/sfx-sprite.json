@@ -1,0 +1,13 @@
+{
+  "click": [0, 60, false],
+  "hover": [180, 40, false],
+  "back": [340, 80, false],
+  "copy": [540, 700, false],
+  "join": [1360, 900, false],
+  "leave": [2380, 800, false],
+  "step1": [3300, 110, false],
+  "step2": [3530, 110, false],
+  "start": [3760, 1400, false],
+  "stamp": [5280, 300, false],
+  "roomtone": [5700, 4000, true]
+}

@@ -1,0 +1,45 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--touch-target);
+  cursor: pointer;
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.box {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--ink);
+  display: grid;
+  place-items: center;
+}
+
+.native:focus-visible + .box {
+  outline: 3px solid var(--copy-blue);
+  outline-offset: 2px;
+}
+
+.tick {
+  width: 1.6rem;
+  height: 1.6rem;
+  fill: none;
+  stroke: var(--copy-blue);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  transition: stroke-dashoffset var(--motion-base) var(--ease-out);
+}
+
+.native:checked + .box .tick {
+  stroke-dashoffset: 0;
+}
