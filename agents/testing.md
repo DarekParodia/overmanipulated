@@ -41,5 +41,10 @@ In CI, Playwright installs its own Chromium (`playwright install --with-deps chr
 sandbox that ships a different Chromium build, point Playwright at it instead of downloading:
 `PW_CHROMIUM_PATH=/opt/pw-browsers/chromium bun run test:e2e`.
 
+Locally Playwright reuses servers already listening on its ports (3000 for the game server,
+4173 for the preview). When several checkouts run e2e on one machine (e.g. agent worktrees),
+give each its own ports so no run talks to another checkout's build:
+`E2E_SERVER_PORT=3311 E2E_WEB_PORT=4311 bun run test:e2e`.
+
 The e2e tests read avatar positions from the scene exposed as `window.__scene` when the page is
 opened with `?debug`; avatar groups are named `player:<nickname>`.
