@@ -1,0 +1,112 @@
+/* Minigame clock: typed seconds over a burning fuse (a strip of ink that shortens). */
+.clock {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: var(--space-2);
+  min-width: 6.5rem;
+}
+
+.clockValue {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.fuse {
+  grid-column: 1 / -1;
+  display: block;
+  height: 4px;
+  border-bottom: 1px solid var(--ink-a40);
+}
+
+.fuse > span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform-origin: left;
+}
+
+/* Last quarter: red figures and fuse, plus a "!" mark so it is not colour alone. No blinking. */
+.urgent .clockValue {
+  color: var(--editorial-red);
+}
+
+.urgent .clockValue::after {
+  content: " !";
+}
+
+.folderLine {
+  margin: 0 0 var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--rule-thin);
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+/* Small typed slip pinned at the bottom centre while working or locked out. */
+.plate {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  bottom: max(var(--space-5), env(safe-area-inset-bottom));
+  transform: translateX(-50%) rotate(-0.6deg);
+  display: grid;
+  gap: var(--space-1);
+  min-width: 15rem;
+  max-width: calc(100vw - 2 * var(--space-4));
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border: var(--rule-thin);
+  box-shadow: var(--shadow-paper);
+  pointer-events: none;
+}
+
+.plateText {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+
+.progress {
+  display: block;
+  height: 8px;
+  border: var(--rule-thin);
+  background: var(--paper-shade);
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  background: var(--copy-blue);
+  transform-origin: left;
+  transition: transform 50ms linear;
+}
+
+.urgent .fuse > span {
+  background: var(--editorial-red);
+}
+
+.failed {
+  border: 2px solid var(--editorial-red);
+  color: var(--editorial-red);
+  transform: translateX(-50%) rotate(1deg);
+}
+
+.wait {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phones: lift the slip above the bottom so it clears the thumb buttons on the right. */
+@media (max-height: 500px), (max-width: 760px) {
+  .plate {
+    bottom: auto;
+    top: max(3.5rem, env(safe-area-inset-top));
+    min-width: 12rem;
+  }
+}

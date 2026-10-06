@@ -60,6 +60,8 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `station.denied` | station busy or wrong item | head shake | "nope" blip | red outline pulse | — | ● |
 | `stamp.applied` | station finished | stamp slam + 60 ms hit-stop | heavy thud | ink splat + paper bits | small shake, short buzz | ●● |
 | `minigame.success` / `fail` | minigame result | card flip / wobble | success ding / fail buzz | sparkle / smoke wisp | — | ● |
+| `station.open` / `desk.open` | minigame sheet / desk folder opens | sheet slides in | paper slide | — | light tick (mobile) | ● |
+| `desk.justify` | justifying stamp picked on the desk | slip pulled out, tab appears | click | — | light tick (mobile) | ● |
 | `verdict.correct` | correct verdict | cheer | chime + score tick | confetti in verdict colour, score pop text | — | ●● |
 | `verdict.contextCorrect` | correct "publish with context" | bigger cheer | fanfare | bigger burst, golden text | small zoom punch | ●●● |
 | `verdict.fakePublished` | fake published | facepalm | alarm sting | red ink splash, credibility bar crack | strong shake, long buzz | ●●● |
