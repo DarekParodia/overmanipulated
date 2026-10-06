@@ -60,7 +60,7 @@ feedback.
   *Done when:* deterministic unit tests for movement, wall sliding, diagonal normalisation,
   player–player non-blocking (or blocking — record decision).
 
-- [ ] **S1-03 — Server: rooms and sockets.**
+- [x] **S1-03 — Server: rooms and sockets.**
   *Depends on:* S1-01
   *Scope:* Hono app on `Bun.serve` (`hono/bun` `upgradeWebSocket` + `websocket`), `GET /health`,
   `GET /ws` upgrade, `app.ts` exporting `AppType`; room registry with unambiguous 4-letter
@@ -70,7 +70,7 @@ feedback.
   *Done when:* in-process tests cover create, join, full room, unknown code, reconnect within and
   after grace period, empty-room cleanup; `/health` tested with `app.request()`.
 
-- [ ] **S1-04 — Server: tick loop.**
+- [x] **S1-04 — Server: tick loop.**
   *Depends on:* S1-02, S1-03
   *Scope:* `loop.ts` fixed 20 Hz per active room; input queue per player (latest + sequence);
   `step`; broadcast `snapshot` with tick, positions, last processed input seq per player.
@@ -134,7 +134,7 @@ feedback.
   move; CI job.
   *Done when:* e2e passes in CI for both projects.
 
-- [ ] **S1-12 — Persistence wiring (Drizzle + SQLite).**
+- [x] **S1-12 — Persistence wiring (Drizzle + SQLite).**
   *Depends on:* S1-03
   *Scope:* add `drizzle-orm`, `drizzle-kit`, `drizzle-zod`; `drizzle.config.ts`
   (dialect `sqlite`, schema `src/db/schema.ts`, out `drizzle/`, `casing: 'snake_case'`);
@@ -447,6 +447,9 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | One client input = one 50 ms tick; server applies 1 queued input per tick (more when catching up) | Prediction replays exactly what the server simulates; no drift |
 | 2026-10-06 | Protocol adds `welcome`, `roomState`, `heartbeat`/`heartbeatAck` to the design-doc messages | Reconnect token, lobby list and ping measurement |
 | 2026-10-06 | Positions quantised to 1/1024 tile inside the sim | Wire values equal sim values, so client replay matches the server bit for bit |
+| 2026-10-06 | `@hono/bun` adapter instead of the deprecated `hono/bun` export | `hono/bun` is scheduled for removal in Hono v5 |
+| 2026-10-06 | Room broadcasts through a `Hub` interface backed by Bun pub/sub (`server.publish`) | Same production path as planned, but the registry is testable with a fake hub |
+| 2026-10-06 | Close code 1000 from the client = intentional leave (slot freed at once); anything else holds the slot 60 s | Distinguishes "Wyjdź" from network drops / app switches on phones |
 | 2026-10-06 | Package sources under `src/` (`packages/shared/src/sim`, …) | Uniform layout across packages; minor deviation from the design-doc tree |
 
 ---

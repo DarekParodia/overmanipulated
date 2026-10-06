@@ -18,4 +18,8 @@ jobs:
       - run: bun run typecheck
       - run: bun run test
       - run: bun run validate:content
+      - name: Check that DB migrations are up to date with the schema
+        run: |
+          bun run db:generate
+          test -z "$(git status --porcelain apps/server/drizzle)" || (echo "Run bun run db:generate and commit the migration" && git status --porcelain apps/server/drizzle && exit 1)
       - run: bun run build

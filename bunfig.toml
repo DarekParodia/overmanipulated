@@ -1,2 +1,3 @@
 [test]
 root = "."
+preload = ["./apps/server/test-setup.ts"]

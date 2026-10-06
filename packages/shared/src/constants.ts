@@ -42,3 +42,9 @@ export const INPUT_QUEUE_CATCH_UP_THRESHOLD = 3;
 export const INTERPOLATION_DELAY_MS = 100;
 /** Maximum WebSocket message size the server accepts, in bytes. */
 export const MAX_CLIENT_MESSAGE_BYTES = 4096;
+
+// --- Persistence ---------------------------------------------------------------------------
+
+/** Leaderboard entries older than this are deleted (no long-term storage of student data). */
+export const LEADERBOARD_RETENTION_DAYS = 90;
+export const LEADERBOARD_DEFAULT_LIMIT = 10;
