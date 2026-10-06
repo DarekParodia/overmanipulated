@@ -2,28 +2,43 @@
 // per-tick simulation step. Transport-agnostic: sockets are injected as `Connection`s and
 // broadcasts go through a `Hub`, so all of this is testable in-process.
 import {
+  DEFAULT_LEVEL_ID,
+  getLevel,
+  type Level,
+  type Story,
+  storiesForLevel,
+} from '@redakcja/content';
+import {
   addPlayer,
   type ClientMessage,
+  COMMAND_QUEUE_MAX,
   createGameState,
   type ErrorCode,
   encodeMessage,
   type GameEvent,
   type GameState,
-  GREYBOX_MAP,
   INPUT_QUEUE_CATCH_UP_THRESHOLD,
   INPUT_QUEUE_MAX,
   type JoinMessage,
+  type LobbyAction,
   MAX_PLAYERS,
   PLAYER_COLOR_COUNT,
+  type PlayerCommand,
   type PlayerInput,
   PROTOCOL_VERSION,
+  parseLayout,
+  type QueuedCommand,
   RECONNECT_GRACE_MS,
+  type Role,
   type RoomPhase,
+  removePlayer as removeSimPlayer,
   type ServerMessage,
+  type SimContext,
   spawnPoint,
   step,
   TICK_MS,
   type TileMap,
+  timeLeftMs,
 } from '@redakcja/shared';
 import { log } from '../log.ts';
 import { generateReconnectToken, generateRoomCode, secureRandom } from './codes.ts';
@@ -39,6 +54,10 @@ type RoomPlayer = {
   disconnectedAt: number | null;
   inputQueue: PlayerInput[];
   lastQueuedSeq: number;
+  /** Decisions (verdicts, minigame results, pings) waiting for the next tick. */
+  commandQueue: PlayerCommand[];
+  role: Role | null;
+  ready: boolean;
 };
 
 type Room = {
@@ -48,9 +67,19 @@ type Room = {
   /** Insertion order is join order. */
   players: Map<string, RoomPlayer>;
   game: GameState;
+  level: Level;
+  stories: Readonly<Record<string, Story>>;
   map: TileMap;
   nextPlayerNumber: number;
 };
+
+function requireLevel(id: string): Level {
+  const level = getLevel(id);
+  if (!level) {
+    throw new Error(`Unknown level "${id}"`);
+  }
+  return level;
+}
 
 type Membership = { roomCode: string; playerId: string };
 
@@ -99,11 +128,14 @@ export function createRoomRegistry(options: RegistryOptions) {
       roomCode: room.code,
       hostId: room.hostId,
       phase: room.phase,
+      levelId: room.level.id,
       players: [...room.players.values()].map((p) => ({
         id: p.id,
         nickname: p.nickname,
         colorIndex: p.colorIndex,
         connected: p.connection !== null,
+        role: p.role,
+        ready: p.ready,
       })),
     });
   }
@@ -141,11 +173,19 @@ export function createRoomRegistry(options: RegistryOptions) {
       disconnectedAt: null,
       inputQueue: [],
       lastQueuedSeq: -1,
+      commandQueue: [],
+      role: null,
+      ready: false,
     };
     room.players.set(player.id, player);
     tokens.set(player.reconnectToken, { roomCode: room.code, playerId: player.id });
     if (room.phase === 'playing') {
-      room.game = addPlayer(room.game, player.id, spawnPoint(room.map, player.colorIndex));
+      room.game = addPlayer(
+        room.game,
+        player.id,
+        spawnPoint(room.map, player.colorIndex),
+        player.role,
+      );
     }
     attach(room, player, connection);
     return player;
@@ -185,13 +225,17 @@ export function createRoomRegistry(options: RegistryOptions) {
 
     if (message.roomCode === undefined) {
       const code = generateRoomCode(random, new Set(rooms.keys()));
+      const level = requireLevel(DEFAULT_LEVEL_ID);
+      const map = parseLayout(level.layout);
       const room: Room = {
         code,
         hostId: '',
         phase: 'lobby',
         players: new Map(),
-        game: createGameState(),
-        map: GREYBOX_MAP,
+        game: createGameState({ map }),
+        level,
+        stories: storiesForLevel(level),
+        map,
         nextPlayerNumber: 1,
       };
       rooms.set(code, room);
@@ -227,6 +271,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         send(connection, { type: 'heartbeatAck', clientTime: message.clientTime });
         return;
       case 'lobby':
+      case 'command':
       case 'input': {
         const membership = memberships.get(connection.id);
         const room = membership ? rooms.get(membership.roomCode) : undefined;
@@ -237,6 +282,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         }
         if (message.type === 'lobby') {
           handleLobby(room, player, message.action);
+        } else if (message.type === 'command') {
+          enqueueCommand(room, player, message.command);
         } else {
           enqueueInput(room, player, message);
         }
@@ -245,27 +292,95 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
   }
 
-  function handleLobby(room: Room, player: RoomPlayer, action: 'start'): void {
-    if (action === 'start') {
-      if (player.id !== room.hostId) {
-        if (player.connection) {
-          sendError(player.connection, 'notHost');
-        }
-        return;
-      }
-      if (room.phase === 'playing') {
-        return;
-      }
-      room.phase = 'playing';
-      let game = createGameState();
-      for (const p of room.players.values()) {
-        game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex));
-      }
-      room.game = game;
-      log.info('game started', { room: room.code });
-      broadcastEvent(room, { kind: 'gameStarted' });
-      broadcastRoomState(room);
+  function rejectNotHost(player: RoomPlayer): void {
+    if (player.connection) {
+      sendError(player.connection, 'notHost');
     }
+  }
+
+  function handleLobby(room: Room, player: RoomPlayer, action: LobbyAction): void {
+    switch (action.kind) {
+      case 'start':
+        if (player.id !== room.hostId) {
+          rejectNotHost(player);
+          return;
+        }
+        if (room.phase !== 'lobby') {
+          return;
+        }
+        startLevel(room);
+        return;
+      case 'setRole':
+        if (room.phase === 'playing') {
+          return;
+        }
+        player.role = action.role;
+        broadcastRoomState(room);
+        return;
+      case 'setReady':
+        if (room.phase !== 'lobby') {
+          return;
+        }
+        player.ready = action.ready;
+        broadcastRoomState(room);
+        return;
+      case 'selectLevel': {
+        if (player.id !== room.hostId) {
+          rejectNotHost(player);
+          return;
+        }
+        const level = getLevel(action.levelId);
+        if (!level) {
+          if (player.connection) {
+            sendError(player.connection, 'unknownLevel');
+          }
+          return;
+        }
+        if (room.phase !== 'lobby') {
+          return;
+        }
+        room.level = level;
+        room.stories = storiesForLevel(level);
+        room.map = parseLayout(level.layout);
+        broadcastRoomState(room);
+        return;
+      }
+      case 'backToLobby':
+        if (player.id !== room.hostId) {
+          rejectNotHost(player);
+          return;
+        }
+        if (room.phase !== 'results') {
+          return;
+        }
+        room.phase = 'lobby';
+        for (const p of room.players.values()) {
+          p.ready = false;
+        }
+        broadcastRoomState(room);
+        return;
+    }
+  }
+
+  function startLevel(room: Room): void {
+    room.phase = 'playing';
+    let game = createGameState({ map: room.map, seed: Math.floor(random() * 0x7fffffff) });
+    for (const p of room.players.values()) {
+      game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
+      p.inputQueue = [];
+      p.commandQueue = [];
+    }
+    room.game = game;
+    log.info('game started', { room: room.code, level: room.level.id });
+    broadcastEvent(room, { kind: 'gameStarted' });
+    broadcastRoomState(room);
+  }
+
+  function enqueueCommand(room: Room, player: RoomPlayer, command: PlayerCommand): void {
+    if (room.phase !== 'playing' || player.commandQueue.length >= COMMAND_QUEUE_MAX) {
+      return;
+    }
+    player.commandQueue.push(command);
   }
 
   function enqueueInput(room: Room, player: RoomPlayer, input: PlayerInput): void {
@@ -286,8 +401,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       memberships.delete(player.connection.id);
       player.connection.unsubscribe(topic(room.code));
     }
-    const { [player.id]: _removed, ...rest } = room.game.players;
-    room.game = { ...room.game, players: rest };
+    room.game = removeSimPlayer(room.game, player.id);
     log.info('player left', { room: room.code, player: player.id });
     if (room.players.size === 0) {
       rooms.delete(room.code);
@@ -328,6 +442,7 @@ export function createRoomRegistry(options: RegistryOptions) {
     player.connection = null;
     player.disconnectedAt = now();
     player.inputQueue = [];
+    player.commandQueue = [];
     if (room.hostId === player.id) {
       reassignHost(room);
     }
@@ -348,26 +463,72 @@ export function createRoomRegistry(options: RegistryOptions) {
         continue;
       }
       const inputs: Record<string, PlayerInput[]> = {};
+      const commands: QueuedCommand[] = [];
       for (const player of room.players.values()) {
         // One input per tick keeps the server in lockstep with client prediction; a queue that
         // grew from network jitter is drained one extra input per tick.
         const count = player.inputQueue.length > INPUT_QUEUE_CATCH_UP_THRESHOLD ? 2 : 1;
         inputs[player.id] = player.inputQueue.splice(0, count);
+        for (const command of player.commandQueue.splice(0)) {
+          commands.push({ playerId: player.id, command });
+        }
       }
-      room.game = step(room.game, inputs, TICK_MS, room.map);
-      broadcast(room, {
-        type: 'snapshot',
-        tick: room.game.tick,
-        players: Object.values(room.game.players).map((p) => ({
-          id: p.id,
-          x: p.x,
-          y: p.y,
-          facing: p.facing,
-          moving: p.moving,
-          lastInputSeq: p.lastInputSeq,
-        })),
-      });
+      const ctx: SimContext = {
+        dtMs: TICK_MS,
+        map: room.map,
+        level: room.level,
+        stories: room.stories,
+      };
+      const result = step(room.game, inputs, commands, ctx);
+      room.game = result.state;
+      for (const event of result.events) {
+        broadcastEvent(room, event);
+      }
+      broadcastSnapshot(room);
+      if (room.game.ended) {
+        endLevel(room);
+      }
     }
+  }
+
+  function broadcastSnapshot(room: Room): void {
+    const game = room.game;
+    broadcast(room, {
+      type: 'snapshot',
+      tick: game.tick,
+      players: Object.values(game.players).map((p) => ({
+        id: p.id,
+        x: p.x,
+        y: p.y,
+        facing: p.facing,
+        moving: p.moving,
+        lastInputSeq: p.lastInputSeq,
+      })),
+      elapsedMs: game.elapsedMs,
+      timeLeftMs: timeLeftMs(game, room.level.durationS),
+      score: game.score,
+      credibility: game.credibility,
+      folders: Object.values(game.folders),
+      stations: Object.values(game.stations),
+      desks: Object.values(game.desks),
+    });
+  }
+
+  function endLevel(room: Room): void {
+    const { game } = room;
+    const outcome = game.ended ?? { won: false, stars: 0 };
+    room.phase = 'results';
+    log.info('level ended', { room: room.code, level: room.level.id, ...outcome });
+    broadcast(room, {
+      type: 'levelEnd',
+      levelId: room.level.id,
+      won: outcome.won,
+      stars: outcome.stars,
+      score: game.score,
+      credibility: game.credibility,
+      results: game.results,
+    });
+    broadcastRoomState(room);
   }
 
   return {
@@ -387,6 +548,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       return {
         hostId: room.hostId,
         phase: room.phase,
+        levelId: room.level.id,
         game: room.game,
         players: [...room.players.values()].map((p) => ({
           id: p.id,
@@ -394,6 +556,8 @@ export function createRoomRegistry(options: RegistryOptions) {
           colorIndex: p.colorIndex,
           connected: p.connection !== null,
           queued: p.inputQueue.length,
+          role: p.role,
+          ready: p.ready,
         })),
       };
     },

@@ -2,6 +2,16 @@ import { describe, expect, it } from 'bun:test';
 import { PROTOCOL_VERSION } from './constants.ts';
 import { encodeMessage, parseClientMessage, parseServerMessage } from './protocol.ts';
 
+const EMPTY_LEVEL = {
+  elapsedMs: 0,
+  timeLeftMs: 120_000,
+  score: 0,
+  credibility: 100,
+  folders: [],
+  stations: [],
+  desks: [],
+};
+
 describe('client messages', () => {
   it('accepts a join that creates a room', () => {
     const result = parseClientMessage({
@@ -57,8 +67,28 @@ describe('client messages', () => {
     expect(result.ok).toBe(false);
   });
 
-  it('accepts lobby start and heartbeat', () => {
-    expect(parseClientMessage({ type: 'lobby', action: 'start' }).ok).toBe(true);
+  it('accepts lobby actions, commands and heartbeat', () => {
+    expect(parseClientMessage({ type: 'lobby', action: { kind: 'start' } }).ok).toBe(true);
+    expect(
+      parseClientMessage({ type: 'lobby', action: { kind: 'setRole', role: 'archivist' } }).ok,
+    ).toBe(true);
+    expect(
+      parseClientMessage({ type: 'lobby', action: { kind: 'setRole', role: 'boss' } }).ok,
+    ).toBe(false);
+    expect(
+      parseClientMessage({
+        type: 'command',
+        command: {
+          kind: 'verdict',
+          folderId: 'f1',
+          verdict: 'publishWithContext',
+          justifyingStampId: 's1',
+        },
+      }).ok,
+    ).toBe(true);
+    expect(
+      parseClientMessage({ type: 'command', command: { kind: 'verdict', folderId: 'f1' } }).ok,
+    ).toBe(false);
     expect(parseClientMessage({ type: 'heartbeat', clientTime: 123.4 }).ok).toBe(true);
   });
 
@@ -83,12 +113,43 @@ describe('server messages', () => {
         roomCode: 'KLMN',
         hostId: 'p1',
         phase: 'lobby',
-        players: [{ id: 'p1', nickname: 'Ala', colorIndex: 0, connected: true }],
+        levelId: 'l0-greybox',
+        players: [
+          {
+            id: 'p1',
+            nickname: 'Ala',
+            colorIndex: 0,
+            connected: true,
+            role: null,
+            ready: false,
+          },
+        ],
       },
       {
         type: 'snapshot',
         tick: 10,
         players: [{ id: 'p1', x: 1.5, y: 2.5, facing: 0, moving: true, lastInputSeq: 4 }],
+        ...EMPTY_LEVEL,
+        folders: [
+          {
+            id: 'f1',
+            storyId: 'l0-story',
+            location: { kind: 'carried', playerId: 'p1' },
+            stamps: [],
+            spawnedAtMs: 0,
+            deadlineMs: 60_000,
+            warned: false,
+          },
+        ],
+      },
+      {
+        type: 'levelEnd',
+        levelId: 'l0-greybox',
+        won: true,
+        stars: 2,
+        score: 40,
+        credibility: 90,
+        results: [],
       },
       { type: 'event', tick: 3, event: { kind: 'playerJoined', playerId: 'p1' } },
       { type: 'error', code: 'roomFull' },
@@ -105,6 +166,7 @@ describe('server messages', () => {
       type: 'snapshot',
       tick: 1,
       players: Array.from({ length: 5 }, () => player),
+      ...EMPTY_LEVEL,
     });
     expect(result.ok).toBe(false);
   });
@@ -117,7 +179,17 @@ describe('server messages', () => {
         roomCode: 'KLMN',
         hostId: 'p1',
         phase: 'lobby',
-        players: [{ id: 'p1', nickname: 'Ala', colorIndex: 4, connected: true }],
+        levelId: 'l0-greybox',
+        players: [
+          {
+            id: 'p1',
+            nickname: 'Ala',
+            colorIndex: 4,
+            connected: true,
+            role: null,
+            ready: false,
+          },
+        ],
       }).ok,
     ).toBe(false);
   });

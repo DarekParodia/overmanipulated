@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "validate": "bun src/validate.ts"
   },
   "dependencies": {
+    "@redakcja/shared": "workspace:*",
     "zod": "^4.6.5"
   },
   "devDependencies": {

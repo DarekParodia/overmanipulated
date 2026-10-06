@@ -1,0 +1,80 @@
+[
+  {
+    "id": "l0-zalany-rynek",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Rynek w Nowych Brzegach pod wodą po wczorajszej ulewie",
+    "body": "Zdjęcie zalanego rynku krąży po grupach mieszkańców. Podpis: „Tak wyglądało wczoraj o 18:00”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l0-zalany-rynek-image",
+        "station": "imageSearch",
+        "text": "To samo zdjęcie opublikowano w sieci w 2019 r.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-zalany-rynek-archive",
+        "station": "archive",
+        "text": "Archiwum: powódź na rynku w czerwcu 2019 r. Wczoraj padało, ale bez podtopień.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-zalany-rynek-source",
+        "station": "sourceRegistry",
+        "text": "Konto aktywne od 6 lat, zwykle wrzuca zdjęcia z okolicy.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-zalany-rynek-image", "l0-zalany-rynek-archive"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie powodzi, ale sprzed kilku lat, podpisane jako wczorajsze.",
+      "technique": "Stare zdjęcie z nowym podpisem: obraz jest autentyczny, fałszywy jest kontekst.",
+      "tool": "Wyszukiwanie obrazem pokazało wcześniejsze publikacje, archiwum potwierdziło datę.",
+      "realWorld": "Po burzach i powodziach w sieci regularnie wracają zdjęcia z wcześniejszych lat, podpisane jako bieżące."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-nocny-autobus",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Od poniedziałku nocna linia autobusowa N3",
+    "body": "Przewoźnik miejski zapowiada nocny kurs co 40 minut, od dworca do osiedla Nadrzecze.",
+    "source": "Mail od czytelnika",
+    "stamps": [
+      {
+        "id": "l0-nocny-autobus-source",
+        "station": "sourceRegistry",
+        "text": "Ten sam komunikat jest na oficjalnej stronie przewoźnika miejskiego.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-nocny-autobus-archive",
+        "station": "archive",
+        "text": "Brak wcześniejszych wystąpień w archiwum.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-nocny-autobus-image",
+        "station": "imageSearch",
+        "text": "Nie znaleziono wcześniejszych kopii grafiki z rozkładem.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-nocny-autobus-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja, potwierdzona u źródła.",
+      "technique": "Brak manipulacji. Nie każde zgłoszenie jest fałszywką.",
+      "tool": "Kartoteka źródeł: komunikat pochodzi od przewoźnika.",
+      "realWorld": "Zmiany w rozkładach jazdy ogłaszają przewoźnicy na swoich stronach; tam warto je sprawdzać."
+    },
+    "reviewed": false
+  }
+]

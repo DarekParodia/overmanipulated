@@ -91,7 +91,7 @@ describe('game server over WebSocket', () => {
     await guest.waitFor('welcome');
     await host.waitFor('roomState', (m) => m.players.length === 2);
 
-    host.send({ type: 'lobby', action: 'start' });
+    host.send({ type: 'lobby', action: { kind: 'start' } });
     await guest.waitFor('roomState', (m) => m.phase === 'playing');
     const first = await guest.waitFor('snapshot');
     const startX = first.players.find((p) => p.id === hostWelcome.playerId)?.x ?? 0;

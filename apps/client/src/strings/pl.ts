@@ -1,6 +1,14 @@
 // All player-facing Polish text. Keys are English; wording follows agents/design-rules.md §9:
 // a gruff, warm editor-in-chief — short, concrete, newsroom vocabulary, no marketing voice.
-import type { ErrorCode } from '@redakcja/shared';
+import type {
+  ErrorCode,
+  PingKind,
+  Priority,
+  Role,
+  StationKind,
+  StoryType,
+  Verdict,
+} from '@redakcja/shared';
 
 export const pl = {
   masthead: {
@@ -77,6 +85,8 @@ export const pl = {
     reconnectFailed: 'Twoje miejsce już przepadło. Dołącz od nowa.',
     notHost: 'Wydanie otwiera tylko gospodarz.',
     notInRoom: 'Nie jesteś w żadnej redakcji.',
+    notReady: 'Nie wszyscy są gotowi.',
+    unknownLevel: 'Nie ma takiego wydania.',
     connectionLost: 'Zerwane połączenie z redakcją.',
   } satisfies Record<ErrorCode | 'connectionLost', string>,
   settings: {
@@ -104,6 +114,64 @@ export const pl = {
   styleguide: {
     title: 'Księga makiety',
   },
+  // --- Stage 2 gameplay. Shared vocabulary first, then one namespace per feature. ----------
+  vocab: {
+    storyTypes: {
+      photo: 'Zdjęcie',
+      quote: 'Cytat',
+      post: 'Post',
+      recording: 'Nagranie',
+      statistic: 'Statystyka',
+      article: 'Artykuł',
+    } satisfies Record<StoryType, string>,
+    priorities: {
+      normal: 'Zwykły',
+      important: 'Ważny',
+      urgent: 'Pilny',
+    } satisfies Record<Priority, string>,
+    verdicts: {
+      publish: 'Publikuj',
+      reject: 'Odrzuć',
+      publishWithContext: 'Publikuj z kontekstem',
+    } satisfies Record<Verdict, string>,
+    stations: {
+      imageSearch: 'Lupa obrazu',
+      archive: 'Archiwum',
+      sourceRegistry: 'Kartoteka źródeł',
+      phone: 'Telefon',
+      aiScanner: 'Skaner AI',
+      dataLibrary: 'Biblioteka danych',
+    } satisfies Record<StationKind, string>,
+    roles: {
+      photoEditor: 'Fotoedytor',
+      archivist: 'Archiwista',
+      reporter: 'Reporter',
+      managingEditor: 'Redaktor prowadzący',
+    } satisfies Record<Role, string>,
+    pings: {
+      needArchive: 'Potrzebuję Archiwum!',
+      fake: 'Fałszywka!',
+      mine: 'Biorę to',
+    } satisfies Record<PingKind, string>,
+  },
+  /** Lobby: roles, readiness, level select (S2-10). */
+  lobbyRoles: {},
+  /** In-game HUD and level-end plate (S2-09). */
+  hud: {},
+  /** Station overlay and work progress (S2-03). */
+  station: {},
+  /** Editorial desk and verdict sheet (S2-07). */
+  desk: {},
+  /** Minigames, one sub-namespace each (S2-04..S2-06). */
+  minigames: {
+    imageSearch: {},
+    archive: {},
+    sourceRegistry: {},
+  },
+  /** Ping picker (S2-11). */
+  pings: {},
+  /** Level results (S2-08/S2-09). */
+  results: {},
 } as const;
 
 export type Strings = typeof pl;

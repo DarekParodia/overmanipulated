@@ -121,7 +121,7 @@ feedback.
   *Status:* verified with `DEV_LATENCY_MS=150` (≈ 390 ms round trip): local movement starts on
   the first frame, no backward corrections over a move-and-stop run.
 
-- [~] **S1-10 — Deployment.**
+- [x] **S1-10 — Deployment.**
   *Depends on:* S1-03
   *Scope:* `Dockerfile` for the server (Bun image), client static build served by Caddy,
   `Caddyfile` (TLS, static files, `/ws` and `/api` reverse proxy), `docker-compose.yml` with a
@@ -224,7 +224,16 @@ mobile e2e.
 Goal: one full level loop on grey boxes: folders arrive, players verify at 3 stations, decide at
 the desk, score and credibility update, level ends with stars.
 
-- [ ] **S2-01 — Content schemas.**
+*Foundation (landed first so the tasks below can be built in parallel):* domain vocabulary
+(`shared/src/domain.ts`), entity schemas (`shared/src/entities.ts`), protocol v2 (lobby actions,
+`command` message, extended snapshot, gameplay events, `levelEnd`), fixtures in the tile map
+(`C D T I A R P S L`), `step(state, inputs, commands, ctx) → { state, events }` running the
+subsystems `folders → stations → desk → pings → scoring` (stubs except pings), content schemas
+with one greybox level and two stories, server wiring (commands, events, snapshots, level end),
+and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts`,
+`stations/minigames/` registry, `StationLayer` and `Hud` mount points).
+
+- [~] **S2-01 — Content schemas.**
   *Depends on:* S1-01
   *Scope:* `content/src/schema.ts` — `Story`, `Stamp`, `Level` (duration, stations available,
   spawn schedule, star thresholds, events), truth→verdict rule, `validate.ts` with referential
@@ -458,6 +467,12 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | Positions quantised to 1/1024 tile inside the sim | Wire values equal sim values, so client replay matches the server bit for bit |
 | 2026-10-06 | `@hono/bun` adapter instead of the deprecated `hono/bun` export | `hono/bun` is scheduled for removal in Hono v5 |
 | 2026-10-06 | Room broadcasts through a `Hub` interface backed by Bun pub/sub (`server.publish`) | Same production path as planned, but the registry is testable with a fake hub |
+| 2026-10-06 | Protocol v2: player decisions (minigame result, verdict, ping, deadline extension, cancel) travel as one `command` message, queued and applied in the next tick | Extension of the design-doc `verdict` message; keeps the simulation the only place state changes |
+| 2026-10-06 | Minigame outcomes are reported by the client; the server owns everything around them (who operates, which folder, stamp text, lockout) | Minigames are skill tests in the UI; cheating is not a threat in a co-op classroom game |
+| 2026-10-06 | Content (stories, levels) is bundled into the client | Static data, no secret to protect; the overlay and HUD need the texts instantly |
+| 2026-10-06 | Roles are optional and non-exclusive | Design doc: roles give a bonus but never block a station; avoids lobby deadlocks |
+| 2026-10-06 | Folder pick-up and put-down are not predicted on the client | 50 ms tick + feedback cues hide the latency; avoids rollback of shared objects |
+| 2026-10-06 | Correct verdict with a non-justifying stamp: half points, no credibility gain (`wrongJustification`) | Blocks guessing without punishing like a wrong verdict |
 | 2026-10-06 | Close code 1000 from the client = intentional leave (slot freed at once); anything else holds the slot 60 s | Distinguishes "Wyjdź" from network drops / app switches on phones |
 | 2026-10-06 | Placeholder SFX synthesised in-repo (`tools/audio/synth_placeholders.py`) instead of Kenney packs | Kenney is unreachable from the build environment; self-made sounds have no licence questions; ids stay stable for real sounds in stage 5 |
 | 2026-10-06 | Scene uses flat Lambert materials, `flat` (no tone mapping) | Colours stay true to design tokens; cheapest lighting model for UHD 620 and phones |
