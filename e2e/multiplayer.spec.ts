@@ -8,6 +8,9 @@ import {
   moveRight,
   openPlayer,
   PHONE,
+  pickRole,
+  rosterRow,
+  setReady,
 } from './helpers.ts';
 
 test.afterEach(closePlayers);
@@ -69,6 +72,39 @@ test('a mixed room: desktop host and phone guest see each other', async ({ brows
   await expect
     .poll(async () => (await avatarPositions(host)).Łukasz?.x ?? 0)
     .toBeGreaterThan(before + 1);
+});
+
+test('the host starts only when guests are ready, and roles show on every roster', async ({
+  browser,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'covers both device types in one run');
+  const host = await openPlayer(browser, 'Zośka', DESKTOP);
+  const phone = await openPlayer(browser, 'Łukasz', PHONE);
+  const code = await createRoom(host);
+  await joinRoom(phone, code, { ready: false });
+
+  const start = host.page.getByRole('button', { name: 'Do składu!' });
+  await expect(start).toBeDisabled();
+  await expect(host.page.getByTestId('start-reason')).toHaveText('Czekamy na: Łukasz.');
+  await expect(host.page.getByTestId('level-card')).toContainText('Makieta');
+  await expect(phone.page.getByTestId('level-card')).toContainText('Makieta');
+
+  await pickRole(phone, 'Archiwista');
+  await expect(rosterRow(host, 'Łukasz').getByTestId('roster-role')).toHaveText('Archiwista');
+  await pickRole(host, 'Redaktor prowadzący');
+  await expect(rosterRow(phone, 'Zośka').getByTestId('roster-role')).toHaveText(
+    'Redaktor prowadzący',
+  );
+
+  await setReady(phone, true);
+  await expect(start).toBeEnabled();
+  await setReady(phone, false);
+  await expect(start).toBeDisabled();
+  await setReady(phone, true);
+  await start.click();
+  for (const player of [host, phone]) {
+    await expect(player.page.getByTestId('hud')).toBeVisible();
+  }
 });
 
 test('leaving frees the slot and returns to the front page', async ({ browser }, testInfo) => {

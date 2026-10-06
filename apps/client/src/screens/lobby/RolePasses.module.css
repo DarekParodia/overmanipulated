@@ -1,0 +1,209 @@
+.passes {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-5);
+  border: none;
+  background: var(--paper);
+  box-shadow: var(--shadow-lifted);
+  transform: rotate(-0.4deg);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.passes:disabled {
+  opacity: 0.6;
+}
+
+.pin {
+  position: absolute;
+  top: -0.55rem;
+  left: 18%;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--editorial-red);
+  box-shadow: 1px 2px 0 var(--ink-a40);
+}
+
+/* A legend ignores grid placement; float + full width puts it in flow as the title. */
+.title {
+  float: left;
+  width: 100%;
+  padding: 0 0 var(--space-1);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  border-bottom: var(--rule-thick);
+}
+
+.hint,
+.note {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.note {
+  font-family: var(--font-typewriter);
+  border-top: var(--rule-thin);
+  padding-top: var(--space-2);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: var(--space-4) var(--space-3);
+  padding-top: var(--space-3);
+}
+
+/* One press pass: card stock with a masthead band, laminated look by a thin inner rule. */
+.pass {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: var(--touch-target);
+  background: var(--paper-shade);
+  border: 1.5px solid var(--ink);
+  outline: 1px solid var(--ink-a20);
+  outline-offset: -5px;
+  cursor: pointer;
+  transform: rotate(var(--tilt, 0deg));
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.pass:hover {
+  background: var(--paper-deep);
+}
+
+.pass:has(.native:focus-visible) {
+  outline: 3px solid var(--copy-blue);
+  outline-offset: 3px;
+}
+
+.passes:disabled .pass {
+  cursor: not-allowed;
+}
+
+.chosen {
+  background: var(--paper);
+  border-width: 3px;
+  box-shadow: var(--shadow-lifted);
+  transform: translateY(-4px) rotate(0deg);
+}
+
+.chosen:hover {
+  background: var(--paper);
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.band {
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-grotesk);
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-stretch: 70%;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.blank .band {
+  background: var(--ink-faint);
+}
+
+.body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) 0;
+}
+
+/* The passport-photo box, here holding the role's accessory. */
+.photo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 3.25rem;
+  border: 1.5px solid var(--ink-a40);
+  background: var(--paper);
+}
+
+.name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  font-stretch: 70%;
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.bonus {
+  padding: var(--space-2) 1.75rem var(--space-2) var(--space-2);
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
+/* Metal clip holding the chosen pass on the board. */
+.clip {
+  display: none;
+  position: absolute;
+  top: -0.7rem;
+  left: 50%;
+  width: 2.2rem;
+  height: 0.95rem;
+  margin-left: -1.1rem;
+  background: var(--ink-soft);
+  border: 1.5px solid var(--ink);
+}
+
+.chosen .clip {
+  display: block;
+}
+
+.tick {
+  position: absolute;
+  right: var(--space-1);
+  bottom: var(--space-1);
+  color: var(--copy-blue);
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .passes {
+    padding: var(--space-3) var(--space-4);
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: var(--space-3) var(--space-2);
+  }
+  .photo {
+    width: 2.25rem;
+    height: 2.5rem;
+  }
+  .name {
+    font-size: var(--text-xs);
+  }
+}

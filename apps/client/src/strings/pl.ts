@@ -155,7 +155,36 @@ export const pl = {
     } satisfies Record<PingKind, string>,
   },
   /** Lobby: roles, readiness, level select (S2-10). */
-  lobbyRoles: {},
+  lobbyRoles: {
+    passesTitle: 'Legitymacje prasowe',
+    passesHint:
+      'Rola przyspiesza pracę, ale nie zamyka żadnego stanowiska. Tę samą może mieć kilka osób.',
+    passHeader: 'Prasa · Kurier',
+    noRole: 'Bez przydziału',
+    noRoleBonus: 'Bez premii. Wszędzie zwykłe tempo.',
+    /** Speed bonus line built from ROLE_STATIONS and ROLE_WORK_TIME_FACTOR. */
+    fasterAt: (stations: readonly string[], percent: number) =>
+      `${stations.join(' i ')} o ${percent}% szybciej.`,
+    /** Roles whose bonus is not (only) speed get their own line. */
+    specialBonuses: {
+      reporter: 'Telefon do źródła bez kolejki.',
+      managingEditor: 'Raz na wydanie przedłuża termin jednej teczki.',
+    } satisfies Partial<Record<Role, string>>,
+    noEditorNote: 'Nikt nie ma roli redaktora prowadzącego: przy stole decyduje każdy, bez premii.',
+    ready: 'Gotowy',
+    readyHint: 'Zaznacz, gdy możesz zaczynać.',
+    readyStamp: 'Gotowy',
+    notReady: 'czeka',
+    levelKicker: 'Dzisiejsze wydanie',
+    levelPick: 'Wybierz wydanie',
+    levelHostOnly: 'Wydanie wybiera gospodarz.',
+    levelMeta: (minutes: number, folders: number) =>
+      `${minutes} min · ${folders} ${folders === 1 ? 'teczka' : folders % 10 >= 2 && folders % 10 <= 4 && (folders % 100 < 12 || folders % 100 > 14) ? 'teczki' : 'teczek'}`,
+    levelStations: 'Stanowiska',
+    startOffline: 'Brak połączenia z redakcją.',
+    startWaiting: (names: readonly string[]) => `Czekamy na: ${names.join(', ')}.`,
+    allReady: 'Wszyscy gotowi. Można zaczynać.',
+  },
   /** In-game HUD and level-end plate (S2-09). */
   hud: {},
   /** Station overlay and work progress (S2-03). */

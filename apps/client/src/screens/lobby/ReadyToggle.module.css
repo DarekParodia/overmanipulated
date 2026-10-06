@@ -1,0 +1,93 @@
+.signoff {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  border: 1.5px dashed var(--ink-a40);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.signoff:has(.native:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.signed {
+  border-style: solid;
+  border-color: var(--copy-blue);
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.box {
+  flex: none;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border: 2.5px solid var(--ink);
+  background: var(--paper);
+  display: grid;
+  place-items: center;
+}
+
+.native:focus-visible + .box {
+  outline: 3px solid var(--copy-blue);
+  outline-offset: 2px;
+}
+
+.tick {
+  width: 2.4rem;
+  height: 2.4rem;
+  fill: none;
+  stroke: var(--copy-blue);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  transition: stroke-dashoffset var(--motion-base) var(--ease-out);
+}
+
+.native:checked + .box .tick {
+  stroke-dashoffset: 0;
+}
+
+.text {
+  display: grid;
+}
+
+.word {
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  font-stretch: 62%;
+  font-size: var(--text-xl);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.signed .word {
+  color: var(--copy-blue);
+}
+
+.hint {
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .word {
+    font-size: var(--text-lg);
+  }
+  .hint {
+    display: none;
+  }
+}
