@@ -183,3 +183,12 @@ export const ARCHIVE_CARD_COUNT = 14;
 export const ARCHIVE_TOPIC_MENTIONS = 3;
 /** Wrong cards pulled before the minigame counts as failed. */
 export const ARCHIVE_MAX_MISTAKES = 2;
+
+// --- S2-04 Image search minigame -----------------------------------------------------------
+
+/** Wrong picks allowed before the image search attempt fails (the second one fails it). */
+export const IMAGE_SEARCH_MAX_MISTAKES = 2;
+/** Marked fragments on the submitted photo (inclusive range). */
+export const IMAGE_SEARCH_FRAGMENTS = { min: 2, max: 3 } as const;
+/** Search-result printouts on the light table (inclusive range). */
+export const IMAGE_SEARCH_RESULTS = { min: 4, max: 6 } as const;
