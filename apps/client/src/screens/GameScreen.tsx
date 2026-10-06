@@ -4,6 +4,7 @@
 import { useEffect } from 'react';
 import { startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
 import { requestMusic } from '../fx/audio/music.ts';
+import { Guidance } from '../guidance/Guidance.tsx';
 import { Hud } from '../hud/Hud.tsx';
 import { RoomChip } from '../hud/RoomChip.tsx';
 import { attachInput } from '../input/input-manager.ts';
@@ -57,6 +58,7 @@ export function GameScreen() {
       </div>
 
       <Hud />
+      <Guidance />
       <StationLayer />
       <PingPicker />
 
