@@ -4,6 +4,7 @@
 import { getStory } from '@redakcja/content';
 import { type Folder, MINIGAME_FAIL_LOCKOUT_MS, type Verdict } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { installGameHook } from '../debug/game-hook.ts';
 import { onGameEvent } from '../net/game-events.ts';
 import {
   selectFolderOn,
@@ -14,7 +15,6 @@ import {
 import { sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { DeskOverlay, type VerdictResultEvent } from './DeskOverlay.tsx';
-import { installGameDevHandle } from './dev-hook.ts';
 import { LockoutNote, StationOverlay, WorkPrompt } from './StationOverlay.tsx';
 
 /** How long the verdict outcome stays on the desk sheet unless dismissed. */
@@ -24,7 +24,7 @@ const VERDICT_PENDING_TIMEOUT_MS = 4000;
 
 export function StationLayer() {
   const playerId = useApp((s) => s.playerId);
-  useEffect(() => installGameDevHandle(), []);
+  useEffect(() => installGameHook(), []);
   return (
     <>
       <StationHost playerId={playerId} />
