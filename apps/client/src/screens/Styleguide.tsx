@@ -2,6 +2,7 @@
 // stamps and controls on one page, to review against the design rules on desktop and phone.
 import { useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
+import { MinigameBench } from '../stations/minigames/MinigameBench.tsx';
 import { pl } from '../strings/pl.ts';
 import { formatDate, formatNumber, typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
@@ -128,6 +129,11 @@ export function Styleguide() {
           <Checkbox label="Mniej ruchu" checked={checked} onChange={setChecked} />
           <Slider label="Efekty" value={volume} onChange={setVolume} />
         </div>
+      </section>
+
+      <section className={styles.section} id="minigames">
+        <h2>Minigry</h2>
+        <MinigameBench />
       </section>
     </main>
   );
