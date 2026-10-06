@@ -385,6 +385,12 @@ export const cues = {
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
     haptic: 'thud',
   },
+  // Lobby (S2-10): signing the duty roster as ready presses a small stamp.
+  'lobby.ready': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.6, rateJitter: 0.05 },
+    haptic: 'tick',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

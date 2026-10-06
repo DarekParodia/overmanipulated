@@ -1,0 +1,120 @@
+/* A typed briefing slip: ruled paper, slightly turned the other way to the code card. */
+.card {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--paper);
+  box-shadow: var(--shadow-lifted);
+  transform: rotate(0.9deg);
+}
+
+.pin {
+  position: absolute;
+  top: -0.55rem;
+  right: 22%;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--editorial-red);
+  box-shadow: 1px 2px 0 var(--ink-a40);
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-bottom: 1.5px solid var(--manila-dark);
+  min-width: 0;
+  width: 100%;
+}
+
+/* Manila index tab sticking up from the drawer of editions. */
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-4);
+  background: var(--paper-shade);
+  border: 1.5px solid var(--manila-dark);
+  border-bottom: none;
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+  font-family: var(--font-grotesk);
+  font-weight: 650;
+  font-stretch: 75%;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.tab:hover {
+  background: var(--manila-dark);
+}
+
+.current {
+  background: var(--manila);
+  font-weight: 800;
+}
+
+.tab:has(.native:focus-visible) {
+  outline: 3px solid var(--copy-blue);
+  outline-offset: 2px;
+  clip-path: none;
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.title {
+  font-size: var(--text-xl);
+}
+
+.meta {
+  font-family: var(--font-grotesk);
+  font-weight: 700;
+  font-stretch: 80%;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  border-top: var(--rule-thin);
+  border-bottom: var(--rule-thin);
+  padding: var(--space-1) 0;
+  width: 100%;
+}
+
+.briefing {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.stations {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.hostOnly {
+  font-size: var(--text-sm);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+@media (max-height: 480px) and (orientation: landscape) {
+  .card {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-1);
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+}

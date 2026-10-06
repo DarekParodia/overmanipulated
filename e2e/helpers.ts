@@ -42,10 +42,45 @@ export async function createRoom(host: Player): Promise<string> {
   return (await code.textContent()) ?? '';
 }
 
-export async function joinRoom(player: Player, code: string): Promise<void> {
+/** Joins by code and, unless told otherwise, signs the roster as ready so the host can start. */
+export async function joinRoom(
+  player: Player,
+  code: string,
+  { ready = true }: { ready?: boolean } = {},
+): Promise<void> {
   await player.page.getByLabel('Kod pokoju').fill(code);
   await player.page.getByRole('button', { name: 'Dołącz' }).click();
   await expect(player.page.getByTestId('room-code')).toHaveText(code);
+  if (ready) {
+    await setReady(player, true);
+  }
+}
+
+/** Ticks (or clears) the guest's "Gotowy" box and waits for the server to confirm it. */
+export async function setReady(player: Player, ready: boolean): Promise<void> {
+  const box = player.page.getByRole('checkbox', { name: 'Gotowy' });
+  // Controlled by the server's room state: a press sends the change, the tick follows the echo.
+  if ((await box.isChecked()) !== ready) {
+    await player.page.locator('label').filter({ has: box }).click();
+  }
+  if (ready) {
+    await expect(box).toBeChecked();
+  } else {
+    await expect(box).not.toBeChecked();
+  }
+}
+
+/** Picks a press pass (role) and waits for the server to confirm it. */
+export async function pickRole(player: Player, roleName: string): Promise<void> {
+  const pass = player.page.getByRole('radio', { name: roleName });
+  // The native radio is a 1 px input under the pass; press the pass itself, as a player does.
+  await player.page.locator('label').filter({ has: pass }).click();
+  await expect(pass).toBeChecked();
+}
+
+/** The duty-roster strip of the player with this nickname, as `viewer` sees it. */
+export function rosterRow(viewer: Player, nickname: string) {
+  return viewer.page.getByRole('listitem').filter({ hasText: nickname });
 }
 
 /** Positions of all avatars as this player's client renders them, keyed by nickname. */
