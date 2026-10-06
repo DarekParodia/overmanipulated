@@ -66,13 +66,11 @@ input {
   white-space: nowrap;
 }
 
-/* Small labels above values: "PUNKTY", "CZAS". Bold, never tiny. */
+/* Labels above values and fields ("Punkty", "Twój podpis"): bold, sentence case, never tiny. */
 .label {
   font-family: var(--font-display);
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   font-weight: 700;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
   color: var(--text-soft);
 }
 

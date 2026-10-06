@@ -84,12 +84,10 @@
 
 .green {
   background: var(--green);
-  color: var(--text-on-dark);
 }
 
 .red {
   background: var(--red);
-  color: var(--text-on-dark);
 }
 
 .orange {
