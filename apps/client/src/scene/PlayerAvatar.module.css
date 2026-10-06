@@ -1,18 +1,29 @@
-.labelWrap {
+/* Layer over the canvas, above the fixture signs. */
+.labelLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
   pointer-events: none;
   user-select: none;
 }
 
-/* Typed name strip, like a label from a label maker. */
+/* Name tag: white pill outlined in the player's colour (set inline), navy text. */
 .label {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: block;
-  padding: 1px 6px;
-  background: var(--paper-a85);
-  border-left: 4px solid;
-  font-family: var(--font-typewriter);
-  font-size: 0.8rem;
-  font-weight: 700;
+  will-change: transform;
+  padding: 0 10px;
+  border: var(--stroke) solid;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  line-height: 1.4;
   white-space: nowrap;
-  color: var(--ink);
-  box-shadow: 1px 1px 0 var(--ink-a20);
+  color: var(--text);
+  box-shadow: var(--pop-pressed);
 }

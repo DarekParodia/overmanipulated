@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Redakcja na Ostatnią Chwilę">
   <title>Redakcja na Ostatnią Chwilę</title>
-  <rect width="512" height="512" fill="#efe8d8"/>
-  <g transform="rotate(-6 256 256)" fill="none" stroke="#b3261e" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="86" y="86" width="340" height="340" stroke-width="26"/>
-    <rect x="122" y="122" width="268" height="268" stroke-width="8"/>
-    <path d="M196 362 L198 152 C258 148 312 156 314 206 C316 252 266 262 204 262 M250 262 L322 362" stroke-width="40"/>
+  <rect width="512" height="512" fill="#7cc8f5"/>
+  <g stroke="#1e2a4a" stroke-width="24" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M84 168a28 28 0 0 1 28-28h88l36 44h164a28 28 0 0 1 28 28v164a28 28 0 0 1-28 28H112a28 28 0 0 1-28-28Z" fill="#1e2a4a" transform="translate(0 16)"/>
+    <path d="M84 168a28 28 0 0 1 28-28h88l36 44h164a28 28 0 0 1 28 28v164a28 28 0 0 1-28 28H112a28 28 0 0 1-28-28Z" fill="#ffd23f"/>
+    <circle cx="256" cy="290" r="78" fill="#ffffff"/>
+    <path d="M216 292l28 28 52-60" fill="none" stroke-width="30"/>
   </g>
 </svg>

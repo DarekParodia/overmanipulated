@@ -32,10 +32,10 @@ export function surfaceHeight(fixture: Fixture): number {
 }
 
 /** Folder held in front of the carrier: distance from the body centre and height. */
-export const CARRY_REACH = 0.42;
+export const CARRY_REACH = 0.6;
 export const CARRY_HEIGHT = 0.82;
 /** Folder box size: width (x), thickness (y), depth (z). */
-export const FOLDER_SIZE = { width: 0.5, thickness: 0.04, depth: 0.38 } as const;
+export const FOLDER_SIZE = { width: 0.6, thickness: 0.06, depth: 0.45 } as const;
 
 export type Placement = {
   x: number;

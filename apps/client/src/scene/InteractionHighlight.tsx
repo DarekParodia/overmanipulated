@@ -1,49 +1,63 @@
-// Shows what the local player would interact with: corner marks in ink on a paper strip around
-// the target fixture, at its surface height. They snap to a new target with a small overshoot (a cut
-// under reduced motion). No glow, no pulsing.
+// Shows what the local player would interact with: a thick yellow rounded frame with a navy
+// outline around the target fixture, at its surface height (yellow = "do this next",
+// design-rules §3). It pops onto a new target with a small overshoot (a cut under reduced
+// motion). One draw call.
 
 import { useFrame } from '@react-three/fiber';
 import { findInteractionTarget } from '@redakcja/shared';
 import { useRef } from 'react';
-import type { Group } from 'three';
+import { type Group, Path, Shape, ShapeGeometry } from 'three';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
 import { runtime } from '../net/session.ts';
 import { useSettings } from '../store/settings.ts';
-import { palette } from '../ui/tokens.ts';
+import { colors } from '../ui/tokens.ts';
 import { surfaceHeight } from './entities.ts';
-import { box, merge, useGeometries } from './geometry.ts';
+import { mergePainted, useGeometries } from './geometry.ts';
 import { renderState } from './render-state.ts';
 
-/** Half the corner-mark square, slightly larger than a tile. */
-const HALF = 0.56;
-const ARM = 0.2;
-const WIDTH = 0.04;
-const THICKNESS = 0.012;
+/** Half the frame's outer size: a little larger than a tile so it hugs the prop. */
+const HALF = 0.62;
+/** Width of the yellow band and of the navy outline on each side of it. */
+const BAND = 0.1;
+const OUTLINE = 0.035;
 const LIFT = 0.03;
 
 /** The fixture id the local player currently targets (read by other scene components). */
 export const highlightState = { targetId: null as string | null };
 
-function cornerMarks(width: number, arm: number, y: number) {
-  const parts = [];
-  for (const sx of [-1, 1]) {
-    for (const sz of [-1, 1]) {
-      const cx = sx * HALF;
-      const cz = sz * HALF;
-      parts.push(box(arm, THICKNESS, width, { x: cx - (sx * (arm - width)) / 2, y, z: cz }));
-      parts.push(box(width, THICKNESS, arm, { x: cx, y, z: cz - (sz * (arm - width)) / 2 }));
-    }
-  }
-  return merge(parts);
+function roundedRect(target: Path, half: number, radius: number): void {
+  target.moveTo(-half + radius, -half);
+  target.lineTo(half - radius, -half);
+  target.quadraticCurveTo(half, -half, half, -half + radius);
+  target.lineTo(half, half - radius);
+  target.quadraticCurveTo(half, half, half - radius, half);
+  target.lineTo(-half + radius, half);
+  target.quadraticCurveTo(-half, half, -half, half - radius);
+  target.lineTo(-half, -half + radius);
+  target.quadraticCurveTo(-half, -half, -half + radius, -half);
+}
+
+/** Flat rounded-square frame between two half sizes, lying on the xz plane at height y. */
+function frame(outer: number, inner: number, y: number): ShapeGeometry {
+  const shape = new Shape();
+  roundedRect(shape, outer, 0.16);
+  const hole = new Path();
+  roundedRect(hole, inner, 0.1);
+  shape.holes.push(hole);
+  const geometry = new ShapeGeometry(shape, 4);
+  geometry.rotateX(-Math.PI / 2);
+  geometry.translate(0, y, 0);
+  return geometry;
 }
 
 export function InteractionHighlight() {
   const root = useRef<Group>(null);
   const pop = useRef<SpringState>({ value: 1, velocity: 0 });
   const g = useGeometries(() => ({
-    // Ink corner marks on a slightly wider paper strip, so they read on the dark belt too.
-    marks: cornerMarks(WIDTH, ARM, 0),
-    backing: cornerMarks(WIDTH + 0.035, ARM + 0.035, -THICKNESS),
+    frame: mergePainted([
+      [colors.outline, [frame(HALF + OUTLINE, HALF - BAND - OUTLINE, 0)]],
+      [colors.yellow, [frame(HALF, HALF - BAND, 0.004)]],
+    ]),
   }));
 
   useFrame((_, delta) => {
@@ -66,7 +80,7 @@ export function InteractionHighlight() {
     }
     if (target.id !== highlightState.targetId) {
       highlightState.targetId = target.id;
-      pop.current.value = reducedMotion ? 1 : 1.18;
+      pop.current.value = reducedMotion ? 1 : 1.2;
       pop.current.velocity = 0;
     }
     stepSpring(pop.current, 1, delta, 4, 0.45);
@@ -77,11 +91,8 @@ export function InteractionHighlight() {
 
   return (
     <group ref={root} name="interaction-highlight" visible={false}>
-      <mesh geometry={g.backing}>
-        <meshLambertMaterial color={palette.paper} />
-      </mesh>
-      <mesh geometry={g.marks}>
-        <meshLambertMaterial color={palette.ink} />
+      <mesh geometry={g.frame}>
+        <meshBasicMaterial vertexColors />
       </mesh>
     </group>
   );

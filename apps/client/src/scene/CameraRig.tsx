@@ -16,6 +16,8 @@ export const ELEVATION = (58 * Math.PI) / 180;
 const FOLLOW_SMOOTHING = 6;
 /** In follow mode the view may extend this far past the room so HUD plates don't hide players. */
 const FOLLOW_EDGE_MARGIN = 1.5;
+/** At the back the view may extend further: the signs over the back row and the HUD sit there. */
+const FOLLOW_BACK_MARGIN = 3.5;
 
 export function CameraRig() {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
@@ -47,7 +49,8 @@ export function CameraRig() {
     const { width, height } = runtime.map;
     // Visible floor needed to show the whole room with a margin, in tiles.
     const fitWidth = width + 1.5;
-    const fitDepth = height + 2.5;
+    // Extra room at the top for the signs over the back row and the HUD above them.
+    const fitDepth = height + 5;
     const aspect = size.width / Math.max(1, size.height);
     const tilePxIfFit = Math.min(
       size.width / fitWidth,
@@ -66,11 +69,11 @@ export function CameraRig() {
       target.set(
         Math.min(width + m - halfW, Math.max(halfW - m, renderState.local.x)),
         0,
-        Math.min(height + m - halfD, Math.max(halfD - m, renderState.local.y)),
+        Math.min(height + m - halfD, Math.max(halfD - FOLLOW_BACK_MARGIN, renderState.local.y)),
       );
     } else {
       visibleDepth = Math.max(fitDepth, fitWidth / aspect / Math.sin(ELEVATION));
-      target.set(width / 2, 0, height / 2 + 0.3);
+      target.set(width / 2, 0, height / 2 - 0.9);
     }
     const k = 1 - Math.exp(-FOLLOW_SMOOTHING * delta);
     focus.current.lerp(target, k);

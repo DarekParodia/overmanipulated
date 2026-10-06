@@ -154,6 +154,17 @@ export const pl = {
       fake: 'Fałszywka!',
       mine: 'Biorę to',
     } satisfies Record<PingKind, string>,
+    /** One-word signs floating over interactive fixtures in the 3D newsroom. */
+    signs: {
+      imageSearch: 'Lupa',
+      archive: 'Archiwum',
+      sourceRegistry: 'Kartoteka',
+      phone: 'Telefon',
+      aiScanner: 'Skaner',
+      dataLibrary: 'Dane',
+      conveyor: 'Wejście',
+      desk: 'Stół',
+    } satisfies Record<StationKind | 'conveyor' | 'desk', string>,
   },
   /** Lobby: roles, readiness, level select (S2-10). */
   lobbyRoles: {
