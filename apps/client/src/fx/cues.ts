@@ -92,6 +92,24 @@ export const cues = {
     sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
     haptic: 'tick',
   },
+  // --- Pings (S2-11). Placeholder sounds until the sound pass adds one per ping type. ------
+  'ping.open': { severity: 1, sound: { ids: ['hover'], bus: 'ui', volume: 0.7 }, haptic: 'tick' },
+  'ping.send': { severity: 1, sound: { ids: ['click'], bus: 'ui', rateJitter: 0.04 } },
+  'ping.needArchive': {
+    severity: 1,
+    sound: { ids: ['copy'], bus: 'sfx', volume: 0.6, rateJitter: 0.04 },
+    particles: { preset: 'inkPuff', count: 6 },
+  },
+  'ping.fake': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'inkPuff', count: 6 },
+  },
+  'ping.mine': {
+    severity: 1,
+    sound: { ids: ['join'], bus: 'sfx', volume: 0.5, rateJitter: 0.04 },
+    particles: { preset: 'inkPuff', count: 6 },
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

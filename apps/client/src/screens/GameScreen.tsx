@@ -9,6 +9,7 @@ import { TouchControls } from '../input/TouchControls.tsx';
 import { canFullscreen, toggleFullscreen, useWakeLock } from '../mobile/device.ts';
 import { RotatePrompt } from '../mobile/RotatePrompt.tsx';
 import { leaveRoom } from '../net/session.ts';
+import { PingPicker } from '../pings/PingPicker.tsx';
 import { GameCanvas } from '../scene/GameCanvas.tsx';
 import { isCoarsePointer } from '../scene/quality.ts';
 import { StationLayer } from '../stations/StationLayer.tsx';
@@ -64,6 +65,7 @@ export function GameScreen() {
 
       <Hud />
       <StationLayer />
+      <PingPicker />
 
       {connection === 'reconnecting' && (
         <p className={styles.banner} role="status">

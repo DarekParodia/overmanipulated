@@ -152,3 +152,8 @@ export const CONTENT_TRUE_STORY_SHARE = { min: 0.25, max: 0.45 } as const;
 export const CONTENT_TWO_STARS_SHARE = { min: 0.35, max: 0.65 } as const;
 /** Three-star threshold as a share of the level's maximum score (≈ 80%). */
 export const CONTENT_THREE_STARS_SHARE = { min: 0.65, max: 0.95 } as const;
+
+// --- S2-11 Pings (client picker) -----------------------------------------------------------
+
+/** Pressing the ping button again this soon after opening the picker re-sends the last ping. */
+export const PING_QUICK_REPEAT_MS = 350;
