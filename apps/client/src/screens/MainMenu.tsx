@@ -2,6 +2,7 @@
 // headline, and the two ways in as article columns.
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { requestMusic } from '../fx/audio/music.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
@@ -32,6 +33,7 @@ export function MainMenu() {
   const today = new Date();
   const busy = connection === 'connecting';
 
+  useEffect(() => requestMusic('menu'), []);
   useEffect(() => {
     void fetchHealth().then((h) => setHealth(h.status));
   }, []);

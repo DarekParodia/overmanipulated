@@ -6,6 +6,7 @@ Every asset shipped with the game is listed here with its source and licence
 | Asset | Path | Source | Licence |
 | --- | --- | --- | --- |
 | Placeholder sound effects (click, hover, back, copy, join, leave, step1–2, start, stamp, roomtone) | `audio/sfx.webm`, `audio/sfx.mp3` | Self-made: synthesised by `tools/audio/synth_placeholders.py` | Project's own |
+| Music v1 loops (menu, level calm layer, level pressure layer) | `audio/music/*.webm`, `audio/music/*.mp3` | Self-made: synthesised by `tools/audio/synth_music.py` | Project's own |
 | App icon | `../icons/icon.svg`, `icon-*.png` | Self-made | Project's own |
 | Newsreader typeface | npm `@fontsource-variable/newsreader` | Production Type | SIL OFL 1.1 |
 | Archivo typeface | npm `@fontsource-variable/archivo` | Omnibus-Type | SIL OFL 1.1 |
