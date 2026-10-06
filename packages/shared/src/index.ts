@@ -1,3 +1,4 @@
 // Shared game logic used by both client and server: simulation, protocol, constants.
-// Placeholder — see docs/implementation-plan.md (stage 1).
-export {};
+export * from './constants.ts';
+export * from './protocol.ts';
+export * from './sim/index.ts';

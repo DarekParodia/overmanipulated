@@ -43,7 +43,7 @@ Goal: 2–4 players on desktop **or phone** open the game, join a room by a 4-le
 each other move around a grey newsroom in sync — already with basic animation, sound and particle
 feedback.
 
-- [ ] **S1-01 — Constants and protocol skeleton.**
+- [x] **S1-01 — Constants and protocol skeleton.**
   *Depends on:* —
   *Scope:* `shared/src/constants.ts` (`TICK_RATE_HZ = 20`, `PROTOCOL_VERSION`, `MAX_PLAYERS = 4`,
   `ROOM_CODE_LENGTH = 4`, `RECONNECT_GRACE_MS = 60_000`, movement speed);
@@ -52,7 +52,7 @@ feedback.
   `parseServerMessage` helpers.
   *Done when:* types inferred from schemas, each schema has accept/reject tests.
 
-- [ ] **S1-02 — Tile map and movement sim.**
+- [x] **S1-02 — Tile map and movement sim.**
   *Depends on:* S1-01
   *Scope:* `sim/map.ts` (tile grid, solid tiles, a hard-coded greybox newsroom layout as data),
   `sim/movement.ts` (apply input vector × speed × dt, AABB vs tile collision with sliding),
@@ -443,6 +443,10 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | Particles, tweens and camera shake are in-house (instanced, pooled) on three.js; no extra FX library | Keeps bundle small and draw calls predictable on mobile GPUs |
 | 2026-10-06 | Binding design rules against a generic/"AI-generated" look; identity based on physical newsroom objects | A game about spotting fakes must not look templated; gives agents concrete constraints |
 | 2026-10-06 | Fonts self-hosted, no Google Fonts CDN; working picks Newsreader + condensed grotesque + typewriter face | School networks and privacy; Polish glyph coverage to be verified in S1-17 |
+| 2026-10-06 | Players pass through each other (no body blocking) | Crowded newsroom would cause frustrating jams; revisit after playtests |
+| 2026-10-06 | One client input = one 50 ms tick; server applies 1 queued input per tick (more when catching up) | Prediction replays exactly what the server simulates; no drift |
+| 2026-10-06 | Protocol adds `welcome`, `roomState`, `heartbeat`/`heartbeatAck` to the design-doc messages | Reconnect token, lobby list and ping measurement |
+| 2026-10-06 | Positions quantised to 1/1024 tile inside the sim | Wire values equal sim values, so client replay matches the server bit for bit |
 | 2026-10-06 | Package sources under `src/` (`packages/shared/src/sim`, …) | Uniform layout across packages; minor deviation from the design-doc tree |
 
 ---
