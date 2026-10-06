@@ -233,7 +233,7 @@ with one greybox level and two stories, server wiring (commands, events, snapsho
 and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts`,
 `stations/minigames/` registry, `StationLayer` and `Hud` mount points).
 
-- [~] **S2-01 — Content schemas.**
+- [x] **S2-01 — Content schemas.**
   *Depends on:* S1-01
   *Scope:* `content/src/schema.ts` — `Story`, `Stamp`, `Level` (duration, stations available,
   spawn schedule, star thresholds, events), truth→verdict rule, `validate.ts` with referential
@@ -241,14 +241,14 @@ and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts
   covering all truth values.
   *Done when:* `bun run validate:content` validates real files and fails on broken fixtures.
 
-- [ ] **S2-02 — Folders: spawn, carry, deadlines.**
+- [x] **S2-02 — Folders: spawn, carry, deadlines.**
   *Depends on:* S1-04, S2-01
   *Scope:* sim entities for folders; conveyor spawning from the level schedule; pick up / put down
   (E) on floor, surfaces, stations, desk; one folder per player; deadline countdown and expiry.
   *Done when:* unit tests for pickup rules, spawn timing, expiry; folders render as coloured boxes
   with type icons.
 
-- [ ] **S2-03 — Station framework.**
+- [x] **S2-03 — Station framework.**
   *Depends on:* S2-02
   *Scope:* station occupancy, hold-Space work with progress, per-station duration (3–8 s) from
   constants, role speed bonus, stamp written to folder from story data, protocol messages for
@@ -259,39 +259,39 @@ and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts
   *Done when:* a folder carried to a station and worked on gets the correct stamp; role bonus
   tested; overlay usable by touch.
 
-- [ ] **S2-04 — Minigame: Image search (`imageSearch`).**
+- [x] **S2-04 — Minigame: Image search (`imageSearch`).**
   *Depends on:* S2-03
   *Scope:* match image fragments to search results; success → stamp, failure → time lost.
   *Done when:* playable in the overlay with keyboard, gamepad and touch (drag/tap); success and
   failure cues wired.
 
-- [ ] **S2-05 — Minigame: Archive (`archive`).**
+- [x] **S2-05 — Minigame: Archive (`archive`).**
   *Depends on:* S2-03
   *Scope:* scroll a timeline and stop on the right date.
   *Done when:* playable with keyboard, gamepad and touch (swipe/drag/tap); success and failure
   cues wired.
 
-- [ ] **S2-06 — Minigame: Source registry (`sourceRegistry`).**
+- [x] **S2-06 — Minigame: Source registry (`sourceRegistry`).**
   *Depends on:* S2-03
   *Scope:* compare a profile against warning signs (account age, verification, name mismatch).
   *Done when:* playable with keyboard, gamepad and touch (swipe/drag/tap); success and failure
   cues wired.
 
-- [ ] **S2-07 — Editorial desk and verdicts.**
+- [x] **S2-07 — Editorial desk and verdicts.**
   *Depends on:* S2-03
   *Scope:* desk overlay showing the folder and its stamps; three verdict buttons; must pick a
   justifying stamp; server evaluates verdict + justification; result event with what was missed.
   *Done when:* tests for every truth × priority × verdict combination, including "wrong
   justification" handling (record rule in Decision log).
 
-- [ ] **S2-08 — Scoring, credibility, stars, level end.**
+- [x] **S2-08 — Scoring, credibility, stars, level end.**
   *Depends on:* S2-07
   *Scope:* the full scoring table from the design doc (incl. speed bonus, expiry, unverifiable
   rules), credibility from 100 with loss at 0, level timer, star thresholds, `levelEnd` message.
   *Done when:* each row of the scoring table has a unit test; level ends correctly on time-out and
   on credibility 0.
 
-- [ ] **S2-09 — HUD.**
+- [x] **S2-09 — HUD.**
   *Depends on:* S2-02, S2-08
   *Scope:* top queue of folders with timers and priority, credibility meter, score, level timer,
   instant verdict feedback toast; animated counters (score roll-up, credibility bar drain with
@@ -299,7 +299,7 @@ and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts
   layout for phones that keeps the touch controls clear.
   *Done when:* readable at 1366×768 and at 640×360; type distinguishable by icon, not only colour.
 
-- [ ] **S2-12 — Core gameplay feedback.**
+- [~] **S2-12 — Core gameplay feedback.**
   *Depends on:* S1-15, S2-02, S2-03, S2-07, S2-08
   *Scope:* catalogue entries with animation + sound + particles (+ haptics on mobile) for:
   folder arrives on conveyor (bell, slide-in), pick up / put down (paper rustle, hop), carry pose,
@@ -310,23 +310,30 @@ and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts
   level timer last 30 s (music tempo up), level win/lose stingers.
   *Done when:* every listed event has its cue; reduced motion tested; particle budget held during
   a busy level.
+  *Status:* every gameplay event has a positioned cue (sound, particles, shake, haptics, hit-stop) in `fx/event-cues.ts`; the named animation triggers (`hop`, `crumple`, `scorePop`, `credibilityCrack`, …) are emitted but not yet consumed by the folder/avatar/HUD components.
 
-- [ ] **S2-13 — Music v1.**
+- [~] **S2-13 — Music v1.**
   *Depends on:* S1-15
   *Scope:* one looping newsroom track with two intensity layers (calm / pressure) cross-faded by
   remaining time and number of urgent folders; menu track.
   *Done when:* layers switch smoothly; music bus volume respected.
+  *Status:* synthesised menu + calm/pressure loops with intensity cross-fade are in; needs a human listening pass.
 
-- [ ] **S2-10 — Lobby: roles, ready, level select.**
+- [x] **S2-10 — Lobby: roles, ready, level select.**
   *Depends on:* S1-05
   *Scope:* role selection (non-exclusive or exclusive — record decision), character colour, ready
   toggle, host picks level, start game; 3-player rule for managing editor.
   *Done when:* all players ready + host start → everyone enters the same level.
 
-- [ ] **S2-11 — Pings (Q).**
+- [x] **S2-11 — Pings (Q).**
   *Depends on:* S1-09
   *Scope:* quick signals ("Potrzebuję Archiwum!", "Fałszywka!", "Biorę to") shown above players.
   *Done when:* pings broadcast and display for ~2 s.
+
+*Stage 2 status:* all tasks landed; a scripted two-player playtest (desktop + phone) plays a
+folder from the conveyor through a station and the desk to the results screen. Still open:
+the exit playtest with 3–4 real people on mixed devices, S2-12 animation listeners, S2-13
+listening pass.
 
 **Stage 2 exit:** greybox level with 5+ test stories played start to finish by 3–4 people on a
 mix of laptops and phones, with full core feedback (animations, sounds, particles).
@@ -479,6 +486,13 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | Game screen (three.js) is lazy-loaded | Menu bundle 122 KB gzip vs 372 KB; faster first load on phones |
 | 2026-10-06 | Fonts via `@fontsource` (Newsreader, Archivo, Courier Prime), Polish glyphs verified | Self-hosted, OFL, full ą ć ę ł ń ó ś ź ż and „ ” – coverage |
 | 2026-10-06 | Package sources under `src/` (`packages/shared/src/sim`, …) | Uniform layout across packages; minor deviation from the design-doc tree |
+| 2026-10-06 | Wrong verdicts outside the design-doc table: plain publish of misleading/satire −10 / −10 cred; rejecting misleading/satire −5 / 0; context note on a true story −5 / 0; publishing false/unverifiable (with or without context) counts as a published fake −20 / −25 | Keeps "better late than wrong" ordering; harmless over-caution costs little |
+| 2026-10-06 | A justification counts only if the stamp is a justifying stamp *and* was collected on the folder; speed bonus only for fully correct verdicts with strictly more than half the time left | Verdicts must rest on evidence the team actually gathered |
+| 2026-10-06 | Deadline extension: managing editor role; with no managing editor and ≤ 3 players anyone may extend; once per level | Design doc's 3-player rule, simplified |
+| 2026-10-06 | Credibility 0 on the same tick as time-out is a loss; reported credibility deltas are the table values, the meter is clamped to 0–100 | Deterministic tie-break; readable feedback |
+| 2026-10-06 | Ready can be toggled in the lobby and on the results screen; ready flags reset on level select, start and back-to-lobby; start needs every connected guest ready | Replay from results must be possible; disconnected players never block |
+| 2026-10-06 | A minigame operator keeps the station while the overlay is open even without facing it; stations are reachable within 1.1 tiles regardless of facing | The overlay owns the input; avoids losing a round to a stray stick nudge |
+| 2026-10-06 | Server-event cues own shared moments (desk opened, minigame failed, pings); overlays only add local UI clicks | One sound per moment when several units listen to the same event |
 
 ---
 

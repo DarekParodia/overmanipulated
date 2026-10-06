@@ -3,11 +3,12 @@
 //   snapshots until `release()` (snapshots still update the clock, score and timer).
 // - `holdSnapshots()` pins whatever folders/stations/desks are in the store right now.
 // - `setState()` / `getState()` reach the game store directly; `emit()` replays a gameplay event
-//   as if it came from the server; `map()` / `localPlayerId()` describe this client.
-import type { Desk, Folder, Station, TileMap } from '@redakcja/shared';
+//   as if it came from the server; `send()` sends a real command to the server;
+//   `map()` / `localPlayerId()` describe this client.
+import type { Desk, Folder, PlayerCommand, Station, TileMap } from '@redakcja/shared';
 import { type GameplayEvent, handleGameEvent } from '../net/game-events.ts';
 import { type GameStore, useGame } from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
+import { runtime, sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 
 type Pinned = Partial<{ folders: Folder[]; stations: Station[]; desks: Desk[] }>;
@@ -24,6 +25,8 @@ export type GameHook = {
   holdSnapshots(): void;
   release(): void;
   emit(event: GameplayEvent): void;
+  /** Sends a player command to the server, e.g. a minigame result in scripted playtests. */
+  send(command: PlayerCommand): void;
 };
 
 let installed = false;
@@ -73,6 +76,7 @@ export function installGameHook(): void {
       pinned = {};
     },
     emit: handleGameEvent,
+    send: sendCommand,
   };
   (window as unknown as { __game?: GameHook }).__game = hook;
 }
