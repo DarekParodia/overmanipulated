@@ -35,12 +35,19 @@ agents/             Working rules for agents
 | `bun run dev:server` | Run the game server with watch mode |
 | `bun run dev:client` | Run the Vite dev server (proxies `/ws` to the game server) |
 | `bun run lint` / `bun run format` | Biome check / Biome check with autofix |
+| `bun run lint:design` | Fails on colour literals outside the design-token files |
 | `bun run typecheck` | `tsc` in every workspace |
 | `bun run test` | `bun test` across the repo |
 | `bun run validate:content` | Validate game content against schemas |
 | `bun run build` | Production build of the client |
-| `bun run db:generate` | Generate a Drizzle migration after changing `apps/server/src/db/schema.ts` (added in S1-12) |
-| `bun run check` | lint + typecheck + test + validate — **must pass before every push** |
+| `bun run db:generate` | Generate a Drizzle migration after changing `apps/server/src/db/schema.ts` |
+| `bun run db:studio` | Browse the local SQLite database |
+| `bun run test:e2e` | Playwright multiplayer tests, desktop + mobile (starts server and preview itself) |
+| `bun run check` | lint + design lint + typecheck + test + validate — **must pass before every push** |
+| `docker compose up --build` | Production-like stack (Caddy + server), see `docs/deploy.md` |
+
+Dev URLs: `http://localhost:5173` (game), `?styleguide` (design reference page), `?debug` or
+F3 (perf overlay). Set `DEV_LATENCY_MS=150` on the server to test netcode under lag.
 
 ## Non-negotiable rules
 

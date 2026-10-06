@@ -34,8 +34,12 @@
 bun run test                 # all unit tests
 bun test packages/shared     # one package
 bun run validate:content     # content checks
-bunx playwright test         # e2e (once set up in stage 1)
+bun run test:e2e             # e2e, desktop + mobile projects
 ```
 
-Playwright uses the pre-installed Chromium; do not run `playwright install` in CI images that
-already ship browsers.
+In CI, Playwright installs its own Chromium (`playwright install --with-deps chromium`). In a
+sandbox that ships a different Chromium build, point Playwright at it instead of downloading:
+`PW_CHROMIUM_PATH=/opt/pw-browsers/chromium bun run test:e2e`.
+
+The e2e tests read avatar positions from the scene exposed as `window.__scene` when the page is
+opened with `?debug`; avatar groups are named `player:<nickname>`.

@@ -119,7 +119,7 @@ feedback.
   *Done when:* smooth movement with 150 ms artificial latency (dev latency flag on the server);
   interpolation helpers tested.
 
-- [ ] **S1-10 — Deployment.**
+- [~] **S1-10 — Deployment.**
   *Depends on:* S1-03
   *Scope:* `Dockerfile` for the server (Bun image), client static build served by Caddy,
   `Caddyfile` (TLS, static files, `/ws` and `/api` reverse proxy), `docker-compose.yml` with a
@@ -127,8 +127,12 @@ feedback.
   deploy notes in `docs/deploy.md`; CI job building the image.
   *Done when:* `docker compose up` locally serves the game on https and WebSockets work through
   Caddy on 443.
+  *Status:* Dockerfile (targets `server`, `web`), Caddyfile, compose, `docs/deploy.md` done.
+  Verified Caddy + server end to end (static, SPA fallback, `/api`, a full game over `wss://`)
+  with the Caddy binary; the image build itself is verified by the CI `docker` job (Docker Hub
+  rate-limited the dev sandbox). Real hosting waits on the open hosting question.
 
-- [ ] **S1-11 — Multiplayer e2e test.**
+- [x] **S1-11 — Multiplayer e2e test.**
   *Depends on:* S1-09, S1-14
   *Scope:* Playwright config with a desktop project and a mobile project (device emulation with
   touch, landscape); test opening 2–3 browser contexts — at least one mobile: create room, join by

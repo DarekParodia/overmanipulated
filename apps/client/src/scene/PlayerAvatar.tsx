@@ -70,7 +70,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, shadows }: PlayerAvatar
   });
 
   return (
-    <group ref={root}>
+    <group ref={root} name={`player:${nickname}`}>
       <group ref={body}>
         <mesh position={[0, 0.52, 0]} castShadow={shadows}>
           <capsuleGeometry args={[0.27, 0.48, 2, 7]} />
