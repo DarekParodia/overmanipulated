@@ -59,7 +59,8 @@ function setup(
   for (const folder of folders) {
     state = withFolder(state, folder);
   }
-  return state;
+  // Folders placed by hand take their ids from the counter, so scheduled spawns don't reuse them.
+  return { ...state, nextFolderNumber: folders.length + 1 };
 }
 
 function intent(work: boolean): PlayerIntent {
