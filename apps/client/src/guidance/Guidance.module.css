@@ -13,15 +13,20 @@
   pointer-events: none;
 }
 
-/* Leave room for the thumb buttons (right, or left for left-handed players). The joystick side
-   needs none: the dock takes no pointer events. */
+/* Sit between the joystick and the thumb buttons so neither is ever covered (sides swap for
+   left-handed players). */
 .touch {
+  padding-left: max(11rem, env(safe-area-inset-left));
   padding-right: max(13.5rem, env(safe-area-inset-right));
 }
 
 .touch.leftHanded {
   padding-left: max(13.5rem, env(safe-area-inset-left));
-  padding-right: max(var(--space-4), env(safe-area-inset-right));
+  padding-right: max(11rem, env(safe-area-inset-right));
+}
+
+.touch .card {
+  width: min(26rem, 100%);
 }
 
 @keyframes pop {
@@ -352,6 +357,16 @@
 
   .cardTitle {
     font-size: var(--text-lg);
+  }
+
+  /* Short screens: the drawing would cover too much of the scene. */
+  .art {
+    display: none;
+  }
+
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: var(--space-4);
   }
 }
 
