@@ -5,26 +5,26 @@
     "priority": "important",
     "truth": "misleading",
     "correctVerdict": "publishWithContext",
-    "headline": "Rynek w Nowych Brzegach pod wodą po wczorajszej ulewie",
-    "body": "Zdjęcie zalanego rynku krąży po grupach mieszkańców. Podpis: „Tak wyglądało wczoraj o 18:00”.",
+    "headline": "Rynek w Nowych Brzegach pod wodą po wczorajszej ulewie",
+    "body": "Zdjęcie zalanego rynku krąży po grupach mieszkańców. Podpis: „Tak wyglądało wczoraj o 18:00”.",
     "source": "Post na grupie Nowe Brzegi Info",
     "stamps": [
       {
         "id": "l0-zalany-rynek-image",
         "station": "imageSearch",
-        "text": "To samo zdjęcie opublikowano w sieci w 2019 r.",
+        "text": "To samo zdjęcie opublikowano w sieci w 2019 r.",
         "relevance": "decisive"
       },
       {
         "id": "l0-zalany-rynek-archive",
         "station": "archive",
-        "text": "Archiwum: powódź na rynku w czerwcu 2019 r. Wczoraj padało, ale bez podtopień.",
+        "text": "Archiwum: powódź na rynku w czerwcu 2019 r. Wczoraj padało, ale bez podtopień.",
         "relevance": "decisive"
       },
       {
         "id": "l0-zalany-rynek-source",
         "station": "sourceRegistry",
-        "text": "Konto aktywne od 6 lat, zwykle wrzuca zdjęcia z okolicy.",
+        "text": "Konto aktywne od 6 lat, zwykle wrzuca zdjęcia z okolicy.",
         "relevance": "irrelevant"
       }
     ],
@@ -32,9 +32,9 @@
     "technique": "stare-zdjecie-nowy-podpis",
     "debrief": {
       "what": "Prawdziwe zdjęcie powodzi, ale sprzed kilku lat, podpisane jako wczorajsze.",
-      "technique": "Stare zdjęcie z nowym podpisem: obraz jest autentyczny, fałszywy jest kontekst.",
+      "technique": "Stare zdjęcie z nowym podpisem: obraz jest autentyczny, fałszywy jest kontekst.",
       "tool": "Wyszukiwanie obrazem pokazało wcześniejsze publikacje, archiwum potwierdziło datę.",
-      "realWorld": "Po burzach i powodziach w sieci regularnie wracają zdjęcia z wcześniejszych lat, podpisane jako bieżące."
+      "realWorld": "Po burzach i powodziach w sieci regularnie wracają zdjęcia z wcześniejszych lat, podpisane jako bieżące."
     },
     "reviewed": false
   },
@@ -45,7 +45,7 @@
     "truth": "true",
     "correctVerdict": "publish",
     "headline": "Od poniedziałku nocna linia autobusowa N3",
-    "body": "Przewoźnik miejski zapowiada nocny kurs co 40 minut, od dworca do osiedla Nadrzecze.",
+    "body": "Przewoźnik miejski zapowiada nocny kurs co 40 minut, od dworca do osiedla Nadrzecze.",
     "source": "Mail od czytelnika",
     "stamps": [
       {
@@ -57,23 +57,335 @@
       {
         "id": "l0-nocny-autobus-archive",
         "station": "archive",
-        "text": "Brak wcześniejszych wystąpień w archiwum.",
+        "text": "Brak wcześniejszych wystąpień w archiwum.",
         "relevance": "irrelevant"
       },
       {
         "id": "l0-nocny-autobus-image",
         "station": "imageSearch",
-        "text": "Nie znaleziono wcześniejszych kopii grafiki z rozkładem.",
+        "text": "Nie znaleziono wcześniejszych kopii grafiki z rozkładem.",
         "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l0-nocny-autobus-source"],
     "technique": "none",
     "debrief": {
-      "what": "Prawdziwa informacja, potwierdzona u źródła.",
+      "what": "Prawdziwa informacja, potwierdzona u źródła.",
       "technique": "Brak manipulacji. Nie każde zgłoszenie jest fałszywką.",
       "tool": "Kartoteka źródeł: komunikat pochodzi od przewoźnika.",
-      "realWorld": "Zmiany w rozkładach jazdy ogłaszają przewoźnicy na swoich stronach; tam warto je sprawdzać."
+      "realWorld": "Zmiany w rozkładach jazdy ogłaszają przewoźnicy na swoich stronach; tam warto je sprawdzać."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-falszywa-straz",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Straż Miejska: od jutra 500 zł mandatu za hulajnogę na bulwarach",
+    "body": "Post z konta „StrazMiejska_NoweBrzegi” zapowiada kontrole od 7:00. Pod spodem setki udostępnień i pytań, czy to prawda.",
+    "source": "Konto „StrazMiejska_NoweBrzegi”",
+    "stamps": [
+      {
+        "id": "l0-falszywa-straz-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone 2 dni temu, bez znacznika weryfikacji. Oficjalny profil to „Straż Miejska Nowe Brzegi”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-falszywa-straz-image",
+        "station": "imageSearch",
+        "text": "Herb w poście to kopia grafiki ze strony ratusza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l0-falszywa-straz-archive",
+        "station": "archive",
+        "text": "W archiwum brak tekstów o tym koncie.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-falszywa-straz-source"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywe konto podszywające się pod Straż Miejską. Prawdziwa straż niczego takiego nie ogłosiła.",
+      "technique": "Podszywanie się pod instytucję: nazwa i herb wyglądają oficjalnie, ale konto jest nowe i niezweryfikowane.",
+      "tool": "Kartoteka źródeł: data założenia konta, brak weryfikacji i inna nazwa niż oficjalny profil.",
+      "realWorld": "Fałszywe profile urzędów i służb pojawiają się zwykle przy ważnych wydarzeniach, bo komunikaty „od władz” szybko się rozchodzą."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-nowa-biblioteka",
+    "type": "article",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Biblioteka na Starym Mieście znów otwarta po remoncie",
+    "body": "Od soboty czytelnia działa do 20:00, a w piwnicy powstała sala gier planszowych dla młodzieży.",
+    "source": "Komunikat prasowy ratusza",
+    "stamps": [
+      {
+        "id": "l0-nowa-biblioteka-source",
+        "station": "sourceRegistry",
+        "text": "Komunikat wysłano z oficjalnego adresu ratusza; ten sam tekst jest na stronie miasta.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-nowa-biblioteka-archive",
+        "station": "archive",
+        "text": "Archiwum: remont ogłoszono w marcu, otwarcie zapowiadano na jesień.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-nowa-biblioteka-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie czytelni nie ma wcześniejszych kopii w sieci.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-nowa-biblioteka-source", "l0-nowa-biblioteka-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja z oficjalnego źródła.",
+      "technique": "Brak manipulacji. Zwykłe, prawdziwe wiadomości też trzeba publikować.",
+      "tool": "Kartoteka źródeł potwierdziła nadawcę, archiwum – wcześniejsze zapowiedzi remontu.",
+      "realWorld": "Komunikaty instytucji można porównać z ich oficjalną stroną; zgodny adres i ta sama treść to dobry znak."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-podatek-od-mew",
+    "type": "article",
+    "priority": "normal",
+    "truth": "satire",
+    "correctVerdict": "publishWithContext",
+    "headline": "Ratusz wprowadza podatek od mew. „Każda mewa to koszt”",
+    "body": "Według artykułu właściciele balkonów zapłacą 15 zł za każdą mewę, która na nich usiądzie. Tekst udostępniają oburzeni mieszkańcy.",
+    "source": "Portal „Brzeski Szpikulec”",
+    "stamps": [
+      {
+        "id": "l0-podatek-od-mew-source",
+        "station": "sourceRegistry",
+        "text": "„Brzeski Szpikulec” w zakładce „O nas” przedstawia się jako portal satyryczny.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-podatek-od-mew-archive",
+        "station": "archive",
+        "text": "Brak wcześniejszych wystąpień w archiwum.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-podatek-od-mew-image",
+        "station": "imageSearch",
+        "text": "Ilustracja z mewą pochodzi z darmowego banku grafik.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-podatek-od-mew-source"],
+    "technique": "satyra-brana-na-powaznie",
+    "debrief": {
+      "what": "Żart z portalu satyrycznego, który część czytelników wzięła za prawdziwą wiadomość.",
+      "technique": "Satyra brana na poważnie: udostępniony poza stroną autora tekst traci oznaczenie, że to żart.",
+      "tool": "Kartoteka źródeł: portal sam opisuje się jako satyryczny.",
+      "realWorld": "Teksty z portali satyrycznych regularnie krążą w sieci jako prawdziwe wiadomości, zwłaszcza gdy ktoś udostępnia sam nagłówek."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-woda-z-kranu",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "unverifiable",
+    "correctVerdict": "reject",
+    "headline": "„Nie pijcie wody z kranu!” – nagranie głosowe krąży po Nadrzeczu",
+    "body": "Męski głos mówi, że „znajomy z wodociągów” ostrzega przed skażeniem. Nagranie przekazano dalej kilkaset razy.",
+    "source": "Wiadomość głosowa z komunikatora",
+    "stamps": [
+      {
+        "id": "l0-woda-z-kranu-source",
+        "station": "sourceRegistry",
+        "text": "Nadawcy nie da się ustalić; nagranie przekazywano dalej bez imienia i nazwiska.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-woda-z-kranu-archive",
+        "station": "archive",
+        "text": "Archiwum: ostatnia awaria wodociągu na Nadrzeczu była 3 lata temu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-woda-z-kranu-image",
+        "station": "imageSearch",
+        "text": "Wiadomość nie zawiera obrazu do sprawdzenia.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-woda-z-kranu-source"],
+    "technique": "anonimowy-informator",
+    "debrief": {
+      "what": "Anonimowe ostrzeżenie, którego w czasie dyżuru nie da się ani potwierdzić, ani obalić.",
+      "technique": "Powołanie się na „znajomego z wewnątrz”: brzmi wiarygodnie, ale nie wiadomo, kto mówi ani skąd to wie.",
+      "tool": "Kartoteka źródeł: brak autora i pierwotnego nadawcy. Pilnej, niepotwierdzonej informacji nie publikujemy.",
+      "realWorld": "Łańcuszkowe ostrzeżenia o skażonej wodzie czy jedzeniu rozchodzą się szybko, bo ludzie chcą chronić bliskich. Komunikaty o jakości wody wydają wodociągi i sanepid."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-cytat-kandydatki",
+    "type": "quote",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Kandydatka na burmistrza: „Młodzież nie powinna mieć prawa głosu”",
+    "body": "Grafika z cytatem i zdjęciem kandydatki krąży po sieci. Autor dopisał: „Zapamiętajcie to przed wyborami!”.",
+    "source": "Grafika udostępniona na komunikatorze",
+    "stamps": [
+      {
+        "id": "l0-cytat-kandydatki-archive",
+        "station": "archive",
+        "text": "Pełne nagranie debaty: kandydatka przytacza to zdanie, żeby się z nim nie zgodzić.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-cytat-kandydatki-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie kandydatki jest prawdziwe – zrobiono je podczas debaty w ratuszu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l0-cytat-kandydatki-source",
+        "station": "sourceRegistry",
+        "text": "Grafikę pierwszy udostępnił profil bez zdjęcia i bez danych autora.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-cytat-kandydatki-archive"],
+    "technique": "cytat-wyrwany-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe słowa kandydatki, ale wycięte tak, że znaczą coś odwrotnego.",
+      "technique": "Cytat wyrwany z kontekstu: z dłuższej wypowiedzi zostaje jedno zdanie, które bez reszty zmienia sens.",
+      "tool": "Archiwum: pełne nagranie debaty pokazało, że kandydatka cytowała cudzy pogląd, żeby z nim polemizować.",
+      "realWorld": "W kampaniach wyborczych krótkie cytaty na grafikach łatwo się udostępnia, a pełnego nagrania mało kto szuka. Warto sprawdzić całą wypowiedź."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-rowery-miejskie",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Rowery miejskie: o 20% więcej wypożyczeń niż rok temu",
+    "body": "Operator systemu podaje, że w czerwcu mieszkańcy wypożyczyli rowery 48 tys. razy. Rok wcześniej – 40 tys.",
+    "source": "Raport operatora rowerów miejskich",
+    "stamps": [
+      {
+        "id": "l0-rowery-miejskie-source",
+        "station": "sourceRegistry",
+        "text": "Raport jest na stronie operatora i w biuletynie ratusza.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-rowery-miejskie-archive",
+        "station": "archive",
+        "text": "Archiwum: w czerwcu ubiegłego roku redakcja podała 40 tys. wypożyczeń.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-rowery-miejskie-image",
+        "station": "imageSearch",
+        "text": "Wykres z raportu nie ma wcześniejszych kopii w sieci.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-rowery-miejskie-source", "l0-rowery-miejskie-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa statystyka z raportu operatora; liczby zgadzają się z danymi sprzed roku.",
+      "technique": "Brak manipulacji. Procent policzono poprawnie: z 40 do 48 tys. to wzrost o 20%.",
+      "tool": "Kartoteka źródeł potwierdziła raport, archiwum – dane z poprzedniego roku.",
+      "realWorld": "Statystyki warto sprawdzać u źródła i porównywać z wcześniejszymi danymi. Tutaj wszystko się zgadza."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-most-zamkniety",
+    "type": "photo",
+    "priority": "urgent",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Most Portowy zamknięty do odwołania, objazd przez Nadrzecze",
+    "body": "Zdjęcie znaku „Zakaz ruchu” i ekipy drogowej przy moście przysłał stały fotoreporter. Kierowcy pytają o objazd.",
+    "source": "Fotoreporter współpracujący z redakcją",
+    "stamps": [
+      {
+        "id": "l0-most-zamkniety-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 7:40, okolice Mostu Portowego.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-most-zamkniety-source",
+        "station": "sourceRegistry",
+        "text": "Autor od 5 lat współpracuje z redakcją. Zarząd dróg potwierdza zamknięcie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-most-zamkniety-archive",
+        "station": "archive",
+        "text": "Archiwum: ostatni remont mostu był w 2021 r.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-most-zamkniety-image", "l0-most-zamkniety-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie od zaufanego autora, potwierdzone przez zarząd dróg.",
+      "technique": "Brak manipulacji. Pilna prawdziwa informacja pomaga mieszkańcom, więc trzeba ją szybko podać dalej.",
+      "tool": "Wyszukiwanie obrazem nie znalazło starszych kopii, kartoteka źródeł potwierdziła autora.",
+      "realWorld": "Przy utrudnieniach w ruchu liczy się czas, ale nawet pilne zdjęcie warto sprawdzić: czy jest nowe i kto je zrobił."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-koncert-na-bulwarach",
+    "type": "post",
+    "priority": "normal",
+    "truth": "unverifiable",
+    "correctVerdict": "reject",
+    "headline": "Podobno sobotni koncert na bulwarach przeniesiony na niedzielę",
+    "body": "Ktoś napisał na grupie osiedlowej, że „słyszał od kolegi”. Organizator jeszcze nie odpowiedział na pytania.",
+    "source": "Komentarz na grupie Osiedle Nadrzecze",
+    "stamps": [
+      {
+        "id": "l0-koncert-na-bulwarach-source",
+        "station": "sourceRegistry",
+        "text": "Autor komentarza nie podaje źródła. Organizator nie wydał żadnego komunikatu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-koncert-na-bulwarach-archive",
+        "station": "archive",
+        "text": "Archiwum: koncert na bulwarach odbywa się co roku w pierwszy weekend lipca.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-koncert-na-bulwarach-image",
+        "station": "imageSearch",
+        "text": "Post nie zawiera zdjęć ani grafik.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-koncert-na-bulwarach-source"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Plotka, której teraz nie da się sprawdzić. Może się potwierdzić, ale nie na podstawie komentarza.",
+      "technique": "Informacja „z drugiej ręki”: nikt nie podaje źródła, a powtarzanie dodaje jej pozornej wiarygodności.",
+      "tool": "Kartoteka źródeł: brak źródła i brak komunikatu organizatora. Zwykłą niepotwierdzalną sprawę można przeczekać.",
+      "realWorld": "Plotki o odwołanych wydarzeniach często krążą w lokalnych grupach. Pewna jest dopiero informacja od organizatora."
     },
     "reviewed": false
   }

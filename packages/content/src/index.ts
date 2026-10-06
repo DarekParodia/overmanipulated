@@ -1,17 +1,17 @@
 // Game content: levels and stories, validated against the schemas when this module loads, so a
-// broken file fails fast on both server and client. Add new files to the lists below.
+// broken file fails fast on both server and client. New files are registered in files.ts.
 import type { StoryBook } from '@redakcja/shared';
-import l0Level from '../levels/l0-greybox.json';
-import l0Stories from '../stories/l0-greybox.json';
+import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { type Level, levelSchema, type Story, storyFileSchema } from './schema.ts';
 
 export * from './schema.ts';
 
-const LEVEL_FILES: readonly unknown[] = [l0Level];
-const STORY_FILES: readonly unknown[] = [l0Stories];
-
-export const LEVELS: readonly Level[] = LEVEL_FILES.map((file) => levelSchema.parse(file));
-export const STORIES: readonly Story[] = STORY_FILES.flatMap((file) => storyFileSchema.parse(file));
+export const LEVELS: readonly Level[] = Object.values(LEVEL_FILES).map((file) =>
+  levelSchema.parse(file),
+);
+export const STORIES: readonly Story[] = Object.values(STORY_FILES).flatMap((file) =>
+  storyFileSchema.parse(file),
+);
 
 /** The level a new room starts with. */
 export const DEFAULT_LEVEL_ID = 'l0-greybox';
