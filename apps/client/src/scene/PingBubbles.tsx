@@ -5,7 +5,6 @@ import { Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { Group } from 'three';
-import { emitCue } from '../fx/feedback.ts';
 import { onGameEvent } from '../net/game-events.ts';
 import {
   clearPingBubbles,
@@ -16,7 +15,7 @@ import {
 import styles from '../pings/PingBubble.module.css';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
-import { playerColor, playerColorVar } from '../ui/tokens.ts';
+import { playerColorVar } from '../ui/tokens.ts';
 import { renderState } from './render-state.ts';
 
 /** Height of the bubble's anchor above the floor (above the name strip). */
@@ -31,16 +30,8 @@ export function PingBubbles() {
       if (event.kind !== 'ping') {
         return;
       }
+      // The sound and particles come from the event cue (net/game-events.ts).
       showPingBubble(event.playerId, event.ping);
-      const rendered = renderState.players.get(event.playerId);
-      const colorIndex = useApp
-        .getState()
-        .room?.players.find((p) => p.id === event.playerId)?.colorIndex;
-      emitCue(`ping.${event.ping}`, {
-        playerId: event.playerId,
-        ...(rendered ? { position: { x: rendered.x, y: rendered.y } } : {}),
-        ...(colorIndex !== undefined ? { color: playerColor(colorIndex) } : {}),
-      });
     });
     return () => {
       unsubscribe();
