@@ -192,3 +192,8 @@ export const IMAGE_SEARCH_MAX_MISTAKES = 2;
 export const IMAGE_SEARCH_FRAGMENTS = { min: 2, max: 3 } as const;
 /** Search-result printouts on the light table (inclusive range). */
 export const IMAGE_SEARCH_RESULTS = { min: 4, max: 6 } as const;
+
+// --- HUD (S2-09) ---------------------------------------------------------------------------
+
+/** Credibility at or below this reads as "low" (HUD gauge warning, heartbeat layer later). */
+export const CREDIBILITY_LOW = 30;

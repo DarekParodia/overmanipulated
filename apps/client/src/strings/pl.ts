@@ -187,7 +187,35 @@ export const pl = {
     allReady: 'Wszyscy gotowi. Można zaczynać.',
   },
   /** In-game HUD and level-end plate (S2-09). */
-  hud: {},
+  hud: {
+    queueLabel: 'Teczki na szpikulcu',
+    queueEmpty: 'Taśma pusta. Na razie.',
+    queueMore: 'w kolejce',
+    timer: 'Do zamknięcia numeru',
+    score: 'Punkty',
+    credibility: 'Wiarygodność',
+    credibilityLow: 'spada',
+    stamps: (n: number) => `${n} piecz.`,
+    timeLeftLabel: (clock: string) => `zostało ${clock}`,
+    location: {
+      carriedBy: (nickname: string) => `niesie ${nickname}`,
+      carried: 'w rękach',
+      conveyor: 'na taśmie',
+      desk: 'na biurku',
+      table: 'na stole',
+      floor: 'na podłodze',
+    },
+    untitled: 'Teczka bez opisu',
+    toast: {
+      correct: 'Trafny werdykt',
+      wrongJustification: 'Trafny werdykt, słabe uzasadnienie',
+      fakePublished: 'Opublikowana fałszywka',
+      truthRejected: 'Odrzucona prawdziwa wiadomość',
+      wrong: 'Chybiony werdykt',
+      expired: 'Przeterminowane',
+      credibility: (delta: string) => `wiarygodność ${delta}`,
+    },
+  },
   /** Station overlay and work progress (S2-03). */
   station: {
     formNo: (n: number) => `Karta stanowiska nr ${n}`,
@@ -452,7 +480,28 @@ export const pl = {
     hintTouch: 'Sygnał zamyka',
   },
   /** Level results (S2-08/S2-09). */
-  results: {},
+  results: {
+    kicker: 'Wydanie zamknięte',
+    wonHeadline: 'Numer poszedł do druku',
+    lostHeadline: 'Nakład wstrzymany',
+    wonLede: 'Czytelnicy dostaną sprawdzone wiadomości. Naczelny kiwa głową.',
+    lostLede: 'Za dużo wpadek i spóźnień. Jutro gazeta wyjdzie z przeprosinami.',
+    stars: (n: number) => `Ocena naczelnego: ${n} z 3`,
+    score: 'Punkty',
+    credibility: 'Wiarygodność',
+    scoreDelta: (delta: string) => `${delta} pkt`,
+    credibilityDelta: (delta: string) => `${delta} wiar.`,
+    folders: 'Co trafiło na biurko',
+    noFolders: 'Żadna teczka nie doczekała werdyktu.',
+    outcomes: {
+      correct: 'Trafnie',
+      wrongJustification: 'Trafnie, złe uzasadnienie',
+      wrong: 'Błąd',
+      expired: 'Przeterminowana',
+    } satisfies Record<FolderOutcome, string>,
+    backToLobby: 'Wróć do redakcji',
+    waitingForHost: 'Czekamy na gospodarza',
+  },
 } as const;
 
 export type Strings = typeof pl;
