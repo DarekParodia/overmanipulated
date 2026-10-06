@@ -29,10 +29,11 @@ polish stage at the end.
 | --- | --- |
 | `feedback.ts` | Event bus: `emitCue(cueId, context)` where context has position, player, intensity. Called from net event handlers and local input handlers. |
 | `cues.ts` | **The feedback catalogue**: data that maps each cue id to its layers (sound ids, particle preset, animation trigger, shake trauma, haptic pattern, UI effect). |
-| `audio/` | Howler manager: buses `music`, `sfx`, `ui`, `ambience`; audio sprites; pan by screen position; ducking (music dips under big stingers); mobile unlock. |
+| `audio/` | Howler manager: buses `music`, `sfx`, `ui`, `ambience`; audio sprites; pan by screen position; ducking (music dips under big stingers); mobile unlock; keyed loops (`loops.ts`, e.g. the typewriter loop per station). |
 | `particles/` | Pooled instanced particle system; emitter presets as data (count, lifetime, velocity, gravity, colour over life, size over life, texture atlas frame). One draw call per material. Global cap from the quality preset. |
 | `animation/` | Easing functions, tweens, springs (allocation-free), procedural character layer (bob, lean, squash & stretch), helpers for `AnimationMixer` clip cross-fades. |
 | `camera/` | Trauma-based camera shake (trauma² → offset/rotation, decays per second), small zoom punches. |
+| `time-scale.ts` | Hit-stop: a global FX clock scale (`fxTimeScale()`) scene code multiplies its FX delta by; off with reduced motion. |
 | `haptics.ts` | Vibration API / gamepad rumble patterns. |
 | `ui-motion/` | Shared CSS/Web Animations API presets for DOM UI: pop, slam, slide, count-up, shake. |
 
@@ -54,26 +55,47 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | --- | --- | --- | --- | --- | --- | --- |
 | `player.join` | player enters room/level | spawn pop (scale overshoot) | chime | ink puff in player colour | — | ● |
 | `player.step` | walking | bob, lean | soft steps (rate by speed) | dust puffs on direction change | — | ● |
-| `folder.arrive` | new folder on conveyor | slide-in + bounce | desk bell | paper flutter | — | ●● |
-| `folder.pickup` / `folder.drop` | E | hop / place squash | paper rustle / thud | — | light tick (mobile) | ● |
-| `station.workStart` / loop | hold Space | working pose | typing / station loop | progress ring | — | ● |
+| `folder.arrive` | `folderSpawned` on a conveyor | `slideIn` (slide-in + bounce) | counter bell (`arrive`) | paper flutter | — | ●● |
+| `folder.pickup` / `folder.drop` | `folderPickedUp` / `folderPutDown` | `hop` / `place` squash | paper rustle / paper slap | paper flutter / dust | light tick (own player only) | ● |
+| `station.workStart` / `station.workCancel` | `workStarted` / `workCancelled` | `workStart` / `workStop` pose | key clack, then typewriter loop (`keys`, per station) until cancel / minigame / stamp; stops if the station snapshot stops working | ink puff in player colour / dust; progress ring (station unit) | — | ● |
 | `station.denied` | station busy or wrong item | head shake | "nope" blip | red outline pulse | — | ● |
-| `stamp.applied` | station finished | stamp slam + 60 ms hit-stop | heavy thud | ink splat + paper bits | small shake, short buzz | ●● |
+| `minigame.start` / `minigame.fail` | `minigameStarted` / `minigameFailed` | `workStop` / `wobble` | paper whoosh / fail blips | paper flutter / smoke wisp | — / light tick | ● |
+| `stamp.applied` | `stampApplied` | `stampSlam` + 60 ms hit-stop (`fx/time-scale.ts`) | heavy thud | paper bits + ink splat | small shake, thud | ●● |
+| `desk.open` / `desk.close` | `deskOpened` / `deskClosed` | `deskOpen` / `deskClose` | drawer knock / soft back | dust | — | ● |
+| `verdict.correct` | correct verdict | `cheer`, `scorePop` (value = score delta) | rising chime | confetti in verdict colour (blue / red / ochre) | light tick | ●● |
+| `verdict.contextCorrect` | correct "publish with context" | `cheer`, `scorePop` | fanfare | bigger ochre burst + paper bits | small shake, thud | ●●● |
+| `verdict.wrongJustification` | right verdict, wrong stamp | `shrug`, `scorePop` | unsure two-note dip | ink puff in verdict colour | light tick | ●● |
+| `verdict.fakePublished` | false / unverifiable published, or misleading / satire published without context | `facepalm`, `credibilityCrack`, `scorePop` | alarm sting | red ink splash + paper bits | strong shake, long buzz | ●●● |
+| `verdict.truthRejected` | publishable story rejected | `shrug`, `credibilityCrack`, `scorePop` | low sting | grey ash | medium shake, thud | ●● |
+| `verdict.wrong` | needless context on a true story | `shrug`, `scorePop` | low sting (quieter) | grey ash | small shake | ●● |
+| `folder.deadlineWarning` / `folder.deadlineTick` | `deadlineWarning`; ticker while any warned folder is in play (`fx/deadline-ticker.ts`, 800 → 220 ms) | `tremble` | warning ticks, then clock ticks speeding up; stops on resolve or extension | paper flutter; timer turns red (HUD; no blinking in no-flash) | light tick | ● → ●● |
+| `folder.deadlineExtended` | `deadlineExtended` | `hop` | soft bell | paper flutter | — | ● |
+| `folder.expired` | `folderExpired` | `crumple` | buzzer | grey ash | small shake, thud | ●● |
 | `minigame.success` / `fail` | minigame result | card flip / wobble | success ding / fail buzz | sparkle / smoke wisp | — | ● |
-| `verdict.correct` | correct verdict | cheer | chime + score tick | confetti in verdict colour, score pop text | — | ●● |
-| `verdict.contextCorrect` | correct "publish with context" | bigger cheer | fanfare | bigger burst, golden text | small zoom punch | ●●● |
-| `verdict.fakePublished` | fake published | facepalm | alarm sting | red ink splash, credibility bar crack | strong shake, long buzz | ●●● |
-| `verdict.truthRejected` | true story rejected | shrug | low sting | grey crumple | medium shake | ●● |
-| `folder.deadlineWarning` | < 25 % time left | folder trembles | ticking (speeds up) | timer turns red (no blinking in no-flash) | — | ● → ●● |
-| `folder.expired` | deadline passed | crumple/burn | buzzer | ash/dust | small shake | ●● |
+| `station.open` / `desk.open` | minigame sheet / desk folder opens | sheet slides in | paper slide | — | light tick (mobile) | ● |
+| `desk.justify` | justifying stamp picked on the desk | slip pulled out, tab appears | click | — | light tick (mobile) | ● |
 | `credibility.low` | credibility < 30 | — | heartbeat layer | vignette | — | ●● |
-| `level.lastSeconds` | last 30 s | — | music → pressure layer, clock tick | timer pulses | — | ●● |
-| `level.win` / `level.lose` | level end | team cheer / slump | win / lose stinger | confetti / falling papers | — | ●●● |
-| `ping.*` | Q signal | bubble pop above player | short ping per type | icon bubble | — | ● |
+| `level.lastSeconds` | timer crosses 30 s left | `timerPulse` (steady under no-flash) | clock strike over a low pulse; music → pressure layer (music unit) | timer pulses (HUD) | light tick | ●● |
+| `level.win` / `level.lose` | `levelEnd` message | `cheer` / `slump` | win / lose stinger; all loops stop | confetti / falling papers at the local player | thud / buzz | ●●● |
+| `ping.needArchive` / `ping.fake` / `ping.mine` | `ping` | `pingPop` (the ping layer draws the bubble) | short bell, pitch per type | ink puff in player colour; icon bubble (ping unit) | — | ● |
 | `event.*` | random events (stage 4) | per event | announce stinger | per event (shares, sparks, glitch, smoke) | per event | ●●–●●● |
 | `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
+| `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
+| `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |
+| `sourceRegistry.file` | card filed correctly | „Sprawdzone” stamp slams on the card | stamp thud | — | thud | ● |
+| `archive.tick` / `stop` / `miss` / `found` | archive minigame: card passes the frame, drawer braked, wrong card pulled, first mention found | card wobble / card lifts with stamp | riffle tick / click / nope / stamp thud | „Nie ta” stamp on the card | tick / buzz / thud (mobile) | ● → ●● |
+| `imageSearch.fragment` | next fragment in the loupe | loupe label changes | soft tick | — | — | ● |
+| `imageSearch.match` / `imageSearch.miss` | image search pick | stamp on the printout / red pencil strike | stamp / back | — | tick / thud | ● |
 
 Add a row here when you add a cue, in the same commit.
+
+Event → cue mapping lives in `fx/event-cues.ts` (pure, unit-tested for every gameplay event
+kind); `net/game-events.ts` adds where it happens (fixture tile centre, folder location or
+player position) and who it is about. State-driven feedback (work loop reconciliation, deadline
+ticker, last-30-s sting, level-end stingers) lives in `fx/gameplay-feedback.ts`. Animation
+listeners (`feedback.onAnimation`) receive `{ reducedMotion, noFlash }` and must honour them;
+cues about another player (`remote`) never vibrate. In a `?debug` build, `window.__fx`
+exposes `handleGameEvent`, `emitCue` and `useGame` for testing feedback by hand.
 
 ## Music
 

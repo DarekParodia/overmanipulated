@@ -1,0 +1,178 @@
+/* Ping picker: a short stack of torn notepad slips pinned in the player's corner. */
+.picker {
+  position: absolute;
+  right: max(var(--space-4), env(safe-area-inset-right));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  z-index: 12;
+  display: grid;
+  gap: var(--space-2);
+  width: 15rem;
+  max-width: calc(100dvw - 2 * var(--space-4));
+  pointer-events: auto;
+  touch-action: manipulation;
+  animation: settle var(--motion-base) var(--ease-settle) both;
+}
+
+/* On touch screens the thumb buttons own the corner: sit just inside them. */
+.touch {
+  right: calc(max(var(--space-4), env(safe-area-inset-right)) + 9.25rem);
+}
+
+.mirrored.touch {
+  right: auto;
+  left: calc(max(var(--space-4), env(safe-area-inset-left)) + 9.25rem);
+}
+
+.mirrored:not(.touch) {
+  right: auto;
+  left: max(var(--space-4), env(safe-area-inset-left));
+}
+
+.title,
+.hint {
+  justify-self: start;
+  margin: 0;
+  padding: 1px var(--space-2);
+  background: var(--paper);
+  border-left: 4px solid var(--ink);
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  box-shadow: 1px 1px 0 var(--ink-a20);
+}
+
+.hint {
+  justify-self: end;
+  border-left: none;
+  border-right: 4px solid var(--ink-faint);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+
+.slips {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The shadow sits on the list item so the slip's torn clip-path does not cut it off. */
+.slips li {
+  filter: drop-shadow(2px 3px 0 var(--ink-a20));
+}
+
+/* One slip torn off a notepad: ragged top edge, hard paper shadow, slightly crooked. */
+.slip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  border: none;
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  clip-path: polygon(
+    0 3px,
+    6% 0,
+    13% 3px,
+    21% 1px,
+    30% 4px,
+    38% 0,
+    47% 3px,
+    55% 1px,
+    64% 4px,
+    72% 0,
+    81% 3px,
+    89% 1px,
+    100% 3px,
+    100% 100%,
+    0 100%
+  );
+  transform: rotate(-1.2deg);
+  transition: transform var(--motion-fast) var(--ease-out);
+  -webkit-tap-highlight-color: transparent;
+}
+
+li:nth-child(2) .slip {
+  transform: rotate(0.9deg) translateX(0.4rem);
+}
+
+li:nth-child(3) .slip {
+  transform: rotate(-0.4deg) translateX(-0.2rem);
+}
+
+.slip:active {
+  background: var(--paper-shade);
+}
+
+/* Keyboard / pad highlight: blue pencil underline and the slip pulled out a little. */
+.selected {
+  background: var(--paper-shade);
+  box-shadow: inset 0 -3px 0 var(--copy-blue);
+}
+
+li .selected.slip {
+  transform: translateX(-0.6rem) rotate(0deg);
+}
+
+.slip:focus-visible {
+  outline: 3px solid var(--copy-blue);
+  outline-offset: 2px;
+}
+
+/* Key cap: a typed number in a square box, like a form field. */
+.key {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: var(--rule-thin);
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+
+.text {
+  font-family: var(--font-grotesk);
+  font-weight: 800;
+  font-stretch: 75%;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.fake .text {
+  color: var(--editorial-red);
+}
+
+.fake .key {
+  border-color: var(--editorial-red);
+  color: var(--editorial-red);
+}
+
+@keyframes settle {
+  from {
+    transform: translateY(0.75rem) rotate(1.5deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .picker {
+  animation: none;
+}
+
+:root[data-reduced-motion="true"] .slip {
+  transition: none;
+}

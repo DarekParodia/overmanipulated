@@ -1,0 +1,26 @@
+{
+  "id": "l0-unsorted",
+  "title": "Pomieszany grafik",
+  "briefing": "Fixture: zgłoszenia nie są ułożone według czasu.",
+  "durationS": 240,
+  "layout": [
+    "####################",
+    "#CCCC...I...A...R..#",
+    "#..................#",
+    "#..................#",
+    "#..1....=TT=....2..#",
+    "#.......====.......#",
+    "#..................#",
+    "#..3....=DD=....4..#",
+    "#.......====.......#",
+    "#.T..............T.#",
+    "#..................#",
+    "####################"
+  ],
+  "stations": ["imageSearch", "archive", "sourceRegistry"],
+  "schedule": [
+    { "atS": 60, "storyId": "l0-nierozwiazywalna", "deadlineS": 90 },
+    { "atS": 10, "storyId": "l0-nierozwiazywalna", "deadlineS": 75 }
+  ],
+  "stars": { "two": 5, "three": 10 }
+}

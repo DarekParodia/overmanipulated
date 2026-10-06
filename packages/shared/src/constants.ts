@@ -122,3 +122,78 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- Folders (S2-02) -----------------------------------------------------------------------
+
+/** A folder dropped on the floor lands this far in front of the player's centre, in tiles. */
+export const FLOOR_DROP_DISTANCE_TILES = 0.6;
+
+// --- S2-07 Editorial desk and verdicts -----------------------------------------------------
+
+/**
+ * Wrong verdicts the design-doc scoring table does not name ("Opublikowana fałszywka" and
+ * "Odrzucony prawdziwy materiał" are in SCORE / CREDIBILITY); see the Decision log.
+ */
+export const WRONG_VERDICT_PENALTY = {
+  /** Plain publish of a misleading or satirical story: it reaches readers without context. */
+  publishedWithoutContext: { score: -10, credibility: -10 },
+  /** Rejecting a misleading or satirical story: the true core is lost, but nobody was misled. */
+  rejectedContextStory: { score: -5, credibility: 0 },
+  /** Publishing a true story with a needless context note: overcautious, harmless. */
+  contextOnTrue: { score: -5, credibility: 0 },
+} as const;
+
+// --- S2-01 — Content validation ------------------------------------------------------------
+// Targets `bun run validate:content` warns about (agents/content-authoring.md).
+
+/** Share of true stories a level should schedule ("roughly 30–40% true"). */
+export const CONTENT_TRUE_STORY_SHARE = { min: 0.25, max: 0.45 } as const;
+/** Two-star threshold as a share of the level's maximum score (≈ 50%). */
+export const CONTENT_TWO_STARS_SHARE = { min: 0.35, max: 0.65 } as const;
+/** Three-star threshold as a share of the level's maximum score (≈ 80%). */
+export const CONTENT_THREE_STARS_SHARE = { min: 0.65, max: 0.95 } as const;
+
+// --- S2-11 Pings (client picker) -----------------------------------------------------------
+
+/** Pressing the ping button again this soon after opening the picker re-sends the last ping. */
+export const PING_QUICK_REPEAT_MS = 350;
+
+// --- Minigame: source registry (S2-06) -----------------------------------------------------
+
+/** Wrong marks or premature filings that end the source-registry minigame as a failure. */
+export const SOURCE_REGISTRY_MAX_MISTAKES = 2;
+/** Fields on one source card (account or website). */
+export const SOURCE_REGISTRY_FIELDS = 7;
+/** Red flags on a suspicious card: between min and max inclusive. */
+export const SOURCE_REGISTRY_MIN_FLAGS = 1;
+export const SOURCE_REGISTRY_MAX_FLAGS = 3;
+/** Chance that a card for a folder without a source-registry stamp is clean. */
+export const SOURCE_REGISTRY_CLEAN_CHANCE = 0.3;
+
+// --- Core gameplay feedback (S2-12) --------------------------------------------------------
+
+/** The level timer's "last seconds" phase (design doc: last 30 s): sting, HUD pulse, music. */
+export const LEVEL_LAST_SECONDS_MS = 30_000;
+
+// --- S2-05 Archive minigame ----------------------------------------------------------------
+
+/** Index cards in one archive drawer (the timeline the player scrolls through). */
+export const ARCHIVE_CARD_COUNT = 14;
+/** How many cards carry the searched topic; only the earliest one is the right answer. */
+export const ARCHIVE_TOPIC_MENTIONS = 3;
+/** Wrong cards pulled before the minigame counts as failed. */
+export const ARCHIVE_MAX_MISTAKES = 2;
+
+// --- S2-04 Image search minigame -----------------------------------------------------------
+
+/** Wrong picks allowed before the image search attempt fails (the second one fails it). */
+export const IMAGE_SEARCH_MAX_MISTAKES = 2;
+/** Marked fragments on the submitted photo (inclusive range). */
+export const IMAGE_SEARCH_FRAGMENTS = { min: 2, max: 3 } as const;
+/** Search-result printouts on the light table (inclusive range). */
+export const IMAGE_SEARCH_RESULTS = { min: 4, max: 6 } as const;
+
+// --- HUD (S2-09) ---------------------------------------------------------------------------
+
+/** Credibility at or below this reads as "low" (HUD gauge warning, heartbeat layer later). */
+export const CREDIBILITY_LOW = 30;

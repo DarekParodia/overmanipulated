@@ -2,7 +2,15 @@
 // the catalogue and the player's settings and forwards them to whichever outputs are mounted
 // (audio, particles, camera, haptics, animation listeners). FX never affect the simulation.
 import { type QualityPreset, type Settings, useSettings } from '../store/settings.ts';
-import { type AnimationTrigger, type AudioBus, type Cue, type CueId, cues } from './cues.ts';
+import {
+  type AnimationTrigger,
+  type AudioBus,
+  type Cue,
+  type CueId,
+  cues,
+  type LoopId,
+  type ParticleLayer,
+} from './cues.ts';
 import type { HapticPattern } from './haptics.ts';
 import { type ParticlePresetId, particleDensity, particlePresets } from './particles/presets.ts';
 
@@ -13,6 +21,15 @@ export type CueContext = {
   color?: string;
   /** Which player the cue is about (for animation listeners). */
   playerId?: string;
+  /** True when the cue is about another player: haptics are skipped (not your hands). */
+  remote?: boolean;
+  /** Folder / fixture the cue is about (for animation listeners). */
+  folderId?: string;
+  fixtureId?: string;
+  /** A number to show, e.g. the score delta for `scorePop`. */
+  value?: number;
+  /** Key of the looping sound a cue starts or stops (e.g. the station id). */
+  loopKey?: string;
 };
 
 export type FeedbackOutputs = {
@@ -28,38 +45,71 @@ export type FeedbackOutputs = {
   vibrate?(pattern: HapticPattern): void;
   /** Maps a world position to horizontal screen position in [-1, 1] for stereo panning. */
   screenX?(position: { x: number; y: number }): number;
+  /** Briefly freezes the FX clock (fx/time-scale.ts). */
+  hitStop?(ms: number): void;
+  startLoop?(key: string, loop: LoopId): void;
+  /** Stops the loop under `key`, or every loop when omitted. */
+  stopLoop?(key?: string): void;
 };
 
-export type AnimationListener = (trigger: AnimationTrigger, context: CueContext) => void;
+/** Accessibility flags animation listeners must honour (no squash/shake, no blinking). */
+export type AnimationOptions = { reducedMotion: boolean; noFlash: boolean };
+
+export type AnimationListener = (
+  trigger: AnimationTrigger,
+  context: CueContext,
+  options: AnimationOptions,
+) => void;
 
 /** Fewer particles with reduced motion, never zero (the information stays visible). */
 const REDUCED_MOTION_PARTICLES = 0.4;
 const PAN_WIDTH = 0.6;
 
+type ResolvedParticles = { preset: ParticlePresetId; count: number };
+
 export type ResolvedCue = {
   sound: Cue['sound'] | null;
-  particles: { preset: ParticlePresetId; count: number } | null;
+  particles: ResolvedParticles | null;
+  extraParticles: ResolvedParticles | null;
   shake: number;
+  hitStopMs: number;
   haptic: HapticPattern | null;
-  animation: AnimationTrigger | null;
+  animations: readonly AnimationTrigger[];
+  loop: Cue['loop'] | null;
 };
+
+const NO_ANIMATIONS: readonly AnimationTrigger[] = [];
+
+function resolveParticles(
+  layer: ParticleLayer | undefined,
+  settings: Settings,
+  quality: QualityPreset,
+): ResolvedParticles | null {
+  if (!layer) {
+    return null;
+  }
+  const base = layer.count ?? particlePresets[layer.preset].count;
+  const scale = particleDensity[quality] * (settings.reducedMotion ? REDUCED_MOTION_PARTICLES : 1);
+  return { preset: layer.preset, count: Math.max(1, Math.round(base * scale)) };
+}
 
 /** Pure: which layers of a cue run under the given settings. */
 export function resolveCue(cue: Cue, settings: Settings, quality: QualityPreset): ResolvedCue {
-  let particles: ResolvedCue['particles'] = null;
-  if (cue.particles) {
-    const base = cue.particles.count ?? particlePresets[cue.particles.preset].count;
-    const scale =
-      particleDensity[quality] * (settings.reducedMotion ? REDUCED_MOTION_PARTICLES : 1);
-    const count = Math.max(1, Math.round(base * scale));
-    particles = { preset: cue.particles.preset, count };
-  }
+  const animation = cue.animation;
   return {
     sound: settings.muted ? null : (cue.sound ?? null),
-    particles,
+    particles: resolveParticles(cue.particles, settings, quality),
+    extraParticles: resolveParticles(cue.extraParticles, settings, quality),
     shake: settings.reducedMotion ? 0 : (cue.shake ?? 0),
+    hitStopMs: settings.reducedMotion ? 0 : (cue.hitStopMs ?? 0),
     haptic: settings.haptics ? (cue.haptic ?? null) : null,
-    animation: cue.animation ?? null,
+    animations:
+      animation === undefined
+        ? NO_ANIMATIONS
+        : typeof animation === 'string'
+          ? [animation]
+          : animation,
+    loop: cue.loop ?? null,
   };
 }
 
@@ -69,7 +119,8 @@ export function createFeedback(getSettings: () => Settings, getQuality: () => Qu
 
   return {
     emit(id: CueId, context: CueContext = {}): void {
-      const resolved = resolveCue(cues[id], getSettings(), getQuality());
+      const settings = getSettings();
+      const resolved = resolveCue(cues[id], settings, getQuality());
       if (resolved.sound && outputs.playSound) {
         const pan =
           context.position && outputs.screenX
@@ -83,18 +134,38 @@ export function createFeedback(getSettings: () => Settings, getQuality: () => Qu
           pan,
         );
       }
-      if (resolved.particles && context.position) {
-        outputs.spawnParticles?.(resolved.particles.preset, resolved.particles.count, context);
+      if (resolved.loop === 'stopAll') {
+        outputs.stopLoop?.();
+      } else if (resolved.loop === 'stop') {
+        if (context.loopKey) {
+          outputs.stopLoop?.(context.loopKey);
+        }
+      } else if (resolved.loop && context.loopKey) {
+        outputs.startLoop?.(context.loopKey, resolved.loop);
+      }
+      if (context.position) {
+        for (const particles of [resolved.particles, resolved.extraParticles]) {
+          if (particles) {
+            outputs.spawnParticles?.(particles.preset, particles.count, context);
+          }
+        }
+      }
+      // Hit-stop freezes everyone's FX, so only your own impacts trigger it.
+      if (resolved.hitStopMs > 0 && !context.remote) {
+        outputs.hitStop?.(resolved.hitStopMs);
       }
       if (resolved.shake > 0) {
         outputs.addTrauma?.(resolved.shake);
       }
-      if (resolved.haptic) {
+      if (resolved.haptic && !context.remote) {
         outputs.vibrate?.(resolved.haptic);
       }
-      if (resolved.animation) {
-        for (const listener of listeners) {
-          listener(resolved.animation, context);
+      if (resolved.animations.length > 0) {
+        const options = { reducedMotion: settings.reducedMotion, noFlash: settings.noFlash };
+        for (const trigger of resolved.animations) {
+          for (const listener of listeners) {
+            listener(trigger, context, options);
+          }
         }
       }
     },

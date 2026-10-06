@@ -2,6 +2,11 @@
   min-height: 100%;
   display: grid;
   grid-template-columns: minmax(14rem, 1fr) minmax(18rem, 1.6fr);
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "code roster"
+    "level roster"
+    "passes passes";
   align-items: start;
   gap: var(--space-6);
   padding: max(var(--space-6), env(safe-area-inset-top))
@@ -21,6 +26,7 @@
 }
 
 .codeCard {
+  grid-area: code;
   display: grid;
   justify-items: start;
   gap: var(--space-2);
@@ -29,7 +35,22 @@
   justify-self: end;
 }
 
+.level {
+  grid-area: level;
+  justify-self: end;
+  width: 100%;
+  max-width: 22rem;
+}
+
+.passes {
+  grid-area: passes;
+  justify-self: center;
+  width: 100%;
+  max-width: 64rem;
+}
+
 .roster {
+  grid-area: roster;
   display: grid;
   gap: var(--space-3);
   transform: rotate(0.6deg);
@@ -125,10 +146,70 @@
   white-space: nowrap;
 }
 
+.who {
+  display: grid;
+  min-width: 0;
+}
+
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-grotesk);
+  font-weight: 650;
+  font-stretch: 75%;
+  font-size: var(--text-sm);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.noRole {
+  color: var(--ink-faint);
+}
+
 .tags {
   margin-left: auto;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--space-2);
+}
+
+/* Sign-off column of the roster: a blue "ready" stamp or a typed "waiting" mark. */
+.signoff {
+  flex: none;
+  width: 5.25rem;
+  display: grid;
+  place-items: center;
+}
+
+.pending {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-sm);
+  color: var(--ink-faint);
+  border-bottom: 1.5px dotted var(--ink-a40);
+}
+
+.startBlock {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.reason {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  max-width: 22rem;
+}
+
+.error {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  color: var(--editorial-red);
+  border-left: 4px solid var(--editorial-red);
+  padding-left: var(--space-2);
 }
 
 .disconnected {
@@ -164,9 +245,16 @@
 @media (max-width: 760px) {
   .board {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-template-areas:
+      "code"
+      "roster"
+      "level"
+      "passes";
     gap: var(--space-5);
   }
-  .codeCard {
+  .codeCard,
+  .level {
     justify-self: stretch;
     max-width: none;
   }
@@ -175,6 +263,11 @@
 @media (max-height: 480px) and (orientation: landscape) {
   .board {
     grid-template-columns: 1fr 1.6fr;
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      "code roster"
+      "level roster"
+      "passes passes";
     gap: var(--space-4);
     padding-top: var(--space-4);
     padding-bottom: var(--space-3);
@@ -203,6 +296,12 @@
   }
   .empty {
     min-height: 1.75rem;
+  }
+  .role {
+    font-size: var(--text-xs);
+  }
+  .signoff {
+    width: 4.5rem;
   }
   .actions {
     margin-top: var(--space-1);

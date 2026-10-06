@@ -16,6 +16,8 @@ export type EmitterPreset = {
   height: number;
   /** Colours to pick from; `null` = use the colour passed with the cue. */
   colors: readonly string[] | null;
+  /** With `colors: null`: extra fixed colours mixed in with the cue colour. */
+  accent?: readonly string[];
 };
 
 export const particlePresets = {
@@ -51,6 +53,80 @@ export const particlePresets = {
     drag: 1.4,
     height: 0.6,
     colors: [palette.paper, palette.paperShade, palette.manila],
+  },
+  // --- S2-12 core gameplay feedback ---------------------------------------------------------
+  /** A few sheets lifting as a folder lands on the conveyor. */
+  paperFlutter: {
+    count: 6,
+    life: [0.5, 0.8],
+    size: [0.05, 0.08],
+    speed: [0.3, 0.9],
+    rise: [0.8, 1.6],
+    gravity: 3,
+    drag: 2.5,
+    height: 0.75,
+    colors: [palette.paper, palette.paperShade, palette.manila],
+  },
+  /** Flat ink drops thrown sideways from under a stamp. */
+  inkSplat: {
+    count: 10,
+    life: [0.45, 0.7],
+    size: [0.04, 0.08],
+    speed: [1.4, 2.8],
+    rise: [0.1, 0.5],
+    gravity: 8,
+    drag: 4,
+    height: 0.62,
+    colors: [palette.ink, palette.inkSoft],
+  },
+  /** Verdict celebration: chips in the verdict colour mixed with paper. */
+  confetti: {
+    count: 26,
+    life: [0.8, 1.3],
+    size: [0.05, 0.09],
+    speed: [0.8, 2.2],
+    rise: [2.4, 4],
+    gravity: 5,
+    drag: 1.6,
+    height: 0.7,
+    colors: null,
+    accent: [palette.paper, palette.paperShade],
+  },
+  /** Published fake: heavy red ink thrown up and splattering down. */
+  redInk: {
+    count: 28,
+    life: [0.7, 1.2],
+    size: [0.07, 0.15],
+    speed: [1.2, 3],
+    rise: [1.6, 3.4],
+    gravity: 9,
+    drag: 1.2,
+    height: 0.7,
+    colors: [palette.editorialRed, palette.editorialRed, palette.ink],
+  },
+  /** Crumpled folder falling apart into grey dust. */
+  ash: {
+    count: 16,
+    life: [0.8, 1.4],
+    size: [0.04, 0.09],
+    speed: [0.3, 1],
+    rise: [0.3, 1],
+    gravity: 1.2,
+    drag: 2.5,
+    height: 0.65,
+    colors: [palette.inkFaint, palette.inkSoft, palette.paperDeep],
+  },
+  /** Small grey wisp rising from a failed minigame (negative gravity lifts it). */
+  smoke: {
+    count: 6,
+    life: [0.6, 1],
+    size: [0.06, 0.11],
+    speed: [0.1, 0.4],
+    rise: [0.4, 0.8],
+    gravity: -0.6,
+    drag: 1.5,
+    height: 1,
+    colors: [palette.inkFaint, palette.paperDeep],
   },
 } as const satisfies Record<string, EmitterPreset>;
 

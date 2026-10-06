@@ -16,7 +16,9 @@ export type IconName =
   | 'settings'
   | 'leave'
   | 'copy'
-  | 'ping';
+  | 'ping'
+  | 'clock'
+  | 'expired';
 
 const paths: Record<IconName, string> = {
   // Folder types
@@ -44,6 +46,11 @@ const paths: Record<IconName, string> = {
   leave:
     'M13.7 4.3 L5.2 4.4 L5.1 19.6 L13.8 19.7 M10.1 12.1 L20.2 11.9 M16.6 8.2 L20.3 12 L16.7 15.8',
   copy: 'M8.4 8.3 L19.8 8.2 L19.9 20 L8.5 20.1 Z M5.3 15.8 L4.2 15.8 L4.1 4.1 L15.6 4 L15.7 5.2',
+  clock:
+    'M12.1 3.8 C16.8 3.7 20.3 7.3 20.2 12.1 C20.1 16.8 16.6 20.3 11.9 20.2 C7.2 20.1 3.8 16.6 3.9 11.9 C4 7.3 7.4 3.9 12.1 3.8 Z M12 7.1 L12.1 12.3 L15.6 14.6',
+  // Folder outcomes besides verdicts: an hourglass for an expired folder
+  expired:
+    'M6.2 3.9 L17.9 4.1 M6.1 20.1 L18 19.9 M7.3 4.2 C7.4 8.6 10.9 10.2 11.9 12 C12.9 10.1 16.5 8.7 16.7 4.2 M7.2 19.8 C7.4 15.5 10.8 13.8 11.9 12 C13 13.9 16.6 15.4 16.8 19.8 M9.6 18.4 L14.4 18.3',
   ping: 'M12.1 3.9 L12.2 14.1 M12.2 18.3 L12.2 19.9 M5.6 8.2 C4.6 10.5 4.7 13.3 5.8 15.4 M18.5 8.1 C19.6 10.4 19.5 13.2 18.4 15.3',
 };
 
@@ -79,3 +86,8 @@ export function Icon({ name, size = 24, label, style, className }: IconProps) {
 }
 
 export const iconNames = Object.keys(paths) as IconName[];
+
+/** Raw path data (24×24 viewBox) for canvas drawing, e.g. the folder cover atlas in 3D. */
+export function iconPath(name: IconName): string {
+  return paths[name];
+}

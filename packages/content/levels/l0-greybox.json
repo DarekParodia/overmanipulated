@@ -1,7 +1,7 @@
 {
   "id": "l0-greybox",
   "title": "Makieta",
-  "briefing": "Próbny dyżur w szarej makiecie redakcji. Teczki wpadają na taśmę, sprawdzacie je na stanowiskach i decydujecie przy stole.",
+  "briefing": "Próbny dyżur w szarej makiecie redakcji. Teczki wpadają na taśmę, sprawdzacie je na stanowiskach i decydujecie przy stole.",
   "durationS": 240,
   "layout": [
     "####################",
@@ -20,7 +20,15 @@
   "stations": ["imageSearch", "archive", "sourceRegistry"],
   "schedule": [
     { "atS": 3, "storyId": "l0-zalany-rynek", "deadlineS": 90 },
-    { "atS": 30, "storyId": "l0-nocny-autobus", "deadlineS": 75 }
+    { "atS": 20, "storyId": "l0-nocny-autobus", "deadlineS": 75 },
+    { "atS": 40, "storyId": "l0-falszywa-straz", "deadlineS": 50 },
+    { "atS": 60, "storyId": "l0-nowa-biblioteka", "deadlineS": 90 },
+    { "atS": 80, "storyId": "l0-podatek-od-mew", "deadlineS": 80 },
+    { "atS": 100, "storyId": "l0-woda-z-kranu", "deadlineS": 45 },
+    { "atS": 120, "storyId": "l0-cytat-kandydatki", "deadlineS": 90 },
+    { "atS": 140, "storyId": "l0-rowery-miejskie", "deadlineS": 80 },
+    { "atS": 160, "storyId": "l0-most-zamkniety", "deadlineS": 50 },
+    { "atS": 175, "storyId": "l0-koncert-na-bulwarach", "deadlineS": 60 }
   ],
-  "stars": { "two": 40, "three": 80 }
+  "stars": { "two": 120, "three": 190 }
 }

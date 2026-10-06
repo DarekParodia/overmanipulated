@@ -3,6 +3,7 @@
 import { STORIES } from '@redakcja/content';
 import { MINIGAME_TIME_LIMIT_MS, type StationKind } from '@redakcja/shared';
 import { useEffect, useState } from 'react';
+import { attachInput } from '../../input/input-manager.ts';
 import { useInputCapture } from '../../input/ui-nav.ts';
 import { useApp } from '../../store/app.ts';
 import { pl } from '../../strings/pl.ts';
@@ -21,6 +22,8 @@ export function MinigameBench() {
   const story = STORIES[storyIndex % Math.max(STORIES.length, 1)];
   const Game = minigameFor(kind);
   useInputCapture(result === null);
+  // Outside a match nothing else listens to the keyboard; the bench needs it for nav intents.
+  useEffect(() => attachInput(), []);
 
   useEffect(() => {
     if (result !== null) {

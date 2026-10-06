@@ -1,0 +1,101 @@
+[
+  {
+    "id": "l0-zly-werdykt",
+    "type": "post",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "publish",
+    "headline": "Fałszywka z błędnym werdyktem",
+    "body": "Fixture: fałsz musi mieć werdykt „Odrzuć”.",
+    "source": "Fixture",
+    "stamps": [
+      {
+        "id": "l0-zly-werdykt-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone wczoraj.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l0-zly-werdykt-source"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fixture.",
+      "technique": "Fixture.",
+      "tool": "Fixture.",
+      "realWorld": "Fixture."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-nieznana-pieczatka",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Uzasadnienie wskazuje nieistniejącą pieczątkę",
+    "body": "Fixture: justifyingStamps zawiera nieznany identyfikator.",
+    "source": "Fixture",
+    "stamps": [
+      {
+        "id": "l0-nieznana-pieczatka-source",
+        "station": "sourceRegistry",
+        "text": "Oficjalne konto.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l0-nie-ma-takiej"],
+    "technique": "none",
+    "debrief": {
+      "what": "Fixture.",
+      "technique": "Fixture.",
+      "tool": "Fixture.",
+      "realWorld": "Fixture."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-nierozwiazywalna",
+    "type": "recording",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Rozstrzyga tylko telefon, którego nie ma na poziomie",
+    "body": "Fixture: jedyna rozstrzygająca pieczątka pochodzi ze stanowiska spoza poziomu.",
+    "source": "Fixture",
+    "stamps": [
+      {
+        "id": "l0-nierozwiazywalna-phone",
+        "station": "phone",
+        "text": "Biuro zaprzecza.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-nierozwiazywalna-image",
+        "station": "imageSearch",
+        "text": "Brak obrazu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-nierozwiazywalna-archive",
+        "station": "archive",
+        "text": "Brak wcześniejszych wystąpień.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-nierozwiazywalna-source",
+        "station": "sourceRegistry",
+        "text": "Nadawca nieznany.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-nierozwiazywalna-phone"],
+    "technique": "zmyslona-wypowiedz",
+    "debrief": {
+      "what": "Fixture.",
+      "technique": "Fixture.",
+      "tool": "Fixture.",
+      "realWorld": "Fixture."
+    },
+    "reviewed": false
+  }
+]

@@ -13,7 +13,8 @@ export const soundIds: ReadonlySet<string> = new Set(Object.keys(spriteMap));
 let sfx: Howl | null = null;
 let ambienceId: number | null = null;
 
-function busVolume(settings: Settings, bus: AudioBus): number {
+/** Effective volume of a bus (master × bus level), before global mute. */
+export function busVolume(settings: Settings, bus: AudioBus): number {
   const busLevel =
     bus === 'ui' ? settings.uiVolume : bus === 'music' ? settings.musicVolume : settings.sfxVolume;
   return settings.masterVolume * busLevel;
@@ -46,15 +47,37 @@ export function playSound(
     return;
   }
   const howl = load();
-  const settings = useSettings.getState();
-  const playId = howl.play(id);
-  howl.volume(Math.min(1, busVolume(settings, bus) * volume), playId);
+  const playId = playOn(howl, id, bus, volume);
   if (rateJitter > 0) {
     howl.rate(1 + (Math.random() * 2 - 1) * rateJitter, playId);
   }
   if (pan !== 0) {
     howl.stereo(pan, playId);
   }
+}
+
+function playOn(howl: Howl, id: string, bus: AudioBus, volume: number): number {
+  const playId = howl.play(id);
+  howl.volume(Math.min(1, busVolume(useSettings.getState(), bus) * volume), playId);
+  return playId;
+}
+
+/** Running loops (fx/audio/loops.ts) with their bus, so volume changes reach them. */
+const loopVolumes = new Map<number, { bus: AudioBus; volume: number }>();
+
+/** Starts a looping sprite (loop flag set in the sprite map); returns its Howler id. */
+export function startLoopSound(id: string, bus: AudioBus, volume: number): number | null {
+  if (!soundIds.has(id) || !spriteMap[id]?.[2]) {
+    return null;
+  }
+  const playId = playOn(load(), id, bus, volume);
+  loopVolumes.set(playId, { bus, volume });
+  return playId;
+}
+
+export function stopSound(playId: number): void {
+  loopVolumes.delete(playId);
+  sfx?.stop(playId);
 }
 
 /** Starts the newsroom room-tone loop (idempotent). */
@@ -81,6 +104,9 @@ export function initAudio(): () => void {
     Howler.mute(settings.muted || document.hidden);
     if (sfx && ambienceId !== null) {
       sfx.volume(busVolume(settings, 'sfx') * 0.6, ambienceId);
+    }
+    for (const [playId, loop] of loopVolumes) {
+      sfx?.volume(Math.min(1, busVolume(settings, loop.bus) * loop.volume), playId);
     }
   };
   apply();

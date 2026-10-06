@@ -1,0 +1,305 @@
+/*
+ * HUD layer. Layout variables are shared with the queue and toast modules: the plate sits in
+ * the top-left corner, the screen tools (GameScreen) in the top-right, the queue between them.
+ */
+.hud {
+  --hud-top: max(var(--space-3), env(safe-area-inset-top));
+  --hud-left: max(var(--space-3), env(safe-area-inset-left));
+  --hud-right: max(var(--space-3), env(safe-area-inset-right));
+  --hud-plate-w: 13.5rem;
+  /* Three icon keys (24 px icon + 2 × space-4 padding + 2 px borders) and their gaps
+     (GameScreen .tools). */
+  --hud-tools-w: calc(3 * (1.5rem + 2 * var(--space-4) + 4px) + 2 * var(--space-2));
+  --hud-slip-w: 8.5rem;
+  --hud-queue-h: 7.75rem;
+
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* The plate: a strip of newsprint pinned in the corner, with printed boxes and rules. */
+.plate {
+  position: absolute;
+  top: var(--hud-top);
+  left: var(--hud-left);
+  width: var(--hud-plate-w);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--paper);
+  border: var(--rule-thin);
+  border-top: var(--rule-thick);
+  box-shadow: var(--shadow-paper);
+}
+
+.label {
+  font-family: var(--font-grotesk);
+  font-stretch: 70%;
+  font-weight: 700;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.clock {
+  font-family: var(--font-grotesk);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: var(--text-2xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Timer --------------------------------------------------------------------------------- */
+
+.timer {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: var(--space-1);
+  padding-bottom: var(--space-1);
+  border-bottom: var(--rule-thin);
+}
+
+.timer .clock {
+  grid-column: 1 / -1;
+}
+
+.lastSeconds {
+  color: var(--editorial-red);
+}
+
+.lastSeconds .label {
+  color: var(--editorial-red);
+}
+
+.lastSeconds .clock {
+  font-size: calc(var(--text-2xl) * 1.15);
+  animation: clock-tick 260ms var(--ease-settle) both;
+}
+
+@keyframes clock-tick {
+  from {
+    transform: translateY(-3px) scale(1.08);
+  }
+  to {
+    transform: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .lastSeconds .clock {
+  animation: none;
+}
+
+/* --- Score --------------------------------------------------------------------------------- */
+
+.score {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.counter {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Credibility gauge --------------------------------------------------------------------- */
+
+.gauge {
+  grid-column: 1 / -1;
+}
+
+.gaugeHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.gaugeValue {
+  margin-left: auto;
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.lowTag {
+  padding: 0 var(--space-1);
+  border: 1px solid var(--editorial-red);
+  color: var(--editorial-red);
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+}
+
+.track {
+  position: relative;
+  height: 0.75rem;
+  margin-top: 2px;
+  border: 1px solid var(--ink);
+  background: var(--paper-shade);
+}
+
+.ghost,
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.ghost {
+  background: var(--editorial-red);
+  transition: width var(--motion-slow) var(--ease-out);
+}
+
+.fill {
+  background: var(--ink);
+  transition: width var(--motion-fast) var(--ease-out);
+}
+
+.low .fill {
+  background: var(--editorial-red);
+}
+
+.low .ghost {
+  background: var(--ink-faint);
+}
+
+.low .gaugeValue {
+  color: var(--editorial-red);
+}
+
+/* Printed scale marks at 25 / 50 / 75 over the fill. */
+.scale {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.scale span {
+  border-right: 1px solid var(--paper);
+}
+
+.scale span:last-child {
+  border-right: none;
+}
+
+/* --- Room line ----------------------------------------------------------------------------- */
+
+.room {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  padding-top: var(--space-1);
+  border-top: 1px dashed var(--ink-a40);
+}
+
+.code {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  letter-spacing: 0.2em;
+}
+
+.status {
+  margin-left: auto;
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.reconnecting,
+.offline,
+.connecting {
+  color: var(--editorial-red);
+}
+
+/* --- Phones: compact plate, clear of the joystick zone (top quarter is touch-free) ---------- */
+
+@media (max-height: 500px), (max-width: 760px) {
+  .hud {
+    --hud-top: max(var(--space-2), env(safe-area-inset-top));
+    --hud-left: max(var(--space-2), env(safe-area-inset-left));
+    --hud-right: max(var(--space-2), env(safe-area-inset-right));
+    --hud-plate-w: 9.5rem;
+    --hud-slip-w: 5.25rem;
+    --hud-queue-h: 4.75rem;
+  }
+
+  .clock {
+    font-size: var(--text-xl);
+  }
+
+  .label,
+  .gaugeValue {
+    font-size: 0.625rem;
+  }
+
+  .plate {
+    gap: 2px var(--space-2);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .timer {
+    grid-template-rows: auto;
+    grid-template-columns: auto 1fr auto;
+    padding-bottom: 2px;
+  }
+
+  .timer .label {
+    display: none;
+  }
+
+  .timer .clock {
+    grid-column: auto;
+    justify-self: end;
+  }
+
+  .lastSeconds .clock {
+    font-size: var(--text-xl);
+  }
+
+  .counter {
+    font-size: var(--text-lg);
+  }
+
+  .track {
+    height: 0.5rem;
+  }
+
+  .gaugeHead {
+    gap: var(--space-1);
+  }
+
+  .lowTag {
+    padding: 0 2px;
+    font-size: 0.5625rem;
+  }
+
+  .room {
+    padding-top: 2px;
+  }
+
+  .code,
+  .status {
+    font-size: 0.625rem;
+  }
+}

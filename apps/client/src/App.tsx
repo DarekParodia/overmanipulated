@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { PerfOverlay } from './debug/PerfOverlay.tsx';
 import { initAudio, playSound } from './fx/audio/audio-manager.ts';
 import { feedback } from './fx/feedback.ts';
+import { startGameplayFeedback } from './fx/gameplay-feedback.ts';
 import { vibrate } from './fx/haptics.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
 import { Loading } from './screens/Loading.tsx';
@@ -30,11 +31,13 @@ export function App() {
     const unsubscribeSettings = useSettings.subscribe(applySettingsToDocument);
     const stopAudio = initAudio();
     const disconnectOutputs = feedback.connect({ playSound, vibrate });
+    const stopGameplayFeedback = startGameplayFeedback();
     document.addEventListener('visibilitychange', handleVisibilityReturn);
     return () => {
       unsubscribeSettings();
       stopAudio();
       disconnectOutputs();
+      stopGameplayFeedback();
       document.removeEventListener('visibilitychange', handleVisibilityReturn);
     };
   }, []);

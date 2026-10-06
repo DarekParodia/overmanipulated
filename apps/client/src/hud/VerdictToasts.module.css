@@ -1,0 +1,130 @@
+/*
+ * Verdict slips: phone-message forms torn off a pad, sliding down under the folder queue.
+ * Centred between the joystick half and the action buttons on phones.
+ */
+.toasts {
+  position: absolute;
+  top: calc(var(--hud-top) + var(--hud-queue-h) + var(--space-2));
+  left: 50%;
+  width: min(24rem, 46vw);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.slip {
+  display: flex;
+  align-items: stretch;
+  background: var(--paper);
+  border: var(--rule-thin);
+  box-shadow: var(--shadow-paper);
+  animation: slide-in var(--motion-base) var(--ease-settle) both;
+}
+
+.slip:nth-child(2) {
+  rotate: 0.5deg;
+}
+
+.slip:nth-child(3) {
+  rotate: -0.4deg;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateY(-60%);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+:root[data-reduced-motion="true"] .slip {
+  animation: none;
+}
+
+/* The mark column carries the outcome shape (tick, cross, context, hourglass) in ink. */
+.mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  border-right: var(--rule-thin);
+  color: var(--paper);
+}
+
+.good .mark {
+  background: var(--copy-blue);
+}
+
+.caution .mark {
+  background: var(--ochre);
+  color: var(--ink);
+}
+
+.bad .mark {
+  background: var(--editorial-red);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+}
+
+.title {
+  font-family: var(--font-grotesk);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.delta {
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.bad .delta {
+  color: var(--editorial-red);
+}
+
+.headline {
+  overflow: hidden;
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--ink-soft);
+}
+
+@media (max-height: 500px), (max-width: 760px) {
+  .toasts {
+    width: min(18rem, 46vw);
+  }
+
+  .mark {
+    width: 1.75rem;
+  }
+
+  .body {
+    padding: 2px var(--space-1);
+  }
+
+  .title {
+    font-size: var(--text-sm);
+  }
+
+  .headline {
+    font-size: 0.625rem;
+  }
+}
