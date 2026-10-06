@@ -122,3 +122,8 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- Core gameplay feedback (S2-12) --------------------------------------------------------
+
+/** The level timer's "last seconds" phase (design doc: last 30 s): sting, HUD pulse, music. */
+export const LEVEL_LAST_SECONDS_MS = 30_000;

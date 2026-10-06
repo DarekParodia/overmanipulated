@@ -142,6 +142,181 @@ def roomtone():
     return normalize(body, 0.18)
 
 
+# --- Core gameplay feedback (S2-12) ------------------------------------------------------------
+
+
+def delayed(signal, seconds):
+    return np.concatenate([np.zeros(int(RATE * seconds)), signal])
+
+
+def mix(*signals):
+    n = max(len(x) for x in signals)
+    out = np.zeros(n)
+    for x in signals:
+        out[: len(x)] += x
+    return out
+
+
+def tone(freq, seconds, attack, decay, shape="sine"):
+    x = t(seconds)
+    phase = 2 * np.pi * freq * x
+    if shape == "square":
+        wave_ = np.sign(np.sin(phase)) * 0.6 + 0.4 * np.sin(phase)
+    elif shape == "saw":
+        wave_ = 2 * ((freq * x) % 1) - 1
+    else:
+        wave_ = np.sin(phase)
+    return wave_ * env(seconds, attack, decay)
+
+
+def arrive_bell():
+    """Folder lands on the conveyor: short counter bell, two strikes."""
+    a = bell(1568, 0.45, 0.14, ((1, 1.0), (2.4, 0.4), (4.1, 0.15)))
+    return normalize(mix(a, delayed(0.6 * a[: int(RATE * 0.3)], 0.09)), 0.5)
+
+
+def paper_rustle():
+    """Folder picked up: band-limited noise with a few crinkle bursts."""
+    n = 0.25
+    s = highpass(lowpass(noise(n), 6000), 900)
+    crinkle = np.zeros(int(RATE * n))
+    for start in (0.0, 0.05, 0.11, 0.16):
+        i = int(RATE * start)
+        burst = env(0.05, 0.002, 0.012)
+        crinkle[i : i + len(burst)] += burst[: len(crinkle) - i]
+    return normalize(s * (0.3 * env(n, 0.01, 0.08) + crinkle), 0.45)
+
+
+def paper_place():
+    """Folder put down: soft slap on wood."""
+    s = 0.7 * np.sin(2 * np.pi * 140 * t(0.2)) * env(0.2, 0.001, 0.03)
+    s += 0.6 * lowpass(noise(0.2), 2500) * env(0.2, 0.001, 0.02)
+    return normalize(s, 0.55)
+
+
+def warn_ticks():
+    """Deadline warning: two quick wooden ticks, the second higher."""
+    a = tone(1200, 0.06, 0.0005, 0.012) + 0.4 * highpass(noise(0.06), 2500) * env(0.06, 0.0005, 0.006)
+    b = tone(1600, 0.06, 0.0005, 0.012) + 0.4 * highpass(noise(0.06), 2500) * env(0.06, 0.0005, 0.006)
+    return normalize(mix(a, delayed(b, 0.14)), 0.5)
+
+
+def clock_tick():
+    """One clock tick for the deadline ticker (playback rate varies tick/tock)."""
+    s = tone(2400, 0.05, 0.0003, 0.006) + 0.6 * highpass(noise(0.05), 3000) * env(0.05, 0.0003, 0.004)
+    return normalize(s, 0.45)
+
+
+def expiry_buzzer():
+    """Folder expired: dull buzzer, a falling square wave."""
+    x = t(0.5)
+    f = 180 - 40 * x
+    phase = 2 * np.pi * np.cumsum(f) / RATE
+    s = (np.sign(np.sin(phase)) * 0.5 + 0.5 * np.sin(phase)) * env(0.5, 0.005, 0.25)
+    return normalize(lowpass(s, 1800), 0.55)
+
+
+def typewriter_loop():
+    """Station work loop: irregular typewriter keys over one second, seamless (no tail)."""
+    seconds = 1.0
+    n = int(RATE * seconds)
+    out = np.zeros(n)
+    times = [0.02, 0.11, 0.19, 0.31, 0.38, 0.47, 0.6, 0.67, 0.78, 0.86]
+    for k, start in enumerate(times):
+        key = highpass(noise(0.05), 1800) * env(0.05, 0.0005, 0.007)
+        key += 0.5 * np.sin(2 * np.pi * (380 + 30 * (k % 3)) * t(0.05)) * env(0.05, 0.0005, 0.01)
+        i = int(RATE * start)
+        out[i : i + len(key)] += key[: n - i] * (0.8 + 0.2 * ((k * 7) % 3) / 2)
+    return normalize(out, 0.45)
+
+
+def minigame_slide():
+    """Minigame sheet slides in: short airy paper whoosh."""
+    s = highpass(lowpass(noise(0.25), 5000), 600) * env(0.25, 0.06, 0.06)
+    return normalize(s, 0.4)
+
+
+def fail_buzz():
+    """Minigame failed: two short low blips going down."""
+    a = tone(330, 0.12, 0.002, 0.05, "square")
+    b = tone(220, 0.2, 0.002, 0.08, "square")
+    return normalize(lowpass(mix(a, delayed(b, 0.13)), 2200), 0.45)
+
+
+def desk_open():
+    """Desk opened: drawer knock plus paper flap."""
+    s = 0.8 * np.sin(2 * np.pi * 210 * t(0.25)) * env(0.25, 0.001, 0.035)
+    s += 0.4 * highpass(lowpass(noise(0.25), 5000), 800) * env(0.25, 0.02, 0.05)
+    return normalize(s, 0.5)
+
+
+def correct_chime():
+    """Correct verdict: rising major arpeggio on bells."""
+    notes = (784, 988, 1175)
+    return normalize(mix(*[delayed(bell(f, 0.5, 0.18), i * 0.08) for i, f in enumerate(notes)]), 0.5)
+
+
+def context_fanfare():
+    """Correct "publish with context": longer arpeggio ending on a held chord."""
+    notes = (659, 784, 988, 1319)
+    parts = [delayed(bell(f, 0.6, 0.2), i * 0.09) for i, f in enumerate(notes)]
+    parts.append(delayed(bell(1319, 0.7, 0.35) + bell(988, 0.7, 0.35), 0.36))
+    return normalize(mix(*parts), 0.55)
+
+
+def wrong_hmm():
+    """Right verdict, wrong justification: an unsure two-note dip."""
+    a = tone(440, 0.2, 0.01, 0.1)
+    b = tone(392, 0.25, 0.01, 0.12)
+    return normalize(mix(a, delayed(b, 0.18)), 0.4)
+
+
+def alarm_sting():
+    """Fake published: urgent two-tone alarm, three cycles, harsh but not piercing."""
+    parts = []
+    for i in range(3):
+        parts.append(delayed(tone(740, 0.14, 0.003, 0.2, "saw"), i * 0.3))
+        parts.append(delayed(tone(554, 0.14, 0.003, 0.2, "saw"), i * 0.3 + 0.15))
+    s = lowpass(mix(*parts), 2600)
+    s = mix(s, 0.8 * np.sin(2 * np.pi * 60 * t(0.4)) * env(0.4, 0.002, 0.12))
+    return normalize(s, 0.6)
+
+
+def low_sting():
+    """True story rejected: a low descending minor figure."""
+    a = tone(294, 0.3, 0.01, 0.2, "saw")
+    b = tone(233, 0.5, 0.01, 0.3, "saw")
+    return normalize(lowpass(mix(a, delayed(b, 0.22)), 1200), 0.5)
+
+
+def last_seconds():
+    """Last 30 s: a clock striking twice over a low pulse."""
+    a = bell(880, 0.5, 0.2, ((1, 1.0), (2.0, 0.4), (3.0, 0.2)))
+    pulse = 0.6 * np.sin(2 * np.pi * 70 * t(0.7)) * env(0.7, 0.005, 0.2)
+    return normalize(mix(a, delayed(a, 0.25), pulse), 0.55)
+
+
+def win_stinger():
+    """Level won: bright bell fanfare."""
+    notes = (523, 659, 784, 1047)
+    parts = [delayed(bell(f, 0.6, 0.22), i * 0.11) for i, f in enumerate(notes)]
+    parts.append(delayed(bell(1047, 1.0, 0.5) + bell(784, 1.0, 0.5) + bell(659, 1.0, 0.5), 0.5))
+    return normalize(mix(*parts), 0.6)
+
+
+def lose_stinger():
+    """Level lost: slow falling bells into a low thud."""
+    notes = (523, 466, 392, 311)
+    parts = [delayed(bell(f, 0.7, 0.3), i * 0.22) for i, f in enumerate(notes)]
+    parts.append(delayed(np.sin(2 * np.pi * 55 * t(0.6)) * env(0.6, 0.003, 0.2), 0.9))
+    return normalize(mix(*parts), 0.55)
+
+
+def ping_bell(freq):
+    """Ping: one short bell per ping kind (pitch tells them apart, the bubble icon too)."""
+    return normalize(bell(freq, 0.3, 0.09, ((1, 1.0), (2.76, 0.3))), 0.45)
+
+
 SOUNDS = [
     ("click", click, False),
     ("hover", hover, False),
@@ -154,6 +329,27 @@ SOUNDS = [
     ("start", desk_bell, False),
     ("stamp", stamp_thud, False),
     ("roomtone", roomtone, True),
+    ("arrive", arrive_bell, False),
+    ("rustle", paper_rustle, False),
+    ("place", paper_place, False),
+    ("warn", warn_ticks, False),
+    ("tick", clock_tick, False),
+    ("buzzer", expiry_buzzer, False),
+    ("keys", typewriter_loop, True),
+    ("slide", minigame_slide, False),
+    ("fail", fail_buzz, False),
+    ("deskopen", desk_open, False),
+    ("chime", correct_chime, False),
+    ("fanfare", context_fanfare, False),
+    ("hmm", wrong_hmm, False),
+    ("alarm", alarm_sting, False),
+    ("lowsting", low_sting, False),
+    ("lastsec", last_seconds, False),
+    ("win", win_stinger, False),
+    ("lose", lose_stinger, False),
+    ("ping1", lambda: ping_bell(1175), False),
+    ("ping2", lambda: ping_bell(880), False),
+    ("ping3", lambda: ping_bell(1480), False),
 ]
 
 
@@ -179,7 +375,7 @@ def main():
             w.setsampwidth(2)
             w.setframerate(RATE)
             w.writeframes(pcm.tobytes())
-        for ext, args in (("webm", ["-c:a", "libopus", "-b:a", "48k"]), ("mp3", ["-c:a", "libmp3lame", "-b:a", "64k"])):
+        for ext, args in (("webm", ["-c:a", "libopus", "-b:a", "32k", "-vbr", "constrained"]), ("mp3", ["-c:a", "libmp3lame", "-b:a", "40k"])):
             subprocess.run(
                 ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav_path), *args, str(OUT_AUDIO / f"sfx.{ext}")],
                 check=True,
