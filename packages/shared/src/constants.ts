@@ -122,3 +122,8 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- Folders (S2-02) -----------------------------------------------------------------------
+
+/** A folder dropped on the floor lands this far in front of the player's centre, in tiles. */
+export const FLOOR_DROP_DISTANCE_TILES = 0.6;
