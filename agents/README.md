@@ -10,6 +10,7 @@ Start with [`../AGENTS.md`](../AGENTS.md). This folder holds the detailed rules 
 | [`testing.md`](testing.md) | What must be tested and how |
 | [`platforms.md`](platforms.md) | Desktop + mobile support: input, layout, browser quirks, device matrix |
 | [`game-feel.md`](game-feel.md) | Animation, sound, particles, shake, haptics; the feedback catalogue |
+| [`design-rules.md`](design-rules.md) | Visual identity and anti-"AI look" rules: colour, type, layout, icons, 3D, motion, copy, review checklist |
 | [`content-authoring.md`](content-authoring.md) | Rules and model for stories, levels and debrief texts |
 | [`glossary.md`](glossary.md) | Polish design terms → English identifiers |
 

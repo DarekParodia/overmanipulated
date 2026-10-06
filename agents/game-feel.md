@@ -93,3 +93,5 @@ Add a row here when you add a cue, in the same commit.
 - UI: screen transitions, stamp slams on the debrief, counters rolling, stars revealing; all
   skippable.
 - Animation LOD on mobile: off-screen/far characters update at a lower rate.
+- Motion style (physical paper/stamp behaviour, no generic fades and glows) follows
+  [`design-rules.md`](design-rules.md) §8.

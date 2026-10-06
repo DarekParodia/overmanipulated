@@ -19,6 +19,8 @@ Tasks within a stage can run in parallel once their dependencies are done.
   animation, sound and particle/visual feedback (placeholder assets are fine) and registers it in
   the feedback catalogue. See [`../agents/game-feel.md`](../agents/game-feel.md).
 - Reduced-motion / no-flash and mute settings are respected by every effect.
+- **It must not look generated.** Every visual, icon, 3D asset and UI string follows
+  [`../agents/design-rules.md`](../agents/design-rules.md) and passes its review checklist.
 
 ---
 
@@ -79,7 +81,8 @@ feedback.
   *Depends on:* S1-01
   *Scope:* React app root, screen router in Zustand (`mainMenu`, `lobby`, `game`), strings module
   `src/strings/pl.ts`, main menu (Graj / Dołącz kodem), nickname entry, lobby list of players with
-  room code, newspaper-style base CSS tokens; responsive layout (portrait and landscape menus,
+  room code, built on the S1-17 tokens and type (main menu as a newspaper front page, lobby as a
+  cork-board roster — see design rules §1); responsive layout (portrait and landscape menus,
   safe-area insets, touch-sized hit targets ≥ 44 px); animated screen transitions.
   *Done when:* can create/join a room against the dev server and see the player list update, on a
   desktop browser and on a phone-sized viewport.
@@ -187,6 +190,19 @@ feedback.
   snapshot buffer depth) via `r3f-perf`-style stats built on `renderer.info`; hidden in production
   unless `?debug`.
   *Done when:* usable on desktop and phone to check budgets.
+
+- [ ] **S1-17 — Design foundation.**
+  *Depends on:* —
+  *Scope:* `apps/client/src/ui/tokens.css` + `tokens.ts` (palette, type scale, spacing, rules,
+  shadows per [`../agents/design-rules.md`](../agents/design-rules.md)); self-hosted fonts
+  (Newsreader, a condensed grotesque, a typewriter face) with Polish glyphs verified; Polish
+  typography helper (`strings/typography.ts`: non-breaking spaces after one-letter words,
+  „quotes”, dates); first custom SVG icons (folder types, verdicts) and the stamp component
+  (drawn lettering, ink mask, seeded rotation); paper/newsprint texture; first entries in
+  `docs/design/references.md`; Biome/grep check in CI that fails on hex colours outside the token
+  files.
+  *Done when:* a `?styleguide` dev page shows tokens, type scale, icons and stamps on desktop and
+  phone viewports and passes the design review checklist.
 
 **Stage 1 exit:** 4 players (mixed desktop and mobile) move in sync with animated characters,
 footstep dust and sound; `docker compose up` serves it over https; CI green including desktop and
@@ -375,7 +391,8 @@ feedback on desktop and phones; first playtest held.
   quality.
 - [ ] **S5-10 — Haptics and controller polish.** Tuned vibration patterns per cue on Android and
   gamepads; rumble intensity setting.
-- [ ] **S5-03 — Newspaper UI theme** (serif headings, sans body, stamps as the main visual motif).
+- [ ] **S5-03 — UI art pass** on top of the S1-17 foundation: final textures, complete icon set,
+  final stamp lettering, every screen re-checked against the design rules and the reference board.
 - [ ] **S5-04 — Technique encyclopedia** with unlockable cards and in-game examples.
 - [ ] **S5-05 — Accessibility** (colour-blind safe palette audit, text scaling, no-flash mode,
   reduced motion, subtitles/visual equivalents for every audio-only cue, full gamepad and
@@ -424,6 +441,8 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | Desktop and mobile (touch, landscape) are both first-class targets | Students play on school laptops and their own phones; touch controls and responsive overlays from stage 1 |
 | 2026-10-06 | Animation, sound and particles ship with each feature via a central feedback catalogue | Game feel is core to an Overcooked-like game; avoids a risky "polish at the end" stage |
 | 2026-10-06 | Particles, tweens and camera shake are in-house (instanced, pooled) on three.js; no extra FX library | Keeps bundle small and draw calls predictable on mobile GPUs |
+| 2026-10-06 | Binding design rules against a generic/"AI-generated" look; identity based on physical newsroom objects | A game about spotting fakes must not look templated; gives agents concrete constraints |
+| 2026-10-06 | Fonts self-hosted, no Google Fonts CDN; working picks Newsreader + condensed grotesque + typewriter face | School networks and privacy; Polish glyph coverage to be verified in S1-17 |
 | 2026-10-06 | Package sources under `src/` (`packages/shared/src/sim`, …) | Uniform layout across packages; minor deviation from the design-doc tree |
 
 ---

@@ -91,4 +91,6 @@ Refs: S2-04
       phone viewport ([`platforms.md`](platforms.md)).
 - [ ] New actions/events have their feedback cue (animation + sound + particles) registered in the
       catalogue, and respect mute / reduced motion / no-flash ([`game-feel.md`](game-feel.md)).
+- [ ] Visual/UI/copy changes pass the design review checklist in
+      [`design-rules.md`](design-rules.md) (paste it into the commit body).
 - [ ] Plan status updated; decisions and new tasks recorded.

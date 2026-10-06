@@ -57,6 +57,9 @@
   `emitCue()` from `fx/feedback.ts` (see [`game-feel.md`](game-feel.md)).
 - Interactive UI uses pointer events (works for mouse, pen and touch); no hover-only affordances;
   every action reachable by keyboard, gamepad and touch (see [`platforms.md`](platforms.md)).
+- Colours, fonts, spacing and radii come only from the design tokens in `apps/client/src/ui/`
+  (`tokens.css` / `tokens.ts`); no hard-coded hex values, no ad-hoc font stacks
+  (see [`design-rules.md`](design-rules.md)).
 - Animate DOM UI with CSS transitions or the Web Animations API presets in `fx/ui-motion/`;
   check `prefers-reduced-motion` and the in-game reduced-motion setting.
 

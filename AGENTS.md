@@ -76,6 +76,10 @@ agents/             Working rules for agents
 12. **Feedback ships with the feature.** Every new action/event gets animation, sound and
     particles through the cue catalogue in `apps/client/src/fx/cues.ts`, respecting mute, reduced
     motion and no-flash. See [`agents/game-feel.md`](agents/game-feel.md).
+13. **It must not look generated.** Every UI element imitates a physical newsroom object; no
+    gradients, glassmorphism, big radii, soft shadows, emoji, stock icon sets or default fonts;
+    colours only from tokens; Polish typography done properly. Run the design review checklist.
+    See [`agents/design-rules.md`](agents/design-rules.md).
 
 ## Agent docs index
 
@@ -87,5 +91,6 @@ agents/             Working rules for agents
 | [`agents/testing.md`](agents/testing.md) | Writing or changing behaviour |
 | [`agents/platforms.md`](agents/platforms.md) | Any UI, input, minigame or rendering work |
 | [`agents/game-feel.md`](agents/game-feel.md) | Adding actions/events, animation, audio, particles |
+| [`agents/design-rules.md`](agents/design-rules.md) | Any visual, UI copy, icon or 3D art work |
 | [`agents/content-authoring.md`](agents/content-authoring.md) | Writing stories, levels or debrief texts |
 | [`agents/glossary.md`](agents/glossary.md) | Naming anything that exists in the design doc |
