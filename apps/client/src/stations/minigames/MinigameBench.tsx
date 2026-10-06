@@ -46,7 +46,7 @@ export function MinigameBench() {
   }
   return (
     <div data-testid="minigame-bench">
-      <p className="label">
+      <p>
         {kinds.map((k) => (
           <Button key={k} onClick={() => restart({ kind: k })} disabled={k === kind}>
             {pl.vocab.stations[k]}
@@ -66,9 +66,7 @@ export function MinigameBench() {
           onDone={(success) => setResult((r) => r ?? success)}
         />
       ) : (
-        <p className="typed" data-testid="minigame-result">
-          {result ? 'success' : 'failure'}
-        </p>
+        <p data-testid="minigame-result">{result ? 'success' : 'failure'}</p>
       )}
     </div>
   );

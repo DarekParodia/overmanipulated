@@ -1,5 +1,5 @@
-/* A sheet of paper pushed in from the right: half the screen on desktop, the scene stays visible
-   on the left. Hard short shadow, square corners, thick rule on the leading edge. */
+/* One cartoon panel (white, thick outline, big radius, pop shadow) on the right half of the
+   screen; the scene stays visible on the left. Full width on phones. */
 .frame {
   position: absolute;
   z-index: 30;
@@ -10,58 +10,140 @@
   width: min(50vw, 46rem);
   display: flex;
   flex-direction: column;
-  border-left: var(--rule-thick);
-  box-shadow: var(--shadow-lifted);
-  transform: rotate(-0.4deg);
+  overflow: hidden;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
-  animation: slide-in var(--motion-base) var(--ease-settle) both;
-}
-
-.paper {
-  background: var(--paper);
-}
-
-/* The desk: the open manila folder itself is the sheet. */
-.manila {
-  background: var(--manila);
-  border-left-color: var(--manila-dark);
+  animation: slide-in var(--motion-base) var(--ease-bounce) both;
 }
 
 .header {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
-  border-bottom: var(--rule-double);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-bottom: var(--stroke) solid var(--outline);
 }
 
-.kicker {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 0;
-  flex: 1;
+.badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  background: var(--yellow);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.title {
+  flex: none;
+  max-width: 45%;
   min-width: 0;
+  font-size: var(--text-xl);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-top: 0.1em;
 }
 
-.formNo {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
+.spacer {
+  flex: 1;
 }
 
+.backKey {
+  display: inline-flex;
+}
+
+/* Big round close button that presses down onto its shadow. */
 .close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+  padding: 0;
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.close svg {
+  stroke-width: 3;
+}
+
+.close:hover {
+  background: var(--surface-soft);
+}
+
+.closeFocused {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.close:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+/* --- Time bar ------------------------------------------------------------------------- */
+
+.time {
+  flex: 1;
+  min-width: 4rem;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
+  margin: 0 var(--space-2);
 }
 
-.hint {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
+.clock {
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--text);
+}
+
+.track {
+  flex: 1;
+  height: 1.5rem;
+  overflow: hidden;
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  border-right: var(--stroke) solid var(--outline);
+  background: var(--blue);
+  transform-origin: left;
+  transition:
+    transform 100ms linear,
+    background-color var(--motion-base);
+}
+
+.warn .fill {
+  background: var(--orange);
+}
+
+.urgent .fill {
+  background: var(--red);
+}
+
+/* Not colour alone: the clock wobbles when time is short. */
+.urgent .clock {
+  color: var(--red-dark);
+  animation: wobble 600ms ease-in-out infinite;
 }
 
 .body {
@@ -75,59 +157,88 @@
 @keyframes slide-in {
   from {
     opacity: 0;
-    transform: translateX(24px) rotate(1deg);
+    transform: translateX(32px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: rotate(-0.4deg);
+    transform: none;
   }
 }
 
-/* Phones (landscape down to 640×360) and narrow windows: full-width sheet from the bottom,
-   covering the touch controls (input is captured while it is open) but never its own close
-   button. */
+@keyframes wobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-12deg);
+  }
+  75% {
+    transform: rotate(12deg);
+  }
+}
+
+/* Phones (landscape down to 640×360) and narrow windows: full width, compact header. The
+   panel covers the touch controls (input is captured while it is open), never its close. */
 @media (max-height: 500px), (max-width: 760px) {
   .frame {
-    top: env(safe-area-inset-top);
-    bottom: 0;
-    left: env(safe-area-inset-left);
-    right: env(safe-area-inset-right);
+    top: max(var(--space-2), env(safe-area-inset-top));
+    bottom: max(var(--space-2), env(safe-area-inset-bottom));
+    left: max(var(--space-2), env(safe-area-inset-left));
+    right: max(var(--space-2), env(safe-area-inset-right));
     width: auto;
-    border-left: none;
-    border-top: var(--rule-thick);
-    transform: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--pop);
     animation-name: rise;
   }
 
   .header {
-    padding: var(--space-1) max(var(--space-3), env(safe-area-inset-right)) var(--space-1)
-      var(--space-3);
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
+  }
+
+  .badge {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .title {
+    font-size: var(--text-lg);
+  }
+
+  .close {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .track {
+    height: 1.25rem;
   }
 
   .body {
-    padding: var(--space-2) var(--space-3) max(var(--space-2), env(safe-area-inset-bottom));
-  }
-
-  .hint {
-    display: none;
+    padding: var(--space-2) var(--space-3);
   }
 }
 
 @keyframes rise {
   from {
-    transform: translateY(30%);
+    opacity: 0;
+    transform: translateY(24px);
   }
   to {
+    opacity: 1;
     transform: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .frame {
+  .frame,
+  .urgent .clock {
     animation: none;
   }
 }
 
-:global(:root[data-reduced-motion="true"]) .frame {
+:global(:root[data-reduced-motion="true"]) .frame,
+:global(:root[data-reduced-motion="true"]) .urgent .clock {
   animation: none;
 }

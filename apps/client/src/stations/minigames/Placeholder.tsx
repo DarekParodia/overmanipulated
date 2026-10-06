@@ -7,7 +7,7 @@ export function PlaceholderMinigame({ story, onDone }: MinigameProps) {
   return (
     <div>
       <p>{story.headline}</p>
-      <Button variant="stamp" onClick={() => onDone(true)}>
+      <Button variant="primary" onClick={() => onDone(true)}>
         {pl.vocab.verdicts.publish}
       </Button>
     </div>

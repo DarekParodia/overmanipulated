@@ -1,6 +1,6 @@
 // Station overlay (S2-03): hosts the minigame for the station the local player operates, enforces
 // the time limit and reports the outcome to the server exactly once. Also the two small plates
-// shown around it: the hold-to-work prompt while working, and the lockout note after a failure.
+// shown around it: the hold-to-work ring while working, and the lockout plate after a failure.
 import { getStory } from '@redakcja/content';
 import { type Folder, MINIGAME_TIME_LIMIT_MS, type Station } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -9,10 +9,11 @@ import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
-import { typeset } from '../strings/typography.ts';
+import { Icon } from '../ui/icons/Icon.tsx';
+import { KeyCap, ResultMark, STATION_ICON } from './kit.tsx';
 import { minigameFor } from './minigames/index.ts';
 import { OverlayFrame } from './OverlayFrame.tsx';
-import { formatCountdown, secondsLeft } from './overlay-logic.ts';
+import { secondsLeft } from './overlay-logic.ts';
 import styles from './StationOverlay.module.css';
 
 /** How often the minigame clock re-renders. */
@@ -94,83 +95,90 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
   const Game = minigameFor(station.kind);
   const timeLeft = Math.max(0, MINIGAME_TIME_LIMIT_MS - elapsed);
   const timeUsed = Math.min(1, elapsed / MINIGAME_TIME_LIMIT_MS);
-  const urgent = timeLeft <= MINIGAME_TIME_LIMIT_MS * 0.25;
 
   return (
     <OverlayFrame
-      kicker={pl.vocab.stations[station.kind]}
-      formNo={pl.station.formNo(stationNumber(station.id))}
+      title={pl.vocab.stations[station.kind]}
+      icon={STATION_ICON[station.kind]}
       closeLabel={pl.station.leave}
-      closeHint={pl.station.leaveHint[device]}
+      backKey={pl.station.backKey[device]}
       onClose={close}
       testId="station-overlay"
-      aside={
-        playable && (
-          <span
-            className={`${styles.clock} ${urgent ? styles.urgent : ''}`}
-            data-testid="station-clock"
-          >
-            <span className="label">{pl.station.timeLeft}</span>
-            <span className={styles.clockValue}>{formatCountdown(timeLeft)}</span>
-            <span className={styles.fuse} aria-hidden="true">
-              <span style={{ transform: `scaleX(${1 - timeUsed})` }} />
-            </span>
-          </span>
-        )
+      time={
+        playable
+          ? {
+              left: 1 - timeUsed,
+              label: pl.station.timeLeft(secondsLeft(timeLeft)),
+              testId: 'station-clock',
+            }
+          : undefined
       }
     >
       {story ? (
-        <>
-          <p className={styles.folderLine}>
-            <span className="label">{pl.station.folder}</span> {typeset(story.headline)}
-          </p>
-          <Game
-            seed={station.minigameSeed}
-            story={story}
-            stamp={story.stamps.find((s) => s.station === station.kind)}
-            device={device}
-            timeUsed={timeUsed}
-            onDone={finish}
-          />
-        </>
+        <Game
+          seed={station.minigameSeed}
+          story={story}
+          stamp={story.stamps.find((s) => s.station === station.kind)}
+          device={device}
+          timeUsed={timeUsed}
+          onDone={finish}
+        />
       ) : (
-        <p className="typed">{folder ? pl.station.unknownStory : pl.station.noFolder}</p>
+        <p className={styles.empty}>{folder ? pl.station.unknownStory : pl.station.noFolder}</p>
       )}
     </OverlayFrame>
   );
 }
 
-/** "imageSearch-0" → 1: the number typed on the station's form. */
-function stationNumber(id: string): number {
-  const n = Number.parseInt(id.slice(id.lastIndexOf('-') + 1), 10);
-  return Number.isFinite(n) ? n + 1 : 1;
-}
+/** Ring geometry for the work prompt (SVG units). */
+const RING_R = 26;
+const RING_C = 2 * Math.PI * RING_R;
 
-/** Compact plate while the player holds the work button: which key, and how far along. */
+/** While the player holds the work button: a big progress ring and "Hold [key]". */
 export function WorkPrompt({ station }: { station: Station }) {
   const device = useApp((s) => s.inputDevice);
   const progress =
     station.durationMs > 0 ? Math.min(1, station.progressMs / station.durationMs) : 0;
   return (
-    <div className={styles.plate} role="status" data-testid="work-prompt">
-      <span className="label">{pl.vocab.stations[station.kind]}</span>
-      <span className={styles.plateText}>
-        {pl.station.working} · {pl.station.holdWork[device]}
-      </span>
+    <div className={`panel ${styles.plate}`} role="status" data-testid="work-prompt">
       <span
-        className={styles.progress}
+        className={styles.ring}
         role="progressbar"
+        aria-label={pl.vocab.stations[station.kind]}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(progress * 100)}
       >
-        <span style={{ transform: `scaleX(${progress})` }} />
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <circle className={styles.ringTrack} cx={32} cy={32} r={RING_R} />
+          <circle
+            className={styles.ringFill}
+            cx={32}
+            cy={32}
+            r={RING_R}
+            strokeDasharray={RING_C}
+            strokeDashoffset={RING_C * (1 - progress)}
+          />
+        </svg>
+        <span className={styles.ringIcon}>
+          <Icon name={STATION_ICON[station.kind]} size={26} />
+        </span>
+      </span>
+      <span className={styles.plateText}>
+        {device === 'touch' ? (
+          <span>{pl.station.holdTouch}</span>
+        ) : (
+          <>
+            <span>{pl.station.hold}</span>
+            <KeyCap>{pl.station.workKey[device]}</KeyCap>
+          </>
+        )}
       </span>
     </div>
   );
 }
 
-/** "Failed, wait" note after a lost minigame; disappears when the lockout runs out. */
+/** "Missed, wait" plate after a lost minigame; disappears when the lockout runs out. */
 export function LockoutNote({ until, onDone }: { until: number; onDone(): void }) {
   const [now, setNow] = useState(() => performance.now());
   const left = until - now;
@@ -187,9 +195,18 @@ export function LockoutNote({ until, onDone }: { until: number; onDone(): void }
     return null;
   }
   return (
-    <div className={`${styles.plate} ${styles.failed}`} role="status" data-testid="lockout-note">
-      <span className={styles.plateText}>{pl.station.failed}</span>
-      <span className={styles.wait}>{pl.station.wait(secondsLeft(left))}</span>
+    <div
+      className={`panel ${styles.plate} ${styles.failed}`}
+      role="status"
+      data-testid="lockout-note"
+    >
+      <ResultMark success={false} />
+      <span className={styles.plateText}>
+        <span>{pl.station.failed}</span>
+        <span className={styles.wait}>
+          {pl.station.wait} {pl.station.seconds(secondsLeft(left))}
+        </span>
+      </span>
     </div>
   );
 }

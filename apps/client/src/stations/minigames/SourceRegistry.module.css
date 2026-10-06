@@ -1,336 +1,204 @@
 /*
- * Kartoteka źródeł: a wooden card-index drawer with one typed index card pulled out.
- * Warning signs get a red pencil ring; mistakes are crossed out in ink with a margin note.
+ * Kartoteka źródeł: one source card with big tappable rows. Marked rows get a red outline and
+ * a "!" badge; a wrongly marked row is struck through with a green "W porządku" chip.
  */
-.drawer {
+.root {
   container-type: inline-size;
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3) var(--space-3);
-  background: var(--wood);
-  border: 2px solid var(--cork-dark);
-  border-radius: var(--radius-paper);
-  box-shadow: inset 0 -6px 0 var(--cork-dark);
+  gap: var(--space-3);
   user-select: none;
   touch-action: manipulation;
 }
 
-/* Drawer front: brass-style label holder and the time strip (a paper tape running out). */
-.drawerFront {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.labelHolder {
-  padding: 2px var(--space-3);
-  background: var(--paper-shade);
-  border: 2px solid var(--ink);
-  font-family: var(--font-grotesk);
-  font-weight: 700;
-  font-stretch: 75%;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--ink);
-}
-
-.timeStrip {
-  flex: 1;
-  height: 0.6rem;
-  background: var(--cork-dark);
-  border: 1px solid var(--ink);
-}
-
-.timeStrip > span {
-  display: block;
-  height: 100%;
-  background: var(--paper);
-  transform-origin: left;
-  transition: transform 100ms linear;
-}
-
-.drawer[data-urgent="true"] .timeStrip > span {
-  background: var(--editorial-red);
-}
-
-.drawer[data-urgent="true"] .labelHolder {
-  color: var(--editorial-red);
-  border-color: var(--editorial-red);
-}
-
-/* The index card: paper, red header rule, faint ruled lines, slightly askew. */
 .card {
   position: relative;
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-2) var(--space-3) var(--space-2);
-  background: var(--paper);
-  border: 1px solid var(--ink-a40);
-  border-radius: var(--radius-paper);
-  box-shadow: var(--shadow-paper);
-  rotate: -0.5deg;
-  color: var(--ink);
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  color: var(--text);
 }
 
-/* Without no-flash/reduced motion, the urgent card trembles slightly (no blinking). */
-.drawer[data-urgent="true"][data-calm="false"] .card {
-  animation: tremble 160ms steps(2) infinite;
-}
-
-@keyframes tremble {
-  0% {
-    translate: 0 0;
-  }
-  100% {
-    translate: 1px 0;
-  }
-}
-
-.cardHead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 var(--space-3);
-  padding-bottom: var(--space-1);
-  border-bottom: 2px solid var(--editorial-red);
-}
-
+/* Account or website: a small chip on the card. */
 .kind {
-  font-family: var(--font-serif);
-  font-weight: 700;
-  font-size: var(--text-xl);
-  line-height: var(--leading-tight);
-}
-
-.cardNo {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
-}
-
-.task {
-  flex-basis: 100%;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: var(--text-sm);
-  line-height: var(--leading-snug);
-  color: var(--ink-soft);
+  justify-self: start;
+  padding: 0 var(--space-3);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1.6;
 }
 
 .fields {
   display: grid;
   grid-template-columns: 1fr;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-@container (min-width: 34rem) {
+@container (min-width: 30rem) {
   .fields {
     /* Column-major, so up/down on keyboard and pad follows the visual reading order. */
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: repeat(var(--rows, 4), auto);
+    grid-template-rows: repeat(var(--rows2, 4), auto);
     grid-auto-flow: column;
-    column-gap: var(--space-4);
   }
 }
 
+@container (min-width: 48rem) {
+  .fields {
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: repeat(var(--rows3, 3), auto);
+  }
+}
+
+.fields li {
+  display: grid;
+}
+
+/* One row: a white tile with an outline that can be marked. */
 .field {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
+  align-content: center;
+  gap: 2px;
   width: 100%;
-  min-height: var(--touch-target);
-  padding: 2px var(--space-2) 2px var(--space-3);
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--ink-a20);
+  min-height: 3.5rem;
+  padding: var(--space-1) 2.5rem var(--space-1) var(--space-3);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: 0 3px 0 var(--outline);
   text-align: left;
   color: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .field:disabled {
   cursor: default;
 }
 
-.field:not(:disabled):hover {
-  background: var(--ink-a10);
+.field:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: var(--pop-pressed);
 }
 
-/* Keyboard/gamepad cursor: a blue pencil tick in the left margin plus an outline. */
+/* Keyboard/gamepad cursor: blue outline and a lift. */
 .field[data-focused="true"],
-.file[data-focused="true"] {
-  outline: 2px solid var(--copy-blue);
-  outline-offset: -2px;
-}
-
-.field[data-focused="true"]::before {
-  content: "";
-  position: absolute;
-  left: 2px;
-  top: 50%;
-  width: 6px;
-  height: 2px;
-  background: var(--copy-blue);
-}
-
 .field:focus-visible {
-  outline: 2px solid var(--copy-blue);
-  outline-offset: -2px;
+  outline: 4px solid var(--blue);
+  outline-offset: 0;
+  transform: translateY(-3px);
+  box-shadow: var(--pop);
 }
 
 .fieldLabel {
-  grid-column: 1;
-  font-family: var(--font-grotesk);
-  font-weight: 650;
-  font-stretch: 75%;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--text-soft);
 }
 
 .fieldValue {
-  position: relative;
-  grid-column: 1;
-  justify-self: start;
-  padding: 0 var(--space-1);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--text-md);
   line-height: var(--leading-snug);
 }
 
-.margin {
-  grid-column: 2;
-  grid-row: 1 / span 2;
-  min-width: 1.25rem;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  font-style: italic;
-  color: var(--ink-soft);
-  text-align: right;
+/* Marked as suspicious: red outline, pale red fill and a round "!" badge. */
+.field[data-circled="true"] {
+  border-color: var(--red-dark);
+  outline: 3px solid var(--red);
+  outline-offset: 0;
 }
 
-.field[data-circled="true"] .margin,
-.field[data-missed="true"] .margin {
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-style: normal;
-  font-size: var(--text-lg);
-  color: var(--editorial-red);
+.field[data-circled="true"][data-focused="true"] {
+  outline-color: var(--blue);
 }
 
-/* Red pencil ring drawn around the value. */
-.pencilRing {
+/* Revealed after a failure: the rows the player should have marked, dashed. */
+.field[data-missed="true"] {
+  border-style: dashed;
+  border-color: var(--red-dark);
+}
+
+.flag {
   position: absolute;
-  inset: -6px -10px -6px -8px;
-  width: calc(100% + 18px);
-  height: calc(100% + 12px);
-  overflow: visible;
-  pointer-events: none;
+  top: 50%;
+  right: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-top: -0.875rem;
+  background: var(--red);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1;
+  color: var(--text-on-dark);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
 }
 
-.pencilRing path {
-  fill: none;
-  stroke: var(--editorial-red);
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 0;
-  animation: draw var(--motion-base) var(--ease-out) both;
-}
-
-/* Revealed after a failure: the ring the player should have drawn, dashed. */
-.field[data-missed="true"] .pencilRing path {
-  stroke-dasharray: 0.03 0.02;
-  animation: none;
-}
-
-@keyframes draw {
-  from {
-    stroke-dashoffset: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-/* Mistake: value crossed out in ink, note in the margin. */
+/* Wrongly marked (a mistake): struck through, with a green "fine" chip. */
 .field[data-struck="true"] .fieldValue {
-  color: var(--ink-faint);
+  color: var(--text-faint);
   text-decoration: line-through;
   text-decoration-thickness: 2px;
-  text-decoration-color: var(--ink);
 }
 
-.cardFoot {
+.ok {
+  position: absolute;
+  top: -0.6rem;
+  right: var(--space-2);
+  padding: 0 var(--space-2);
+  background: var(--green);
+  border: 2px solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-2) var(--space-4);
-  padding-top: var(--space-1);
 }
 
-.tally {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-family: var(--font-grotesk);
-  font-weight: 650;
-  font-stretch: 75%;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.tallyMark {
-  position: relative;
-  display: inline-block;
-  width: 0.85rem;
-  height: 0.85rem;
-  border: 1.5px solid var(--ink);
-}
-
-/* A used mistake: the box struck through with one red pencil stroke. */
-.tallyMark[data-used="true"]::after {
-  content: "";
-  position: absolute;
-  left: -2px;
-  right: -2px;
-  top: 50%;
-  height: 2.5px;
-  background: var(--editorial-red);
-  rotate: -45deg;
-}
-
-.count {
-  flex: 1;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-}
-
-/* File: the card's own tab, pushed back into the drawer. Big, typewriter-key weight. */
+/* The one main action: a big yellow pill, like ui/Button's primary. */
 .file {
-  min-height: var(--touch-target);
-  min-width: 9rem;
-  padding: var(--space-2) var(--space-5);
-  background: var(--manila);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-paper);
-  box-shadow: 0 4px 0 var(--ink);
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-stretch: 70%;
-  font-size: var(--text-lg);
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--ink);
+  min-height: 3.75rem;
+  padding: var(--space-3) var(--space-6);
+  background: var(--yellow);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop-lg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
@@ -339,60 +207,107 @@
     box-shadow var(--motion-fast) var(--ease-out);
 }
 
-.file:not(:disabled):hover {
-  background: var(--manila-dark);
+.file:hover {
+  transform: translateY(-1px);
 }
 
-.file:not(:disabled):active {
+.file:active {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--ink);
+  box-shadow: var(--pop-pressed);
 }
 
-.file:disabled {
-  cursor: default;
-  opacity: 0.6;
+.file[data-focused="true"],
+.file:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
 }
 
-/* Result: the stamp lands on the card, with the station's finding typed underneath. */
-.verdict {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: var(--space-2);
-  pointer-events: none;
+.count {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
 }
 
-.stampText {
-  max-width: 26rem;
-  padding: var(--space-1) var(--space-3);
-  background: var(--paper);
-  border: 1px solid var(--ink);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-  text-align: center;
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
-.hint {
-  margin: 0;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  color: var(--paper);
+:global(:root[data-reduced-motion="true"]) .flag {
+  animation: none;
 }
 
-/* Short landscape phones: tighter card so seven fields, the footer and the hint fit. */
-@media (max-height: 420px) {
-  .drawer {
-    padding: var(--space-1) var(--space-2) var(--space-2);
-    gap: var(--space-1);
+@media (prefers-reduced-motion: reduce) {
+  .flag {
+    animation: none;
+  }
+}
+
+/* Short landscape phones: tighter rows so seven fields, the footer and the task fit. */
+@media (max-height: 430px) {
+  /* Footer moves to a narrow column on the right so the whole card fits without scrolling. */
+  .root {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-3);
   }
 
-  .task {
-    display: none;
+  .root > :first-child,
+  .root > ul {
+    grid-column: 1 / -1;
+  }
+
+  /* The outcome takes the footer's column, so the revealed rows stay visible. */
+  .result {
+    max-width: 13rem;
+  }
+
+  .result > div {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    text-align: center;
+  }
+
+  .foot {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-end;
+  }
+
+  .file {
+    min-height: 3.25rem;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-lg);
+  }
+
+  .count {
+    text-align: center;
+    font-size: var(--text-sm);
+  }
+
+  .card {
+    padding: var(--space-2);
   }
 
   .kind {
-    font-size: var(--text-lg);
+    display: none;
+  }
+
+  .field {
+    min-height: var(--touch-target);
+    padding: 2px 2.25rem 2px var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .fields {
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .fieldValue {
+    font-size: var(--text-sm);
   }
 }
