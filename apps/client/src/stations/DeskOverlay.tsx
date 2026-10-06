@@ -75,10 +75,6 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
   ];
   const [focus, setFocus] = useState<string | null>(() => grid[0]?.[0] ?? CLOSE);
   const canVerdict = chosen !== null && !pending;
-  useEffect(() => {
-    emitCue('desk.open');
-  }, []);
-
   const choose = (stampId: string) => {
     setChosen(stampId);
     emitCue('desk.justify');

@@ -169,3 +169,8 @@ export const SOURCE_REGISTRY_MIN_FLAGS = 1;
 export const SOURCE_REGISTRY_MAX_FLAGS = 3;
 /** Chance that a card for a folder without a source-registry stamp is clean. */
 export const SOURCE_REGISTRY_CLEAN_CHANCE = 0.3;
+
+// --- Core gameplay feedback (S2-12) --------------------------------------------------------
+
+/** The level timer's "last seconds" phase (design doc: last 30 s): sting, HUD pulse, music. */
+export const LEVEL_LAST_SECONDS_MS = 30_000;

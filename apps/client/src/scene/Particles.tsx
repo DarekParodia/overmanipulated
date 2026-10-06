@@ -15,10 +15,12 @@ import type { CueContext } from '../fx/feedback.ts';
 import { feedback } from '../fx/feedback.ts';
 import { createPool, scaleAt, spawn, stepPool } from '../fx/particles/pool.ts';
 import {
+  type EmitterPreset,
   type ParticlePresetId,
   particleCapacity,
   particlePresets,
 } from '../fx/particles/presets.ts';
+import { fxTimeScale } from '../fx/time-scale.ts';
 import { palette } from '../ui/tokens.ts';
 import { useQuality } from './quality.ts';
 
@@ -55,8 +57,8 @@ export function Particles() {
           if (!position) {
             return;
           }
-          const p = particlePresets[id];
-          const colors = p.colors ?? [context.color ?? palette.ink];
+          const p: EmitterPreset = particlePresets[id];
+          const colors = p.colors ?? [context.color ?? palette.ink, ...(p.accent ?? [])];
           for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = between(p.speed);
@@ -86,7 +88,7 @@ export function Particles() {
     if (!instanced) {
       return;
     }
-    stepPool(pool, Math.min(delta, 0.1));
+    stepPool(pool, Math.min(delta, 0.1) * fxTimeScale());
     let n = 0;
     for (let i = 0; i < pool.capacity; i++) {
       if (!pool.alive[i]) {

@@ -49,7 +49,10 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
       }
       settled.current = true;
       sendCommand({ kind: 'minigameResult', stationId: station.id, success });
-      emitCue(success ? 'minigame.success' : 'minigame.fail');
+      // Failure feedback comes with the server's minigameFailed event (net/game-events.ts).
+      if (success) {
+        emitCue('minigame.success');
+      }
       onResult(success);
     },
     [station.id, onResult],
