@@ -10,6 +10,11 @@ import type {
   StoryType,
   Verdict,
 } from '@redakcja/shared';
+import type { InputDevice as Device } from '../store/app.ts';
+
+/** Key-cap hints shown under a minigame, per input device (empty: no hint). */
+export type KeyHint = { keys: readonly string[]; label: string };
+type KeyHints = Record<Device, readonly KeyHint[]>;
 
 export const pl = {
   masthead: {
@@ -218,87 +223,86 @@ export const pl = {
   },
   /** Station overlay and work progress (S2-03). */
   station: {
-    formNo: (n: number) => `Karta stanowiska nr ${n}`,
-    folder: 'Teczka',
-    timeLeft: 'Zostało',
     leave: 'Odejdź',
-    leaveHint: {
-      keyboard: 'Esc – odejdź',
-      gamepad: 'B – odejdź',
-      touch: '',
-    } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
-    holdWork: {
-      keyboard: 'Trzymaj Spację',
-      gamepad: 'Trzymaj X',
-      touch: 'Trzymaj „Pracuj”',
-    } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
-    working: 'Sprawdzamy',
-    failed: 'Pudło. Stanowisko stoi',
-    wait: (s: number) => `jeszcze ${s} s`,
-    noFolder: 'Na stanowisku nie ma teczki.',
-    unknownStory: 'Tej teczki nie ma w kartotece.',
+    /** Key cap for "back" on each device; touch uses the close button. */
+    backKey: { keyboard: 'Esc', gamepad: 'B', touch: '' } satisfies Record<Device, string>,
+    timeLeft: (s: number) => `Zostało ${s} s`,
+    hold: 'Trzymaj',
+    workKey: { keyboard: 'Spacja', gamepad: 'X', touch: '' } satisfies Record<Device, string>,
+    /** Touch has an on-screen button instead of a key. */
+    holdTouch: 'Trzymaj „Pracuj”',
+    failed: 'Pudło!',
+    wait: 'Czekaj',
+    seconds: (s: number) => `${s} s`,
+    noFolder: 'Brak teczki na stanowisku.',
+    unknownStory: 'Nieznana teczka.',
   },
-  /** Editorial desk and verdict sheet (S2-07). */
   desk: {
-    kicker: 'Stół redakcyjny',
-    caseNo: (id: string) => `Sprawa ${id}`,
-    type: 'Rodzaj',
-    priority: 'Priorytet',
-    source: 'Nadesłał',
-    deadline: 'Termin',
-    overdue: 'po terminie',
-    evidence: 'Pieczątki w teczce',
-    justification: 'uzasadnienie',
-    pickStamp: 'Wskaż pieczątkę, która uzasadnia werdykt.',
-    pickVerdict: 'Teraz werdykt.',
-    noStamps: 'Pusta teczka. Bez pieczątki nie ma werdyktu – zanieś ją najpierw na stanowisko.',
-    verdictsLabel: 'Werdykt',
+    title: 'Stół redakcyjny',
     close: 'Odłóż teczkę',
-    sending: 'Idzie do składu…',
+    source: 'Od:',
+    deadline: 'Termin',
+    overdue: 'Po terminie',
+    stepEvidence: 'Wybierz dowód',
+    stepVerdict: 'Wybierz werdykt',
+    pickStamp: 'Stuknij pieczątkę – to twój dowód',
+    pickVerdict: 'Teraz werdykt!',
+    sending: 'Wysyłam…',
+    noStamps: 'Pusta teczka. Zanieś ją na stanowisko.',
+    verdictsLabel: 'Werdykt',
+    /** Short visible labels; the full name (`vocab.verdicts`) stays the accessible name. */
+    verdictShort: {
+      publish: 'Publikuj',
+      reject: 'Odrzuć',
+      publishWithContext: 'Z kontekstem',
+    } satisfies Record<Verdict, string>,
     next: 'Dalej',
     outcomes: {
-      correct: 'Trafiony werdykt',
-      wrongJustification: 'Werdykt dobry, uzasadnienie chybione',
+      correct: 'Dobrze!',
+      wrongJustification: 'Werdykt dobry, dowód nie',
       wrong: 'Zły werdykt',
       expired: 'Teczka przepadła',
     } satisfies Record<FolderOutcome, string>,
     points: (n: string) => `${n} pkt`,
-    credibility: (n: string) => `wiarygodność ${n}`,
-    speedBonus: 'premia za tempo',
-    missed: 'Tego zabrakło w teczce:',
-    unknownStory: 'Tej teczki nie ma w kartotece.',
+    credibility: (n: string) => `Wiarygodność ${n}`,
+    speedBonus: 'Premia za tempo',
+    missed: 'Zabrakło:',
+    unknownStory: 'Nieznana teczka.',
   },
-  /** Minigames, one sub-namespace each (S2-04..S2-06). */
   minigames: {
+    /** Shared by every minigame. */
+    common: {
+      mistakes: (n: number, of: number) => `Pomyłki: ${n} z ${of}`,
+      failure: 'Pudło!',
+    },
     imageSearch: {
-      kicker: 'Lupa obrazu',
-      task: 'Znajdź wydruk, na którym są wszystkie zaznaczone fragmenty.',
+      task: 'Znajdź wynik ze wszystkimi kółkami',
       submitted: 'Nadesłane zdjęcie',
       results: 'Wyniki wyszukiwania',
-      fragment: (n: number, of: number) => `Fragment ${n} z ${of}`,
+      fragment: (n: number, of: number) => `${n}/${of}`,
       nextFragment: 'Następny fragment',
-      mistakes: 'Pomyłki',
-      missing: 'Brak fragmentu',
       result: (n: number) => `Wynik ${n}`,
       published: (site: string, date: string) => `${site}, ${date}`,
-      found: 'Wcześniejsza publikacja',
-      checked: 'Wynik sprawdzenia',
+      found: 'Wcześniejsza publikacja!',
+      checked: 'Sprawdzone!',
       foundFallback: 'Znaleziono wcześniejszą kopię zdjęcia.',
-      stamp: 'Znalezione',
       done: 'Gotowe',
-      urgent: 'Naczelny już woła',
-      lost: 'Nie ten trop. Teczka wraca na stół.',
-      prompts: {
-        keyboard: 'Strzałki – wybór · Spacja – sprawdź · Q – następny fragment',
-        gamepad: 'Krzyżak – wybór · A – sprawdź · Y – następny fragment',
-        touch: 'Stuknij wydruk albo przeciągnij na niego lupę',
-      },
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'sprawdź' },
+          { keys: ['Q'], label: 'lupa' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'sprawdź' },
+          { keys: ['Y'], label: 'lupa' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
     },
     archive: {
-      kicker: 'Szuflada archiwum',
-      clueLabel: 'Szukamy pierwszej wzmianki o temacie',
-      clueRule: 'Liczy się najstarsza karta, nie najbliższa.',
-      folderLabel: 'Teczka',
+      task: 'Znajdź najstarszą kartę z hasłem',
       /** Topics printed on the index cards; fictional Nowe Brzegi local news. */
       topics: [
         'zalany rynek',
@@ -316,43 +320,47 @@ export const pl = {
       ],
       earlier: 'Wcześniej',
       later: 'Później',
-      pull: 'Wyjmij kartę',
-      mistakes: 'Pomyłki',
-      wrong: 'Nie ta',
-      found: 'Jest',
+      pull: 'Wyjmij',
       foundFallback: 'Pierwsza wzmianka odnaleziona w archiwum.',
       firstMention: (date: string) => `Pierwsza wzmianka: ${date}`,
-      toFolder: 'Do teczki:',
       failed: 'Szuflada zamknięta',
-      hints: {
-        keyboard: '← → przewijaj, przytrzymaj, by szybciej. Spacja: stój, potem wyjmij kartę.',
-        gamepad: 'Krzyżak w bok przewija, przytrzymaj, by szybciej. A: stój, potem wyjmij kartę.',
-        touch:
-          'Przesuń szufladę palcem. Stuknij, by zatrzymać. Stuknij kartę w ramce, by ją wyjąć.',
-      },
+      keys: {
+        keyboard: [
+          { keys: ['←', '→'], label: 'przewijaj' },
+          { keys: ['Spacja'], label: 'stop / wyjmij' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'przewijaj' },
+          { keys: ['A'], label: 'stop / wyjmij' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
     },
     sourceRegistry: {
-      drawer: 'Kartoteka źródeł',
-      cardNo: (n: number) => `Karta nr ${String(n).padStart(4, '0')}`,
       kinds: { account: 'Konto', website: 'Strona' },
-      task: 'Zakreśl, co się nie zgadza. Wszystko gra? Odłóż kartę bez kółek.',
-      file: 'Do kartoteki',
-      marked: (n: number) => (n === 0 ? 'Bez zastrzeżeń' : `Zakreślone: ${n}`),
-      mistakes: 'Pomyłki',
-      mistakeUsed: 'pomyłka',
-      mistakeFree: 'wolne',
-      notThis: 'w porządku',
-      missing: 'Czegoś brakuje. Czytaj jeszcze raz.',
-      revealed: 'Przerywane kółka: tego szukaliśmy.',
-      filed: 'Sprawdzone',
+      task: 'Zakreśl podejrzane wpisy, potem odłóż kartę',
+      file: 'Odłóż kartę',
+      marked: (n: number) => (n === 0 ? 'Nic nie zakreślone' : `Zakreślone: ${n}`),
+      notThis: 'W porządku',
+      missing: 'Czegoś brakuje!',
+      revealed: 'Przerywane: tego szukaliśmy',
+      filed: 'Sprawdzone!',
       failed: 'Źle zakreślone',
       clean: 'Źródło w porządku',
       flagged: 'Źródło podejrzane',
-      hints: {
-        keyboard: 'W/S wybór · E zakreśl · Q do kartoteki',
-        gamepad: 'Krzyżak wybór · A zakreśl · Y do kartoteki',
-        touch: 'Stuknij podejrzany wpis, potem odłóż kartę',
-      },
+      keys: {
+        keyboard: [
+          { keys: ['W', 'S'], label: 'wybierz' },
+          { keys: ['E'], label: 'zakreśl' },
+          { keys: ['Q'], label: 'odłóż' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'zakreśl' },
+          { keys: ['Y'], label: 'odłóż' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
       /**
        * Card fields. Each has a label, believable values (`clean`) and warning signs
        * (`flagged`). Everything is invented: Nowe Brzegi, no real people, brands or platforms.
@@ -474,10 +482,13 @@ export const pl = {
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
   pings: {
-    title: 'Sygnał do zespołu',
-    hintKeys: 'Esc lub Q zamyka',
-    hintPad: 'B zamyka',
-    hintTouch: 'Sygnał zamyka',
+    title: 'Sygnał',
+    close: 'zamknij',
+    closeTouch: 'Stuknij „Sygnał”, by zamknąć',
+    closeKeys: { keyboard: ['Esc', 'Q'], gamepad: ['B'], touch: [] } satisfies Record<
+      Device,
+      readonly string[]
+    >,
   },
   /** Level results (S2-08/S2-09). */
   results: {

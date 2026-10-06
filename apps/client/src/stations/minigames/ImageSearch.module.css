@@ -1,138 +1,17 @@
 /*
- * „Lupa obrazu”: a light table in a wooden frame. The submitted photo lies on the left with red
- * pencil rings, the loupe rests under it, search-result printouts are spread on the right.
- * Sized by its container: a half-screen panel on desktop, a bottom sheet on phones.
+ * „Lupa obrazu”: the submitted photo with red rings on the left, the loupe below it, the
+ * search-result cards on the right. Sized by its container: half the screen on desktop, the
+ * full-width panel on phones.
  */
 .root {
   container-type: inline-size;
   position: relative;
   display: grid;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background: var(--paper);
-  border: 6px solid var(--wood);
-  outline: 1px solid var(--ink);
-  outline-offset: -6px;
-  color: var(--ink);
+  gap: var(--space-3);
+  color: var(--text);
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-}
-
-.header {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3);
-  border-bottom: var(--rule-thick);
-  padding-bottom: var(--space-1);
-}
-
-.title {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.kicker {
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-stretch: 70%;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--editorial-red);
-}
-
-.task {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: var(--text-lg);
-  line-height: var(--leading-snug);
-}
-
-.mistakes {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex: none;
-}
-
-.mistakesLabel {
-  font-family: var(--font-grotesk);
-  font-weight: 650;
-  font-stretch: 75%;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  margin-right: var(--space-1);
-}
-
-/* A tick box on a printed form; a wrong pick gets a red pencil cross. */
-.tally {
-  display: inline-grid;
-  place-items: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 1.5px solid var(--ink);
-  background: var(--paper);
-}
-
-.tally svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: var(--editorial-red);
-  stroke-width: 1.6;
-  stroke-linecap: round;
-}
-
-/* Deadline strip: an ink rule that fills as the attempt's time runs out. */
-.clock {
-  position: relative;
-  height: 0.375rem;
-  border: 1px solid var(--ink);
-  background: var(--paper-shade);
-}
-
-.clockFill {
-  display: block;
-  height: 100%;
-  background: var(--ink-soft);
-  transition: width 100ms linear;
-}
-
-.clockLabel {
-  position: absolute;
-  right: 0;
-  top: 0.5rem;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  color: var(--editorial-red);
-}
-
-.urgent .clock {
-  border-color: var(--editorial-red);
-}
-
-.urgent .clockFill {
-  background: var(--editorial-red);
-}
-
-/* A slow, small shiver of the strip; no blinking. Off with reduced motion and no-flash. */
-.tremble .clock {
-  animation: tremble 160ms steps(2) infinite;
-}
-
-@keyframes tremble {
-  from {
-    transform: translateX(-1px);
-  }
-  to {
-    transform: translateX(1px);
-  }
 }
 
 .table {
@@ -140,36 +19,22 @@
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: var(--space-4);
   align-items: start;
-  padding-top: var(--space-2);
-}
-
-/* Small typewriter label strip, taped above a group of papers. */
-.tag {
-  justify-self: start;
-  display: inline-block;
-  padding: 1px var(--space-2);
-  background: var(--paper-shade);
-  border: 1px solid var(--ink-a40);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  font-weight: 700;
 }
 
 .submitted {
   margin: 0;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .photo {
   display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
-  background: var(--paper-shade);
-  border: 5px solid var(--paper);
-  outline: 1px solid var(--ink-a40);
-  box-shadow: var(--shadow-paper);
-  transform: rotate(-1deg);
+  background: var(--surface-soft);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
 }
 
 .mark {
@@ -177,49 +42,54 @@
 }
 
 .markNumber {
-  font-family: var(--font-grotesk);
+  font-family: var(--font-display);
   font-weight: 800;
-  font-size: 7px;
-  fill: var(--editorial-red);
+  font-size: 9px;
+  fill: var(--red-dark);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 2px;
 }
 
-/* The loupe resting on the table; tap for the next fragment, drag onto a printout to compare. */
+/* The loupe: a chunky round button. Tap for the next fragment, drag onto a result to compare. */
 .loupe {
   justify-self: start;
   display: flex;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--touch-target);
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--ink);
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-1);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
   cursor: grab;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .loupe:active {
   cursor: grabbing;
-}
-
-.loupe:focus-visible {
-  outline: 3px solid var(--copy-blue);
-  outline-offset: 2px;
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
 }
 
 .lens {
   display: block;
-  width: 4.5rem;
-  height: 4.5rem;
+  width: 4rem;
+  height: 4rem;
   flex: none;
 }
 
 .loupeLabel {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  text-align: left;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .ghost {
@@ -230,18 +100,12 @@
   height: 5rem;
   margin: -2.2rem 0 0 -2.2rem;
   pointer-events: none;
-  z-index: 10;
+  z-index: 40;
 }
 
 .ghost .lens {
   width: 100%;
   height: 100%;
-}
-
-.resultsColumn {
-  display: grid;
-  gap: var(--space-2);
-  min-width: 0;
 }
 
 .results {
@@ -250,266 +114,171 @@
   padding: 0;
   display: grid;
   grid-template-columns: repeat(var(--columns, 3), minmax(0, 1fr));
-  gap: var(--space-3) var(--space-2);
+  gap: var(--space-3);
 }
 
 .slot {
   min-width: 0;
 }
 
-/* A search result printed on cheap paper, dropped on the table at a slight angle. */
-.printout {
+.table > [role="status"],
+.over .results {
+  grid-column: 1 / -1;
+}
+
+/* Four results sit in one row: on roomy screens put them under the photo, full width. */
+@media (min-height: 30.01rem) {
+  .table[data-columns="4"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .table[data-columns="4"] .submitted {
+    grid-template-columns: minmax(0, 24rem) auto;
+    align-items: end;
+  }
+
+  .table[data-columns="4"] .results {
+    grid-column: 1 / -1;
+  }
+}
+
+/* One search result: a chunky card with the picture and the year. */
+.result {
   position: relative;
   display: grid;
-  gap: 2px;
+  gap: var(--space-1);
   width: 100%;
   min-height: var(--touch-target);
-  padding: 3px 3px var(--space-1);
-  background: var(--paper);
-  border: 1px solid var(--ink-a40);
-  border-radius: var(--radius-paper);
-  box-shadow: var(--shadow-paper);
-  color: var(--ink);
-  text-align: left;
+  padding: var(--space-1) var(--space-1) var(--space-1);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+  color: var(--text);
   cursor: pointer;
-  transform: rotate(var(--tilt, 0deg));
   transition:
     transform var(--motion-fast) var(--ease-out),
     box-shadow var(--motion-fast) var(--ease-out);
   -webkit-tap-highlight-color: transparent;
 }
 
-.printout:not([aria-disabled="true"]):hover,
+.result:not([aria-disabled="true"]):hover,
 .dropTarget {
-  transform: rotate(var(--tilt, 0deg)) translateY(-2px);
-  box-shadow: var(--shadow-lifted);
+  transform: translateY(-3px);
+  box-shadow: var(--pop-lg);
 }
 
-.printout:active:not([aria-disabled="true"]) {
-  transform: rotate(var(--tilt, 0deg)) translateY(1px);
-  box-shadow: none;
+.result:active:not([aria-disabled="true"]) {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
 }
 
-.printout:focus-visible,
-.cursor {
-  outline: 3px solid var(--copy-blue);
-  outline-offset: 2px;
-}
-
+/* Selected (keyboard/pad cursor or loupe over it): blue outline and a lift. */
+.result:focus-visible,
+.cursor,
 .dropTarget {
-  outline: 3px dashed var(--copy-blue);
-  outline-offset: 2px;
+  border-color: var(--blue-dark);
+  outline: 4px solid var(--blue);
+  outline-offset: 0;
+  transform: translateY(-4px);
+  box-shadow: var(--pop-lg);
 }
 
 .thumb {
   display: block;
   width: 100%;
   aspect-ratio: 4 / 3;
-  background: var(--paper-shade);
+  background: var(--surface-soft);
+  border-radius: calc(var(--radius-md) - 6px);
 }
 
 .caption {
-  display: grid;
-  min-width: 0;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  line-height: 1.2;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.1em;
 }
 
-.site {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 700;
-}
-
-.date {
-  color: var(--ink-soft);
-}
-
-/* Struck through with the red pencil: this result lacks a marked fragment. */
+/* Ruled out: greyed, with a red ✗ badge. */
 .ruledOut {
   cursor: not-allowed;
-  background: var(--paper-shade);
+  background: var(--surface-sunk);
+  box-shadow: none;
 }
 
-.ruledOut .thumb {
-  opacity: 0.75;
-}
-
-.ruledOut::after {
-  content: "";
-  position: absolute;
-  left: 4%;
-  right: 4%;
-  top: 36%;
-  border-top: 2.5px solid var(--editorial-red);
-  transform: rotate(-24deg);
-  pointer-events: none;
-}
-
-.missing {
-  position: absolute;
-  left: 50%;
-  top: 6%;
-  transform: translateX(-50%) rotate(-3deg);
-  padding: 0 var(--space-1);
-  background: var(--paper);
-  border: 1.5px solid var(--editorial-red);
-  color: var(--editorial-red);
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-stretch: 70%;
-  font-size: var(--text-xs);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  max-width: 94%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.ruledOut .thumb,
+.ruledOut .caption {
+  opacity: 0.5;
 }
 
 .found {
-  outline: 3px solid var(--copy-blue);
-  outline-offset: 2px;
+  border-color: var(--green-dark);
+  outline: 4px solid var(--green);
+  outline-offset: 0;
 }
 
-.foundStamp {
+.badge {
   position: absolute;
-  right: -6%;
-  bottom: 18%;
-  width: 62%;
+  top: -0.6rem;
+  right: -0.6rem;
   pointer-events: none;
 }
 
-.foundStamp svg {
-  width: 100%;
-  height: auto;
-}
-
-/* After a match the photo is swapped for a typed note pinned to the table. */
-.slip {
-  display: grid;
-  gap: var(--space-2);
-  justify-items: start;
-  padding: var(--space-3);
-  background: var(--paper);
-  border: 1px solid var(--ink-a40);
-  border-left: 4px solid var(--copy-blue);
-  box-shadow: var(--shadow-paper);
-  transform: rotate(-0.6deg);
-}
-
-.slipKicker {
-  font-family: var(--font-grotesk);
+.foundSource {
+  font-family: var(--font-display);
   font-weight: 800;
-  font-stretch: 70%;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--copy-blue);
 }
 
-.slipSource {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-  font-weight: 700;
-}
-
-.slipText {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-size: var(--text-md);
-  line-height: var(--leading-body);
-}
-
-.prompt {
-  margin: 0;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
-}
-
-/* Phone bottom sheet and narrow panels: tighter type, smaller loupe. */
-@container (max-width: 44rem) {
-  .task {
-    font-size: var(--text-md);
-  }
-
+/* Narrow panels: smaller loupe, tighter gaps. */
+@container (max-width: 40rem) {
   .table {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 8fr);
     gap: var(--space-3);
   }
 
-  .lens {
-    width: 3.5rem;
-    height: 3.5rem;
-  }
-
-  .loupeLabel {
-    font-size: var(--text-xs);
-  }
-
   .results {
-    gap: var(--space-2) var(--space-1);
-  }
-
-  .slipText {
-    font-size: var(--text-sm);
-  }
-}
-
-/* Landscape phones: the sheet is short, so the photo is capped by height and the printouts sit
-   next to it (two rows of three still stay above the 44 px touch-target minimum). */
-@media (max-height: 30rem) {
-  .root {
-    gap: var(--space-1);
-    padding: var(--space-2) var(--space-3);
-  }
-
-  /* The overlay already names the station; keep the task line only. */
-  .kicker {
-    display: none;
-  }
-
-  .task {
-    font-size: var(--text-md);
-  }
-
-  .table {
-    grid-template-columns: auto minmax(0, 1fr);
-    justify-content: start;
-    gap: var(--space-5);
-    padding-top: var(--space-1);
-  }
-
-  .submitted,
-  .resultsColumn {
-    gap: var(--space-1);
-  }
-
-  .photo {
-    width: calc(44dvh * 4 / 3);
+    gap: var(--space-2);
   }
 
   .lens {
     width: 3.25rem;
     height: 3.25rem;
   }
+}
+
+/* Landscape phones: the panel is short, so the photo is capped by height and the result cards
+   sit next to it. */
+@media (max-height: 30rem) {
+  .root {
+    gap: var(--space-2);
+  }
+
+  .table {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .submitted {
+    gap: var(--space-2);
+  }
+
+  .photo {
+    width: calc(38dvh * 4 / 3);
+  }
+
+  .lens {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
 
   .results {
-    max-width: calc(var(--columns, 3) * 8.5rem);
-    gap: var(--space-2) var(--space-1);
+    max-width: calc(var(--columns, 3) * 6.5rem);
+    gap: var(--space-2);
   }
 
-  /* One caption line: the date. The site is read off the note once the match is found. */
-  .site {
-    display: none;
-  }
-
-  .date {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .caption {
+    font-size: var(--text-md);
   }
 }

@@ -1,45 +1,373 @@
-/* Desk blotter: the case sheet on top, the evidence slips below it, the three verdict stamp
-   handles along the bottom edge. On phones the sheet and the slips sit side by side. */
+/* Desk sheet: folder card on top, step 1 (evidence chips), step 2 (three big verdict buttons)
+   at the bottom. On phones the card and the evidence sit side by side. */
 .layout {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     "file"
     "evidence"
-    "verdicts";
+    "decide";
   gap: var(--space-4);
 }
 
 .file {
   grid-area: file;
-  position: relative;
+  min-width: 0;
 }
 
 .evidence {
   grid-area: evidence;
+  display: grid;
+  gap: var(--space-2);
   min-width: 0;
 }
 
-.heading {
-  margin: 0 0 var(--space-1);
+.decide {
+  grid-area: decide;
+  /* Always visible: the evidence scrolls under it if the story is long. */
+  position: sticky;
+  bottom: calc(-1 * var(--space-4));
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+  padding: var(--space-3) var(--space-4) var(--space-3);
+  background: var(--surface);
+  border-top: var(--stroke) solid var(--outline);
 }
 
-.hint {
-  margin: 0 0 var(--space-2);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
+/* --- Step headings ----------------------------------------------------------------------- */
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
 }
 
-/* No evidence: the note reads like a red pencil remark in the margin. */
-.empty {
-  padding: var(--space-2) var(--space-3);
-  border: 2px solid var(--editorial-red);
-  background: var(--paper);
-  color: var(--editorial-red);
-  font-weight: 700;
+.stepNo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--yellow);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-md);
+  line-height: 1;
+  padding-top: 0.1em;
 }
+
+.done .stepNo {
+  background: var(--green);
+  padding-top: 0;
+}
+
+.done .stepNo svg {
+  stroke-width: 3.2;
+}
+
+.waiting {
+  color: var(--text-faint);
+}
+
+.waiting .stepNo {
+  background: var(--surface-sunk);
+  border-color: var(--text-faint);
+}
+
+/* --- Evidence chips ---------------------------------------------------------------------- */
 
 .stamps {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stamp {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.stamp:hover {
+  transform: translateY(-2px);
+}
+
+.stamp:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.stampIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.stampText {
+  display: grid;
+  min-width: 0;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.stampStation {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+/* Chosen as evidence: blue fill on the icon, blue outline, lifted, with a ✓ badge. */
+.chosen {
+  border-color: var(--blue-dark);
+  outline: 4px solid var(--blue);
+  outline-offset: 0;
+  transform: translateY(-3px);
+  box-shadow: var(--pop-lg);
+}
+
+.chosen .stampIcon {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.tick {
+  position: absolute;
+  top: -0.75rem;
+  right: -0.5rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--blue);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  color: var(--text-on-dark);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+.tickIcon {
+  stroke-width: 3.4;
+}
+
+/* Keyboard / gamepad focus: a thick blue ring outside the element. */
+.focused {
+  outline: 4px solid var(--blue);
+  outline-offset: 4px;
+}
+
+.emptyBox {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+.emptyBox [data-focused="true"] {
+  outline: 4px solid var(--blue);
+  outline-offset: 4px;
+}
+
+/* --- Verdict buttons --------------------------------------------------------------------- */
+
+.verdicts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  border: none;
+  min-width: 0;
+}
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 5rem;
+  padding: var(--space-2);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop-lg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1.05;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    opacity var(--motion-fast);
+}
+
+.verdictIcon {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.verdictGlyph {
+  stroke-width: 3;
+}
+
+.verdict:not(:disabled):hover {
+  transform: translateY(-2px);
+}
+
+.verdict:not(:disabled):active {
+  transform: translateY(5px);
+  box-shadow: var(--pop-pressed);
+}
+
+.verdict:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  box-shadow: none;
+}
+
+.publish {
+  background: var(--green);
+}
+
+.publishWithContext {
+  background: var(--orange);
+}
+
+.reject {
+  background: var(--red);
+}
+
+/* --- Result view -------------------------------------------------------------------------- */
+
+.result {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.outcome {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.outcomeText {
+  display: grid;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+
+.outcomeTitle {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+}
+
+.good {
+  color: var(--green-dark);
+}
+
+.bad {
+  color: var(--red-dark);
+}
+
+.outcomeStory {
+  font-size: var(--text-md);
+  color: var(--text-soft);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.verdictChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+  padding: var(--space-1) var(--space-3);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+}
+
+.deltas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.points {
+  background: var(--yellow);
+  font-size: var(--text-xl);
+}
+
+.missed {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+}
+
+.missedTitle {
+  font-size: var(--text-lg);
+  color: var(--red-dark);
+}
+
+.missed ul {
   display: grid;
   gap: var(--space-2);
   margin: 0;
@@ -47,243 +375,138 @@
   list-style: none;
 }
 
-/* One stamped slip per station: the impression on the left, the typed finding beside it. */
-.stampSlip {
-  position: relative;
-  display: grid;
-  grid-template-columns: 8rem 1fr;
+.missed li {
+  display: flex;
   align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  min-height: var(--touch-target);
-  padding: var(--space-2) var(--space-3);
-  background: var(--paper);
-  border: var(--rule-thin);
-  border-radius: var(--radius-paper);
-  box-shadow: var(--shadow-paper);
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: transform var(--motion-fast) var(--ease-out);
-}
-
-.stampSlip > svg {
-  justify-self: center;
-}
-
-.stampSlip:active {
-  transform: translateY(2px);
-}
-
-.stampText {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
+  gap: var(--space-2);
+  font-size: var(--text-md);
   line-height: var(--leading-snug);
 }
 
-/* Chosen as the justification: thick frame, pulled out a little, with a manila tab label. */
-.chosen {
-  border: var(--rule-thick);
-  padding: calc(var(--space-2) - 2px) calc(var(--space-3) - 2px);
-  transform: translateX(-6px);
-  box-shadow: var(--shadow-lifted);
+.missed .stampIcon {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
-.justifyTab {
-  position: absolute;
-  top: -0.85rem;
-  right: var(--space-4);
-  padding: 0 var(--space-2);
-  background: var(--manila);
-  border: 1.5px solid var(--manila-dark);
-  border-bottom: none;
-  font-family: var(--font-grotesk);
-  font-weight: 700;
-  font-stretch: 75%;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
-/* Keyboard / gamepad focus: a blue pencil ring, drawn outside the paper. */
-.focused {
-  outline: 3px solid var(--copy-blue);
-  outline-offset: 3px;
-}
-
-.verdicts {
-  grid-area: verdicts;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-3);
-  margin: 0;
-  padding: var(--space-3) 0 0;
-  border: none;
-  border-top: var(--rule-double);
-  min-width: 0;
-}
-
-/* Verdict stamp handles: ink frame in the verdict's colour plus its own icon shape. */
-.verdict {
+.next {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 3.25rem;
-  padding: var(--space-2) var(--space-3);
-  background: var(--paper);
-  border: 4px solid currentColor;
-  outline: 1.5px solid currentColor;
-  outline-offset: -9px;
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-stretch: 62%;
-  font-size: var(--text-lg);
-  line-height: 1;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transform: rotate(-1.5deg);
-  transition: transform var(--motion-fast) var(--ease-out);
+  justify-content: flex-end;
 }
 
-.verdict:nth-child(3) {
-  transform: rotate(1deg);
+@keyframes pop {
+  from {
+    transform: scale(0.4);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
-.verdict:not(:disabled):active {
-  transform: rotate(-1.5deg) scale(0.94);
+:global(:root[data-reduced-motion="true"]) .tick {
+  animation: none;
 }
 
-.verdict:disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
+@media (prefers-reduced-motion: reduce) {
+  .tick {
+    animation: none;
+  }
 }
 
-.verdict.focused {
-  outline: 3px solid var(--copy-blue);
-  outline-offset: 3px;
-}
-
-.publish {
-  color: var(--copy-blue);
-}
-
-.reject {
-  color: var(--editorial-red);
-}
-
-.publishWithContext {
-  color: var(--ochre);
-}
-
-/* The verdict stamp slammed across the case sheet. */
-.verdictStamp {
-  position: absolute;
-  right: var(--space-4);
-  bottom: var(--space-3);
-  pointer-events: none;
-}
-
-.outcome {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-2);
-  font-family: var(--font-serif);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  line-height: var(--leading-tight);
-}
-
-.good {
-  color: var(--copy-blue);
-}
-
-.bad {
-  color: var(--editorial-red);
-}
-
-.deltas {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1) var(--space-4);
-  margin: 0 0 var(--space-3);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.points {
-  font-weight: 700;
-  font-size: var(--text-lg);
-}
-
-.missed {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: var(--space-2) var(--space-3);
-  list-style: none;
-  background: var(--paper);
-  border: var(--rule-thin);
-  border-left: 3px solid var(--editorial-red);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-}
-
-/* Phones: case sheet and evidence side by side, verdicts as a strip along the bottom. */
+/* Phones: card and evidence side by side, verdicts as a strip along the bottom. */
 @media (max-height: 500px), (max-width: 760px) {
   .layout {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     grid-template-areas:
       "file evidence"
-      "verdicts verdicts";
+      "decide decide";
     gap: var(--space-2) var(--space-3);
   }
 
-  .stampSlip {
-    grid-template-columns: 4.5rem 1fr;
-    gap: var(--space-2);
-    padding: var(--space-1) var(--space-2);
+  .layoutEmpty {
+    grid-template-areas: "file evidence";
   }
 
-  .chosen {
-    padding: calc(var(--space-1) - 2px) calc(var(--space-2) - 2px);
-  }
-
-  .stampSlip > svg {
-    max-width: 4.5rem;
-    height: auto;
-  }
-
-  .stampText {
-    font-size: var(--text-xs);
-  }
-
-  .verdicts {
-    position: sticky;
-    bottom: 0;
-    gap: var(--space-2);
-    padding: var(--space-2) 0 0;
-    background: var(--manila);
-  }
-
-  .verdict {
-    min-height: var(--touch-target);
+  .step {
     font-size: var(--text-md);
   }
 
-  .verdictStamp > svg {
-    width: 150px;
-    height: auto;
+  .stepNo {
+    width: 2rem;
+    height: 2rem;
   }
 
-  .outcome {
+  .stamps {
+    gap: var(--space-2);
+  }
+
+  .stamp {
+    min-height: var(--touch-target);
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  }
+
+  .stampIcon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .stampText {
+    font-size: var(--text-sm);
+  }
+
+  .decide {
+    bottom: calc(-1 * var(--space-2));
+    margin: 0 calc(-1 * var(--space-3)) calc(-1 * var(--space-2));
+    padding: var(--space-2) var(--space-3);
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-3);
+    padding-top: var(--space-2);
+    background: var(--surface);
+  }
+
+  .verdicts {
+    gap: var(--space-2);
+    padding-bottom: var(--space-1);
+  }
+
+  .verdict {
+    flex-direction: row;
+    min-height: 3.5rem;
+    gap: var(--space-2);
+    font-size: var(--text-md);
+  }
+
+  .verdictIcon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .result {
+    gap: var(--space-2);
+  }
+
+  .outcomeTitle {
+    font-size: var(--text-xl);
+  }
+
+  .points {
     font-size: var(--text-lg);
+  }
+
+  .missed {
+    padding: var(--space-2);
+  }
+
+  .missed li {
+    font-size: var(--text-sm);
+  }
+
+  .outcomeStory {
+    display: none;
+  }
+
+  .missedTitle {
+    font-size: var(--text-md);
   }
 }
