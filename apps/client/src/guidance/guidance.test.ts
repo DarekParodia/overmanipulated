@@ -60,6 +60,15 @@ describe('nextStep', () => {
     expect(nextStep(input({})).kind).toBe('wait');
   });
 
+  test('a folder dropped on the floor still needs picking up', () => {
+    const step = nextStep(input({ folders: [folder('f', { kind: 'floor', x: 3, y: 3 })] }));
+    expect(step).toEqual({
+      kind: 'pickup',
+      text: pl.guidance.hint.pickupWaiting,
+      targetFixtureIds: [],
+    });
+  });
+
   test('empty hands: the conveyor folder with the earliest deadline', () => {
     const step = nextStep(
       input({
@@ -244,6 +253,8 @@ describe('tutorial', () => {
     expect(advanceTutorial(1, 'stampApplied')).toBe(4);
     expect(advanceTutorial(3, 'pickedUp')).toBe(3);
     expect(advanceTutorial(4, 'verdict')).toBe(TUTORIAL_DONE);
+    expect(advanceTutorial(1, 'teamVerdict')).toBe(1);
+    expect(advanceTutorial(4, 'teamVerdict')).toBe(TUTORIAL_DONE);
   });
 
   test('events count only for the local player, except the verdict', () => {
@@ -251,7 +262,8 @@ describe('tutorial', () => {
     expect(signalForEvent(pickup, ME)).toBe('pickedUp');
     expect(signalForEvent(pickup, 'p2')).toBeUndefined();
     const verdict = { kind: 'verdictResult', playerId: 'p2' } as GameplayEvent;
-    expect(signalForEvent(verdict, ME)).toBe('verdict');
+    expect(signalForEvent(verdict, 'p2')).toBe('verdict');
+    expect(signalForEvent(verdict, ME)).toBe('teamVerdict');
     const spawned = { kind: 'folderSpawned', folderId: 'f', fixtureId: 'c' } as GameplayEvent;
     expect(signalForEvent(spawned, ME)).toBeUndefined();
   });

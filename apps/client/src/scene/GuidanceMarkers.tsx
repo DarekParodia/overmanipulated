@@ -15,7 +15,8 @@ import { colors } from '../ui/tokens.ts';
 import { surfaceHeight } from './entities.ts';
 import { cone, cylinder, merge, mergePainted, ring, useGeometries } from './geometry.ts';
 
-const POOL = 4;
+/** Enough for every station of the largest level (six kinds). */
+const POOL = 6;
 /** Arrow centre height above the fixture surface: the tip stays clear of the station dials. */
 const ARROW_LIFT = 1.35;
 const BOUNCE_HEIGHT = 0.16;

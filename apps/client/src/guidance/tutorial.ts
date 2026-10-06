@@ -9,7 +9,14 @@ export type TutorialStepId = (typeof TUTORIAL_STEPS)[number];
 export const TUTORIAL_DONE = TUTORIAL_STEPS.length;
 
 /** Things that complete a step. */
-export type TutorialSignal = 'moved' | 'pickedUp' | 'minigameStarted' | 'stampApplied' | 'verdict';
+export type TutorialSignal =
+  | 'moved'
+  | 'pickedUp'
+  | 'minigameStarted'
+  | 'stampApplied'
+  | 'verdict'
+  /** A teammate's verdict: finishes only the last step, never skips the earlier ones. */
+  | 'teamVerdict';
 
 const COMPLETES: Record<TutorialSignal, TutorialStepId> = {
   moved: 'move',
@@ -17,6 +24,7 @@ const COMPLETES: Record<TutorialSignal, TutorialStepId> = {
   minigameStarted: 'work',
   stampApplied: 'minigame',
   verdict: 'verdict',
+  teamVerdict: 'verdict',
 };
 
 /**
@@ -24,6 +32,9 @@ const COMPLETES: Record<TutorialSignal, TutorialStepId> = {
  * already knows the game can skip ahead); it never goes back.
  */
 export function advanceTutorial(stepIndex: number, signal: TutorialSignal): number {
+  if (signal === 'teamVerdict' && stepIndex < TUTORIAL_STEPS.indexOf('verdict')) {
+    return stepIndex;
+  }
   const completed = TUTORIAL_STEPS.indexOf(COMPLETES[signal]);
   return Math.max(stepIndex, completed + 1);
 }
@@ -42,8 +53,8 @@ export function signalForEvent(
     case 'stampApplied':
       return mine ? 'stampApplied' : undefined;
     case 'verdictResult':
-      // A verdict is a team outcome: whoever sends it, the whole round trip has been shown.
-      return 'verdict';
+      // A verdict is a team outcome, but a teammate's one only counts on the last step.
+      return mine ? 'verdict' : 'teamVerdict';
     default:
       return undefined;
   }

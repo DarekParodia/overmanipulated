@@ -254,6 +254,10 @@ export function nextStep(input: NextStepInput): NextStep {
   if (elsewhere) {
     return step('pickup', guidance.hint.pickupWaiting, [fixtureOf(elsewhere)]);
   }
+  // Dropped on the floor: no fixture to mark, but the folder still needs someone.
+  if (input.folders.some((f) => f.location.kind === 'floor')) {
+    return step('pickup', guidance.hint.pickupWaiting);
+  }
   return step('wait', guidance.hint.wait);
 }
 

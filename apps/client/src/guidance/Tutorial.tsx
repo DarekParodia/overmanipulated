@@ -1,7 +1,8 @@
 // First-game tutorial card: one big friendly step at a time, driven by what the player really
 // does (tutorial.ts). The wording and the drawn controls follow the input device in use. The
 // card never takes input except for its skip button, so the game keeps running underneath.
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
+import { emitCue } from '../fx/feedback.ts';
 import { type InputDevice, useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
@@ -126,6 +127,15 @@ export function Tutorial({ step }: { step: number }) {
   const close = useTutorial((s) => s.close);
   const done = step >= TUTORIAL_DONE;
 
+  // A soft chime for each step the player completes (the card itself pops in).
+  const shownStep = useRef(step);
+  useEffect(() => {
+    if (step > shownStep.current) {
+      emitCue('ui.copy');
+    }
+    shownStep.current = step;
+  }, [step]);
+
   useEffect(() => {
     if (!done) {
       return;
@@ -172,7 +182,7 @@ export function Tutorial({ step }: { step: number }) {
         </p>
         {!done && (
           <div className={styles.skip}>
-            <Button variant="ghost" onClick={skip} tabIndex={-1}>
+            <Button variant="ghost" onClick={skip}>
               {pl.guidance.tutorial.skip}
             </Button>
           </div>

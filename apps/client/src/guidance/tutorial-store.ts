@@ -23,9 +23,12 @@ export function tutorialSeen(): boolean {
 export const useTutorial = create<TutorialStore>((set, get) => ({
   step: null,
   start() {
-    if (get().step === null && !tutorialSeen()) {
-      set({ step: 0 });
+    const step = get().step;
+    if (step !== null && step < TUTORIAL_DONE) {
+      return;
     }
+    // A closing card left over from a level that ended before it was hidden goes away too.
+    set({ step: tutorialSeen() ? null : 0 });
   },
   signal(signal) {
     const step = get().step;

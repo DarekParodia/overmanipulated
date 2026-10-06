@@ -35,6 +35,8 @@ export function liveNextStep(): NextStep {
 export function useGuidanceDriver(): void {
   useEffect(() => {
     useTutorial.getState().start();
+    // Forget the previous level's position, so the "moved" step needs a real first step.
+    renderState.local = null;
     let origin: { x: number; y: number } | null = null;
     const timer = setInterval(() => {
       useGuidance.getState().setStep(liveNextStep());
