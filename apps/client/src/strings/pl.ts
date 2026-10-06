@@ -2,6 +2,7 @@
 // a gruff, warm editor-in-chief — short, concrete, newsroom vocabulary, no marketing voice.
 import type {
   ErrorCode,
+  FolderOutcome,
   PingKind,
   Priority,
   Role,
@@ -159,9 +160,57 @@ export const pl = {
   /** In-game HUD and level-end plate (S2-09). */
   hud: {},
   /** Station overlay and work progress (S2-03). */
-  station: {},
+  station: {
+    formNo: (n: number) => `Karta stanowiska nr ${n}`,
+    folder: 'Teczka',
+    timeLeft: 'Zostało',
+    leave: 'Odejdź',
+    leaveHint: {
+      keyboard: 'Esc – odejdź',
+      gamepad: 'B – odejdź',
+      touch: '',
+    } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
+    holdWork: {
+      keyboard: 'Trzymaj Spację',
+      gamepad: 'Trzymaj X',
+      touch: 'Trzymaj „Pracuj”',
+    } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
+    working: 'Sprawdzamy',
+    failed: 'Pudło. Stanowisko stoi',
+    wait: (s: number) => `jeszcze ${s} s`,
+    noFolder: 'Na stanowisku nie ma teczki.',
+    unknownStory: 'Tej teczki nie ma w kartotece.',
+  },
   /** Editorial desk and verdict sheet (S2-07). */
-  desk: {},
+  desk: {
+    kicker: 'Stół redakcyjny',
+    caseNo: (id: string) => `Sprawa ${id}`,
+    type: 'Rodzaj',
+    priority: 'Priorytet',
+    source: 'Nadesłał',
+    deadline: 'Termin',
+    overdue: 'po terminie',
+    evidence: 'Pieczątki w teczce',
+    justification: 'uzasadnienie',
+    pickStamp: 'Wskaż pieczątkę, która uzasadnia werdykt.',
+    pickVerdict: 'Teraz werdykt.',
+    noStamps: 'Pusta teczka. Bez pieczątki nie ma werdyktu – zanieś ją najpierw na stanowisko.',
+    verdictsLabel: 'Werdykt',
+    close: 'Odłóż teczkę',
+    sending: 'Idzie do składu…',
+    next: 'Dalej',
+    outcomes: {
+      correct: 'Trafiony werdykt',
+      wrongJustification: 'Werdykt dobry, uzasadnienie chybione',
+      wrong: 'Zły werdykt',
+      expired: 'Teczka przepadła',
+    } satisfies Record<FolderOutcome, string>,
+    points: (n: string) => `${n} pkt`,
+    credibility: (n: string) => `wiarygodność ${n}`,
+    speedBonus: 'premia za tempo',
+    missed: 'Tego zabrakło w teczce:',
+    unknownStory: 'Tej teczki nie ma w kartotece.',
+  },
   /** Minigames, one sub-namespace each (S2-04..S2-06). */
   minigames: {
     imageSearch: {},

@@ -32,7 +32,11 @@ export const NAV_KEYS: Readonly<Record<string, NavIntent>> = {
 const PAD_EAST = 1;
 const STICK_THRESHOLD = 0.6;
 
-type Listener = (intent: NavIntent) => void;
+/**
+ * Returning `false` passes the intent on to the next-older subscriber, so a frame around a
+ * minigame can handle `back` and leave everything else to the minigame inside it.
+ */
+type Listener = (intent: NavIntent) => unknown;
 const listeners: Listener[] = [];
 let captureCount = 0;
 let pollHandle: number | null = null;
@@ -43,8 +47,23 @@ export function isInputCaptured(): boolean {
 }
 
 function dispatch(intent: NavIntent): void {
-  // Last subscriber wins: the topmost overlay handles navigation.
-  listeners.at(-1)?.(intent);
+  // Last subscriber wins: the topmost overlay handles navigation unless it passes (`false`).
+  for (let i = listeners.length - 1; i >= 0; i--) {
+    if (listeners[i]?.(intent) !== false) {
+      return;
+    }
+  }
+}
+
+/** Subscribes a navigation listener (newest first); returns the unsubscribe function. */
+export function subscribeNav(listener: Listener): () => void {
+  listeners.push(listener);
+  return () => {
+    const index = listeners.indexOf(listener);
+    if (index >= 0) {
+      listeners.splice(index, 1);
+    }
+  };
 }
 
 /** Called by the keyboard handler while captured; returns true if the key was used. */
@@ -126,18 +145,14 @@ export function useInputCapture(active: boolean): void {
   useEffect(() => (active ? captureInput() : undefined), [active]);
 }
 
-/** Subscribes to navigation intents while mounted. The newest subscriber receives them. */
-export function useNavIntent(onIntent: (intent: NavIntent) => void): void {
+/**
+ * Subscribes to navigation intents while mounted. The newest subscriber receives them; a
+ * handler that returns `false` passes the intent on to the previous one. React runs a child's
+ * effects before its parent's, so a parent overlay mounted together with its minigame gets
+ * intents first.
+ */
+export function useNavIntent(onIntent: (intent: NavIntent) => unknown): void {
   const handler = useRef(onIntent);
   handler.current = onIntent;
-  useEffect(() => {
-    const listener: Listener = (intent) => handler.current(intent);
-    listeners.push(listener);
-    return () => {
-      const index = listeners.indexOf(listener);
-      if (index >= 0) {
-        listeners.splice(index, 1);
-      }
-    };
-  }, []);
+  useEffect(() => subscribeNav((intent) => handler.current(intent)), []);
 }

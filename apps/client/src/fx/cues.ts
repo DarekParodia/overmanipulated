@@ -78,6 +78,20 @@ export const cues = {
     haptic: 'thud',
     animation: 'stampSlam',
   },
+  // --- Station overlay and desk sheet (S2-03, S2-07). Placeholder sounds until the sound pass.
+  'station.open': { severity: 1, sound: { ids: ['copy'], bus: 'ui', volume: 0.6 }, haptic: 'tick' },
+  'minigame.success': {
+    severity: 1,
+    sound: { ids: ['click'], bus: 'sfx', rateJitter: 0.04 },
+    haptic: 'tick',
+  },
+  'minigame.fail': { severity: 1, sound: { ids: ['back'], bus: 'sfx' }, haptic: 'buzz' },
+  'desk.open': { severity: 1, sound: { ids: ['copy'], bus: 'ui', volume: 0.7 }, haptic: 'tick' },
+  'desk.justify': {
+    severity: 1,
+    sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

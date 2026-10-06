@@ -1,0 +1,133 @@
+/* A sheet of paper pushed in from the right: half the screen on desktop, the scene stays visible
+   on the left. Hard short shadow, square corners, thick rule on the leading edge. */
+.frame {
+  position: absolute;
+  z-index: 30;
+  /* Below the screen tools (fullscreen, settings, leave), which stay reachable. */
+  top: max(calc(var(--touch-target) + var(--space-5)), env(safe-area-inset-top));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  right: max(var(--space-4), env(safe-area-inset-right));
+  width: min(50vw, 46rem);
+  display: flex;
+  flex-direction: column;
+  border-left: var(--rule-thick);
+  box-shadow: var(--shadow-lifted);
+  transform: rotate(-0.4deg);
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  animation: slide-in var(--motion-base) var(--ease-settle) both;
+}
+
+.paper {
+  background: var(--paper);
+}
+
+/* The desk: the open manila folder itself is the sheet. */
+.manila {
+  background: var(--manila);
+  border-left-color: var(--manila-dark);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  border-bottom: var(--rule-double);
+}
+
+.kicker {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.formNo {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hint {
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px) rotate(1deg);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-0.4deg);
+  }
+}
+
+/* Phones (landscape down to 640×360) and narrow windows: full-width sheet from the bottom,
+   covering the touch controls (input is captured while it is open) but never its own close
+   button. */
+@media (max-height: 500px), (max-width: 760px) {
+  .frame {
+    top: env(safe-area-inset-top);
+    bottom: 0;
+    left: env(safe-area-inset-left);
+    right: env(safe-area-inset-right);
+    width: auto;
+    border-left: none;
+    border-top: var(--rule-thick);
+    transform: none;
+    animation-name: rise;
+  }
+
+  .header {
+    padding: var(--space-1) max(var(--space-3), env(safe-area-inset-right)) var(--space-1)
+      var(--space-3);
+  }
+
+  .body {
+    padding: var(--space-2) var(--space-3) max(var(--space-2), env(safe-area-inset-bottom));
+  }
+
+  .hint {
+    display: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(30%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .frame {
+    animation: none;
+  }
+}
+
+:global(:root[data-reduced-motion="true"]) .frame {
+  animation: none;
+}

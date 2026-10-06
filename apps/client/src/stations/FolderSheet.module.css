@@ -1,0 +1,90 @@
+/* A typed case sheet clipped into the manila folder: slightly off-square, hard edge shadow. */
+.sheet {
+  position: relative;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  background: var(--paper);
+  border: var(--rule-thin);
+  box-shadow: var(--shadow-paper);
+  transform: rotate(0.3deg);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
+  margin: 0 0 var(--space-2);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--rule-thin);
+}
+
+.meta dd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-family: var(--font-typewriter);
+  font-weight: 700;
+  font-size: var(--text-sm);
+}
+
+/* Priority: the word carries the meaning; urgent also gets red ink and an underline rule. */
+.urgent {
+  color: var(--editorial-red);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.important {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+.deadline {
+  font-variant-numeric: tabular-nums;
+}
+
+.warning {
+  color: var(--editorial-red);
+}
+
+.warning::after {
+  content: "!";
+}
+
+.headline {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+.body {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-serif);
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+}
+
+.source {
+  margin: 0;
+  font-family: var(--font-typewriter);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+@media (max-height: 500px), (max-width: 760px) {
+  .sheet {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .headline {
+    font-size: var(--text-lg);
+  }
+
+  .body {
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+}
