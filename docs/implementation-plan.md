@@ -10,6 +10,16 @@ Status markers: `[ ]` todo · `[~]` in progress (claimed) · `[x]` done.
 Task format: **ID — title** · *Depends on* · *Scope* · *Done when*.
 Tasks within a stage can run in parallel once their dependencies are done.
 
+### Cross-cutting requirements (apply to every stage)
+
+- **Desktop and mobile are both first-class.** Every gameplay feature, minigame and screen must
+  work with keyboard, gamepad **and touch**, on desktop (≥ 1280×720) and on phones/tablets in
+  landscape (≥ 640×360 CSS px). See [`../agents/platforms.md`](../agents/platforms.md).
+- **Game feel ships with the feature, not later.** A task that adds a game action also adds its
+  animation, sound and particle/visual feedback (placeholder assets are fine) and registers it in
+  the feedback catalogue. See [`../agents/game-feel.md`](../agents/game-feel.md).
+- Reduced-motion / no-flash and mute settings are respected by every effect.
+
 ---
 
 ## Stage 0 — Project init
@@ -27,8 +37,9 @@ Goal: empty but fully wired monorepo, agent rules, CI.
 
 ## Stage 1 — Foundation
 
-Goal: 2–4 players open a deployed URL, join a room by a 4-letter code and see each other move
-around a grey newsroom in sync.
+Goal: 2–4 players on desktop **or phone** open the game, join a room by a 4-letter code and see
+each other move around a grey newsroom in sync — already with basic animation, sound and particle
+feedback.
 
 - [ ] **S1-01 — Constants and protocol skeleton.**
   *Depends on:* —
@@ -68,8 +79,10 @@ around a grey newsroom in sync.
   *Depends on:* S1-01
   *Scope:* React app root, screen router in Zustand (`mainMenu`, `lobby`, `game`), strings module
   `src/strings/pl.ts`, main menu (Graj / Dołącz kodem), nickname entry, lobby list of players with
-  room code, newspaper-style base CSS tokens.
-  *Done when:* can create/join a room against the dev server and see the player list update.
+  room code, newspaper-style base CSS tokens; responsive layout (portrait and landscape menus,
+  safe-area insets, touch-sized hit targets ≥ 44 px); animated screen transitions.
+  *Done when:* can create/join a room against the dev server and see the player list update, on a
+  desktop browser and on a phone-sized viewport.
 
 - [ ] **S1-06 — Network client.**
   *Depends on:* S1-01, S1-05
@@ -84,11 +97,15 @@ around a grey newsroom in sync.
   stub (shadows on/off, DPR).
   *Done when:* scene renders the shared layout; draw calls < 50 in the greybox.
 
-- [ ] **S1-08 — Input.**
+- [ ] **S1-08 — Input (keyboard, gamepad, touch).**
   *Depends on:* S1-05
-  *Scope:* `input/` keyboard (WASD/arrows, E, Space hold, Q) and Gamepad API mapping into one
-  `InputState`; sent to server at tick rate with sequence numbers.
-  *Done when:* pure mapping functions tested; gamepad works in Chrome manually.
+  *Scope:* `input/` keyboard (WASD/arrows, E, Space hold, Q), Gamepad API and **touch controls**
+  (floating virtual joystick on the left half, action buttons Podnieś / Pracuj (hold) / Sygnał on
+  the right, sized for thumbs, semi-transparent) mapped into one `InputState`; active input device
+  auto-detected from the last used device, on-screen prompts switch accordingly (key caps / pad
+  buttons / touch icons); sent to server at tick rate with sequence numbers.
+  *Done when:* pure mapping functions tested (incl. joystick dead zone and normalisation); gamepad
+  works in Chrome; touch controls work on a real Android phone and iOS Safari.
 
 - [ ] **S1-09 — Prediction and interpolation.**
   *Depends on:* S1-04, S1-06, S1-07, S1-08
@@ -107,10 +124,12 @@ around a grey newsroom in sync.
   Caddy on 443.
 
 - [ ] **S1-11 — Multiplayer e2e test.**
-  *Depends on:* S1-09
-  *Scope:* Playwright config, test opening 2–3 browser contexts: create room, join by code, move
-  one player, assert others see the move; CI job.
-  *Done when:* e2e passes in CI.
+  *Depends on:* S1-09, S1-14
+  *Scope:* Playwright config with a desktop project and a mobile project (device emulation with
+  touch, landscape); test opening 2–3 browser contexts — at least one mobile: create room, join by
+  code, move one player (keyboard on desktop, joystick drag on mobile), assert others see the
+  move; CI job.
+  *Done when:* e2e passes in CI for both projects.
 
 - [ ] **S1-12 — Persistence wiring (Drizzle + SQLite).**
   *Depends on:* S1-03
@@ -131,7 +150,47 @@ around a grey newsroom in sync.
   *Done when:* client calls `/health` through the typed client; a type error appears if a route
   changes shape.
 
-**Stage 1 exit:** deployed URL, 4 players move in sync, CI green including e2e.
+- [ ] **S1-14 — Mobile shell.**
+  *Depends on:* S1-05, S1-07
+  *Scope:* viewport meta (no pinch zoom), disable page scroll/pull-to-refresh/long-press menus
+  and text selection on the game surface; "rotate your device" prompt in portrait during gameplay;
+  Fullscreen API button; Screen Wake Lock while in a level; `visibilitychange` handling (pause
+  local effects, fast reconnect on return); DPR cap and automatic low-quality preset on mobile
+  GPUs; web app manifest + icons so it can be added to the home screen (no offline mode).
+  *Done when:* a full join-and-move session works on a mid-range Android phone (Chrome) and an
+  iPhone (Safari) without accidental zoom/scroll, at ≥ 30 FPS (target 60).
+
+- [ ] **S1-15 — Feedback (FX) framework.**
+  *Depends on:* S1-07
+  *Scope:* `apps/client/src/fx/`:
+  - `feedback.ts` — client-side event bus; game/server events and local actions map to feedback
+    *cues* defined in one catalogue (`cues.ts`), see [`../agents/game-feel.md`](../agents/game-feel.md);
+  - `audio/` — Howler manager: buses (music, sfx, ui) with volumes, audio sprites, mobile/iOS
+    autoplay unlock on first interaction, stereo pan by on-screen position, mute on hidden tab;
+  - `particles/` — pooled, instanced particle system (one draw call per emitter material,
+    global particle cap from quality preset), emitter presets defined as data;
+  - `animation/` — tween/easing helpers and spring utility for UI and 3D (no allocation per
+    frame), procedural character animation for the greybox capsules (walk bob, lean into
+    movement, squash & stretch on start/stop, idle breathing);
+  - `camera/` — camera shake with trauma decay; `haptics.ts` — Vibration API on Android / gamepad
+    rumble where available;
+  - settings: master/music/sfx volumes, reduced motion (no shake, fewer particles, no
+    squash), no-flash, haptics on/off — persisted in localStorage.
+  First cues: player joined (puff + chime), footsteps dust + soft steps, menu click/hover, room
+  code copied. CC0 placeholder sounds (e.g. Kenney audio packs) credited in `CREDITS.md`.
+  *Done when:* cues fire from the event bus, unit tests for cue mapping, tweens and particle pool;
+  reduced-motion and mute verified; particle and audio cost visible in the dev perf overlay.
+
+- [ ] **S1-16 — Dev perf overlay.**
+  *Depends on:* S1-07
+  *Scope:* toggleable overlay (FPS, frame time, draw calls, triangles, particles alive, ping,
+  snapshot buffer depth) via `r3f-perf`-style stats built on `renderer.info`; hidden in production
+  unless `?debug`.
+  *Done when:* usable on desktop and phone to check budgets.
+
+**Stage 1 exit:** 4 players (mixed desktop and mobile) move in sync with animated characters,
+footstep dust and sound; `docker compose up` serves it over https; CI green including desktop and
+mobile e2e.
 
 ---
 
@@ -160,24 +219,29 @@ the desk, score and credibility update, level ends with stars.
   *Scope:* station occupancy, hold-Space work with progress, per-station duration (3–8 s) from
   constants, role speed bonus, stamp written to folder from story data, protocol messages for
   starting a station and submitting a minigame result (record in Decision log as an extension of
-  the design-doc protocol); generic 2D `StationOverlay` (half screen, scene still alive).
+  the design-doc protocol); generic 2D `StationOverlay` (half screen on desktop, bottom sheet /
+  full width on phones, scene still alive); work loop feedback (typing/keyboard loop sound,
+  progress ring, character "working" pose).
   *Done when:* a folder carried to a station and worked on gets the correct stamp; role bonus
-  tested.
+  tested; overlay usable by touch.
 
 - [ ] **S2-04 — Minigame: Image search (`imageSearch`).**
   *Depends on:* S2-03
   *Scope:* match image fragments to search results; success → stamp, failure → time lost.
-  *Done when:* playable in the overlay with keyboard and gamepad.
+  *Done when:* playable in the overlay with keyboard, gamepad and touch (drag/tap); success and
+  failure cues wired.
 
 - [ ] **S2-05 — Minigame: Archive (`archive`).**
   *Depends on:* S2-03
   *Scope:* scroll a timeline and stop on the right date.
-  *Done when:* playable with keyboard and gamepad.
+  *Done when:* playable with keyboard, gamepad and touch (swipe/drag/tap); success and failure
+  cues wired.
 
 - [ ] **S2-06 — Minigame: Source registry (`sourceRegistry`).**
   *Depends on:* S2-03
   *Scope:* compare a profile against warning signs (account age, verification, name mismatch).
-  *Done when:* playable with keyboard and gamepad.
+  *Done when:* playable with keyboard, gamepad and touch (swipe/drag/tap); success and failure
+  cues wired.
 
 - [ ] **S2-07 — Editorial desk and verdicts.**
   *Depends on:* S2-03
@@ -196,8 +260,28 @@ the desk, score and credibility update, level ends with stars.
 - [ ] **S2-09 — HUD.**
   *Depends on:* S2-02, S2-08
   *Scope:* top queue of folders with timers and priority, credibility meter, score, level timer,
-  instant verdict feedback toast.
-  *Done when:* readable at 1366×768; type distinguishable by icon, not only colour.
+  instant verdict feedback toast; animated counters (score roll-up, credibility bar drain with
+  lag-behind ghost bar), urgency pulse on folders near deadline (respects no-flash); compact
+  layout for phones that keeps the touch controls clear.
+  *Done when:* readable at 1366×768 and at 640×360; type distinguishable by icon, not only colour.
+
+- [ ] **S2-12 — Core gameplay feedback.**
+  *Depends on:* S1-15, S2-02, S2-03, S2-07, S2-08
+  *Scope:* catalogue entries with animation + sound + particles (+ haptics on mobile) for:
+  folder arrives on conveyor (bell, slide-in), pick up / put down (paper rustle, hop), carry pose,
+  stamp applied (hit-stop ~60 ms, slam animation, ink splat + paper bits, thud, small shake),
+  correct verdict (confetti/paper burst by verdict colour, chime, score pop text), published fake
+  (red ink splash, alarm sting, strong shake, credibility bar crack), rejected truth, folder
+  expired (folder burns/crumples to dust, buzzer), deadline warning (ticking that speeds up),
+  level timer last 30 s (music tempo up), level win/lose stingers.
+  *Done when:* every listed event has its cue; reduced motion tested; particle budget held during
+  a busy level.
+
+- [ ] **S2-13 — Music v1.**
+  *Depends on:* S1-15
+  *Scope:* one looping newsroom track with two intensity layers (calm / pressure) cross-faded by
+  remaining time and number of urgent folders; menu track.
+  *Done when:* layers switch smoothly; music bus volume respected.
 
 - [ ] **S2-10 — Lobby: roles, ready, level select.**
   *Depends on:* S1-05
@@ -210,7 +294,8 @@ the desk, score and credibility update, level ends with stars.
   *Scope:* quick signals ("Potrzebuję Archiwum!", "Fałszywka!", "Biorę to") shown above players.
   *Done when:* pings broadcast and display for ~2 s.
 
-**Stage 2 exit:** greybox level with 5+ test stories played start to finish by 3–4 people.
+**Stage 2 exit:** greybox level with 5+ test stories played start to finish by 3–4 people on a
+mix of laptops and phones, with full core feedback (animations, sounds, particles).
 
 ---
 
@@ -229,14 +314,24 @@ Goal: a polished vertical slice ready for the first playtest with students.
   ready.
 - [ ] **S3-04 — Level select / campaign map (minimal).** Levels with stars, locked/unlocked;
   progress stored per browser (localStorage, no accounts).
-- [ ] **S3-05 — First assets.** Kenney CC0 newsroom furniture and characters with role
-  accessories, folder models per type; `CREDITS.md`; stay within performance budget.
-- [ ] **S3-06 — Basic audio.** Howler: new-folder bell, stamp thud, low-time alarm, ambient
-  newsroom; autoplay unlock; volume setting.
-- [ ] **S3-07 — Playtest kit.** `docs/playtests/` with a session script, observation sheet and a
-  short student questionnaire; log results as new tasks/balance notes.
+- [ ] **S3-05 — First assets.** Kenney CC0 newsroom furniture and **rigged** characters with role
+  accessories, folder models per type; `CREDITS.md`; stay within the desktop and mobile budgets.
+- [ ] **S3-06 — Character animation v1.** Skeletal clips via `AnimationMixer` (idle, walk, run,
+  carry-walk, work-at-station, stamp, cheer, facepalm) with cross-fades driven by player state;
+  procedural layer kept (lean, squash); animation LOD (lower update rate for far/off-screen
+  characters on mobile).
+- [ ] **S3-07 — Ambient life.** Newsroom ambience (room tone, distant phones, printers),
+  idle props animation (ceiling fans, monitor flicker — respects no-flash, paper stacks wobble),
+  dust motes particles in light beams (desktop "high" preset only).
+- [ ] **S3-08 — Screen and UI animation pass.** Briefing intro (newspaper spin-in), debrief
+  stamps slamming onto story cards one by one, star reveal with sound, vote animation; all
+  skippable and reduced-motion aware.
+- [ ] **S3-09 — Playtest kit.** `docs/playtests/` with a session script, observation sheet and a
+  short student questionnaire; device checklist (school laptops, students' phones); log results
+  as new tasks/balance notes.
 
-**Stage 3 exit:** Level 1 playable end to end with debrief; first playtest held.
+**Stage 3 exit:** Level 1 playable end to end with debrief, animated characters, ambience and
+feedback on desktop and phones; first playtest held.
 
 ---
 
@@ -247,9 +342,13 @@ Goal: a polished vertical slice ready for the first playtest with students.
 - [ ] **S4-02 — AI scanner (`aiScanner`).** Probability readout with error margin; never decisive
   alone (enforced by content validation).
 - [ ] **S4-03 — Data library (`dataLibrary`).** Compare a number with the original table.
+  (S4-01…S4-03: keyboard, gamepad and touch; success/failure cues.)
 - [ ] **S4-04 — Managing editor ability.** Extend one folder's deadline once per level.
 - [ ] **S4-05 — Event framework + `viral`.** Event scheduling from level data; growing share
-  counter on a folder.
+  counter on a folder. Each event below ships with its own announce banner, sound and particles
+  (e.g. `viral`: floating share/heart icons and notification pings; `bossCall`: ringing red
+  phone, shaking desk; `botRaid`: swarm of identical folders with glitch effect; `outage`: sparks,
+  smoke and powered-down station; `correction`: siren + highlighted folder trail).
 - [ ] **S4-06 — `bossCall`.** Editor-in-chief demands instant publish; points only if true.
 - [ ] **S4-07 — `botRaid`.** Wave of near-identical folders; recognising one resolves all.
 - [ ] **S4-08 — `outage`.** A station is down for 20 s.
@@ -268,15 +367,26 @@ Goal: a polished vertical slice ready for the first playtest with students.
 ## Stage 5 — Presentation
 
 - [ ] **S5-01 — Final models and newsroom art pass** (low-poly, paper/wood palette, editorial red).
-- [ ] **S5-02 — Character animations** (walk, carry, work, stamp).
+- [ ] **S5-02 — Character animation polish** (role-specific idles and celebrations, emotes on
+  pings, hand IK on folders, footstep sync with sounds, blend tuning).
+- [ ] **S5-09 — VFX polish.** Final particle art (ink, paper, confetti, sparks, smoke, glitch),
+  stylised outlines/toon shading pass within budget, screen-space touches (vignette on low
+  credibility, subtle chromatic glitch on `botRaid`) — all disabled by reduced motion / low
+  quality.
+- [ ] **S5-10 — Haptics and controller polish.** Tuned vibration patterns per cue on Android and
+  gamepads; rumble intensity setting.
 - [ ] **S5-03 — Newspaper UI theme** (serif headings, sans body, stamps as the main visual motif).
 - [ ] **S5-04 — Technique encyclopedia** with unlockable cards and in-game examples.
 - [ ] **S5-05 — Accessibility** (colour-blind safe palette audit, text scaling, no-flash mode,
-  full gamepad navigation in menus).
-- [ ] **S5-06 — Settings screen** (quality, volume, accessibility, controls help).
-- [ ] **S5-07 — Loading and performance** (asset progress bar, ≤10 MB first load, 60 FPS on
-  UHD 620 verified, instancing audit).
-- [ ] **S5-08 — Full audio pass** (music, all SFX).
+  reduced motion, subtitles/visual equivalents for every audio-only cue, full gamepad and
+  touch navigation in menus, left-handed touch layout option).
+- [ ] **S5-06 — Settings screen** (quality preset, volumes per bus, accessibility, haptics,
+  touch control size/opacity, controls help per input device).
+- [ ] **S5-07 — Loading and performance** (asset progress bar, ≤10 MB first load, compressed
+  textures (KTX2) and Draco/meshopt models, 60 FPS on UHD 620 and the mobile reference devices,
+  adaptive quality that drops particles/shadows/DPR when frame time rises, instancing audit).
+- [ ] **S5-08 — Full audio pass** (per-level music, all SFX final, mix and loudness pass,
+  stingers for events, voice-less "gibberish" newsroom chatter).
 
 ---
 
@@ -287,7 +397,8 @@ Goal: a polished vertical slice ready for the first playtest with students.
 - [ ] **S6-03 — Contest materials** in `docs/contest/`: screenshots of every screen, labelled
   newsroom map, role cards, 3–4 sample folders with stamps, 60–90 s gameplay video, criteria
   mapping.
-- [ ] **S6-04 — Production deploy and smoke test** on a school-like network (port 443 only).
+- [ ] **S6-04 — Production deploy and smoke test** on a school-like network (port 443 only) with
+  the device matrix from [`../agents/platforms.md`](../agents/platforms.md).
 
 ---
 
@@ -310,6 +421,9 @@ Goal: a polished vertical slice ready for the first playtest with students.
 | 2026-10-06 | Commits go directly to `main` | Small team; CI and `bun run check` guard quality |
 | 2026-10-06 | Hono for HTTP/WebSocket routing on `Bun.serve` | Typed REST (`/api`) with zod-validator and the RPC client alongside the WebSocket; native Bun pub/sub kept for rooms |
 | 2026-10-06 | Drizzle ORM on SQLite (`bun:sqlite`) for persistence | No DB server to run in schools; typed schema and committed migrations; live game state stays in memory |
+| 2026-10-06 | Desktop and mobile (touch, landscape) are both first-class targets | Students play on school laptops and their own phones; touch controls and responsive overlays from stage 1 |
+| 2026-10-06 | Animation, sound and particles ship with each feature via a central feedback catalogue | Game feel is core to an Overcooked-like game; avoids a risky "polish at the end" stage |
+| 2026-10-06 | Particles, tweens and camera shake are in-house (instanced, pooled) on three.js; no extra FX library | Keeps bundle small and draw calls predictable on mobile GPUs |
 | 2026-10-06 | Package sources under `src/` (`packages/shared/src/sim`, …) | Uniform layout across packages; minor deviation from the design-doc tree |
 
 ---
@@ -325,3 +439,6 @@ Copied from the design doc; answers change scope and scheduling.
 - [ ] Same room (talking live) or remote play? Remote → voice chat or Discord?
 - [ ] Will the jury play alone? If yes, a 1–2 player mode with a helper bot moves out of backlog.
 - [ ] Hosting target (VPS provider, domain) for S1-10.
+- [ ] Mobile reference devices for performance testing (which phones do students actually have?).
+- [ ] Phones: same-room play next to laptops, or also fully mobile groups? (Affects how much text
+  the phone layout must fit.)

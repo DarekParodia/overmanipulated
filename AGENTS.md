@@ -8,7 +8,8 @@ files in [`agents/`](agents/) that are relevant to your task.
 **Redakcja na Ostatnią Chwilę** ("Last-Minute Newsroom") — a cooperative, browser-based, 3–4 player
 game about fact-checking under time pressure (think *Overcooked* meets a newsroom). Players carry
 story folders between verification stations, collect evidence stamps and decide: publish, reject,
-or publish with context. Target audience: Polish high-school students; one level lasts 6–8 minutes.
+or publish with context. Target audience: Polish high-school students; one level lasts 6–8 minutes. Runs on desktop
+and mobile browsers (touch, landscape) — mixed groups in one room are the normal case.
 
 - Source of truth for game design: [`docs/design-document.pl.md`](docs/design-document.pl.md) (Polish).
 - Staged plan and task list: [`docs/implementation-plan.md`](docs/implementation-plan.md).
@@ -17,7 +18,7 @@ or publish with context. Target audience: Polish high-school students; one level
 ## Repository layout
 
 ```
-apps/client/        Vite + React 19 + React Three Fiber (scene/, stations/, screens/, net/, input/, store/)
+apps/client/        Vite + React 19 + React Three Fiber (scene/, stations/, screens/, net/, input/, store/, fx/)
 apps/server/        Bun + Hono authoritative game server (routes/, rooms/, loop, db/ with Drizzle + SQLite)
 packages/shared/    Game logic shared by client and server: sim/, protocol, constants
 packages/content/   Content schemas, levels/*.json, stories/*.json, validate script
@@ -66,8 +67,15 @@ agents/             Working rules for agents
    (`bun:sqlite`) for persistence.** Live game state stays in memory and never goes to the DB.
    Migrations are generated and committed, never hand-edited after landing. See
    [`agents/architecture.md`](agents/architecture.md).
-10. **Respect the performance budget** (60 FPS on Intel UHD 620, ≤100k triangles, ~150 draw calls,
-   ≤10 MB first load). See [`agents/architecture.md`](agents/architecture.md).
+10. **Respect the performance budget** (60 FPS on Intel UHD 620 and mid-range phones, ≤100k
+   triangles, ~150 draw calls desktop / ~100 mobile, ≤10 MB first load). See
+   [`agents/architecture.md`](agents/architecture.md).
+11. **Desktop and mobile are both first-class.** Every feature works with keyboard, gamepad and
+    touch, from 1280×720 desktop down to 640×360 landscape phones. See
+    [`agents/platforms.md`](agents/platforms.md).
+12. **Feedback ships with the feature.** Every new action/event gets animation, sound and
+    particles through the cue catalogue in `apps/client/src/fx/cues.ts`, respecting mute, reduced
+    motion and no-flash. See [`agents/game-feel.md`](agents/game-feel.md).
 
 ## Agent docs index
 
@@ -77,5 +85,7 @@ agents/             Working rules for agents
 | [`agents/code-conventions.md`](agents/code-conventions.md) | Writing any code |
 | [`agents/architecture.md`](agents/architecture.md) | Touching sim, protocol, server, netcode or rendering |
 | [`agents/testing.md`](agents/testing.md) | Writing or changing behaviour |
+| [`agents/platforms.md`](agents/platforms.md) | Any UI, input, minigame or rendering work |
+| [`agents/game-feel.md`](agents/game-feel.md) | Adding actions/events, animation, audio, particles |
 | [`agents/content-authoring.md`](agents/content-authoring.md) | Writing stories, levels or debrief texts |
 | [`agents/glossary.md`](agents/glossary.md) | Naming anything that exists in the design doc |

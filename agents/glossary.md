@@ -94,4 +94,15 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Encyklopedia technik | `encyclopedia` |
 | Ustawienia | `settings` |
 
+## Client / game feel
+
+| Term | Code | Notes |
+| --- | --- | --- |
+| Feedback cue | `cue`, `CueId` | Named feedback event mapped to animation/sound/particles in `fx/cues.ts` |
+| Quality preset | `qualityPreset`: `low` / `medium` / `high` | |
+| Reduced motion | `reducedMotion` | Setting; disables shake/squash, fewer particles |
+| No-flash mode | `noFlash` | Setting; no blinking/strobing |
+| Virtual joystick | `touchJoystick` | Touch movement control |
+| Input device | `inputDevice`: `keyboard` / `gamepad` / `touch` | Last used device drives prompts |
+
 Missing a term? Add it here in the same commit that introduces it.

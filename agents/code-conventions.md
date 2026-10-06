@@ -53,6 +53,12 @@
   re-renders. Server snapshots go into a ref/store that `useFrame` reads.
 - 2D overlays (stations, desk, HUD, screens) are plain React DOM on top of the canvas, not drawn
   in three.js.
+- Components never call Howler, particles, camera shake or haptics directly — emit a cue via
+  `emitCue()` from `fx/feedback.ts` (see [`game-feel.md`](game-feel.md)).
+- Interactive UI uses pointer events (works for mouse, pen and touch); no hover-only affordances;
+  every action reachable by keyboard, gamepad and touch (see [`platforms.md`](platforms.md)).
+- Animate DOM UI with CSS transitions or the Web Animations API presets in `fx/ui-motion/`;
+  check `prefers-reduced-motion` and the in-game reduced-motion setting.
 
 ## Server (Hono + Drizzle)
 

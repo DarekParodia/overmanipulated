@@ -87,4 +87,8 @@ Refs: S2-04
 - [ ] Tests cover the new logic (sim/protocol/content always; UI where practical).
 - [ ] No new magic numbers outside `constants.ts`; no `any`; no non-null assertions.
 - [ ] Player-facing strings are Polish and live in the strings module, not inline.
+- [ ] Works with keyboard, gamepad and touch; checked at desktop size and a 640×360 landscape
+      phone viewport ([`platforms.md`](platforms.md)).
+- [ ] New actions/events have their feedback cue (animation + sound + particles) registered in the
+      catalogue, and respect mute / reduced motion / no-flash ([`game-feel.md`](game-feel.md)).
 - [ ] Plan status updated; decisions and new tasks recorded.
