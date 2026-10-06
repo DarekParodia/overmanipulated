@@ -122,3 +122,10 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- HUD (S2-09) ---------------------------------------------------------------------------
+
+/** The level timer is emphasised (and the music shifts) for this long before the end. */
+export const LEVEL_LAST_SECONDS_MS = 30_000;
+/** Credibility at or below this reads as "low" (HUD gauge warning, heartbeat layer later). */
+export const CREDIBILITY_LOW = 30;

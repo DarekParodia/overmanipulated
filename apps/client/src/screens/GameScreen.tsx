@@ -1,4 +1,4 @@
-// Gameplay screen: the 3D newsroom with a small paper HUD plate, controls for leaving,
+// Gameplay screen: the 3D newsroom with the HUD (hud/Hud.tsx), controls for leaving,
 // settings and fullscreen, touch controls on touch devices and the rotate prompt.
 import { useEffect } from 'react';
 import { startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
@@ -18,9 +18,7 @@ import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './GameScreen.module.css';
 
 export function GameScreen() {
-  const room = useApp((s) => s.room);
   const connection = useApp((s) => s.connection);
-  const rtt = useApp((s) => s.rttMs);
   const device = useApp((s) => s.inputDevice);
   const setSettingsOpen = useApp((s) => s.setSettingsOpen);
   const showTouch = device === 'touch' || isCoarsePointer();
@@ -35,16 +33,6 @@ export function GameScreen() {
   return (
     <main className={styles.screen}>
       <GameCanvas />
-
-      <div className={styles.plate} data-testid="hud">
-        <span className="label">{pl.game.room}</span>
-        <span className={styles.code}>{room?.roomCode}</span>
-        <span className={`${styles.status} ${styles[connection]}`} aria-live="polite">
-          {connection === 'online' && rtt !== null
-            ? pl.game.ping(rtt)
-            : pl.connection[connection === 'idle' ? 'offline' : connection]}
-        </span>
-      </div>
 
       <div className={styles.tools}>
         {canFullscreen() && (

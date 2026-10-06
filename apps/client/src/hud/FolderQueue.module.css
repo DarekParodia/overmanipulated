@@ -1,0 +1,329 @@
+/*
+ * Folder queue: manila slips pinned under a wooden rail across the top of the screen ("spike"
+ * of incoming copy). Sits between the HUD plate (left) and the screen tools (right).
+ */
+.queue {
+  position: absolute;
+  top: var(--hud-top);
+  left: calc(var(--hud-left) + var(--hud-plate-w) + var(--space-3));
+  right: calc(var(--hud-right) + var(--hud-tools-w) + var(--space-3));
+  pointer-events: none;
+  overflow: hidden;
+  padding-top: var(--space-1);
+}
+
+/* The rail the slips hang from: a thick ink rule, like a pinboard strip. */
+.rail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--wood);
+  border-bottom: 1px solid var(--ink);
+}
+
+.empty {
+  display: inline-block;
+  margin: var(--space-2) 0 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--paper);
+  border: var(--rule-thin);
+  font-family: var(--font-typewriter);
+  font-size: var(--text-xs);
+  color: var(--ink-soft);
+  transform: rotate(-0.6deg);
+}
+
+.slips {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0 0 var(--space-3);
+  list-style: none;
+}
+
+.slip {
+  position: relative;
+  flex: 0 0 var(--hud-slip-w);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  background: var(--manila);
+  border: 1px solid var(--manila-dark);
+  border-top: none;
+  box-shadow: var(--shadow-paper);
+  color: var(--ink);
+  transform-origin: 50% 0;
+  animation: hang var(--motion-base) var(--ease-settle) both;
+}
+
+/* Slips hang slightly crooked from their pin; seeded by position so they don't jitter. */
+.slip:nth-child(3n + 1) {
+  --slip-tilt: -1deg;
+}
+.slip:nth-child(3n + 2) {
+  --slip-tilt: 0.6deg;
+}
+.slip:nth-child(3n) {
+  --slip-tilt: -0.3deg;
+}
+.slip {
+  rotate: var(--slip-tilt, 0deg);
+}
+
+@keyframes hang {
+  from {
+    transform: translateY(-110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* "+N" tab: the corner of the next folders peeking out from under the last slip. */
+.more {
+  flex: 0 0 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1) 2px;
+  background: var(--manila-dark);
+  border: 1px solid var(--ink);
+  border-top: none;
+  box-shadow: var(--shadow-paper);
+}
+
+.moreCount {
+  font-family: var(--font-grotesk);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.moreLabel {
+  font-family: var(--font-typewriter);
+  font-size: 0.5625rem;
+  text-align: center;
+}
+
+/* Drawing pin: actually round, so the radius is allowed. */
+.pin {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  border: 1px solid var(--ink);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 20px;
+  padding-right: 1.1rem;
+}
+
+.priority {
+  font-family: var(--font-grotesk);
+  font-stretch: 70%;
+  font-weight: 700;
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/* Priority flag: a square tab for "important", a red triangular corner for "urgent". */
+.flag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: start end;
+  width: 1.3rem;
+  height: 1.3rem;
+  padding: 1px 3px 0 0;
+  font-family: var(--font-grotesk);
+  font-weight: 900;
+  font-size: var(--text-xs);
+  line-height: 1;
+}
+
+.important .flag {
+  background: var(--ochre);
+  border-left: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  color: var(--ink);
+  place-items: center;
+  padding: 0;
+}
+
+.urgent .flag {
+  width: 1.8rem;
+  height: 1.8rem;
+  background: var(--editorial-red);
+  color: var(--paper);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+}
+
+.urgent .priority {
+  color: var(--editorial-red);
+}
+
+.headline {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-family: var(--font-serif);
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+}
+
+.countdown {
+  margin: 0;
+  font-family: var(--font-grotesk);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-family: var(--font-typewriter);
+  font-size: 0.6875rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.where {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stamps {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: none;
+}
+
+.ticks {
+  display: inline-flex;
+  gap: 1px;
+}
+
+/* A stamp tick: a tiny inked square, like a stamp mark on the folder's edge. */
+.tick {
+  width: 5px;
+  height: 7px;
+  background: var(--ink);
+}
+
+.stampCount {
+  font-weight: 700;
+}
+
+/* --- Deadline warning ---------------------------------------------------------------------- */
+
+.warn .countdown {
+  color: var(--editorial-red);
+}
+
+/* Default: the slip trembles and its countdown alternates ink and red. */
+.warn {
+  animation:
+    hang var(--motion-base) var(--ease-settle) both,
+    tremble 0.5s ease-in-out infinite;
+}
+
+.warn .countdown {
+  animation: blink-ink 1s steps(1) infinite;
+}
+
+@keyframes tremble {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translateY(1px) rotate(-1.5deg) scale(1.03);
+  }
+  75% {
+    transform: translateY(1px) rotate(1.5deg) scale(1.03);
+  }
+}
+
+@keyframes blink-ink {
+  0% {
+    color: var(--editorial-red);
+  }
+  50% {
+    color: var(--ink);
+  }
+}
+
+/* No-flash: no colour blinking; a static red dog-ear marks the slip instead. */
+:root[data-no-flash="true"] .warn .countdown {
+  animation: none;
+}
+
+:root[data-no-flash="true"] .warn::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: var(--editorial-red);
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+/* Reduced motion: no trembling or scaling, no hanging slide. */
+:root[data-reduced-motion="true"] .slip,
+:root[data-reduced-motion="true"] .warn {
+  animation: none;
+}
+
+/* --- Phones: no headlines, smaller slips ---------------------------------------------------- */
+
+@media (max-height: 500px), (max-width: 760px) {
+  .headline {
+    display: none;
+  }
+
+  .slip {
+    padding: var(--space-1) var(--space-1) 2px;
+  }
+
+  .countdown {
+    font-size: var(--text-md);
+  }
+
+  .priority {
+    font-size: 0.625rem;
+  }
+
+  .meta {
+    font-size: 0.625rem;
+  }
+
+  .stampCount {
+    display: none;
+  }
+}
