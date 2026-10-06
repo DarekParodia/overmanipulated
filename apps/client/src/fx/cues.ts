@@ -349,6 +349,27 @@ export const cues = {
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
     haptic: 'thud',
   },
+  // S2-05 archive minigame: index cards riffling past the reading frame, the drawer braking,
+  // a wrong card pulled, and the first mention found.
+  'archive.tick': {
+    severity: 1,
+    sound: { ids: ['hover'], bus: 'ui', volume: 0.35, rateJitter: 0.15 },
+  },
+  'archive.stop': {
+    severity: 1,
+    sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
+  'archive.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'sfx', rateJitter: 0.05 },
+    haptic: 'buzz',
+  },
+  'archive.found': {
+    severity: 2,
+    sound: { ids: ['stamp'], bus: 'sfx', volume: 0.8, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

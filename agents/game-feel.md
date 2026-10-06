@@ -83,6 +83,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |
 | `sourceRegistry.file` | card filed correctly | „Sprawdzone” stamp slams on the card | stamp thud | — | thud | ● |
+| `archive.tick` / `stop` / `miss` / `found` | archive minigame: card passes the frame, drawer braked, wrong card pulled, first mention found | card wobble / card lifts with stamp | riffle tick / click / nope / stamp thud | „Nie ta” stamp on the card | tick / buzz / thud (mobile) | ● → ●● |
 
 Add a row here when you add a cue, in the same commit.
 

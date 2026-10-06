@@ -214,7 +214,43 @@ export const pl = {
   /** Minigames, one sub-namespace each (S2-04..S2-06). */
   minigames: {
     imageSearch: {},
-    archive: {},
+    archive: {
+      kicker: 'Szuflada archiwum',
+      clueLabel: 'Szukamy pierwszej wzmianki o temacie',
+      clueRule: 'Liczy się najstarsza karta, nie najbliższa.',
+      folderLabel: 'Teczka',
+      /** Topics printed on the index cards; fictional Nowe Brzegi local news. */
+      topics: [
+        'zalany rynek',
+        'nocny autobus',
+        'remont mostu',
+        'festyn nad rzeką',
+        'nowa biblioteka',
+        'awaria wodociągu',
+        'dzik na osiedlu',
+        'targ rybny',
+        'mecz juniorów',
+        'budowa ronda',
+        'zegar na ratuszu',
+        'koncert w parku',
+      ],
+      earlier: 'Wcześniej',
+      later: 'Później',
+      pull: 'Wyjmij kartę',
+      mistakes: 'Pomyłki',
+      wrong: 'Nie ta',
+      found: 'Jest',
+      foundFallback: 'Pierwsza wzmianka odnaleziona w archiwum.',
+      firstMention: (date: string) => `Pierwsza wzmianka: ${date}`,
+      toFolder: 'Do teczki:',
+      failed: 'Szuflada zamknięta',
+      hints: {
+        keyboard: '← → przewijaj, przytrzymaj, by szybciej. Spacja: stój, potem wyjmij kartę.',
+        gamepad: 'Krzyżak w bok przewija, przytrzymaj, by szybciej. A: stój, potem wyjmij kartę.',
+        touch:
+          'Przesuń szufladę palcem. Stuknij, by zatrzymać. Stuknij kartę w ramce, by ją wyjąć.',
+      },
+    },
     sourceRegistry: {
       drawer: 'Kartoteka źródeł',
       cardNo: (n: number) => `Karta nr ${String(n).padStart(4, '0')}`,

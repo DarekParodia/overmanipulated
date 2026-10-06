@@ -174,3 +174,12 @@ export const SOURCE_REGISTRY_CLEAN_CHANCE = 0.3;
 
 /** The level timer's "last seconds" phase (design doc: last 30 s): sting, HUD pulse, music. */
 export const LEVEL_LAST_SECONDS_MS = 30_000;
+
+// --- S2-05 Archive minigame ----------------------------------------------------------------
+
+/** Index cards in one archive drawer (the timeline the player scrolls through). */
+export const ARCHIVE_CARD_COUNT = 14;
+/** How many cards carry the searched topic; only the earliest one is the right answer. */
+export const ARCHIVE_TOPIC_MENTIONS = 3;
+/** Wrong cards pulled before the minigame counts as failed. */
+export const ARCHIVE_MAX_MISTAKES = 2;
