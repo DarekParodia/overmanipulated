@@ -72,6 +72,8 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `ping.*` | Q signal | bubble pop above player | short ping per type | icon bubble | — | ● |
 | `event.*` | random events (stage 4) | per event | announce stinger | per event (shares, sparks, glitch, smoke) | per event | ●●–●●● |
 | `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
+| `imageSearch.fragment` | next fragment in the loupe | loupe label changes | soft tick | — | — | ● |
+| `imageSearch.match` / `imageSearch.miss` | image search pick | stamp on the printout / red pencil strike | stamp / back | — | tick / thud | ● |
 
 Add a row here when you add a cue, in the same commit.
 

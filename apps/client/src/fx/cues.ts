@@ -78,6 +78,21 @@ export const cues = {
     haptic: 'thud',
     animation: 'stampSlam',
   },
+  // S2-04 image search minigame (placeholder sounds until the sound unit lands).
+  'imageSearch.fragment': {
+    severity: 1,
+    sound: { ids: ['hover'], bus: 'ui', volume: 0.8, rateJitter: 0.1 },
+  },
+  'imageSearch.match': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'tick',
+  },
+  'imageSearch.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'thud',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

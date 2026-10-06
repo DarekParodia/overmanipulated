@@ -122,3 +122,12 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- S2-04 Image search minigame -----------------------------------------------------------
+
+/** Wrong picks allowed before the image search attempt fails (the second one fails it). */
+export const IMAGE_SEARCH_MAX_MISTAKES = 2;
+/** Marked fragments on the submitted photo (inclusive range). */
+export const IMAGE_SEARCH_FRAGMENTS = { min: 2, max: 3 } as const;
+/** Search-result printouts on the light table (inclusive range). */
+export const IMAGE_SEARCH_RESULTS = { min: 4, max: 6 } as const;
