@@ -3,9 +3,10 @@
 Summary of the technical design from the design document, plus the invariants agents must keep.
 
 ```
-Browser (React + R3F)  ──wss:443──▶  Caddy  ──▶  Bun game server (rooms, 20 Hz loop)
-        │                              │                     │
-        └──── @redakcja/shared ◀───────┴─────────────────────┘
+Browser (React + R3F)  ──https/wss:443──▶  Caddy  ──▶  Bun server: Hono (/ws, /api) + rooms + 20 Hz loop
+        │                                                              │
+        │                                                     Drizzle ──▶ SQLite file
+        └──── @redakcja/shared ◀───────────────────────────────────────┘
               (sim, protocol, constants)      @redakcja/content (schemas, levels, stories)
 ```
 
@@ -15,7 +16,7 @@ Browser (React + R3F)  ──wss:443──▶  Caddy  ──▶  Bun game server
 | --- | --- | --- |
 | `packages/shared` | Pure game simulation, network protocol schemas, balance constants | `zod` |
 | `packages/content` | Content schemas, level/story JSON, loaders, validator | `zod`, `shared` (types only) |
-| `apps/server` | Rooms, sockets, tick loop, applying inputs to sim, broadcasting snapshots | `shared`, `content` |
+| `apps/server` | Hono routes, rooms, sockets, tick loop, applying inputs to sim, broadcasting snapshots, Drizzle/SQLite persistence | `shared`, `content` |
 | `apps/client` | Rendering, input, UI, netcode (prediction/interpolation), audio | `shared`, `content` |
 
 Dependencies point only downwards. `shared` never imports from apps or from `content` at runtime.
@@ -36,16 +37,64 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
 
 ## Server (`apps/server`)
 
-- `Bun.serve` with native WebSocket; one pub/sub topic per room.
+- **HTTP and WebSocket routing with [Hono](https://hono.dev)** on top of `Bun.serve`:
+  `Bun.serve({ fetch: app.fetch, websocket })` with `upgradeWebSocket` and `websocket` from
+  `hono/bun`.
+- Routes:
+  - `GET /health`: liveness, plus a DB check.
+  - `GET /ws`: WebSocket upgrade for the game protocol.
+  - `/api/*`: REST endpoints (leaderboard, content preview for the supervisor, room stats).
+- REST input is validated with `@hono/zod-validator` and the shared Zod schemas. The app exports
+  `type AppType = typeof routes` so the client calls REST through Hono's typed RPC client (`hc`)
+  and never hand-writes `fetch` URLs or response types.
+- The game itself stays on the WebSocket. Do not move real-time traffic (input, snapshots,
+  verdicts) to REST.
+- Room broadcasting uses Bun's native pub/sub: `ws.raw.subscribe(roomTopic)` on join, then
+  `server.publish(roomTopic, …)`. One topic per room.
 - Rooms are in memory; 4-letter codes from an unambiguous alphabet (no `O/0`, `I/1`).
   Max 4 players. A disconnected player's slot is held for 60 s for reconnection.
 - Fixed **20 Hz** tick loop per active room: drain queued inputs → `step` → broadcast snapshot and
   events. Empty rooms are destroyed.
 - Every incoming message is parsed with the Zod schema from `shared/protocol`; invalid messages are
   dropped and logged, never crash the room.
-- No accounts, no personal data: only a nickname. Nothing is persisted except an optional
-  leaderboard (`bun:sqlite`) in endless mode.
-- Exposed only behind Caddy on port 443 (`/ws` path); never on a public custom port.
+- Exposed only behind Caddy on port 443 (`/ws` and `/api` paths); never on a public custom port.
+
+Suggested layout:
+
+```
+apps/server/src/
+  index.ts        Bun.serve bootstrap (reads env, runs migrations, starts server)
+  app.ts          Hono app, mounts routes, exports AppType
+  routes/         health.ts, ws.ts, api/*.ts
+  rooms/          room registry, codes, join/leave, reconnect
+  loop.ts         20 Hz tick loop
+  db/             client.ts, schema.ts, queries/*.ts
+apps/server/drizzle/   generated SQL migrations (committed)
+```
+
+## Persistence (`apps/server/src/db`)
+
+- **SQLite via [Drizzle ORM](https://orm.drizzle.team)** using Bun's built-in driver
+  (`drizzle-orm/bun-sqlite` + `bun:sqlite`). No external database server.
+- Live game state is **never** stored in the DB. Rooms, players and the simulation stay in
+  memory. The DB holds only data that must outlive a room: the endless-mode leaderboard, the
+  debrief "blunder of the day" vote tallies, and later anything the plan adds (e.g. per-class
+  results).
+- The schema is defined in TypeScript in `db/schema.ts` and is the single source of truth. Row
+  types come from `$inferSelect` / `$inferInsert`, and Zod schemas for API payloads may be derived
+  with `drizzle-zod` (via `createInsertSchema` / `createSelectSchema`).
+- Migrations are generated with `drizzle-kit generate` into `apps/server/drizzle/` and committed.
+  They are applied on server start with `migrate()` from `drizzle-orm/bun-sqlite/migrator`. Never
+  edit a migration that has already landed on `main`; add a new one. Never use `drizzle-kit push`
+  against a real database.
+- The DB file path comes from `DATABASE_PATH` (default `./data/redakcja.sqlite`). Enable WAL mode
+  on open.
+- DB access lives only in `apps/server/src/db/queries/*`. Routes and the game loop call these
+  functions, never query builders inline. The simulation in `packages/shared` never touches the
+  DB.
+- **Privacy**: no accounts, no personal data. Store only the nickname the player typed, room code
+  and game results. Nothing that identifies a student (no IP, user agent, email). Leaderboard
+  entries expire (retention set in `constants.ts`).
 
 ## Protocol (`packages/shared/src/protocol.ts`)
 
@@ -90,7 +139,9 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
 
 ## Deployment
 
-- Docker Compose: Caddy (static client + reverse proxy to `/ws`, automatic TLS) and the Bun server.
+- Docker Compose: Caddy (static client + reverse proxy to `/ws` and `/api`, automatic TLS) and the
+  Bun server. The SQLite file lives on a named volume mounted at `/data`
+  (`DATABASE_PATH=/data/redakcja.sqlite`); back it up by copying the file (or `VACUUM INTO`).
 - CI: GitHub Actions (`.github/workflows/ci.yml`) runs install, lint, typecheck, test, content
   validation and build on every push to `main`. (The design doc mentions Forgejo Actions; the
   workflow syntax is compatible if the repo moves.)

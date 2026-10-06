@@ -18,7 +18,7 @@ or publish with context. Target audience: Polish high-school students; one level
 
 ```
 apps/client/        Vite + React 19 + React Three Fiber (scene/, stations/, screens/, net/, input/, store/)
-apps/server/        Bun.serve authoritative game server (rooms/, loop, index)
+apps/server/        Bun + Hono authoritative game server (routes/, rooms/, loop, db/ with Drizzle + SQLite)
 packages/shared/    Game logic shared by client and server: sim/, protocol, constants
 packages/content/   Content schemas, levels/*.json, stories/*.json, validate script
 tools/              Optional tooling (level editor, content helpers)
@@ -38,6 +38,7 @@ agents/             Working rules for agents
 | `bun run test` | `bun test` across the repo |
 | `bun run validate:content` | Validate game content against schemas |
 | `bun run build` | Production build of the client |
+| `bun run db:generate` | Generate a Drizzle migration after changing `apps/server/src/db/schema.ts` (added in S1-12) |
 | `bun run check` | lint + typecheck + test + validate — **must pass before every push** |
 
 ## Non-negotiable rules
@@ -61,7 +62,11 @@ agents/             Working rules for agents
    [`agents/content-authoring.md`](agents/content-authoring.md).
 8. **Pick tasks from the plan, one at a time**, and keep its status up to date in the same commit
    as the work.
-9. **Respect the performance budget** (60 FPS on Intel UHD 620, ≤100k triangles, ~150 draw calls,
+9. **Server stack is fixed: Hono for HTTP/WebSocket routing, Drizzle ORM on SQLite
+   (`bun:sqlite`) for persistence.** Live game state stays in memory and never goes to the DB.
+   Migrations are generated and committed, never hand-edited after landing. See
+   [`agents/architecture.md`](agents/architecture.md).
+10. **Respect the performance budget** (60 FPS on Intel UHD 620, ≤100k triangles, ~150 draw calls,
    ≤10 MB first load). See [`agents/architecture.md`](agents/architecture.md).
 
 ## Agent docs index

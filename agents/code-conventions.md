@@ -54,10 +54,28 @@
 - 2D overlays (stations, desk, HUD, screens) are plain React DOM on top of the canvas, not drawn
   in three.js.
 
+## Server (Hono + Drizzle)
+
+- One file per route group under `apps/server/src/routes/`; chain route definitions
+  (`new Hono().get(...).post(...)`) so `AppType` keeps full types for the RPC client.
+- Validate every REST input with `zValidator('json' | 'query' | 'param', schema)`; never read
+  `c.req.json()` unvalidated.
+- Return errors as `{ error: { code, message } }` with a proper status code; `code` is an English
+  machine id, `message` may be shown to players only via the client strings module.
+- Drizzle table names are `snake_case` plural (`leaderboard_entries`), TypeScript table objects
+  `camelCase` (`leaderboardEntries`), columns `snake_case` in SQL via `casing: 'snake_case'`.
+- Queries live in `db/queries/*.ts` as small named functions (`insertLeaderboardEntry`,
+  `getTopEntries`) that take the `db` instance as the first argument, so tests can pass an
+  in-memory DB.
+- Prefer the query builder; raw `sql` templates only when Drizzle cannot express the query, and
+  always with bound parameters.
+
 ## Dependencies
 
-- Stick to the stack in the design doc (Bun, TS, Vite, React 19, three/R3F/drei, Zustand, Zod,
-  Howler, Biome, Playwright). Adding any other runtime dependency requires a *Decision log* entry
-  with the reason and its size impact on the client bundle.
+- Stick to the agreed stack: Bun, TS, Vite, React 19, three/R3F/drei, Zustand, Zod, Howler,
+  Biome, Playwright, plus on the server **Hono** (`hono`, `@hono/zod-validator`) and **Drizzle**
+  (`drizzle-orm`, `drizzle-kit`, `drizzle-zod`) on `bun:sqlite`. Adding any other runtime
+  dependency requires a *Decision log* entry with the reason and its size impact on the client
+  bundle.
 - Add dependencies with `bun add` in the right workspace so `bun.lock` stays consistent; commit the
   lockfile.

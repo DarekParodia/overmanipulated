@@ -10,3 +10,6 @@ playwright-report/
 *.log
 .DS_Store
 *.sqlite
+*.sqlite-wal
+*.sqlite-shm
+data/

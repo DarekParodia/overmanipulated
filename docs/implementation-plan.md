@@ -49,12 +49,13 @@ around a grey newsroom in sync.
 
 - [ ] **S1-03 — Server: rooms and sockets.**
   *Depends on:* S1-01
-  *Scope:* `Bun.serve` with `/health` and `/ws` upgrade; room registry with unambiguous 4-letter
+  *Scope:* Hono app on `Bun.serve` (`hono/bun` `upgradeWebSocket` + `websocket`), `GET /health`,
+  `GET /ws` upgrade, `app.ts` exporting `AppType`; room registry with unambiguous 4-letter
   codes; create/join/leave; nickname validation; max 4 players; host assignment and hand-over;
   60 s reconnect slot via a reconnect token; pub/sub topic per room; invalid messages dropped and
   logged; `PROTOCOL_VERSION` check.
   *Done when:* in-process tests cover create, join, full room, unknown code, reconnect within and
-  after grace period, empty-room cleanup.
+  after grace period, empty-room cleanup; `/health` tested with `app.request()`.
 
 - [ ] **S1-04 — Server: tick loop.**
   *Depends on:* S1-02, S1-03
@@ -99,7 +100,8 @@ around a grey newsroom in sync.
 - [ ] **S1-10 — Deployment.**
   *Depends on:* S1-03
   *Scope:* `Dockerfile` for the server (Bun image), client static build served by Caddy,
-  `Caddyfile` (TLS, static files, `/ws` reverse proxy), `docker-compose.yml`, `.env.example`,
+  `Caddyfile` (TLS, static files, `/ws` and `/api` reverse proxy), `docker-compose.yml` with a
+  named volume for the SQLite file (`DATABASE_PATH=/data/redakcja.sqlite`), `.env.example`,
   deploy notes in `docs/deploy.md`; CI job building the image.
   *Done when:* `docker compose up` locally serves the game on https and WebSockets work through
   Caddy on 443.
@@ -109,6 +111,25 @@ around a grey newsroom in sync.
   *Scope:* Playwright config, test opening 2–3 browser contexts: create room, join by code, move
   one player, assert others see the move; CI job.
   *Done when:* e2e passes in CI.
+
+- [ ] **S1-12 — Persistence wiring (Drizzle + SQLite).**
+  *Depends on:* S1-03
+  *Scope:* add `drizzle-orm`, `drizzle-kit`, `drizzle-zod`; `drizzle.config.ts`
+  (dialect `sqlite`, schema `src/db/schema.ts`, out `drizzle/`, `casing: 'snake_case'`);
+  `db/client.ts` opening `bun:sqlite` at `DATABASE_PATH` with WAL and running `migrate()` on
+  start; root scripts `db:generate` and `db:studio`; first table `leaderboard_entries`
+  (room code, nicknames, score, level/mode, created at) as a smoke test of the pipeline;
+  `/health` reports DB status; CI checks that `drizzle-kit generate` produces no uncommitted
+  migration.
+  *Done when:* migrations apply on an empty DB in tests (`:memory:`) and on server start; query
+  functions for the table tested.
+
+- [ ] **S1-13 — Typed REST client.**
+  *Depends on:* S1-03, S1-06
+  *Scope:* `apps/client/src/net/api.ts` using Hono `hc<AppType>` with same-origin base URL;
+  Vite dev proxy for `/api`.
+  *Done when:* client calls `/health` through the typed client; a type error appears if a route
+  changes shape.
 
 **Stage 1 exit:** deployed URL, 4 players move in sync, CI green including e2e.
 
@@ -201,8 +222,9 @@ Goal: a polished vertical slice ready for the first playtest with students.
   (old photo as new, fake institutional account), including the design-doc examples; images
   CC0/self-made with credits; `reviewed: false` until the supervisor signs off.
 - [ ] **S3-02 — Debrief screen (Kolegium).** List of the level's stories with what it was,
-  technique, tool, real-world analogue; player's verdicts vs correct; blunder-of-the-day vote;
-  stars.
+  technique, tool, real-world analogue; player's verdicts vs correct; blunder-of-the-day vote
+  (tallies stored per story in SQLite via Drizzle, exposed on `/api/stats/blunders` for the
+  supervisor); stars.
 - [ ] **S3-03 — Briefing screen.** 15–20 s topic of the day + new mechanics, skippable when all
   ready.
 - [ ] **S3-04 — Level select / campaign map (minimal).** Levels with stars, locked/unlocked;
@@ -236,7 +258,8 @@ Goal: a polished vertical slice ready for the first playtest with students.
 - [ ] **S4-10 — Levels 2–6 content.** ~15 stories each, following the campaign table; one task per
   level (`S4-10a` … `S4-10e`) so content can be written in parallel.
 - [ ] **S4-11 — Endless mode.** Random stories from all levels, speeds up every minute; room
-  leaderboard (optional `bun:sqlite`).
+  leaderboard per room and global top list stored via Drizzle (`leaderboard_entries`), served
+  from `/api/leaderboard` with retention from `constants.ts`.
 
 **Stage 4 exit:** full campaign (6 levels) and endless mode playable.
 
@@ -285,6 +308,8 @@ Goal: a polished vertical slice ready for the first playtest with students.
 | 2026-10-06 | CI on GitHub Actions instead of Forgejo Actions | Repository is hosted on GitHub; workflow syntax is portable |
 | 2026-10-06 | All repo text in English; only player-facing content in Polish | Team decision; glossary maps design terms |
 | 2026-10-06 | Commits go directly to `main` | Small team; CI and `bun run check` guard quality |
+| 2026-10-06 | Hono for HTTP/WebSocket routing on `Bun.serve` | Typed REST (`/api`) with zod-validator and the RPC client alongside the WebSocket; native Bun pub/sub kept for rooms |
+| 2026-10-06 | Drizzle ORM on SQLite (`bun:sqlite`) for persistence | No DB server to run in schools; typed schema and committed migrations; live game state stays in memory |
 | 2026-10-06 | Package sources under `src/` (`packages/shared/src/sim`, …) | Uniform layout across packages; minor deviation from the design-doc tree |
 
 ---
