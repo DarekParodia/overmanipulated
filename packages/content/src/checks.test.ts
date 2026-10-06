@@ -1,0 +1,189 @@
+import { describe, expect, it } from 'bun:test';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { correctVerdictFor } from '@redakcja/shared';
+import { BROKEN_CASES, realContent, toFiles } from './__fixtures__/broken.ts';
+import { checkRegistration, formatIssue, maxLevelScore, validateContent } from './checks.ts';
+import { LEVEL_FILES, STORY_FILES } from './files.ts';
+import { LEVELS, STORIES } from './index.ts';
+
+const packageRoot = resolve(import.meta.dir, '..');
+
+function contentFilesOnDisk(): { file: string; data: unknown }[] {
+  return (['levels', 'stories'] as const).flatMap((dir) =>
+    readdirSync(join(packageRoot, dir))
+      .filter((name) => name.endsWith('.json'))
+      .map((name) => ({
+        file: `${dir}/${name}`,
+        data: JSON.parse(readFileSync(join(packageRoot, dir, name), 'utf8')),
+      })),
+  );
+}
+
+describe('validateContent', () => {
+  it('accepts the real content without errors or warnings', () => {
+    const { levels, stories } = toFiles(realContent());
+    expect(validateContent(levels, stories)).toEqual([]);
+  });
+
+  for (const broken of BROKEN_CASES) {
+    it(`reports ${broken.name}`, () => {
+      const content = realContent();
+      broken.breakIt(content);
+      const { levels, stories } = toFiles(content);
+      const issues = validateContent(levels, stories);
+      expect(issues).toContainEqual(broken.expected);
+      if (broken.expected.severity === 'warning') {
+        expect(issues.filter((issue) => issue.severity === 'error')).toEqual([]);
+      }
+    });
+  }
+
+  it('reports a story file that is not an array', () => {
+    expect(validateContent([], [{ file: 'stories/x.json', data: {} }])).toEqual([
+      {
+        severity: 'error',
+        file: 'stories/x.json',
+        path: '',
+        message: 'expected an array of stories',
+      },
+    ]);
+  });
+});
+
+describe('greybox content', () => {
+  const level = LEVELS.find((l) => l.id === 'l0-greybox');
+  const scheduled = STORIES.filter((s) => level?.schedule.some((spawn) => spawn.storyId === s.id));
+
+  it('schedules at least 8 stories that cover every truth value and priority', () => {
+    expect(scheduled.length).toBeGreaterThanOrEqual(8);
+    expect(new Set(scheduled.map((s) => s.truth))).toEqual(
+      new Set(['true', 'false', 'misleading', 'satire', 'unverifiable']),
+    );
+    expect(new Set(scheduled.map((s) => s.priority))).toEqual(
+      new Set(['normal', 'important', 'urgent']),
+    );
+    const unverifiable = scheduled.filter((s) => s.truth === 'unverifiable');
+    expect(unverifiable.some((s) => s.priority === 'urgent')).toBe(true);
+    expect(unverifiable.some((s) => s.priority !== 'urgent')).toBe(true);
+    expect(new Set(scheduled.map((s) => s.type)).size).toBeGreaterThanOrEqual(5);
+  });
+
+  it('gives every story one stamp per level station and a matching verdict', () => {
+    for (const story of scheduled) {
+      const stations: string[] = story.stamps.map((s) => s.station).sort();
+      expect(stations).toEqual(['archive', 'imageSearch', 'sourceRegistry']);
+      expect(story.correctVerdict).toBe(correctVerdictFor(story.truth, story.priority));
+      expect(story.reviewed).toBe(false);
+    }
+  });
+
+  it('sets star thresholds near 50% and 80% of the maximum score', () => {
+    if (!level) {
+      throw new Error('greybox level missing');
+    }
+    const max = maxLevelScore(level, new Map(STORIES.map((s) => [s.id, s])));
+    expect(max).toBe(240);
+    expect(level.stars.two / max).toBeCloseTo(0.5, 1);
+    expect(level.stars.three / max).toBeCloseTo(0.8, 1);
+  });
+});
+
+describe('registration', () => {
+  it('registers every content file on disk under its own path', () => {
+    expect(checkRegistration(contentFilesOnDisk(), { ...LEVEL_FILES, ...STORY_FILES })).toEqual([]);
+  });
+
+  it('reports files on disk that src/files.ts does not register', () => {
+    expect(
+      checkRegistration(
+        [
+          { file: 'levels/a.json', data: { a: 1 } },
+          { file: 'stories/l9-nowe.json', data: [] },
+        ],
+        { 'levels/a.json': { a: 1 } },
+      ),
+    ).toEqual([
+      {
+        severity: 'error',
+        file: 'stories/l9-nowe.json',
+        path: '',
+        message: 'not registered in src/files.ts, so the game never loads it',
+      },
+    ]);
+  });
+
+  it('reports registry entries with the wrong contents or no file', () => {
+    expect(
+      checkRegistration([{ file: 'levels/a.json', data: { a: 1 } }], {
+        'levels/a.json': { b: 2 },
+        'levels/gone.json': {},
+      }),
+    ).toEqual([
+      {
+        severity: 'error',
+        file: 'src/files.ts',
+        path: '',
+        message: '"levels/a.json" is registered with the contents of another file',
+      },
+      {
+        severity: 'error',
+        file: 'src/files.ts',
+        path: '',
+        message: 'registers "levels/gone.json", which does not exist',
+      },
+    ]);
+  });
+});
+
+describe('validate CLI', () => {
+  const run = (...args: string[]) =>
+    Bun.spawnSync([process.execPath, 'src/validate.ts', ...args], { cwd: packageRoot });
+
+  it('passes on the real content', () => {
+    const result = run();
+    expect(result.stdout.toString()).toContain('0 error(s), 0 warning(s)');
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('fails on the broken fixtures with readable messages', () => {
+    const result = run('src/__fixtures__/broken');
+    const out = result.stdout.toString();
+    expect(result.exitCode).toBe(1);
+    for (const line of [
+      formatIssue({
+        severity: 'error',
+        file: 'stories/l0-broken.json',
+        path: '[0].correctVerdict',
+        message: 'truth "false" requires verdict "reject"',
+      }),
+      formatIssue({
+        severity: 'error',
+        file: 'stories/l0-broken.json',
+        path: '[1].justifyingStamps[0]',
+        message: 'unknown stamp "l0-nie-ma-takiej"',
+      }),
+      formatIssue({
+        severity: 'error',
+        file: 'levels/l0-broken.json',
+        path: 'schedule[1].storyId',
+        message: 'unknown story "l0-brakujaca-historia"',
+      }),
+      formatIssue({
+        severity: 'error',
+        file: 'levels/l0-broken.json',
+        path: 'schedule[0].storyId',
+        message:
+          'story "l0-nierozwiazywalna" is unsolvable: no justifying stamp comes from imageSearch, archive, sourceRegistry',
+      }),
+      formatIssue({
+        severity: 'error',
+        file: 'levels/l0-unsorted.json',
+        path: 'schedule[1]',
+        message: 'schedule must be sorted',
+      }),
+    ]) {
+      expect(out).toContain(line);
+    }
+  });
+});

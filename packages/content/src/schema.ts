@@ -1,6 +1,6 @@
 // Zod schemas for game content: stories (submissions) and levels. The authoring rules are in
 // agents/content-authoring.md; this file is the authoritative model. Cross-file checks (story
-// ids referenced by levels, solvability with the level's stations) live in validate.ts.
+// ids referenced by levels, solvability with the level's stations) live in checks.ts.
 import {
   correctVerdictFor,
   parseLayout,

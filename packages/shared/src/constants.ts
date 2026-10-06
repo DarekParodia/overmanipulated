@@ -122,3 +122,13 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- S2-01 — Content validation ------------------------------------------------------------
+// Targets `bun run validate:content` warns about (agents/content-authoring.md).
+
+/** Share of true stories a level should schedule ("roughly 30–40% true"). */
+export const CONTENT_TRUE_STORY_SHARE = { min: 0.25, max: 0.45 } as const;
+/** Two-star threshold as a share of the level's maximum score (≈ 50%). */
+export const CONTENT_TWO_STARS_SHARE = { min: 0.35, max: 0.65 } as const;
+/** Three-star threshold as a share of the level's maximum score (≈ 80%). */
+export const CONTENT_THREE_STARS_SHARE = { min: 0.65, max: 0.95 } as const;

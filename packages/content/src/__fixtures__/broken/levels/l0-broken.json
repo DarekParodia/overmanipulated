@@ -1,0 +1,26 @@
+{
+  "id": "l0-broken",
+  "title": "Zepsuty poziom",
+  "briefing": "Fixture: odwołuje się do brakującej i nierozwiązywalnej historii.",
+  "durationS": 240,
+  "layout": [
+    "####################",
+    "#CCCC...I...A...R..#",
+    "#..................#",
+    "#..................#",
+    "#..1....=TT=....2..#",
+    "#.......====.......#",
+    "#..................#",
+    "#..3....=DD=....4..#",
+    "#.......====.......#",
+    "#.T..............T.#",
+    "#..................#",
+    "####################"
+  ],
+  "stations": ["imageSearch", "archive", "sourceRegistry"],
+  "schedule": [
+    { "atS": 3, "storyId": "l0-nierozwiazywalna", "deadlineS": 90 },
+    { "atS": 30, "storyId": "l0-brakujaca-historia", "deadlineS": 75 }
+  ],
+  "stars": { "two": 5, "three": 10 }
+}
