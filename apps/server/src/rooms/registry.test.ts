@@ -114,19 +114,43 @@ describe('starting the game', () => {
   it('only the host can start; start spawns everyone', () => {
     const host = join('Ala');
     const guest = join('Bartek', welcomeOf(host).roomCode);
-    registry.handleMessage(guest, { type: 'lobby', action: 'start' });
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'start' } });
     expect(guest.last('error')?.code).toBe('notHost');
 
-    registry.handleMessage(host, { type: 'lobby', action: 'start' });
+    registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
     expect(host.last('roomState')?.phase).toBe('playing');
     expect(guest.all('event').map((e) => e.event.kind)).toContain('gameStarted');
     const game = registry.inspect(welcomeOf(host).roomCode)?.game;
     expect(Object.keys(game?.players ?? {})).toHaveLength(2);
   });
 
+  it('stores roles, readiness and the selected level in the room state', () => {
+    const host = join('Ala');
+    const guest = join('Bartek', welcomeOf(host).roomCode);
+    registry.handleMessage(guest, {
+      type: 'lobby',
+      action: { kind: 'setRole', role: 'archivist' },
+    });
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
+    const players = host.last('roomState')?.players;
+    expect(players?.[1]).toMatchObject({ role: 'archivist', ready: true });
+    expect(host.last('roomState')?.levelId).toBe('l0-greybox');
+
+    registry.handleMessage(guest, {
+      type: 'lobby',
+      action: { kind: 'selectLevel', levelId: 'l0-greybox' },
+    });
+    expect(guest.last('error')?.code).toBe('notHost');
+    registry.handleMessage(host, {
+      type: 'lobby',
+      action: { kind: 'selectLevel', levelId: 'l9-nope' },
+    });
+    expect(host.last('error')?.code).toBe('unknownLevel');
+  });
+
   it('rejects lobby and input messages before joining', () => {
     const stranger = fake.connect();
-    registry.handleMessage(stranger, { type: 'lobby', action: 'start' });
+    registry.handleMessage(stranger, { type: 'lobby', action: { kind: 'start' } });
     expect(stranger.last('error')?.code).toBe('notInRoom');
   });
 });
@@ -135,7 +159,7 @@ describe('ticks and snapshots', () => {
   function startedRoom() {
     const host = join('Ala');
     const guest = join('Bartek', welcomeOf(host).roomCode);
-    registry.handleMessage(host, { type: 'lobby', action: 'start' });
+    registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
     return { host, guest, code: welcomeOf(host).roomCode };
   }
 
@@ -174,6 +198,24 @@ describe('ticks and snapshots', () => {
     input(host, 5, 1, 0);
     input(host, 3, 1, 0);
     expect(registry.inspect(code)?.players[0]?.queued).toBe(1);
+  });
+
+  it('sends level data in snapshots and turns commands into events next tick', () => {
+    const { host, guest } = startedRoom();
+    registry.handleMessage(host, { type: 'command', command: { kind: 'ping', ping: 'mine' } });
+    registry.tick();
+    const snapshot = guest.last('snapshot');
+    expect(snapshot).toMatchObject({ score: 0, credibility: 100 });
+    expect(snapshot?.stations.map((s) => s.kind)).toEqual([
+      'imageSearch',
+      'archive',
+      'sourceRegistry',
+    ]);
+    expect(guest.all('event').map((e) => e.event)).toContainEqual({
+      kind: 'ping',
+      playerId: welcomeOf(host).playerId,
+      ping: 'mine',
+    });
   });
 
   it('ignores input while in the lobby', () => {

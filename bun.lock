@@ -63,6 +63,7 @@
       "name": "@redakcja/content",
       "version": "0.0.0",
       "dependencies": {
+        "@redakcja/shared": "workspace:*",
         "zod": "^4.6.5",
       },
       "devDependencies": {

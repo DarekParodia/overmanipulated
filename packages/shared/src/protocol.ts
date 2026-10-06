@@ -9,6 +9,15 @@ import {
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
 } from './constants.ts';
+import { pingKindSchema, roleSchema, stationKindSchema, verdictSchema } from './domain.ts';
+import {
+  deskSchema,
+  folderLocationSchema,
+  folderOutcomeSchema,
+  folderResultSchema,
+  folderSchema,
+  stationSchema,
+} from './entities.ts';
 
 // --- Primitives ----------------------------------------------------------------------------
 
@@ -26,6 +35,8 @@ export const nicknameSchema = z
   .regex(/^[^\p{Cc}\p{Cf}]+$/u);
 
 export const playerIdSchema = z.string().min(1).max(32);
+const entityId = z.string().min(1).max(64);
+export const levelIdSchema = z.string().min(1).max(64);
 export const reconnectTokenSchema = z.string().min(16).max(64);
 
 const unitAxis = z.number().min(-1).max(1);
@@ -52,9 +63,21 @@ export const joinMessageSchema = z.object({
   reconnectToken: reconnectTokenSchema.optional(),
 });
 
+export const lobbyActionSchema = z.discriminatedUnion('kind', [
+  /** Host only: start the selected level. */
+  z.object({ kind: z.literal('start') }),
+  /** Roles are optional and non-exclusive; null clears the choice. */
+  z.object({ kind: z.literal('setRole'), role: roleSchema.nullable() }),
+  z.object({ kind: z.literal('setReady'), ready: z.boolean() }),
+  /** Host only. */
+  z.object({ kind: z.literal('selectLevel'), levelId: levelIdSchema }),
+  /** From the results screen back to the lobby (host only). */
+  z.object({ kind: z.literal('backToLobby') }),
+]);
+
 export const lobbyMessageSchema = z.object({
   type: z.literal('lobby'),
-  action: z.enum(['start']),
+  action: lobbyActionSchema,
 });
 
 export const inputMessageSchema = z.object({
@@ -63,6 +86,32 @@ export const inputMessageSchema = z.object({
   seq: z.number().int().nonnegative(),
   move: moveVectorSchema,
   actions: inputActionsSchema,
+});
+
+/**
+ * Player decisions that are not per-tick input. The server queues them and applies them in the
+ * next simulation step (extension of the design-doc protocol; see the plan's Decision log).
+ */
+export const playerCommandSchema = z.discriminatedUnion('kind', [
+  /** Outcome of the station minigame the sender is operating. */
+  z.object({ kind: z.literal('minigameResult'), stationId: entityId, success: z.boolean() }),
+  /** Verdict for the folder on the desk the sender has open. */
+  z.object({
+    kind: z.literal('verdict'),
+    folderId: entityId,
+    verdict: verdictSchema,
+    justifyingStampId: entityId,
+  }),
+  /** Close the station minigame or desk sheet without a result. */
+  z.object({ kind: z.literal('cancel') }),
+  z.object({ kind: z.literal('ping'), ping: pingKindSchema }),
+  /** Managing editor: extend one folder's deadline, once per level. */
+  z.object({ kind: z.literal('extendDeadline'), folderId: entityId }),
+]);
+
+export const commandMessageSchema = z.object({
+  type: z.literal('command'),
+  command: playerCommandSchema,
 });
 
 export const heartbeatMessageSchema = z.object({
@@ -75,12 +124,13 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
   joinMessageSchema,
   lobbyMessageSchema,
   inputMessageSchema,
+  commandMessageSchema,
   heartbeatMessageSchema,
 ]);
 
 // --- Server → client -----------------------------------------------------------------------
 
-export const roomPhaseSchema = z.enum(['lobby', 'playing']);
+export const roomPhaseSchema = z.enum(['lobby', 'playing', 'results']);
 
 export const lobbyPlayerSchema = z.object({
   id: playerIdSchema,
@@ -91,6 +141,8 @@ export const lobbyPlayerSchema = z.object({
     .min(0)
     .max(PLAYER_COLOR_COUNT - 1),
   connected: z.boolean(),
+  role: roleSchema.nullable(),
+  ready: z.boolean(),
 });
 
 export const welcomeMessageSchema = z.object({
@@ -105,6 +157,7 @@ export const roomStateMessageSchema = z.object({
   roomCode: roomCodeSchema,
   hostId: playerIdSchema,
   phase: roomPhaseSchema,
+  levelId: levelIdSchema,
   players: z.array(lobbyPlayerSchema).max(MAX_PLAYERS),
 });
 
@@ -122,6 +175,14 @@ export const snapshotMessageSchema = z.object({
   type: z.literal('snapshot'),
   tick: z.number().int().nonnegative(),
   players: z.array(playerSnapshotSchema).max(MAX_PLAYERS),
+  /** Level time since start. */
+  elapsedMs: finite,
+  timeLeftMs: finite,
+  score: z.number().int(),
+  credibility: z.number().int(),
+  folders: z.array(folderSchema).max(64),
+  stations: z.array(stationSchema).max(32),
+  desks: z.array(deskSchema).max(8),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [
@@ -129,6 +190,66 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('playerLeft'), playerId: playerIdSchema }),
   z.object({ kind: z.literal('playerReconnected'), playerId: playerIdSchema }),
   z.object({ kind: z.literal('gameStarted') }),
+  z.object({
+    kind: z.literal('folderSpawned'),
+    folderId: entityId,
+    storyId: entityId,
+    fixtureId: entityId,
+  }),
+  z.object({ kind: z.literal('folderPickedUp'), folderId: entityId, playerId: playerIdSchema }),
+  z.object({
+    kind: z.literal('folderPutDown'),
+    folderId: entityId,
+    playerId: playerIdSchema,
+    location: folderLocationSchema,
+  }),
+  z.object({ kind: z.literal('deadlineWarning'), folderId: entityId }),
+  z.object({ kind: z.literal('folderExpired'), folderId: entityId, storyId: entityId }),
+  z.object({ kind: z.literal('deadlineExtended'), folderId: entityId, playerId: playerIdSchema }),
+  z.object({ kind: z.literal('workStarted'), stationId: entityId, playerId: playerIdSchema }),
+  z.object({ kind: z.literal('workCancelled'), stationId: entityId, playerId: playerIdSchema }),
+  z.object({
+    kind: z.literal('minigameStarted'),
+    stationId: entityId,
+    station: stationKindSchema,
+    playerId: playerIdSchema,
+    folderId: entityId,
+    seed: z.number().int(),
+  }),
+  z.object({
+    kind: z.literal('minigameFailed'),
+    stationId: entityId,
+    playerId: playerIdSchema,
+    folderId: entityId,
+  }),
+  z.object({
+    kind: z.literal('stampApplied'),
+    stationId: entityId,
+    playerId: playerIdSchema,
+    folderId: entityId,
+    stampId: entityId,
+  }),
+  z.object({
+    kind: z.literal('deskOpened'),
+    deskId: entityId,
+    playerId: playerIdSchema,
+    folderId: entityId,
+  }),
+  z.object({ kind: z.literal('deskClosed'), deskId: entityId, playerId: playerIdSchema }),
+  z.object({
+    kind: z.literal('verdictResult'),
+    folderId: entityId,
+    storyId: entityId,
+    playerId: playerIdSchema,
+    verdict: verdictSchema,
+    justifyingStampId: entityId,
+    outcome: folderOutcomeSchema,
+    scoreDelta: z.number().int(),
+    credibilityDelta: z.number().int(),
+    speedBonus: z.boolean(),
+    missedStampIds: z.array(entityId).max(16),
+  }),
+  z.object({ kind: z.literal('ping'), playerId: playerIdSchema, ping: pingKindSchema }),
 ]);
 
 export const eventMessageSchema = z.object({
@@ -146,6 +267,8 @@ export const errorCodeSchema = z.enum([
   'reconnectFailed',
   'notHost',
   'notInRoom',
+  'notReady',
+  'unknownLevel',
 ]);
 
 export const errorMessageSchema = z.object({
@@ -153,6 +276,17 @@ export const errorMessageSchema = z.object({
   code: errorCodeSchema,
   /** English diagnostic for logs; players see a Polish string chosen by `code`. */
   detail: z.string().max(200).optional(),
+});
+
+/** Sent once when the level ends; the room moves to the `results` phase. */
+export const levelEndMessageSchema = z.object({
+  type: z.literal('levelEnd'),
+  levelId: levelIdSchema,
+  won: z.boolean(),
+  stars: z.number().int().min(0).max(3),
+  score: z.number().int(),
+  credibility: z.number().int(),
+  results: z.array(folderResultSchema).max(128),
 });
 
 export const heartbeatAckMessageSchema = z.object({
@@ -166,6 +300,7 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
   snapshotMessageSchema,
   eventMessageSchema,
   errorMessageSchema,
+  levelEndMessageSchema,
   heartbeatAckMessageSchema,
 ]);
 
@@ -175,7 +310,10 @@ export type RoomCode = z.infer<typeof roomCodeSchema>;
 export type MoveVector = z.infer<typeof moveVectorSchema>;
 export type InputActions = z.infer<typeof inputActionsSchema>;
 export type JoinMessage = z.infer<typeof joinMessageSchema>;
+export type LobbyAction = z.infer<typeof lobbyActionSchema>;
 export type LobbyMessage = z.infer<typeof lobbyMessageSchema>;
+export type PlayerCommand = z.infer<typeof playerCommandSchema>;
+export type CommandMessage = z.infer<typeof commandMessageSchema>;
 export type InputMessage = z.infer<typeof inputMessageSchema>;
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
 export type RoomPhase = z.infer<typeof roomPhaseSchema>;
@@ -188,6 +326,7 @@ export type GameEvent = z.infer<typeof gameEventSchema>;
 export type EventMessage = z.infer<typeof eventMessageSchema>;
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 export type ErrorMessage = z.infer<typeof errorMessageSchema>;
+export type LevelEndMessage = z.infer<typeof levelEndMessageSchema>;
 export type ServerMessage = z.infer<typeof serverMessageSchema>;
 
 // --- Parsing helpers -----------------------------------------------------------------------

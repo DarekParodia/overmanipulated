@@ -4,7 +4,9 @@
 import type { InputActions, MoveVector } from '@redakcja/shared';
 import { useApp } from '../store/app.ts';
 import { readGamepad } from './gamepad.ts';
+import { firstGamepad } from './gamepad-access.ts';
 import { GAME_KEYS, isWorkHeld, KEY_BINDINGS, keysToMove } from './keyboard.ts';
+import { handleNavKey, isInputCaptured } from './ui-nav.ts';
 
 export type InputSample = { move: MoveVector; actions: InputActions; ping: boolean };
 
@@ -15,7 +17,17 @@ const padPrevious = { interact: false, ping: false };
 let attached = false;
 
 function onKeyDown(event: KeyboardEvent): void {
-  if (!GAME_KEYS.has(event.code) || isTypingTarget(event.target)) {
+  if (isTypingTarget(event.target)) {
+    return;
+  }
+  if (isInputCaptured()) {
+    pressedKeys.clear();
+    if (handleNavKey(event)) {
+      useApp.getState().setInputDevice('keyboard');
+    }
+    return;
+  }
+  if (!GAME_KEYS.has(event.code)) {
     return;
   }
   event.preventDefault();
@@ -81,25 +93,24 @@ export const touchInput = {
   },
 };
 
-function firstGamepad() {
-  try {
-    for (const pad of navigator.getGamepads?.() ?? []) {
-      if (pad?.connected) {
-        return pad;
-      }
-    }
-  } catch {
-    // Gamepad API blocked (permissions policy): treat as no gamepad.
-  }
-  return null;
-}
-
 function strongest(a: MoveVector, b: MoveVector): MoveVector {
   return Math.hypot(a.x, a.y) >= Math.hypot(b.x, b.y) ? a : b;
 }
 
 /** Reads all devices and consumes latched edges. Call exactly once per simulation tick. */
 export function sampleInput(): InputSample {
+  if (isInputCaptured()) {
+    // An overlay owns the input: the avatar stands still and nothing is picked up.
+    latched.interact = false;
+    latched.ping = false;
+    const pad = firstGamepad();
+    if (pad) {
+      const reading = readGamepad(pad);
+      padPrevious.interact = reading.interact;
+      padPrevious.ping = reading.ping;
+    }
+    return { move: { x: 0, y: 0 }, actions: { interact: false, work: false }, ping: false };
+  }
   let move = strongest(keysToMove(pressedKeys), touch.move);
   let work = isWorkHeld(pressedKeys) || touch.work;
   const pad = firstGamepad();

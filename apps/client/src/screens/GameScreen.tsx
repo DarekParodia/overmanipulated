@@ -2,6 +2,7 @@
 // settings and fullscreen, touch controls on touch devices and the rotate prompt.
 import { useEffect } from 'react';
 import { startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
+import { Hud } from '../hud/Hud.tsx';
 import { attachInput } from '../input/input-manager.ts';
 import { TouchControls } from '../input/TouchControls.tsx';
 import { canFullscreen, toggleFullscreen, useWakeLock } from '../mobile/device.ts';
@@ -9,6 +10,7 @@ import { RotatePrompt } from '../mobile/RotatePrompt.tsx';
 import { leaveRoom } from '../net/session.ts';
 import { GameCanvas } from '../scene/GameCanvas.tsx';
 import { isCoarsePointer } from '../scene/quality.ts';
+import { StationLayer } from '../stations/StationLayer.tsx';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
@@ -57,6 +59,9 @@ export function GameScreen() {
         />
         <Button back icon={<Icon name="leave" label={pl.game.leave} />} onClick={leaveRoom} />
       </div>
+
+      <Hud />
+      <StationLayer />
 
       {connection === 'reconnecting' && (
         <p className={styles.banner} role="status">

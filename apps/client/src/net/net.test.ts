@@ -15,6 +15,13 @@ function snapshot(tick: number, x: number): SnapshotMessage {
     type: 'snapshot',
     tick,
     players: [{ id: 'p1', x, y: 5, facing: 0, moving: true, lastInputSeq: tick }],
+    elapsedMs: tick * TICK_MS,
+    timeLeftMs: 0,
+    score: 0,
+    credibility: 100,
+    folders: [],
+    stations: [],
+    desks: [],
   };
 }
 
@@ -64,7 +71,7 @@ describe('prediction', () => {
   const start: PlayerState = {
     id: 'p1',
     x: 3.5,
-    y: 1.5,
+    y: 2.5,
     facing: 0,
     moving: false,
     lastInputSeq: -1,

@@ -1,11 +1,14 @@
 // Per-match client runtime: fixed 50 ms input ticks (send + predict), snapshot intake
 // (interpolation buffer + reconciliation), and render-time sampling for the scene.
+import { DEFAULT_LEVEL_ID, getLevel } from '@redakcja/content';
 import {
   GREYBOX_MAP,
   type InputMessage,
   type PlayerState,
+  parseLayout,
   type SnapshotMessage,
   TICK_MS,
+  type TileMap,
 } from '@redakcja/shared';
 import { sampleInput } from '../input/input-manager.ts';
 import { createPredictor, type Predictor } from './prediction.ts';
@@ -20,21 +23,35 @@ const MAX_TICKS_PER_FRAME = 4;
 
 export type RenderedPlayer = SampledPlayer & { local: boolean };
 
+/** Tile map of a level (cached; layouts never change at runtime). */
+const maps = new Map<string, TileMap>();
+export function mapForLevel(levelId: string): TileMap {
+  let map = maps.get(levelId);
+  if (!map) {
+    const level = getLevel(levelId) ?? getLevel(DEFAULT_LEVEL_ID);
+    map = level ? parseLayout(level.layout) : GREYBOX_MAP;
+    maps.set(levelId, map);
+  }
+  return map;
+}
+
 export type GameRuntime = {
-  readonly map: typeof GREYBOX_MAP;
+  /** Map of the level being played; set by `reset` when a level starts. */
+  readonly map: TileMap;
   readonly buffer: SnapshotBuffer;
   readonly predictor: Predictor;
   onSnapshot(snapshot: SnapshotMessage, receivedAt: number): void;
   /** Advances input ticks; returns the render state for this frame. */
   frame(now: number, dtMs: number): Map<string, RenderedPlayer>;
-  reset(): void;
+  /** Clears all match state; `levelId` selects the map for the next match. */
+  reset(levelId?: string): void;
 };
 
 export function createRuntime(
   getLocalId: () => string | null,
   sendInput: (message: InputMessage) => void,
 ): GameRuntime {
-  const map = GREYBOX_MAP;
+  let map = mapForLevel(DEFAULT_LEVEL_ID);
   const buffer = createSnapshotBuffer();
   let predictor = createPredictor(map);
   let seq = 0;
@@ -42,7 +59,9 @@ export function createRuntime(
   let localKnown = false;
 
   return {
-    map,
+    get map() {
+      return map;
+    },
     buffer,
     get predictor() {
       return predictor;
@@ -103,7 +122,10 @@ export function createRuntime(
       return players;
     },
 
-    reset() {
+    reset(levelId) {
+      if (levelId) {
+        map = mapForLevel(levelId);
+      }
       buffer.clear();
       predictor = createPredictor(map);
       seq = 0;

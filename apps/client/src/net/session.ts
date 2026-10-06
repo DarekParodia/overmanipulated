@@ -4,9 +4,12 @@
 import {
   type ClientMessage,
   encodeMessage,
+  type LobbyAction,
+  type PlayerCommand,
   PROTOCOL_VERSION,
   parseServerMessage,
   RECONNECT_GRACE_MS,
+  type Role,
   type ServerMessage,
 } from '@redakcja/shared';
 import { emitCue } from '../fx/feedback.ts';
@@ -14,6 +17,8 @@ import { useApp } from '../store/app.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
 import { playerColor } from '../ui/tokens.ts';
 import { reconnectDelayMs } from './backoff.ts';
+import { handleGameEvent } from './game-events.ts';
+import { useGame } from './game-store.ts';
 import { createRuntime } from './runtime.ts';
 
 const TOKEN_KEY = 'redakcja.reconnect';
@@ -80,8 +85,13 @@ function handleMessage(message: ServerMessage): void {
       const previous = app.room;
       useApp.setState({ room: message });
       if (message.phase === 'playing' && app.screen !== 'game') {
-        runtime.reset();
+        runtime.reset(message.levelId);
+        useGame.getState().reset();
         app.setScreen('game');
+      } else if (message.phase === 'playing' && previous?.phase === 'results') {
+        // A new level started straight from the results screen.
+        runtime.reset(message.levelId);
+        useGame.getState().reset();
       } else if (message.phase === 'lobby' && app.screen !== 'lobby') {
         app.setScreen('lobby');
       }
@@ -95,6 +105,10 @@ function handleMessage(message: ServerMessage): void {
     }
     case 'snapshot':
       runtime.onSnapshot(message, performance.now());
+      useGame.getState().applySnapshot(message);
+      return;
+    case 'levelEnd':
+      useGame.getState().setLevelEnd(message);
       return;
     case 'event': {
       const { event } = message;
@@ -103,6 +117,14 @@ function handleMessage(message: ServerMessage): void {
         return;
       }
       if (useApp.getState().screen !== 'game') {
+        return;
+      }
+      if (
+        event.kind !== 'playerJoined' &&
+        event.kind !== 'playerLeft' &&
+        event.kind !== 'playerReconnected'
+      ) {
+        handleGameEvent(event);
         return;
       }
       const snapshot = runtime.buffer.latest();
@@ -257,8 +279,33 @@ export function leaveRoom(): void {
   resetToMenu();
 }
 
+function lobby(action: LobbyAction): void {
+  send({ type: 'lobby', action });
+}
+
 export function startGame(): void {
-  send({ type: 'lobby', action: 'start' });
+  lobby({ kind: 'start' });
+}
+
+export function setRole(role: Role | null): void {
+  lobby({ kind: 'setRole', role });
+}
+
+export function setReady(ready: boolean): void {
+  lobby({ kind: 'setReady', ready });
+}
+
+export function selectLevel(levelId: string): void {
+  lobby({ kind: 'selectLevel', levelId });
+}
+
+export function backToLobby(): void {
+  lobby({ kind: 'backToLobby' });
+}
+
+/** Sends a player decision (minigame result, verdict, ping, …); applied on the next tick. */
+export function sendCommand(command: PlayerCommand): void {
+  send({ type: 'command', command });
 }
 
 /** On load: resume a slot from this tab's previous page (reload) if there is one. */
