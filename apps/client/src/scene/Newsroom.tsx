@@ -1,7 +1,8 @@
 // Greybox newsroom from the shared tile map: plank floor (one textured plane), instanced walls
-// (tall at the back, cut away at the front so players stay visible) and instanced desks.
+// (tall at the back, cut away at the front so players stay visible) and instanced decorative
+// furniture. Interactive fixtures (conveyor, stations, desk, tables) are drawn by Fixtures.tsx.
 
-import { tileAt } from '@redakcja/shared';
+import { fixtureAt, tileAt } from '@redakcja/shared';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import {
   CanvasTexture,
@@ -67,7 +68,7 @@ function collectBlocks() {
         const h =
           row === 0 ? BACK_WALL_HEIGHT : row === height - 1 ? FRONT_WALL_HEIGHT : SIDE_WALL_HEIGHT;
         walls.push({ x: col + 0.5, z: row + 0.5, height: h });
-      } else if (kind === 'furniture') {
+      } else if (kind === 'furniture' && !fixtureAt(runtime.map, col, row)) {
         desks.push({ x: col + 0.5, z: row + 0.5, height: DESK_HEIGHT });
       }
     }

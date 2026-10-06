@@ -79,3 +79,8 @@ export function Icon({ name, size = 24, label, style, className }: IconProps) {
 }
 
 export const iconNames = Object.keys(paths) as IconName[];
+
+/** Raw path data (24×24 viewBox) for canvas drawing, e.g. the folder cover atlas in 3D. */
+export function iconPath(name: IconName): string {
+  return paths[name];
+}

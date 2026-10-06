@@ -3,17 +3,23 @@
 import { Canvas } from '@react-three/fiber';
 import { useEffect } from 'react';
 import { NoToneMapping, SRGBColorSpace } from 'three';
+import { installGameHook } from '../debug/game-hook.ts';
 import { perfStats } from '../debug/perf-stats.ts';
+import { useApp } from '../store/app.ts';
 import { useSettings } from '../store/settings.ts';
 import { palette } from '../ui/tokens.ts';
 import { CameraRig } from './CameraRig.tsx';
 import { Driver } from './Driver.tsx';
+import { Fixtures } from './Fixtures.tsx';
+import { Folders } from './Folders.tsx';
+import { InteractionHighlight } from './InteractionHighlight.tsx';
 import { Newsroom } from './Newsroom.tsx';
 import { Particles } from './Particles.tsx';
 import { PerfProbe } from './PerfProbe.tsx';
 import { PingBubbles } from './PingBubbles.tsx';
 import { Players } from './Players.tsx';
 import { detectPreset, isCoarsePointer, profileFor, useQuality } from './quality.ts';
+import { StationIndicators } from './StationIndicators.tsx';
 import { Warmup } from './Warmup.tsx';
 
 function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
@@ -26,6 +32,8 @@ function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
 export function GameCanvas() {
   const profile = useQuality((s) => s.profile);
   const chosen = useSettings((s) => s.quality);
+  // World props read `runtime.map` once; remount them when a level with another map starts.
+  const levelId = useApp((s) => s.room?.levelId ?? '');
 
   useEffect(() => {
     if (chosen) {
@@ -46,6 +54,7 @@ export function GameCanvas() {
         if (new URLSearchParams(window.location.search).has('debug')) {
           // Dev aid: inspect the scene from the console or end-to-end tests.
           (window as unknown as { __scene?: unknown }).__scene = scene;
+          installGameHook();
         }
         gl.toneMapping = NoToneMapping;
         gl.outputColorSpace = SRGBColorSpace;
@@ -75,7 +84,13 @@ export function GameCanvas() {
       />
       <Driver />
       <CameraRig />
-      <Newsroom shadows={profile.shadows} />
+      <group key={levelId}>
+        <Newsroom shadows={profile.shadows} />
+        <Fixtures shadows={profile.shadows} />
+        <InteractionHighlight />
+        <StationIndicators />
+        <Folders />
+      </group>
       <Players shadows={profile.shadows} />
       <PingBubbles />
       <Particles />
