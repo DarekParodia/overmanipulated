@@ -1,0 +1,28 @@
+{
+  "name": "redakcja",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:client": "bun run --filter @redakcja/client dev",
+    "dev:server": "bun run --filter @redakcja/server dev",
+    "build": "bun run --filter @redakcja/client build",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "bun run --filter '*' typecheck",
+    "test": "bun test --pass-with-no-tests",
+    "validate:content": "bun run --filter @redakcja/content validate",
+    "check": "bun run lint && bun run typecheck && bun run test && bun run validate:content"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.15",
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.4.0"
+  }
+}
