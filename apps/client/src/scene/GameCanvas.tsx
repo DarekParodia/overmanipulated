@@ -13,6 +13,7 @@ import { Particles } from './Particles.tsx';
 import { PerfProbe } from './PerfProbe.tsx';
 import { Players } from './Players.tsx';
 import { detectPreset, isCoarsePointer, profileFor, useQuality } from './quality.ts';
+import { Warmup } from './Warmup.tsx';
 
 function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
   const info = gl.getExtension('WEBGL_debug_renderer_info');
@@ -77,6 +78,7 @@ export function GameCanvas() {
       <Players shadows={profile.shadows} />
       <Particles />
       <PerfProbe />
+      <Warmup />
     </Canvas>
   );
 }

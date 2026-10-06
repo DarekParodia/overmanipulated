@@ -1,10 +1,11 @@
 // Renders the shared particle pool as one instanced mesh of low-poly chips (one draw call).
 // Particles shrink to nothing instead of fading, matching the paper-cut look without alpha.
 import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   Color,
   IcosahedronGeometry,
+  InstancedBufferAttribute,
   type InstancedMesh,
   MeshLambertMaterial,
   Object3D,
@@ -33,6 +34,18 @@ export function Particles() {
   const material = useMemo(() => new MeshLambertMaterial({ flatShading: true }), []);
   const dummy = useMemo(() => new Object3D(), []);
   const color = useMemo(() => new Color(), []);
+  const warmFrames = useRef(3);
+
+  // Create the per-instance colour attribute before the first render: adding it later changes the
+  // shader defines and forces a recompile (a 100+ ms stall) on the first particle burst.
+  useLayoutEffect(() => {
+    const instanced = mesh.current;
+    if (instanced && !instanced.instanceColor) {
+      instanced.instanceColor = new InstancedBufferAttribute(new Float32Array(capacity * 3), 3);
+      instanced.count = 0;
+      warmFrames.current = 3;
+    }
+  }, [capacity]);
 
   useEffect(
     () =>
@@ -88,12 +101,23 @@ export function Particles() {
       instanced.setColorAt(n, color.setHex(pool.color[i] ?? 0));
       n++;
     }
+    if (warmFrames.current > 0) {
+      // Draw one invisible particle on the first frames so the GPU pipeline for this mesh is
+      // created during load, not on the first real burst.
+      warmFrames.current--;
+      if (n === 0) {
+        dummy.scale.setScalar(0);
+        dummy.updateMatrix();
+        instanced.setMatrixAt(0, dummy.matrix);
+        n = 1;
+      }
+    }
     instanced.count = n;
     instanced.instanceMatrix.needsUpdate = true;
     if (instanced.instanceColor) {
       instanced.instanceColor.needsUpdate = true;
     }
-    particleStats.alive = n;
+    particleStats.alive = pool.count;
   });
 
   return (

@@ -1,5 +1,6 @@
 import {
   type Browser,
+  type BrowserContext,
   type BrowserContextOptions,
   devices,
   expect,
@@ -11,12 +12,20 @@ export const PHONE: BrowserContextOptions = { ...devices['Pixel 7 landscape'] };
 
 export type Player = { page: Page; nickname: string; touch: boolean };
 
+const openContexts: BrowserContext[] = [];
+
+/** Closes every context opened by `openPlayer`; idle scenes would otherwise keep rendering. */
+export async function closePlayers(): Promise<void> {
+  await Promise.all(openContexts.splice(0).map((context) => context.close()));
+}
+
 export async function openPlayer(
   browser: Browser,
   nickname: string,
   options: BrowserContextOptions,
 ): Promise<Player> {
   const context = await browser.newContext(options);
+  openContexts.push(context);
   const page = await context.newPage();
   page.on('pageerror', (error) => {
     throw error;

@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import {
   avatarPositions,
+  closePlayers,
   createRoom,
   DESKTOP,
   joinRoom,
@@ -8,6 +9,8 @@ import {
   openPlayer,
   PHONE,
 } from './helpers.ts';
+
+test.afterEach(closePlayers);
 
 test('players create and join a room, start, and see each other move', async ({
   browser,

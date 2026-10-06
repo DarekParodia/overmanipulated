@@ -118,6 +118,8 @@ feedback.
   unacknowledged inputs); remote players interpolated ~100 ms behind.
   *Done when:* smooth movement with 150 ms artificial latency (dev latency flag on the server);
   interpolation helpers tested.
+  *Status:* verified with `DEV_LATENCY_MS=150` (≈ 390 ms round trip): local movement starts on
+  the first frame, no backward corrections over a move-and-stop run.
 
 - [~] **S1-10 — Deployment.**
   *Depends on:* S1-03
