@@ -89,6 +89,8 @@ export type RegistryOptions = {
   random?: () => number;
   /** Called when the first room is created, so the loop can start. */
   onActive?: () => void;
+  /** Simulation step; injectable so tests can drive phases (e.g. force `state.ended`). */
+  step?: typeof step;
 };
 
 export type RoomRegistry = ReturnType<typeof createRoomRegistry>;
@@ -97,6 +99,7 @@ export function createRoomRegistry(options: RegistryOptions) {
   const { hub } = options;
   const now = options.now ?? (() => performance.now());
   const random = options.random ?? secureRandom;
+  const stepGame = options.step ?? step;
   const rooms = new Map<string, Room>();
   const memberships = new Map<string, Membership>();
   const tokens = new Map<string, Membership>();
@@ -300,17 +303,28 @@ export function createRoomRegistry(options: RegistryOptions) {
 
   function handleLobby(room: Room, player: RoomPlayer, action: LobbyAction): void {
     switch (action.kind) {
-      case 'start':
+      case 'start': {
         if (player.id !== room.hostId) {
           rejectNotHost(player);
           return;
         }
-        if (room.phase !== 'lobby') {
+        // Start works from the lobby and, as a replay, straight from the results screen. The
+        // same ready gate applies in both phases (readiness may be toggled during results too).
+        if (room.phase === 'playing') {
+          return;
+        }
+        const waitingFor = notReadyPlayers(room);
+        if (waitingFor.length > 0) {
+          if (player.connection) {
+            sendError(player.connection, 'notReady', `waiting for ${waitingFor.join(', ')}`);
+          }
           return;
         }
         startLevel(room);
         return;
+      }
       case 'setRole':
+        // Roles are non-exclusive; they are fixed for the duration of a level.
         if (room.phase === 'playing') {
           return;
         }
@@ -318,7 +332,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         broadcastRoomState(room);
         return;
       case 'setReady':
-        if (room.phase !== 'lobby') {
+        // Allowed in `results` as well so a direct replay can pass the ready gate.
+        if (room.phase === 'playing') {
           return;
         }
         player.ready = action.ready;
@@ -342,6 +357,10 @@ export function createRoomRegistry(options: RegistryOptions) {
         room.level = level;
         room.stories = storiesForLevel(level);
         room.map = parseLayout(level.layout);
+        room.game = createGameState({ map: room.map });
+        // Every (re)selection asks players to confirm again, so nobody is ready for a level
+        // they have not seen.
+        resetReady(room);
         broadcastRoomState(room);
         return;
       }
@@ -354,11 +373,30 @@ export function createRoomRegistry(options: RegistryOptions) {
           return;
         }
         room.phase = 'lobby';
+        // Drop the finished run; the next start builds a fresh game from the room's map.
+        room.game = createGameState({ map: room.map });
         for (const p of room.players.values()) {
-          p.ready = false;
+          p.inputQueue = [];
+          p.lastQueuedSeq = -1;
+          p.commandQueue = [];
         }
+        resetReady(room);
         broadcastRoomState(room);
         return;
+    }
+  }
+
+  /** Nicknames of connected non-host players who have not pressed ready. The host is
+   * implicitly ready by pressing start; disconnected players never block the start. */
+  function notReadyPlayers(room: Room): string[] {
+    return [...room.players.values()]
+      .filter((p) => p.id !== room.hostId && p.connection !== null && !p.ready)
+      .map((p) => p.nickname);
+  }
+
+  function resetReady(room: Room): void {
+    for (const p of room.players.values()) {
+      p.ready = false;
     }
   }
 
@@ -368,7 +406,9 @@ export function createRoomRegistry(options: RegistryOptions) {
     for (const p of room.players.values()) {
       game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
       p.inputQueue = [];
+      p.lastQueuedSeq = -1;
       p.commandQueue = [];
+      p.ready = false;
     }
     room.game = game;
     log.info('game started', { room: room.code, level: room.level.id });
@@ -479,7 +519,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         level: room.level,
         stories: room.stories,
       };
-      const result = step(room.game, inputs, commands, ctx);
+      const result = stepGame(room.game, inputs, commands, ctx);
       room.game = result.state;
       for (const event of result.events) {
         broadcastEvent(room, event);
