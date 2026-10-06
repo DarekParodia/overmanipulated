@@ -1,24 +1,43 @@
+/* Developer overlay (?debug / F3), not player-facing: small, bottom-centre, between the
+   joystick and the action buttons so it never covers the HUD or the touch controls. */
 .overlay {
   position: fixed;
-  left: max(var(--space-2), env(safe-area-inset-left));
-  bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  left: 50%;
+  bottom: max(var(--space-1), env(safe-area-inset-bottom));
   z-index: 50;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  column-gap: var(--space-4);
+  width: max-content;
+  max-width: 15rem;
   margin: 0;
-  padding: var(--space-2) var(--space-3);
-  background: var(--paper-a85);
-  border: var(--rule-thin);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-2);
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 2px solid var(--outline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  line-height: 1.25;
   pointer-events: none;
   font-variant-numeric: tabular-nums;
+  opacity: 0.85;
 }
 
 .row {
   display: flex;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.row dt {
+  white-space: nowrap;
 }
 
 .row dd {
+  overflow: hidden;
   margin: 0;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }

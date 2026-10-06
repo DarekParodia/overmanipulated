@@ -1,329 +1,220 @@
 /*
- * Folder queue: manila slips pinned under a wooden rail across the top of the screen ("spike"
- * of incoming copy). Sits between the HUD plate (left) and the screen tools (right).
+ * Folder queue: up to three chunky cards centred between the HUD pill (left) and the screen
+ * tools (right), plus a round "+N" chip for the rest.
  */
 .queue {
   position: absolute;
   top: var(--hud-top);
-  left: calc(var(--hud-left) + var(--hud-plate-w) + var(--space-3));
+  left: calc(var(--hud-left) + var(--hud-pill-w) + var(--space-3));
   right: calc(var(--hud-right) + var(--hud-tools-w) + var(--space-3));
+  display: flex;
+  justify-content: center;
   pointer-events: none;
-  overflow: hidden;
-  padding-top: var(--space-1);
-}
-
-/* The rail the slips hang from: a thick ink rule, like a pinboard strip. */
-.rail {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--wood);
-  border-bottom: 1px solid var(--ink);
 }
 
 .empty {
-  display: inline-block;
-  margin: var(--space-2) 0 0;
-  padding: var(--space-1) var(--space-3);
-  background: var(--paper);
-  border: var(--rule-thin);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
-  transform: rotate(-0.6deg);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--text-soft);
 }
 
-.slips {
+.cards {
   display: flex;
-  gap: var(--space-2);
+  align-items: flex-start;
+  gap: var(--space-3);
   margin: 0;
-  padding: 0 0 var(--space-3);
+  padding: 0;
   list-style: none;
 }
 
-.slip {
+.card {
   position: relative;
-  flex: 0 0 var(--hud-slip-w);
-  min-width: 0;
+  flex: 0 0 var(--hud-card-w);
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: var(--space-2) var(--space-2) var(--space-1);
-  background: var(--manila);
-  border: 1px solid var(--manila-dark);
-  border-top: none;
-  box-shadow: var(--shadow-paper);
-  color: var(--ink);
-  transform-origin: 50% 0;
-  animation: hang var(--motion-base) var(--ease-settle) both;
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+  color: var(--text);
+  animation: pop-in var(--motion-base) var(--ease-bounce) both;
 }
 
-/* Slips hang slightly crooked from their pin; seeded by position so they don't jitter. */
-.slip:nth-child(3n + 1) {
-  --slip-tilt: -1deg;
-}
-.slip:nth-child(3n + 2) {
-  --slip-tilt: 0.6deg;
-}
-.slip:nth-child(3n) {
-  --slip-tilt: -0.3deg;
-}
-.slip {
-  rotate: var(--slip-tilt, 0deg);
-}
-
-@keyframes hang {
-  from {
-    transform: translateY(-110%);
+@keyframes pop-in {
+  0% {
+    transform: scale(0.8);
   }
-  to {
-    transform: translateY(0);
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
-/* "+N" tab: the corner of the next folders peeking out from under the last slip. */
-.more {
-  flex: 0 0 3rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-1) 2px;
-  background: var(--manila-dark);
-  border: 1px solid var(--ink);
-  border-top: none;
-  box-shadow: var(--shadow-paper);
-}
-
-.moreCount {
-  font-family: var(--font-grotesk);
-  font-stretch: 75%;
-  font-weight: 800;
-  font-size: var(--text-lg);
-  line-height: 1;
-}
-
-.moreLabel {
-  font-family: var(--font-typewriter);
-  font-size: 0.5625rem;
-  text-align: center;
-}
-
-/* Drawing pin: actually round, so the radius is allowed. */
-.pin {
-  position: absolute;
-  top: -3px;
-  left: 50%;
-  width: 9px;
-  height: 9px;
-  margin-left: -4px;
-  border-radius: 50%;
-  background: var(--ink-soft);
-  border: 1px solid var(--ink);
-}
-
-.head {
+/* Top band in the priority colour: story-type icon left, 1–3 flags right. */
+.band {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-1);
-  min-height: 20px;
-  padding-right: 1.1rem;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: var(--outline-border);
+  border-radius: calc(var(--radius-md) - var(--stroke)) calc(var(--radius-md) - var(--stroke)) 0 0;
+  color: var(--outline);
 }
 
-.priority {
-  font-family: var(--font-grotesk);
-  font-stretch: 70%;
-  font-weight: 700;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+.normal .band {
+  background: var(--priority-normal);
 }
 
-/* Priority flag: a square tab for "important", a red triangular corner for "urgent". */
-.flag {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: grid;
-  place-items: start end;
-  width: 1.3rem;
-  height: 1.3rem;
-  padding: 1px 3px 0 0;
-  font-family: var(--font-grotesk);
-  font-weight: 900;
-  font-size: var(--text-xs);
-  line-height: 1;
+.important .band {
+  background: var(--priority-important);
 }
 
-.important .flag {
-  background: var(--ochre);
-  border-left: 1px solid var(--ink);
-  border-bottom: 1px solid var(--ink);
-  color: var(--ink);
-  place-items: center;
-  padding: 0;
+.urgent .band {
+  background: var(--priority-urgent);
 }
 
-.urgent .flag {
-  width: 1.8rem;
-  height: 1.8rem;
-  background: var(--editorial-red);
-  color: var(--paper);
-  clip-path: polygon(0 0, 100% 0, 100% 100%);
+.flags {
+  display: inline-flex;
+  margin-right: -2px;
 }
 
-.urgent .priority {
-  color: var(--editorial-red);
-}
-
-.headline {
-  display: -webkit-box;
-  margin: 0;
-  overflow: hidden;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  font-family: var(--font-serif);
-  font-size: var(--text-xs);
-  line-height: var(--leading-snug);
+.flags svg + svg {
+  margin-left: -5px;
 }
 
 .countdown {
   margin: 0;
-  font-family: var(--font-grotesk);
-  font-stretch: 75%;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-lg);
-  line-height: 1;
+  font-size: var(--text-xl);
+  line-height: 1.1;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-.meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-1);
-  margin: 0;
-  font-family: var(--font-typewriter);
-  font-size: 0.6875rem;
-  line-height: 1.2;
-  white-space: nowrap;
+/* Where the folder is: a small round badge hanging off the bottom-right corner. */
+.badge {
+  position: absolute;
+  right: -0.6rem;
+  bottom: -0.6rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
 }
 
-.where {
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* "+N": a round chip for the folders that don't fit. */
+.more {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  min-width: 3rem;
+  height: 3rem;
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
 }
 
-.stamps {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex: none;
-}
+/* --- Deadline warning (< 10 s): red card, gentle shake --------------------------------------- */
 
-.ticks {
-  display: inline-flex;
-  gap: 1px;
-}
-
-/* A stamp tick: a tiny inked square, like a stamp mark on the folder's edge. */
-.tick {
-  width: 5px;
-  height: 7px;
-  background: var(--ink);
-}
-
-.stampCount {
-  font-weight: 700;
-}
-
-/* --- Deadline warning ---------------------------------------------------------------------- */
-
-.warn .countdown {
-  color: var(--editorial-red);
-}
-
-/* Default: the slip trembles and its countdown alternates ink and red. */
 .warn {
+  background: var(--red);
   animation:
-    hang var(--motion-base) var(--ease-settle) both,
-    tremble 0.5s ease-in-out infinite;
+    pop-in var(--motion-base) var(--ease-bounce) both,
+    shake 0.6s ease-in-out infinite;
 }
 
-.warn .countdown {
-  animation: blink-ink 1s steps(1) infinite;
-}
-
-@keyframes tremble {
+@keyframes shake {
   0%,
   100% {
-    transform: translateY(0) rotate(0deg) scale(1);
+    transform: rotate(0deg);
   }
-  25% {
-    transform: translateY(1px) rotate(-1.5deg) scale(1.03);
+  20% {
+    transform: rotate(-3deg);
   }
-  75% {
-    transform: translateY(1px) rotate(1.5deg) scale(1.03);
+  40% {
+    transform: rotate(3deg);
   }
-}
-
-@keyframes blink-ink {
-  0% {
-    color: var(--editorial-red);
+  60% {
+    transform: rotate(-2deg);
   }
-  50% {
-    color: var(--ink);
+  80% {
+    transform: rotate(2deg);
   }
 }
 
-/* No-flash: no colour blinking; a static red dog-ear marks the slip instead. */
-:root[data-no-flash="true"] .warn .countdown {
-  animation: none;
-}
-
-:root[data-no-flash="true"] .warn::after {
-  content: "";
-  position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 1.1rem;
-  height: 1.1rem;
-  background: var(--editorial-red);
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-
-/* Reduced motion: no trembling or scaling, no hanging slide. */
-:root[data-reduced-motion="true"] .slip,
+:root[data-reduced-motion="true"] .card,
 :root[data-reduced-motion="true"] .warn {
   animation: none;
 }
 
-/* --- Phones: no headlines, smaller slips ---------------------------------------------------- */
+/* --- Phones ---------------------------------------------------------------------------------- */
 
 @media (max-height: 500px), (max-width: 760px) {
-  .headline {
-    display: none;
+  .cards {
+    gap: var(--space-2);
   }
 
-  .slip {
-    padding: var(--space-1) var(--space-1) 2px;
+  .band {
+    padding: 2px var(--space-1);
+  }
+
+  .band > svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .flags svg {
+    width: 13px;
+    height: 13px;
   }
 
   .countdown {
+    padding: 2px var(--space-1) var(--space-1);
+    font-size: var(--text-lg);
+  }
+
+  .badge {
+    right: -0.45rem;
+    bottom: -0.45rem;
+    width: 1.625rem;
+    height: 1.625rem;
+  }
+
+  .badge svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .more {
+    min-width: 2.5rem;
+    height: 2.5rem;
     font-size: var(--text-md);
   }
 
-  .priority {
-    font-size: 0.625rem;
-  }
-
-  .meta {
-    font-size: 0.625rem;
-  }
-
-  .stampCount {
-    display: none;
+  .empty {
+    font-size: var(--text-sm);
+    padding: var(--space-1) var(--space-3);
   }
 }

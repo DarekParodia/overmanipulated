@@ -8,31 +8,44 @@
   -webkit-touch-callout: none;
 }
 
+/* Movement half. Starts below the HUD pill so a thumb on the HUD never hides under it. */
 .stickZone {
   position: absolute;
   left: 0;
-  top: 25%;
+  top: max(25%, 8rem);
   bottom: 0;
   width: 50%;
   pointer-events: auto;
   touch-action: none;
 }
 
+/* Joystick: a translucent base with a thick outline and a chunky knob that pops. */
 .ring {
   position: fixed;
   display: grid;
   place-items: center;
-  border: 2px solid var(--ink-a40);
+  border: var(--stroke-bold) solid var(--outline);
   border-radius: 50%;
-  background: var(--paper-a85);
-  opacity: 0.85;
+  background: var(--outline-a20);
 }
 
 .knob {
-  width: 46%;
-  height: 46%;
+  width: 48%;
+  height: 48%;
+  border: var(--stroke-bold) solid var(--outline);
   border-radius: 50%;
-  background: var(--ink-a70);
+  background: var(--surface);
+  box-shadow: var(--pop);
+}
+
+/* Resting joystick: shows where to put the thumb; replaced by the live one on touch. */
+.idle {
+  position: absolute;
+  left: max(var(--space-5), env(safe-area-inset-left));
+  bottom: max(var(--space-5), env(safe-area-inset-bottom));
+  width: 7rem;
+  height: 7rem;
+  opacity: 0.55;
 }
 
 .buttons {
@@ -42,53 +55,65 @@
   display: grid;
   grid-template-columns: auto auto;
   grid-template-areas:
-    "ping interact"
-    "work work";
+    ". ping"
+    "work interact";
+  align-items: end;
   gap: var(--space-3);
   pointer-events: auto;
   touch-action: none;
 }
 
-/* Thumb buttons: round rubber-stamp handles seen from above, semi-transparent. */
+/* Thumb buttons: chunky round toys with an icon over a short label. */
 .action {
-  min-width: 4.25rem;
-  min-height: 4.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 5rem;
+  height: 5rem;
+  padding: 0;
+  border: var(--stroke-bold) solid var(--outline);
   border-radius: 50%;
-  border: 3px solid var(--ink);
-  background: var(--paper-a85);
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-stretch: 70%;
-  font-size: var(--text-sm);
-  text-transform: uppercase;
+  background: var(--surface);
+  box-shadow: var(--pop-lg);
+  color: var(--outline);
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0.88;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .action:active {
-  transform: scale(0.92);
-  background: var(--paper-shade);
+  transform: translateY(5px);
+  box-shadow: var(--pop-pressed);
+}
+
+.label {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: 1;
+}
+
+/* Pick up / put down: the most used action, so the biggest and the yellow one. */
+.interact {
+  grid-area: interact;
+  width: 5.75rem;
+  height: 5.75rem;
+  background: var(--yellow);
 }
 
 .work {
   grid-area: work;
-  justify-self: end;
-  min-width: 5.25rem;
-  min-height: 5.25rem;
-  border-color: var(--copy-blue);
-  color: var(--copy-blue);
-}
-
-.interact {
-  grid-area: interact;
 }
 
 .ping {
   grid-area: ping;
-  min-width: 3.5rem;
-  min-height: 3.5rem;
-  align-self: end;
+  justify-self: center;
+  width: 4.25rem;
+  height: 4.25rem;
 }
 
 .mirrored .stickZone {
@@ -96,14 +121,15 @@
   right: 0;
 }
 
+.mirrored .idle {
+  left: auto;
+  right: max(var(--space-5), env(safe-area-inset-right));
+}
+
 .mirrored .buttons {
   right: auto;
   left: max(var(--space-4), env(safe-area-inset-left));
   grid-template-areas:
-    "interact ping"
-    "work work";
-}
-
-.mirrored .work {
-  justify-self: start;
+    "ping ."
+    "interact work";
 }
