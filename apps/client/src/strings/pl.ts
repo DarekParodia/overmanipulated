@@ -215,7 +215,146 @@ export const pl = {
   minigames: {
     imageSearch: {},
     archive: {},
-    sourceRegistry: {},
+    sourceRegistry: {
+      drawer: 'Kartoteka źródeł',
+      cardNo: (n: number) => `Karta nr ${String(n).padStart(4, '0')}`,
+      kinds: { account: 'Konto', website: 'Strona' },
+      task: 'Zakreśl, co się nie zgadza. Wszystko gra? Odłóż kartę bez kółek.',
+      file: 'Do kartoteki',
+      marked: (n: number) => (n === 0 ? 'Bez zastrzeżeń' : `Zakreślone: ${n}`),
+      mistakes: 'Pomyłki',
+      mistakeUsed: 'pomyłka',
+      mistakeFree: 'wolne',
+      notThis: 'w porządku',
+      missing: 'Czegoś brakuje. Czytaj jeszcze raz.',
+      revealed: 'Przerywane kółka: tego szukaliśmy.',
+      filed: 'Sprawdzone',
+      failed: 'Źle zakreślone',
+      clean: 'Źródło w porządku',
+      flagged: 'Źródło podejrzane',
+      hints: {
+        keyboard: 'W/S wybór · E zakreśl · Q do kartoteki',
+        gamepad: 'Krzyżak wybór · A zakreśl · Y do kartoteki',
+        touch: 'Stuknij podejrzany wpis, potem odłóż kartę',
+      },
+      /**
+       * Card fields. Each has a label, believable values (`clean`) and warning signs
+       * (`flagged`). Everything is invented: Nowe Brzegi, no real people, brands or platforms.
+       */
+      fields: {
+        account: {
+          identity: {
+            label: 'Nazwa i login',
+            clean: [
+              'Kasia Wróblewska · @kwroblewska',
+              'Fotoklub Nadrzecze · @fotoklub_nadrzecze',
+              'Marek Sowa · @marek.sowa',
+              'Piekarnia Pod Mostem · @piekarnia_podmostem',
+            ],
+            flagged: [
+              'Urząd Miasta Nowe Brzegi · @nb_news_2481',
+              'Policja Nowe Brzegi · @xx_prawda_xx',
+              'Kurier Nowobrzeski · @kurier_nb_0ficjalny',
+            ],
+          },
+          created: {
+            label: 'Konto założone',
+            clean: ['w marcu 2019 r.', '6 lat temu', 'w 2016 r.', 'jesienią 2020 r.'],
+            flagged: ['3 dni temu', 'wczoraj wieczorem', 'przedwczoraj'],
+          },
+          history: {
+            label: 'Wcześniejsze wpisy',
+            clean: [
+              'ok. 1200, głównie zdjęcia z okolicy',
+              'od lat sprawy osiedla i remonty',
+              'zapowiedzi wystaw, relacje z klubu',
+            ],
+            flagged: [
+              'brak, to pierwszy wpis',
+              'wszystko sprzed tygodnia usunięte',
+              'tylko ten jeden post, udostępniany',
+            ],
+          },
+          avatar: {
+            label: 'Zdjęcie profilowe',
+            clean: [
+              'zdjęcie znad rzeki, to samo od lat',
+              'logo jak na szyldzie przy rynku',
+              'zwykły portret, kilka starszych wersji',
+            ],
+            flagged: [
+              'z banku zdjęć, znane z reklam',
+              'herb miasta wycięty z cudzej strony',
+              'twarz wygenerowana, rozmyte uszy',
+            ],
+          },
+          followers: {
+            label: 'Obserwujący',
+            clean: ['312, głównie sąsiedzi', '1450 osób z regionu', '86 znajomych'],
+            flagged: ['15 000 w dwa dni, konta bez zdjęć', '9800 kont założonych jednego dnia'],
+          },
+          activity: {
+            label: 'Aktywność',
+            clean: ['kilka wpisów w tygodniu', 'raz, dwa razy dziennie', 'zwykle wieczorami'],
+            flagged: [
+              '60 wpisów w godzinę',
+              'ten sam tekst w 40 grupach',
+              'co minutę, także w nocy',
+            ],
+          },
+          place: {
+            label: 'Miejscowość',
+            clean: [
+              'Nowe Brzegi, Nadrzecze',
+              'Nowe Brzegi, Stare Miasto',
+              'okolice Nowych Brzegów',
+            ],
+            flagged: ['zmieniana pięć razy w miesiącu', 'Nowe Brzegi, ale konto z innego kraju'],
+          },
+        },
+        website: {
+          address: {
+            label: 'Adres',
+            clean: ['nowe-brzegi.pl', 'mpk.nowe-brzegi.pl', 'kurier-nowobrzeski.pl'],
+            flagged: [
+              'nowe-brzegi-gov.info',
+              'nowe-brzegl.pl',
+              'kurier-nowobrzeski.pilne-wiesci.top',
+            ],
+          },
+          registered: {
+            label: 'Domena zarejestrowana',
+            clean: ['w 2004 r.', 'w 2011 r.', 'w 1999 r.'],
+            flagged: ['5 dni temu', 'wczoraj', 'tydzień temu'],
+          },
+          owner: {
+            label: 'Właściciel domeny',
+            clean: ['instytucja, dane jawne w rejestrze', 'firma z Nowych Brzegów, dane jawne'],
+            flagged: ['dane ukryte, pośrednik za granicą', 'osoba prywatna, inna niż w stopce'],
+          },
+          contact: {
+            label: 'Kontakt',
+            clean: ['adres, telefon, godziny pracy', 'ul. Ratuszowa 1, sekretariat'],
+            flagged: ['tylko formularz, brak adresu', 'mail na darmowej skrzynce'],
+          },
+          archive: {
+            label: 'Inne artykuły',
+            clean: ['archiwum komunikatów od 2010 r.', 'setki wpisów, ostatni wczoraj'],
+            flagged: ['jeden, właśnie ten', 'pięć, wszystkie z dzisiaj'],
+          },
+          look: {
+            label: 'Wygląd',
+            clean: ['logo i układ jak w wersji drukowanej', 'herb zgodny z oficjalnym'],
+            flagged: ['herb rozmyty, skopiowany', 'logo prawie jak oryginał, inna czcionka'],
+          },
+          links: {
+            label: 'Linki',
+            clean: ['prowadzą do źródeł i dokumentów', 'działają, do stron gminy'],
+            flagged: ['wszystkie prowadzą do sklepu', 'puste, nigdzie nie prowadzą'],
+          },
+        },
+      },
+    },
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
   pings: {

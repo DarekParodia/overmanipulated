@@ -157,3 +157,15 @@ export const CONTENT_THREE_STARS_SHARE = { min: 0.65, max: 0.95 } as const;
 
 /** Pressing the ping button again this soon after opening the picker re-sends the last ping. */
 export const PING_QUICK_REPEAT_MS = 350;
+
+// --- Minigame: source registry (S2-06) -----------------------------------------------------
+
+/** Wrong marks or premature filings that end the source-registry minigame as a failure. */
+export const SOURCE_REGISTRY_MAX_MISTAKES = 2;
+/** Fields on one source card (account or website). */
+export const SOURCE_REGISTRY_FIELDS = 7;
+/** Red flags on a suspicious card: between min and max inclusive. */
+export const SOURCE_REGISTRY_MIN_FLAGS = 1;
+export const SOURCE_REGISTRY_MAX_FLAGS = 3;
+/** Chance that a card for a folder without a source-registry stamp is clean. */
+export const SOURCE_REGISTRY_CLEAN_CHANCE = 0.3;
