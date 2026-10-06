@@ -12,6 +12,7 @@ import { CameraRig } from './CameraRig.tsx';
 import { Driver } from './Driver.tsx';
 import { Fixtures } from './Fixtures.tsx';
 import { Folders } from './Folders.tsx';
+import { GuidanceMarkers } from './GuidanceMarkers.tsx';
 import { InteractionHighlight } from './InteractionHighlight.tsx';
 import { Newsroom } from './Newsroom.tsx';
 import { Particles } from './Particles.tsx';
@@ -90,6 +91,7 @@ export function GameCanvas() {
         <InteractionHighlight />
         <StationIndicators />
         <Folders />
+        <GuidanceMarkers />
       </group>
       <Players shadows={profile.shadows} />
       <PingBubbles />

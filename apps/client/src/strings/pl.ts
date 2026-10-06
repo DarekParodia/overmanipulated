@@ -502,6 +502,67 @@ export const pl = {
     backToLobby: 'Wróć do redakcji',
     waitingForHost: 'Czekamy na gospodarza',
   },
+  /** "What next" hint bubble and the first-game tutorial. */
+  guidance: {
+    /** Key names in the accusative, after „Trzymaj” / „Wciśnij”. */
+    workKey: {
+      keyboard: 'Spację',
+      gamepad: 'X',
+      touch: '„Pracuj”',
+    } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
+    /** Short station names for hints: „Zanieś do: Lupa / Archiwum”. */
+    stationShort: {
+      imageSearch: 'Lupa',
+      archive: 'Archiwum',
+      sourceRegistry: 'Kartoteka',
+      phone: 'Telefon',
+      aiScanner: 'Skaner',
+      dataLibrary: 'Dane',
+    } satisfies Record<StationKind, string>,
+    hint: {
+      pickupConveyor: 'Weź teczkę z taśmy',
+      pickupWaiting: 'Weź czekającą teczkę',
+      pickupHere: {
+        keyboard: 'Podnieś: E',
+        gamepad: 'Podnieś: A',
+        touch: 'Wciśnij „Podnieś”',
+      } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
+      dropHere: {
+        keyboard: 'Odłóż: E',
+        gamepad: 'Odłóż: A',
+        touch: 'Odłóż: wciśnij „Podnieś”',
+      } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
+      toStation: (names: string) => `Zanieś do: ${names}`,
+      work: (key: string) => `Trzymaj ${key}`,
+      working: 'Trzymaj, sprawdzamy!',
+      minigame: 'Rozwiąż zadanie',
+      lockout: 'Stanowisko stoi. Chwilę!',
+      toDesk: 'Gotowe – zanieś na stół!',
+      openDesk: (key: string) => `Werdykt: trzymaj ${key}`,
+      verdict: 'Wybierz werdykt',
+      wait: 'Czekaj na nową teczkę',
+    },
+    bubbleLabel: 'Podpowiedź',
+    tutorial: {
+      label: 'Samouczek',
+      step: (n: number, total: number) => `Krok ${n} z ${total}`,
+      skip: 'Pomiń samouczek',
+      move: {
+        keyboard: 'Ruszaj się: WASD',
+        gamepad: 'Ruszaj się: lewa gałka',
+        touch: 'Ruszaj się: przesuń kciukiem',
+      } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
+      pickup: {
+        keyboard: 'Podnieś teczkę z taśmy: E',
+        gamepad: 'Podnieś teczkę z taśmy: A',
+        touch: 'Przy taśmie wciśnij „Podnieś”',
+      } satisfies Record<'keyboard' | 'gamepad' | 'touch', string>,
+      work: (key: string) => `Zanieś ją na stanowisko, trzymaj ${key}`,
+      minigame: 'Rozwiąż zadanie na stanowisku',
+      verdict: 'Zanieś teczkę na stół, wybierz werdykt',
+      done: 'Super! Tak trzymaj!',
+    },
+  },
 } as const;
 
 export type Strings = typeof pl;
