@@ -13,7 +13,8 @@ export const soundIds: ReadonlySet<string> = new Set(Object.keys(spriteMap));
 let sfx: Howl | null = null;
 let ambienceId: number | null = null;
 
-function busVolume(settings: Settings, bus: AudioBus): number {
+/** Effective volume of a bus (master × bus level), before global mute. */
+export function busVolume(settings: Settings, bus: AudioBus): number {
   const busLevel =
     bus === 'ui' ? settings.uiVolume : bus === 'music' ? settings.musicVolume : settings.sfxVolume;
   return settings.masterVolume * busLevel;

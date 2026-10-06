@@ -1,7 +1,8 @@
 // Lobby as a duty roster pinned to a cork board (design-rules §1): the room code on a typed
 // card, each player on a typed strip with a coloured pin.
 import { MAX_PLAYERS } from '@redakcja/shared';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { leaveRoom, startGame } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
@@ -16,6 +17,7 @@ export function Lobby() {
   const playerId = useApp((s) => s.playerId);
   const connection = useApp((s) => s.connection);
   const [copied, setCopied] = useState(false);
+  useEffect(() => requestMusic('menu'), []);
 
   if (!room) {
     return null;

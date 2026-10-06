@@ -2,6 +2,7 @@
 // settings and fullscreen, touch controls on touch devices and the rotate prompt.
 import { useEffect } from 'react';
 import { startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
+import { requestMusic } from '../fx/audio/music.ts';
 import { Hud } from '../hud/Hud.tsx';
 import { attachInput } from '../input/input-manager.ts';
 import { TouchControls } from '../input/TouchControls.tsx';
@@ -27,6 +28,7 @@ export function GameScreen() {
 
   useWakeLock(true);
   useEffect(() => attachInput(), []);
+  useEffect(() => requestMusic('game'), []);
   useEffect(() => {
     startAmbience();
     return stopAmbience;
