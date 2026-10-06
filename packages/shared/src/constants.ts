@@ -122,3 +122,18 @@ export const PING_COOLDOWN_MS = 750;
 
 /** Commands (verdicts, minigame results, pings) buffered per player between two ticks. */
 export const COMMAND_QUEUE_MAX = 8;
+
+// --- S2-07 Editorial desk and verdicts -----------------------------------------------------
+
+/**
+ * Wrong verdicts the design-doc scoring table does not name ("Opublikowana fałszywka" and
+ * "Odrzucony prawdziwy materiał" are in SCORE / CREDIBILITY); see the Decision log.
+ */
+export const WRONG_VERDICT_PENALTY = {
+  /** Plain publish of a misleading or satirical story: it reaches readers without context. */
+  publishedWithoutContext: { score: -10, credibility: -10 },
+  /** Rejecting a misleading or satirical story: the true core is lost, but nobody was misled. */
+  rejectedContextStory: { score: -5, credibility: 0 },
+  /** Publishing a true story with a needless context note: overcautious, harmless. */
+  contextOnTrue: { score: -5, credibility: 0 },
+} as const;
