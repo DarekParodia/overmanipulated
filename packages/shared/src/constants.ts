@@ -127,3 +127,18 @@ export const COMMAND_QUEUE_MAX = 8;
 
 /** A folder dropped on the floor lands this far in front of the player's centre, in tiles. */
 export const FLOOR_DROP_DISTANCE_TILES = 0.6;
+
+// --- S2-07 Editorial desk and verdicts -----------------------------------------------------
+
+/**
+ * Wrong verdicts the design-doc scoring table does not name ("Opublikowana fałszywka" and
+ * "Odrzucony prawdziwy materiał" are in SCORE / CREDIBILITY); see the Decision log.
+ */
+export const WRONG_VERDICT_PENALTY = {
+  /** Plain publish of a misleading or satirical story: it reaches readers without context. */
+  publishedWithoutContext: { score: -10, credibility: -10 },
+  /** Rejecting a misleading or satirical story: the true core is lost, but nobody was misled. */
+  rejectedContextStory: { score: -5, credibility: 0 },
+  /** Publishing a true story with a needless context note: overcautious, harmless. */
+  contextOnTrue: { score: -5, credibility: 0 },
+} as const;
