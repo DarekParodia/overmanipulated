@@ -117,6 +117,7 @@ describe('starting the game', () => {
     registry.handleMessage(guest, { type: 'lobby', action: { kind: 'start' } });
     expect(guest.last('error')?.code).toBe('notHost');
 
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
     expect(host.last('roomState')?.phase).toBe('playing');
     expect(guest.all('event').map((e) => e.event.kind)).toContain('gameStarted');
@@ -159,6 +160,7 @@ describe('ticks and snapshots', () => {
   function startedRoom() {
     const host = join('Ala');
     const guest = join('Bartek', welcomeOf(host).roomCode);
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
     return { host, guest, code: welcomeOf(host).roomCode };
   }

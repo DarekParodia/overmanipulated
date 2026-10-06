@@ -90,6 +90,8 @@ describe('game server over WebSocket', () => {
     });
     await guest.waitFor('welcome');
     await host.waitFor('roomState', (m) => m.players.length === 2);
+    guest.send({ type: 'lobby', action: { kind: 'setReady', ready: true } });
+    await host.waitFor('roomState', (m) => m.players.every((p) => p.id === m.hostId || p.ready));
 
     host.send({ type: 'lobby', action: { kind: 'start' } });
     await guest.waitFor('roomState', (m) => m.phase === 'playing');
