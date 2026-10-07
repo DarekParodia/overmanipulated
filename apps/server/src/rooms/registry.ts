@@ -140,6 +140,9 @@ export function createRoomRegistry(options: RegistryOptions) {
         role: p.role,
         ready: p.ready,
       })),
+      // Briefing phase and blunder votes are implemented in S3-03 / S3-02.
+      briefing: null,
+      blunderVotes: [],
     });
   }
 
@@ -364,6 +367,10 @@ export function createRoomRegistry(options: RegistryOptions) {
         broadcastRoomState(room);
         return;
       }
+      case 'skipBriefing':
+      case 'voteBlunder':
+        // S3-03 / S3-02.
+        return;
       case 'backToLobby':
         if (player.id !== room.hostId) {
           rejectNotHost(player);

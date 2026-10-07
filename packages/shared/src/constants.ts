@@ -197,3 +197,8 @@ export const IMAGE_SEARCH_RESULTS = { min: 4, max: 6 } as const;
 
 /** Credibility at or below this reads as "low" (HUD gauge warning, heartbeat layer later). */
 export const CREDIBILITY_LOW = 30;
+
+// --- Stage 3: briefing and debrief ---------------------------------------------------------
+
+/** The briefing (topic of the day) starts the level by itself after this long. */
+export const BRIEFING_DURATION_MS = 18_000;

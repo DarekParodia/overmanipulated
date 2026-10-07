@@ -372,7 +372,9 @@ describe('stepFolders: deadlines', () => {
       const state = withPlayers({ a: SPOT.openFloor }, base(30_000, f));
       const { state: next, events } = runFolders(state);
       expect(next.folders.f1).toBeUndefined();
-      expect(events).toEqual([{ kind: 'folderExpired', folderId: 'f1', storyId: 't-false' }]);
+      expect(events).toEqual([
+        { kind: 'folderExpired', folderId: 'f1', storyId: 't-false', stamps: [] },
+      ]);
       expect(next.score).toBe(state.score);
       expect(next.credibility).toBe(state.credibility);
       expect(next.results).toEqual([]);

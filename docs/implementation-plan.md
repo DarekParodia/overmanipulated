@@ -494,6 +494,8 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | A minigame operator keeps the station while the overlay is open even without facing it; stations are reachable within 1.1 tiles regardless of facing | The overlay owns the input; avoids losing a round to a stray stick nudge |
 | 2026-10-06 | Server-event cues own shared moments (desk opened, minigame failed, pings); overlays only add local UI clicks | One sound per moment when several units listen to the same event |
 | 2026-10-06 | Visual style changed from "newsroom paper" (cream paper, serif, typewriter) to "cartoon newsroom": bright flat colours, thick navy outlines, rounded chunky shapes, Baloo 2 + Nunito; plus clarity rules (one primary action, ≤ 8 words during play, smaller HUD, "what next" hints, first-level tutorial) | User feedback: the paper look read as generic/AI-made and the UI was hard to read; the game must be easy for anyone |
+| 2026-10-07 | Stage 3 contracts: room phase `briefing` between lobby and playing (auto-start after `BRIEFING_DURATION_MS` or when all connected players skip); `skipBriefing` and `voteBlunder` lobby actions; `roomState.briefing` and `roomState.blunderVotes`; `folderExpired` carries the folder's stamps | Lets S3 units build briefing, debrief and votes in parallel; fixes "missed stamps" for expired folders |
+| 2026-10-07 | S3-05 assets are built procedurally in code (flat-shaded primitives, hierarchical rigs animated with `AnimationMixer` clips) instead of Kenney packs | The build environment cannot download asset packs; procedural models keep the cartoon style consistent and the bundle small. Kenney/artist assets can replace them in S5-01 |
 
 ---
 
