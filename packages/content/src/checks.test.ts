@@ -89,6 +89,44 @@ describe('greybox content', () => {
   });
 });
 
+describe('level 1 content', () => {
+  const level = LEVELS.find((l) => l.id === 'l1-burza');
+  const scheduled = STORIES.filter((s) => level?.schedule.some((spawn) => spawn.storyId === s.id));
+
+  it('schedules 15 stories for the image search and source registry only', () => {
+    expect(level?.stations).toEqual(['imageSearch', 'sourceRegistry']);
+    expect(scheduled).toHaveLength(15);
+    expect(new Set(scheduled.map((s) => s.priority))).toEqual(
+      new Set(['normal', 'important', 'urgent']),
+    );
+    const techniques = new Set(scheduled.map((s) => s.technique));
+    expect(techniques).toContain('stare-zdjecie-nowy-podpis');
+    expect(techniques).toContain('podszywanie-sie-pod-instytucje');
+    expect(scheduled.some((s) => s.truth === 'unverifiable' && s.priority === 'urgent')).toBe(true);
+  });
+
+  it('gives every story one stamp per level station and a matching verdict', () => {
+    for (const story of scheduled) {
+      const stations: string[] = story.stamps.map((s) => s.station).sort();
+      expect(stations).toEqual(['imageSearch', 'sourceRegistry']);
+      expect(story.correctVerdict).toBe(correctVerdictFor(story.truth, story.priority));
+      expect(story.reviewed).toBe(false);
+    }
+  });
+
+  it('ends every deadline before the level ends and sets stars near 50% and 80%', () => {
+    if (!level) {
+      throw new Error('level 1 missing');
+    }
+    for (const spawn of level.schedule) {
+      expect(spawn.atS + spawn.deadlineS).toBeLessThanOrEqual(level.durationS);
+    }
+    const max = maxLevelScore(level, new Map(STORIES.map((s) => [s.id, s])));
+    expect(level.stars.two / max).toBeCloseTo(0.5, 1);
+    expect(level.stars.three / max).toBeCloseTo(0.8, 1);
+  });
+});
+
 describe('registration', () => {
   it('registers every content file on disk under its own path', () => {
     expect(checkRegistration(contentFilesOnDisk(), { ...LEVEL_FILES, ...STORY_FILES })).toEqual([]);
