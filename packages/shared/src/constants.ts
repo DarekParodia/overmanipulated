@@ -202,3 +202,8 @@ export const CREDIBILITY_LOW = 30;
 
 /** The briefing (topic of the day) starts the level by itself after this long. */
 export const BRIEFING_DURATION_MS = 18_000;
+
+// --- S3-02: blunder-of-the-day votes -------------------------------------------------------
+
+/** Stored blunder votes older than this are deleted (same window as the leaderboard). */
+export const BLUNDER_VOTE_RETENTION_DAYS = LEADERBOARD_RETENTION_DAYS;
