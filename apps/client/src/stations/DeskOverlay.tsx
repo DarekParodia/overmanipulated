@@ -1,26 +1,21 @@
-// Editorial desk sheet (S2-07): the open folder on the desk blotter. The player points at one
-// collected stamp as the justification, then presses one of three verdict stamps. After the
-// server's verdict the sheet shows the outcome (with what was missed) for a moment.
+// Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick one collected
+// stamp as the evidence. 2: press one of three big verdict buttons. After the server's verdict
+// the sheet shows the outcome (✓ / ✗, points, what was missed) until dismissed.
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
-import {
-  type Folder,
-  type GameEvent,
-  type StationKind,
-  VERDICTS,
-  type Verdict,
-} from '@redakcja/shared';
-import { useEffect, useState } from 'react';
+import type { Folder, GameEvent, Verdict } from '@redakcja/shared';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { type NavIntent, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
+import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
-import { Stamp, type StampShape, type StampTone } from '../ui/Stamp.tsx';
 import styles from './DeskOverlay.module.css';
 import { FolderSheet } from './FolderSheet.tsx';
+import { OutcomeBanner, ResultMark, STATION_ICON } from './kit.tsx';
 import { OverlayFrame } from './OverlayFrame.tsx';
-import { type FocusGrid, moveFocus, seedFromId, signed } from './overlay-logic.ts';
+import { type FocusGrid, moveFocus, signed } from './overlay-logic.ts';
 
 export type VerdictResultEvent = Extract<GameEvent, { kind: 'verdictResult' }>;
 
@@ -36,23 +31,12 @@ export type DeskOverlayProps = {
   onDismissResult(): void;
 };
 
-/** Each station's stamp has its own border, so stamps differ by shape, not only by label. */
-const STATION_STAMP_SHAPE: Record<StationKind, StampShape> = {
-  imageSearch: 'circle',
-  archive: 'rect',
-  sourceRegistry: 'double',
-  phone: 'circle',
-  aiScanner: 'double',
-  dataLibrary: 'rect',
-};
-
-const VERDICT_STAMP: Record<Verdict, { tone: StampTone; shape: StampShape }> = {
-  publish: { tone: 'blue', shape: 'rect' },
-  reject: { tone: 'red', shape: 'double' },
-  publishWithContext: { tone: 'ochre', shape: 'rect' },
-};
+/** Left to right: green publish, orange with context, red reject. */
+const VERDICT_ORDER: readonly Verdict[] = ['publish', 'publishWithContext', 'reject'];
 
 const CLOSE = 'close';
+/** Gap kept between a focused stamp and the panel edge or the verdict strip. */
+const FOCUS_MARGIN_PX = 12;
 const verdictKey = (verdict: Verdict) => `verdict:${verdict}`;
 
 export function DeskOverlay(props: DeskOverlayProps) {
@@ -70,7 +54,7 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
   const [chosen, setChosen] = useState<string | null>(null);
   const grid: FocusGrid = [
     ...collected.map((stamp) => [stamp.id]),
-    collected.length > 0 ? VERDICTS.map(verdictKey) : [],
+    collected.length > 0 ? VERDICT_ORDER.map(verdictKey) : [],
     [CLOSE],
   ];
   const [focus, setFocus] = useState<string | null>(() => grid[0]?.[0] ?? CLOSE);
@@ -115,103 +99,191 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
 
   const showFocus = device !== 'touch';
   const focused = (key: string) => (showFocus && focus === key ? styles.focused : '');
-  const hint =
-    collected.length === 0
-      ? pl.desk.noStamps
-      : chosen === null
-        ? pl.desk.pickStamp
-        : pending
-          ? pl.desk.sending
-          : pl.desk.pickVerdict;
+  // Keep the keyboard/gamepad focus in view above the sticky verdict strip. Not on open (the
+  // story must stay readable); moving back to the first stamp scrolls up to the story again.
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const decideRef = useRef<HTMLDivElement>(null);
+  const stampRefs = useRef(new Map<string, HTMLButtonElement>());
+  const firstStamp = collected[0]?.id;
+  const lastFocus = useRef(focus);
+  useEffect(() => {
+    if (focus === lastFocus.current) {
+      return;
+    }
+    lastFocus.current = focus;
+    if (!showFocus || focus === null) {
+      return;
+    }
+    const body = layoutRef.current?.parentElement;
+    if (!body) {
+      return;
+    }
+    if (focus === firstStamp) {
+      body.scrollTop = 0;
+      return;
+    }
+    const target = stampRefs.current.get(focus);
+    if (!target) {
+      return;
+    }
+    // Scroll only the panel body (never the panel itself), keeping the item above the strip.
+    const view = body.getBoundingClientRect();
+    const item = target.getBoundingClientRect();
+    const bottom = view.bottom - (decideRef.current?.offsetHeight ?? 0) - FOCUS_MARGIN_PX;
+    if (item.bottom > bottom) {
+      body.scrollTop += item.bottom - bottom;
+    } else if (item.top < view.top + FOCUS_MARGIN_PX) {
+      body.scrollTop -= view.top + FOCUS_MARGIN_PX - item.top;
+    }
+  }, [focus, showFocus, firstStamp]);
+  const empty = collected.length === 0;
+  const hint = empty
+    ? pl.desk.noStamps
+    : chosen === null
+      ? pl.desk.pickStamp
+      : pending
+        ? pl.desk.sending
+        : pl.desk.pickVerdict;
 
   return (
     <OverlayFrame
-      kicker={pl.desk.kicker}
-      formNo={pl.desk.caseNo(folder.id)}
+      title={pl.desk.title}
+      icon="article"
       closeLabel={pl.desk.close}
-      closeHint={pl.station.leaveHint[device]}
+      backKey={pl.station.backKey[device]}
       onClose={onClose}
-      tone="manila"
+      closeFocused={showFocus && focus === CLOSE && collected.length > 0}
       testId="desk-overlay"
     >
-      <div className={styles.layout}>
+      <div className={`${styles.layout} ${empty ? styles.layoutEmpty : ''}`} ref={layoutRef}>
         <div className={styles.file}>
-          {story ? (
-            <FolderSheet folder={folder} story={story} />
-          ) : (
-            <p className="typed">{pl.desk.unknownStory}</p>
-          )}
+          {story ? <FolderSheet folder={folder} story={story} /> : <p>{pl.desk.unknownStory}</p>}
         </div>
 
         <div className={styles.evidence}>
-          <h3 className={`label ${styles.heading}`}>{pl.desk.evidence}</h3>
-          <p
-            className={`${styles.hint} ${collected.length === 0 ? styles.empty : ''}`}
-            role="status"
-            data-testid="desk-hint"
-          >
+          <p className="visually-hidden" role="status" data-testid="desk-hint">
             {typeset(hint)}
           </p>
-          <ul className={styles.stamps}>
-            {collected.map((stamp) => (
-              <li key={stamp.id}>
-                <button
-                  type="button"
-                  className={`${styles.stampSlip} ${chosen === stamp.id ? styles.chosen : ''} ${focused(stamp.id)}`}
-                  aria-pressed={chosen === stamp.id}
-                  data-testid={`desk-stamp-${stamp.id}`}
-                  onClick={() => {
-                    choose(stamp.id);
-                    setFocus(stamp.id);
-                  }}
-                >
-                  {chosen === stamp.id && (
-                    <span className={styles.justifyTab}>{pl.desk.justification}</span>
-                  )}
-                  <Stamp
-                    text={pl.vocab.stations[stamp.station]}
-                    shape={STATION_STAMP_SHAPE[stamp.station]}
-                    tone="ink"
-                    seed={seedFromId(stamp.id)}
-                    size={STATION_STAMP_SHAPE[stamp.station] === 'circle' ? 76 : 124}
-                  />
-                  <span className={styles.stampText}>{typeset(stamp.text)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
+          {empty ? (
+            <div className={styles.emptyBox}>
+              <OutcomeBanner success={false} title={typeset(pl.desk.noStamps)} />
+              <Button
+                variant="primary"
+                big
+                back
+                onClick={onClose}
+                data-focused={showFocus && focus === CLOSE}
+              >
+                {pl.desk.close}
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Step n={1} state={chosen === null ? 'active' : 'done'}>
+                {pl.desk.stepEvidence}
+              </Step>
+              <ul className={styles.stamps}>
+                {collected.map((stamp) => (
+                  <li key={stamp.id}>
+                    <button
+                      type="button"
+                      className={`${styles.stamp} ${chosen === stamp.id ? styles.chosen : ''} ${focused(stamp.id)}`}
+                      aria-pressed={chosen === stamp.id}
+                      data-testid={`desk-stamp-${stamp.id}`}
+                      ref={(element) => {
+                        if (element) {
+                          stampRefs.current.set(stamp.id, element);
+                        } else {
+                          stampRefs.current.delete(stamp.id);
+                        }
+                      }}
+                      onClick={() => {
+                        choose(stamp.id);
+                        setFocus(stamp.id);
+                      }}
+                    >
+                      <span className={styles.stampIcon}>
+                        <Icon name={STATION_ICON[stamp.station]} size={26} />
+                      </span>
+                      <span className={styles.stampText}>
+                        <span className={styles.stampStation}>
+                          {pl.vocab.stations[stamp.station]}
+                        </span>
+                        <span>{typeset(stamp.text)}</span>
+                      </span>
+                      {chosen === stamp.id && (
+                        <span className={styles.tick} aria-hidden="true">
+                          <Icon name="publish" size={20} className={`${styles.tickIcon}`} />
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
 
-        <fieldset className={styles.verdicts} disabled={!canVerdict}>
-          <legend className="visually-hidden">{pl.desk.verdictsLabel}</legend>
-          {VERDICTS.map((verdict) => (
-            <button
-              key={verdict}
-              type="button"
-              className={`${styles.verdict} ${styles[verdict]} ${focused(verdictKey(verdict))}`}
-              data-testid={`desk-verdict-${verdict}`}
-              onClick={() => {
-                emitCue('ui.click');
-                setFocus(verdictKey(verdict));
-                decide(verdict);
-              }}
-            >
-              <Icon name={verdict} size={22} />
-              <span>{pl.vocab.verdicts[verdict]}</span>
-            </button>
-          ))}
-        </fieldset>
+        {!empty && (
+          <div className={styles.decide} ref={decideRef}>
+            <Step n={2} state={chosen === null ? 'waiting' : 'active'}>
+              {pending ? pl.desk.sending : pl.desk.stepVerdict}
+            </Step>
+            <fieldset className={styles.verdicts} disabled={!canVerdict}>
+              <legend className="visually-hidden">{pl.desk.verdictsLabel}</legend>
+              {VERDICT_ORDER.map((verdict) => (
+                <button
+                  key={verdict}
+                  type="button"
+                  className={`${styles.verdict} ${styles[verdict]} ${focused(verdictKey(verdict))}`}
+                  aria-label={pl.vocab.verdicts[verdict]}
+                  data-testid={`desk-verdict-${verdict}`}
+                  onClick={() => {
+                    emitCue('ui.click');
+                    setFocus(verdictKey(verdict));
+                    decide(verdict);
+                  }}
+                >
+                  <span className={styles.verdictIcon}>
+                    <Icon name={verdict} size={26} className={`${styles.verdictGlyph}`} />
+                  </span>
+                  <span>{pl.desk.verdictShort[verdict]}</span>
+                </button>
+              ))}
+            </fieldset>
+          </div>
+        )}
       </div>
     </OverlayFrame>
   );
 }
 
+/** Numbered step heading: yellow number when it is the thing to do, green ✓ once done. */
+function Step({
+  n,
+  state,
+  children,
+}: {
+  n: number;
+  state: 'active' | 'done' | 'waiting';
+  children: ReactNode;
+}) {
+  return (
+    <h3 className={`${styles.step} ${styles[state] ?? ''}`}>
+      <span className={styles.stepNo} aria-hidden="true">
+        {state === 'done' ? <Icon name="publish" size={20} /> : n}
+      </span>
+      {children}
+    </h3>
+  );
+}
+
 function ResultView({
-  folder,
   story,
   result,
   onDismissResult,
 }: DeskOverlayProps & { result: VerdictResultEvent }) {
+  const device = useApp((s) => s.inputDevice);
   useNavIntent((intent) => {
     if (intent === 'confirm' || intent === 'back') {
       emitCue('ui.click');
@@ -221,61 +293,67 @@ function ResultView({
   const missed = result.missedStampIds
     .map((id) => story?.stamps.find((stamp) => stamp.id === id))
     .filter((stamp): stamp is StoryStamp => stamp !== undefined);
-  const stamp = VERDICT_STAMP[result.verdict];
   const good = result.outcome === 'correct';
 
   return (
     <OverlayFrame
-      kicker={pl.desk.kicker}
-      formNo={pl.desk.caseNo(folder.id)}
+      title={pl.desk.title}
+      icon="article"
       closeLabel={pl.desk.next}
+      backKey={pl.station.backKey[device]}
       onClose={onDismissResult}
-      tone="manila"
       testId="desk-result"
     >
-      <div className={styles.layout}>
-        <div className={styles.file}>
-          {story && (
-            <FolderSheet folder={folder} story={story} hideDeadline>
-              <span className={styles.verdictStamp}>
-                <Stamp
-                  text={pl.vocab.verdicts[result.verdict]}
-                  tone={stamp.tone}
-                  shape={stamp.shape}
-                  seed={seedFromId(result.folderId)}
-                  size={220}
-                  slam
-                />
-              </span>
-            </FolderSheet>
-          )}
+      <div className={styles.result}>
+        <div className={styles.outcome} role="status" data-testid="desk-outcome">
+          <ResultMark success={good} size="lg" />
+          <div className={styles.outcomeText}>
+            <p className={`${styles.outcomeTitle} ${good ? styles.good : styles.bad}`}>
+              {typeset(pl.desk.outcomes[result.outcome])}
+            </p>
+            {story && <p className={styles.outcomeStory}>{typeset(story.headline)}</p>}
+          </div>
+          <span className={`${styles.verdictChip} ${styles[result.verdict]}`}>
+            <Icon name={result.verdict} size={22} />
+            {pl.desk.verdictShort[result.verdict]}
+          </span>
         </div>
-        <div className={styles.evidence}>
-          <p
-            className={`${styles.outcome} ${good ? styles.good : styles.bad}`}
-            role="status"
-            data-testid="desk-outcome"
-          >
-            <Icon name={good ? 'publish' : 'reject'} size={22} />
-            {pl.desk.outcomes[result.outcome]}
-          </p>
-          <p className={styles.deltas}>
-            <span className={styles.points}>{pl.desk.points(signed(result.scoreDelta))}</span>
-            <span>{pl.desk.credibility(signed(result.credibilityDelta))}</span>
-            {result.speedBonus && <span>{pl.desk.speedBonus}</span>}
-          </p>
-          {missed.length > 0 && (
-            <>
-              <h3 className={`label ${styles.heading}`}>{pl.desk.missed}</h3>
-              <ul className={styles.missed}>
-                {missed.map((m) => (
-                  <li key={m.id}>
-                    <span className="label">{pl.vocab.stations[m.station]}</span> {typeset(m.text)}
-                  </li>
-                ))}
-              </ul>
-            </>
+
+        <p className={styles.deltas}>
+          <span className={`${styles.delta} ${styles.points}`}>
+            {pl.desk.points(signed(result.scoreDelta))}
+          </span>
+          <span className={styles.delta}>
+            {pl.desk.credibility(signed(result.credibilityDelta))}
+          </span>
+          {result.speedBonus && (
+            <span className={styles.delta}>
+              <Icon name="clock" size={20} />
+              {pl.desk.speedBonus}
+            </span>
           )}
+        </p>
+
+        {missed.length > 0 && (
+          <div className={styles.missed}>
+            <h3 className={styles.missedTitle}>{pl.desk.missed}</h3>
+            <ul>
+              {missed.map((m) => (
+                <li key={m.id}>
+                  <span className={styles.stampIcon}>
+                    <Icon name={STATION_ICON[m.station]} size={22} />
+                  </span>
+                  <span>{typeset(m.text)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className={styles.next}>
+          <Button variant="primary" big onClick={onDismissResult}>
+            {pl.desk.next}
+          </Button>
         </div>
       </div>
     </OverlayFrame>

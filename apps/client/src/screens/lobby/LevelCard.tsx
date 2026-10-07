@@ -1,10 +1,10 @@
-// Today's edition: a typed briefing slip pinned under the room code. The host flips through
-// the editions on manila index tabs (native radios); guests read the chosen one.
+// The chosen level: title plus two chips (minutes, folders). With more than one level the host
+// picks it from pill buttons (native radios); guests just see the choice.
 import { getLevel, LEVELS } from '@redakcja/content';
 import { useId } from 'react';
 import { emitCue } from '../../fx/feedback.ts';
 import { pl } from '../../strings/pl.ts';
-import { bindOrphans } from '../../strings/typography.ts';
+import { Icon } from '../../ui/icons/Icon.tsx';
 import styles from './LevelCard.module.css';
 
 export type LevelCardProps = {
@@ -17,21 +17,36 @@ export type LevelCardProps = {
 export function LevelCard({ levelId, isHost, onSelect, disabled = false }: LevelCardProps) {
   const groupName = useId();
   const level = getLevel(levelId);
+  const choice = LEVELS.length > 1;
   return (
     <section
-      className={styles.card}
+      className={`panel ${styles.card}`}
       aria-labelledby={`${groupName}-title`}
       data-testid="level-card"
     >
-      <span className={styles.pin} aria-hidden="true" />
-      <p className="label">{pl.lobbyRoles.levelKicker}</p>
-      {isHost && (
-        <fieldset className={styles.tabs} disabled={disabled}>
+      <p className={styles.kicker}>{pl.lobbyRoles.levelKicker}</p>
+      <h2 id={`${groupName}-title`} className={styles.title}>
+        {level?.title ?? levelId}
+      </h2>
+      {level && (
+        <p className={styles.chips}>
+          <span className={styles.chip}>
+            <Icon name="clock" size={22} />
+            {pl.lobbyRoles.levelMinutes(Math.round(level.durationS / 60))}
+          </span>
+          <span className={styles.chip}>
+            <Icon name="article" size={22} />
+            {pl.lobbyRoles.levelFolders(level.schedule.length)}
+          </span>
+        </p>
+      )}
+      {choice && isHost && (
+        <fieldset className={styles.options} disabled={disabled}>
           <legend className="visually-hidden">{pl.lobbyRoles.levelPick}</legend>
           {LEVELS.map((option) => (
             <label
               key={option.id}
-              className={`${styles.tab} ${option.id === levelId ? styles.current : ''}`}
+              className={`${styles.option} ${option.id === levelId ? styles.current : ''}`}
             >
               <input
                 type="radio"
@@ -48,22 +63,7 @@ export function LevelCard({ levelId, isHost, onSelect, disabled = false }: Level
           ))}
         </fieldset>
       )}
-      <h2 id={`${groupName}-title`} className={styles.title}>
-        {level?.title ?? levelId}
-      </h2>
-      {level && (
-        <>
-          <p className={styles.meta}>
-            {pl.lobbyRoles.levelMeta(Math.round(level.durationS / 60), level.schedule.length)}
-          </p>
-          <p className={styles.briefing}>{bindOrphans(level.briefing)}</p>
-          <p className={styles.stations}>
-            <span className="label">{pl.lobbyRoles.levelStations}</span>{' '}
-            {level.stations.map((station) => pl.vocab.stations[station]).join(', ')}
-          </p>
-        </>
-      )}
-      {!isHost && <p className={styles.hostOnly}>{pl.lobbyRoles.levelHostOnly}</p>}
+      {choice && !isHost && <p className={styles.hostOnly}>{pl.lobbyRoles.levelHostOnly}</p>}
     </section>
   );
 }

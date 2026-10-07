@@ -1,143 +1,176 @@
 /*
- * Level-end plate: the next morning's front page laid over the newsroom. Masthead with rules,
- * a big headline, then two columns: the editor's rating (stamped stars, figures) as narrow
- * marginalia and the folder list as the main column.
+ * Results panel: one white cartoon panel over the dimmed newsroom. A coloured ribbon with the
+ * headline on top (green = won, red = lost, plus a ✓/✗ disc), stars and figures on the left,
+ * the folder list on the right (it scrolls on its own so the buttons always stay visible).
  */
 .backdrop {
   position: absolute;
   inset: 0;
   z-index: 30;
   display: grid;
-  place-items: start center;
-  overflow-y: auto;
+  place-items: center;
   padding: max(var(--space-4), env(safe-area-inset-top))
     max(var(--space-4), env(safe-area-inset-right)) max(var(--space-4), env(safe-area-inset-bottom))
     max(var(--space-4), env(safe-area-inset-left));
-  background: var(--ink-a40);
+  background: var(--outline-a50);
   pointer-events: auto;
   touch-action: pan-y;
   overscroll-behavior: contain;
 }
 
-.page {
-  width: min(62rem, 100%);
-  padding: var(--space-4) var(--space-5) var(--space-5);
-  background: var(--paper);
-  border: var(--rule-thin);
-  box-shadow: var(--shadow-lifted);
-  transform: rotate(-0.4deg);
-  animation: drop var(--motion-slow) var(--ease-settle) both;
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: min(54rem, 100%);
+  max-height: 100%;
+  overflow: hidden;
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--pop-lg);
+  color: var(--text);
+  animation: pop-in var(--motion-slow) var(--ease-bounce) both;
 }
 
-@keyframes drop {
-  from {
-    transform: translateY(-40px) rotate(-2deg);
+@keyframes pop-in {
+  0% {
+    transform: scale(0.8);
     opacity: 0;
   }
-  to {
-    transform: rotate(-0.4deg);
+  60% {
+    transform: scale(1.03);
     opacity: 1;
+  }
+  100% {
+    transform: scale(1);
   }
 }
 
-:root[data-reduced-motion="true"] .page {
+:root[data-reduced-motion="true"] .panel {
   animation: none;
 }
 
-.masthead {
+/* --- Ribbon ---------------------------------------------------------------------------------- */
+
+.ribbon {
+  flex: none;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: var(--space-3);
-  padding-bottom: var(--space-2);
-  border-bottom: var(--rule-double);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: var(--stroke-bold) solid var(--outline);
 }
 
-.kicker {
-  font-family: var(--font-grotesk);
-  font-stretch: 70%;
-  font-weight: 700;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  color: var(--ink-soft);
+.won .ribbon {
+  background: var(--green);
 }
 
-.paper {
-  font-family: var(--font-serif);
-  font-weight: 800;
-  font-variation-settings: "opsz" 72;
-  font-size: var(--text-xl);
-  line-height: 1;
+.lost .ribbon {
+  background: var(--red);
+}
+
+.ribbonMark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: 50%;
+  box-shadow: var(--pop);
+  color: var(--outline);
 }
 
 .headline {
-  margin: var(--space-4) 0 var(--space-2);
-  font-family: var(--font-serif);
-  font-size: var(--text-3xl);
+  margin: 0;
+  padding-top: 0.1em;
+  font-family: var(--font-display);
   font-weight: 800;
-  font-variation-settings: "opsz" 60;
+  font-size: var(--text-3xl);
   line-height: var(--leading-tight);
-  max-width: 20ch;
-}
-
-.lost .headline {
-  color: var(--editorial-red);
+  color: var(--outline);
 }
 
 .lede {
   margin: 0;
-  max-width: 50ch;
-  font-family: var(--font-serif);
+  font-family: var(--font-body);
+  font-weight: 700;
   font-size: var(--text-lg);
-  font-style: italic;
-  line-height: var(--leading-snug);
+  color: var(--outline);
 }
 
-.columns {
+/* --- Body ------------------------------------------------------------------------------------ */
+
+.body {
+  flex: 1;
+  min-height: 0;
   display: grid;
-  grid-template-columns: minmax(12rem, 1fr) 2.4fr;
-  margin-top: var(--space-4);
-  border-top: var(--rule-thin);
+  grid-template-columns: minmax(15rem, 1fr) minmax(0, 1.6fr);
+  gap: var(--space-5);
+  padding: var(--space-5);
 }
 
-.rating {
-  padding: var(--space-3) var(--space-4) 0 0;
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .stars {
   display: flex;
+  align-items: flex-end;
   gap: var(--space-1);
 }
 
 .star {
-  width: 4.25rem;
-  height: 4.25rem;
-  transform: rotate(var(--stamp-rotation));
+  width: 5rem;
+  height: 5rem;
+  overflow: visible;
+}
+
+/* The middle star sits a little higher, like a podium. */
+.star:nth-child(2) {
+  width: 6rem;
+  height: 6rem;
+  margin-bottom: var(--space-2);
+}
+
+.starShadow {
+  fill: var(--outline);
+}
+
+.starBody {
+  stroke: var(--outline);
+}
+
+.starEarned .starBody {
+  fill: var(--yellow);
+}
+
+.starMissing .starShadow {
+  fill: var(--surface-sunk);
+}
+
+.starMissing .starBody {
+  fill: var(--surface-soft);
+  stroke: var(--text-faint);
 }
 
 .starEarned {
-  color: var(--editorial-red);
-  mix-blend-mode: multiply;
-  animation: star-slam var(--motion-slow) var(--ease-settle) both;
+  animation: star-pop var(--motion-slow) var(--ease-bounce) both;
 }
 
-.starMissing {
-  color: var(--ink-faint);
-}
-
-@keyframes star-slam {
+@keyframes star-pop {
   0% {
-    opacity: 0;
-    transform: rotate(var(--stamp-rotation)) scale(1.9) translateY(-12%);
+    transform: scale(0) rotate(-30deg);
   }
-  55% {
-    opacity: 1;
-    transform: rotate(var(--stamp-rotation)) scale(0.94);
+  70% {
+    transform: scale(1.2) rotate(6deg);
   }
   100% {
-    opacity: 1;
-    transform: rotate(var(--stamp-rotation)) scale(1);
+    transform: scale(1) rotate(0deg);
   }
 }
 
@@ -145,222 +178,309 @@
   animation: none;
 }
 
-.starsLabel {
-  margin: var(--space-1) 0 var(--space-3);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-}
-
 .figures {
   display: grid;
-  gap: var(--space-2);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  width: 100%;
   margin: 0;
 }
 
-.figures div {
+.figure {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  border-bottom: 1px dashed var(--ink-a40);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
 }
 
-.figures dt {
-  font-family: var(--font-grotesk);
-  font-stretch: 70%;
-  font-weight: 700;
-  font-size: var(--text-xs);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+.figure dt {
+  display: inline-flex;
 }
 
-.figures dd {
+.figure dd {
   margin: 0;
-  font-family: var(--font-typewriter);
-  font-weight: 700;
+  padding-top: 0.12em;
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: var(--text-xl);
+  line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Folder list ----------------------------------------------------------------------------- */
+
 .list {
-  padding: var(--space-3) 0 0 var(--space-4);
-  border-left: var(--rule-thin);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .listTitle {
   margin: 0 0 var(--space-2);
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
+  font-weight: 800;
   font-size: var(--text-lg);
-  font-weight: 700;
 }
 
 .empty {
   margin: 0;
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-md);
+  color: var(--text-soft);
 }
 
 .rows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
   margin: 0;
-  padding: 0;
+  padding: 0 0 var(--space-1);
   list-style: none;
 }
 
 .row {
-  display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
-  align-items: baseline;
-  gap: var(--space-1) var(--space-3);
-  padding: var(--space-2) 0;
-  border-bottom: 1px solid var(--ink-a20);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
 }
 
 .rowMark {
-  align-self: center;
   display: grid;
   place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
-  border: 1.5px solid currentColor;
+  flex: none;
+  width: 2.375rem;
+  height: 2.375rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
 }
 
 .rowGood .rowMark {
-  color: var(--copy-blue);
+  background: var(--green);
 }
 
 .rowCaution .rowMark {
-  color: var(--ochre);
+  background: var(--orange);
 }
 
 .rowBad .rowMark {
-  color: var(--editorial-red);
+  background: var(--red);
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .rowHeadline {
-  font-family: var(--font-serif);
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-weight: 700;
   font-size: var(--text-md);
   line-height: var(--leading-snug);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .rowOutcome {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
+  font-family: var(--font-display);
   font-weight: 700;
-}
-
-.rowBad .rowOutcome {
-  color: var(--editorial-red);
-}
-
-.rowDelta {
-  min-width: 4.5rem;
-  font-family: var(--font-typewriter);
   font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.rowCred {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
   font-variant-numeric: tabular-nums;
+}
+
+.rowPoints {
+  flex: none;
+  min-width: 4.5rem;
+  padding-top: 0.12em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
   text-align: right;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
+.rowGood .rowPoints {
+  color: var(--green-dark);
+}
+
+.rowBad .rowPoints {
+  color: var(--red-dark);
+}
+
+/* --- Footer ---------------------------------------------------------------------------------- */
+
 .footer {
+  flex: none;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
-  margin-top: var(--space-5);
-  padding-top: var(--space-3);
-  border-top: var(--rule-thin);
+  padding: var(--space-3) var(--space-5) var(--space-4);
+  border-top: var(--stroke) solid var(--surface-sunk);
 }
 
 .waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 1px dashed var(--ink);
-  font-family: var(--font-typewriter);
-  font-size: var(--text-md);
-  transform: rotate(-1deg);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
 }
 
-/* Phones (640×360 landscape and up): smaller type, stars stacked over the figures, rows wrap. */
+/* --- Phones (640×360 landscape and up): tighter, smaller stars, list scrolls ----------------- */
+
 @media (max-height: 500px), (max-width: 760px) {
-  .page {
-    padding: var(--space-2) var(--space-3) var(--space-3);
+  .backdrop {
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-3), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-3), env(safe-area-inset-left));
   }
 
-  .paper {
-    font-size: var(--text-lg);
+  .panel {
+    border-width: var(--stroke);
+    border-radius: var(--radius-md);
+  }
+
+  .ribbon {
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border-bottom-width: var(--stroke);
+  }
+
+  .ribbonMark {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-width: var(--stroke);
+  }
+
+  .ribbonMark svg {
+    width: 22px;
+    height: 22px;
   }
 
   .headline {
-    margin-top: var(--space-2);
-    font-size: var(--text-2xl);
-    max-width: none;
+    font-size: var(--text-xl);
   }
 
   .lede {
     font-size: var(--text-sm);
   }
 
-  .columns {
-    grid-template-columns: 10rem 1fr;
-    margin-top: var(--space-2);
+  .body {
+    grid-template-columns: 12rem minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
   }
 
-  .rating {
-    padding: var(--space-2) var(--space-3) 0 0;
+  .summary {
+    gap: var(--space-2);
   }
 
   .star {
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 3rem;
+    height: 3rem;
   }
 
-  .starsLabel {
-    font-size: var(--text-xs);
-    margin-bottom: var(--space-2);
+  .star:nth-child(2) {
+    width: 3.75rem;
+    height: 3.75rem;
+    margin-bottom: var(--space-1);
   }
 
-  .figures dd {
+  .figures {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .figure {
+    padding: 2px var(--space-3);
+  }
+
+  .figure svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .figure dd {
     font-size: var(--text-lg);
   }
 
-  .list {
-    padding: var(--space-2) 0 0 var(--space-3);
+  .listTitle {
+    display: none;
   }
 
-  .listTitle {
-    font-size: var(--text-md);
+  .rows {
+    gap: var(--space-1);
   }
 
   .row {
-    grid-template-columns: auto 1fr auto auto;
-    gap: 2px var(--space-2);
-    padding: var(--space-1) 0;
-  }
-
-  .rowHeadline {
-    grid-column: 2 / -1;
-    font-size: var(--text-sm);
+    gap: var(--space-2);
+    padding: 2px var(--space-2) 2px 2px;
   }
 
   .rowMark {
-    grid-row: span 2;
+    width: 1.875rem;
+    height: 1.875rem;
   }
 
-  .rowOutcome,
-  .rowDelta {
-    font-size: var(--text-xs);
+  .rowMark svg {
+    width: 18px;
+    height: 18px;
   }
 
-  .rowOutcome {
-    grid-column: 2;
+  .rowHeadline {
+    font-size: var(--text-sm);
   }
 
-  .rowDelta {
-    min-width: 0;
+  .rowCred {
+    display: none;
+  }
+
+  .rowPoints {
+    min-width: 3.5rem;
+    font-size: var(--text-md);
   }
 
   .footer {
-    margin-top: var(--space-3);
-    padding-top: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .waiting {
+    font-size: var(--text-md);
+    padding: var(--space-1) var(--space-3);
   }
 }

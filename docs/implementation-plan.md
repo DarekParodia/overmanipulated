@@ -493,6 +493,7 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | Ready can be toggled in the lobby and on the results screen; ready flags reset on level select, start and back-to-lobby; start needs every connected guest ready | Replay from results must be possible; disconnected players never block |
 | 2026-10-06 | A minigame operator keeps the station while the overlay is open even without facing it; stations are reachable within 1.1 tiles regardless of facing | The overlay owns the input; avoids losing a round to a stray stick nudge |
 | 2026-10-06 | Server-event cues own shared moments (desk opened, minigame failed, pings); overlays only add local UI clicks | One sound per moment when several units listen to the same event |
+| 2026-10-06 | Visual style changed from "newsroom paper" (cream paper, serif, typewriter) to "cartoon newsroom": bright flat colours, thick navy outlines, rounded chunky shapes, Baloo 2 + Nunito; plus clarity rules (one primary action, ≤ 8 words during play, smaller HUD, "what next" hints, first-level tutorial) | User feedback: the paper look read as generic/AI-made and the UI was hard to read; the game must be easy for anyone |
 
 ---
 

@@ -3,54 +3,64 @@
   user-select: none;
 }
 
-/* A note slip held up over the head: paper, player-colour edge, typed text and a short tail. */
+/* A chunky speech bubble over the player's head, outlined in the player's colour (set inline
+   as border-color), with a tail pointing down at the avatar. */
 .bubble {
   position: relative;
-  margin: 0 0 0.5rem;
-  padding: 2px var(--space-2) 3px;
-  background: var(--paper);
-  border-left: 5px solid;
-  font-family: var(--font-grotesk);
+  margin: 0 0 0.75rem;
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
   font-weight: 800;
-  font-stretch: 75%;
-  font-size: var(--text-md);
+  font-size: var(--text-lg);
   line-height: var(--leading-tight);
   white-space: nowrap;
-  color: var(--ink);
-  box-shadow: var(--shadow-paper);
+  color: var(--text);
+  box-shadow: var(--pop);
   transform-origin: 50% 120%;
-  animation: pop var(--motion-slow) var(--ease-settle) both;
+  animation: pop var(--motion-slow) var(--ease-bounce) both;
 }
 
-/* Tail: a small paper triangle pointing at the player. */
+/* Tail: an outer triangle in the player's colour, a white one inside it. */
+.bubble::before,
 .bubble::after {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -0.45rem;
   width: 0;
   height: 0;
-  border-left: 0.45rem solid transparent;
-  border-right: 0.45rem solid transparent;
-  border-top: 0.5rem solid var(--paper);
   transform: translateX(-50%);
+  border-style: solid;
+  border-color: transparent;
+}
+
+.bubble::before {
+  bottom: -0.85rem;
+  border-width: 0.8rem 0.65rem 0;
+  border-top-color: inherit;
+}
+
+.bubble::after {
+  bottom: -0.4rem;
+  border-width: 0.5rem 0.4rem 0;
+  border-top-color: var(--surface);
 }
 
 .fake {
-  color: var(--editorial-red);
-  text-decoration: underline 2px var(--editorial-red);
-  text-underline-offset: 2px;
+  color: var(--red-dark);
 }
 
 @keyframes pop {
   0% {
-    transform: translateY(0.6rem) scale(0.4) rotate(-6deg);
+    transform: translateY(0.6rem) scale(0.4);
   }
   70% {
-    transform: translateY(-0.1rem) scale(1.06) rotate(1.5deg);
+    transform: translateY(-0.1rem) scale(1.08);
   }
   100% {
-    transform: rotate(-1deg);
+    transform: none;
   }
 }
 

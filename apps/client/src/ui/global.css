@@ -20,15 +20,14 @@ body,
 }
 
 body {
-  background-color: var(--paper);
-  /* Newsprint grain: procedural noise, no texture download. */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.12 0 0 0 0 0.11 0 0 0 0 0.09 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  color: var(--ink);
-  font-family: var(--font-serif);
+  background-color: var(--sky);
+  color: var(--text);
+  font-family: var(--font-body);
   font-size: var(--text-md);
+  font-weight: 600;
   line-height: var(--leading-body);
-  font-optical-sizing: auto;
   overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
@@ -36,9 +35,9 @@ h2,
 h3,
 h4 {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-display);
   line-height: var(--leading-tight);
-  font-weight: 700;
+  font-weight: 800;
   text-wrap: balance;
 }
 
@@ -54,7 +53,7 @@ input {
 }
 
 :focus-visible {
-  outline: 3px solid var(--copy-blue);
+  outline: 4px solid var(--blue);
   outline-offset: 2px;
 }
 
@@ -67,20 +66,22 @@ input {
   white-space: nowrap;
 }
 
-/* Small uppercase labels: kickers, tabs, field labels. */
+/* Labels above values and fields ("Punkty", "Twój podpis"): bold, sentence case, never tiny. */
 .label {
-  font-family: var(--font-grotesk);
-  font-size: var(--text-xs);
-  font-weight: 650;
-  font-stretch: 75%;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
-.typed {
-  font-family: var(--font-typewriter);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-soft);
 }
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* A white rounded panel with a thick outline and a hard shadow: the basic UI container. */
+.panel {
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--pop-lg);
 }

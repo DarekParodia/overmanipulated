@@ -1,0 +1,134 @@
+/* Floating round sign: white badge with navy outline, icon, one-word name pill below. */
+.sign {
+  --ring: transparent;
+  --operator: var(--outline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  /* Anchored at its foot, so it floats above the prop and its folder instead of covering it. */
+  transform: translate(-50%, -100%);
+}
+
+.badge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+}
+
+/* Chunky progress ring around the badge, filled clockwise from twelve o'clock. */
+.dial {
+  position: absolute;
+  inset: 0;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.track {
+  fill: none;
+  stroke: var(--outline);
+  stroke-width: 13;
+}
+
+.fill {
+  fill: none;
+  stroke: var(--ring);
+  stroke-width: 7;
+  stroke-linecap: butt;
+}
+
+.sign[data-state="none"] .dial {
+  display: none;
+}
+
+/* Inside the navy track: the not-yet-filled part reads as an empty slot. */
+.slot {
+  fill: none;
+  stroke: var(--surface-sunk);
+  stroke-width: 7;
+}
+
+.face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: var(--stroke) solid var(--operator, var(--outline));
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--outline);
+  box-shadow: var(--pop);
+  transition: transform var(--motion-base) var(--ease-bounce);
+}
+
+.sign:not([data-state="none"]) .face {
+  border-width: 4px;
+  box-shadow: none;
+  transform: scale(0.92);
+}
+
+.cross {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--red-dark);
+}
+
+.sign[data-state="lockout"] .cross {
+  display: grid;
+}
+
+.name {
+  padding: 0 10px;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--text);
+  white-space: nowrap;
+  box-shadow: var(--pop-pressed);
+}
+
+/* Short landscape phones: a little smaller, still ≥ 15 px text. */
+@media (max-height: 420px) {
+  .badge {
+    width: 46px;
+    height: 46px;
+  }
+
+  .face {
+    width: 36px;
+    height: 36px;
+  }
+
+  .face svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* One layer over the canvas for every sign, under the name tags and ping bubbles. */
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.anchor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}

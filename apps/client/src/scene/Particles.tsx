@@ -21,7 +21,7 @@ import {
   particlePresets,
 } from '../fx/particles/presets.ts';
 import { fxTimeScale } from '../fx/time-scale.ts';
-import { palette } from '../ui/tokens.ts';
+import { colors as tokens } from '../ui/tokens.ts';
 import { useQuality } from './quality.ts';
 
 const between = (range: readonly [number, number]) =>
@@ -58,7 +58,7 @@ export function Particles() {
             return;
           }
           const p: EmitterPreset = particlePresets[id];
-          const colors = p.colors ?? [context.color ?? palette.ink, ...(p.accent ?? [])];
+          const colors = p.colors ?? [context.color ?? tokens.outline, ...(p.accent ?? [])];
           for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = between(p.speed);
@@ -74,7 +74,7 @@ export function Particles() {
               gravity: p.gravity,
               drag: p.drag,
               color: color
-                .set(colors[Math.floor(Math.random() * colors.length)] ?? palette.ink)
+                .set(colors[Math.floor(Math.random() * colors.length)] ?? tokens.outline)
                 .getHex(),
             });
           }

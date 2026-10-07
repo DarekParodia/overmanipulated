@@ -1,4 +1,4 @@
-// Form field on paper: typed label above a ruled writing line (design-rules §1, settings form).
+// Text field: bold label above a rounded, outlined input (design-rules.md §2).
 import { type InputHTMLAttributes, useId } from 'react';
 import styles from './Field.module.css';
 

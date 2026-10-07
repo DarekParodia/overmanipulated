@@ -1,309 +1,176 @@
-.board {
+.page {
+  width: 100%;
+  max-width: 70rem;
   min-height: 100%;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(14rem, 1fr) minmax(18rem, 1.6fr);
-  grid-template-rows: auto 1fr auto;
-  grid-template-areas:
-    "code roster"
-    "level roster"
-    "passes passes";
-  align-items: start;
-  gap: var(--space-6);
-  padding: max(var(--space-6), env(safe-area-inset-top))
-    max(var(--space-5), env(safe-area-inset-right)) max(var(--space-6), env(safe-area-inset-bottom))
+  align-content: start;
+  gap: var(--space-4);
+  padding: max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-5), env(safe-area-inset-right)) max(var(--space-5), env(safe-area-inset-bottom))
     max(var(--space-5), env(safe-area-inset-left));
-  background-color: var(--cork);
-  /* Cork grain: speckles from procedural noise. */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='c'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.4' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0.55 -0.12'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23c)'/%3E%3C/svg%3E");
 }
 
-.codeCard,
-.roster {
-  position: relative;
-  background: var(--paper);
-  box-shadow: var(--shadow-lifted);
-  padding: var(--space-5);
-}
-
-.codeCard {
-  grid-area: code;
-  display: grid;
-  justify-items: start;
-  gap: var(--space-2);
-  transform: rotate(-1.5deg);
-  max-width: 22rem;
-  justify-self: end;
-}
-
-.level {
-  grid-area: level;
-  justify-self: end;
-  width: 100%;
-  max-width: 22rem;
-}
-
-.passes {
-  grid-area: passes;
-  justify-self: center;
-  width: 100%;
-  max-width: 64rem;
-}
-
-.roster {
-  grid-area: roster;
-  display: grid;
-  gap: var(--space-3);
-  transform: rotate(0.6deg);
-  max-width: 36rem;
-}
-
-.pin {
-  position: absolute;
-  top: -0.55rem;
-  left: 50%;
-  width: 1.1rem;
-  height: 1.1rem;
-  margin-left: -0.55rem;
-  border-radius: 50%;
-  background: var(--editorial-red);
-  box-shadow: 1px 2px 0 var(--ink-a40);
-}
-
-.code {
-  font-family: var(--font-typewriter);
-  font-weight: 700;
-  font-size: var(--text-3xl);
-  letter-spacing: 0.3em;
-  line-height: 1;
-  padding: var(--space-2) 0;
-  border-top: var(--rule-thin);
-  border-bottom: var(--rule-thin);
-}
-
-.codeHint {
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-}
-
-.rosterTitle {
-  font-size: var(--text-2xl);
-  border-bottom: var(--rule-thick);
-  padding-bottom: var(--space-2);
-}
-
-.strips {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--space-2);
-}
-
-.strip {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-height: 3.25rem;
-  padding: var(--space-2) var(--space-3);
-  background: var(--paper-shade);
-  border-left: 4px solid var(--ink);
-  transform: rotate(var(--tilt, 0deg));
-  animation: pin-in var(--motion-slow) var(--ease-settle) both;
-}
-
-.empty {
-  background: transparent;
-  border: 1.5px dashed var(--ink-a40);
-  border-left-width: 4px;
-  color: var(--ink-faint);
-  animation: none;
-}
-
-.away {
-  opacity: 0.6;
-}
-
-.playerPin {
-  flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-size: var(--text-sm);
-  color: var(--ink);
-  border: 2px solid var(--ink);
-}
-
-.name {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-lg);
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.who {
-  display: grid;
-  min-width: 0;
-}
-
-.role {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  font-family: var(--font-grotesk);
-  font-weight: 650;
-  font-stretch: 75%;
-  font-size: var(--text-sm);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.noRole {
-  color: var(--ink-faint);
-}
-
-.tags {
-  margin-left: auto;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
-}
-
-/* Sign-off column of the roster: a blue "ready" stamp or a typed "waiting" mark. */
-.signoff {
-  flex: none;
-  width: 5.25rem;
-  display: grid;
-  place-items: center;
-}
-
-.pending {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-  color: var(--ink-faint);
-  border-bottom: 1.5px dotted var(--ink-a40);
-}
-
-.startBlock {
-  display: grid;
-  justify-items: start;
-  gap: var(--space-2);
-}
-
-.reason {
-  font-family: var(--font-typewriter);
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-  max-width: 22rem;
-}
-
-.error {
-  font-family: var(--font-typewriter);
-  font-weight: 700;
-  color: var(--editorial-red);
-  border-left: 4px solid var(--editorial-red);
-  padding-left: var(--space-2);
-}
-
-.disconnected {
-  color: var(--editorial-red);
-}
-
-.actions {
+.top {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* The room code: big, in a white pill, with a copy button inside. */
+.codePill {
+  display: inline-flex;
+  align-items: center;
   gap: var(--space-4);
-  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop-lg);
 }
 
-.waiting {
-  font-family: var(--font-typewriter);
-  color: var(--ink-soft);
+.codeLabel {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-soft);
+  line-height: var(--leading-tight);
+  max-width: 4.5em;
 }
 
-/* A strip being pinned: drops onto the board and settles. */
-@keyframes pin-in {
-  from {
-    opacity: 0;
-    transform: translateY(-14px) rotate(calc(var(--tilt, 0deg) * 3));
-  }
-  to {
-    opacity: 1;
-    transform: rotate(var(--tilt, 0deg));
-  }
+.code {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.1em;
+}
+
+.players {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  font-size: var(--text-xl);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.emptySeat {
+  display: grid;
+  place-items: center;
+  min-height: 6rem;
+  padding: var(--space-3);
+  border: var(--stroke) dashed var(--outline-a50);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+/* Level on the left, the one main action on the right. */
+.bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.action {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  min-width: 16rem;
+}
+
+.reason {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  text-align: center;
+}
+
+.error {
+  padding: var(--space-1) var(--space-3);
+  border: var(--stroke) solid var(--red-dark);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--red-dark);
+  font-weight: 800;
+  text-align: center;
 }
 
 @media (max-width: 760px) {
-  .board {
+  .bottom {
     grid-template-columns: 1fr;
-    grid-template-rows: none;
-    grid-template-areas:
-      "code"
-      "roster"
-      "level"
-      "passes";
-    gap: var(--space-5);
-  }
-  .codeCard,
-  .level {
-    justify-self: stretch;
-    max-width: none;
   }
 }
 
-@media (max-height: 480px) and (orientation: landscape) {
-  .board {
-    grid-template-columns: 1fr 1.6fr;
-    grid-template-rows: auto 1fr auto;
-    grid-template-areas:
-      "code roster"
-      "level roster"
-      "passes passes";
-    gap: var(--space-4);
-    padding-top: var(--space-4);
-    padding-bottom: var(--space-3);
+/* Short landscape phones: tighter spacing; the main action bar sticks to the bottom edge so
+   "Gotowy" / "Do składu!" never scrolls away. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .page {
+    gap: var(--space-3);
+    padding-top: max(var(--space-2), env(safe-area-inset-top));
+    padding-bottom: 0;
   }
-  .codeCard,
-  .roster {
-    padding: var(--space-3) var(--space-4);
-    gap: var(--space-1);
+  .codePill {
+    gap: var(--space-3);
+    padding: var(--space-1) var(--space-1) var(--space-1) var(--space-4);
+    box-shadow: var(--pop);
   }
   .code {
-    font-size: var(--text-2xl);
+    font-size: var(--text-xl);
   }
-  .codeHint {
-    display: none;
+  .codeLabel {
+    font-size: var(--text-sm);
   }
-  .rosterTitle {
+  .sectionTitle {
     font-size: var(--text-lg);
-    padding-bottom: var(--space-1);
   }
-  .strips {
+  .cards {
+    gap: var(--space-2);
+  }
+  .emptySeat {
+    min-height: 4rem;
+    font-size: var(--text-sm);
+  }
+  .bottom {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    margin: 0 calc(-1 * var(--space-2));
+    padding: var(--space-2) var(--space-2) max(var(--space-2), env(safe-area-inset-bottom));
+    background: var(--sky);
+    border-top: var(--stroke) solid var(--outline);
+  }
+  .action {
+    min-width: 0;
     gap: var(--space-1);
   }
-  .strip {
-    min-height: 2.5rem;
-    padding: var(--space-1) var(--space-3);
+  .action > button,
+  .action > label {
+    min-height: var(--touch-target);
+    font-size: var(--text-lg);
   }
-  .empty {
-    min-height: 1.75rem;
-  }
-  .role {
-    font-size: var(--text-xs);
-  }
-  .signoff {
-    width: 4.5rem;
-  }
-  .actions {
-    margin-top: var(--space-1);
+  .reason,
+  .error {
+    font-size: var(--text-sm);
   }
 }

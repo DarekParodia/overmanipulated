@@ -1,0 +1,161 @@
+.card {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+  text-align: center;
+  animation: pop-in var(--motion-base) var(--ease-bounce) both;
+}
+
+/* Your own card: thicker outline so you find yourself at a glance (plus the "Ty" chip). */
+.me {
+  border-width: var(--stroke-bold);
+}
+
+.away {
+  background: var(--surface-soft);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1;
+  padding-top: 0.12em;
+  color: var(--text);
+}
+
+.away .avatar {
+  opacity: 0.5;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.you {
+  flex: none;
+  padding: 0.1em var(--space-2) 0;
+  border-radius: var(--radius-pill);
+  background: var(--outline);
+  color: var(--text-on-dark);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.role {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.role svg {
+  flex: none;
+  stroke-width: 2.4;
+}
+
+.noRole {
+  color: var(--text-soft);
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: 2.5rem;
+  padding: 0.15em var(--space-3) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.state svg {
+  flex: none;
+  stroke-width: 3;
+  margin-top: -0.12em;
+}
+
+.stateReady {
+  background: var(--green);
+  color: var(--text);
+  animation: pop-in var(--motion-base) var(--ease-bounce) both;
+}
+
+.stateWaiting {
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  border-color: var(--text-faint);
+  border-style: dashed;
+}
+
+.stateHost {
+  background: var(--surface);
+}
+
+.stateAway {
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  border-color: var(--text-faint);
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Short landscape phones: avatar beside the name, compact chip. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .card {
+    gap: var(--space-1);
+    padding: var(--space-2);
+  }
+  .avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: var(--text-lg);
+  }
+  .name {
+    font-size: var(--text-md);
+  }
+  .state {
+    min-height: 2rem;
+    font-size: var(--text-sm);
+  }
+}

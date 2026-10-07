@@ -1,3 +1,5 @@
+/* Chunky cartoon button: white or coloured fill, navy outline, hard shadow below. Pressing
+   moves the button down onto its shadow. */
 .button {
   display: inline-flex;
   align-items: center;
@@ -5,120 +7,101 @@
   gap: var(--space-2);
   min-height: var(--touch-target);
   min-width: var(--touch-target);
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  background: none;
+  padding: var(--space-2) var(--space-5);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  line-height: 1;
+  white-space: nowrap;
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  transform: translateY(0);
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    filter var(--motion-fast);
+}
+
+.button:not(:disabled):hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+.button:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
 }
 
 .button:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  background: var(--surface-sunk);
+  color: var(--text-faint);
+  border-color: var(--text-faint);
+  box-shadow: none;
+}
+
+.button:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
 }
 
 .icon {
   display: inline-flex;
 }
 
+.text {
+  padding-top: 0.12em; /* Baloo sits high in its box */
+}
+
 .wide {
   width: 100%;
 }
 
-/* Typewriter key: raised key cap with a hard shadow; pressing pushes it down. */
-.key {
-  background: var(--paper);
-  border: 2px solid var(--ink);
-  border-radius: var(--radius-paper);
-  box-shadow: 0 4px 0 var(--ink);
-  font-family: var(--font-grotesk);
-  font-weight: 700;
-  font-stretch: 80%;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  font-size: var(--text-sm);
-  transform: translateY(0);
-  transition:
-    transform var(--motion-fast) var(--ease-out),
-    box-shadow var(--motion-fast) var(--ease-out);
-}
-
-.key:not(:disabled):hover {
-  background: var(--paper-shade);
-}
-
-.key:not(:disabled):active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--ink);
-}
-
-/* Stamp label: the main action. Red ink frame, condensed caps, slightly rotated. */
-.stamp {
-  position: relative;
-  padding: var(--space-3) var(--space-5);
-  color: var(--editorial-red);
-  border: 4px solid currentColor;
-  outline: 1.5px solid currentColor;
-  outline-offset: -9px;
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-stretch: 62%;
+.big {
+  min-height: 3.75rem;
+  padding: var(--space-3) var(--space-6);
   font-size: var(--text-xl);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  transform: rotate(-2deg);
-  transition:
-    transform var(--motion-fast) var(--ease-out),
-    background var(--motion-fast);
+  border-width: var(--stroke-bold);
+  box-shadow: var(--pop-lg);
 }
 
-.stamp:not(:disabled):hover {
-  background: var(--ink-a10);
+.primary {
+  background: var(--yellow);
 }
 
-.stamp:not(:disabled):active {
-  transform: rotate(-2deg) scale(0.94);
+.secondary {
+  background: var(--surface);
 }
 
-.stamp:focus-visible {
-  outline: 3px solid var(--copy-blue);
-  outline-offset: 3px;
+.green {
+  background: var(--green);
 }
 
-/* Manila tab: sticks up from the edge of a folder. */
-.tab {
-  padding: var(--space-2) var(--space-4);
-  background: var(--manila);
-  border: 1.5px solid var(--manila-dark);
-  border-bottom: none;
-  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
-  font-family: var(--font-grotesk);
-  font-weight: 650;
-  font-stretch: 75%;
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-  font-size: var(--text-xs);
+.red {
+  background: var(--red);
 }
 
-.tab:not(:disabled):hover {
-  background: var(--manila-dark);
+.orange {
+  background: var(--orange);
 }
 
-/* Quiet: pencil-underlined text link for secondary actions. */
-.quiet {
-  padding: var(--space-2);
-  font-family: var(--font-grotesk);
-  font-weight: 600;
-  font-stretch: 85%;
-  font-size: var(--text-sm);
+.ghost {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  font-size: var(--text-md);
   text-decoration: underline;
-  text-decoration-thickness: 1.5px;
+  text-decoration-thickness: 2px;
   text-underline-offset: 4px;
 }
 
-.quiet:not(:disabled):hover {
-  color: var(--copy-blue);
+.ghost:not(:disabled):active {
+  box-shadow: none;
 }

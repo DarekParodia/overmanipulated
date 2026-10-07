@@ -1,4 +1,4 @@
-// Ping picker (S2-11): three torn note slips pinned near the player's corner. Keys 1–3, arrows /
+// Ping picker (S2-11): three big speech-bubble buttons in the player's corner. Keys 1–3, arrows /
 // d-pad + confirm, or a tap send a ping; Esc / pad east / the ping button again close it.
 import { PING_KINDS, type PingKind } from '@redakcja/shared';
 import { useEffect } from 'react';
@@ -6,9 +6,11 @@ import { emitCue } from '../fx/feedback.ts';
 import { NAV_KEYS, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { sendCommand } from '../net/session.ts';
 import { isCoarsePointer } from '../scene/quality.ts';
+import { KeyCap } from '../stations/kit.tsx';
 import { useApp } from '../store/app.ts';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
+import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './PingPicker.module.css';
 import {
   choosePing,
@@ -20,6 +22,13 @@ import {
   usePings,
 } from './ping-store.ts';
 
+/** Icon per ping: archive (clock = dates), fake (✗), mine (✓). */
+const PING_ICON: Record<PingKind, IconName> = {
+  needArchive: 'archive',
+  fake: 'cross',
+  mine: 'hand',
+};
+
 function send(ping: PingKind): void {
   emitCue('ping.send');
   sendCommand({ kind: 'ping', ping });
@@ -30,10 +39,10 @@ export function PingPicker() {
   useEffect(() => setPingSender(send), []);
   // Never leave a picker open across matches.
   useEffect(() => closePingPicker, []);
-  return open ? <PickerSlips /> : null;
+  return open ? <PickerBubbles /> : null;
 }
 
-function PickerSlips() {
+function PickerBubbles() {
   const selected = usePings((s) => s.selected);
   const device = useApp((s) => s.inputDevice);
   const leftHanded = useSettings((s) => s.leftHanded);
@@ -98,12 +107,7 @@ function PickerSlips() {
     return () => window.removeEventListener('keydown', onKeyDown, { capture: true });
   }, []);
 
-  const hint =
-    device === 'gamepad'
-      ? pl.pings.hintPad
-      : device === 'touch'
-        ? pl.pings.hintTouch
-        : pl.pings.hintKeys;
+  const closeKeys = pl.pings.closeKeys[device];
 
   return (
     <div
@@ -112,26 +116,41 @@ function PickerSlips() {
       aria-label={pl.pings.title}
       data-testid="ping-picker"
     >
-      <p className={styles.title}>{pl.pings.title}</p>
-      <ol className={styles.slips}>
+      <ol className={styles.bubbles}>
         {PING_KINDS.map((ping, index) => (
           <li key={ping}>
             <button
               type="button"
-              className={`${styles.slip} ${styles[ping]} ${index === selected && device !== 'touch' ? styles.selected : ''}`}
+              className={`${styles.bubble} ${styles[ping]} ${index === selected && device !== 'touch' ? styles.selected : ''}`}
               data-testid={`ping-option-${ping}`}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={() => choosePing(ping, performance.now())}
             >
-              <span className={styles.key} aria-hidden="true">
-                {index + 1}
+              <span className={styles.icon}>
+                <Icon name={PING_ICON[ping]} size={26} />
               </span>
               <span className={styles.text}>{pl.vocab.pings[ping]}</span>
+              {device === 'keyboard' && (
+                <span className={styles.key} aria-hidden="true">
+                  <KeyCap>{index + 1}</KeyCap>
+                </span>
+              )}
             </button>
           </li>
         ))}
       </ol>
-      <p className={styles.hint}>{hint}</p>
+      <p className={styles.hint} aria-hidden="true">
+        {closeKeys.length > 0 ? (
+          <>
+            {closeKeys.map((key) => (
+              <KeyCap key={key}>{key}</KeyCap>
+            ))}
+            <span>{pl.pings.close}</span>
+          </>
+        ) : (
+          <span>{pl.pings.closeTouch}</span>
+        )}
+      </p>
     </div>
   );
 }

@@ -1,5 +1,6 @@
-// Greybox newsroom from the shared tile map: plank floor (one textured plane), instanced walls
-// (tall at the back, cut away at the front so players stay visible) and instanced decorative
+// The newsroom shell from the shared tile map, in the cartoon style (design-rules §7): a warm
+// plank floor (one textured plane), sky-blue instanced walls with light caps (tall at the back,
+// cut away at the front so players stay visible) and instanced orange-brown decorative
 // furniture. Interactive fixtures (conveyor, stations, desk, tables) are drawn by Fixtures.tsx.
 
 import { fixtureAt, tileAt } from '@redakcja/shared';
@@ -13,15 +14,17 @@ import {
   SRGBColorSpace,
 } from 'three';
 import { runtime } from '../net/session.ts';
-import { palette } from '../ui/tokens.ts';
+import { colors } from '../ui/tokens.ts';
 
 const BACK_WALL_HEIGHT = 1.5;
 const SIDE_WALL_HEIGHT = 0.9;
 const FRONT_WALL_HEIGHT = 0.22;
 const DESK_HEIGHT = 0.72;
 const DESK_TOP = 0.06;
+/** Light cap on every wall block, so the wall silhouette reads from above. */
+const WALL_CAP = 0.06;
 
-/** Plank floor drawn once into a canvas: two tones from the palette, seams and grain lines. */
+/** Plank floor drawn once into a canvas: calm warm planks with darker seams and butt joints. */
 function createFloorTexture(): CanvasTexture {
   const px = 64;
   const canvas = document.createElement('canvas');
@@ -31,19 +34,21 @@ function createFloorTexture(): CanvasTexture {
   if (ctx) {
     const planks = 8;
     const plankH = canvas.height / planks;
+    ctx.fillStyle = colors.floor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     for (let i = 0; i < planks; i++) {
-      ctx.fillStyle = i % 2 === 0 ? palette.floor : palette.paperDeep;
-      ctx.fillRect(0, i * plankH, canvas.width, plankH);
-      ctx.fillStyle = palette.wood;
-      ctx.globalAlpha = 0.35;
-      ctx.fillRect(0, i * plankH, canvas.width, 2);
-      const seam = ((i * 97) % 4) * px + px / 2;
-      ctx.fillRect(seam, i * plankH, 2, plankH);
-      ctx.globalAlpha = 0.08;
-      for (let g = 0; g < 3; g++) {
-        ctx.fillRect(0, i * plankH + 6 + g * 7 + ((i * 3) % 4), canvas.width, 1);
+      const top = i * plankH;
+      // Every other plank a touch darker, so the boards read without getting busy.
+      if (i % 2 === 1) {
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = colors.floorDark;
+        ctx.fillRect(0, top, canvas.width, plankH);
+        ctx.globalAlpha = 1;
       }
-      ctx.globalAlpha = 1;
+      ctx.fillStyle = colors.floorDark;
+      ctx.fillRect(0, top, canvas.width, 3);
+      const seam = ((i * 3) % 4) * px + px / 2;
+      ctx.fillRect(seam, top, 3, plankH);
     }
   }
   const texture = new CanvasTexture(canvas);
@@ -106,12 +111,15 @@ const deskY = (b: Block) => (b.height - DESK_TOP) / 2;
 const deskScale = (b: Block) => b.height - DESK_TOP;
 const topY = (b: Block) => b.height - DESK_TOP / 2;
 const topScale = () => DESK_TOP;
+const capY = (b: Block) => b.height + WALL_CAP / 2;
+const capScale = () => WALL_CAP;
 
 export function Newsroom({ shadows }: { shadows: boolean }) {
   const { width, height } = runtime.map;
   const floor = useMemo(createFloorTexture, []);
   const { walls, desks } = useMemo(collectBlocks, []);
   const wallRef = useInstances(walls, wallY, wallScale);
+  const capRef = useInstances(walls, capY, capScale);
   const deskRef = useInstances(desks, deskY, deskScale);
   const topRef = useInstances(desks, topY, topScale);
 
@@ -132,11 +140,15 @@ export function Newsroom({ shadows }: { shadows: boolean }) {
         receiveShadow={shadows}
       >
         <boxGeometry args={[1, 1, 1]} />
-        <meshLambertMaterial color={palette.wall} />
+        <meshLambertMaterial color={colors.wall} />
+      </instancedMesh>
+      <instancedMesh ref={capRef} args={[undefined, undefined, walls.length]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshLambertMaterial color={colors.wallTop} />
       </instancedMesh>
       <instancedMesh ref={deskRef} args={[undefined, undefined, desks.length]} castShadow={shadows}>
         <boxGeometry args={[0.98, 1, 0.98]} />
-        <meshLambertMaterial color={palette.furniture} />
+        <meshLambertMaterial color={colors.furniture} />
       </instancedMesh>
       <instancedMesh
         ref={topRef}
@@ -144,7 +156,7 @@ export function Newsroom({ shadows }: { shadows: boolean }) {
         receiveShadow={shadows}
       >
         <boxGeometry args={[1.02, 1, 1.02]} />
-        <meshLambertMaterial color={palette.furnitureTop} />
+        <meshLambertMaterial color={colors.furnitureTop} />
       </instancedMesh>
     </group>
   );

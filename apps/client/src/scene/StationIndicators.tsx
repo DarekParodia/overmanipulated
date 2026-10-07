@@ -1,187 +1,302 @@
-// Station and desk state in the world: a paper dial above the fixture, tilted to face the camera
-// like a kitchen timer. Working fills the dial in ink with progress; a minigame shows a "busy"
-// dial in the operator's colour with three ink dots; lockout drains a red sector under an ink
-// cross; an occupied desk shows the busy dial. A tab in the operator's colour marks who works.
+// Round signs over the interactive fixtures (design-rules §7): every station, each conveyor run
+// ("Wejście") and each editorial desk run ("Stół") gets a floating white badge with its icon
+// and a one-word name. The badge doubles as the station dial: a chunky ring around it fills
+// green while someone works, shows the operator's colour during a minigame or at a busy desk,
+// and drains red under a cross during a lockout. DOM in one layer over the canvas: no draw
+// calls, crisp text.
 
 import { useFrame } from '@react-three/fiber';
 import type { Fixture, Station } from '@redakcja/shared';
-import { useEffect, useMemo, useRef } from 'react';
-import {
-  type BufferGeometry,
-  CircleGeometry,
-  DoubleSide,
-  type Group,
-  type Mesh,
-  type MeshLambertMaterial,
-  RingGeometry,
-} from 'three';
-import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
+import { useMemo } from 'react';
+import { Vector3 } from 'three';
 import { useGame } from '../net/game-store.ts';
 import { runtime } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { useSettings } from '../store/settings.ts';
-import { palette, playerColor } from '../ui/tokens.ts';
-import { ELEVATION } from './CameraRig.tsx';
+import { pl } from '../strings/pl.ts';
+import { Icon } from '../ui/icons/Icon.tsx';
+import { playerColorVar } from '../ui/tokens.ts';
 import { type StationIndicator, stationIndicator, surfaceHeight } from './entities.ts';
-import { box, mergePainted, useGeometries } from './geometry.ts';
+import { screenTransform, useOverlay } from './overlay.ts';
+import styles from './StationIndicators.module.css';
 
-/** Tilted back by the camera elevation so the dial faces the camera. */
-const FACE_CAMERA_X = -ELEVATION;
-const DIAL_ABOVE_SURFACE = 0.62;
-const FILL_SEGMENTS = 40;
+/** Height of the sign's foot above the fixture's surface; the sign rises from there. */
+const SIGN_ABOVE = 0.45;
 const FILL_RATE = 12;
+/** Ring circumference in SVG units (r = 27). */
+const RING_RADIUS = 27;
+const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 
-type Shared = {
-  /** Paper disc with ink rim, plain / with busy dots / with lockout cross (vertex colours). */
-  plain: BufferGeometry;
-  busy: BufferGeometry;
-  lockout: BufferGeometry;
-  fill: CircleGeometry;
-  tab: BufferGeometry;
+type SignKind = keyof typeof pl.vocab.signs;
+
+type Sign = {
+  id: string;
+  kind: SignKind;
+  x: number;
+  z: number;
+  height: number;
+  /** Station, or every desk tile of a desk run, whose state the ring shows; empty for the
+   * conveyor. */
+  fixtureIds: readonly string[];
 };
+
 type RoomPlayers = readonly { id: string; colorIndex: number }[] | undefined;
 
-function operatorColor(players: RoomPlayers, operatorId: string | null): string {
-  if (!operatorId) {
-    return palette.inkFaint;
+/** Groups touching fixtures of one kind into runs (conveyor belts, desk blocks). */
+function runsOf(kind: 'conveyor' | 'desk'): Fixture[][] {
+  const left = runtime.map.fixtures.filter((f) => f.kind === kind);
+  const runs: Fixture[][] = [];
+  while (left.length > 0) {
+    const run = left.splice(0, 1);
+    for (let i = 0; i < run.length; i++) {
+      const from = run[i];
+      for (let j = left.length - 1; j >= 0; j--) {
+        const other = left[j];
+        if (
+          from &&
+          other &&
+          Math.abs(other.col - from.col) + Math.abs(other.row - from.row) === 1
+        ) {
+          run.push(other);
+          left.splice(j, 1);
+        }
+      }
+    }
+    runs.push(run);
   }
-  const player = players?.find((p) => p.id === operatorId);
-  return player ? playerColor(player.colorIndex) : palette.inkFaint;
+  return runs;
 }
 
-function indicatorFor(fixture: Fixture): StationIndicator {
+function collectSigns(): Sign[] {
+  const signs: Sign[] = [];
+  for (const fixture of runtime.map.fixtures) {
+    if (fixture.kind === 'station' && fixture.station) {
+      signs.push({
+        id: fixture.id,
+        kind: fixture.station,
+        x: fixture.col + 0.5,
+        z: fixture.row + 0.5,
+        height: surfaceHeight(fixture) + SIGN_ABOVE,
+        fixtureIds: [fixture.id],
+      });
+    }
+  }
+  for (const kind of ['conveyor', 'desk'] as const) {
+    for (const run of runsOf(kind)) {
+      const first = run[0];
+      if (!first) {
+        continue;
+      }
+      const mean = (pick: (f: Fixture) => number) =>
+        run.reduce((sum, f) => sum + pick(f), 0) / run.length + 0.5;
+      signs.push({
+        id: first.id,
+        kind,
+        x: mean((f) => f.col),
+        z: mean((f) => f.row),
+        height: surfaceHeight(first) + SIGN_ABOVE,
+        // A desk run (one table) shares one sign; it shows whichever desk tile is in use.
+        fixtureIds: kind === 'desk' ? run.map((f) => f.id) : [],
+      });
+    }
+  }
+  return signs;
+}
+
+function indicatorFor(sign: Sign): StationIndicator {
+  if (sign.fixtureIds.length === 0) {
+    return { kind: 'none' };
+  }
   const state = useGame.getState();
-  if (fixture.kind === 'desk') {
-    const desk = state.desks.find((d) => d.id === fixture.id);
+  if (sign.kind === 'desk') {
+    const desk = state.desks.find((d) => sign.fixtureIds.includes(d.id) && d.operatorId);
     return desk?.operatorId ? { kind: 'busy', operatorId: desk.operatorId } : { kind: 'none' };
   }
-  const station: Station | undefined = state.stations.find((s) => s.id === fixture.id);
+  const station: Station | undefined = state.stations.find((s) => s.id === sign.fixtureIds[0]);
   return stationIndicator(station);
 }
 
-function Dial({ fixture, shared }: { fixture: Fixture; shared: Shared }) {
-  const root = useRef<Group>(null);
-  const fill = useRef<Mesh>(null);
-  const fillMaterial = useRef<MeshLambertMaterial>(null);
-  const tab = useRef<Mesh>(null);
-  const tabMaterial = useRef<MeshLambertMaterial>(null);
-  const face = useRef<Mesh>(null);
-  const pop = useRef<SpringState>({ value: 0, velocity: 0 });
-  const shown = useRef({ kind: 'none' as StationIndicator['kind'], fraction: 0 });
-  // Colours are resolved only when the operator, the kind or the roster changes.
-  const players = useApp((s) => s.room?.players);
-  const painted = useRef({ key: '', players: undefined as RoomPlayers });
+/** The operator's player colour (shown on the badge outline), or the plain outline. */
+function operatorColor(indicator: StationIndicator, players: RoomPlayers): string {
+  const operatorId =
+    indicator.kind === 'working' || indicator.kind === 'busy' ? indicator.operatorId : null;
+  const player = operatorId ? players?.find((p) => p.id === operatorId) : undefined;
+  return player ? playerColorVar(player.colorIndex) : 'var(--outline)';
+}
 
-  useFrame((_, delta) => {
-    const group = root.current;
-    if (!group || !fill.current || !fillMaterial.current || !tab.current || !tabMaterial.current) {
-      return;
-    }
-    const indicator = indicatorFor(fixture);
-    const reducedMotion = useSettings.getState().reducedMotion;
-    if (indicator.kind === 'none') {
-      group.visible = false;
-      shown.current.kind = 'none';
-      return;
-    }
-    const target = indicator.kind === 'busy' ? 1 : indicator.fraction;
-    if (indicator.kind !== shown.current.kind) {
-      if (shown.current.kind === 'none') {
-        pop.current.value = reducedMotion ? 1 : 0.4;
-        pop.current.velocity = 0;
-      }
-      shown.current.kind = indicator.kind;
-      shown.current.fraction = target;
-    }
-    const k = reducedMotion ? 1 : 1 - Math.exp(-FILL_RATE * delta);
-    shown.current.fraction += (target - shown.current.fraction) * k;
-    stepSpring(pop.current, 1, delta, 4, 0.5);
+function ringColor(indicator: StationIndicator, players: RoomPlayers): string {
+  if (indicator.kind === 'lockout') {
+    return 'var(--red)';
+  }
+  if (indicator.kind === 'working') {
+    return 'var(--green)';
+  }
+  if (indicator.kind === 'busy') {
+    const player = players?.find((p) => p.id === indicator.operatorId);
+    return player ? playerColorVar(player.colorIndex) : 'var(--text-faint)';
+  }
+  return 'transparent';
+}
 
-    group.visible = true;
-    group.scale.setScalar(reducedMotion ? 1 : pop.current.value);
-    const segments = Math.round(shown.current.fraction * FILL_SEGMENTS);
-    fill.current.geometry.setDrawRange(0, segments * 3);
-    fill.current.visible = segments > 0;
+type SignHandle = {
+  sign: Sign;
+  anchor: HTMLDivElement | null;
+  element: HTMLDivElement | null;
+  ring: SVGCircleElement | null;
+  shown: {
+    kind: StationIndicator['kind'];
+    fraction: number;
+    offset: string;
+    color: string;
+    operator: string;
+  };
+  /** Last transform written to the anchor. */
+  at: string;
+};
 
-    const operatorId = indicator.kind === 'lockout' ? null : indicator.operatorId;
-    tab.current.visible = operatorId !== null;
-    const key = `${indicator.kind}|${operatorId ?? ''}`;
-    if (key !== painted.current.key || players !== painted.current.players) {
-      painted.current = { key, players };
-      const color = operatorColor(players, operatorId);
-      fillMaterial.current.color.set(
-        indicator.kind === 'lockout'
-          ? palette.editorialRed
-          : indicator.kind === 'busy'
-            ? color
-            : palette.ink,
-      );
-      tabMaterial.current.color.set(color);
-    }
-    if (face.current) {
-      face.current.geometry =
-        indicator.kind === 'busy'
-          ? shared.busy
-          : indicator.kind === 'lockout'
-            ? shared.lockout
-            : shared.plain;
-    }
-  });
-
-  // Each dial owns its fill geometry: the draw range (progress) is per dial.
-  const fillGeometry = useMemo(() => shared.fill.clone(), [shared.fill]);
-  useEffect(() => () => fillGeometry.dispose(), [fillGeometry]);
-
+function SignBadge({ handle }: { handle: SignHandle }) {
+  const { sign } = handle;
   return (
-    <group
-      ref={root}
-      name={`station-dial:${fixture.id}`}
-      position={[fixture.col + 0.5, surfaceHeight(fixture) + DIAL_ABOVE_SURFACE, fixture.row + 0.5]}
-      rotation-x={FACE_CAMERA_X}
-      visible={false}
+    <div
+      ref={(anchor) => {
+        // A fresh element starts unstyled: forget what was written to the previous one.
+        handle.anchor = anchor;
+        handle.at = '';
+        // The old overlay root unmounts later than the new one mounts: only clear our own.
+        return () => {
+          if (handle.anchor === anchor) {
+            handle.anchor = null;
+          }
+        };
+      }}
+      className={styles.anchor}
     >
-      <mesh geometry={shared.tab} ref={tab} position={[0, 0.25, -0.004]}>
-        <meshLambertMaterial ref={tabMaterial} />
-      </mesh>
-      <mesh ref={face} geometry={shared.plain}>
-        <meshLambertMaterial vertexColors />
-      </mesh>
-      {/* Mirrored so the sector fills clockwise from twelve o'clock. */}
-      <mesh ref={fill} geometry={fillGeometry} position-z={0.003} scale-x={-1}>
-        <meshLambertMaterial ref={fillMaterial} side={DoubleSide} />
-      </mesh>
-    </group>
+      <div
+        ref={(element) => {
+          handle.element = element;
+          handle.shown = { ...handle.shown, kind: 'none', offset: '', color: '', operator: '' };
+          return () => {
+            if (handle.element === element) {
+              handle.element = null;
+            }
+          };
+        }}
+        className={styles.sign}
+        data-kind={sign.kind}
+        data-state="none"
+      >
+        <span className={styles.badge}>
+          <svg className={styles.dial} viewBox="0 0 64 64" aria-hidden="true">
+            <circle className={styles.track} cx="32" cy="32" r={RING_RADIUS} />
+            <circle className={styles.slot} cx="32" cy="32" r={RING_RADIUS} />
+            <circle
+              ref={(ring) => {
+                handle.ring = ring;
+                handle.shown = { ...handle.shown, offset: '' };
+                return () => {
+                  if (handle.ring === ring) {
+                    handle.ring = null;
+                  }
+                };
+              }}
+              className={styles.fill}
+              cx="32"
+              cy="32"
+              r={RING_RADIUS}
+              strokeDasharray={RING_LENGTH}
+              strokeDashoffset={0}
+            />
+          </svg>
+          <span className={styles.face}>
+            <Icon name={sign.kind} size={28} />
+            <span className={styles.cross}>
+              <Icon name="cross" size={28} />
+            </span>
+          </span>
+        </span>
+        <span className={styles.name}>{pl.vocab.signs[sign.kind]}</span>
+      </div>
+    </div>
   );
 }
 
+/** Updates one sign's ring from the game state; DOM writes only when something changed. */
+function updateSign(handle: SignHandle, delta: number, players: RoomPlayers): void {
+  const { element, ring } = handle;
+  if (!element || !ring) {
+    return;
+  }
+  const indicator = indicatorFor(handle.sign);
+  const current = handle.shown;
+  const target = indicator.kind === 'busy' || indicator.kind === 'none' ? 1 : indicator.fraction;
+  if (indicator.kind !== current.kind) {
+    current.kind = indicator.kind;
+    current.fraction = target;
+    element.dataset.state = indicator.kind;
+  }
+  const reducedMotion = useSettings.getState().reducedMotion;
+  const k = reducedMotion ? 1 : 1 - Math.exp(-FILL_RATE * delta);
+  current.fraction += (target - current.fraction) * k;
+  const offset = (RING_LENGTH * (1 - current.fraction)).toFixed(1);
+  if (offset !== current.offset) {
+    current.offset = offset;
+    ring.style.strokeDashoffset = offset;
+  }
+  const color = ringColor(indicator, players);
+  if (color !== current.color) {
+    current.color = color;
+    element.style.setProperty('--ring', color);
+  }
+  const operator = operatorColor(indicator, players);
+  if (operator !== current.operator) {
+    current.operator = operator;
+    element.style.setProperty('--operator', operator);
+  }
+}
+
+/**
+ * All signs live in one DOM layer over the canvas (see overlay.ts); each frame the anchors move
+ * to the projected sign positions.
+ */
 export function StationIndicators() {
-  const fixtures = useMemo(
-    () => runtime.map.fixtures.filter((f) => f.kind === 'station' || f.kind === 'desk'),
+  const handles = useMemo(
+    () =>
+      collectSigns().map(
+        (sign): SignHandle => ({
+          sign,
+          anchor: null,
+          element: null,
+          ring: null,
+          shown: { kind: 'none', fraction: 1, offset: '', color: '', operator: '' },
+          at: '',
+        }),
+      ),
     [],
   );
-  const shared = useGeometries((): Shared => {
-    const face = (marks: BufferGeometry[]) =>
-      mergePainted([
-        [palette.paper, [new CircleGeometry(0.2, 28)]],
-        [palette.ink, [new RingGeometry(0.2, 0.235, 28), ...marks]],
-      ]);
-    // Marks sit in front of the fill sector (which is drawn at z 0.003).
-    return {
-      plain: face([]),
-      busy: face([-0.07, 0, 0.07].map((x) => box(0.04, 0.04, 0.004, { x, z: 0.006 }))),
-      lockout: face([
-        box(0.26, 0.045, 0.004, { z: 0.006, rz: Math.PI / 4 }),
-        box(0.26, 0.045, 0.004, { z: 0.006, rz: -Math.PI / 4 }),
-      ]),
-      fill: new CircleGeometry(0.165, FILL_SEGMENTS, Math.PI / 2, Math.PI * 2),
-      tab: box(0.12, 0.09, 0.004),
-    };
-  });
-  return (
-    <>
-      {fixtures.map((fixture) => (
-        <Dial key={fixture.id} fixture={fixture} shared={shared} />
-      ))}
-    </>
+  const projected = useMemo(() => new Vector3(), []);
+
+  const badges = useMemo(
+    () => handles.map((handle) => <SignBadge key={handle.sign.id} handle={handle} />),
+    [handles],
   );
+  useOverlay(styles.layer ?? '', badges);
+
+  useFrame(({ camera, size }, delta) => {
+    const players = useApp.getState().room?.players;
+    for (const handle of handles) {
+      const anchor = handle.anchor;
+      if (!anchor) {
+        continue;
+      }
+      projected.set(handle.sign.x, handle.sign.height, handle.sign.z);
+      const at = screenTransform(projected, camera, size) ?? 'scale(0)';
+      if (at !== handle.at) {
+        handle.at = at;
+        anchor.style.transform = at;
+      }
+      updateSign(handle, delta, players);
+    }
+  });
+
+  return null;
 }

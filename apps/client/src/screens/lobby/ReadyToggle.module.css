@@ -1,24 +1,54 @@
-.signoff {
-  position: relative;
+/* Looks and moves like a big primary button; the state is shown by colour AND the tick box. */
+.toggle {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-3);
-  min-height: var(--touch-target);
-  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
-  border: 1.5px dashed var(--ink-a40);
+  min-height: 3.75rem;
+  min-width: 14rem;
+  padding: var(--space-2) var(--space-6) var(--space-2) var(--space-4);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--yellow);
+  box-shadow: var(--pop-lg);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1;
   cursor: pointer;
+  user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    background var(--motion-fast);
 }
 
-.signoff:has(.native:disabled) {
+.toggle:hover {
+  transform: translateY(-1px);
+}
+
+.toggle:active {
+  transform: translateY(4px);
+  box-shadow: var(--pop-pressed);
+}
+
+.ready {
+  background: var(--green);
+}
+
+.disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  background: var(--surface-sunk);
+  color: var(--text-faint);
+  border-color: var(--text-faint);
+  box-shadow: none;
 }
 
-.signed {
-  border-style: solid;
-  border-color: var(--copy-blue);
+.toggle:has(.native:focus-visible) {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
 }
 
 .native {
@@ -30,25 +60,21 @@
 
 .box {
   flex: none;
-  width: var(--touch-target);
-  height: var(--touch-target);
-  border: 2.5px solid var(--ink);
-  background: var(--paper);
   display: grid;
   place-items: center;
-}
-
-.native:focus-visible + .box {
-  outline: 3px solid var(--copy-blue);
-  outline-offset: 2px;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: var(--outline-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .tick {
-  width: 2.4rem;
-  height: 2.4rem;
+  width: 1.6rem;
+  height: 1.6rem;
   fill: none;
-  stroke: var(--copy-blue);
-  stroke-width: 2.8;
+  stroke: var(--text);
+  stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-dasharray: 30;
@@ -56,38 +82,10 @@
   transition: stroke-dashoffset var(--motion-base) var(--ease-out);
 }
 
-.native:checked + .box .tick {
+.native:checked ~ .box .tick {
   stroke-dashoffset: 0;
 }
 
-.text {
-  display: grid;
-}
-
 .word {
-  font-family: var(--font-grotesk);
-  font-weight: 800;
-  font-stretch: 62%;
-  font-size: var(--text-xl);
-  line-height: 1;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.signed .word {
-  color: var(--copy-blue);
-}
-
-.hint {
-  font-size: var(--text-xs);
-  color: var(--ink-soft);
-}
-
-@media (max-height: 480px) and (orientation: landscape) {
-  .word {
-    font-size: var(--text-lg);
-  }
-  .hint {
-    display: none;
-  }
+  padding-top: 0.12em; /* Baloo sits high in its box */
 }

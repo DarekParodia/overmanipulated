@@ -1,6 +1,5 @@
-// Lobby as a duty roster pinned to a cork board (design-rules §1): the room code on a typed
-// card, today's edition on a briefing slip, each player on a typed strip with a coloured pin,
-// their role and a "ready" stamp, and the press passes to pick a role from.
+// Lobby (design-rules §5): the room code big in a pill, the players as a row of cards, the
+// role picker, the level, and one main action — "Gotowy" for guests, "Do składu!" for the host.
 import { MAX_PLAYERS, type Role } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -10,15 +9,13 @@ import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
-import { RoleIcon } from '../ui/icons/RoleIcon.tsx';
-import { Stamp } from '../ui/Stamp.tsx';
-import { playerColorVar } from '../ui/tokens.ts';
 import styles from './Lobby.module.css';
 import { LevelCard } from './lobby/LevelCard.tsx';
+import { PlayerCard } from './lobby/PlayerCard.tsx';
 import { ReadyToggle } from './lobby/ReadyToggle.tsx';
 import { RolePasses } from './lobby/RolePasses.tsx';
 
-/** Server errors a lobby action can answer with; shown next to the roster's actions. */
+/** Server errors a lobby action can answer with; shown next to the main action. */
 const LOBBY_ERRORS = new Set(['notReady', 'notHost', 'unknownLevel']);
 
 /** Clears a previous lobby error before the next action, so a stale reason never lingers. */
@@ -30,7 +27,7 @@ function act(action: () => void): void {
   action();
 }
 
-/** Plays the ready stamp when someone else signs the roster (own ticks cue on press). */
+/** Plays the ready cue when someone else gets ready (own toggles cue on press). */
 function useRemoteReadyCue(playerId: string | null): void {
   const players = useApp((s) => s.room?.players);
   const readyBefore = useRef<Set<string> | null>(null);
@@ -50,7 +47,16 @@ export function Lobby() {
   const connection = useApp((s) => s.connection);
   const error = useApp((s) => s.error);
   const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => requestMusic('menu'), []);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current) {
+        clearTimeout(copiedTimer.current);
+      }
+    },
+    [],
+  );
   useRemoteReadyCue(playerId);
 
   if (!room) {
@@ -61,7 +67,7 @@ export function Lobby() {
   const empty = MAX_PLAYERS - room.players.length;
   const online = connection === 'online';
   // Start gate (the server enforces the same rule and answers `notReady`): every connected
-  // guest must have signed the roster.
+  // guest must be ready.
   const waitingFor = room.players
     .filter((p) => p.id !== room.hostId && p.connected && !p.ready)
     .map((p) => p.nickname);
@@ -84,142 +90,105 @@ export function Lobby() {
       await navigator.clipboard.writeText(room.roomCode);
       emitCue('ui.copy');
       setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
+      if (copiedTimer.current) {
+        clearTimeout(copiedTimer.current);
+      }
+      copiedTimer.current = setTimeout(() => setCopied(false), 1600);
     } catch {
       // Clipboard blocked: the code is large enough to read aloud.
     }
   }
 
   return (
-    <main className={styles.board}>
-      <section className={styles.codeCard} aria-labelledby="room-code-label">
-        <span className={styles.pin} aria-hidden="true" />
-        <p id="room-code-label" className="label">
-          {pl.lobby.codeLabel}
-        </p>
-        <p className={styles.code} data-testid="room-code">
-          {room.roomCode}
-        </p>
-        <p className={styles.codeHint}>{pl.lobby.codeHint}</p>
-        <Button variant="quiet" icon={<Icon name="copy" size={20} />} onClick={copyCode}>
-          {copied ? pl.lobby.copied : pl.lobby.copy}
+    <main className={styles.page}>
+      <header className={styles.top}>
+        <section className={styles.codePill} aria-labelledby="room-code-label">
+          <span id="room-code-label" className={styles.codeLabel}>
+            {pl.lobby.codeLabel}
+          </span>
+          <span className={styles.code} data-testid="room-code">
+            {room.roomCode}
+          </span>
+          <Button
+            icon={<Icon name={copied ? 'publish' : 'copy'} size={24} label={pl.lobby.copy} />}
+            onClick={copyCode}
+          />
+          <span className="visually-hidden" aria-live="polite">
+            {copied ? pl.lobby.copied : ''}
+          </span>
+        </section>
+        <Button back icon={<Icon name="leave" size={24} />} onClick={leaveRoom}>
+          {pl.lobby.leave}
         </Button>
-      </section>
+      </header>
 
-      <section className={styles.roster} aria-labelledby="roster-title">
-        <span className={styles.pin} aria-hidden="true" />
-        <h1 id="roster-title" className={styles.rosterTitle}>
-          {pl.lobby.boardTitle}
+      <section className={styles.players} aria-labelledby="players-title">
+        <h1 id="players-title" className={styles.sectionTitle}>
+          {pl.lobby.playersCount(room.players.length, MAX_PLAYERS)}
         </h1>
-        <p className="label">{pl.lobby.playersCount(room.players.length, MAX_PLAYERS)}</p>
-        <ol className={styles.strips}>
-          {room.players.map((player, index) => (
-            <li
+        <ol className={styles.cards}>
+          {room.players.map((player) => (
+            <PlayerCard
               key={player.id}
-              className={`${styles.strip} ${player.connected ? '' : styles.away}`}
-              style={{ ['--tilt' as string]: `${((index * 37) % 5) - 2}deg` }}
-            >
-              <span
-                className={styles.playerPin}
-                style={{ background: playerColorVar(player.colorIndex) }}
-                aria-hidden="true"
-              >
-                {player.colorIndex + 1}
-              </span>
-              <span className={styles.who}>
-                <span className={styles.name}>{player.nickname}</span>
-                <span
-                  className={`${styles.role} ${player.role ? '' : styles.noRole}`}
-                  data-testid="roster-role"
-                >
-                  <RoleIcon role={player.role ?? 'none'} size={18} />
-                  {player.role ? pl.vocab.roles[player.role] : pl.lobbyRoles.noRole}
-                </span>
-              </span>
-              <span className={styles.tags}>
-                {player.id === playerId && <span className="label">{pl.lobby.you}</span>}
-                {player.id === room.hostId && <span className="label">{pl.lobby.host}</span>}
-                {!player.connected && (
-                  <span className={`label ${styles.disconnected}`}>{pl.lobby.disconnected}</span>
-                )}
-              </span>
-              <span className={styles.signoff}>
-                {player.id === room.hostId ? null : player.ready ? (
-                  <Stamp
-                    text={pl.lobbyRoles.readyStamp}
-                    tone="blue"
-                    seed={player.colorIndex * 97 + 13}
-                    slam
-                    size={78}
-                  />
-                ) : (
-                  <span className={styles.pending}>{pl.lobbyRoles.notReady}</span>
-                )}
-              </span>
-            </li>
+              player={player}
+              isMe={player.id === playerId}
+              isHost={player.id === room.hostId}
+            />
           ))}
           {Array.from({ length: empty }, (_, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: empty desks have no identity.
-            <li key={`empty-${i}`} className={`${styles.strip} ${styles.empty}`}>
-              <span className={styles.name}>{pl.lobby.emptySlot}</span>
+            // biome-ignore lint/suspicious/noArrayIndexKey: empty seats have no identity.
+            <li key={`empty-${i}`} className={styles.emptySeat}>
+              {pl.lobby.emptySlot}
             </li>
           ))}
         </ol>
-        <div className={styles.actions}>
-          {isHost ? (
-            <div className={styles.startBlock}>
-              <Button
-                variant="stamp"
-                onClick={() => act(startGame)}
-                disabled={!canStart}
-                aria-describedby={startReason ? 'start-reason' : undefined}
-              >
-                {pl.lobby.start}
-              </Button>
-              {startReason && (
-                <p id="start-reason" className={styles.reason} data-testid="start-reason">
-                  {startReason}
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className={styles.startBlock}>
-              <ReadyToggle
-                ready={me?.ready ?? false}
-                disabled={!online}
-                onChange={(ready) => act(() => setReady(ready))}
-              />
-              <p className={styles.waiting}>{pl.lobby.waitingForHost}</p>
-            </div>
-          )}
-          <Button variant="quiet" back icon={<Icon name="leave" size={20} />} onClick={leaveRoom}>
-            {pl.lobby.leave}
-          </Button>
-        </div>
-        {lobbyError && (
-          <p className={styles.error} role="alert">
-            {lobbyError}
-          </p>
-        )}
       </section>
 
-      <div className={styles.level}>
+      <RolePasses
+        role={me?.role ?? null}
+        disabled={!online}
+        showEditorNote={noEditor && room.players.length > 1}
+        onChange={(role: Role | null) => act(() => setRole(role))}
+      />
+
+      <footer className={styles.bottom}>
         <LevelCard
           levelId={room.levelId}
           isHost={isHost}
           disabled={!online}
           onSelect={(levelId) => act(() => selectLevel(levelId))}
         />
-      </div>
-
-      <div className={styles.passes}>
-        <RolePasses
-          role={me?.role ?? null}
-          disabled={!online}
-          showEditorNote={noEditor && room.players.length > 1}
-          onChange={(role: Role | null) => act(() => setRole(role))}
-        />
-      </div>
+        <div className={styles.action}>
+          {isHost ? (
+            <Button
+              variant="primary"
+              big
+              onClick={() => act(startGame)}
+              disabled={!canStart}
+              aria-describedby={startReason ? 'start-reason' : undefined}
+            >
+              {pl.lobby.start}
+            </Button>
+          ) : (
+            <ReadyToggle
+              ready={me?.ready ?? false}
+              disabled={!online}
+              onChange={(ready) => act(() => setReady(ready))}
+            />
+          )}
+          {isHost && startReason && (
+            <p id="start-reason" className={styles.reason} data-testid="start-reason">
+              {startReason}
+            </p>
+          )}
+          {!isHost && me?.ready && <p className={styles.reason}>{pl.lobby.waitingForHost}</p>}
+          {lobbyError && (
+            <p className={styles.error} role="alert">
+              {lobbyError}
+            </p>
+          )}
+        </div>
+      </footer>
     </main>
   );
 }

@@ -1,7 +1,7 @@
-// Story folders in the world: thin manila boxes whose cover (one shared atlas) shows the type
-// icon and the priority band. They lie on fixtures or the floor, or follow their carrier's
-// rendered position at chest height. Stamps collected show as small ink rings on the cover
-// (one instanced mesh for all folders). One draw call per folder. Groups are named
+// Story folders in the world: bright yellow boxes with a thick navy edge whose cover (one shared
+// atlas) shows the big type icon and 1–3 priority flags. They lie on fixtures or the floor, or
+// follow their carrier's rendered position at chest height. Stamps collected show as navy dots
+// on the cover (one instanced mesh for all folders). One draw call per folder. Groups are named
 // `folder:<id>` for tests.
 import { useFrame } from '@react-three/fiber';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
@@ -19,7 +19,7 @@ import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
 import { useGame } from '../net/game-store.ts';
 import { runtime } from '../net/session.ts';
 import { useSettings } from '../store/settings.ts';
-import { palette } from '../ui/tokens.ts';
+import { colors } from '../ui/tokens.ts';
 import {
   ATLAS_PRIORITIES,
   ATLAS_TYPES,
@@ -30,7 +30,7 @@ import {
   type Placement,
   stampMarkCount,
 } from './entities.ts';
-import { ring } from './geometry.ts';
+import { cylinder } from './geometry.ts';
 import { renderState } from './render-state.ts';
 import { createFolderAtlas } from './textures.ts';
 
@@ -39,25 +39,26 @@ const FOLLOW_RATE_CARRIED = 30;
 const FOLLOW_RATE_RESTING = 14;
 /** Instanced stamp marks shared by all folders. */
 const MARK_CAPACITY = 96;
-/** Stamp mark slots on the cover (folder-local x, z), right of the type icon. */
+/** Stamp mark slots on the cover (folder-local x, z): under the flags, right of the icon. */
 const MARK_SLOTS: readonly [number, number][] = [
-  [0.12, -0.12],
-  [0.19, -0.12],
-  [0.12, -0.05],
-  [0.19, -0.05],
-  [0.12, 0.02],
+  [0.117, 0.066],
+  [0.178, 0.066],
+  [0.239, 0.066],
+  [0.117, 0.15],
+  [0.178, 0.15],
 ];
 
 type Motion = Placement & { pop: SpringState };
 
 /**
- * Folder box whose sides sample the worn card edge of its atlas cell, so a whole folder is one
+ * Folder box whose sides sample the navy edge of its atlas cell, so a whole folder is one
  * material and one draw call. Thin and low, so it casts no shadow.
  */
 function createFolderGeometry(): BoxGeometry {
   const geometry = new BoxGeometry(FOLDER_SIZE.width, FOLDER_SIZE.thickness, FOLDER_SIZE.depth);
   const uv = geometry.getAttribute('uv');
-  // Faces are +x, -x, +y (cover), -y, +z, -z with four vertices each.
+  // Faces are +x, -x, +y (cover), -y, +z, -z with four vertices each; the sides sample the
+  // navy edge.
   for (let i = 0; i < uv.count; i++) {
     if (i < 8 || i >= 12) {
       uv.setXY(i, 0.01, 0.5);
@@ -110,7 +111,7 @@ export function Folders() {
   const items = useGame(useShallow((s) => s.folders.map((f) => `${f.id}\n${f.storyId}`)));
   const atlas = useMemo(createFolderAtlas, []);
   const geometry = useMemo(createFolderGeometry, []);
-  const markGeometry = useMemo(() => ring(0.022, 0.006, { rx: Math.PI / 2 }), []);
+  const markGeometry = useMemo(() => cylinder(0.03, 0.012, {}, 12), []);
   useEffect(
     () => () => {
       atlas.dispose();
@@ -192,8 +193,8 @@ export function Folders() {
         if (!slot) {
           break;
         }
-        scratch.local.position.set(slot[0], FOLDER_SIZE.thickness / 2 + 0.004, slot[1]);
-        scratch.local.rotation.set(0, i * 0.7, 0);
+        scratch.local.position.set(slot[0], FOLDER_SIZE.thickness / 2 + 0.006, slot[1]);
+        scratch.local.rotation.set(0, 0, 0);
         scratch.local.updateMatrix();
         scratch.matrix.multiplyMatrices(group.matrixWorld, scratch.local.matrix);
         markMesh.setMatrixAt(markCount, scratch.matrix);
@@ -228,7 +229,7 @@ export function Folders() {
         frustumCulled={false}
         name="folder-stamp-marks"
       >
-        <meshLambertMaterial color={palette.ink} />
+        <meshLambertMaterial color={colors.outline} />
       </instancedMesh>
     </>
   );

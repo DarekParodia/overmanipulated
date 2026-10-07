@@ -1,42 +1,59 @@
-/* A typed case sheet clipped into the manila folder: slightly off-square, hard edge shadow. */
+/* The folder card: a yellow card (folders are yellow everywhere) with chips and the story. */
 .sheet {
-  position: relative;
+  display: grid;
+  gap: var(--space-2);
   padding: var(--space-3) var(--space-4) var(--space-4);
-  background: var(--paper);
-  border: var(--rule-thin);
-  box-shadow: var(--shadow-paper);
-  transform: rotate(0.3deg);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-top: 0.75rem solid var(--yellow);
+  border-radius: var(--radius-md);
 }
 
-.meta {
+.chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-1) var(--space-5);
-  margin: 0 0 var(--space-2);
-  padding-bottom: var(--space-2);
-  border-bottom: var(--rule-thin);
+  gap: var(--space-2);
 }
 
-.meta dd {
-  display: flex;
+.chip {
+  display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  margin: 0;
-  font-family: var(--font-typewriter);
-  font-weight: 700;
-  font-size: var(--text-sm);
+  padding: 0 var(--space-3) 0 var(--space-2);
+  min-height: 2.25rem;
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1;
+  white-space: nowrap;
 }
 
-/* Priority: the word carries the meaning; urgent also gets red ink and an underline rule. */
-.urgent {
-  color: var(--editorial-red);
-  text-decoration: underline;
-  text-decoration-thickness: 2px;
+.flags {
+  display: inline-flex;
+  gap: 2px;
 }
 
-.important {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
+/* One coloured pip per priority step (1–3): shape and colour, never colour alone. */
+.flag {
+  width: 0.6rem;
+  height: 1rem;
+  border: 2px solid var(--outline);
+  border-radius: 3px;
+}
+
+.normal .flag {
+  background: var(--blue);
+}
+
+.important .flag {
+  background: var(--orange);
+}
+
+.urgent .flag {
+  background: var(--red);
 }
 
 .deadline {
@@ -44,39 +61,35 @@
 }
 
 .warning {
-  color: var(--editorial-red);
-}
-
-.warning::after {
-  content: "!";
+  background: var(--red);
 }
 
 .headline {
-  margin: 0 0 var(--space-2);
-  font-family: var(--font-serif);
   font-size: var(--text-xl);
-  font-weight: 700;
   line-height: var(--leading-tight);
-  text-wrap: balance;
 }
 
 .body {
-  margin: 0 0 var(--space-2);
-  font-family: var(--font-serif);
   font-size: var(--text-md);
   line-height: var(--leading-body);
 }
 
 .source {
-  margin: 0;
-  font-family: var(--font-typewriter);
   font-size: var(--text-sm);
-  color: var(--ink-soft);
+  font-weight: 700;
+  color: var(--text-soft);
 }
 
 @media (max-height: 500px), (max-width: 760px) {
   .sheet {
+    gap: var(--space-1);
     padding: var(--space-2) var(--space-3);
+    border-top-width: 0.5rem;
+  }
+
+  .chip {
+    min-height: 2rem;
+    font-size: var(--text-sm);
   }
 
   .headline {

@@ -1,0 +1,383 @@
+/* Guidance dock: bottom centre over the scene, between the touch buttons on touch devices.
+   Takes no pointer events except the tutorial's skip button. Purple = help (design-rules §3). */
+.dock {
+  position: absolute;
+  z-index: 11;
+  left: 0;
+  right: 0;
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  padding-inline: max(var(--space-4), env(safe-area-inset-left))
+    max(var(--space-4), env(safe-area-inset-right));
+  pointer-events: none;
+}
+
+/* Sit between the joystick and the thumb buttons so neither is ever covered (sides swap for
+   left-handed players). */
+.touch {
+  padding-left: max(11rem, env(safe-area-inset-left));
+  padding-right: max(13.5rem, env(safe-area-inset-right));
+}
+
+.touch.leftHanded {
+  padding-left: max(13.5rem, env(safe-area-inset-left));
+  padding-right: max(11rem, env(safe-area-inset-right));
+}
+
+.touch .card {
+  width: min(26rem, 100%);
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* --- Hint bubble ------------------------------------------------------------------------- */
+
+.bubble {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 100%;
+  margin: 0 0 var(--space-2);
+  padding: var(--space-2) var(--space-5) var(--space-2) var(--space-2);
+  background: var(--purple);
+  color: var(--text-on-dark);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+/* Speech-bubble tail. */
+.bubble::after {
+  content: "";
+  position: absolute;
+  left: 2.25rem;
+  bottom: -0.7rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  background: var(--purple);
+  border-right: var(--stroke-bold) solid var(--outline);
+  border-bottom: var(--stroke-bold) solid var(--outline);
+  transform: rotate(45deg);
+}
+
+.bubbleIcon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--outline);
+  border: var(--stroke) solid var(--outline);
+}
+
+.bubbleText {
+  display: inline-block;
+  min-width: 0;
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+/* --- Tutorial card ----------------------------------------------------------------------- */
+
+.card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  width: min(36rem, 100%);
+  padding: var(--space-3) var(--space-5) var(--space-3) var(--space-3);
+  background: var(--surface);
+  color: var(--text);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--pop-lg);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+/* Lifted above the work prompt pinned at the bottom centre. */
+.prompt {
+  margin-bottom: 5.5rem;
+}
+
+/* A station or desk overlay fills the right half on wide screens: move to the left half.
+   On phones the overlay is full width and says what to do itself: step aside. */
+.overlay {
+  margin-right: 50%;
+}
+
+@media (max-width: 899px) {
+  .overlay {
+    display: none;
+  }
+}
+
+.art {
+  display: grid;
+  place-items: center;
+  min-width: 6.5rem;
+  min-height: 6.5rem;
+  padding: var(--space-2);
+  background: var(--purple);
+  color: var(--text-on-dark);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+}
+
+.cardBody {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--text-soft);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--text-sm);
+}
+
+.badge {
+  line-height: 1;
+}
+
+.dots {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.dot {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--outline);
+  background: var(--surface);
+}
+
+.dotDone {
+  background: var(--purple);
+}
+
+.dotNow {
+  background: var(--yellow);
+}
+
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+.skip {
+  justify-self: start;
+  margin-left: calc(-1 * var(--space-5));
+  pointer-events: auto;
+}
+
+/* --- Drawn controls ---------------------------------------------------------------------- */
+
+.key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  color: var(--text);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.keyWide {
+  min-width: 6rem;
+}
+
+.wasd {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.wasdRow {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.padButton,
+.touchButton {
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  border: var(--stroke) solid var(--outline);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.padButton {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--text-xl);
+}
+
+/* The thumb button's label, drawn as a pill so long Polish words fit. */
+.touchButton {
+  height: 3rem;
+  padding: 0 var(--space-3);
+  font-size: var(--text-md);
+}
+
+.stick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+}
+
+.stickKnob {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--outline);
+  transform: translate(0.7rem, -0.7rem);
+}
+
+.pair {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.verdicts {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: var(--space-1);
+}
+
+.verdict {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  border: var(--stroke) solid var(--outline);
+  color: var(--outline);
+}
+
+.publish {
+  background: var(--green);
+}
+
+.context {
+  background: var(--orange);
+}
+
+.reject {
+  background: var(--red);
+}
+
+.doneMark {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+/* Small landscape phones: a slimmer card. */
+@media (max-height: 480px) {
+  .card {
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
+  }
+
+  .art {
+    min-width: 4.5rem;
+    min-height: 4.5rem;
+  }
+
+  .key {
+    min-width: 2rem;
+    height: 2rem;
+    font-size: var(--text-md);
+  }
+
+  .keyWide {
+    min-width: 4.5rem;
+  }
+
+  .touchButton {
+    height: 2.5rem;
+  }
+
+  .stick {
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+
+  .stickKnob {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+
+  .cardTitle {
+    font-size: var(--text-lg);
+  }
+
+  /* Short screens: the drawing would cover too much of the scene. */
+  .art {
+    display: none;
+  }
+
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: var(--space-4);
+  }
+}
+
+/* The smallest phones (640×360): text only, the drawing would cover half the scene. */
+@media (max-height: 400px) {
+  .art {
+    display: none;
+  }
+
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: var(--space-4);
+  }
+}

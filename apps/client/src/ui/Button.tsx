@@ -1,10 +1,20 @@
-// Buttons imitate physical newsroom objects (design-rules §1): a typewriter key, a rubber
-// stamp label, or a manila folder tab. Every press emits a UI cue.
+// Chunky cartoon buttons (design-rules.md): thick outline, hard drop shadow that collapses when
+// pressed, one colour per meaning. Every press emits a UI cue.
 import type { ButtonHTMLAttributes, PointerEvent, ReactNode } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import styles from './Button.module.css';
 
-export type ButtonVariant = 'key' | 'stamp' | 'tab' | 'quiet';
+export type ButtonVariant =
+  /** Yellow: the one thing to do next on this screen. */
+  | 'primary'
+  /** White: everything else. */
+  | 'secondary'
+  /** Meaning colours: publish/ready (green), reject/danger (red), context/warning (orange). */
+  | 'green'
+  | 'red'
+  | 'orange'
+  /** Text-only, for minor actions. */
+  | 'ghost';
 
 export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> & {
   variant?: ButtonVariant;
@@ -12,13 +22,16 @@ export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'classNa
   /** Use the "back" sound (leave, close, cancel). */
   back?: boolean;
   wide?: boolean;
+  /** Bigger text and padding for the main call to action. */
+  big?: boolean;
 };
 
 export function Button({
-  variant = 'key',
+  variant = 'secondary',
   icon,
   back = false,
   wide = false,
+  big = false,
   children,
   onClick,
   onPointerEnter,
@@ -29,7 +42,7 @@ export function Button({
     <button
       {...rest}
       type={type}
-      className={`${styles.button} ${styles[variant]} ${wide ? styles.wide : ''}`}
+      className={`${styles.button} ${styles[variant]} ${wide ? styles.wide : ''} ${big ? styles.big : ''}`}
       onClick={(event) => {
         emitCue(back ? 'ui.back' : 'ui.click');
         onClick?.(event);

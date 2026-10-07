@@ -1,9 +1,12 @@
-// Gameplay screen: the 3D newsroom with the HUD (hud/Hud.tsx), controls for leaving,
-// settings and fullscreen, touch controls on touch devices and the rotate prompt.
+// Gameplay screen: the 3D newsroom with the HUD (hud/Hud.tsx), round tool buttons for
+// fullscreen, settings and leaving (with the room chip under them), touch controls on touch
+// devices and the rotate prompt.
 import { useEffect } from 'react';
 import { startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
 import { requestMusic } from '../fx/audio/music.ts';
+import { Guidance } from '../guidance/Guidance.tsx';
 import { Hud } from '../hud/Hud.tsx';
+import { RoomChip } from '../hud/RoomChip.tsx';
 import { attachInput } from '../input/input-manager.ts';
 import { TouchControls } from '../input/TouchControls.tsx';
 import { canFullscreen, toggleFullscreen, useWakeLock } from '../mobile/device.ts';
@@ -38,20 +41,24 @@ export function GameScreen() {
       <GameCanvas />
 
       <div className={styles.tools}>
-        {canFullscreen() && (
+        <div className={styles.toolRow}>
+          {canFullscreen() && (
+            <Button
+              icon={<Icon name="fullscreen" label={pl.game.fullscreen} />}
+              onClick={() => void toggleFullscreen()}
+            />
+          )}
           <Button
-            icon={<Icon name="fullscreen" label={pl.game.fullscreen} />}
-            onClick={() => void toggleFullscreen()}
+            icon={<Icon name="settings" label={pl.game.settings} />}
+            onClick={() => setSettingsOpen(true)}
           />
-        )}
-        <Button
-          icon={<Icon name="settings" label={pl.game.settings} />}
-          onClick={() => setSettingsOpen(true)}
-        />
-        <Button back icon={<Icon name="leave" label={pl.game.leave} />} onClick={leaveRoom} />
+          <Button back icon={<Icon name="leave" label={pl.game.leave} />} onClick={leaveRoom} />
+        </div>
+        <RoomChip />
       </div>
 
       <Hud />
+      <Guidance />
       <StationLayer />
       <PingPicker />
 

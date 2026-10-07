@@ -1,5 +1,5 @@
-// Archive minigame (S2-05): a drawer of dated index cards. The player scrolls the drawer with
-// momentum and pulls the card under the reading frame; only the earliest card with the searched
+// Archive minigame (S2-05): a drawer of dated cards. The player scrolls the drawer with
+// momentum and pulls the card under the yellow frame; only the earliest card with the searched
 // topic is right (the "first appearance" check an archivist does with dated editions or web
 // archive snapshots). Two wrong cards close the drawer. Pure rules live in archive.logic.ts.
 import { ARCHIVE_MAX_MISTAKES, MINIGAME_TIME_LIMIT_MS } from '@redakcja/shared';
@@ -14,11 +14,10 @@ import { emitCue } from '../../fx/feedback.ts';
 import { PAD, radialDeadzone } from '../../input/gamepad.ts';
 import { firstGamepad } from '../../input/gamepad-access.ts';
 import { type NavIntent, useNavIntent } from '../../input/ui-nav.ts';
-import { useSettings } from '../../store/settings.ts';
 import { pl } from '../../strings/pl.ts';
 import { formatDate, typeset } from '../../strings/typography.ts';
 import { Button } from '../../ui/Button.tsx';
-import { Stamp } from '../../ui/Stamp.tsx';
+import { KeyHints, Mistakes, OutcomeBanner, ResultMark, TaskLine } from '../kit.tsx';
 import styles from './Archive.module.css';
 import {
   type ArchiveCard,
@@ -49,8 +48,6 @@ const TAP_MAX_MS = 400;
 /** Held gamepad direction starts accelerating after this delay. */
 const PAD_HOLD_DELAY_MS = 250;
 const STICK_THRESHOLD = 0.6;
-/** Urgency starts showing when this share of the time limit is used. */
-const URGENT_FROM = 0.65;
 const CARD_GAP_PX = 10;
 
 type Phase = 'browsing' | 'found' | 'failed';
@@ -79,11 +76,9 @@ function cardIndexAt(target: EventTarget | null): number | null {
   return Number.isInteger(index) ? index : null;
 }
 
-export function Archive({ seed, story, stamp, device, timeUsed, onDone }: MinigameProps) {
+export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps) {
   const puzzle = useMemo(() => createArchivePuzzle(seed, t.topics.length), [seed]);
   const count = puzzle.cards.length;
-  const noFlash = useSettings((s) => s.noFlash);
-  const reducedMotion = useSettings((s) => s.reducedMotion);
 
   const [phase, setPhase] = useState<Phase>('browsing');
   const [centered, setCentered] = useState(puzzle.startIndex);
@@ -337,46 +332,16 @@ export function Archive({ seed, story, stamp, device, timeUsed, onDone }: Miniga
     };
   };
 
-  const urgent = timeUsed >= URGENT_FROM;
-  const hint = typeset(t.hints[device]);
   const target = puzzle.cards[puzzle.targetIndex];
 
   return (
-    <div
-      className={styles.root}
-      data-urgent={urgent}
-      data-pulse={urgent && !noFlash && !reducedMotion}
-      data-testid="archive-minigame"
-    >
-      <div className={styles.slip}>
-        <p className={styles.kicker}>
-          {t.kicker} · {t.folderLabel}: {typeset(story.headline)}
-        </p>
-        <p className={styles.clue}>
-          <span className={styles.clueLabel}>{t.clueLabel}</span>{' '}
-          <span className={styles.topic} data-testid="archive-topic">
-            „{t.topics[puzzle.topic]}”
-          </span>
-        </p>
-        <p className={styles.rule}>{typeset(t.clueRule)}</p>
-        <div className={styles.deadline} aria-hidden="true">
-          <span style={{ width: `${Math.round(timeUsed * 100)}%` }} />
-        </div>
-      </div>
-
-      <div className={styles.mistakes} role="img" aria-label={`${t.mistakes}: ${rejected.size}`}>
-        <span className={styles.mistakesLabel}>{t.mistakes}</span>
-        {Array.from({ length: ARCHIVE_MAX_MISTAKES }, (_, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: fixed number of tally boxes
-          <span key={i} className={styles.tally} data-marked={i < rejected.size}>
-            {i < rejected.size && (
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M3 4 L17 16 M16 3 L4 17" />
-              </svg>
-            )}
-          </span>
-        ))}
-      </div>
+    <div className={styles.root} data-testid="archive-minigame">
+      <TaskLine aside={<Mistakes used={rejected.size} max={ARCHIVE_MAX_MISTAKES} />}>
+        {typeset(t.task)}{' '}
+        <span className={styles.topic} data-testid="archive-topic">
+          „{t.topics[puzzle.topic]}”
+        </span>
+      </TaskLine>
 
       <div
         ref={drawerRef}
@@ -391,30 +356,25 @@ export function Archive({ seed, story, stamp, device, timeUsed, onDone }: Miniga
         <div ref={trackRef} className={styles.track}>
           {puzzle.cards.map((card, index) => {
             const isFound = phase === 'found' && index === puzzle.targetIndex;
+            const isRejected = rejected.has(index);
             return (
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: the drawer never reorders
                 key={index}
-                // A card is rejected once; the wobble plays when the class first appears.
-                className={`${styles.card} ${rejected.has(index) ? styles.wobble : ''} ${isFound ? styles.found : ''}`}
+                // A card is rejected once; the shake plays when the class first appears.
+                className={`${styles.card} ${isRejected ? styles.wobble : ''} ${isFound ? styles.found : ''}`}
                 data-index={index}
                 data-centered={index === centered}
-                data-rejected={rejected.has(index)}
+                data-rejected={isRejected}
                 data-testid={`archive-card-${index}`}
                 aria-current={index === centered}
               >
-                <span className={styles.tab}>{card.date.year}</span>
-                <span className={styles.edition}>{pl.masthead.edition(card.edition)}</span>
+                <span className={styles.year}>{card.date.year}</span>
                 <span className={styles.date}>{cardDate(card)}</span>
                 <span className={styles.label}>{t.topics[card.topic]}</span>
-                {rejected.has(index) && (
-                  <span className={styles.reject}>
-                    <Stamp
-                      text={t.wrong}
-                      seed={seed * 31 + index}
-                      size={112}
-                      slam={!reducedMotion}
-                    />
+                {(isRejected || isFound) && (
+                  <span className={styles.badge}>
+                    <ResultMark success={isFound} />
                   </span>
                 )}
               </div>
@@ -424,48 +384,29 @@ export function Archive({ seed, story, stamp, device, timeUsed, onDone }: Miniga
         <div className={styles.frame} aria-hidden="true" />
       </div>
 
-      <div className={styles.controls}>
-        <Button onClick={() => push(-1)} disabled={phase !== 'browsing'}>
-          <span aria-hidden="true">‹</span> {t.earlier}
-        </Button>
-        <Button
-          variant="stamp"
-          onClick={pull}
-          disabled={phase !== 'browsing'}
-          data-testid="archive-pull"
-        >
-          {t.pull}
-        </Button>
-        <Button onClick={() => push(1)} disabled={phase !== 'browsing'}>
-          {t.later} <span aria-hidden="true">›</span>
-        </Button>
-      </div>
-
-      {phase === 'browsing' && <p className={styles.hint}>{hint}</p>}
-      {phase === 'found' && target && (
-        <div className={styles.result} data-testid="archive-found">
-          <Stamp
-            text={t.found}
-            tone="blue"
-            shape="double"
-            seed={seed}
-            size={150}
-            slam={!reducedMotion}
-          />
-          <div>
-            <p className={styles.resultTitle}>{t.firstMention(cardDate(target))}</p>
-            <p className={styles.resultText}>
-              <span className={styles.resultLabel}>{t.toFolder}</span>{' '}
-              {typeset(stamp?.text ?? t.foundFallback)}
-            </p>
-          </div>
+      {phase === 'browsing' && (
+        <div className={styles.controls}>
+          <Button onClick={() => push(-1)}>
+            <span aria-hidden="true">‹</span> {t.earlier}
+          </Button>
+          <Button variant="primary" big onClick={pull} data-testid="archive-pull">
+            {t.pull}
+          </Button>
+          <Button onClick={() => push(1)}>
+            {t.later} <span aria-hidden="true">›</span>
+          </Button>
         </div>
+      )}
+      {phase === 'found' && target && (
+        <OutcomeBanner success title={t.firstMention(cardDate(target))} testId="archive-found">
+          <p>{typeset(stamp?.text ?? t.foundFallback)}</p>
+        </OutcomeBanner>
       )}
       {phase === 'failed' && (
-        <div className={styles.result} data-testid="archive-failed">
-          <p className={styles.resultTitle}>{t.failed}</p>
-        </div>
+        <OutcomeBanner success={false} title={t.failed} testId="archive-failed" />
       )}
+
+      {phase === 'browsing' && <KeyHints hints={t.keys} device={device} />}
     </div>
   );
 }

@@ -1,18 +1,20 @@
-// Greybox character: faceted capsule in the player's colour with a paper notepad showing which
-// way they face, a typed name strip, and procedural animation (bob, lean, squash, spawn pop).
-// While carrying a folder the arms swing forward to hold it and the notepad is put away.
-import { Html } from '@react-three/drei';
+// Cartoon character: a round faceted capsule in the player's colour with a navy outline (an
+// inverted hull, one extra draw call), big eyes and a white notepad showing which way they face,
+// a white name pill outlined in the player's colour, and procedural animation (bob, lean,
+// squash, spawn pop). While carrying a folder the arms swing forward to hold it and the notepad
+// is put away.
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
-import type { Group, Mesh } from 'three';
+import { BackSide, CapsuleGeometry, type Group, type Mesh, Vector3 } from 'three';
 import { animateCharacter, createAnimator } from '../fx/animation/procedural.ts';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
 import { emitCue, feedback } from '../fx/feedback.ts';
 import { selectCarried, useGame } from '../net/game-store.ts';
 import { useSettings } from '../store/settings.ts';
-import { palette, playerColor } from '../ui/tokens.ts';
+import { colors, playerColor, playerColorVar } from '../ui/tokens.ts';
 import { facingToRotationY } from './coords.ts';
-import { box, merge } from './geometry.ts';
+import { box, merge, mergePainted } from './geometry.ts';
+import { screenTransform, useOverlay } from './overlay.ts';
 import styles from './PlayerAvatar.module.css';
 import { renderState } from './render-state.ts';
 
@@ -20,10 +22,34 @@ import { renderState } from './render-state.ts';
 const ARM_REST = 0.15;
 const ARM_CARRY = 1.7;
 
+/** Round body shared by every avatar; the outline hull is the same mesh scaled up. */
+const bodyGeometry = new CapsuleGeometry(0.33, 0.32, 3, 10);
+const OUTLINE_SCALE = 1.16;
+/** Height of the name tag's centre above the floor. */
+const NAME_TAG_HEIGHT = 1.35;
+
 /** Two arms hanging from the shoulder line (shared by every avatar). */
 const armsGeometry = merge([
-  box(0.1, 0.32, 0.1, { y: -0.16, z: 0.3 }),
-  box(0.1, 0.32, 0.1, { y: -0.16, z: -0.3 }),
+  box(0.12, 0.32, 0.12, { y: -0.16, z: 0.33 }),
+  box(0.12, 0.32, 0.12, { y: -0.16, z: -0.33 }),
+]);
+
+/** Big cartoon eyes: white with navy pupils, merged into one vertex-coloured mesh. */
+const eyesGeometry = mergePainted([
+  [
+    colors.surface,
+    [
+      box(0.05, 0.13, 0.11, { x: 0.29, y: 0.86, z: 0.1 }),
+      box(0.05, 0.13, 0.11, { x: 0.29, y: 0.86, z: -0.1 }),
+    ],
+  ],
+  [
+    colors.outline,
+    [
+      box(0.03, 0.07, 0.06, { x: 0.32, y: 0.85, z: 0.1 }),
+      box(0.03, 0.07, 0.06, { x: 0.32, y: 0.85, z: -0.1 }),
+    ],
+  ],
 ]);
 
 export type PlayerAvatarProps = {
@@ -54,7 +80,34 @@ export function PlayerAvatar({ id, nickname, colorIndex, shadows }: PlayerAvatar
     [id],
   );
 
-  useFrame((_, delta) => {
+  // Name tag in a DOM layer over the canvas, moved to the head every frame.
+  const tag = useRef<HTMLSpanElement | null>(null);
+  const tagAt = useRef('');
+  const tagPoint = useMemo(() => new Vector3(), []);
+  const tagNode = useMemo(
+    () => (
+      <span
+        ref={(element) => {
+          tag.current = element;
+          tagAt.current = '';
+          // The old overlay root unmounts after the new one mounts: only clear our own element.
+          return () => {
+            if (tag.current === element) {
+              tag.current = null;
+            }
+          };
+        }}
+        className={styles.label}
+        style={{ borderColor: playerColorVar(colorIndex) }}
+      >
+        {nickname}
+      </span>
+    ),
+    [nickname, colorIndex],
+  );
+  useOverlay(styles.labelLayer ?? '', tagNode);
+
+  useFrame(({ camera, size }, delta) => {
     const player = renderState.players.get(id);
     const group = root.current;
     const inner = body.current;
@@ -62,6 +115,16 @@ export function PlayerAvatar({ id, nickname, colorIndex, shadows }: PlayerAvatar
       return;
     }
     group.visible = player !== undefined;
+    if (tag.current) {
+      const at = player
+        ? (screenTransform(tagPoint.set(player.x, NAME_TAG_HEIGHT, player.y), camera, size) ??
+          'scale(0)')
+        : 'scale(0)';
+      if (at !== tagAt.current) {
+        tagAt.current = at;
+        tag.current.style.transform = `${at} translate(-50%, -50%)`;
+      }
+    }
     if (!player) {
       return;
     }
@@ -99,19 +162,27 @@ export function PlayerAvatar({ id, nickname, colorIndex, shadows }: PlayerAvatar
   return (
     <group ref={root} name={`player:${nickname}`}>
       <group ref={body}>
-        <mesh position={[0, 0.52, 0]} castShadow={shadows}>
-          <capsuleGeometry args={[0.27, 0.48, 2, 7]} />
+        <mesh geometry={bodyGeometry} position={[0, 0.55, 0]} castShadow={shadows}>
           <meshLambertMaterial color={color} flatShading />
+        </mesh>
+        {/* Inverted hull: back faces of a slightly larger body read as a thick navy outline. */}
+        <mesh
+          geometry={bodyGeometry}
+          position={[0, 0.55, 0]}
+          scale={OUTLINE_SCALE}
+          name="avatar-outline"
+        >
+          <meshBasicMaterial color={colors.outline} side={BackSide} />
         </mesh>
         {/* Notepad held in front: shows facing direction. */}
         <mesh
           ref={notepad}
-          position={[0.27, 0.55, 0]}
+          position={[0.33, 0.55, 0]}
           rotation={[0, 0, -0.25]}
           castShadow={shadows}
         >
           <boxGeometry args={[0.06, 0.26, 0.2]} />
-          <meshLambertMaterial color={palette.paper} />
+          <meshLambertMaterial color={colors.surface} />
         </mesh>
         {/* Both arms in one mesh, pivoting at the shoulder line; +z swings them forward (+x). */}
         <group ref={arms} position={[0.02, 0.72, 0]}>
@@ -120,20 +191,10 @@ export function PlayerAvatar({ id, nickname, colorIndex, shadows }: PlayerAvatar
           </mesh>
         </group>
         {/* Eyes, so the face reads from the top-down camera. */}
-        <mesh position={[0.22, 0.86, 0.08]}>
-          <boxGeometry args={[0.04, 0.06, 0.04]} />
-          <meshLambertMaterial color={palette.ink} />
-        </mesh>
-        <mesh position={[0.22, 0.86, -0.08]}>
-          <boxGeometry args={[0.04, 0.06, 0.04]} />
-          <meshLambertMaterial color={palette.ink} />
+        <mesh geometry={eyesGeometry}>
+          <meshBasicMaterial vertexColors />
         </mesh>
       </group>
-      <Html position={[0, 1.35, 0]} center zIndexRange={[10, 0]} className={styles.labelWrap}>
-        <span className={styles.label} style={{ borderColor: color }}>
-          {nickname}
-        </span>
-      </Html>
     </group>
   );
 }

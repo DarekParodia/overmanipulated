@@ -1,5 +1,5 @@
 // Emitter presets as data (agents/game-feel.md). Colours come from design tokens.
-import { palette } from '../../ui/tokens.ts';
+import { colors } from '../../ui/tokens.ts';
 
 export type EmitterPreset = {
   /** Base particle count before quality/reduced-motion scaling. */
@@ -30,7 +30,7 @@ export const particlePresets = {
     gravity: 0.6,
     drag: 3,
     height: 0.03,
-    colors: [palette.paperDeep, palette.paperShade, palette.inkFaint],
+    colors: [colors.floorDark, colors.surface, colors.furnitureTop],
   },
   inkPuff: {
     count: 18,
@@ -52,7 +52,7 @@ export const particlePresets = {
     gravity: 6,
     drag: 1.4,
     height: 0.6,
-    colors: [palette.paper, palette.paperShade, palette.manila],
+    colors: [colors.surface, colors.folder, colors.sky],
   },
   // --- S2-12 core gameplay feedback ---------------------------------------------------------
   /** A few sheets lifting as a folder lands on the conveyor. */
@@ -65,7 +65,7 @@ export const particlePresets = {
     gravity: 3,
     drag: 2.5,
     height: 0.75,
-    colors: [palette.paper, palette.paperShade, palette.manila],
+    colors: [colors.surface, colors.folder, colors.surfaceSoft],
   },
   /** Flat ink drops thrown sideways from under a stamp. */
   inkSplat: {
@@ -77,9 +77,9 @@ export const particlePresets = {
     gravity: 8,
     drag: 4,
     height: 0.62,
-    colors: [palette.ink, palette.inkSoft],
+    colors: [colors.outline, colors.textSoft],
   },
-  /** Verdict celebration: chips in the verdict colour mixed with paper. */
+  /** Verdict celebration: chips in the verdict colour mixed with white and sky blue. */
   confetti: {
     count: 26,
     life: [0.8, 1.3],
@@ -90,7 +90,7 @@ export const particlePresets = {
     drag: 1.6,
     height: 0.7,
     colors: null,
-    accent: [palette.paper, palette.paperShade],
+    accent: [colors.surface, colors.sky],
   },
   /** Published fake: heavy red ink thrown up and splattering down. */
   redInk: {
@@ -102,7 +102,7 @@ export const particlePresets = {
     gravity: 9,
     drag: 1.2,
     height: 0.7,
-    colors: [palette.editorialRed, palette.editorialRed, palette.ink],
+    colors: [colors.red, colors.redDark, colors.outline],
   },
   /** Crumpled folder falling apart into grey dust. */
   ash: {
@@ -114,7 +114,7 @@ export const particlePresets = {
     gravity: 1.2,
     drag: 2.5,
     height: 0.65,
-    colors: [palette.inkFaint, palette.inkSoft, palette.paperDeep],
+    colors: [colors.textFaint, colors.textSoft, colors.surfaceSunk],
   },
   /** Small grey wisp rising from a failed minigame (negative gravity lifts it). */
   smoke: {
@@ -126,7 +126,7 @@ export const particlePresets = {
     gravity: -0.6,
     drag: 1.5,
     height: 1,
-    colors: [palette.inkFaint, palette.paperDeep],
+    colors: [colors.textFaint, colors.surfaceSunk],
   },
 } as const satisfies Record<string, EmitterPreset>;
 

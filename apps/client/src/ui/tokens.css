@@ -1,60 +1,70 @@
 /*
  * Design tokens — the only place where colours, fonts, spacing, radii and shadows are defined
- * (agents/design-rules.md §3–4). Mirrored for three.js in tokens.ts; keep both in sync.
+ * (agents/design-rules.md). Mirrored for three.js in tokens.ts; keep both in sync.
+ *
+ * Style: "cartoon co-op game" — bright flat colours, thick navy outlines, chunky rounded
+ * shapes, hard offset shadows that make buttons look pressable, one big rounded font.
  */
 :root {
-  /* Paper and ink */
-  --paper: #efe8d8;
-  --paper-shade: #e2d8c2;
-  --paper-deep: #d6caae;
-  --manila: #d9b77a;
-  --manila-dark: #b8954f;
-  --ink: #1f1c18;
-  --ink-soft: #4a443c;
-  --ink-faint: #8a8173;
-  --cork: #a97c50;
-  --cork-dark: #7d5a37;
-  --wood: #8b6a4a;
+  /* --- Base ------------------------------------------------------------------------------ */
+  --sky: #7cc8f5; /* screen background behind menus */
+  --sky-deep: #4fa6dc;
+  --surface: #ffffff; /* panels and cards */
+  --surface-soft: #eef6fc; /* inset areas inside panels */
+  --surface-sunk: #d9e9f5; /* tracks, disabled fills */
+  --outline: #1e2a4a; /* every outline and all body text */
+  --text: #1e2a4a;
+  --text-soft: #4d5b80;
+  --text-faint: #8492b3;
+  --text-on-dark: #ffffff;
 
-  /* Accents: rare, each with one meaning */
-  --editorial-red: #b3261e; /* danger, false, reject */
-  --copy-blue: #2c4a7a; /* confirmed, publish, focus */
-  --ochre: #c98a1b; /* context, caution */
+  /* --- Meaning colours (each means exactly one thing) ---------------------------------- */
+  --yellow: #ffd23f; /* primary action ("do this next") */
+  --yellow-dark: #e8b400;
+  --green: #36c46a; /* publish, true, success, ready */
+  --green-dark: #1f9a4c;
+  --red: #ff5a5f; /* reject, false, danger, time running out */
+  --red-dark: #d63339;
+  --orange: #ff9f1c; /* publish with context, warning */
+  --orange-dark: #e07b00;
+  --blue: #3a86ff; /* information, selection, focus */
+  --blue-dark: #1f63d6;
+  --purple: #9b5de5; /* hints and tutorial */
 
-  /* Player identity colours (Okabe–Ito based, muted for paper) */
-  --player-0: #d9822b;
-  --player-1: #4f9fd1;
-  --player-2: #2e8b6e;
-  --player-3: #b26b9a;
+  /* Folder priorities */
+  --priority-normal: var(--blue);
+  --priority-important: var(--orange);
+  --priority-urgent: var(--red);
 
-  /* Translucent ink for shadows, rules and overlays */
-  --ink-a10: rgb(31 28 24 / 0.1);
-  --ink-a20: rgb(31 28 24 / 0.2);
-  --ink-a40: rgb(31 28 24 / 0.4);
-  --ink-a70: rgb(31 28 24 / 0.7);
-  --paper-a85: rgb(239 232 216 / 0.85);
+  /* Player identity colours */
+  --player-0: #ff8c42;
+  --player-1: #3a86ff;
+  --player-2: #2ec4b6;
+  --player-3: #e86fc6;
 
-  /* Type */
-  --font-serif: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
-  --font-grotesk: "Archivo Variable", "Arial Narrow", sans-serif;
-  --font-typewriter: "Courier Prime", "Courier New", monospace;
+  /* Translucent outline for scrims */
+  --outline-a20: rgb(30 42 74 / 0.2);
+  --outline-a50: rgb(30 42 74 / 0.5);
+  --outline-a70: rgb(30 42 74 / 0.7);
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-md: 1rem;
-  --text-lg: 1.25rem;
-  --text-xl: 1.75rem;
-  --text-2xl: 2.5rem;
-  --text-3xl: 3.75rem;
-  --text-masthead: clamp(2.25rem, 7vw, 5.5rem);
+  /* --- Type ------------------------------------------------------------------------------ */
+  --font-display: "Baloo 2 Variable", "Baloo 2", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Nunito Variable", "Nunito", system-ui, sans-serif;
+
+  /* Minimum body size is 16 px; nothing a player must read is smaller than --text-sm. */
+  --text-sm: 0.9375rem; /* 15 px: secondary labels only */
+  --text-md: 1.0625rem; /* 17 px: body */
+  --text-lg: 1.375rem; /* 22 px: card titles, buttons */
+  --text-xl: 1.875rem; /* 30 px: panel titles, HUD numbers */
+  --text-2xl: 2.75rem; /* 44 px: screen titles, timer */
+  --text-3xl: 4rem; /* 64 px: big moments (results) */
+  --text-logo: clamp(2.5rem, 8vw, 5.5rem);
 
   --leading-tight: 1.05;
-  --leading-snug: 1.25;
-  --leading-body: 1.45;
+  --leading-snug: 1.2;
+  --leading-body: 1.4;
 
-  --tracking-label: 0.08em;
-
-  /* Spacing (4 px base) */
+  /* --- Spacing (4 px base) --------------------------------------------------------------- */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -64,22 +74,27 @@
   --space-7: 3rem;
   --space-8: 4.5rem;
 
-  /* Rules, radii, shadows: paper has hard edges */
-  --rule-thin: 1px solid var(--ink);
-  --rule-thick: 3px solid var(--ink);
-  --rule-double: 4px double var(--ink);
-  --radius-paper: 1px;
-  --shadow-paper: 2px 3px 0 var(--ink-a20);
-  --shadow-lifted: 4px 6px 0 var(--ink-a20);
+  /* --- Shape ----------------------------------------------------------------------------- */
+  --stroke: 3px; /* standard outline */
+  --stroke-bold: 4px; /* primary buttons, main panels */
+  --outline-border: var(--stroke) solid var(--outline);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+  /* Hard offset shadow, no blur: makes things look like chunky physical toys. */
+  --pop: 0 4px 0 var(--outline);
+  --pop-lg: 0 6px 0 var(--outline);
+  --pop-pressed: 0 1px 0 var(--outline);
 
-  /* Touch */
-  --touch-target: 2.75rem;
+  /* --- Touch ----------------------------------------------------------------------------- */
+  --touch-target: 3rem;
 
-  /* Motion */
+  /* --- Motion ---------------------------------------------------------------------------- */
   --motion-fast: 120ms;
   --motion-base: 220ms;
   --motion-slow: 420ms;
-  --ease-settle: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
 
   /* Text scaling setting multiplies the root size (see settings store) */

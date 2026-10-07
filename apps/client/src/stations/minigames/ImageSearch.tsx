@@ -1,18 +1,15 @@
-// Image search minigame, „Lupa obrazu” (S2-04). A light table: the submitted photo with red
-// pencil marks around 2–3 fragments, a loupe that magnifies one fragment, and printouts of
-// reverse-image-search results. The player picks the printout that shows every marked fragment
+// Image search minigame, „Lupa obrazu” (S2-04). The submitted photo with red rings around 2–3
+// fragments, a loupe that magnifies one fragment, and reverse-image-search result cards. The player picks the result that shows every marked fragment
 // (tap it, drag the loupe onto it, or arrows + confirm), then reads off where and when it was
 // published. Two wrong picks fail the attempt. Puzzle rules live in imageSearch.logic.ts.
-import { createRng } from '@redakcja/shared';
+import { IMAGE_SEARCH_MAX_MISTAKES } from '@redakcja/shared';
 import { memo, type PointerEvent, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { emitCue } from '../../fx/feedback.ts';
 import { type NavIntent, useNavIntent } from '../../input/ui-nav.ts';
-import type { InputDevice } from '../../store/app.ts';
-import { useSettings } from '../../store/settings.ts';
 import { pl } from '../../strings/pl.ts';
 import { formatDate, typeset } from '../../strings/typography.ts';
 import { Button } from '../../ui/Button.tsx';
-import { Stamp } from '../../ui/Stamp.tsx';
+import { KeyHints, Mistakes, OutcomeBanner, ResultMark, TaskLine } from '../kit.tsx';
 import styles from './ImageSearch.module.css';
 import {
   type Box,
@@ -47,19 +44,18 @@ const SOLVE_REVEAL_MS = 2500;
 const SOLVE_DEADLINE = 0.95;
 /** Pointer travel before a press on the loupe becomes a drag. */
 const DRAG_THRESHOLD_PX = 8;
-/** Share of the time limit after which the table shows urgency. */
-const URGENT_FROM = 0.7;
 
+// Tone names come from the puzzle logic; they map onto the flat cartoon palette.
 const TONE_VAR: Record<ShapeTone | GroundTone, string> = {
-  ink: 'var(--ink)',
-  inkSoft: 'var(--ink-soft)',
-  manila: 'var(--manila)',
-  cork: 'var(--cork)',
-  wood: 'var(--wood)',
-  copyBlue: 'var(--copy-blue)',
-  ochre: 'var(--ochre)',
-  paperDeep: 'var(--paper-deep)',
-  manilaDark: 'var(--manila-dark)',
+  ink: 'var(--outline)',
+  inkSoft: 'var(--text-soft)',
+  manila: 'var(--yellow)',
+  cork: 'var(--sky)',
+  wood: 'var(--orange-dark)',
+  copyBlue: 'var(--blue)',
+  ochre: 'var(--orange)',
+  paperDeep: 'var(--surface-sunk)',
+  manilaDark: 'var(--yellow-dark)',
 };
 
 function ShapePath({ shape, shadow = false }: { shape: Shape; shadow?: boolean }) {
@@ -68,9 +64,9 @@ function ShapePath({ shape, shadow = false }: { shape: Shape; shadow?: boolean }
   const y = shape.y + offset;
   const left = x - shape.w / 2;
   const top = y - shape.h / 2;
-  const fill = shadow ? 'var(--ink-a20)' : TONE_VAR[shape.tone];
-  const stroke = shadow ? 'none' : 'var(--ink)';
-  const common = { fill, stroke, strokeWidth: 0.6, strokeLinejoin: 'round' as const };
+  const fill = shadow ? 'var(--outline-a20)' : TONE_VAR[shape.tone];
+  const stroke = shadow ? 'none' : 'var(--outline)';
+  const common = { fill, stroke, strokeWidth: 0.9, strokeLinejoin: 'round' as const };
   switch (shape.kind) {
     case 'disc':
       return <circle cx={x} cy={y} r={shape.w / 2} {...common} />;
@@ -97,7 +93,7 @@ function ShapePath({ shape, shadow = false }: { shape: Shape; shadow?: boolean }
   }
 }
 
-/** The paper-cut scene: sky, ground, then every shape over its own hard cut shadow. */
+/** The flat scene: sky, ground, then every shape over its own hard shadow. */
 const SceneArt = memo(function SceneArt({ scene }: { scene: Scene }) {
   return (
     <>
@@ -106,7 +102,7 @@ const SceneArt = memo(function SceneArt({ scene }: { scene: Scene }) {
         y={-20}
         width={SCENE_WIDTH + 40}
         height={SCENE_HEIGHT + 40}
-        fill="var(--paper-shade)"
+        fill="var(--surface-soft)"
       />
       <rect
         x={-20}
@@ -120,8 +116,8 @@ const SceneArt = memo(function SceneArt({ scene }: { scene: Scene }) {
         x2={SCENE_WIDTH + 20}
         y1={scene.horizon}
         y2={scene.horizon}
-        stroke="var(--ink-a40)"
-        strokeWidth={0.5}
+        stroke="var(--outline-a50)"
+        strokeWidth={0.6}
       />
       {scene.shapes.map((shape, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: shapes are a fixed list per puzzle
@@ -139,7 +135,7 @@ function viewBox(box: Box): string {
   return `${box.x} ${box.y} ${box.w} ${box.h}`;
 }
 
-/** Red pencil ring with the fragment number, as drawn by the photo editor. */
+/** Red ring with the fragment number. */
 function FragmentMark({
   shape,
   number,
@@ -161,10 +157,9 @@ function FragmentMark({
         rx={r}
         ry={r * 0.94}
         fill="none"
-        stroke="var(--editorial-red)"
-        strokeWidth={selected ? 1.8 : 1}
+        stroke="var(--red)"
+        strokeWidth={selected ? 2.4 : 1.4}
         strokeDasharray={dashed ? '2.5 2' : undefined}
-        transform={`rotate(-8 ${shape.x} ${shape.y})`}
       />
       <text x={shape.x + r * 0.72} y={shape.y - r * 0.72} className={styles.markNumber}>
         {number}
@@ -179,8 +174,24 @@ function LoupeLens({ scene, shape }: { scene: Scene; shape: Shape }) {
   const box = fragmentBox(shape);
   return (
     <svg viewBox="0 0 100 100" className={styles.lens} aria-hidden="true">
-      <line x1={64} y1={64} x2={95} y2={95} stroke="var(--wood)" strokeWidth={10} />
-      <line x1={64} y1={64} x2={95} y2={95} stroke="var(--ink)" strokeWidth={1.2} />
+      <line
+        x1={64}
+        y1={64}
+        x2={94}
+        y2={94}
+        stroke="var(--outline)"
+        strokeWidth={14}
+        strokeLinecap="round"
+      />
+      <line
+        x1={64}
+        y1={64}
+        x2={94}
+        y2={94}
+        stroke="var(--yellow)"
+        strokeWidth={8}
+        strokeLinecap="round"
+      />
       <defs>
         <clipPath id={clipId}>
           <circle cx={40} cy={40} r={34} />
@@ -191,8 +202,7 @@ function LoupeLens({ scene, shape }: { scene: Scene; shape: Shape }) {
           <SceneArt scene={scene} />
         </svg>
       </g>
-      <circle cx={40} cy={40} r={35} fill="none" stroke="var(--ink)" strokeWidth={4} />
-      <circle cx={40} cy={40} r={31.5} fill="none" stroke="var(--paper-a85)" strokeWidth={1} />
+      <circle cx={40} cy={40} r={35} fill="none" stroke="var(--outline)" strokeWidth={5} />
     </svg>
   );
 }
@@ -201,22 +211,12 @@ function dateText(date: ResultDate): string {
   return formatDate(new Date(date.year, date.month - 1, date.day));
 }
 
-function promptFor(device: InputDevice): string {
-  return t.prompts[device];
-}
-
 export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameProps) {
   const matchYear = yearFromText(stamp?.text);
   const puzzle = useMemo(() => createPuzzle(seed, matchYear ?? undefined), [seed, matchYear]);
-  const tilts = useMemo(() => {
-    const rng = createRng(seed ^ 0x51ab);
-    return puzzle.results.map(() => (rng.next() - 0.5) * 2.4);
-  }, [seed, puzzle]);
   const [play, setPlay] = useState<PlayState>(initialPlay);
   const playRef = useRef(play);
   playRef.current = play;
-  const reducedMotion = useSettings((s) => s.reducedMotion);
-  const noFlash = useSettings((s) => s.noFlash);
 
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
@@ -373,62 +373,41 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
   const earlierCopy = !stamp || matchYear !== null;
   const selectedShape = puzzle.photo.shapes[puzzle.fragments[play.fragment] ?? 0];
   const match = puzzle.results[puzzle.answer];
-  const urgent = timeUsed >= URGENT_FROM && !isOver(play);
   const showCursor = device !== 'touch';
   const columns = resultColumns(puzzle.results.length);
 
   return (
     <section
-      className={`${styles.root} ${urgent ? styles.urgent : ''} ${
-        urgent && !noFlash && !reducedMotion ? styles.tremble : ''
-      }`}
+      className={styles.root}
       data-testid="image-search"
       data-state={play.solved ? 'solved' : play.failed ? 'failed' : 'playing'}
-      aria-label={t.kicker}
+      aria-label={pl.vocab.stations.imageSearch}
     >
-      <header className={styles.header}>
-        <div className={styles.title}>
-          <span className={styles.kicker}>{t.kicker}</span>
-          <span className={styles.task}>{typeset(t.task)}</span>
-        </div>
-        <div className={styles.mistakes} data-mistakes={play.mistakes}>
-          <span className={styles.mistakesLabel}>{t.mistakes}</span>
-          {[0, 1].map((i) => (
-            <span
-              key={i}
-              className={`${styles.tally} ${i < play.mistakes ? styles.tallyUsed : ''}`}
-            >
-              {i < play.mistakes && (
-                <svg viewBox="0 0 10 10" aria-hidden="true">
-                  <path d="M2 2.4 L8.2 8 M8 1.8 L2.2 8.3" />
-                </svg>
-              )}
-            </span>
-          ))}
-        </div>
-      </header>
-      <div className={styles.clock} aria-hidden="true">
-        <span className={styles.clockFill} style={{ width: `${Math.round(timeUsed * 100)}%` }} />
-        {urgent && <span className={styles.clockLabel}>{t.urgent}</span>}
-      </div>
+      <TaskLine aside={<Mistakes used={play.mistakes} max={IMAGE_SEARCH_MAX_MISTAKES} />}>
+        {typeset(t.task)}
+      </TaskLine>
 
-      <div className={styles.table}>
+      <div className={`${styles.table} ${isOver(play) ? styles.over : ''}`} data-columns={columns}>
         {play.solved && match ? (
-          <div className={styles.slip} data-testid="image-search-found">
-            <span className={styles.slipKicker}>{earlierCopy ? t.found : t.checked}</span>
+          <OutcomeBanner
+            success
+            title={earlierCopy ? t.found : t.checked}
+            testId="image-search-found"
+            action={
+              <Button variant="primary" onClick={finish} data-testid="image-search-done">
+                {t.done}
+              </Button>
+            }
+          >
             {earlierCopy && (
-              <span className={styles.slipSource}>
-                {t.published(match.site, dateText(match.date))}
-              </span>
+              <p className={styles.foundSource}>{t.published(match.site, dateText(match.date))}</p>
             )}
-            <p className={styles.slipText}>{typeset(stamp?.text ?? t.foundFallback)}</p>
-            <Button variant="stamp" onClick={finish} data-testid="image-search-done">
-              {t.done}
-            </Button>
-          </div>
+            <p>{typeset(stamp?.text ?? t.foundFallback)}</p>
+          </OutcomeBanner>
+        ) : play.failed ? (
+          <OutcomeBanner success={false} title={pl.minigames.common.failure} />
         ) : (
           <figure className={styles.submitted}>
-            <figcaption className={styles.tag}>{t.submitted}</figcaption>
             <svg
               className={styles.photo}
               viewBox={`0 0 ${SCENE_WIDTH} ${SCENE_HEIGHT}`}
@@ -474,77 +453,67 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
           </figure>
         )}
 
-        <div className={styles.resultsColumn}>
-          <span className={styles.tag}>{t.results}</span>
-          <ol className={styles.results} style={{ ['--columns' as string]: columns }}>
-            {puzzle.results.map((result, index) => {
-              const ruledOut = play.ruledOut.includes(index);
-              const missing = ruledOut ? missingFragments(puzzle, index) : [];
-              const isFound = play.solved && index === puzzle.answer;
-              const classes = [
-                styles.printout,
-                showCursor && index === play.cursor && !isOver(play) ? styles.cursor : '',
-                ruledOut ? styles.ruledOut : '',
-                isFound ? styles.found : '',
-                dragging && over === index ? styles.dropTarget : '',
-              ];
-              return (
-                <li key={result.site} className={styles.slot}>
-                  <button
-                    type="button"
-                    className={classes.join(' ')}
-                    style={{ ['--tilt' as string]: `${tilts[index] ?? 0}deg` }}
-                    data-result={index}
-                    data-testid={`image-search-result-${index}`}
-                    aria-label={`${t.result(index + 1)}: ${t.published(result.site, dateText(result.date))}`}
-                    aria-disabled={ruledOut || isOver(play)}
-                    onClick={() => choose(index)}
+        <ol
+          className={styles.results}
+          style={{ ['--columns' as string]: columns }}
+          aria-label={t.results}
+        >
+          {puzzle.results.map((result, index) => {
+            const ruledOut = play.ruledOut.includes(index);
+            const missing = ruledOut ? missingFragments(puzzle, index) : [];
+            const isFound = play.solved && index === puzzle.answer;
+            const classes = [
+              styles.result,
+              showCursor && index === play.cursor && !isOver(play) ? styles.cursor : '',
+              ruledOut ? styles.ruledOut : '',
+              isFound ? styles.found : '',
+              dragging && over === index ? styles.dropTarget : '',
+            ];
+            return (
+              <li key={result.site} className={styles.slot}>
+                <button
+                  type="button"
+                  className={classes.join(' ')}
+                  data-result={index}
+                  data-testid={`image-search-result-${index}`}
+                  aria-label={`${t.result(index + 1)}: ${t.published(result.site, dateText(result.date))}`}
+                  aria-disabled={ruledOut || isOver(play)}
+                  onClick={() => choose(index)}
+                >
+                  <svg
+                    className={styles.thumb}
+                    viewBox={viewBox(result.crop)}
+                    preserveAspectRatio="xMidYMid slice"
+                    aria-hidden="true"
                   >
-                    <svg
-                      className={styles.thumb}
-                      viewBox={viewBox(result.crop)}
-                      preserveAspectRatio="xMidYMid slice"
-                      aria-hidden="true"
-                    >
-                      <SceneArt scene={result.scene} />
-                      {missing.map((position) => {
-                        const shape = puzzle.photo.shapes[puzzle.fragments[position] ?? 0];
-                        return shape ? (
-                          <FragmentMark
-                            key={position}
-                            shape={shape}
-                            number={position + 1}
-                            selected={false}
-                            dashed
-                          />
-                        ) : null;
-                      })}
-                    </svg>
-                    <span className={styles.caption}>
-                      <span className={styles.site}>{result.site}</span>
-                      <span className={styles.date}>{dateText(result.date)}</span>
-                    </span>
-                    {ruledOut && <span className={styles.missing}>{t.missing}</span>}
-                    {isFound && (
-                      <span className={styles.foundStamp}>
-                        <Stamp
-                          text={t.stamp}
-                          tone="blue"
-                          seed={seed}
-                          slam={!reducedMotion}
-                          size={96}
+                    <SceneArt scene={result.scene} />
+                    {missing.map((position) => {
+                      const shape = puzzle.photo.shapes[puzzle.fragments[position] ?? 0];
+                      return shape ? (
+                        <FragmentMark
+                          key={position}
+                          shape={shape}
+                          number={position + 1}
+                          selected={false}
+                          dashed
                         />
-                      </span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+                      ) : null;
+                    })}
+                  </svg>
+                  <span className={styles.caption}>{result.date.year}</span>
+                  {(ruledOut || isFound) && (
+                    <span className={styles.badge}>
+                      <ResultMark success={isFound} />
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       </div>
 
-      <p className={styles.prompt}>{play.failed ? t.lost : promptFor(device)}</p>
+      {!isOver(play) && <KeyHints hints={t.keys} device={device} />}
 
       {dragging && selectedShape && (
         <div
