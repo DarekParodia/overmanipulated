@@ -1,6 +1,7 @@
 // End-to-end over real sockets: Bun.serve + Hono + registry + loop.
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test';
 import {
+  BRIEFING_DURATION_MS,
   type ClientMessage,
   encodeMessage,
   PROTOCOL_VERSION,
@@ -13,7 +14,12 @@ let running: RunningServer;
 let base: string;
 
 beforeAll(() => {
-  running = startServer({ PORT: 0, DATABASE_PATH: ':memory:', DEV_LATENCY_MS: 0 });
+  running = startServer({
+    PORT: 0,
+    DATABASE_PATH: ':memory:',
+    DEV_LATENCY_MS: 0,
+    BRIEFING_MS: BRIEFING_DURATION_MS,
+  });
   base = `localhost:${running.server.port}`;
 });
 
@@ -94,6 +100,12 @@ describe('game server over WebSocket', () => {
     await host.waitFor('roomState', (m) => m.players.every((p) => p.id === m.hostId || p.ready));
 
     host.send({ type: 'lobby', action: { kind: 'start' } });
+    const briefing = await guest.waitFor('roomState', (m) => m.phase === 'briefing');
+    expect(briefing.briefing?.endsInMs).toBeGreaterThan(0);
+    // Both press "ready" on the briefing, so the level starts long before the timer runs out.
+    for (const client of [host, guest]) {
+      client.send({ type: 'lobby', action: { kind: 'skipBriefing' } });
+    }
     await guest.waitFor('roomState', (m) => m.phase === 'playing');
     const first = await guest.waitFor('snapshot');
     const startX = first.players.find((p) => p.id === hostWelcome.playerId)?.x ?? 0;

@@ -183,6 +183,31 @@ const icons = {
       fill: 'solid',
     },
   ],
+  // S3-04 campaign map: a locked level.
+  lock: [
+    { d: 'M8 10.5V7.5a4 4 0 0 1 8 0v3' },
+    {
+      d: 'M6.5 10.5h11A1.5 1.5 0 0 1 19 12v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19v-7a1.5 1.5 0 0 1 1.5-1.5Z',
+      fill: 'tint',
+    },
+    { d: 'M12 14.5v2.5' },
+  ],
+  // --- Debrief (S3-02) ---------------------------------------------------------------------
+  /** Blunder of the day: a banana peel. */
+  blunder: [
+    { d: 'M9 11.5c0-3.6 1.2-6.6 3-8 1.8 1.4 3 4.4 3 8Z', fill: 'tint' },
+    {
+      d: 'M9 11.5C5.5 12 3.5 15 3 19c3-.5 5.3-2.5 6.5-5.5ZM15 11.5c3.5.5 5.5 3.5 6 7.5-3-.5-5.3-2.5-6.5-5.5ZM10 12.5c-.3 3 .3 5.5 2 8 1.7-2.5 2.3-5 2-8Z',
+      fill: 'tint',
+    },
+  ],
+  /** Where it happens in the real world. */
+  globe: [
+    { d: 'M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0-17 0Z', fill: 'tint' },
+    {
+      d: 'M3.5 12h17M12 3.5c-2.5 2.5-3.5 5.5-3.5 8.5s1 6 3.5 8.5c2.5-2.5 3.5-5.5 3.5-8.5S14.5 6 12 3.5',
+    },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;

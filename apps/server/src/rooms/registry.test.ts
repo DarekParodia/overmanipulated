@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { PROTOCOL_VERSION, RECONNECT_GRACE_MS, TICK_MS } from '@redakcja/shared';
+import {
+  BRIEFING_DURATION_MS,
+  PROTOCOL_VERSION,
+  RECONNECT_GRACE_MS,
+  TICK_MS,
+} from '@redakcja/shared';
 import { createFakeHub, type FakeConnection } from '../__fixtures__/fake-transport.ts';
 import { generateRoomCode } from './codes.ts';
 import { createRoomRegistry, type RoomRegistry } from './registry.ts';
@@ -40,6 +45,13 @@ function welcomeOf(connection: FakeConnection) {
     throw new Error('no welcome received');
   }
   return welcome;
+}
+
+/** Host presses start and the briefing runs out, so the level is playing. */
+function startPastBriefing(host: FakeConnection): void {
+  registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
+  time += BRIEFING_DURATION_MS;
+  registry.tick();
 }
 
 function input(connection: FakeConnection, seq: number, x: number, y: number) {
@@ -118,7 +130,7 @@ describe('starting the game', () => {
     expect(guest.last('error')?.code).toBe('notHost');
 
     registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
-    registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
+    startPastBriefing(host);
     expect(host.last('roomState')?.phase).toBe('playing');
     expect(guest.all('event').map((e) => e.event.kind)).toContain('gameStarted');
     const game = registry.inspect(welcomeOf(host).roomCode)?.game;
@@ -161,7 +173,7 @@ describe('ticks and snapshots', () => {
     const host = join('Ala');
     const guest = join('Bartek', welcomeOf(host).roomCode);
     registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
-    registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
+    startPastBriefing(host);
     return { host, guest, code: welcomeOf(host).roomCode };
   }
 

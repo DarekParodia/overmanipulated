@@ -295,6 +295,11 @@ export const pl = {
     speedBonus: 'Premia za tempo',
     missed: 'Zabrakło:',
     unknownStory: 'Nieznana teczka.',
+    /** The managing editor's one deadline extension per level. */
+    extend: 'Przedłuż termin',
+    extendAmount: (s: number) => `+${s}\u00a0s`,
+    extendLabel: (s: number) => `Przedłuż termin o\u00a0${s}\u00a0s`,
+    extended: (s: number) => `Termin +${s}\u00a0s!`,
   },
   minigames: {
     /** Shared by every minigame. */
@@ -573,7 +578,8 @@ export const pl = {
       work: (key: string) => `Trzymaj ${key}`,
       working: 'Trzymaj, sprawdzamy!',
       minigame: 'Rozwiąż zadanie',
-      lockout: 'Stanowisko stoi. Chwilę!',
+      /** Facing a locked station that holds a folder: take the folder elsewhere. */
+      lockout: 'Weź teczkę gdzie indziej',
       toDesk: 'Gotowe – zanieś na stół!',
       openDesk: (key: string) => `Werdykt: trzymaj ${key}`,
       verdict: 'Wybierz werdykt',
@@ -584,6 +590,8 @@ export const pl = {
       label: 'Samouczek',
       step: (n: number, total: number) => `Krok ${n} z ${total}`,
       skip: 'Pomiń samouczek',
+      /** Before the drawn key: „lub Esc”, „lub B B”. */
+      skipOr: 'lub',
       move: {
         keyboard: 'Ruszaj się: WASD',
         gamepad: 'Ruszaj się: lewa gałka',
@@ -599,6 +607,64 @@ export const pl = {
       verdict: 'Zanieś teczkę na stół, wybierz werdykt',
       done: 'Super! Tak trzymaj!',
     },
+  },
+  /** Editorial briefing before a level (S3-03). */
+  briefing: {
+    label: 'Briefing redakcyjny',
+    levelNumber: (n: number) => `Poziom ${n}`,
+    training: 'Trening',
+    topic: 'Temat dnia:',
+    newToday: 'Nowe dziś:',
+    ready: 'Gotowy!',
+    waiting: 'Czekamy na resztę',
+    countdownLabel: (seconds: number) => `Start za ${seconds} s`,
+    readyCount: (ready: number, total: number) => `Gotowi: ${ready} z ${total}`,
+    playerReady: (nickname: string) => `${nickname}: gotowy`,
+    playerWaiting: (nickname: string) => `${nickname}: czyta`,
+    skipIntro: 'Pomiń animację',
+  },
+  /** Campaign map in the lobby (S3-04). */
+  campaign: {
+    title: 'Wybierz poziom',
+    training: 'Trening',
+    locked: 'Zamknięty',
+    tileLabel: (title: string, number: string, stars: number, locked: boolean) =>
+      `${number}: ${title}, ${locked ? 'zamknięty' : `${stars} z 3 gwiazdek`}`,
+  },
+  /** Debrief (Kolegium) after a level: one card per story. Longer text is allowed only here. */
+  debrief: {
+    title: 'Kolegium',
+    cardsLabel: 'Teczki tego wydania',
+    count: (n: number) =>
+      n === 1
+        ? '1 teczka'
+        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
+          ? `${n} teczki`
+          : `${n} teczek`,
+    untitled: 'Teczka bez tytułu',
+    yourVerdict: 'Wasz werdykt',
+    correctVerdict: 'Właściwy',
+    expired: 'Przepadła',
+    sections: {
+      what: 'Co to było',
+      technique: 'Jak działa ta sztuczka',
+      tool: 'Co to wykryło',
+      realWorld: 'Gdzie to się zdarza',
+    },
+    missed: 'Zabrakło pieczątek',
+    vote: 'Wpadka dnia?',
+    voted: 'Twój głos',
+    leader: 'Wpadka dnia!',
+    votes: (n: number) =>
+      n === 1
+        ? '1 głos'
+        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
+          ? `${n} głosy`
+          : `${n} głosów`,
+    voteFor: (headline: string) => `Wpadka dnia: ${headline}`,
+    prev: 'Poprzednia teczka',
+    next: 'Następna teczka',
+    position: (n: number, total: number) => `${n} z ${total}`,
   },
 } as const;
 
