@@ -39,9 +39,9 @@ const HOUR_TURN_S = 720;
 /** Screen glow: a slow breath between two light blues, out of phase per monitor. */
 const GLOW_PERIOD_S = 4.5;
 /** Paper stacks: how close a walking player must pass, and how hard the stack is nudged. */
-const WOBBLE_RADIUS = 1.05;
-const WOBBLE_KICK = 2.2;
-const WOBBLE_MAX = 0.16;
+const WOBBLE_RADIUS = 1.2;
+const WOBBLE_KICK = 4;
+const WOBBLE_MAX = 0.2;
 const MOTES_PER_COLUMN = 18;
 
 const dummy = new Object3D();
