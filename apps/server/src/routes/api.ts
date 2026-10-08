@@ -1,9 +1,10 @@
 // REST routes under /api. Chained so `AppType` carries full types for the client's hc client.
 import { zValidator } from '@hono/zod-validator';
-import { LEADERBOARD_DEFAULT_LIMIT, PROTOCOL_VERSION } from '@redakcja/shared';
+import { LEADERBOARD_DEFAULT_LIMIT, levelIdSchema, PROTOCOL_VERSION } from '@redakcja/shared';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { type Db, isDatabaseHealthy } from '../db/client.ts';
+import { getBlunderTallies } from '../db/queries/blunder-votes.ts';
 import { getTopEntries } from '../db/queries/leaderboard.ts';
 import { gameModes } from '../db/schema.ts';
 import type { RoomRegistry } from '../rooms/registry.ts';
@@ -15,6 +16,9 @@ const leaderboardQuerySchema = z.object({
   levelId: z.string().min(1).max(64).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(LEADERBOARD_DEFAULT_LIMIT),
 });
+
+/** Supervisor view of the debrief votes: which stories fooled the class most (S3-02). */
+const blunderStatsQuerySchema = z.object({ levelId: levelIdSchema });
 
 export function healthStatus(deps: ApiDeps) {
   const dbOk = isDatabaseHealthy(deps.db);
@@ -41,5 +45,9 @@ export function createApiRoutes(deps: ApiDeps) {
         createdAt: e.createdAt.toISOString(),
       }));
       return c.json({ entries });
+    })
+    .get('/stats/blunders', zValidator('query', blunderStatsQuerySchema), (c) => {
+      const { levelId } = c.req.valid('query');
+      return c.json({ levelId, stories: getBlunderTallies(deps.db, levelId) });
     });
 }
