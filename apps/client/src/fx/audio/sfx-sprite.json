@@ -30,5 +30,9 @@
   "lose": [21350, 1500, false],
   "ping1": [22970, 300, false],
   "ping2": [23390, 300, false],
-  "ping3": [23810, 300, false]
+  "ping3": [23810, 300, false],
+  "ambphone": [24230, 2250, false],
+  "ambprinter": [26600, 1860, false],
+  "ambfax": [28580, 1500, false],
+  "ambtyping": [30200, 2200, false]
 }

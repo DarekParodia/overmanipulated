@@ -391,6 +391,24 @@ export const cues = {
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.6, rateJitter: 0.05 },
     haptic: 'tick',
   },
+  // S3-07 newsroom ambience: quiet, distant one-shots over the room tone, scheduled at random by
+  // fx/audio/ambience.ts (ducked under station and desk overlays). They carry no information.
+  'ambience.phone': {
+    severity: 1,
+    sound: { ids: ['ambphone'], bus: 'sfx', volume: 0.32, rateJitter: 0.04 },
+  },
+  'ambience.printer': {
+    severity: 1,
+    sound: { ids: ['ambprinter'], bus: 'sfx', volume: 0.3, rateJitter: 0.06 },
+  },
+  'ambience.fax': {
+    severity: 1,
+    sound: { ids: ['ambfax'], bus: 'sfx', volume: 0.22, rateJitter: 0.03 },
+  },
+  'ambience.typing': {
+    severity: 1,
+    sound: { ids: ['ambtyping'], bus: 'sfx', volume: 0.3, rateJitter: 0.1 },
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

@@ -5,7 +5,7 @@ Every asset shipped with the game is listed here with its source and licence
 
 | Asset | Path | Source | Licence |
 | --- | --- | --- | --- |
-| Placeholder sound effects (click, hover, back, copy, join, leave, step1–2, start, stamp, roomtone; gameplay: arrive, rustle, place, warn, tick, buzzer, keys, slide, fail, deskopen, chime, fanfare, hmm, alarm, lowsting, lastsec, win, lose, ping1–3) | `audio/sfx.webm`, `audio/sfx.mp3` | Self-made: synthesised by `tools/audio/synth_placeholders.py` | Project's own |
+| Placeholder sound effects (click, hover, back, copy, join, leave, step1–2, start, stamp, roomtone; gameplay: arrive, rustle, place, warn, tick, buzzer, keys, slide, fail, deskopen, chime, fanfare, hmm, alarm, lowsting, lastsec, win, lose, ping1–3; ambience: ambphone, ambprinter, ambfax, ambtyping) | `audio/sfx.webm`, `audio/sfx.mp3` | Self-made: synthesised by `tools/audio/synth_placeholders.py` | Project's own |
 | Music v1 loops (menu, level calm layer, level pressure layer) | `audio/music/*.webm`, `audio/music/*.mp3` | Self-made: synthesised by `tools/audio/synth_music.py` | Project's own |
 | App icon | `../icons/icon.svg`, `icon-*.png` | Self-made | Project's own |
 | Newsreader typeface | npm `@fontsource-variable/newsreader` | Production Type | SIL OFL 1.1 |
