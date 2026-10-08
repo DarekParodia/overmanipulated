@@ -35,7 +35,7 @@ import { useQuality } from './quality.ts';
 import { renderState } from './render-state.ts';
 
 /** Height of the name tag's centre above the floor. */
-const NAME_TAG_HEIGHT = CHARACTER_HEIGHT + 0.4;
+const NAME_TAG_HEIGHT = CHARACTER_HEIGHT + 0.55;
 /** Small hop (picking up / putting down a folder): height and duration. */
 const HOP_HEIGHT = 0.12;
 const HOP_S = 0.26;

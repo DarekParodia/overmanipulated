@@ -206,7 +206,7 @@ function accessoryParts(role: Role | null): Part[] {
         ),
         part(
           'head',
-          box(0.17, 0.03, 0.36).rotateZ(-0.25),
+          box(0.13, 0.025, 0.3).rotateZ(-0.25),
           colors.outline,
           onFace(0, 0.06, 0.78),
           0,
