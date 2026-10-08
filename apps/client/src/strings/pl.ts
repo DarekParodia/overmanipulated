@@ -600,6 +600,41 @@ export const pl = {
       done: 'Super! Tak trzymaj!',
     },
   },
+  /** Debrief (Kolegium) after a level: one card per story. Longer text is allowed only here. */
+  debrief: {
+    title: 'Kolegium',
+    cardsLabel: 'Teczki tego wydania',
+    count: (n: number) =>
+      n === 1
+        ? '1 teczka'
+        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
+          ? `${n} teczki`
+          : `${n} teczek`,
+    untitled: 'Teczka bez tytułu',
+    yourVerdict: 'Wasz werdykt',
+    correctVerdict: 'Właściwy',
+    expired: 'Przepadła',
+    sections: {
+      what: 'Co to było',
+      technique: 'Jak działa ta sztuczka',
+      tool: 'Co to wykryło',
+      realWorld: 'Gdzie to się zdarza',
+    },
+    missed: 'Zabrakło pieczątek',
+    vote: 'Wpadka dnia?',
+    voted: 'Twój głos',
+    leader: 'Wpadka dnia!',
+    votes: (n: number) =>
+      n === 1
+        ? '1 głos'
+        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
+          ? `${n} głosy`
+          : `${n} głosów`,
+    voteFor: (headline: string) => `Wpadka dnia: ${headline}`,
+    prev: 'Poprzednia teczka',
+    next: 'Następna teczka',
+    position: (n: number, total: number) => `${n} z ${total}`,
+  },
 } as const;
 
 export type Strings = typeof pl;

@@ -1,7 +1,8 @@
 /*
  * Results panel: one white cartoon panel over the dimmed newsroom. A coloured ribbon with the
- * headline on top (green = won, red = lost, plus a ✓/✗ disc), stars and figures on the left,
- * the folder list on the right (it scrolls on its own so the buttons always stay visible).
+ * headline on top (green = won, red = lost, plus a ✓/✗ disc); desktop: stars and figures on the
+ * left, the Kolegium list on the right (it scrolls on its own so the buttons always stay
+ * visible). Phones: stars and figures move into the ribbon and the Kolegium shows one card.
  */
 .backdrop {
   position: absolute;
@@ -19,10 +20,16 @@
 }
 
 .panel {
-  display: flex;
-  flex-direction: column;
-  width: min(54rem, 100%);
-  max-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "ribbon ribbon"
+    "summary kolegium"
+    "footer footer";
+  width: min(68rem, 100%);
+  height: 100%;
+  max-height: 52rem;
   overflow: hidden;
   background: var(--surface);
   border: var(--stroke-bold) solid var(--outline);
@@ -53,7 +60,7 @@
 /* --- Ribbon ---------------------------------------------------------------------------------- */
 
 .ribbon {
-  flex: none;
+  grid-area: ribbon;
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -87,7 +94,7 @@
   padding-top: 0.1em;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
   line-height: var(--leading-tight);
   color: var(--outline);
 }
@@ -100,22 +107,16 @@
   color: var(--outline);
 }
 
-/* --- Body ------------------------------------------------------------------------------------ */
-
-.body {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(15rem, 1fr) minmax(0, 1.6fr);
-  gap: var(--space-5);
-  padding: var(--space-5);
-}
+/* --- Summary: stars and figures -------------------------------------------------------------- */
 
 .summary {
+  grid-area: summary;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-4);
+  padding: var(--space-5) var(--space-4);
+  border-right: var(--stroke) solid var(--surface-sunk);
 }
 
 .stars {
@@ -125,15 +126,15 @@
 }
 
 .star {
-  width: 5rem;
-  height: 5rem;
+  width: 4.5rem;
+  height: 4.5rem;
   overflow: visible;
 }
 
 /* The middle star sits a little higher, like a podium. */
 .star:nth-child(2) {
-  width: 6rem;
-  height: 6rem;
+  width: 5.5rem;
+  height: 5.5rem;
   margin-bottom: var(--space-2);
 }
 
@@ -167,11 +168,15 @@
     transform: scale(0) rotate(-30deg);
   }
   70% {
-    transform: scale(1.2) rotate(6deg);
+    transform: scale(1.25) rotate(6deg);
   }
   100% {
     transform: scale(1) rotate(0deg);
   }
+}
+
+.instant .starEarned {
+  animation: none;
 }
 
 :root[data-reduced-motion="true"] .starEarned {
@@ -180,7 +185,7 @@
 
 .figures {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--space-3);
   width: 100%;
   margin: 0;
@@ -211,133 +216,45 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* --- Folder list ----------------------------------------------------------------------------- */
+/* --- Kolegium ------------------------------------------------------------------------------- */
 
-.list {
+.kolegium {
+  grid-area: kolegium;
+  display: flex;
+  flex-direction: column;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-2) 0 var(--space-5);
 }
 
-.listTitle {
-  margin: 0 0 var(--space-2);
+.kolegiumTitle {
+  flex: none;
+  margin: 0 0 var(--space-3);
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-lg);
-}
-
-.empty {
-  margin: 0;
-  font-family: var(--font-body);
-  font-weight: 600;
-  font-size: var(--text-md);
-  color: var(--text-soft);
-}
-
-.rows {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0 0 var(--space-1);
-  list-style: none;
-}
-
-.row {
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-2);
-  background: var(--surface-soft);
-  border: var(--outline-border);
-  border-radius: var(--radius-md);
 }
 
-.rowMark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 2.375rem;
-  height: 2.375rem;
-  border: var(--outline-border);
-  border-radius: 50%;
-  color: var(--outline);
-}
-
-.rowGood .rowMark {
-  background: var(--green);
-}
-
-.rowCaution .rowMark {
-  background: var(--orange);
-}
-
-.rowBad .rowMark {
-  background: var(--red);
-}
-
-.rowText {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.rowHeadline {
-  overflow: hidden;
-  font-family: var(--font-body);
-  font-weight: 700;
-  font-size: var(--text-md);
-  line-height: var(--leading-snug);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.rowOutcome {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--text-sm);
-  line-height: var(--leading-snug);
-  color: var(--text-soft);
-}
-
-.rowCred {
+.kolegiumCount {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  flex: none;
-  font-family: var(--font-display);
+  gap: var(--space-1);
+  padding: 2px var(--space-3) 0 var(--space-2);
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-md);
   font-weight: 700;
-  font-size: var(--text-sm);
-  color: var(--text-soft);
-  font-variant-numeric: tabular-nums;
-}
-
-.rowPoints {
-  flex: none;
-  min-width: 4.5rem;
-  padding-top: 0.12em;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--text-lg);
-  line-height: 1;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.rowGood .rowPoints {
-  color: var(--green-dark);
-}
-
-.rowBad .rowPoints {
-  color: var(--red-dark);
+  --icon-fill: var(--yellow);
 }
 
 /* --- Footer ---------------------------------------------------------------------------------- */
 
 .footer {
-  flex: none;
+  grid-area: footer;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -360,7 +277,59 @@
   font-size: var(--text-lg);
 }
 
-/* --- Phones (640×360 landscape and up): tighter, smaller stars, list scrolls ----------------- */
+.pager {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pageButton {
+  display: grid;
+  place-items: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: 50%;
+  box-shadow: var(--pop);
+  color: var(--outline);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.pageButton:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.pageButton:disabled {
+  border-color: var(--text-faint);
+  color: var(--text-faint);
+  box-shadow: none;
+  cursor: default;
+}
+
+.pageButton:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.pagePosition {
+  min-width: 4.25rem;
+  padding-top: 0.12em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Phones (640×360 landscape and up): summary in the ribbon, one card per page ------------- */
 
 @media (max-height: 500px), (max-width: 760px) {
   .backdrop {
@@ -371,14 +340,39 @@
   }
 
   .panel {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "ribbon summary"
+      "kolegium kolegium"
+      "footer footer";
+    max-height: none;
     border-width: var(--stroke);
     border-radius: var(--radius-md);
   }
 
+  .ribbon,
+  .summary {
+    border-bottom: var(--stroke) solid var(--outline);
+  }
+
   .ribbon {
     gap: var(--space-3);
-    padding: var(--space-2) var(--space-4);
-    border-bottom-width: var(--stroke);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  }
+
+  .summary {
+    flex-direction: row;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+    border-right: none;
+  }
+
+  .won .summary {
+    background: var(--green);
+  }
+
+  .lost .summary {
+    background: var(--red);
   }
 
   .ribbonMark {
@@ -393,41 +387,35 @@
   }
 
   .headline {
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
+    white-space: nowrap;
   }
 
   .lede {
-    font-size: var(--text-sm);
+    display: none;
   }
 
-  .body {
-    grid-template-columns: 12rem minmax(0, 1fr);
-    gap: var(--space-3);
-    padding: var(--space-2) var(--space-4);
-  }
-
-  .summary {
-    gap: var(--space-2);
-  }
-
-  .star {
-    width: 3rem;
-    height: 3rem;
-  }
-
+  .star,
   .star:nth-child(2) {
-    width: 3.75rem;
-    height: 3.75rem;
-    margin-bottom: var(--space-1);
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-bottom: 0;
+  }
+
+  .stars {
+    align-items: center;
+    gap: 0;
   }
 
   .figures {
-    grid-template-columns: 1fr;
-    gap: var(--space-1);
+    grid-template-columns: auto auto;
+    gap: var(--space-2);
+    width: auto;
   }
 
   .figure {
-    padding: 2px var(--space-3);
+    gap: var(--space-1);
+    padding: 2px var(--space-3) 2px var(--space-2);
   }
 
   .figure svg {
@@ -439,48 +427,41 @@
     font-size: var(--text-lg);
   }
 
-  .listTitle {
-    display: none;
+  .kolegium {
+    padding: var(--space-2) var(--space-3) 0;
   }
 
-  .rows {
-    gap: var(--space-1);
-  }
-
-  .row {
-    gap: var(--space-2);
-    padding: 2px var(--space-2) 2px 2px;
-  }
-
-  .rowMark {
-    width: 1.875rem;
-    height: 1.875rem;
-  }
-
-  .rowMark svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .rowHeadline {
-    font-size: var(--text-sm);
-  }
-
-  .rowCred {
-    display: none;
-  }
-
-  .rowPoints {
-    min-width: 3.5rem;
-    font-size: var(--text-md);
+  .kolegiumTitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 
   .footer {
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
   }
 
   .waiting {
     font-size: var(--text-md);
     padding: var(--space-1) var(--space-3);
+  }
+}
+
+/* Very narrow (portrait phones): the summary gets its own row under the ribbon. */
+@media (max-width: 560px) {
+  .panel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "ribbon"
+      "summary"
+      "kolegium"
+      "footer";
+  }
+
+  .summary {
+    justify-content: center;
   }
 }

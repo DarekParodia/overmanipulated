@@ -303,6 +303,11 @@ export function backToLobby(): void {
   lobby({ kind: 'backToLobby' });
 }
 
+/** Blunder-of-the-day vote on the results screen; a new vote replaces the old one. */
+export function voteBlunder(storyId: string): void {
+  lobby({ kind: 'voteBlunder', storyId });
+}
+
 /** Sends a player decision (minigame result, verdict, ping, …); applied on the next tick. */
 export function sendCommand(command: PlayerCommand): void {
   send({ type: 'command', command });
