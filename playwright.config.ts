@@ -39,7 +39,13 @@ export default defineConfig({
     {
       command: 'bun apps/server/src/index.ts',
       url: `http://localhost:${serverPort}/health`,
-      env: { PORT: serverPort, DATABASE_PATH: ':memory:', LOG_LEVEL: 'silent' },
+      // A short briefing keeps the start-to-HUD tests quick even without pressing "Gotowy!".
+      env: {
+        PORT: serverPort,
+        DATABASE_PATH: ':memory:',
+        LOG_LEVEL: 'silent',
+        BRIEFING_MS: '1500',
+      },
       reuseExistingServer: !process.env.CI,
     },
     {

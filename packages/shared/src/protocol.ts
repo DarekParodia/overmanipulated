@@ -201,6 +201,8 @@ export const snapshotMessageSchema = z.object({
   folders: z.array(folderSchema).max(64),
   stations: z.array(stationSchema).max(32),
   desks: z.array(deskSchema).max(8),
+  /** The managing editor's one deadline extension per level has been used. */
+  deadlineExtensionUsed: z.boolean(),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [

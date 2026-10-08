@@ -1,0 +1,497 @@
+[
+  {
+    "id": "l1-brak-pradu",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Brak prądu na Lipowej i Klonowej do ok. 18:00",
+    "body": "Dostawca energii: wiatr zerwał linię przy ul. Lipowej. Ekipy już pracują, prąd wróci po południu.",
+    "source": "Profil „Brzeska Energia”",
+    "stamps": [
+      {
+        "id": "l1-brak-pradu-image",
+        "station": "imageSearch",
+        "text": "Post nie zawiera zdjęcia, tylko mapkę awarii bez wcześniejszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l1-brak-pradu-source",
+        "station": "sourceRegistry",
+        "text": "Profil zweryfikowany, prowadzony od 8 lat. Ten sam komunikat jest na stronie dostawcy.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-brak-pradu-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy komunikat dostawcy energii o awarii po burzy.",
+      "technique": "Brak manipulacji. Nie każde zgłoszenie jest fałszywką – prawdziwe komunikaty też trzeba szybko publikować.",
+      "tool": "Kartoteka źródeł: profil jest zweryfikowany i ma tę samą treść co oficjalna strona dostawcy.",
+      "realWorld": "Informacje o awariach podają dostawcy prądu na swoich stronach i profilach. Warto sprawdzić, czy komunikat jest i tu, i tu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-zalana-ulica",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Tak teraz wygląda centrum Nowych Brzegów!",
+    "body": "Zdjęcie ulicy zalanej po kolana krąży po grupach mieszkańców. Podpis: „Burza zrobiła z centrum rzekę”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l1-zalana-ulica-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie krąży w sieci od 2019 r. Pochodzi z powodzi w innym kraju.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-zalana-ulica-source",
+        "station": "sourceRegistry",
+        "text": "Konto prywatne, aktywne od 4 lat. Zwykle udostępnia lokalne wiadomości.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l1-zalana-ulica-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Burza w Nowych Brzegach była prawdziwa, ale zdjęcie pochodzi z innego kraju i sprzed kilku lat.",
+      "technique": "Stare zdjęcie z nowym podpisem: obraz jest autentyczny, fałszywe jest miejsce i czas. Prawdziwe wydarzenie uwiarygadnia cudzy kadr.",
+      "tool": "Lupa obrazu: wyszukiwanie obrazem znalazło starsze publikacje tego samego zdjęcia z 2019 r.",
+      "realWorld": "Po każdej większej burzy w sieci wracają efektowne zdjęcia powodzi z innych miejsc i lat. Wyszukiwanie obrazem szybko pokazuje ich pochodzenie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-falszywa-straz-miejska",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Straż Miejska: od 14:00 zakaz wjazdu do centrum",
+    "body": "„Z powodu burzy zamykamy centrum dla aut. Za wjazd mandat 500 zł”. Post ma herb miasta i setki udostępnień.",
+    "source": "Konto „StrazMiejska_NoweBrzegi”",
+    "stamps": [
+      {
+        "id": "l1-falszywa-straz-miejska-image",
+        "station": "imageSearch",
+        "text": "Herb w poście to kopia grafiki ze strony ratusza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l1-falszywa-straz-miejska-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone 2 dni temu, bez znacznika weryfikacji. Prawdziwe ma nazwę „Straż Miejska Nowe Brzegi”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-falszywa-straz-miejska-source"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywe konto podszywające się pod Straż Miejską. Prawdziwa straż nie ogłosiła żadnego zakazu.",
+      "technique": "Podszywanie się pod instytucję: nazwa i herb wyglądają oficjalnie, ale konto jest nowe i niezweryfikowane.",
+      "tool": "Kartoteka źródeł: data założenia konta, brak weryfikacji i inna nazwa niż oficjalny profil. Prawdziwy herb niczego nie dowodzi.",
+      "realWorld": "Fałszywe profile urzędów i służb pojawiają się zwykle przy ważnych wydarzeniach, bo komunikaty „od władz” szybko się rozchodzą."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-kaczki-na-boisku",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Kaczki pływają po zalanym boisku w parku Nadrzecze",
+    "body": "Mieszkanka przysłała zdjęcie kaczek na boisku zamienionym w staw. Zarząd zieleni zamknął park do jutra.",
+    "source": "Zdjęcie od czytelniczki",
+    "stamps": [
+      {
+        "id": "l1-kaczki-na-boisku-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 8:15, park Nadrzecze.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-kaczki-na-boisku-source",
+        "station": "sourceRegistry",
+        "text": "Autorka od 3 lat przysyła redakcji zdjęcia z osiedla. Zarząd zieleni potwierdza zamknięcie parku.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-kaczki-na-boisku-image", "l1-kaczki-na-boisku-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie od czytelniczki, potwierdzone przez zarząd zieleni.",
+      "technique": "Brak manipulacji. Zabawne zdjęcie nie musi być fałszywe.",
+      "tool": "Lupa obrazu nie znalazła starszych kopii, Kartoteka źródeł potwierdziła autorkę i zamknięcie parku.",
+      "realWorld": "Redakcje często dostają zdjęcia od czytelników. Zanim je opublikują, sprawdzają, czy są nowe i kto je zrobił."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-drzewo-na-szkole",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Drzewo runęło na dach Liceum nr 2, lekcje odwołane",
+    "body": "Na zdjęciu wielki dąb leży na zgniecionym dachu. Podpis: „Liceum nr 2 dziś rano. Nie idźcie do szkoły!”.",
+    "source": "Udostępnienie na komunikatorze",
+    "stamps": [
+      {
+        "id": "l1-drzewo-na-szkole-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie opublikowano w 2017 r. Przedstawia halę sportową w innym mieście.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-drzewo-na-szkole-source",
+        "station": "sourceRegistry",
+        "text": "Strona Liceum nr 2: budynek jest cały, lekcje odbywają się normalnie.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-drzewo-na-szkole-image", "l1-drzewo-na-szkole-source"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Zmyślona wiadomość: w Liceum nr 2 nic się nie stało, a zdjęcie pokazuje inny budynek sprzed lat.",
+      "technique": "Stare zdjęcie jako nowe: prawdziwy obraz innego zdarzenia ma „udowodnić” coś, co się nie wydarzyło.",
+      "tool": "Lupa obrazu znalazła zdjęcie z 2017 r., a Kartoteka źródeł – komunikat szkoły, że lekcje trwają.",
+      "realWorld": "Fałszywe wiadomości o odwołanych lekcjach krążą po każdej burzy. Pewną informację podaje szkoła lub urząd miasta."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-zamkniete-szkoly",
+    "type": "article",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Jutro zamknięte szkoły podstawowe na Nadrzeczu",
+    "body": "Urząd miasta: w trzech szkołach na Nadrzeczu nadal nie ma prądu. Uczniowie mają jutro wolne.",
+    "source": "Komunikat urzędu miasta",
+    "stamps": [
+      {
+        "id": "l1-zamkniete-szkoly-image",
+        "station": "imageSearch",
+        "text": "Grafika z herbem miasta to szablon używany w komunikatach od lat.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l1-zamkniete-szkoly-source",
+        "station": "sourceRegistry",
+        "text": "Zweryfikowany profil „Miasto Nowe Brzegi”. Ten sam komunikat jest na stronie miasta.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-zamkniete-szkoly-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa decyzja urzędu miasta, ogłoszona na oficjalnym profilu i stronie.",
+      "technique": "Brak manipulacji. Oficjalny komunikat z dwóch zgodnych źródeł.",
+      "tool": "Kartoteka źródeł: profil jest zweryfikowany, a treść zgadza się ze stroną miasta.",
+      "realWorld": "Decyzje o zamknięciu szkół ogłaszają urzędy i dyrekcje. Warto czytać je u źródła, a nie w przekazywanych dalej zrzutach ekranu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-kajaki-zamiast-biletow",
+    "type": "article",
+    "priority": "normal",
+    "truth": "satire",
+    "correctVerdict": "publishWithContext",
+    "headline": "Ratusz rozda mieszkańcom kajaki zamiast biletów miesięcznych",
+    "body": "„Skoro ulice to rzeki, komunikacja miejska przejdzie na wiosła” – czytamy w tekście, który udostępniają tysiące osób.",
+    "source": "Portal „Brzeski Szpikulec”",
+    "stamps": [
+      {
+        "id": "l1-kajaki-zamiast-biletow-image",
+        "station": "imageSearch",
+        "text": "Ilustracja z kajakiem pochodzi z darmowego banku grafik.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l1-kajaki-zamiast-biletow-source",
+        "station": "sourceRegistry",
+        "text": "„Brzeski Szpikulec” w zakładce „O nas” przedstawia się jako portal satyryczny.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-kajaki-zamiast-biletow-source"],
+    "technique": "satyra-brana-na-powaznie",
+    "debrief": {
+      "what": "Żart portalu satyrycznego o skutkach burzy, który część czytelników wzięła na serio.",
+      "technique": "Satyra brana na poważnie: udostępniony poza stroną autora tekst traci oznaczenie, że to żart.",
+      "tool": "Kartoteka źródeł: portal sam opisuje się jako satyryczny.",
+      "realWorld": "Teksty z portali satyrycznych regularnie krążą jako prawdziwe wiadomości, zwłaszcza gdy ktoś udostępnia sam nagłówek."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-ostrzezenie-burzowe",
+    "type": "article",
+    "priority": "urgent",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Druga fala burz z gradem nad Nowymi Brzegami do 22:00",
+    "body": "Regionalne Biuro Prognoz wydało ostrzeżenie 2. stopnia: grad, wiatr do 90 km/h. Lepiej zostać w domu.",
+    "source": "Komunikat Regionalnego Biura Prognoz",
+    "stamps": [
+      {
+        "id": "l1-ostrzezenie-burzowe-image",
+        "station": "imageSearch",
+        "text": "Mapa ostrzeżeń nie ma wcześniejszych kopii w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l1-ostrzezenie-burzowe-source",
+        "station": "sourceRegistry",
+        "text": "Komunikat jest na oficjalnej stronie biura i na jego zweryfikowanym profilu.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-ostrzezenie-burzowe-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe ostrzeżenie pogodowe z oficjalnego źródła.",
+      "technique": "Brak manipulacji. Pilna, prawdziwa informacja chroni mieszkańców, więc trzeba ją szybko podać dalej.",
+      "tool": "Kartoteka źródeł: komunikat pochodzi od biura prognoz i jest na jego stronie.",
+      "realWorld": "Ostrzeżenia pogodowe wydają państwowe służby meteorologiczne. Tam warto je sprawdzać, zanim się je udostępni."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-oplata-za-prad",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Prąd wróci szybciej, jeśli zapłacisz 50 zł przez link",
+    "body": "„Brzeska Energia” pisze: kto opłaci „ekspresową naprawę” przez link w poście, dostanie prąd jeszcze dziś.",
+    "source": "Konto „BrzeskaEnergia_Pomoc”",
+    "stamps": [
+      {
+        "id": "l1-oplata-za-prad-image",
+        "station": "imageSearch",
+        "text": "Logo jest identyczne jak na stronie dostawcy energii.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l1-oplata-za-prad-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone 3 dni temu. Prawdziwy profil „Brzeska Energia” ostrzega przed takimi linkami.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-oplata-za-prad-source"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Oszustwo: fałszywe konto podszywa się pod dostawcę energii, żeby wyłudzić pieniądze.",
+      "technique": "Podszywanie się pod instytucję: skopiowane logo i podobna nazwa mają uśpić czujność, a pośpiech po awarii pomaga oszustom.",
+      "tool": "Kartoteka źródeł: nowe konto, a prawdziwy dostawca ostrzega przed fałszywymi linkami. Samo logo niczego nie dowodzi.",
+      "realWorld": "Oszuści często podszywają się pod firmy i urzędy, gdy ludzie czekają na pomoc. Prawdziwe instytucje nie każą płacić przez link w poście."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-piorun-nad-ratuszem",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Wczorajszy piorun nad wieżą ratusza",
+    "body": "Efektowne zdjęcie błyskawicy tuż nad zegarem ratusza ma tysiące polubień. Podpis: „Wczoraj, 23:10”.",
+    "source": "Fanpage „Piękne Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l1-piorun-nad-ratuszem-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie wygrało konkurs fotograficzny w 2020 r. Wczoraj nie było go w sieci.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-piorun-nad-ratuszem-source",
+        "station": "sourceRegistry",
+        "text": "Fanpage prowadzony od 5 lat, ma wielu obserwujących.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l1-piorun-nad-ratuszem-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Wczoraj nad miastem naprawdę przeszła burza, ale to zdjęcie zrobiono kilka lat temu.",
+      "technique": "Stare zdjęcie z nowym podpisem: piękny, prawdziwy kadr dopasowany do bieżącego wydarzenia. Popularny profil nie gwarantuje aktualności.",
+      "tool": "Lupa obrazu: zdjęcie było publikowane już w 2020 r. jako praca konkursowa.",
+      "realWorld": "Najbardziej efektowne zdjęcia burz i błyskawic wracają co roku jako „wczorajsze”. Duża liczba polubień nie świadczy o prawdzie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-wal-puszcza",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "unverifiable",
+    "correctVerdict": "reject",
+    "headline": "Wał przy rzece może puścić w nocy!",
+    "body": "Głos w nagraniu: „Kolega z wodociągów mówi, że wał na Nadrzeczu przecieka. Wyjeżdżajcie”. Nagranie krąży od godziny.",
+    "source": "Wiadomość głosowa z komunikatora",
+    "stamps": [
+      {
+        "id": "l1-wal-puszcza-image",
+        "station": "imageSearch",
+        "text": "Wiadomość nie zawiera obrazu do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l1-wal-puszcza-source",
+        "station": "sourceRegistry",
+        "text": "Nadawcy nie da się ustalić. Żadna służba nie wydała komunikatu o wale.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-wal-puszcza-source"],
+    "technique": "anonimowy-informator",
+    "debrief": {
+      "what": "Anonimowe ostrzeżenie, którego w czasie dyżuru nie da się ani potwierdzić, ani obalić.",
+      "technique": "Powołanie się na „znajomego z wewnątrz”: brzmi wiarygodnie, ale nie wiadomo, kto mówi ani skąd to wie.",
+      "tool": "Kartoteka źródeł: brak autora i brak komunikatu służb. Pilnej, niepotwierdzonej informacji nie publikujemy.",
+      "realWorld": "Łańcuszkowe ostrzeżenia rozchodzą się szybko, bo ludzie chcą chronić bliskich. O zagrożeniu powodziowym informują służby i urząd miasta."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-dworzec-pod-woda",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dworzec pod wodą, pociągi nie kursują",
+    "body": "Zdjęcie peronu zalanego aż po krawędź. Podpis: „Dworzec w Nowych Brzegach. Dziś nigdzie nie pojedziecie”.",
+    "source": "Post na grupie Osiedle Nadrzecze",
+    "stamps": [
+      {
+        "id": "l1-dworzec-pod-woda-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie krąży w sieci od 2010 r. Przedstawia stację w innym regionie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-dworzec-pod-woda-source",
+        "station": "sourceRegistry",
+        "text": "Przewoźnik kolejowy na swojej stronie: pociągi z Nowych Brzegów kursują planowo.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-dworzec-pod-woda-image", "l1-dworzec-pod-woda-source"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Zmyślona wiadomość: dworzec działa, a zdjęcie pokazuje powódź w innym miejscu sprzed lat.",
+      "technique": "Stare zdjęcie jako nowe: obraz z innego zdarzenia „potwierdza” coś, czego nie było.",
+      "tool": "Lupa obrazu znalazła zdjęcie z 2010 r., Kartoteka źródeł – komunikat przewoźnika.",
+      "realWorld": "Zdjęcia zalanych dworców i lotnisk wracają przy każdej ulewie. Rozkład jazdy i komunikaty przewoźnika szybko je weryfikują."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-falszywy-ratusz",
+    "type": "post",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Ratusz: cały tydzień wolny od szkoły i pracy!",
+    "body": "„Po burzy wszyscy mieszkańcy dostają tydzień wolnego. Pozdrawiamy!” – ogłasza profil z herbem miasta.",
+    "source": "Konto „Ratusz_NoweBrzegi_Oficjalny”",
+    "stamps": [
+      {
+        "id": "l1-falszywy-ratusz-image",
+        "station": "imageSearch",
+        "text": "Herb to zrzut ekranu ze strony miasta, lekko rozmazany.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l1-falszywy-ratusz-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone wczoraj, 12 obserwujących. Oficjalny profil „Miasto Nowe Brzegi” nic takiego nie ogłosił.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-falszywy-ratusz-source"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywe konto podszywające się pod urząd miasta. Nikt nie ogłosił tygodnia wolnego.",
+      "technique": "Podszywanie się pod instytucję: słowo „Oficjalny” w nazwie i herb nie czynią konta oficjalnym.",
+      "tool": "Kartoteka źródeł: konto ma jeden dzień, a prawdziwy profil miasta milczy w tej sprawie.",
+      "realWorld": "Fałszywe konta często dodają do nazwy słowa „oficjalny” lub „info”. Prawdziwe profile urzędów mają znacznik weryfikacji i długą historię."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-zalany-przejazd",
+    "type": "photo",
+    "priority": "urgent",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Zalany przejazd pod torami na Kolejowej, objazd przez Most Portowy",
+    "body": "Fotoreporter przysłał zdjęcie autobusu zawracającego przed wodą w tunelu. Zarząd dróg kieruje auta na objazd.",
+    "source": "Fotoreporter współpracujący z redakcją",
+    "stamps": [
+      {
+        "id": "l1-zalany-przejazd-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 15:20, ul. Kolejowa.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-zalany-przejazd-source",
+        "station": "sourceRegistry",
+        "text": "Autor od 6 lat współpracuje z redakcją. Zarząd dróg potwierdza objazd.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l1-zalany-przejazd-image", "l1-zalany-przejazd-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie od zaufanego autora, potwierdzone przez zarząd dróg.",
+      "technique": "Brak manipulacji. Pilna, prawdziwa informacja o utrudnieniach pomaga kierowcom.",
+      "tool": "Lupa obrazu nie znalazła starszych kopii, Kartoteka źródeł potwierdziła autora i objazd.",
+      "realWorld": "Przy utrudnieniach w ruchu liczy się czas, ale nawet pilne zdjęcie warto sprawdzić: czy jest nowe i kto je zrobił."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-zalane-piwnice",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Zalane piwnice na Starym Mieście po nocnej ulewie",
+    "body": "Zdjęcie piwnicy z pływającymi słoikami. Podpis: „Moja piwnica dziś rano”. Straż pożarna pisze o 20 wezwaniach.",
+    "source": "Komentarz pod artykułem o burzy",
+    "stamps": [
+      {
+        "id": "l1-zalane-piwnice-image",
+        "station": "imageSearch",
+        "text": "To samo zdjęcie opublikowano na forum w 2018 r.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-zalane-piwnice-source",
+        "station": "sourceRegistry",
+        "text": "Autor komentarza podpisuje się samym imieniem. Konto ma 2 lata.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l1-zalane-piwnice-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Piwnice na Starym Mieście naprawdę zalało, ale to zdjęcie ma kilka lat.",
+      "technique": "Stare zdjęcie z nowym podpisem: prawdziwe zdarzenie, ale cudzy, stary obraz. Trzeba to dopisać przy publikacji.",
+      "tool": "Lupa obrazu: zdjęcie było w sieci już w 2018 r.",
+      "realWorld": "Ludzie często ilustrują prawdziwe wydarzenia „podobnymi” zdjęciami z sieci. Informacja może być prawdziwa, a zdjęcie – nie."
+    },
+    "reviewed": false
+  }
+]

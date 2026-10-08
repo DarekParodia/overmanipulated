@@ -22,6 +22,7 @@ function snapshot(tick: number, x: number): SnapshotMessage {
     folders: [],
     stations: [],
     desks: [],
+    deadlineExtensionUsed: false,
   };
 }
 

@@ -22,7 +22,7 @@ export type NextStepKind =
   | 'working'
   /** The local player's minigame overlay is open. */
   | 'minigame'
-  /** The station in front of the player is locked after a failed minigame. */
+  /** The station in front of the player is locked after a failed minigame but holds a folder. */
   | 'lockout'
   /** Carrying a folder with a justifying stamp: take it to a desk. */
   | 'toDesk'
@@ -59,12 +59,7 @@ export type NextStepInput = {
 };
 
 /** Steps during which another piece of UI (overlay, work prompt) already says what to do. */
-export const BUSY_KINDS: ReadonlySet<NextStepKind> = new Set([
-  'working',
-  'minigame',
-  'lockout',
-  'verdict',
-]);
+export const BUSY_KINDS: ReadonlySet<NextStepKind> = new Set(['working', 'minigame', 'verdict']);
 
 /** Steps done right where the player stands: the target needs a ring, not an arrow. */
 export const HERE_KINDS: ReadonlySet<NextStepKind> = new Set([
@@ -100,12 +95,12 @@ function missingStamp(folder: Folder, story: StoryStamps | undefined, kind: Stat
 
 /**
  * Stations worth visiting with this folder: the level's stations whose stamp it still lacks,
- * the ones that can justify a verdict first, free ones (no folder on them) first.
+ * the ones that can justify a verdict first, free ones (no folder on them, not locked) first.
  */
 export function stationsToVisit(
   folder: Folder,
   story: StoryStamps | undefined,
-  input: Pick<NextStepInput, 'map' | 'folders'>,
+  input: Pick<NextStepInput, 'map' | 'folders' | 'stations'>,
 ): Fixture[] {
   const unchecked = input.map.fixtures.filter(
     (f) => f.kind === 'station' && f.station && missingStamp(folder, story, f.station),
@@ -115,8 +110,13 @@ export function stationsToVisit(
     return stamp !== undefined && (story?.justifyingStamps.includes(stamp.id) ?? false);
   });
   const pool = justifying.length > 0 ? justifying : unchecked;
-  const free = pool.filter((f) => !folderOn(input.folders, f.id));
+  const free = pool.filter((f) => !folderOn(input.folders, f.id) && !isLocked(input, f.id));
   return free.length > 0 ? free : pool;
+}
+
+/** The station is locked after a failed minigame: nothing can be done there for now. */
+function isLocked(input: Pick<NextStepInput, 'stations'>, fixtureId: string): boolean {
+  return input.stations.some((s) => s.id === fixtureId && s.phase === 'lockout');
 }
 
 function stationNames(fixtures: readonly Fixture[]): string {
@@ -139,7 +139,8 @@ function carryingStep(input: NextStepInput, folder: Folder): NextStep {
   const { guidance } = pl;
   const story = input.story(folder.storyId);
   const target = input.targetFixtureId;
-  const targetFree = target !== null && !folderOn(input.folders, target);
+  const targetFree =
+    target !== null && !folderOn(input.folders, target) && !isLocked(input, target);
   const visit = hasJustifyingStamp(folder, story) ? [] : stationsToVisit(folder, story, input);
   if (visit.length === 0) {
     const desks = deskTargets(input);
