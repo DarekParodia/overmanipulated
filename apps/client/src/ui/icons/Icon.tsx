@@ -183,6 +183,15 @@ const icons = {
       fill: 'solid',
     },
   ],
+  // S3-04 campaign map: a locked level.
+  lock: [
+    { d: 'M8 10.5V7.5a4 4 0 0 1 8 0v3' },
+    {
+      d: 'M6.5 10.5h11A1.5 1.5 0 0 1 19 12v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19v-7a1.5 1.5 0 0 1 1.5-1.5Z',
+      fill: 'tint',
+    },
+    { d: 'M12 14.5v2.5' },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;

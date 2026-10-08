@@ -600,6 +600,29 @@ export const pl = {
       done: 'Super! Tak trzymaj!',
     },
   },
+  /** Editorial briefing before a level (S3-03). */
+  briefing: {
+    label: 'Briefing redakcyjny',
+    levelNumber: (n: number) => `Poziom ${n}`,
+    training: 'Trening',
+    topic: 'Temat dnia:',
+    newToday: 'Nowe dziś:',
+    ready: 'Gotowy!',
+    waiting: 'Czekamy na resztę',
+    countdownLabel: (seconds: number) => `Start za ${seconds} s`,
+    readyCount: (ready: number, total: number) => `Gotowi: ${ready} z ${total}`,
+    playerReady: (nickname: string) => `${nickname}: gotowy`,
+    playerWaiting: (nickname: string) => `${nickname}: czyta`,
+    skipIntro: 'Pomiń animację',
+  },
+  /** Campaign map in the lobby (S3-04). */
+  campaign: {
+    title: 'Wybierz poziom',
+    training: 'Trening',
+    locked: 'Zamknięty',
+    tileLabel: (title: string, number: string, stars: number, locked: boolean) =>
+      `${number}: ${title}, ${locked ? 'zamknięty' : `${stars} z 3 gwiazdek`}`,
+  },
 } as const;
 
 export type Strings = typeof pl;

@@ -86,6 +86,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `archive.tick` / `stop` / `miss` / `found` | archive minigame: card passes the frame, drawer braked, wrong card pulled, first mention found | card wobble / card lifts with stamp | riffle tick / click / nope / stamp thud | „Nie ta” stamp on the card | tick / buzz / thud (mobile) | ● → ●● |
 | `imageSearch.fragment` | next fragment in the loupe | loupe label changes | soft tick | — | — | ● |
 | `imageSearch.match` / `imageSearch.miss` | image search pick | stamp on the printout / red pencil strike | stamp / back | — | tick / thud | ● |
+| `briefing.intro` / `briefing.land` / `briefing.ready` | briefing card appears / lands on the desk / "Gotowy!" pressed | newspaper spins and drops in, squashes on landing (fade under reduced motion; tap skips) | paper slide / paper slap / stamp | — | — / thud / tick | ● → ●● |
 
 Add a row here when you add a cue, in the same commit.
 

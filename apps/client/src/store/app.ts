@@ -3,7 +3,7 @@ import type { ErrorCode, RoomStateMessage } from '@redakcja/shared';
 import { create } from 'zustand';
 import { readStored, writeStored } from './safe-storage.ts';
 
-export type ScreenId = 'mainMenu' | 'lobby' | 'game' | 'styleguide';
+export type ScreenId = 'mainMenu' | 'lobby' | 'briefing' | 'game' | 'styleguide';
 export type ConnectionStatus = 'idle' | 'connecting' | 'online' | 'reconnecting' | 'offline';
 export type InputDevice = 'keyboard' | 'gamepad' | 'touch';
 export type UiError = ErrorCode | 'connectionLost';
