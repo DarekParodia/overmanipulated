@@ -1,8 +1,12 @@
 // First-game tutorial card: one big friendly step at a time, driven by what the player really
 // does (tutorial.ts). The wording and the drawn controls follow the input device in use. The
 // card never takes input except for its skip button, so the game keeps running underneath.
+// It can also be skipped without the pointer: Esc on the keyboard, B twice or a held
+// Back/Select on a gamepad (buttons the game itself does not use).
 import { type ReactNode, useEffect, useRef } from 'react';
 import { emitCue } from '../fx/feedback.ts';
+import { firstGamepad } from '../input/gamepad-access.ts';
+import { isInputCaptured } from '../input/ui-nav.ts';
 import { type InputDevice, useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
@@ -11,7 +15,14 @@ import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './Guidance.module.css';
 import { placementFor } from './placement.ts';
 import { useGuidance } from './store.ts';
-import { TUTORIAL_DONE, TUTORIAL_STEPS, type TutorialStepId } from './tutorial.ts';
+import {
+  PAD_SKIP_BUTTONS,
+  PAD_SKIP_START,
+  padSkipStep,
+  TUTORIAL_DONE,
+  TUTORIAL_STEPS,
+  type TutorialStepId,
+} from './tutorial.ts';
 import { useTutorial } from './tutorial-store.ts';
 
 /** How long the closing "well done" card stays. */
@@ -120,12 +131,87 @@ function Illustration({ id, device }: { id: TutorialStepId | 'done'; device: Inp
   }
 }
 
+/**
+ * Esc (keyboard) and B B / held Back (gamepad) call `onSkip` while `active`. The pad is polled
+ * only off touch devices (a phone with a pad switches to "gamepad" as soon as it is used).
+ */
+function useSkipControls(active: boolean, pollPad: boolean, onSkip: () => void): void {
+  const skipRef = useRef(onSkip);
+  skipRef.current = onSkip;
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+    const skip = () => {
+      emitCue('ui.back');
+      skipRef.current();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      // While an overlay owns the input, Esc closes the overlay instead.
+      if (event.code === 'Escape' && !event.repeat && !isInputCaptured()) {
+        skip();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    if (!pollPad) {
+      return () => window.removeEventListener('keydown', onKey);
+    }
+    let pad = PAD_SKIP_START;
+    let frame = 0;
+    const poll = () => {
+      const gamepad = firstGamepad();
+      const pressed = (i: number) => gamepad?.buttons[i]?.pressed ?? false;
+      const result = padSkipStep(
+        pad,
+        {
+          east: pressed(PAD_SKIP_BUTTONS.east),
+          select: pressed(PAD_SKIP_BUTTONS.select),
+          captured: isInputCaptured(),
+        },
+        performance.now(),
+      );
+      pad = result.state;
+      if (result.skip) {
+        skip();
+        return;
+      }
+      frame = requestAnimationFrame(poll);
+    };
+    frame = requestAnimationFrame(poll);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      cancelAnimationFrame(frame);
+    };
+  }, [active, pollPad]);
+}
+
+/** The non-pointer way to skip, drawn next to the skip button. */
+function SkipKeys({ device }: { device: InputDevice }) {
+  if (device === 'touch') {
+    return null;
+  }
+  return (
+    <span className={styles.skipKeys} aria-hidden="true">
+      {pl.guidance.tutorial.skipOr}
+      {device === 'gamepad' ? (
+        <>
+          <PadButton>B</PadButton>
+          <PadButton>B</PadButton>
+        </>
+      ) : (
+        <Key wide>Esc</Key>
+      )}
+    </span>
+  );
+}
+
 export function Tutorial({ step }: { step: number }) {
   const device = useApp((s) => s.inputDevice);
   const kind = useGuidance((s) => s.step?.kind);
   const skip = useTutorial((s) => s.skip);
   const close = useTutorial((s) => s.close);
   const done = step >= TUTORIAL_DONE;
+  useSkipControls(!done, device !== 'touch', skip);
 
   // A soft chime for each step the player completes (the card itself pops in).
   const shownStep = useRef(step);
@@ -182,9 +268,15 @@ export function Tutorial({ step }: { step: number }) {
         </p>
         {!done && (
           <div className={styles.skip}>
-            <Button variant="ghost" onClick={skip}>
+            <Button
+              variant="ghost"
+              onClick={skip}
+              aria-keyshortcuts="Escape"
+              data-testid="tutorial-skip"
+            >
               {pl.guidance.tutorial.skip}
             </Button>
+            <SkipKeys device={device} />
           </div>
         )}
       </div>

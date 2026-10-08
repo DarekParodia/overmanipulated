@@ -10,6 +10,7 @@ const EMPTY_LEVEL = {
   folders: [],
   stations: [],
   desks: [],
+  deadlineExtensionUsed: false,
 };
 
 describe('client messages', () => {

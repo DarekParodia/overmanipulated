@@ -25,10 +25,6 @@
   padding-right: max(11rem, env(safe-area-inset-right));
 }
 
-.touch .card {
-  width: min(26rem, 100%);
-}
-
 @keyframes pop {
   0% {
     transform: scale(0.8);
@@ -114,6 +110,10 @@
   animation: pop var(--motion-base) var(--ease-bounce) both;
 }
 
+.touch .card {
+  width: min(26rem, 100%);
+}
+
 /* Lifted above the work prompt pinned at the bottom centre. */
 .prompt {
   margin-bottom: 5.5rem;
@@ -195,9 +195,22 @@
 }
 
 .skip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   justify-self: start;
   margin-left: calc(-1 * var(--space-5));
   pointer-events: auto;
+}
+
+/* "or Esc" / "or B B" next to the skip button: small drawn controls. */
+.skipKeys {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-soft);
+  font-weight: 700;
+  font-size: var(--text-md);
 }
 
 /* --- Drawn controls ---------------------------------------------------------------------- */
@@ -259,6 +272,20 @@
   height: 3rem;
   padding: 0 var(--space-3);
   font-size: var(--text-md);
+}
+
+/* Small drawn controls in the tutorial's "or Esc" / "or B B" note. */
+.skipKeys .key,
+.skipKeys .padButton {
+  min-width: 2rem;
+  width: auto;
+  height: 2rem;
+  font-size: var(--text-md);
+  box-shadow: none;
+}
+
+.skipKeys .padButton {
+  width: 2rem;
 }
 
 .stick {
