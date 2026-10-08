@@ -1,0 +1,358 @@
+/* The briefing: one newspaper card centred on the sky background. */
+.page {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: max(var(--space-5), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right)) max(var(--space-5), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  overflow: hidden;
+}
+
+.card {
+  width: min(100%, 42rem);
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6) var(--space-5);
+  transform-origin: 50% 60%;
+}
+
+/* Newspaper spin-in: thrown from above, spinning, it slaps onto the desk and squashes. */
+.intro {
+  animation: briefing-drop 900ms var(--ease-out) both;
+}
+
+@keyframes briefing-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-55vh) rotate(-560deg) scale(0.25);
+  }
+  12% {
+    opacity: 1;
+  }
+  62% {
+    transform: translateY(0) rotate(-8deg) scale(1.1);
+  }
+  74% {
+    transform: translateY(6px) rotate(3deg) scale(1.06, 0.9);
+  }
+  86% {
+    transform: translateY(-4px) rotate(-1.5deg) scale(0.98, 1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .intro {
+  animation: briefing-fade 300ms linear both;
+}
+
+@keyframes briefing-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Masthead: level chip and the countdown ring on one line, the big title below. */
+.head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "kicker ring"
+    "title ring"
+    "topic topic";
+  align-items: center;
+  column-gap: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: var(--stroke) solid var(--outline);
+}
+
+.kicker {
+  grid-area: kicker;
+}
+
+.levelChip {
+  display: inline-block;
+  padding: 0.2em var(--space-3) 0.05em;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--blue);
+  color: var(--text-on-dark);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.title {
+  grid-area: title;
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.1em;
+}
+
+.topic {
+  grid-area: topic;
+  margin-top: var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.topicLabel {
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.ring {
+  grid-area: ring;
+  position: relative;
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+.ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ringTrack {
+  fill: var(--surface-soft);
+  stroke: var(--outline);
+  stroke-width: 10;
+}
+
+.ringFill {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 200ms linear;
+}
+
+.seconds {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-top: 0.15em;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.secondsLong {
+  font-size: var(--text-md);
+}
+
+.text {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+
+.points {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.points li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+
+.points svg {
+  flex: none;
+}
+
+/* "Nowe dziś:" and the station chips on one line. */
+.fresh {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.freshTitle {
+  font-size: var(--text-lg);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.chip svg {
+  margin-top: -0.1em;
+}
+
+/* Ready dots on the left, the one main action on the right. */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding-top: var(--space-2);
+}
+
+.dots {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--text-on-dark);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  padding-top: 0.1em;
+  border-style: dashed;
+  opacity: 0.6;
+}
+
+.dotReady {
+  border-style: solid;
+  opacity: 1;
+  animation: dot-pop var(--motion-base) var(--ease-bounce);
+}
+
+@keyframes dot-pop {
+  from {
+    transform: scale(0.7);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.dotCheck {
+  position: absolute;
+  right: -0.45rem;
+  bottom: -0.35rem;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  background: var(--green);
+  color: var(--outline);
+}
+
+.action {
+  display: flex;
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.waiting {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 3.75rem;
+  padding: var(--space-2) var(--space-5);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--green);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+/* Short landscape phones: everything on one screen, no scrolling. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .page {
+    padding-top: max(var(--space-2), env(safe-area-inset-top));
+    padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  }
+  .card {
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+  }
+  .head {
+    padding-bottom: var(--space-2);
+  }
+  .levelChip {
+    font-size: var(--text-sm);
+  }
+  .title {
+    font-size: var(--text-xl);
+  }
+  .topic,
+  .text,
+  .points li,
+  .freshTitle {
+    font-size: var(--text-md);
+  }
+  .ring {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+  .seconds {
+    font-size: var(--text-lg);
+  }
+  .chip {
+    font-size: var(--text-sm);
+    box-shadow: none;
+  }
+  .dot {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: var(--text-md);
+  }
+  .points {
+    gap: var(--space-1);
+  }
+  .waiting,
+  .action button {
+    min-height: var(--touch-target);
+    padding-block: var(--space-1);
+    font-size: var(--text-lg);
+  }
+  .secondsLong {
+    font-size: var(--text-sm);
+  }
+}

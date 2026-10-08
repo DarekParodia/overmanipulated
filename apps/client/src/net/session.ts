@@ -14,6 +14,7 @@ import {
 } from '@redakcja/shared';
 import { emitCue } from '../fx/feedback.ts';
 import { useApp } from '../store/app.ts';
+import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
 import { playerColor } from '../ui/tokens.ts';
 import { reconnectDelayMs } from './backoff.ts';
@@ -72,6 +73,11 @@ function setSlot(next: StoredSlot | null): void {
   writeStored('session', TOKEN_KEY, next ? JSON.stringify(next) : null);
 }
 
+function resetLevelState(levelId: string): void {
+  runtime.reset(levelId);
+  useGame.getState().reset();
+}
+
 function handleMessage(message: ServerMessage): void {
   const app = useApp.getState();
   switch (message.type) {
@@ -84,14 +90,17 @@ function handleMessage(message: ServerMessage): void {
     case 'roomState': {
       const previous = app.room;
       useApp.setState({ room: message });
-      if (message.phase === 'playing' && app.screen !== 'game') {
-        runtime.reset(message.levelId);
-        useGame.getState().reset();
+      if (message.phase === 'briefing' && app.screen !== 'briefing') {
+        // Topic of the day before the level (S3-03). Entering it (from the lobby or, on a
+        // replay, from the results screen) drops the previous level's state once.
+        resetLevelState(message.levelId);
+        app.setScreen('briefing');
+      } else if (message.phase === 'playing' && app.screen !== 'game') {
+        // Already reset when the briefing began; a reload mid-level arrives here directly.
+        if (previous?.phase !== 'briefing') {
+          resetLevelState(message.levelId);
+        }
         app.setScreen('game');
-      } else if (message.phase === 'playing' && previous?.phase === 'results') {
-        // A new level started straight from the results screen.
-        runtime.reset(message.levelId);
-        useGame.getState().reset();
       } else if (message.phase === 'lobby' && app.screen !== 'lobby') {
         app.setScreen('lobby');
       }
@@ -109,6 +118,7 @@ function handleMessage(message: ServerMessage): void {
       return;
     case 'levelEnd':
       useGame.getState().setLevelEnd(message);
+      useProgress.getState().record(message.levelId, message.stars);
       return;
     case 'event': {
       const { event } = message;
@@ -299,6 +309,11 @@ export function selectLevel(levelId: string): void {
   lobby({ kind: 'selectLevel', levelId });
 }
 
+/** Briefing: this player has read it; the level starts when everyone has (or on time). */
+export function skipBriefing(): void {
+  lobby({ kind: 'skipBriefing' });
+}
+
 export function backToLobby(): void {
   lobby({ kind: 'backToLobby' });
 }
@@ -329,4 +344,10 @@ export function handleVisibilityReturn(): void {
     reconnectAttempt = 0;
     open();
   }
+}
+
+// Dev aid (`?debug`): replay a server message, e.g. a `roomState` in the briefing phase before
+// the server sends one, and send lobby actions from the console or a scripted playtest.
+if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+  (window as unknown as { __session?: unknown }).__session = { receive: handleMessage, lobby };
 }

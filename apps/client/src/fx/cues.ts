@@ -407,6 +407,21 @@ export const cues = {
     sound: { ids: ['place'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
     haptic: 'tick',
   },
+  // S3-03 briefing: the newspaper card whooshes in and slaps onto the desk; "Gotowy!" stamps.
+  'briefing.intro': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.8 },
+  },
+  'briefing.land': {
+    severity: 2,
+    sound: { ids: ['place'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'briefing.ready': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'tick',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

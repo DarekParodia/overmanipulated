@@ -5,6 +5,7 @@ import { feedback } from './fx/feedback.ts';
 import { startGameplayFeedback } from './fx/gameplay-feedback.ts';
 import { vibrate } from './fx/haptics.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
+import { Briefing } from './screens/Briefing.tsx';
 import { Loading } from './screens/Loading.tsx';
 import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
@@ -46,6 +47,7 @@ export function App() {
     <>
       {screen === 'mainMenu' && <MainMenu />}
       {screen === 'lobby' && <Lobby />}
+      {screen === 'briefing' && <Briefing />}
       {screen === 'game' && (
         <Suspense fallback={<Loading />}>
           <GameScreen />

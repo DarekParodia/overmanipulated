@@ -1,6 +1,12 @@
 {
   "id": "l1-burza",
-  "title": "Pierwszy dzień – Burza nad miastem",
+  "title": "Pierwszy dzień",
+  "topic": "Burza nad miastem",
+  "briefingPoints": [
+    "Nocna burza – sieć zalewają zdjęcia i komunikaty.",
+    "Lupa obrazu: czy zdjęcie nie jest stare?",
+    "Kartoteka źródeł: kto naprawdę mówi?"
+  ],
   "briefing": "Pierwszy dzień w redakcji! W nocy nad Nowymi Brzegami przeszła burza, a sieć zalewają zdjęcia i komunikaty. Lupa obrazu sprawdzi, czy zdjęcie nie jest stare. Kartoteka źródeł pokaże, kto naprawdę mówi. Teczki możecie odkładać na stoliki, werdykt wydajecie przy stole redakcyjnym.",
   "durationS": 390,
   "layout": [

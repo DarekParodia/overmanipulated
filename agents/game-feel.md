@@ -88,6 +88,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `imageSearch.match` / `imageSearch.miss` | image search pick | stamp on the printout / red pencil strike | stamp / back | — | tick / thud | ● |
 | `debrief.star` / `debrief.mark` | results reveal: each earned star, then each Kolegium card's outcome mark (skippable by any tap/key; off with reduced motion) | star pop / mark slams on like a stamp | chime / stamp thud | — (DOM) | tick | ●● / ● |
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
+| `briefing.intro` / `briefing.land` / `briefing.ready` | briefing card appears / lands on the desk / "Gotowy!" pressed | newspaper spins and drops in, squashes on landing (fade under reduced motion; tap skips) | paper slide / paper slap / stamp | — | — / thud / tick | ● → ●● |
 
 Add a row here when you add a cue, in the same commit.
 

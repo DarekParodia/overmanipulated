@@ -23,7 +23,7 @@ const HINT_ICONS: Record<NextStepKind, IconName> = {
   work: 'clock',
   working: 'clock',
   minigame: 'photo',
-  lockout: 'clock',
+  lockout: 'hourglass',
   toDesk: 'publish',
   openDesk: 'publish',
   verdict: 'publish',

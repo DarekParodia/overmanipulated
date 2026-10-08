@@ -4,7 +4,7 @@
   grid-template-areas:
     "kicker kicker"
     "title chips"
-    "options options";
+    "hostOnly hostOnly";
   align-items: center;
   gap: var(--space-1) var(--space-4);
   padding: var(--space-3) var(--space-5);
@@ -53,36 +53,83 @@
   margin-top: -0.1em;
 }
 
-.options {
-  grid-area: options;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin: var(--space-2) 0 0;
-  padding: 0;
-  border: none;
+.hostOnly {
+  grid-area: hostOnly;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
 }
 
-.option {
-  display: inline-flex;
+/* Host: the campaign map. Title and the chosen level's chips on top, the tile path below. */
+.map {
+  grid-template-areas:
+    "title chips"
+    "path path";
+  row-gap: var(--space-1);
+}
+
+.mapTitle {
+  grid-area: title;
+  font-size: var(--text-lg);
+  padding-top: 0.08em;
+}
+
+.map .chips {
+  justify-content: flex-end;
+}
+
+/* Tiles in a row joined by a dashed road; scrolls sideways when the campaign grows. */
+.path {
+  grid-area: path;
+  position: relative;
+  display: flex;
+  gap: var(--space-4);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-1) var(--space-1) var(--space-2) var(--space-1);
+  border: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tile {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "badge title"
+    "badge stars";
+  justify-content: start;
   align-items: center;
-  min-height: var(--touch-target);
-  padding: 0.15em var(--space-4) 0;
+  column-gap: var(--space-2);
+  min-height: 3.5rem;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
   border: var(--outline-border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: var(--pop);
-  font-family: var(--font-display);
-  font-weight: 700;
   cursor: pointer;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
 }
 
-.current {
-  background: var(--blue);
-  color: var(--text-on-dark);
+/* The dashed road from one tile to the next. */
+.tile + .tile::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  width: calc(var(--space-4) + var(--stroke));
+  border-top: var(--stroke) dashed var(--outline);
 }
 
-.option:has(.native:focus-visible) {
+.tile:not(.locked):active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.tile:has(.native:focus-visible) {
   outline: 4px solid var(--blue);
   outline-offset: 3px;
 }
@@ -94,10 +141,87 @@
   height: 1px;
 }
 
-.hostOnly {
-  grid-column: 1 / -1;
+.badge {
+  grid-area: badge;
+  display: grid;
+  place-items: center;
+  min-width: 2.75rem;
+  height: 2.75rem;
+  padding: 0.15em var(--space-2) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* „Trening” is a word, not a number: smaller so the badge stays a chip. */
+.badgeWord {
+  font-size: var(--text-md);
+}
+
+.tileTitle {
+  grid-area: title;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  padding-top: 0.1em;
+  max-width: 8.5rem;
+}
+
+.stars,
+.lock {
+  grid-area: stars;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.starOn {
+  --icon-fill: var(--yellow);
+}
+
+.starOff {
+  color: var(--text-faint);
+}
+
+.lock {
+  gap: var(--space-1);
+  font-family: var(--font-display);
   font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.current {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.current .badge {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.current .starOn {
+  color: var(--outline);
+}
+
+.current .starOff {
+  color: var(--surface-sunk);
+}
+
+.locked {
+  cursor: not-allowed;
+  background: var(--surface-sunk);
   color: var(--text-soft);
+  box-shadow: none;
+}
+
+.locked .badge {
+  background: var(--surface-sunk);
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
@@ -113,5 +237,36 @@
   }
   .chip {
     font-size: var(--text-sm);
+  }
+  /* The tiles speak for themselves on a phone; the sticky action bar stays short. */
+  .map {
+    grid-template-areas: "path path";
+  }
+  .mapTitle,
+  .map .chips {
+    display: none;
+  }
+  .path {
+    gap: var(--space-3);
+    padding-bottom: var(--space-1);
+  }
+  .tile + .tile::before {
+    width: calc(var(--space-3) + var(--stroke));
+  }
+  .tile {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+    column-gap: var(--space-2);
+  }
+  .badge {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    font-size: var(--text-lg);
+  }
+  .badgeWord {
+    font-size: var(--text-sm);
+  }
+  .tileTitle {
+    font-size: var(--text-md);
   }
 }
