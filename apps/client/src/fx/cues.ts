@@ -406,6 +406,22 @@ export const cues = {
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
     haptic: 'tick',
   },
+  // S3-02 / S3-08 debrief (Kolegium): DOM animations live in debrief/, these are their sounds.
+  'debrief.star': {
+    severity: 2,
+    sound: { ids: ['chime'], bus: 'ui', volume: 0.8, rateJitter: 0.03 },
+    haptic: 'tick',
+  },
+  'debrief.mark': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.75, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
+  'debrief.vote': {
+    severity: 1,
+    sound: { ids: ['place'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'tick',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;
