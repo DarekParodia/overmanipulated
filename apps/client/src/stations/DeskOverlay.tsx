@@ -1,17 +1,22 @@
 // Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick one collected
 // stamp as the evidence. 2: press one of three big verdict buttons. After the server's verdict
-// the sheet shows the outcome (✓ / ✗, points, what was missed) until dismissed.
+// the sheet shows the outcome (✓ / ✗, points, what was missed) until dismissed. The managing
+// editor also gets the level's one "+20 s" deadline extension here (S4-04 groundwork).
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
 import type { Folder, GameEvent, Verdict } from '@redakcja/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { type NavIntent, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
+import { onGameEvent } from '../net/game-events.ts';
+import { useGame } from '../net/game-store.ts';
+import { sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './DeskOverlay.module.css';
+import { DEADLINE_EXTENSION_S, mayExtendDeadline } from './deadline-extension.ts';
 import { FolderSheet } from './FolderSheet.tsx';
 import { OutcomeBanner, ResultMark, STATION_ICON } from './kit.tsx';
 import { OverlayFrame } from './OverlayFrame.tsx';
@@ -35,6 +40,9 @@ export type DeskOverlayProps = {
 const VERDICT_ORDER: readonly Verdict[] = ['publish', 'publishWithContext', 'reject'];
 
 const CLOSE = 'close';
+const EXTEND = 'extend';
+/** How long the "+20 s" button waits for the server before it can be pressed again. */
+const EXTEND_RETRY_MS = 2000;
 /** Gap kept between a focused stamp and the panel edge or the verdict strip. */
 const FOCUS_MARGIN_PX = 12;
 const verdictKey = (verdict: Verdict) => `verdict:${verdict}`;
@@ -52,12 +60,14 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
   const device = useApp((s) => s.inputDevice);
   const collected = collectedStamps(folder, story);
   const [chosen, setChosen] = useState<string | null>(null);
+  const extension = useDeadlineExtension(folder.id);
   const grid: FocusGrid = [
+    extension.state === 'available' ? [EXTEND] : [],
     ...collected.map((stamp) => [stamp.id]),
     collected.length > 0 ? VERDICT_ORDER.map(verdictKey) : [],
     [CLOSE],
   ];
-  const [focus, setFocus] = useState<string | null>(() => grid[0]?.[0] ?? CLOSE);
+  const [focus, setFocus] = useState<string | null>(() => collected[0]?.id ?? CLOSE);
   const canVerdict = chosen !== null && !pending;
   const choose = (stampId: string) => {
     setChosen(stampId);
@@ -83,6 +93,13 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
     if (focus === CLOSE) {
       emitCue('ui.back');
       onClose();
+    } else if (focus === EXTEND) {
+      if (extension.state === 'available') {
+        emitCue('ui.click');
+        extension.extend();
+      } else {
+        emitCue('ui.hover');
+      }
     } else if (focus?.startsWith('verdict:')) {
       const verdict = focus.slice('verdict:'.length) as Verdict;
       if (canVerdict) {
@@ -164,6 +181,14 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
           <p className="visually-hidden" role="status" data-testid="desk-hint">
             {typeset(hint)}
           </p>
+          <ExtendDeadline
+            state={extension.state}
+            focused={showFocus && focus === EXTEND}
+            onExtend={() => {
+              setFocus(EXTEND);
+              extension.extend();
+            }}
+          />
           {empty ? (
             <div className={styles.emptyBox}>
               <OutcomeBanner success={false} title={typeset(pl.desk.noStamps)} />
@@ -255,6 +280,96 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
         )}
       </div>
     </OverlayFrame>
+  );
+}
+
+type ExtensionState = 'hidden' | 'available' | 'sending' | 'done';
+
+/**
+ * The local player's view of the level's one deadline extension for this folder: offered only
+ * to whoever may use it (see `mayExtendDeadline`) while it is unused, then "done" once the
+ * server confirms it for this folder.
+ */
+function useDeadlineExtension(folderId: string): { state: ExtensionState; extend(): void } {
+  const playerId = useApp((s) => s.playerId);
+  const players = useApp((s) => s.room?.players);
+  const used = useGame((s) => s.deadlineExtensionUsed);
+  const [sentAt, setSentAt] = useState<number | null>(null);
+  const [done, setDone] = useState(false);
+  useEffect(
+    () =>
+      onGameEvent((event) => {
+        if (event.kind === 'deadlineExtended' && event.folderId === folderId) {
+          setDone(true);
+          setSentAt(null);
+        }
+      }),
+    [folderId],
+  );
+  // The server ignores a refused command; let the player try again after a moment.
+  useEffect(() => {
+    if (sentAt === null) {
+      return;
+    }
+    const timer = setTimeout(() => setSentAt(null), EXTEND_RETRY_MS);
+    return () => clearTimeout(timer);
+  }, [sentAt]);
+  const allowed = mayExtendDeadline(players ?? [], playerId, used);
+  const state: ExtensionState = done
+    ? 'done'
+    : !allowed
+      ? 'hidden'
+      : sentAt !== null
+        ? 'sending'
+        : 'available';
+  return {
+    state,
+    extend() {
+      if (state !== 'available') {
+        return;
+      }
+      setSentAt(Date.now());
+      sendCommand({ kind: 'extendDeadline', folderId });
+    },
+  };
+}
+
+/** Secondary "+20 s" button; after the server's confirmation a green "+20 s!" badge. */
+function ExtendDeadline({
+  state,
+  focused,
+  onExtend,
+}: {
+  state: ExtensionState;
+  focused: boolean;
+  onExtend(): void;
+}) {
+  if (state === 'hidden') {
+    return null;
+  }
+  if (state === 'done') {
+    return (
+      <p className={styles.extended} role="status" data-testid="desk-extended">
+        <Icon name="clock" size={22} />
+        {pl.desk.extended(DEADLINE_EXTENSION_S)}
+      </p>
+    );
+  }
+  return (
+    <div className={styles.extend}>
+      <Button
+        variant="secondary"
+        icon={<Icon name="clock" size={22} />}
+        disabled={state === 'sending'}
+        aria-label={pl.desk.extendLabel(DEADLINE_EXTENSION_S)}
+        data-focused={focused}
+        data-testid="desk-extend"
+        onClick={onExtend}
+      >
+        <span className={styles.extendAmount}>{pl.desk.extendAmount(DEADLINE_EXTENSION_S)}</span>{' '}
+        {pl.desk.extend}
+      </Button>
+    </div>
   );
 }
 

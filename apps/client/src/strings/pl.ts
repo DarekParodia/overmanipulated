@@ -295,6 +295,11 @@ export const pl = {
     speedBonus: 'Premia za tempo',
     missed: 'Zabrakło:',
     unknownStory: 'Nieznana teczka.',
+    /** The managing editor's one deadline extension per level. */
+    extend: 'Przedłuż termin',
+    extendAmount: (s: number) => `+${s}\u00a0s`,
+    extendLabel: (s: number) => `Przedłuż termin o\u00a0${s}\u00a0s`,
+    extended: (s: number) => `Termin +${s}\u00a0s!`,
   },
   minigames: {
     /** Shared by every minigame. */
@@ -573,7 +578,8 @@ export const pl = {
       work: (key: string) => `Trzymaj ${key}`,
       working: 'Trzymaj, sprawdzamy!',
       minigame: 'Rozwiąż zadanie',
-      lockout: 'Stanowisko stoi. Chwilę!',
+      /** Facing a locked station that holds a folder: take the folder elsewhere. */
+      lockout: 'Weź teczkę gdzie indziej',
       toDesk: 'Gotowe – zanieś na stół!',
       openDesk: (key: string) => `Werdykt: trzymaj ${key}`,
       verdict: 'Wybierz werdykt',
@@ -584,6 +590,8 @@ export const pl = {
       label: 'Samouczek',
       step: (n: number, total: number) => `Krok ${n} z ${total}`,
       skip: 'Pomiń samouczek',
+      /** Before the drawn key: „lub Esc”, „lub B B”. */
+      skipOr: 'lub',
       move: {
         keyboard: 'Ruszaj się: WASD',
         gamepad: 'Ruszaj się: lewa gałka',

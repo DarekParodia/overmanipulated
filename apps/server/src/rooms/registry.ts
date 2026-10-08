@@ -558,6 +558,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       folders: Object.values(game.folders),
       stations: Object.values(game.stations),
       desks: Object.values(game.desks),
+      deadlineExtensionUsed: game.deadlineExtensionUsed,
     });
   }
 

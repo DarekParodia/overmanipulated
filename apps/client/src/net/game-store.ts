@@ -13,6 +13,8 @@ export type GameStore = {
   folders: readonly Folder[];
   stations: readonly Station[];
   desks: readonly Desk[];
+  /** The level's one deadline extension has been used. */
+  deadlineExtensionUsed: boolean;
   /** Set when the level ends; cleared when a new level starts. */
   levelEnd: LevelEndMessage | null;
   applySnapshot(snapshot: SnapshotMessage): void;
@@ -29,6 +31,7 @@ const EMPTY = {
   folders: [],
   stations: [],
   desks: [],
+  deadlineExtensionUsed: false,
   levelEnd: null,
 } satisfies Partial<GameStore>;
 
@@ -44,6 +47,7 @@ export const useGame = create<GameStore>((set) => ({
       folders: snapshot.folders,
       stations: snapshot.stations,
       desks: snapshot.desks,
+      deadlineExtensionUsed: snapshot.deadlineExtensionUsed,
     });
   },
   setLevelEnd(message) {
