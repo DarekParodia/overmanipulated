@@ -6,8 +6,23 @@
   box-sizing: border-box;
 }
 
+/*
+ * Text scaling (settings, 1-1.4) multiplies the root size, so every rem layout follows. On
+ * compact landscape screens (phones, 640x360) the HUD and overlays are laid out in rem and
+ * simply run out of room above ~1.15, so the effective scale is capped there (S5-05).
+ */
+:root {
+  --text-scale-max: 1.4;
+}
+
+@media (max-height: 500px) {
+  :root {
+    --text-scale-max: 1.15;
+  }
+}
+
 html {
-  font-size: calc(100% * var(--text-scale));
+  font-size: calc(100% * min(var(--text-scale), var(--text-scale-max)));
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -55,6 +70,14 @@ input {
 :focus-visible {
   outline: 4px solid var(--blue);
   outline-offset: 2px;
+}
+
+/* Gamepad navigation (input/menu-nav.ts): a programmatic focus does not always match
+   :focus-visible after a mouse click, so the pad marks the root and the ring follows :focus. */
+:root[data-pad-nav="true"] :is(button, a, select, [tabindex]):focus,
+:root[data-pad-nav="true"] label:has(input:focus) {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
 }
 
 .visually-hidden {

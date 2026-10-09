@@ -5,6 +5,7 @@ import { initAudio, playSound } from './fx/audio/audio-manager.ts';
 import { feedback } from './fx/feedback.ts';
 import { startGameplayFeedback } from './fx/gameplay-feedback.ts';
 import { vibrate } from './fx/haptics.ts';
+import { useMenuNavigation } from './input/menu-nav.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
 import { Briefing } from './screens/Briefing.tsx';
 import { Loading } from './screens/Loading.tsx';
@@ -22,6 +23,7 @@ const GameScreen = lazy(() =>
 
 export function App() {
   const screen = useApp((s) => s.screen);
+  useMenuNavigation();
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has('styleguide')) {

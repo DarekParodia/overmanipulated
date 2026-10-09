@@ -85,10 +85,19 @@ export function Briefing() {
   // Gamepad (and keyboard while captured): the first press ends the intro, the next is ready.
   useInputCapture(true);
   useNavIntent((intent) => {
+    const focused = document.activeElement;
+    // Focus on another control (leave, settings): the menu navigator moves and presses it.
+    const elsewhere =
+      focused instanceof HTMLButtonElement && !readyButton.current?.contains(focused);
+    if (!intro && (elsewhere || (intent !== 'confirm' && intent !== 'back'))) {
+      return false;
+    }
     if (intent === 'confirm') {
       intro ? finishIntro() : ready();
     } else if (intent === 'back' && intro) {
       finishIntro();
+    } else if (!intro) {
+      return false;
     }
   });
   useEffect(() => {

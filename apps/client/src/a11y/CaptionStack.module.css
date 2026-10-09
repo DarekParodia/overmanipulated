@@ -6,7 +6,7 @@
 .stack {
   position: absolute;
   z-index: 10;
-  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 8.5rem);
+  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 9.75rem);
   left: max(var(--space-3), env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
@@ -91,4 +91,26 @@
   display: flex;
   gap: var(--space-2);
   pointer-events: auto;
+}
+
+/* Compact landscape (phones, 640x360): the HUD pill is taller, so the stack drops lower, shows
+   only the two newest chips and uses smaller ones. */
+@media (max-height: 500px) {
+  .stack {
+    top: calc(max(var(--space-3), env(safe-area-inset-top)) + 11rem);
+    max-width: min(13rem, 34%);
+  }
+
+  .chip:nth-last-child(n + 3) {
+    display: none;
+  }
+
+  .mark {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .text {
+    font-size: var(--text-sm);
+  }
 }
