@@ -292,58 +292,39 @@
   height: 2.1rem;
 }
 
-/* Controls tab: one card per device, the one in use outlined thicker. */
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
-  gap: var(--space-3);
-  align-items: start;
+/* Controls tab: pick a device, read its bindings as one tidy list. */
+.options3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.cards > .note {
-  grid-column: 1 / -1;
-}
-
-.card {
-  display: grid;
+.option {
   gap: var(--space-2);
-  padding: var(--space-3);
+}
+
+.bindings {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
   background: var(--surface-soft);
   border: var(--outline-border);
   border-radius: var(--radius-md);
 }
 
-.cardCurrent {
-  border-width: var(--stroke-bold);
-  background: var(--surface);
-}
-
-.cardTitle {
+.binding {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-lg);
-}
-
-.cardTitle svg {
-  flex: none;
-}
-
-.bindings {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-}
-
-.binding {
-  display: grid;
-  gap: var(--space-1);
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  min-height: var(--touch-target);
   font-weight: 700;
 }
 
 .binding dd {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--space-2);
   margin: 0;
 }
@@ -395,7 +376,19 @@
     font-size: var(--text-xl);
   }
   .stage {
-    height: 8rem;
+    height: 7rem;
+  }
+  .split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+  /* Narrow columns: sliders stack the label over the track. */
+  .split div:has(> input[type="range"]) {
+    grid-template-columns: minmax(0, 1fr) 3.5rem;
+    row-gap: 0;
+  }
+  .split div:has(> input[type="range"]) > label {
+    grid-column: 1 / -1;
   }
 }
 

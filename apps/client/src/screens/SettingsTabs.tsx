@@ -224,36 +224,42 @@ const DEVICES: readonly ControlDevice[] = ['keyboard', 'gamepad', 'touch'];
 
 export function ControlsTab() {
   const current = useApp((s) => s.inputDevice);
+  const [device, setDevice] = useState<ControlDevice>(current);
   return (
-    <div className={styles.cards}>
-      {DEVICES.map((device) => (
-        <section
-          key={device}
-          className={`${styles.card} ${device === current ? styles.cardCurrent : ''}`}
-          aria-labelledby={`controls-${device}`}
-        >
-          <h3 id={`controls-${device}`} className={styles.cardTitle}>
-            <Icon name={DEVICE_ICON[device]} size={24} />
-            {pl.settings.devices[device]}
-          </h3>
-          <dl className={styles.bindings}>
-            {controlRows(device).map((row) => (
-              <div key={row.action} className={styles.binding}>
-                <dt>{pl.settings.actions[row.action]}</dt>
-                <dd>
-                  {row.options.map((caps) => (
-                    <span key={caps.join()} className={styles.caps}>
-                      {caps.map((cap) => (
-                        <KeyCap key={cap}>{cap}</KeyCap>
-                      ))}
-                    </span>
+    <div className={styles.stack}>
+      <div className={styles.choice} role="radiogroup" aria-label={pl.settings.controlsTitle}>
+        <div className={`${styles.options} ${styles.options3}`}>
+          {DEVICES.map((id) => (
+            <label key={id} className={styles.option}>
+              <input
+                className={styles.native}
+                type="radio"
+                name="controls-device"
+                checked={device === id}
+                onChange={() => setDevice(id)}
+              />
+              <Icon name={DEVICE_ICON[id]} size={22} />
+              <span>{pl.settings.devices[id]}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <dl className={styles.bindings} data-testid="controls-help">
+        {controlRows(device).map((row) => (
+          <div key={row.action} className={styles.binding}>
+            <dt>{pl.settings.actions[row.action]}</dt>
+            <dd>
+              {row.options.map((caps) => (
+                <span key={caps.join()} className={styles.caps}>
+                  {caps.map((cap) => (
+                    <KeyCap key={cap}>{cap}</KeyCap>
                   ))}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      ))}
+                </span>
+              ))}
+            </dd>
+          </div>
+        ))}
+      </dl>
       <p className={styles.note}>{pl.settings.controlsMenuNote}</p>
     </div>
   );
