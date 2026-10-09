@@ -3,15 +3,19 @@
 // stories/ that is missing from this registry, or registered under the wrong path.
 import l0Level from '../levels/l0-greybox.json';
 import l1Level from '../levels/l1-burza.json';
+import l3Level from '../levels/l3-afera.json';
 import l0Stories from '../stories/l0-greybox.json';
 import l1Stories from '../stories/l1-burza.json';
+import l3Stories from '../stories/l3-afera.json';
 
 export const LEVEL_FILES: Readonly<Record<string, unknown>> = {
   'levels/l0-greybox.json': l0Level,
   'levels/l1-burza.json': l1Level,
+  'levels/l3-afera.json': l3Level,
 };
 
 export const STORY_FILES: Readonly<Record<string, unknown>> = {
   'stories/l0-greybox.json': l0Stories,
   'stories/l1-burza.json': l1Stories,
+  'stories/l3-afera.json': l3Stories,
 };
