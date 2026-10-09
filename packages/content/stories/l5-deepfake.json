@@ -1,0 +1,869 @@
+[
+  {
+    "id": "l5-nagranie-podatek",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Burmistrz w nagraniu: podatek od psów wzrośnie pięciokrotnie",
+    "body": "Krótkie nagranie audio. Głos burmistrza Wrzoska mówi: „od stycznia pięć razy więcej”. Krąży w komunikatorach.",
+    "source": "Nagranie z komunikatora",
+    "stamps": [
+      {
+        "id": "l5-nagranie-podatek-image",
+        "station": "imageSearch",
+        "text": "Do nagrania dołączono tylko szare tło. Brak obrazu do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-nagranie-podatek-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 94% – głos prawdopodobnie syntetyczny. To tylko prawdopodobieństwo.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-nagranie-podatek-source",
+        "station": "sourceRegistry",
+        "text": "Nadawca nieznany, numer bez historii. Nie da się go powiązać z urzędem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-nagranie-podatek-phone",
+        "station": "phone",
+        "text": "Rzecznik urzędu: „Żadnej podwyżki nie ma, burmistrz nie nagrywał takiego oświadczenia”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-nagranie-podatek-archive",
+        "station": "archive",
+        "text": "W archiwum uchwał brak projektu podwyżki podatku od psów.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-nagranie-podatek-phone", "l5-nagranie-podatek-scanner"],
+    "technique": "deepfake-audio",
+    "debrief": {
+      "what": "Nagranie z głosem burmistrza wygenerowane przez program. Burmistrz niczego takiego nie powiedział.",
+      "technique": "Deepfake audio: model uczy się głosu z publicznych wystąpień i czyta dowolny tekst. Brzmi znajomo, więc budzi zaufanie.",
+      "tool": "Telefon: rzecznik urzędu zaprzeczył. Skaner AI tylko to wsparł – sam o niczym nie przesądza.",
+      "realWorld": "Sklonowane głosy polityków krążą w sieci przed wyborami. Zanim uwierzysz w nagranie, zapytaj osobę lub jej biuro."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-przemowa-na-rynku",
+    "type": "recording",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Burmistrz na rynku: nowy plac zabaw otwarty w sobotę",
+    "body": "Wideo z wystąpienia burmistrza Wrzoska na rynku. Nagrał je mieszkaniec. Pod filmem komentarze: „to chyba sztuczna inteligencja”.",
+    "source": "Film mieszkańca na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l5-przemowa-na-rynku-image",
+        "station": "imageSearch",
+        "text": "Ujęcia zgadzają się z galerią urzędu. Brak wcześniejszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-przemowa-na-rynku-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 62% – możliwa ingerencja. Wynik zawyżony przez kompresję filmu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-przemowa-na-rynku-source",
+        "station": "sourceRegistry",
+        "text": "Konto mieszkańca z 6-letnią historią, zwykle pokazuje lokalne wydarzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-przemowa-na-rynku-phone",
+        "station": "phone",
+        "text": "Urząd potwierdza otwarcie placu zabaw w sobotę, ale nie komentuje filmu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-przemowa-na-rynku-archive",
+        "station": "archive",
+        "text": "Transmisja z rynku zapisana w archiwum telewizji lokalnej. Przemowa zgadza się słowo w słowo.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-przemowa-na-rynku-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe wideo z prawdziwej przemowy. Skaner AI pomylił się przez słabą jakość nagrania.",
+      "technique": "Brak manipulacji. Fałszywy alarm skanera: kompresja i ruch kamery wyglądają dla programu jak ślady generowania.",
+      "tool": "Archiwum: zapis transmisji lokalnej telewizji potwierdził film. Skaner AI to tylko wskazówka z marginesem błędu.",
+      "realWorld": "Wykrywacze AI regularnie błędnie oznaczają prawdziwe zdjęcia i filmy. Liczy się niezależne źródło, nie sam wynik programu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-glosowka-przelew",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Głosówka „od burmistrza”: pilny przelew dla radnych",
+    "body": "Radni dostali wiadomość głosową: „Tu Wrzosek. Wpłaćcie 2000 zł na konto fundacji, oddam jutro”. Głos brzmi jak burmistrza.",
+    "source": "Wiadomość głosowa w komunikatorze",
+    "stamps": [
+      {
+        "id": "l5-glosowka-przelew-image",
+        "station": "imageSearch",
+        "text": "W wiadomości nie ma obrazu ani załączników do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-przelew-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 88% – cechy klonowanego głosu. Margines błędu około 15%.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-glosowka-przelew-source",
+        "station": "sourceRegistry",
+        "text": "Numer nadawcy zarejestrowany tydzień temu na kartę prepaid.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-przelew-phone",
+        "station": "phone",
+        "text": "Sekretariat: „Burmistrz nie prosił o żadne przelewy, jest na komisji”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-glosowka-przelew-archive",
+        "station": "archive",
+        "text": "W rejestrze fundacji brak organizacji o takiej nazwie.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-glosowka-przelew-phone", "l5-glosowka-przelew-scanner"],
+    "technique": "klonowanie-glosu",
+    "debrief": {
+      "what": "Próba wyłudzenia pieniędzy z użyciem sklonowanego głosu burmistrza.",
+      "technique": "Klonowanie głosu: kilkanaście sekund nagrania wystarczy, by program mówił czyimś głosem. Presja czasu ma zablokować sprawdzanie.",
+      "tool": "Telefon: jedno pytanie w sekretariacie rozwiązało sprawę. Skaner AI jedynie podniósł podejrzenie.",
+      "realWorld": "Oszuści podszywają się pod szefów i krewnych sklonowanym głosem i proszą o pilny przelew. Zawsze oddzwoń na znany numer."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-wolne-tempo",
+    "type": "recording",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Burmistrz „pijany” na sesji? Wideo wywołało burzę",
+    "body": "Klip z sesji rady: burmistrz mówi wolno i niewyraźnie. Autor pyta: „Czy tak wygląda ktoś, kto rządzi miastem?”.",
+    "source": "Profil „Prawda o Brzegach”",
+    "stamps": [
+      {
+        "id": "l5-wolne-tempo-image",
+        "station": "imageSearch",
+        "text": "Wyszukiwanie obrazem znalazło oryginał. W klipie spowolniono tempo do 75%.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-wolne-tempo-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 4% – brak śladów generowania. Nagranie jest prawdziwe, tylko zmienione.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-wolne-tempo-source",
+        "station": "sourceRegistry",
+        "text": "Profil anonimowy, publikuje głównie krytykę władz. Bez dowodów nadużyć.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wolne-tempo-phone",
+        "station": "phone",
+        "text": "Biuro prasowe nie odbiera. Prośba o komentarz oczekuje.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wolne-tempo-archive",
+        "station": "archive",
+        "text": "Archiwum sesji ma pełny zapis w normalnym tempie. Burmistrz mówił spokojnie.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-wolne-tempo-image", "l5-wolne-tempo-archive"],
+    "technique": "tania-podrobka-spowolnienie",
+    "debrief": {
+      "what": "Prawdziwy film z sesji rady, ale spowolniony, by burmistrz sprawiał wrażenie pijanego.",
+      "technique": "Tania podróbka: prosty montaż zamiast sztucznej inteligencji. Zmiana tempa lub wycięcie fragmentu zmienia sens autentycznego nagrania.",
+      "tool": "Lupa obrazu i Archiwum: porównanie z oryginałem. Skaner AI nic nie wykrył, bo nagranie nie jest wygenerowane.",
+      "realWorld": "Spowolnione filmy z politykami krążyły wielokrotnie w różnych krajach. Najprostsza edycja bywa skuteczniejsza niż deepfake."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-wyciety-cytat",
+    "type": "quote",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Burmistrz: „Nie obchodzą mnie problemy mieszkańców”",
+    "body": "Krótki klip z wypowiedzią burmistrza. Zdanie ucięto w połowie. Kilka tysięcy udostępnień w godzinę.",
+    "source": "Konto „Nowe Brzegi Bez Cenzury”",
+    "stamps": [
+      {
+        "id": "l5-wyciety-cytat-image",
+        "station": "imageSearch",
+        "text": "Klip nie ma wcześniejszych kopii w tym kształcie. Źródło to dłuższe wideo.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wyciety-cytat-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 6% – głos autentyczny. Skaner nie wykrywa przycięcia.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-wyciety-cytat-source",
+        "station": "sourceRegistry",
+        "text": "Konto bez podpisanej redakcji, publikuje anonimowo.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wyciety-cytat-phone",
+        "station": "phone",
+        "text": "Biuro burmistrza prosi o kontakt mailowy. Odpowiedź za godzinę.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wyciety-cytat-archive",
+        "station": "archive",
+        "text": "Pełny zapis: „Nie obchodzą mnie plotki – obchodzą mnie problemy mieszkańców”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-wyciety-cytat-archive"],
+    "technique": "tania-podrobka-wyciecie",
+    "debrief": {
+      "what": "Prawdziwa wypowiedź, ale wycięta tak, że znaczy coś odwrotnego.",
+      "technique": "Tania podróbka przez wycięcie: zdanie jest autentyczne, brakuje kontekstu. Nie trzeba żadnej sztucznej inteligencji.",
+      "tool": "Archiwum: pełny zapis wystąpienia. Skaner AI uznał głos za prawdziwy – i słusznie, ale to nie rozstrzyga sprawy.",
+      "realWorld": "Cytaty urwane w połowie zdania to klasyczna manipulacja. Zawsze szukaj pełnej wersji wypowiedzi."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-burmistrz-na-jachcie",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Burmistrz na luksusowym jachcie podczas powodzi?",
+    "body": "Zdjęcie: burmistrz Wrzosek z kieliszkiem na pokładzie jachtu. Podpis: „Gdy miasto tonie, on odpoczywa”.",
+    "source": "Anonimowy post na forum",
+    "stamps": [
+      {
+        "id": "l5-burmistrz-na-jachcie-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych publikacji tego kadru. Oryginału nie znaleziono.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-na-jachcie-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 91% – obraz prawdopodobnie wygenerowany. Szacunek, nie dowód.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-burmistrz-na-jachcie-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone wczoraj, brak innych wpisów. Nie da się wskazać autora.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-burmistrz-na-jachcie-phone",
+        "station": "phone",
+        "text": "Urząd: burmistrz jest w pracy. Nie komentuje anonimowych wpisów.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-na-jachcie-archive",
+        "station": "archive",
+        "text": "W archiwum zdjęć urzędu brak takiej sesji.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-burmistrz-na-jachcie-source", "l5-burmistrz-na-jachcie-scanner"],
+    "technique": "obraz-wygenerowany-ai",
+    "debrief": {
+      "what": "Obraz wygenerowany przez program. Na zdjęciu widać dziwne dłonie i zniekształcone napisy na burcie.",
+      "technique": "Obraz AI: realistyczna scena, której nigdy nie było. Zwróć uwagę na dłonie, napisy, tło i brak źródła.",
+      "tool": "Kartoteka źródeł: świeże, puste konto bez historii. Skaner AI tylko potwierdził to przeczucie.",
+      "realWorld": "Wygenerowane „zdjęcia” polityków w kompromitujących sytuacjach pojawiają się przy każdej kampanii. Pytanie: kto je zrobił i gdzie?"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-przecinanie-wstegi",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Burmistrz przecina wstęgę na nowym moście",
+    "body": "Zdjęcie otwarcia mostu na Brzeżance. Skaner pokazał 78% „AI”, a komentarze żądają usunięcia.",
+    "source": "Fotoreporterka Gazety Nowobrzeskiej",
+    "stamps": [
+      {
+        "id": "l5-przecinanie-wstegi-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie jest w galerii urzędu, z danymi aparatu i godziną. Brak starszych kopii.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-przecinanie-wstegi-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 78% – obraz wygląda na wygenerowany. Gładkie tło mylnie wzięto za ślad AI.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-przecinanie-wstegi-source",
+        "station": "sourceRegistry",
+        "text": "Autorka to akredytowana fotoreporterka, publikuje od lat.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-przecinanie-wstegi-phone",
+        "station": "phone",
+        "text": "Urząd potwierdza otwarcie mostu w tym tygodniu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-przecinanie-wstegi-archive",
+        "station": "archive",
+        "text": "Archiwum zdjęć lokalnych ma podobne ujęcia z próbnego przejazdu.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-przecinanie-wstegi-image"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie z otwarcia mostu. Skaner AI błędnie je oznaczył.",
+      "technique": "Brak manipulacji. Fałszywy alarm: wygładzone tło i światło lampy błyskowej bywają brane za ślad generowania.",
+      "tool": "Lupa obrazu: pochodzenie i dane techniczne zdjęcia. Wynik skanera to nie dowód – może się mylić w obie strony.",
+      "realWorld": "Prawdziwe zdjęcia bywają oskarżane o „AI”, by zdyskredytować niewygodne wydarzenia. Szukaj źródła, nie wierz ślepo programowi."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-wideo-ewakuacja",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Wideo: burmistrz ogłasza ewakuację szkół",
+    "body": "Film: burmistrz Wrzosek w ratuszu mówi: „Natychmiast ewakuujcie szkoły”. Rodzice dostają powiadomienia.",
+    "source": "Konto „Alarm Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l5-wideo-ewakuacja-image",
+        "station": "imageSearch",
+        "text": "Tło to ratusz, ale ujęcie nie pasuje do żadnego oficjalnego nagrania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wideo-ewakuacja-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 83% – ślady podmiany twarzy. Wynik z marginesem błędu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-wideo-ewakuacja-source",
+        "station": "sourceRegistry",
+        "text": "Konto anonimowe, pierwszy wpis z dzisiaj.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wideo-ewakuacja-phone",
+        "station": "phone",
+        "text": "Dyspozytor kryzysowy: „Żadnego alarmu nie ogłaszaliśmy. To fałszywka”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-wideo-ewakuacja-archive",
+        "station": "archive",
+        "text": "W archiwum komunikatów brak takiej decyzji.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-wideo-ewakuacja-phone", "l5-wideo-ewakuacja-scanner"],
+    "technique": "deepfake-wideo",
+    "debrief": {
+      "what": "Deepfake: twarz i głos burmistrza nałożono na inne nagranie.",
+      "technique": "Deepfake wideo: program podmienia twarz i dopasowuje ruch ust. Pilny alarm wywołuje panikę, zanim ktoś sprawdzi.",
+      "tool": "Telefon: dyspozytor kryzysowy zaprzeczył. Skaner AI tylko to wsparł.",
+      "realWorld": "Fałszywe alarmy z udziałem znanych osób to groźna broń w kryzysie. Najpierw potwierdź w służbach, potem publikuj."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-komunikat-budzet",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Budżet miasta: 3 mln zł na remont szkół",
+    "body": "Burmistrz w nagraniu zapowiada przeznaczenie trzech milionów na remonty szkół. Nagranie przesłał urząd.",
+    "source": "Profil „Urząd Miasta Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l5-komunikat-budzet-image",
+        "station": "imageSearch",
+        "text": "Grafika z wykresem jest oryginalna, bez wcześniejszych publikacji.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-komunikat-budzet-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 11% – głos prawdopodobnie prawdziwy. Wynik niski, nie przesądza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-komunikat-budzet-source",
+        "station": "sourceRegistry",
+        "text": "Profil zweryfikowany, prowadzony od 9 lat, ta sama informacja na stronie urzędu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-komunikat-budzet-phone",
+        "station": "phone",
+        "text": "Rzecznik potwierdza kwotę i termin remontów.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-komunikat-budzet-archive",
+        "station": "archive",
+        "text": "Uchwała budżetowa zgadza się z kwotą z nagrania.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-komunikat-budzet-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy komunikat urzędu, potwierdzony uchwałą budżetową.",
+      "technique": "Brak manipulacji. Prawdziwe nagrania też trzeba szybko publikować.",
+      "tool": "Kartoteka źródeł: oficjalny, zweryfikowany profil i ta sama treść na stronie urzędu.",
+      "realWorld": "Oficjalne komunikaty publikują urzędy w kilku miejscach naraz. Zgodność kanałów to dobry znak."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-zdjecie-sprzed-lat",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Burmistrz ściska rękę inwestora od składowiska",
+    "body": "Zdjęcie: burmistrz z biznesmenem. Podpis: „Wczoraj w ratuszu – sprawa składowiska załatwiona”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l5-zdjecie-sprzed-lat-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie pochodzi z 2018 r., z otwarcia hali sportowej. Podpis jest nieprawdziwy.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-zdjecie-sprzed-lat-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 3% – prawdziwe zdjęcie. Wynik nic nie mówi o dacie i podpisie.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-zdjecie-sprzed-lat-source",
+        "station": "sourceRegistry",
+        "text": "Konto prywatne, aktywne od 3 lat, ostatnio dużo wpisów krytycznych.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-zdjecie-sprzed-lat-phone",
+        "station": "phone",
+        "text": "Urząd: burmistrz spotkał się z inwestorem, ale w innej sprawie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-zdjecie-sprzed-lat-archive",
+        "station": "archive",
+        "text": "Archiwum fotografii: ujęcie z otwarcia hali, publikowane w prasie lokalnej.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-zdjecie-sprzed-lat-image", "l5-zdjecie-sprzed-lat-archive"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Autentyczne zdjęcie sprzed lat, ale z fałszywym podpisem sugerującym tajną umowę.",
+      "technique": "Stare zdjęcie z nowym podpisem: obraz jest prawdziwy, kłamstwo siedzi w opisie.",
+      "tool": "Lupa obrazu i Archiwum: starsze publikacje tego zdjęcia. Skaner AI przy prawdziwym zdjęciu milczy.",
+      "realWorld": "Prawdziwe zdjęcia z nowym podpisem to jedna z najczęstszych metod dezinformacji. Sprawdź datę i miejsce."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-glosowka-radnej",
+    "type": "recording",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Radna na nagraniu: „Za pieniądze zagłosuję za parkingiem”",
+    "body": "Nagranie rozmowy: głos radnej Zielińskiej oferuje głos za pieniądze. Nagranie bez daty, jakość słaba.",
+    "source": "Anonimowy link w komunikatorze",
+    "stamps": [
+      {
+        "id": "l5-glosowka-radnej-image",
+        "station": "imageSearch",
+        "text": "Do nagrania nie dołączono żadnego obrazu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-radnej-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 51% – wynik niejednoznaczny. Słaba jakość utrudnia ocenę.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-glosowka-radnej-source",
+        "station": "sourceRegistry",
+        "text": "Nadawca nieznany, link przekierowuje przez kilka stron.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-radnej-phone",
+        "station": "phone",
+        "text": "Radna: „Nigdy tego nie powiedziałam, w tym dniu byłam na urlopie”. Przedstawiła bilety.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-glosowka-radnej-archive",
+        "station": "archive",
+        "text": "Protokoły rady: radna zawsze głosowała zgodnie ze swoim klubem.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-glosowka-radnej-phone"],
+    "technique": "klonowanie-glosu",
+    "debrief": {
+      "what": "Fałszywe nagranie ze sklonowanym głosem radnej. Skaner AI nie dał jednoznacznej odpowiedzi.",
+      "technique": "Klonowanie głosu z pogorszoną jakością: szum maskuje ślady sztucznego głosu i utrudnia wykrycie.",
+      "tool": "Telefon: rozmowa z radną i dowód, że nie było jej w mieście. Skaner AI przy słabym nagraniu jest bezradny.",
+      "realWorld": "Szkodzące nagrania z „przyłapanymi” urzędnikami bywają fałszywe. Źródło i druga strona rozstrzygają, nie sam dźwięk."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-parodia-rap",
+    "type": "recording",
+    "priority": "normal",
+    "truth": "satire",
+    "correctVerdict": "publishWithContext",
+    "headline": "Burmistrz Wrzosek rapuje o korkach – hit sieci!",
+    "body": "Wideo: „burmistrz” rapuje o objazdach. Filmik ma 40 tysięcy wyświetleń i wiele komentarzy: „serio?”.",
+    "source": "Kanał „Brzegi na Wesoło”",
+    "stamps": [
+      {
+        "id": "l5-parodia-rap-image",
+        "station": "imageSearch",
+        "text": "Oryginał to nagranie z kanału satyrycznego, brak starszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-parodia-rap-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 99% – głos i twarz syntetyczne. Zgodne z opisem kanału.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-parodia-rap-source",
+        "station": "sourceRegistry",
+        "text": "Kanał satyryczny z opisem: „Wszystkie nagrania są parodią”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-parodia-rap-phone",
+        "station": "phone",
+        "text": "Urząd: „Zauważyliśmy, bawimy się dobrze, ale to nie nasze”.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-parodia-rap-archive",
+        "station": "archive",
+        "text": "W archiwum brak takiego wystąpienia burmistrza.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-parodia-rap-source", "l5-parodia-rap-scanner"],
+    "technique": "satyra",
+    "debrief": {
+      "what": "Satyryczny filmik z wygenerowanym burmistrzem. Autor jawnie nazywa go parodią.",
+      "technique": "Satyra wygenerowana przez AI: nie chce oszukać, ale poza kontekstem łatwo wziąć ją na serio.",
+      "tool": "Kartoteka źródeł: opis kanału zdradza satyrę. Skaner AI potwierdził syntetyczny charakter nagrania.",
+      "realWorld": "Satyryczne filmy z podmienionymi twarzami krążą bez oznaczeń i bywają brane za prawdę. Dodaj kontekst, że to parodia."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-tlum-na-wiecu",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Rekordowy wiec: 5000 osób na rynku w Nowych Brzegach",
+    "body": "Zdjęcie ogromnego tłumu na rynku. Podpis: „Mieszkańcy poparli burmistrza jak nigdy dotąd”.",
+    "source": "Profil „Wspieramy Wrzoska”",
+    "stamps": [
+      {
+        "id": "l5-tlum-na-wiecu-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych publikacji. Kadr nie pasuje do widoku rynku.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-tlum-na-wiecu-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 74% – prawdopodobnie wygenerowany. Margines błędu 20%.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-tlum-na-wiecu-source",
+        "station": "sourceRegistry",
+        "text": "Profil kampanijny, bez dowodów na wydarzenie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-tlum-na-wiecu-phone",
+        "station": "phone",
+        "text": "Policja: zgromadzenie liczyło około 120 osób.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-tlum-na-wiecu-archive",
+        "station": "archive",
+        "text": "Plan rynku: mieści 1200 osób. Zdjęcia lokalnej prasy z wiecu pokazują niewielką grupę.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-tlum-na-wiecu-archive"],
+    "technique": "obraz-wygenerowany-ai",
+    "debrief": {
+      "what": "Wygenerowany obraz tłumu. Wiec był kameralny, ok. 120 osób.",
+      "technique": "Obraz AI jako dowód poparcia: powtarzalne twarze i dziwne dłonie zdradzają generator, ale nie zawsze.",
+      "tool": "Archiwum: plan rynku i prasowe zdjęcia z wiecu. Skaner AI to tylko jeden z sygnałów.",
+      "realWorld": "Sztuczne tłumy i sztuczne poparcie to powtarzalny trik kampanii. Porównuj z niezależnymi zdjęciami i liczbami."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-wywiad-radio",
+    "type": "recording",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Burmistrz w radiu: remont ulicy Lipowej do września",
+    "body": "Fragment audycji lokalnego radia. Burmistrz zapewnia, że ulica Lipowa będzie gotowa do końca września.",
+    "source": "Radio Brzeg FM, fragment w sieci",
+    "stamps": [
+      {
+        "id": "l5-wywiad-radio-image",
+        "station": "imageSearch",
+        "text": "Nagranie opatrzone logo radia, brak oryginalnego obrazu do porównania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-radio-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 8% – brak śladów syntezy. Wynik nie przesądza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-radio-source",
+        "station": "sourceRegistry",
+        "text": "Konto rozgłośni zweryfikowane, ten sam fragment na stronie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-radio-phone",
+        "station": "phone",
+        "text": "Redaktor audycji potwierdza: wywiad nagrano w czwartek, całość dostępna.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-wywiad-radio-archive",
+        "station": "archive",
+        "text": "Plan inwestycji zgadza się z terminem września.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-wywiad-radio-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy fragment wywiadu radiowego, potwierdzony przez redakcję.",
+      "technique": "Brak manipulacji. Prawdziwe zapowiedzi też trzeba szybko publikować.",
+      "tool": "Telefon: redaktor prowadzący potwierdził wywiad. Skaner AI nic nie wykrył, ale to nie dowód.",
+      "realWorld": "Najprostszy sposób na sprawdzenie nagrania z audycji: zapytać redakcję, która ją nadała."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-wideo-obietnica",
+    "type": "recording",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Burmistrz: darmowe bilety dla seniorów od września",
+    "body": "Wideo z konferencji prasowej: burmistrz zapowiada darmowe bilety komunikacji miejskiej dla seniorów.",
+    "source": "Konferencja prasowa, wideo urzędu",
+    "stamps": [
+      {
+        "id": "l5-wideo-obietnica-image",
+        "station": "imageSearch",
+        "text": "Ujęcia zgadzają się z galerią konferencji. Brak starszych kopii.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-wideo-obietnica-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 67% – możliwa ingerencja. Wynik pogorszony przez kompresję.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-wideo-obietnica-source",
+        "station": "sourceRegistry",
+        "text": "Profil urzędu zweryfikowany, ta sama informacja w komunikacie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wideo-obietnica-phone",
+        "station": "phone",
+        "text": "Rzecznik potwierdza zapowiedź, ale termin zależy od uchwały.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wideo-obietnica-archive",
+        "station": "archive",
+        "text": "Uchwała w przygotowaniu zgodnie z zapowiedzią.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-wideo-obietnica-image"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa zapowiedź burmistrza z konferencji prasowej. Skaner AI dał wynik niepewny.",
+      "technique": "Brak manipulacji. Kolejny przykład fałszywego alarmu wykrywacza.",
+      "tool": "Lupa obrazu: zgodność z oficjalną galerią. Nie ufaj ślepo wynikom skanera – ma margines błędu.",
+      "realWorld": "Narzędzia do wykrywania AI nie są pewne. Najlepszy dowód to niezależne potwierdzenie z kilku źródeł."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-boss-obwodnica",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Burmistrz: obwodnica otwarta w sobotę o 10:00",
+    "body": "Oficjalne wideo burmistrza z zaproszeniem na otwarcie obwodnicy. Szef: „Publikować natychmiast!”.",
+    "source": "Profil „Urząd Miasta Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l5-boss-obwodnica-image",
+        "station": "imageSearch",
+        "text": "Wideo zgodne z galerią urzędu, bez wcześniejszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-obwodnica-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 9% – brak śladów syntezy. Nie przesądza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-obwodnica-source",
+        "station": "sourceRegistry",
+        "text": "Profil zweryfikowany, ta sama informacja na stronie urzędu i w ogłoszeniach.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-boss-obwodnica-phone",
+        "station": "phone",
+        "text": "Rzecznik potwierdza datę otwarcia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-obwodnica-archive",
+        "station": "archive",
+        "text": "Zgoda na użytkowanie obwodnicy jest w rejestrze decyzji.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-boss-obwodnica-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe zaproszenie na otwarcie obwodnicy. Szef miał rację – to warto publikować od razu.",
+      "technique": "Brak manipulacji. Nacisk szefa nie zawsze oznacza pułapkę.",
+      "tool": "Kartoteka źródeł: zweryfikowany profil i zgodność informacji z oficjalną stroną.",
+      "realWorld": "Pośpiech bywa uzasadniony, gdy źródło jest wiarygodne. Szybka weryfikacja źródła zajmuje chwilę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-boss-dymisja",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Nagranie: burmistrz odwołuje komendanta straży",
+    "body": "Audio: głos burmistrza ogłasza dymisję komendanta straży miejskiej. Szef: „To hit, publikujcie natychmiast!”.",
+    "source": "Nagranie z anonimowej skrzynki",
+    "stamps": [
+      {
+        "id": "l5-boss-dymisja-image",
+        "station": "imageSearch",
+        "text": "Do nagrania dołączono tylko zdjęcie komendanta z oficjalnej strony.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-dymisja-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 90% – głos syntetyczny. Margines błędu około 10%.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-boss-dymisja-source",
+        "station": "sourceRegistry",
+        "text": "Nadawca bez historii, adres założony dziś rano.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-dymisja-phone",
+        "station": "phone",
+        "text": "Komendant: „Nikt mnie nie odwołał, jestem w pracy”. Urząd zaprzecza.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-boss-dymisja-archive",
+        "station": "archive",
+        "text": "W rejestrze zarządzeń brak dymisji komendanta.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-boss-dymisja-phone", "l5-boss-dymisja-scanner"],
+    "technique": "deepfake-audio",
+    "debrief": {
+      "what": "Fałszywe nagranie ze sklonowanym głosem burmistrza. Posłuchanie szefa oznaczało publikację fałszywki.",
+      "technique": "Deepfake audio z presją czasu: „publikujcie natychmiast” to dokładnie to, na co liczą twórcy fałszywek.",
+      "tool": "Telefon: komendant i urząd zaprzeczyli. Skaner AI tylko wsparł podejrzenie.",
+      "realWorld": "Nacisk szefa lub tłumu na pośpiech to sygnał do ostrożności, nie do rezygnacji ze sprawdzenia."
+    },
+    "reviewed": false
+  }
+]
