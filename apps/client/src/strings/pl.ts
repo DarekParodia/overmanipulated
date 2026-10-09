@@ -547,6 +547,39 @@ export const pl = {
         'Dziennik „Kurier Nowobrzeski”',
       ],
     },
+    aiScanner: {
+      task: 'Odczytaj skaner',
+      reading: (percent: number, margin: number) => `${percent}\u00a0% ± ${margin}\u00a0%`,
+      readingLabel: (percent: number, margin: number) =>
+        `Skaner: ${percent} procent, błąd plus minus ${margin} procent`,
+      human: 'prawdziwe',
+      machine: 'AI',
+      margin: 'margines błędu',
+      answers: { real: 'Raczej prawdziwe', unsure: 'Nie wiem', ai: 'Raczej AI' },
+      done: {
+        ambiguous: 'Zakres obejmuje 50\u00a0%: „Nie wiem” trafia',
+        clearAi: 'Cały zakres po stronie AI',
+        clearReal: 'Cały zakres po stronie prawdy',
+      },
+      failed: {
+        ambiguous: 'Margines sięga 50\u00a0%: skaner nie rozstrzyga',
+        clearAi: 'Cały zakres był po stronie AI',
+        clearReal: 'Cały zakres był po stronie prawdy',
+      },
+      success: 'Dobry odczyt!',
+      failure: 'Zły odczyt',
+      keys: {
+        keyboard: [
+          { keys: ['A', 'D'], label: 'wybierz' },
+          { keys: ['E'], label: 'potwierdź' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
+    },
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
   pings: {
