@@ -668,7 +668,9 @@ def main():
                 ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav_path), "-ac", "1", *args, str(OUT_AUDIO / f"sfx.{ext}")],
                 check=True,
             )
-    OUT_JSON.write_text(json.dumps(sprite, indent=2) + "\n")
+    # One line per sound, as Biome formats it (so `bun run format` leaves the file alone).
+    lines = [f"  {json.dumps(k)}: {json.dumps(v)}" for k, v in sprite.items()]
+    OUT_JSON.write_text("{\n" + ",\n".join(lines) + "\n}\n")
     print(f"wrote {len(sprite)} sounds, {cursor:.1f} s", file=sys.stderr)
 
 

@@ -1,12 +1,15 @@
-// Howler-based audio: one sprite for all placeholder SFX, buses with settings-driven volume,
-// stereo pan, mobile autoplay unlock and mute while the tab is hidden. Also runs the newsroom
-// ambience during play: the room-tone loop plus random distant one-shots (ambience.ts).
+// Howler-based audio: one sprite for all SFX, buses with settings-driven volume, a limiter on the
+// output bus, stereo pan, mobile autoplay unlock and mute while the tab is hidden. Also runs the
+// newsroom ambience during play: the room-tone loop, the voice-less chatter bed and random distant
+// one-shots (ambience.ts, mix.ts). Big stingers dip the music (duck.ts).
 import { Howl, Howler } from 'howler';
 import { selectOperatedDesk, selectOperatedStation, useGame } from '../../net/game-store.ts';
 import { useApp } from '../../store/app.ts';
 import { type Settings, useSettings } from '../../store/settings.ts';
 import { type AudioBus, cues } from '../cues.ts';
 import { createAmbience } from './ambience.ts';
+import { DUCKING_SOUNDS, musicDucker } from './duck.ts';
+import { BUS_TRIM, chatterVolume, LIMITER } from './mix.ts';
 import sprite from './sfx-sprite.json';
 
 type SpriteMap = Record<string, [number, number, boolean]>;
@@ -16,12 +19,46 @@ export const soundIds: ReadonlySet<string> = new Set(Object.keys(spriteMap));
 
 let sfx: Howl | null = null;
 let ambienceId: number | null = null;
+let chatterId: number | null = null;
+let limiterInstalled = false;
 
 /** Effective volume of a bus (master × bus level), before global mute. */
 export function busVolume(settings: Settings, bus: AudioBus): number {
   const busLevel =
     bus === 'ui' ? settings.uiVolume : bus === 'music' ? settings.musicVolume : settings.sfxVolume;
-  return settings.masterVolume * busLevel;
+  return settings.masterVolume * busLevel * BUS_TRIM[bus];
+}
+
+/**
+ * Puts a limiter (a fast DynamicsCompressor) between Howler's gain stage and the speakers, so
+ * stacked stingers and the music never clip. Safe to call repeatedly; call after the first Howl
+ * exists (that is when Howler creates its audio context).
+ */
+export function installMasterLimiter(): void {
+  const ctx = Howler.ctx;
+  const gainStage = Howler.masterGain;
+  if (limiterInstalled || !Howler.usingWebAudio || !ctx || !gainStage) {
+    return;
+  }
+  limiterInstalled = true;
+  try {
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = LIMITER.thresholdDb;
+    limiter.knee.value = LIMITER.kneeDb;
+    limiter.ratio.value = LIMITER.ratio;
+    limiter.attack.value = LIMITER.attackS;
+    limiter.release.value = LIMITER.releaseS;
+    gainStage.disconnect();
+    gainStage.connect(limiter);
+    limiter.connect(ctx.destination);
+  } catch {
+    // Without a limiter the audio still plays: reconnect straight to the output.
+    try {
+      gainStage.connect(ctx.destination);
+    } catch {
+      // Already connected.
+    }
+  }
 }
 
 function load(): Howl {
@@ -35,6 +72,7 @@ function load(): Howl {
       sprite: howlSprite,
       preload: true,
     });
+    installMasterLimiter();
   }
   return sfx;
 }
@@ -51,6 +89,10 @@ export function playSound(
     return;
   }
   const howl = load();
+  const duckMs = DUCKING_SOUNDS[id];
+  if (duckMs !== undefined && !useSettings.getState().muted) {
+    musicDucker.request(performance.now(), duckMs);
+  }
   const playId = playOn(howl, id, bus, volume);
   if (rateJitter > 0) {
     howl.rate(1 + (Math.random() * 2 - 1) * rateJitter, playId);
@@ -94,6 +136,10 @@ function applyRoomTone(settings: Settings): void {
   if (sfx && ambienceId !== null) {
     sfx.volume(busVolume(settings, 'sfx') * ROOMTONE_LEVEL * bedGain, ambienceId);
   }
+  if (sfx && chatterId !== null) {
+    // chatterVolume applies master × sfx volume, the ducking and the reduced-audio rule.
+    sfx.volume(Math.min(1, chatterVolume(settings, bedGain) * BUS_TRIM.sfx), chatterId);
+  }
 }
 
 const ambience = createAmbience({
@@ -131,6 +177,7 @@ export function startAmbience(): void {
   }
   bedGain = 1;
   ambienceId = howl.play('roomtone');
+  chatterId = howl.play('ambchatter');
   applyRoomTone(useSettings.getState());
   ambience.reset(performance.now());
   ambienceTimer = setInterval(
@@ -143,7 +190,11 @@ export function stopAmbience(): void {
   if (sfx && ambienceId !== null) {
     sfx.stop(ambienceId);
   }
+  if (sfx && chatterId !== null) {
+    sfx.stop(chatterId);
+  }
   ambienceId = null;
+  chatterId = null;
   if (ambienceTimer !== null) {
     clearInterval(ambienceTimer);
     ambienceTimer = null;
