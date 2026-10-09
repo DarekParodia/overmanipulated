@@ -130,6 +130,10 @@ export const levelSchema = z
     title: text(60),
     /** Editorial briefing shown before the level: topic of the day, new mechanics. */
     briefing: text(400),
+    /** Topic of the day for the briefing card („Burza nad miastem”). */
+    topic: text(40).optional(),
+    /** Up to 3 short lines shown on the briefing card instead of a long `briefing` text. */
+    briefingPoints: z.array(text(60)).min(1).max(3).optional(),
     durationS: z.number().int().positive(),
     /** Tile layout; legend in packages/shared/src/sim/map.ts. */
     layout: z.array(z.string().min(1)).min(3),

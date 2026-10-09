@@ -9,8 +9,9 @@ function frameWith(events: GameEvent[]): SimFrame {
   return { ctx: testContext(), intents: {}, commands: [], events };
 }
 
-const expired = (folderId: string, storyId: string): GameEvent => ({
+const expired = (folderId: string, storyId: string, stamps: string[] = []): GameEvent => ({
   kind: 'folderExpired',
+  stamps,
   folderId,
   storyId,
 });

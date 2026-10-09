@@ -56,7 +56,7 @@ export function stepScoring(state: GameState, frame: SimFrame): GameState {
       verdict: null,
       scoreDelta,
       credibilityDelta,
-      missedStampIds: [...(story?.justifyingStamps ?? [])],
+      missedStampIds: (story?.justifyingStamps ?? []).filter((id) => !event.stamps.includes(id)),
     });
   }
 

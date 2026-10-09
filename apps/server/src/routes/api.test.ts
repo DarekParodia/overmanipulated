@@ -3,6 +3,7 @@ import { PROTOCOL_VERSION } from '@redakcja/shared';
 import { createFakeHub } from '../__fixtures__/fake-transport.ts';
 import { createApp } from '../app.ts';
 import { openDatabase } from '../db/client.ts';
+import { recordBlunderVote } from '../db/queries/blunder-votes.ts';
 import { insertLeaderboardEntry } from '../db/queries/leaderboard.ts';
 import { createRoomRegistry } from '../rooms/registry.ts';
 
@@ -56,6 +57,30 @@ describe('REST routes', () => {
     const { app } = setup();
     expect((await app.request('/api/leaderboard?mode=cheat')).status).toBe(400);
     expect((await app.request('/api/leaderboard?mode=endless&limit=500')).status).toBe(400);
+  });
+
+  it('GET /api/stats/blunders returns vote counts per story for a level', async () => {
+    const { app, db } = setup();
+    for (const storyId of ['s1', 's2', 's2']) {
+      recordBlunderVote(db, { levelId: 'l1-sygnal', storyId, previousId: null });
+    }
+    recordBlunderVote(db, { levelId: 'l0-greybox', storyId: 's1', previousId: null });
+    const res = await app.request('/api/stats/blunders?levelId=l1-sygnal');
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      levelId: 'l1-sygnal',
+      stories: [
+        { storyId: 's2', votes: 2 },
+        { storyId: 's1', votes: 1 },
+      ],
+    });
+  });
+
+  it('GET /api/stats/blunders requires a level id', async () => {
+    const { app } = setup();
+    expect((await app.request('/api/stats/blunders')).status).toBe(400);
+    expect((await app.request('/api/stats/blunders?levelId=')).status).toBe(400);
+    expect((await app.request(`/api/stats/blunders?levelId=${'x'.repeat(65)}`)).status).toBe(400);
   });
 
   it('returns 404 for unknown routes', async () => {

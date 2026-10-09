@@ -1,6 +1,7 @@
 // Lobby and level lifecycle: ready gate, ready resets, roles, results phase and replay.
 import { beforeEach, describe, expect, it } from 'bun:test';
 import {
+  BRIEFING_DURATION_MS,
   type FolderResult,
   type LobbyAction,
   PROTOCOL_VERSION,
@@ -81,6 +82,15 @@ function ready(connection: FakeConnection, value = true): void {
   lobby(connection, { kind: 'setReady', ready: value });
 }
 
+/** Start as `connection`; if the room enters the briefing, let its timer run out. */
+function start(connection: FakeConnection): void {
+  lobby(connection, { kind: 'start' });
+  if (phaseOf(connection) === 'briefing') {
+    time += BRIEFING_DURATION_MS;
+    registry.tick();
+  }
+}
+
 function phaseOf(connection: FakeConnection) {
   return registry.inspect(welcomeOf(connection).roomCode)?.phase;
 }
@@ -102,7 +112,7 @@ function playToResults(host: FakeConnection, ...guests: FakeConnection[]): void 
   for (const guest of guests) {
     ready(guest);
   }
-  lobby(host, { kind: 'start' });
+  start(host);
   expect(phaseOf(host)).toBe('playing');
   endNextTick = true;
   registry.tick();
@@ -112,7 +122,7 @@ describe('ready gate', () => {
   it('refuses to start while a connected guest is not ready', () => {
     const { host, b } = threePlayerRoom();
     ready(b);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(host.last('error')).toMatchObject({ code: 'notReady' });
     expect(host.last('error')?.detail).toContain('Celina');
     expect(phaseOf(host)).toBe('lobby');
@@ -122,7 +132,7 @@ describe('ready gate', () => {
     const { host, b, c } = threePlayerRoom();
     ready(b);
     ready(c);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(host.last('error')).toBeUndefined();
     expect(phaseOf(host)).toBe('playing');
     for (const connection of [host, b, c]) {
@@ -133,7 +143,7 @@ describe('ready gate', () => {
 
   it('lets a solo host start without anyone else', () => {
     const host = join('Ala');
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(phaseOf(host)).toBe('playing');
   });
 
@@ -141,7 +151,7 @@ describe('ready gate', () => {
     const { host, b, c } = threePlayerRoom();
     ready(b);
     registry.handleDisconnect(c, false);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(phaseOf(host)).toBe('playing');
     // The disconnected player still holds a slot in the level and can come back into it.
     const game = registry.inspect(welcomeOf(host).roomCode)?.game;
@@ -153,7 +163,7 @@ describe('ready gate', () => {
     ready(b);
     ready(c);
     ready(c, false);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(host.last('error')?.code).toBe('notReady');
   });
 
@@ -161,10 +171,10 @@ describe('ready gate', () => {
     const { host, b, c } = threePlayerRoom();
     registry.handleDisconnect(host, true);
     expect(b.last('roomState')?.hostId).toBe(welcomeOf(b).playerId);
-    lobby(b, { kind: 'start' });
+    start(b);
     expect(b.last('error')?.code).toBe('notReady');
     ready(c);
-    lobby(b, { kind: 'start' });
+    start(b);
     expect(phaseOf(b)).toBe('playing');
   });
 });
@@ -176,7 +186,7 @@ describe('ready resets', () => {
     ready(b);
     const c = join('Celina', welcomeOf(host).roomCode);
     expect(c.last('roomState')?.players.map((p) => p.ready)).toEqual([false, true, false]);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(host.last('error')?.code).toBe('notReady');
   });
 
@@ -192,7 +202,7 @@ describe('ready resets', () => {
     const { host, b, c } = threePlayerRoom();
     ready(b);
     ready(c);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(readyFlags(host)).toEqual([false, false, false]);
     expect(b.last('roomState')?.players.every((p) => !p.ready)).toBe(true);
   });
@@ -201,7 +211,7 @@ describe('ready resets', () => {
     const { host, b, c } = threePlayerRoom();
     ready(b);
     ready(c);
-    lobby(host, { kind: 'start' });
+    start(host);
     ready(b);
     expect(readyFlags(host)).toEqual([false, false, false]);
   });
@@ -228,7 +238,7 @@ describe('level selection', () => {
 
   it('is ignored while playing', () => {
     const host = join('Ala');
-    lobby(host, { kind: 'start' });
+    start(host);
     const before = host.all('roomState').length;
     lobby(host, { kind: 'selectLevel', levelId: 'l0-greybox' });
     expect(host.all('roomState')).toHaveLength(before);
@@ -253,7 +263,7 @@ describe('roles', () => {
     lobby(b, { kind: 'setRole', role: 'reporter' });
     ready(b);
     ready(c);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(registry.inspect(code)?.game.crew[welcomeOf(b).playerId]?.role).toBe('reporter');
     lobby(b, { kind: 'setRole', role: 'photoEditor' });
     expect(registry.inspect(code)?.players[1]?.role).toBe('reporter');
@@ -276,7 +286,7 @@ describe('roles', () => {
 
     ready(back);
     ready(c);
-    lobby(host, { kind: 'start' });
+    start(host);
     registry.handleDisconnect(back, false);
     time += RECONNECT_GRACE_MS - 1;
     registry.tick();
@@ -289,7 +299,7 @@ describe('roles', () => {
 
   it('a player joining mid-level enters the running level', () => {
     const host = join('Ala');
-    lobby(host, { kind: 'start' });
+    start(host);
     const late = join('Dawid', welcomeOf(host).roomCode);
     const game = registry.inspect(welcomeOf(host).roomCode)?.game;
     expect(game?.players[welcomeOf(late).playerId]).toBeDefined();
@@ -339,7 +349,7 @@ describe('results and back to lobby', () => {
     const host = join('Ala');
     lobby(host, { kind: 'backToLobby' });
     expect(phaseOf(host)).toBe('lobby');
-    lobby(host, { kind: 'start' });
+    start(host);
     lobby(host, { kind: 'backToLobby' });
     expect(phaseOf(host)).toBe('playing');
   });
@@ -350,7 +360,7 @@ describe('results and back to lobby', () => {
     lobby(host, { kind: 'backToLobby' });
     ready(b);
     ready(c);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(phaseOf(host)).toBe('playing');
     const game = registry.inspect(code)?.game;
     expect(game).toMatchObject({ ended: null, results: [], tick: 0 });
@@ -362,12 +372,12 @@ describe('results and back to lobby', () => {
   it('lets the host replay straight from results once everyone is ready', () => {
     const { host, b, c, code } = threePlayerRoom();
     playToResults(host, b, c);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(host.last('error')?.code).toBe('notReady');
     expect(phaseOf(host)).toBe('results');
     ready(b);
     ready(c);
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(phaseOf(host)).toBe('playing');
     expect(registry.inspect(code)?.game.ended).toBeNull();
   });
@@ -384,7 +394,7 @@ describe('results and back to lobby', () => {
     for (const guest of [b, c, d]) {
       ready(guest);
     }
-    lobby(host, { kind: 'start' });
+    start(host);
     expect(registry.inspect(code)?.game.players[welcomeOf(d).playerId]).toBeDefined();
   });
 

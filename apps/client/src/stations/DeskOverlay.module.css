@@ -193,6 +193,40 @@
   outline-offset: 4px;
 }
 
+/* --- Deadline extension (managing editor) ------------------------------------------------ */
+
+.extend {
+  display: flex;
+}
+
+.extend [data-focused="true"] {
+  outline: 4px solid var(--blue);
+  outline-offset: 4px;
+}
+
+.extendAmount {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Confirmed: a green badge that pops in where the button was. */
+.extended {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-4);
+  background: var(--green);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
 /* --- Verdict buttons --------------------------------------------------------------------- */
 
 .verdicts {
@@ -402,12 +436,14 @@
   }
 }
 
-:global(:root[data-reduced-motion="true"]) .tick {
+:global(:root[data-reduced-motion="true"]) .tick,
+:global(:root[data-reduced-motion="true"]) .extended {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tick {
+  .tick,
+  .extended {
     animation: none;
   }
 }
@@ -507,6 +543,10 @@
   }
 
   .missedTitle {
+    font-size: var(--text-md);
+  }
+
+  .extended {
     font-size: var(--text-md);
   }
 }

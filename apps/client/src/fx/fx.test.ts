@@ -215,7 +215,7 @@ const everyEvent: GameplayEvent[] = [
     location: { kind: 'fixture', fixtureId: 'table-0' },
   },
   { kind: 'deadlineWarning', folderId: 'f1' },
-  { kind: 'folderExpired', folderId: 'f1', storyId: 's1' },
+  { kind: 'folderExpired', folderId: 'f1', storyId: 's1', stamps: [] },
   { kind: 'deadlineExtended', folderId: 'f1', playerId: player },
   { kind: 'workStarted', stationId: 'imageSearch-0', playerId: player },
   { kind: 'workCancelled', stationId: 'imageSearch-0', playerId: player },

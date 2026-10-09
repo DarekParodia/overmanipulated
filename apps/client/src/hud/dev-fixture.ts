@@ -147,7 +147,7 @@ export function installHudDevFixture(): (() => void) | undefined {
       handleGameEvent(event satisfies GameplayEvent);
     },
     expire(storyId = 'l0-nocny-autobus') {
-      handleGameEvent({ kind: 'folderExpired', folderId: `dev-${serial++}`, storyId });
+      handleGameEvent({ kind: 'folderExpired', folderId: `dev-${serial++}`, storyId, stamps: [] });
     },
     end(won, stars) {
       const state = useGame.getState();

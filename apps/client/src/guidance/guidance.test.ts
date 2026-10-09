@@ -2,9 +2,26 @@ import { describe, expect, test } from 'bun:test';
 import { type Desk, type Folder, parseLayout } from '@redakcja/shared';
 import type { GameplayEvent } from '../fx/event-cues.ts';
 import { pl } from '../strings/pl.ts';
-import { type NextStepInput, nextStep, type StoryStamps, sameStep } from './next-step.ts';
+import {
+  BUSY_KINDS,
+  type NextStepInput,
+  nextStep,
+  type StoryStamps,
+  sameStep,
+} from './next-step.ts';
 import { placementFor } from './placement.ts';
-import { advanceTutorial, signalForEvent, TUTORIAL_DONE } from './tutorial.ts';
+import {
+  advanceTutorial,
+  PAD_SKIP_DOUBLE_MS,
+  PAD_SKIP_HOLD_MS,
+  PAD_SKIP_QUIET_MS,
+  PAD_SKIP_START,
+  type PadSkipInput,
+  type PadSkipState,
+  padSkipStep,
+  signalForEvent,
+  TUTORIAL_DONE,
+} from './tutorial.ts';
 
 const map = parseLayout(['########', '#CC.IAR#', '#......#', '#.T..DD#', '#1.....#', '########']);
 
@@ -184,6 +201,20 @@ describe('nextStep', () => {
       }),
     );
     expect(step.kind).toBe('lockout');
+    // Shown in the bubble: the folder on it can be taken to another station meanwhile.
+    expect(step.text).toBe(pl.guidance.hint.lockout);
+    expect(step.text.split(' ').length).toBeLessThanOrEqual(5);
+    expect(BUSY_KINDS.has('lockout')).toBe(false);
+  });
+
+  test('a locked station is never the place to drop the folder taken from it', () => {
+    const locked = { id: 'archive-0', operatorId: null, phase: 'lockout' };
+    const carried = folder('f', { kind: 'carried', playerId: ME });
+    const step = nextStep(
+      input({ folders: [carried], stations: [locked], targetFixtureId: 'archive-0' }),
+    );
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).not.toContain('archive-0');
   });
 
   test('operating a station or a desk', () => {
@@ -266,5 +297,69 @@ describe('tutorial', () => {
     expect(signalForEvent(verdict, ME)).toBe('teamVerdict');
     const spawned = { kind: 'folderSpawned', folderId: 'f', fixtureId: 'c' } as GameplayEvent;
     expect(signalForEvent(spawned, ME)).toBeUndefined();
+  });
+});
+
+describe('tutorial skip on a gamepad', () => {
+  const idle: PadSkipInput = { east: false, select: false, captured: false };
+
+  /** Feeds `inputs` one poll each, starting at `t0` and `stepMs` apart; true if any skipped. */
+  function run(inputs: PadSkipInput[], stepMs = 16, from: PadSkipState = PAD_SKIP_START) {
+    let state = from;
+    let t = 0;
+    let skipped = false;
+    for (const input of inputs) {
+      const result = padSkipStep(state, input, t);
+      state = result.state;
+      skipped ||= result.skip;
+      t += stepMs;
+    }
+    return skipped;
+  }
+  const b = { ...idle, east: true };
+  const select = { ...idle, select: true };
+
+  test('B pressed twice quickly skips, once or slowly does not', () => {
+    expect(run([idle, b, idle, b])).toBe(true);
+    expect(run([idle, b, idle, idle])).toBe(false);
+    const slow = Math.ceil((PAD_SKIP_DOUBLE_MS + 1) / 2);
+    expect(run([idle, b, idle, b], slow)).toBe(false);
+  });
+
+  test('holding B is one press, not two', () => {
+    expect(run([idle, b, b, b, b, b, b])).toBe(false);
+  });
+
+  test('holding Back/Select skips after the hold time, a tap does not', () => {
+    const polls = Math.ceil(PAD_SKIP_HOLD_MS / 16) + 2;
+    expect(run([idle, ...Array.from({ length: polls }, () => select)])).toBe(true);
+    expect(run([idle, select, select, idle, idle])).toBe(false);
+  });
+
+  test('buttons already held when the card appears must be released first', () => {
+    expect(run([b, idle, b])).toBe(false);
+    const polls = Math.ceil(PAD_SKIP_HOLD_MS / 16) + 2;
+    expect(run(Array.from({ length: polls }, () => select))).toBe(false);
+  });
+
+  test('B presses meant for an open overlay do not count', () => {
+    const captured = { ...b, captured: true };
+    expect(run([idle, captured, { ...idle, captured: true }, captured])).toBe(false);
+    expect(run([idle, captured, idle, b])).toBe(false);
+  });
+
+  test('mashing B to close an overlay does not skip; B B a moment later does', () => {
+    const closing = { ...b, captured: true };
+    expect(run([idle, closing, idle, b, idle, b])).toBe(false);
+    const wait = Array.from({ length: Math.ceil(PAD_SKIP_QUIET_MS / 16) + 1 }, () => idle);
+    expect(run([idle, closing, ...wait, b, idle, b])).toBe(true);
+  });
+
+  test('holding Select while an overlay is open does not skip', () => {
+    const polls = Math.ceil(PAD_SKIP_HOLD_MS / 16) + 2;
+    const held = { ...select, captured: true };
+    expect(run([idle, ...Array.from({ length: polls }, () => held)])).toBe(false);
+    // Still held after the overlay closes: it must be released first.
+    expect(run([idle, held, ...Array.from({ length: polls }, () => select)])).toBe(false);
   });
 });

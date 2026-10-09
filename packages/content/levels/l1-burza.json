@@ -1,0 +1,45 @@
+{
+  "id": "l1-burza",
+  "title": "Pierwszy dzień",
+  "topic": "Burza nad miastem",
+  "briefingPoints": [
+    "Nocna burza – sieć zalewają zdjęcia i komunikaty.",
+    "Lupa obrazu: czy zdjęcie nie jest stare?",
+    "Kartoteka źródeł: kto naprawdę mówi?"
+  ],
+  "briefing": "Pierwszy dzień w redakcji! W nocy nad Nowymi Brzegami przeszła burza, a sieć zalewają zdjęcia i komunikaty. Lupa obrazu sprawdzi, czy zdjęcie nie jest stare. Kartoteka źródeł pokaże, kto naprawdę mówi. Teczki możecie odkładać na stoliki, werdykt wydajecie przy stole redakcyjnym.",
+  "durationS": 390,
+  "layout": [
+    "####################",
+    "#CCCCC...=I=...=R=.#",
+    "#..................#",
+    "#.T...1......2...T.#",
+    "#..................#",
+    "#......T=DD=T......#",
+    "#.==....====....==.#",
+    "#..................#",
+    "#...3..........4...#",
+    "#..................#",
+    "#..==..........==..#",
+    "####################"
+  ],
+  "stations": ["imageSearch", "sourceRegistry"],
+  "schedule": [
+    { "atS": 4, "storyId": "l1-brak-pradu", "deadlineS": 80 },
+    { "atS": 25, "storyId": "l1-zalana-ulica", "deadlineS": 90 },
+    { "atS": 47, "storyId": "l1-falszywa-straz-miejska", "deadlineS": 50 },
+    { "atS": 70, "storyId": "l1-kaczki-na-boisku", "deadlineS": 80 },
+    { "atS": 92, "storyId": "l1-drzewo-na-szkole", "deadlineS": 85 },
+    { "atS": 114, "storyId": "l1-zamkniete-szkoly", "deadlineS": 85 },
+    { "atS": 136, "storyId": "l1-kajaki-zamiast-biletow", "deadlineS": 90 },
+    { "atS": 158, "storyId": "l1-ostrzezenie-burzowe", "deadlineS": 50 },
+    { "atS": 180, "storyId": "l1-oplata-za-prad", "deadlineS": 80 },
+    { "atS": 202, "storyId": "l1-piorun-nad-ratuszem", "deadlineS": 90 },
+    { "atS": 224, "storyId": "l1-wal-puszcza", "deadlineS": 45 },
+    { "atS": 246, "storyId": "l1-dworzec-pod-woda", "deadlineS": 75 },
+    { "atS": 268, "storyId": "l1-falszywy-ratusz", "deadlineS": 75 },
+    { "atS": 290, "storyId": "l1-zalany-przejazd", "deadlineS": 50 },
+    { "atS": 312, "storyId": "l1-zalane-piwnice", "deadlineS": 70 }
+  ],
+  "stars": { "two": 190, "three": 300 }
+}

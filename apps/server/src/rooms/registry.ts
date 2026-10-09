@@ -10,6 +10,7 @@ import {
 } from '@redakcja/content';
 import {
   addPlayer,
+  BRIEFING_DURATION_MS,
   type ClientMessage,
   COMMAND_QUEUE_MAX,
   createGameState,
@@ -71,6 +72,10 @@ type Room = {
   stories: Readonly<Record<string, Story>>;
   map: TileMap;
   nextPlayerNumber: number;
+  /** Set while `phase === 'briefing'`. */
+  briefing: { endsAt: number; skippedBy: Set<string> } | null;
+  /** Blunder-of-the-day votes of the current results screen, by player id. */
+  blunderVotes: Map<string, { storyId: string; rowId: number | null }>;
 };
 
 function requireLevel(id: string): Level {
@@ -91,6 +96,17 @@ export type RegistryOptions = {
   onActive?: () => void;
   /** Simulation step; injectable so tests can drive phases (e.g. force `state.ended`). */
   step?: typeof step;
+  /** How long the briefing lasts before the level starts by itself. */
+  briefingMs?: number;
+  /**
+   * Persists a blunder vote (S3-02) and returns the stored row id. `previousId` is the row of
+   * the same player's earlier vote in this run, which the new one replaces.
+   */
+  recordBlunderVote?: (vote: {
+    levelId: string;
+    storyId: string;
+    previousId: number | null;
+  }) => number;
 };
 
 export type RoomRegistry = ReturnType<typeof createRoomRegistry>;
@@ -100,6 +116,7 @@ export function createRoomRegistry(options: RegistryOptions) {
   const now = options.now ?? (() => performance.now());
   const random = options.random ?? secureRandom;
   const stepGame = options.step ?? step;
+  const briefingMs = options.briefingMs ?? BRIEFING_DURATION_MS;
   const rooms = new Map<string, Room>();
   const memberships = new Map<string, Membership>();
   const tokens = new Map<string, Membership>();
@@ -139,6 +156,18 @@ export function createRoomRegistry(options: RegistryOptions) {
         connected: p.connection !== null,
         role: p.role,
         ready: p.ready,
+      })),
+      // Clients count the briefing down locally from `endsInMs`; it is re-sent with every
+      // roomState (skip, join, reconnect), so there is no periodic broadcast.
+      briefing: room.briefing
+        ? {
+            endsInMs: Math.max(0, room.briefing.endsAt - now()),
+            skippedBy: [...room.briefing.skippedBy],
+          }
+        : null,
+      blunderVotes: [...room.blunderVotes].map(([playerId, vote]) => ({
+        playerId,
+        storyId: vote.storyId,
       })),
     });
   }
@@ -240,6 +269,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         stories: storiesForLevel(level),
         map,
         nextPlayerNumber: 1,
+        briefing: null,
+        blunderVotes: new Map(),
       };
       rooms.set(code, room);
       const player = addToRoom(room, message.nickname, connection);
@@ -310,7 +341,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         }
         // Start works from the lobby and, as a replay, straight from the results screen. The
         // same ready gate applies in both phases (readiness may be toggled during results too).
-        if (room.phase === 'playing') {
+        if (room.phase === 'playing' || room.phase === 'briefing') {
           return;
         }
         const waitingFor = notReadyPlayers(room);
@@ -320,12 +351,12 @@ export function createRoomRegistry(options: RegistryOptions) {
           }
           return;
         }
-        startLevel(room);
+        beginBriefing(room);
         return;
       }
       case 'setRole':
-        // Roles are non-exclusive; they are fixed for the duration of a level.
-        if (room.phase === 'playing') {
+        // Roles are non-exclusive; they are fixed from the briefing to the end of the level.
+        if (room.phase === 'playing' || room.phase === 'briefing') {
           return;
         }
         player.role = action.role;
@@ -333,7 +364,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         return;
       case 'setReady':
         // Allowed in `results` as well so a direct replay can pass the ready gate.
-        if (room.phase === 'playing') {
+        if (room.phase === 'playing' || room.phase === 'briefing') {
           return;
         }
         player.ready = action.ready;
@@ -364,6 +395,18 @@ export function createRoomRegistry(options: RegistryOptions) {
         broadcastRoomState(room);
         return;
       }
+      case 'skipBriefing':
+        if (!room.briefing || room.briefing.skippedBy.has(player.id)) {
+          return;
+        }
+        room.briefing.skippedBy.add(player.id);
+        if (!finishBriefingIfAllSkipped(room)) {
+          broadcastRoomState(room);
+        }
+        return;
+      case 'voteBlunder':
+        voteBlunder(room, player, action.storyId);
+        return;
       case 'backToLobby':
         if (player.id !== room.hostId) {
           rejectNotHost(player);
@@ -373,6 +416,7 @@ export function createRoomRegistry(options: RegistryOptions) {
           return;
         }
         room.phase = 'lobby';
+        room.blunderVotes.clear();
         // Drop the finished run; the next start builds a fresh game from the room's map.
         room.game = createGameState({ map: room.map });
         for (const p of room.players.values()) {
@@ -400,8 +444,64 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
   }
 
+  /** Start (from the lobby or as a replay from results) opens the briefing first. */
+  function beginBriefing(room: Room): void {
+    room.phase = 'briefing';
+    room.briefing = { endsAt: now() + briefingMs, skippedBy: new Set() };
+    room.blunderVotes.clear();
+    resetReady(room);
+    log.info('briefing started', { room: room.code, level: room.level.id });
+    broadcastRoomState(room);
+  }
+
+  /**
+   * Starts the level once every connected player has skipped the briefing. Disconnected
+   * players never hold it up (the timer still runs for an empty room). Returns true when the
+   * level started.
+   */
+  function finishBriefingIfAllSkipped(room: Room): boolean {
+    const briefing = room.briefing;
+    if (!briefing) {
+      return false;
+    }
+    const connected = [...room.players.values()].filter((p) => p.connection !== null);
+    if (connected.length === 0 || !connected.every((p) => briefing.skippedBy.has(p.id))) {
+      return false;
+    }
+    startLevel(room);
+    return true;
+  }
+
+  function voteBlunder(room: Room, player: RoomPlayer, storyId: string): void {
+    if (room.phase !== 'results') {
+      return;
+    }
+    if (!room.game.results.some((r) => r.storyId === storyId)) {
+      if (player.connection) {
+        sendError(player.connection, 'invalidMessage', `story ${storyId} is not in this run`);
+      }
+      return;
+    }
+    const previous = room.blunderVotes.get(player.id);
+    if (previous?.storyId === storyId) {
+      return;
+    }
+    let rowId: number | null = previous?.rowId ?? null;
+    if (options.recordBlunderVote) {
+      try {
+        rowId = options.recordBlunderVote({ levelId: room.level.id, storyId, previousId: rowId });
+      } catch (error) {
+        // A failed write must not break the debrief; the vote still shows in the room.
+        log.error('blunder vote not stored', { room: room.code, error: String(error) });
+      }
+    }
+    room.blunderVotes.set(player.id, { storyId, rowId });
+    broadcastRoomState(room);
+  }
+
   function startLevel(room: Room): void {
     room.phase = 'playing';
+    room.briefing = null;
     let game = createGameState({ map: room.map, seed: Math.floor(random() * 0x7fffffff) });
     for (const p of room.players.values()) {
       game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
@@ -442,6 +542,9 @@ export function createRoomRegistry(options: RegistryOptions) {
       player.connection.unsubscribe(topic(room.code));
     }
     room.game = removeSimPlayer(room.game, player.id);
+    room.briefing?.skippedBy.delete(player.id);
+    // A stored vote stays counted; it just leaves the room's list with its player.
+    room.blunderVotes.delete(player.id);
     log.info('player left', { room: room.code, player: player.id });
     if (room.players.size === 0) {
       rooms.delete(room.code);
@@ -452,7 +555,9 @@ export function createRoomRegistry(options: RegistryOptions) {
       reassignHost(room);
     }
     broadcastEvent(room, { kind: 'playerLeft', playerId: player.id });
-    broadcastRoomState(room);
+    if (!finishBriefingIfAllSkipped(room)) {
+      broadcastRoomState(room);
+    }
   }
 
   function reassignHost(room: Room): void {
@@ -487,7 +592,9 @@ export function createRoomRegistry(options: RegistryOptions) {
       reassignHost(room);
     }
     log.info('player disconnected', { room: room.code, player: player.id });
-    broadcastRoomState(room);
+    if (!finishBriefingIfAllSkipped(room)) {
+      broadcastRoomState(room);
+    }
   }
 
   /** Advances every room by one tick: expires slots, steps the simulation, sends snapshots. */
@@ -499,7 +606,15 @@ export function createRoomRegistry(options: RegistryOptions) {
           removePlayer(room, player);
         }
       }
-      if (!rooms.has(room.code) || room.phase !== 'playing') {
+      if (!rooms.has(room.code)) {
+        continue;
+      }
+      if (room.briefing && time >= room.briefing.endsAt) {
+        startLevel(room);
+        // The first simulation step runs on the next tick, as after a lobby start.
+        continue;
+      }
+      if (room.phase !== 'playing') {
         continue;
       }
       const inputs: Record<string, PlayerInput[]> = {};
@@ -551,6 +666,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       folders: Object.values(game.folders),
       stations: Object.values(game.stations),
       desks: Object.values(game.desks),
+      deadlineExtensionUsed: game.deadlineExtensionUsed,
     });
   }
 
@@ -590,6 +706,10 @@ export function createRoomRegistry(options: RegistryOptions) {
         phase: room.phase,
         levelId: room.level.id,
         game: room.game,
+        briefing: room.briefing
+          ? { endsAt: room.briefing.endsAt, skippedBy: [...room.briefing.skippedBy] }
+          : null,
+        blunderVotes: [...room.blunderVotes].map(([playerId, vote]) => ({ playerId, ...vote })),
         players: [...room.players.values()].map((p) => ({
           id: p.id,
           nickname: p.nickname,

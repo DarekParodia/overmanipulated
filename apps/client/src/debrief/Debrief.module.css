@@ -1,0 +1,499 @@
+/*
+ * Kolegium cards: the one place with longer text, so it is calm — body text in Nunito at body
+ * size, short titled chunks in soft inset blocks, generous spacing. The outcome mark slams on
+ * like a stamp during the reveal; voter dots pop in.
+ */
+.list {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: var(--space-2) var(--space-3) var(--space-4) var(--space-2);
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding: var(--space-2);
+}
+
+.page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 0 var(--space-2);
+}
+
+.page > div {
+  animation: page-in var(--motion-base) var(--ease-out) both;
+}
+
+@keyframes page-in {
+  from {
+    transform: translateX(1.5rem);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+:root[data-reduced-motion="true"] .page > div {
+  animation: none;
+}
+
+.empty {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-md);
+  color: var(--text-soft);
+}
+
+/* --- Card ------------------------------------------------------------------------------------ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+  touch-action: pan-y;
+}
+
+.current {
+  outline: 4px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* On phones the single card is always current; the outline would only add noise. */
+.page .current {
+  outline: none;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  box-shadow: var(--pop);
+  color: var(--outline);
+}
+
+.good .mark {
+  background: var(--green);
+}
+
+.caution .mark {
+  background: var(--orange);
+}
+
+.bad .mark {
+  background: var(--red);
+}
+
+.markOff {
+  visibility: hidden;
+}
+
+.markOn {
+  animation: mark-slam var(--motion-slow) var(--ease-out) both;
+}
+
+/* A rubber stamp: comes down big and tilted, hits, squashes, settles. */
+@keyframes mark-slam {
+  0% {
+    transform: scale(2.4) rotate(-18deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(0.88) rotate(3deg);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1.08) rotate(-1deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.instant .markOn {
+  animation: none;
+}
+
+:root[data-reduced-motion="true"] .markOn {
+  animation: none;
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+}
+
+.headline {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+}
+
+.outcome {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.points {
+  font-variant-numeric: tabular-nums;
+}
+
+.good .points {
+  color: var(--green-dark);
+}
+
+.bad .points {
+  color: var(--red-dark);
+}
+
+/* --- Verdicts -------------------------------------------------------------------------------- */
+
+.verdicts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+
+.verdictPair {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.verdictPair dt {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  color: var(--text-soft);
+}
+
+.verdictPair dd {
+  margin: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3) 2px var(--space-2);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--outline);
+  white-space: nowrap;
+}
+
+.chipPublish {
+  background: var(--green);
+}
+
+.chipReject {
+  background: var(--red);
+}
+
+.chipContext {
+  background: var(--orange);
+}
+
+.chipExpired {
+  background: var(--surface-sunk);
+}
+
+/* --- Debrief chunks -------------------------------------------------------------------------- */
+
+.sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-2);
+}
+
+.section,
+.missed {
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background: var(--surface-soft);
+  border-radius: var(--radius-sm);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.sectionTitle svg {
+  flex: none;
+  --icon-fill: var(--surface);
+}
+
+.sectionText {
+  margin: 0;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+}
+
+.missed {
+  border: var(--stroke) solid var(--orange);
+}
+
+.missedList {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.missedItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+}
+
+.missedItem svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+/* --- Vote ------------------------------------------------------------------------------------ */
+
+.voteRow {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.vote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-3);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.vote svg {
+  --icon-fill: var(--yellow);
+}
+
+.vote:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.vote:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* Selected = blue (selection colour) outline plus a ✓ instead of the peel. */
+.vote[aria-pressed="true"] {
+  background: var(--surface-soft);
+  border-color: var(--blue-dark);
+  box-shadow: 0 4px 0 var(--blue-dark);
+  animation: vote-pop var(--motion-base) var(--ease-bounce);
+}
+
+.voteText {
+  padding-top: 0.12em;
+}
+
+.voters {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.dots {
+  display: inline-flex;
+}
+
+.dot {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: -0.25rem;
+  background: var(--dot);
+  border: var(--outline-border);
+  border-radius: 50%;
+  animation: vote-pop var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes vote-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+:root[data-reduced-motion="true"] .dot,
+:root[data-reduced-motion="true"] .vote[aria-pressed="true"] {
+  animation: none;
+}
+
+.count {
+  padding-top: 0.12em;
+  padding-left: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  font-variant-numeric: tabular-nums;
+}
+
+.leader {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3) 2px var(--space-2);
+  background: var(--orange);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1.6;
+  color: var(--outline);
+  animation: vote-pop var(--motion-base) var(--ease-bounce) both;
+}
+
+:root[data-reduced-motion="true"] .leader {
+  animation: none;
+}
+
+/* --- Phones ---------------------------------------------------------------------------------- */
+
+@media (max-height: 500px), (max-width: 760px) {
+  .card {
+    gap: var(--space-2);
+    padding: var(--space-3);
+    box-shadow: none;
+  }
+
+  .mark {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .mark svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .headline {
+    font-size: var(--text-md);
+  }
+
+  /* Votes and the leader badge wrap under the headline so the debrief text stays in view. */
+  .head {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .head::after {
+    content: "";
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .voteRow {
+    display: contents;
+  }
+
+  .mark {
+    order: 0;
+  }
+
+  .headText {
+    order: 1;
+  }
+
+  .vote {
+    order: 2;
+  }
+
+  .voters {
+    order: 4;
+    margin: var(--space-1) 0 0 calc(2.5rem + var(--space-3));
+  }
+
+  .leader {
+    order: 5;
+    margin-top: var(--space-1);
+  }
+
+  .voters + .leader {
+    margin-left: var(--space-3);
+  }
+
+  .outcome {
+    margin-top: 0;
+  }
+
+  .sections {
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  }
+}

@@ -36,7 +36,12 @@ function checkDeadlines(state: GameState, frame: SimFrame): GameState {
     if (state.elapsedMs >= folder.deadlineMs) {
       folders ??= { ...state.folders };
       delete folders[folder.id];
-      frame.events.push({ kind: 'folderExpired', folderId: folder.id, storyId: folder.storyId });
+      frame.events.push({
+        kind: 'folderExpired',
+        folderId: folder.id,
+        storyId: folder.storyId,
+        stamps: [...folder.stamps],
+      });
     } else if (!folder.warned && folder.deadlineMs - state.elapsedMs <= DEADLINE_WARNING_MS) {
       folders ??= { ...state.folders };
       folders[folder.id] = { ...folder, warned: true };

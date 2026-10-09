@@ -10,6 +10,7 @@ const EMPTY_LEVEL = {
   folders: [],
   stations: [],
   desks: [],
+  deadlineExtensionUsed: false,
 };
 
 describe('client messages', () => {
@@ -114,6 +115,8 @@ describe('server messages', () => {
         hostId: 'p1',
         phase: 'lobby',
         levelId: 'l0-greybox',
+        briefing: null,
+        blunderVotes: [],
         players: [
           {
             id: 'p1',

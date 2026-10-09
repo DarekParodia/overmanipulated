@@ -73,6 +73,10 @@ export const lobbyActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('selectLevel'), levelId: levelIdSchema }),
   /** From the results screen back to the lobby (host only). */
   z.object({ kind: z.literal('backToLobby') }),
+  /** During the briefing: this player is ready to play (all connected skip → level starts). */
+  z.object({ kind: z.literal('skipBriefing') }),
+  /** On the results/debrief screen: vote for the story that fooled the team most. */
+  z.object({ kind: z.literal('voteBlunder'), storyId: entityId }),
 ]);
 
 export const lobbyMessageSchema = z.object({
@@ -130,7 +134,17 @@ export const clientMessageSchema = z.discriminatedUnion('type', [
 
 // --- Server → client -----------------------------------------------------------------------
 
-export const roomPhaseSchema = z.enum(['lobby', 'playing', 'results']);
+/** lobby → briefing (topic of the day, skippable) → playing → results (debrief) → lobby. */
+export const roomPhaseSchema = z.enum(['lobby', 'briefing', 'playing', 'results']);
+
+export const briefingStateSchema = z.object({
+  /** Time left before the level starts by itself. */
+  endsInMs: finite,
+  /** Players who pressed "ready" on the briefing. */
+  skippedBy: z.array(playerIdSchema).max(MAX_PLAYERS),
+});
+
+export const blunderVoteSchema = z.object({ playerId: playerIdSchema, storyId: entityId });
 
 export const lobbyPlayerSchema = z.object({
   id: playerIdSchema,
@@ -159,6 +173,10 @@ export const roomStateMessageSchema = z.object({
   phase: roomPhaseSchema,
   levelId: levelIdSchema,
   players: z.array(lobbyPlayerSchema).max(MAX_PLAYERS),
+  /** Set while `phase === 'briefing'`. */
+  briefing: briefingStateSchema.nullable(),
+  /** Blunder-of-the-day votes cast on the results screen (one per player). */
+  blunderVotes: z.array(blunderVoteSchema).max(MAX_PLAYERS),
 });
 
 export const playerSnapshotSchema = z.object({
@@ -183,6 +201,8 @@ export const snapshotMessageSchema = z.object({
   folders: z.array(folderSchema).max(64),
   stations: z.array(stationSchema).max(32),
   desks: z.array(deskSchema).max(8),
+  /** The managing editor's one deadline extension per level has been used. */
+  deadlineExtensionUsed: z.boolean(),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [
@@ -204,7 +224,13 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     location: folderLocationSchema,
   }),
   z.object({ kind: z.literal('deadlineWarning'), folderId: entityId }),
-  z.object({ kind: z.literal('folderExpired'), folderId: entityId, storyId: entityId }),
+  z.object({
+    kind: z.literal('folderExpired'),
+    folderId: entityId,
+    storyId: entityId,
+    /** Stamps the folder had collected when it expired. */
+    stamps: z.array(entityId).max(16),
+  }),
   z.object({ kind: z.literal('deadlineExtended'), folderId: entityId, playerId: playerIdSchema }),
   z.object({ kind: z.literal('workStarted'), stationId: entityId, playerId: playerIdSchema }),
   z.object({ kind: z.literal('workCancelled'), stationId: entityId, playerId: playerIdSchema }),
@@ -317,6 +343,8 @@ export type CommandMessage = z.infer<typeof commandMessageSchema>;
 export type InputMessage = z.infer<typeof inputMessageSchema>;
 export type ClientMessage = z.infer<typeof clientMessageSchema>;
 export type RoomPhase = z.infer<typeof roomPhaseSchema>;
+export type BriefingState = z.infer<typeof briefingStateSchema>;
+export type BlunderVote = z.infer<typeof blunderVoteSchema>;
 export type LobbyPlayer = z.infer<typeof lobbyPlayerSchema>;
 export type WelcomeMessage = z.infer<typeof welcomeMessageSchema>;
 export type RoomStateMessage = z.infer<typeof roomStateMessageSchema>;

@@ -1,8 +1,12 @@
 // Howler-based audio: one sprite for all placeholder SFX, buses with settings-driven volume,
-// stereo pan, mobile autoplay unlock and mute while the tab is hidden.
+// stereo pan, mobile autoplay unlock and mute while the tab is hidden. Also runs the newsroom
+// ambience during play: the room-tone loop plus random distant one-shots (ambience.ts).
 import { Howl, Howler } from 'howler';
+import { selectOperatedDesk, selectOperatedStation, useGame } from '../../net/game-store.ts';
+import { useApp } from '../../store/app.ts';
 import { type Settings, useSettings } from '../../store/settings.ts';
-import type { AudioBus } from '../cues.ts';
+import { type AudioBus, cues } from '../cues.ts';
+import { createAmbience } from './ambience.ts';
 import sprite from './sfx-sprite.json';
 
 type SpriteMap = Record<string, [number, number, boolean]>;
@@ -80,14 +84,59 @@ export function stopSound(playId: number): void {
   sfx?.stop(playId);
 }
 
-/** Starts the newsroom room-tone loop (idempotent). */
+/** Room tone level relative to the sfx bus, before ducking. */
+const ROOMTONE_LEVEL = 0.6;
+const AMBIENCE_TICK_MS = 250;
+let bedGain = 1;
+let ambienceTimer: ReturnType<typeof setInterval> | null = null;
+
+function applyRoomTone(settings: Settings): void {
+  if (sfx && ambienceId !== null) {
+    sfx.volume(busVolume(settings, 'sfx') * ROOMTONE_LEVEL * bedGain, ambienceId);
+  }
+}
+
+const ambience = createAmbience({
+  play(cue, gain, pan) {
+    if (useSettings.getState().muted) {
+      return;
+    }
+    const sound = cues[cue].sound;
+    playSound(sound.ids, sound.bus, sound.volume * gain, sound.rateJitter, pan);
+  },
+  setBedGain(gain) {
+    if (gain !== bedGain) {
+      bedGain = gain;
+      applyRoomTone(useSettings.getState());
+    }
+  },
+});
+
+/** Duck the bed while the local player works in a station or desk overlay, or on results. */
+function ambienceDucked(): boolean {
+  const game = useGame.getState();
+  const playerId = useApp.getState().playerId;
+  return (
+    game.levelEnd !== null ||
+    selectOperatedStation(game, playerId) !== undefined ||
+    selectOperatedDesk(game, playerId) !== undefined
+  );
+}
+
+/** Starts the newsroom room-tone loop and the random ambience one-shots (idempotent). */
 export function startAmbience(): void {
   const howl = load();
   if (ambienceId !== null) {
     return;
   }
+  bedGain = 1;
   ambienceId = howl.play('roomtone');
-  howl.volume(busVolume(useSettings.getState(), 'sfx') * 0.6, ambienceId);
+  applyRoomTone(useSettings.getState());
+  ambience.reset(performance.now());
+  ambienceTimer = setInterval(
+    () => ambience.tick(performance.now(), ambienceDucked()),
+    AMBIENCE_TICK_MS,
+  );
 }
 
 export function stopAmbience(): void {
@@ -95,6 +144,10 @@ export function stopAmbience(): void {
     sfx.stop(ambienceId);
   }
   ambienceId = null;
+  if (ambienceTimer !== null) {
+    clearInterval(ambienceTimer);
+    ambienceTimer = null;
+  }
 }
 
 /** Wires global mute to settings and tab visibility. Returns a cleanup function. */
@@ -102,9 +155,7 @@ export function initAudio(): () => void {
   const apply = () => {
     const settings = useSettings.getState();
     Howler.mute(settings.muted || document.hidden);
-    if (sfx && ambienceId !== null) {
-      sfx.volume(busVolume(settings, 'sfx') * 0.6, ambienceId);
-    }
+    applyRoomTone(settings);
     for (const [playId, loop] of loopVolumes) {
       sfx?.volume(Math.min(1, busVolume(settings, loop.bus) * loop.volume), playId);
     }

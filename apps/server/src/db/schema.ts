@@ -27,3 +27,26 @@ export const leaderboardEntries = sqliteTable(
 
 export type LeaderboardEntry = typeof leaderboardEntries.$inferSelect;
 export type NewLeaderboardEntry = typeof leaderboardEntries.$inferInsert;
+
+/**
+ * Blunder-of-the-day votes from the debrief (S3-02): one row per player's final choice in a
+ * run. Deliberately anonymous — no room code, nickname or player id, only what the supervisor
+ * needs to see which stories fooled the class.
+ */
+export const blunderVotes = sqliteTable(
+  'blunder_votes',
+  {
+    id: integer().primaryKey({ autoIncrement: true }),
+    levelId: text().notNull(),
+    storyId: text().notNull(),
+    createdAt: integer({ mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [
+    index('blunder_votes_level_story_idx').on(table.levelId, table.storyId),
+    index('blunder_votes_created_at_idx').on(table.createdAt),
+  ],
+);
+
+export type BlunderVoteRow = typeof blunderVotes.$inferSelect;

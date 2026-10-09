@@ -317,6 +317,71 @@ def ping_bell(freq):
     return normalize(bell(freq, 0.3, 0.09, ((1, 1.0), (2.76, 0.3))), 0.45)
 
 
+# --- Newsroom ambience (S3-07): quiet, distant one-shots over the room tone -----------------------
+
+
+def distant(signal, cutoff=2200):
+    """Pushes a sound into the background: duller and softer."""
+    return lowpass(signal, cutoff)
+
+
+def amb_phone():
+    """A desk phone ringing in another room: two short trills of a two-tone bell."""
+    def trill(seconds):
+        x = t(seconds)
+        bell_ = np.sin(2 * np.pi * 1240 * x) + 0.6 * np.sin(2 * np.pi * 1480 * x)
+        hammer = 0.5 + 0.5 * np.sign(np.sin(2 * np.pi * 22 * x))
+        gate = np.clip(x / 0.01, 0, 1) * np.clip((seconds - x) / 0.04, 0, 1)
+        return bell_ * hammer * gate
+    ring = trill(0.9)
+    out = mix(ring, delayed(ring, 1.35))
+    return normalize(distant(out, 2600), 0.32)
+
+
+def amb_printer():
+    """A dot-matrix printer line burst: buzzy head passes with a paper feed thunk."""
+    out = []
+    for i, seconds in enumerate((0.42, 0.36, 0.48)):
+        x = t(seconds)
+        buzz = np.sign(np.sin(2 * np.pi * (480 + 40 * i) * x)) * (0.6 + 0.4 * np.sin(2 * np.pi * 37 * x))
+        head = highpass(noise(seconds), 1500) * 0.5
+        gate = np.clip(x / 0.01, 0, 1) * np.clip((seconds - x) / 0.02, 0, 1)
+        out.append((0.5 * buzz + head) * gate)
+        feed = 0.8 * np.sin(2 * np.pi * 110 * t(0.12)) * env(0.12, 0.002, 0.03)
+        out.append(feed)
+        out.append(np.zeros(int(RATE * 0.08)))
+    return normalize(distant(np.concatenate(out), 2400), 0.28)
+
+
+def amb_fax():
+    """A fax machine handshake far away: a few beeps and a warbling carrier."""
+    beeps = [tone(1100, 0.35, 0.005, 2.0) * np.clip((0.35 - t(0.35)) / 0.02, 0, 1)]
+    beeps.append(np.zeros(int(RATE * 0.25)))
+    x = t(0.9)
+    warble = np.sin(2 * np.pi * (1650 + 350 * np.sign(np.sin(2 * np.pi * 9 * x))) * x)
+    warble *= np.clip(x / 0.03, 0, 1) * np.clip((0.9 - x) / 0.05, 0, 1)
+    beeps.append(0.7 * warble)
+    return normalize(distant(np.concatenate(beeps), 2000), 0.22)
+
+
+def amb_typing():
+    """A colleague typing at the far end of the room: a soft, irregular burst of keys."""
+    seconds = 2.2
+    n = int(RATE * seconds)
+    out = np.zeros(n)
+    start = 0.05
+    k = 0
+    while start < seconds - 0.1:
+        key = highpass(noise(0.05), 1500) * env(0.05, 0.0005, 0.008)
+        key += 0.4 * np.sin(2 * np.pi * (360 + 25 * (k % 4)) * t(0.05)) * env(0.05, 0.0005, 0.01)
+        i = int(RATE * start)
+        out[i : i + len(key)] += key[: n - i] * (0.6 + 0.4 * rng.random())
+        start += 0.07 + 0.12 * rng.random() + (0.35 if rng.random() < 0.08 else 0)
+        k += 1
+    fade = np.clip(np.arange(n) / (RATE * 0.2), 0, 1) * np.clip((n - np.arange(n)) / (RATE * 0.4), 0, 1)
+    return normalize(distant(out * fade, 1800), 0.25)
+
+
 SOUNDS = [
     ("click", click, False),
     ("hover", hover, False),
@@ -350,6 +415,11 @@ SOUNDS = [
     ("ping1", lambda: ping_bell(1175), False),
     ("ping2", lambda: ping_bell(880), False),
     ("ping3", lambda: ping_bell(1480), False),
+    # S3-07 ambience. Appended last: the RNG is shared, so earlier sounds stay identical.
+    ("ambphone", amb_phone, False),
+    ("ambprinter", amb_printer, False),
+    ("ambfax", amb_fax, False),
+    ("ambtyping", amb_typing, False),
 ]
 
 
