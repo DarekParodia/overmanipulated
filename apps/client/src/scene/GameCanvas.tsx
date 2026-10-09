@@ -22,7 +22,7 @@ import { Particles } from './Particles.tsx';
 import { PerfProbe } from './PerfProbe.tsx';
 import { PingBubbles } from './PingBubbles.tsx';
 import { Players } from './Players.tsx';
-import { detectPreset, isCoarsePointer, profileFor, useQuality } from './quality.ts';
+import { detectPreset, deviceHints, isCoarsePointer, profileFor, useQuality } from './quality.ts';
 import { StationIndicators } from './StationIndicators.tsx';
 import { Warmup } from './Warmup.tsx';
 
@@ -39,11 +39,14 @@ export function GameCanvas() {
   // World props read `runtime.map` once; remount them when a level with another map starts.
   const levelId = useApp((s) => s.room?.levelId ?? '');
 
+  // A preset picked in settings is final (auto off). Back on "auto" the detected preset returns.
   useEffect(() => {
+    const coarse = isCoarsePointer();
     if (chosen) {
-      useQuality
-        .getState()
-        .set(profileFor(chosen, isCoarsePointer(), window.devicePixelRatio), false);
+      useQuality.getState().choose(profileFor(chosen, coarse, window.devicePixelRatio), false);
+    } else if (perfStats.gpu) {
+      const preset = detectPreset(perfStats.gpu, coarse, deviceHints());
+      useQuality.getState().choose(profileFor(preset, coarse, window.devicePixelRatio), true);
     }
   }, [chosen]);
 
@@ -57,7 +60,8 @@ export function GameCanvas() {
       onCreated={({ gl, scene }) => {
         if (new URLSearchParams(window.location.search).has('debug')) {
           // Dev aid: inspect the scene from the console or end-to-end tests.
-          (window as unknown as { __scene?: unknown }).__scene = scene;
+          (window as unknown as { __scene?: unknown; __quality?: unknown }).__scene = scene;
+          (window as unknown as { __quality?: unknown }).__quality = useQuality;
           installGameHook();
         }
         gl.toneMapping = NoToneMapping;
@@ -65,10 +69,9 @@ export function GameCanvas() {
         const name = gpuName(gl.getContext());
         perfStats.gpu = name;
         if (!useSettings.getState().quality) {
-          const preset = detectPreset(name, isCoarsePointer());
-          useQuality
-            .getState()
-            .set(profileFor(preset, isCoarsePointer(), window.devicePixelRatio), true);
+          const coarse = isCoarsePointer();
+          const preset = detectPreset(name, coarse, deviceHints());
+          useQuality.getState().choose(profileFor(preset, coarse, window.devicePixelRatio), true);
         }
       }}
       style={{ touchAction: 'none' }}

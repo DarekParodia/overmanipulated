@@ -13,12 +13,13 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "bun run --filter '*' typecheck && tsc -p tsconfig.json",
-    "test": "bun test --pass-with-no-tests apps packages",
+    "test": "bun test --pass-with-no-tests apps packages tools",
     "validate:content": "bun run --filter @redakcja/content validate",
-    "check": "bun run lint && bun run lint:design && bun run typecheck && bun run test && bun run validate:content",
+    "check": "bun run lint && bun run lint:design && bun run typecheck && bun run test && bun run validate:content && bun run perf:budget",
     "db:generate": "bun run --filter @redakcja/server db:generate",
     "db:studio": "bun run --filter @redakcja/server db:studio",
     "lint:design": "bun tools/design/check-tokens.ts",
+    "perf:budget": "bun run build && bun tools/perf/check-bundle.ts",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

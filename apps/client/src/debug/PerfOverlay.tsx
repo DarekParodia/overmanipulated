@@ -20,6 +20,9 @@ export function PerfOverlay() {
   const [, setTick] = useState(0);
   const rtt = useApp((s) => s.rttMs);
   const preset = useQuality((s) => s.profile.preset);
+  const stage = useQuality((s) => s.stage);
+  const auto = useQuality((s) => s.auto);
+  const dpr = useQuality((s) => s.profile.maxDpr);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -53,6 +56,8 @@ export function PerfOverlay() {
     ['snapshots ahead', String(runtime.buffer.depth(performance.now()))],
     ['pending inputs', String(runtime.predictor.pendingCount)],
     ['quality', preset],
+    ['mode', auto ? `auto, step ${stage}` : 'fixed'],
+    ['dpr cap', dpr.toFixed(2)],
     ['gpu', perfStats.gpu.slice(0, 40)],
   ];
   return (
