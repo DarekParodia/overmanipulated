@@ -103,11 +103,12 @@ describe('planHaptic', () => {
 describe('playPlan', () => {
   it('vibrates and rumbles every connected pad with a vibration actuator', () => {
     const vibrations: number[][] = [];
-    const effects: { startDelay?: number; strongMagnitude: number }[] = [];
+    const effects: { strongMagnitude: number }[] = [];
+    const delays: number[] = [];
     const pad = {
       connected: true,
       vibrationActuator: {
-        playEffect: (_type: string, params: { startDelay?: number; strongMagnitude: number }) => {
+        playEffect: (_type: string, params: { strongMagnitude: number }) => {
           effects.push(params);
           return Promise.resolve('complete');
         },
@@ -119,10 +120,15 @@ describe('playPlan', () => {
         return true;
       },
       gamepads: () => [null, pad],
+      schedule: (fn, ms) => {
+        delays.push(ms);
+        fn();
+      },
     };
     playPlan(planHaptic('success', full), env);
     expect(vibrations).toEqual([[12, 45, 24]]);
-    expect(effects.map((e) => e.startDelay)).toEqual([0, 90]);
+    expect(delays).toEqual([90]);
+    expect(effects.length).toBe(2);
   });
 
   it('falls back to the legacy pulse actuator', () => {

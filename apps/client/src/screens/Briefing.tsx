@@ -88,7 +88,9 @@ export function Briefing() {
     const focused = document.activeElement;
     // Focus on another control (leave, settings): the menu navigator moves and presses it.
     const elsewhere =
-      focused instanceof HTMLButtonElement && !readyButton.current?.contains(focused);
+      focused instanceof HTMLElement &&
+      focused !== document.body &&
+      !readyButton.current?.contains(focused);
     if (!intro && (elsewhere || (intent !== 'confirm' && intent !== 'back'))) {
       return false;
     }

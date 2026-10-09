@@ -168,7 +168,7 @@ export function DebriefCard({
               <span className={styles.dots} aria-hidden>
                 {voters.map((voter) => (
                   <span key={voter.playerId} className={styles.dot}>
-                    <PlayerMark colorIndex={voter.colorIndex} size={26} />
+                    <PlayerMark colorIndex={voter.colorIndex} size="1.6rem" />
                   </span>
                 ))}
               </span>

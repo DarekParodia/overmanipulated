@@ -901,7 +901,6 @@ export const pl = {
   /** S5-05 accessibility: captions for audio-only cues and the muted-sound suggestion. */
   a11y: {
     captionsRegion: 'Napisy dźwięków',
-    suggestText: 'Dźwięk wyciszony',
     suggestAction: 'Włącz napisy',
     suggestDismiss: 'Zamknij podpowiedź',
     captions: {

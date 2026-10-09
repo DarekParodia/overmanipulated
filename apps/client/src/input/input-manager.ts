@@ -16,12 +16,24 @@ const latched = { interact: false, ping: false };
 const padPrevious = { interact: false, ping: false };
 let attached = false;
 
+const NATIVE_DIALOG_KEYS: ReadonlySet<string> = new Set([
+  'Tab',
+  'Space',
+  'Enter',
+  'NumpadEnter',
+  'Backspace',
+]);
+
 function onKeyDown(event: KeyboardEvent): void {
   if (isTypingTarget(event.target)) {
     return;
   }
   if (isInputCaptured()) {
     pressedKeys.clear();
+    // A modal dialog (settings) keeps the browser's own Tab / Enter / Space behaviour.
+    if (NATIVE_DIALOG_KEYS.has(event.code) && document.querySelector('dialog[open]')) {
+      return;
+    }
     if (handleNavKey(event)) {
       useApp.getState().setInputDevice('keyboard');
     }

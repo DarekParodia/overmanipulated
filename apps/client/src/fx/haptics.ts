@@ -97,7 +97,6 @@ type RumbleActuator = {
   playEffect?: (
     type: 'dual-rumble',
     params: {
-      startDelay?: number;
       duration: number;
       strongMagnitude: number;
       weakMagnitude: number;
@@ -117,6 +116,8 @@ type HapticPad = Gamepad & {
 export type HapticEnvironment = {
   vibrate?: (pattern: number[]) => boolean;
   gamepads?: () => readonly (Gamepad | null)[];
+  /** Runs `fn` after `ms`; defaults to setTimeout. */
+  schedule?: (fn: () => void, ms: number) => void;
 };
 
 function browserEnvironment(): HapticEnvironment {
@@ -149,15 +150,26 @@ export function playPlan(plan: HapticPlan, env: HapticEnvironment): void {
       }
       const { vibrationActuator, hapticActuators } = pad as HapticPad;
       if (vibrationActuator?.playEffect) {
+        // A new effect preempts the one playing, so each step is started at its own time.
         for (const step of plan.rumble) {
-          void vibrationActuator
-            .playEffect('dual-rumble', {
-              startDelay: step.start,
-              duration: step.duration,
-              strongMagnitude: step.strong,
-              weakMagnitude: step.weak,
-            })
-            ?.catch?.(() => {});
+          const play = () => {
+            try {
+              void vibrationActuator
+                .playEffect?.('dual-rumble', {
+                  duration: step.duration,
+                  strongMagnitude: step.strong,
+                  weakMagnitude: step.weak,
+                })
+                ?.catch?.(() => {});
+            } catch {
+              // Pad vanished between steps.
+            }
+          };
+          if (step.start === 0) {
+            play();
+          } else {
+            (env.schedule ?? ((fn, ms) => void setTimeout(fn, ms)))(play, step.start);
+          }
         }
       } else if (hapticActuators?.[0]?.pulse) {
         // Legacy single-motor API: one pulse at the strongest magnitude of the effect.

@@ -256,7 +256,6 @@ export function useMenuNavigation(): void {
     const observer = new MutationObserver(sync);
     observer.observe(document.body, {
       subtree: true,
-      childList: true,
       attributes: true,
       attributeFilter: ['open'],
     });

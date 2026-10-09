@@ -124,7 +124,11 @@ export function createFeedback(getSettings: () => Settings, getQuality: () => Qu
     emit(id: CueId, context: CueContext = {}): void {
       const settings = getSettings();
       for (const listener of cueListeners) {
-        listener(id, context);
+        try {
+          listener(id, context);
+        } catch {
+          // A broken listener (captions) must never cost the cue its sound and motion.
+        }
       }
       const resolved = resolveCue(cues[id], settings, getQuality());
       if (resolved.sound && outputs.playSound) {

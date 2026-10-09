@@ -17,7 +17,13 @@ const SHAPE_PATH: Record<PlayerShape, string> = {
   diamond: 'M8 1.8L14.2 8L8 14.2L1.8 8Z',
 };
 
-export function PlayerMark({ colorIndex, size = 16 }: { colorIndex: number; size?: number }) {
+export function PlayerMark({
+  colorIndex,
+  size = 16,
+}: {
+  colorIndex: number;
+  size?: number | string;
+}) {
   const shape = playerShape(colorIndex);
   return (
     <svg
