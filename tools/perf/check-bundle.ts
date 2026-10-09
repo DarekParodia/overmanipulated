@@ -175,23 +175,38 @@ function readCost(dist: string, path: string): FileCost {
   return costOf(path, readFileSync(join(dist, path)));
 }
 
-function audioFiles(dist: string, ext: string): { menu: string[]; game: string[] } {
+/**
+ * Menu audio, game audio and the per-level music sets. Level music is loaded lazily per level
+ * (a calm + pressure pair), so a first match pays for one set, not all of them.
+ */
+function audioFiles(
+  dist: string,
+  ext: string,
+): { menu: string[]; game: string[]; levelSets: string[][] } {
   const menu: string[] = [];
   const game: string[] = [];
+  const sets = new Map<string, string[]>();
   const walk = (dir: string) => {
     for (const name of readdirSync(join(dist, dir))) {
       const rel = posix.join(dir, name);
       if (statSync(join(dist, rel)).isDirectory()) {
         walk(rel);
       } else if (name.endsWith(`.${ext}`)) {
-        (name.startsWith('menu.') ? menu : game).push(rel);
+        if (name.startsWith('menu.')) {
+          menu.push(rel);
+        } else if (dir.endsWith('/music')) {
+          const key = name.replace(`-pressure.${ext}`, `.${ext}`);
+          sets.set(key, [...(sets.get(key) ?? []), rel]);
+        } else {
+          game.push(rel);
+        }
       }
     }
   };
   if (existsSync(join(dist, 'assets/audio'))) {
     walk('assets/audio');
   }
-  return { menu, game };
+  return { menu, game, levelSets: [...sets.values()] };
 }
 
 export function measure(dist: string): Report {
@@ -221,7 +236,12 @@ export function measure(dist: string): Report {
         .filter((f, i, all) => all.indexOf(f) === i)
         .map((f) => readCost(dist, f)),
     );
-    const game = sum([...gameChunks, ...audio.game].map((f) => readCost(dist, f)));
+    // The worst case is the biggest single level set; the others load when their level starts.
+    const biggestSet =
+      audio.levelSets
+        .map((files) => ({ files, cost: sum(files.map((f) => readCost(dist, f))) }))
+        .sort((a, b) => b.cost.gzip - a.cost.gzip)[0]?.files ?? [];
+    const game = sum([...gameChunks, ...audio.game, ...biggestSet].map((f) => readCost(dist, f)));
     return { ext, menu, game };
   });
   const largest = reports.reduce((a, b) =>

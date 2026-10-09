@@ -942,6 +942,37 @@ export const pl = {
     listLabel: (scope: 'room' | 'global') =>
       scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich',
   },
+  /** S5-05 accessibility: captions for audio-only cues and the muted-sound suggestion. */
+  a11y: {
+    captionsRegion: 'Napisy dźwięków',
+    suggestAction: 'Włącz napisy',
+    suggestDismiss: 'Zamknij podpowiedź',
+    captions: {
+      newFolder: 'Nowa teczka',
+      deadlineNear: 'Termin blisko',
+      folderLost: 'Teczka przepadła',
+      moreTime: 'Więcej czasu',
+      mistake: 'Błąd!',
+      teammateMistake: 'Ktoś się pomylił',
+      deskTaken: 'Biurko zajęte',
+      lastSeconds: 'Ostatnie sekundy',
+      pingArchive: 'Szukaj w archiwum',
+      pingFake: 'Fałszywka!',
+      pingMine: 'Biorę tę teczkę',
+      playerJoined: 'Ktoś dołączył',
+      playerBack: 'Wrócił do gry',
+      playerLeft: 'Ktoś wyszedł',
+      phoneRings: 'Telefon dzwoni',
+      botRaid: 'Atak botów',
+      outage: 'Awaria!',
+      powerBack: 'Prąd wrócił',
+      correction: 'Sprostowanie!',
+      viral: 'Wiralowa teczka',
+      raidResolved: 'Boty odparte',
+      tempoUp: 'Tempo rośnie',
+      record: 'Nowy rekord',
+    },
+  },
 } as const;
 
 export type Strings = typeof pl;

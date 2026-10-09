@@ -19,6 +19,7 @@ import {
   useGame,
 } from '../net/game-store.ts';
 import { useSettings } from '../store/settings.ts';
+import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { playerColor, playerColorVar } from '../ui/tokens.ts';
 import {
   type CharacterController,
@@ -146,6 +147,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
         className={styles.label}
         style={{ borderColor: playerColorVar(colorIndex) }}
       >
+        <PlayerMark colorIndex={colorIndex} size={14} />
         {nickname}
       </span>
     ),

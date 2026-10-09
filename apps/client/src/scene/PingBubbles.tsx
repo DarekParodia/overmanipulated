@@ -15,6 +15,7 @@ import {
 import styles from '../pings/PingBubble.module.css';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
+import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { playerColorVar } from '../ui/tokens.ts';
 import { renderState } from './render-state.ts';
 
@@ -88,6 +89,7 @@ function BubbleAnchor({
           data-ping={bubble.ping}
           role="status"
         >
+          <PlayerMark colorIndex={colorIndex} size={20} />
           {pl.vocab.pings[bubble.ping]}
         </p>
       </Html>

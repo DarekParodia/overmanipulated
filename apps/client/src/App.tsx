@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
+import { startCaptions } from './a11y/caption-store.ts';
 import { PerfOverlay } from './debug/PerfOverlay.tsx';
 import { initAudio, playSound } from './fx/audio/audio-manager.ts';
 import { feedback } from './fx/feedback.ts';
 import { startGameplayFeedback } from './fx/gameplay-feedback.ts';
 import { vibrate } from './fx/haptics.ts';
+import { useMenuNavigation } from './input/menu-nav.ts';
 import { GameGate } from './loading/GameGate.tsx';
 import { startPreload } from './loading/preload.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
@@ -17,6 +19,7 @@ import { applySettingsToDocument, useSettings } from './store/settings.ts';
 
 export function App() {
   const screen = useApp((s) => s.screen);
+  useMenuNavigation();
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has('styleguide')) {
@@ -29,12 +32,14 @@ export function App() {
     const stopAudio = initAudio();
     const disconnectOutputs = feedback.connect({ playSound, vibrate });
     const stopGameplayFeedback = startGameplayFeedback();
+    const stopCaptions = startCaptions();
     document.addEventListener('visibilitychange', handleVisibilityReturn);
     return () => {
       unsubscribeSettings();
       stopAudio();
       disconnectOutputs();
       stopGameplayFeedback();
+      stopCaptions();
       document.removeEventListener('visibilitychange', handleVisibilityReturn);
     };
   }, []);
