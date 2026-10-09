@@ -2,6 +2,7 @@
 // role picker, the level, and one main action — "Gotowy" for guests, "Do składu!" for the host.
 import { MAX_PLAYERS, type Role } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
+import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { leaveRoom, selectLevel, setReady, setRole, startGame } from '../net/session.ts';
@@ -47,6 +48,7 @@ export function Lobby() {
   const connection = useApp((s) => s.connection);
   const error = useApp((s) => s.error);
   const [copied, setCopied] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => requestMusic('menu'), []);
   useEffect(
@@ -117,10 +119,20 @@ export function Lobby() {
             {copied ? pl.lobby.copied : ''}
           </span>
         </section>
-        <Button back icon={<Icon name="leave" size={24} />} onClick={leaveRoom}>
-          {pl.lobby.leave}
-        </Button>
+        <div className={styles.topActions}>
+          <Button icon={<Icon name="trophy" size={24} />} onClick={() => setBoardOpen(true)}>
+            {pl.leaderboard.open}
+          </Button>
+          <Button back icon={<Icon name="leave" size={24} />} onClick={leaveRoom}>
+            {pl.lobby.leave}
+          </Button>
+        </div>
       </header>
+      <LeaderboardDialog
+        open={boardOpen}
+        roomCode={room.roomCode}
+        onClose={() => setBoardOpen(false)}
+      />
 
       <section className={styles.players} aria-labelledby="players-title">
         <h1 id="players-title" className={styles.sectionTitle}>

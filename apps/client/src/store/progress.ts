@@ -125,3 +125,65 @@ export const useProgress = create<ProgressStore>((set, get) => ({
     }
   },
 }));
+
+// --- Endless mode: best run in this browser (S4-11) ------------------------------------------
+
+const ENDLESS_KEY = 'redakcja.endless.v1';
+
+export type EndlessRun = { score: number; survivedS: number };
+
+/** Higher score wins; with equal scores the longer run does. */
+export function isBetterRun(candidate: EndlessRun, best: EndlessRun | null): boolean {
+  if (!best) {
+    return true;
+  }
+  return (
+    candidate.score > best.score ||
+    (candidate.score === best.score && candidate.survivedS > best.survivedS)
+  );
+}
+
+/** Reads the stored best run; anything malformed is dropped, never thrown. */
+export function parseEndlessBest(raw: string | null): EndlessRun | null {
+  if (!raw) {
+    return null;
+  }
+  let data: unknown;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  if (typeof data !== 'object' || data === null) {
+    return null;
+  }
+  const { score, survivedS } = data as Record<string, unknown>;
+  if (
+    typeof score === 'number' &&
+    Number.isInteger(score) &&
+    typeof survivedS === 'number' &&
+    Number.isInteger(survivedS) &&
+    survivedS >= 0
+  ) {
+    return { score, survivedS };
+  }
+  return null;
+}
+
+type EndlessStore = {
+  best: EndlessRun | null;
+  /** Stores a finished run if it beats the best; returns whether it did. */
+  record(run: EndlessRun): boolean;
+};
+
+export const useEndlessBest = create<EndlessStore>((set, get) => ({
+  best: parseEndlessBest(readStored('local', ENDLESS_KEY)),
+  record(run) {
+    if (!isBetterRun(run, get().best)) {
+      return false;
+    }
+    set({ best: run });
+    writeStored('local', ENDLESS_KEY, JSON.stringify(run));
+    return true;
+  },
+}));

@@ -19,6 +19,12 @@
   gap: var(--space-3);
 }
 
+.topActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 /* The room code: big, in a white pill, with a copy button inside. */
 .codePill {
   display: inline-flex;

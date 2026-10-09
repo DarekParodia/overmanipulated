@@ -210,6 +210,19 @@ const icons = {
   ],
   /** Question mark: "not sure". */
   question: [{ d: 'M8.5 9a3.5 3.5 0 1 1 5.2 3c-1.2.7-1.7 1.3-1.7 2.5' }, { d: 'M12 18.5h.01' }],
+  // --- Endless mode (S4-11) ----------------------------------------------------------------
+  /** Endless mode: a lying eight. */
+  infinity: [
+    {
+      d: 'M12 12c-1.6-2.6-3.2-4.2-5.2-4.2a4.2 4.2 0 0 0 0 8.4c2 0 3.6-1.6 5.2-4.2s3.2-4.2 5.2-4.2a4.2 4.2 0 0 1 0 8.4c-2 0-3.6-1.6-5.2-4.2Z',
+    },
+  ],
+  /** Best score and the leaderboard. */
+  trophy: [
+    { d: 'M7.5 3.5h9v6a4.5 4.5 0 0 1-9 0Z', fill: 'tint' },
+    { d: 'M7.5 5.5h-3v1.5a3.5 3.5 0 0 0 3.5 3.5M16.5 5.5h3v1.5a3.5 3.5 0 0 1-3.5 3.5' },
+    { d: 'M12 14v3M8.5 20.5h7M9.5 20.5v-3.5h5v3.5' },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;
