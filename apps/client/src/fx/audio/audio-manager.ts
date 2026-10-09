@@ -4,12 +4,13 @@
 // one-shots (ambience.ts, mix.ts). Big stingers dip the music (duck.ts).
 import { Howl, Howler } from 'howler';
 import { selectOperatedDesk, selectOperatedStation, useGame } from '../../net/game-store.ts';
+import { useQuality } from '../../scene/quality.ts';
 import { useApp } from '../../store/app.ts';
 import { type Settings, useSettings } from '../../store/settings.ts';
 import { type AudioBus, cues } from '../cues.ts';
 import { createAmbience } from './ambience.ts';
-import { DUCKING_SOUNDS, musicDucker } from './duck.ts';
-import { BUS_TRIM, chatterVolume, LIMITER } from './mix.ts';
+import { DUCKING_SOUNDS, musicDucker, soundDurationMs } from './duck.ts';
+import { BUS_TRIM, chatterLevel, LIMITER, type MixSettings } from './mix.ts';
 import sprite from './sfx-sprite.json';
 
 type SpriteMap = Record<string, [number, number, boolean]>;
@@ -52,11 +53,12 @@ export function installMasterLimiter(): void {
     gainStage.connect(limiter);
     limiter.connect(ctx.destination);
   } catch {
-    // Without a limiter the audio still plays: reconnect straight to the output.
+    // Without a limiter the audio still plays: drop any half-built path, go straight to the output.
     try {
+      gainStage.disconnect();
       gainStage.connect(ctx.destination);
     } catch {
-      // Already connected.
+      // Nothing more to do.
     }
   }
 }
@@ -89,9 +91,9 @@ export function playSound(
     return;
   }
   const howl = load();
-  const duckMs = DUCKING_SOUNDS[id];
-  if (duckMs !== undefined && !useSettings.getState().muted) {
-    musicDucker.request(performance.now(), duckMs);
+  // Only a stinger the player can hear dips the music.
+  if (DUCKING_SOUNDS.has(id) && busVolume(useSettings.getState(), bus) * volume > 0.02) {
+    musicDucker.request(performance.now(), soundDurationMs(id));
   }
   const playId = playOn(howl, id, bus, volume);
   if (rateJitter > 0) {
@@ -136,10 +138,34 @@ function applyRoomTone(settings: Settings): void {
   if (sfx && ambienceId !== null) {
     sfx.volume(busVolume(settings, 'sfx') * ROOMTONE_LEVEL * bedGain, ambienceId);
   }
-  if (sfx && chatterId !== null) {
-    // chatterVolume applies master × sfx volume, the ducking and the reduced-audio rule.
-    sfx.volume(Math.min(1, chatterVolume(settings, bedGain) * BUS_TRIM.sfx), chatterId);
+  applyChatter(settings);
+}
+
+/** Effective settings for the mix rules: the Auto quality preset resolved to the live one. */
+function mixSettings(settings: Settings): MixSettings {
+  return { ...settings, quality: settings.quality ?? useQuality.getState().profile.preset };
+}
+
+/**
+ * The chatter bed plays only while it is audible: it is started and stopped when the
+ * reduced-audio rule flips (muted, low quality, sfx near zero), not just set to volume 0.
+ */
+function applyChatter(settings: Settings): void {
+  if (!sfx || ambienceId === null) {
+    return;
   }
+  const volume = busVolume(settings, 'sfx') * chatterLevel(mixSettings(settings), bedGain);
+  if (volume <= 0) {
+    if (chatterId !== null) {
+      sfx.stop(chatterId);
+      chatterId = null;
+    }
+    return;
+  }
+  if (chatterId === null) {
+    chatterId = sfx.play('ambchatter');
+  }
+  sfx.volume(Math.min(1, volume), chatterId);
 }
 
 const ambience = createAmbience({
@@ -177,7 +203,6 @@ export function startAmbience(): void {
   }
   bedGain = 1;
   ambienceId = howl.play('roomtone');
-  chatterId = howl.play('ambchatter');
   applyRoomTone(useSettings.getState());
   ambience.reset(performance.now());
   ambienceTimer = setInterval(
@@ -213,9 +238,11 @@ export function initAudio(): () => void {
   };
   apply();
   const unsubscribe = useSettings.subscribe(apply);
+  const unsubscribeQuality = useQuality.subscribe(apply);
   document.addEventListener('visibilitychange', apply);
   return () => {
     unsubscribe();
+    unsubscribeQuality();
     document.removeEventListener('visibilitychange', apply);
   };
 }

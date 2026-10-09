@@ -49,7 +49,7 @@ level starts (`trackSetForLevel` in `music-intensity.ts`; unknown ids and the gr
 Runtime (`music.ts`): scenes (menu/game) cross-fade at 0.7 gain/s and only fade in once their files
 are decoded. In game, `targetIntensity` (last minute and urgent folders) drives the pressure
 layer while the calm layer dips by 35 % at full intensity (`layerGains`), so the sum stays level. The
-last 30 s raise the playback rate by 6 %. Stingers listed in `duck.ts` dip the music to 45 % while
+last 30 s raise the playback rate by 6 %. Stingers listed in `duck.ts` dip the music to 45 % (for the sprite length of the sound, if audible) while
 they ring.
 
 ## Buses and mix
@@ -79,7 +79,7 @@ each bus' in-game spread against a window.
 `ambchatter` is a 10 s loop of syllable-like blips (a buzzy source through vowel formants, three
 "speakers") over a muffled murmur; no words. It plays during a level at `CHATTER.level` of the sfx
 volume, follows the ambience duck down to 15 % under station/desk overlays and the results screen,
-and is off entirely in reduced-audio setups (`reducedAudio`: muted, quality `low`, or
+and is off entirely in reduced-audio setups (`reducedAudio`: muted, the effective quality preset is `low` (Auto resolved), or
 master x sfx volume below 0.12).
 
 ## Budget

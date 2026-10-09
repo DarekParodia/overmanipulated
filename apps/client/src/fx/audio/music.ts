@@ -138,6 +138,10 @@ function tick(): void {
   }
 
   // Fetch only what the requested scene needs, and only now that a gesture unlocked audio.
+  const levelId = useApp.getState().room?.levelId;
+  if (requested === 'game' && levelId) {
+    selectSet(trackSetForLevel(levelId));
+  }
   if (requested === 'menu') {
     howl('menu');
   } else if (requested === 'game') {
@@ -221,8 +225,9 @@ function tick(): void {
  * scene in the meantime (menu → lobby keeps the menu loop playing without a gap).
  */
 export function requestMusic(scene: MusicScene): () => void {
-  if (scene === 'game') {
-    selectSet(trackSetForLevel(useApp.getState().room?.levelId));
+  const levelId = useApp.getState().room?.levelId;
+  if (scene === 'game' && levelId) {
+    selectSet(trackSetForLevel(levelId));
   }
   if (!unlocked) {
     listenForGesture();

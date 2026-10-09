@@ -1,6 +1,7 @@
 // Music ducking (S5-08): the music bus dips for a moment under big stingers (win, lose, alarms,
 // level events) so they stay clear. Pure, with the clock passed in; music.ts applies the gain.
 import { slew } from './music-intensity.ts';
+import sprite from './sfx-sprite.json';
 
 export const DUCK_TUNING = {
   /** Music gain while a stinger rings (1 = no dip). */
@@ -12,22 +13,27 @@ export const DUCK_TUNING = {
   minMs: 350,
 } as const;
 
-/** Sprite ids that duck the music, with how long (ms). Anything else never ducks. */
-export const DUCKING_SOUNDS: Readonly<Record<string, number>> = {
-  win: 1500,
-  lose: 1500,
-  fanfare: 1000,
-  alarm: 900,
-  lowsting: 700,
-  lastsec: 750,
-  evviral: 450,
-  evboss: 850,
-  evraid: 600,
-  evoutage: 800,
-  evcorrection: 900,
-  evclear: 600,
-  evback: 600,
-};
+/** Sprite ids that duck the music, for as long as the sound lasts. Anything else never ducks. */
+export const DUCKING_SOUNDS: ReadonlySet<string> = new Set([
+  'win',
+  'lose',
+  'fanfare',
+  'alarm',
+  'lowsting',
+  'lastsec',
+  'evviral',
+  'evboss',
+  'evraid',
+  'evoutage',
+  'evcorrection',
+  'evclear',
+  'evback',
+]);
+
+/** How long a sound rings, from the sprite (ms); 0 for unknown ids. */
+export function soundDurationMs(id: string): number {
+  return (sprite as unknown as Record<string, [number, number, boolean]>)[id]?.[1] ?? 0;
+}
 
 export type Ducker = {
   /** Asks for a dip until `nowMs + durationMs` (keeps the later of two deadlines). */

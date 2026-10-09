@@ -1,10 +1,13 @@
 // Mix rules (S5-08), pure: bus trims, when the voice-less chatter bed plays, and how it follows
 // ducking. The WebAudio graph itself (master limiter) lives in audio-manager.ts.
-import type { Settings } from '../../store/settings.ts';
+import type { QualityPreset, Settings } from '../../store/settings.ts';
 import type { AudioBus } from '../cues.ts';
 import { AMBIENCE_TUNING } from './ambience.ts';
 
-type MixSettings = Pick<Settings, 'muted' | 'masterVolume' | 'sfxVolume' | 'quality'>;
+/** Settings the mix rules read; `quality` is the effective preset (Auto already resolved). */
+export type MixSettings = Pick<Settings, 'muted' | 'masterVolume' | 'sfxVolume'> & {
+  quality: QualityPreset;
+};
 
 /**
  * Per-bus trim on top of master × the bus slider. Files are normalised per class
@@ -44,16 +47,15 @@ export function reducedAudio(settings: MixSettings): boolean {
 }
 
 /**
- * Playback volume of the chatter bed. `bedGain` is the ambience bed's gain (1 normally, down to
- * AMBIENCE_TUNING.duckedGain under overlays); the chatter follows it down to CHATTER.duckedGain.
- * Returns 0 in reduced-audio setups.
+ * Level of the chatter bed relative to the sfx bus (multiply by the bus volume). `bedGain` is the
+ * ambience bed's gain (1 normally, down to AMBIENCE_TUNING.duckedGain under overlays); the chatter
+ * follows it down to CHATTER.duckedGain. Returns 0 in reduced-audio setups.
  */
-export function chatterVolume(settings: MixSettings, bedGain: number): number {
+export function chatterLevel(settings: MixSettings, bedGain: number): number {
   if (reducedAudio(settings)) {
     return 0;
   }
   const lowest = AMBIENCE_TUNING.duckedGain;
   const open = Math.min(1, Math.max(0, (bedGain - lowest) / (1 - lowest)));
-  const gain = CHATTER.duckedGain + (1 - CHATTER.duckedGain) * open;
-  return settings.masterVolume * settings.sfxVolume * CHATTER.level * gain;
+  return CHATTER.level * (CHATTER.duckedGain + (1 - CHATTER.duckedGain) * open);
 }

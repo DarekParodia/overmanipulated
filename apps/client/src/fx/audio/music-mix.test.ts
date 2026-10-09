@@ -2,8 +2,8 @@ import { describe, expect, it } from 'bun:test';
 import { existsSync, statSync } from 'node:fs';
 import { ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { AMBIENCE_TUNING } from './ambience.ts';
-import { createDucker, DUCK_TUNING, DUCKING_SOUNDS } from './duck.ts';
-import { BUS_TRIM, CHATTER, chatterVolume, reducedAudio } from './mix.ts';
+import { createDucker, DUCK_TUNING, DUCKING_SOUNDS, soundDurationMs } from './duck.ts';
+import { BUS_TRIM, CHATTER, chatterLevel, type MixSettings, reducedAudio } from './mix.ts';
 import {
   CALM_DIP_AT_FULL,
   layerGains,
@@ -15,7 +15,7 @@ import manifest from './music-manifest.json';
 import sprite from './sfx-sprite.json';
 
 const AUDIO_DIR = new URL('../../../public/assets/audio/', import.meta.url).pathname;
-const settings = { muted: false, masterVolume: 0.8, sfxVolume: 0.9, quality: null } as const;
+const settings: MixSettings = { muted: false, masterVolume: 0.8, sfxVolume: 0.9, quality: 'high' };
 
 describe('level music selection', () => {
   it('maps every campaign level and endless mode to its own track set', () => {
@@ -128,8 +128,9 @@ describe('music ducking', () => {
   });
 
   it('only names sounds that exist in the sprite', () => {
-    for (const id of Object.keys(DUCKING_SOUNDS)) {
+    for (const id of DUCKING_SOUNDS) {
       expect(id in sprite).toBe(true);
+      expect(soundDurationMs(id)).toBeGreaterThanOrEqual(DUCK_TUNING.minMs);
     }
   });
 });
@@ -142,14 +143,14 @@ describe('chatter bed and bus defaults', () => {
   });
 
   it('plays quietly, ducks under overlays and goes silent in reduced-audio setups', () => {
-    const open = chatterVolume(settings, 1);
-    const ducked = chatterVolume(settings, AMBIENCE_TUNING.duckedGain);
+    const open = chatterLevel(settings, 1);
+    const ducked = chatterLevel(settings, AMBIENCE_TUNING.duckedGain);
     expect(open).toBeGreaterThan(0);
-    expect(open).toBeLessThan(settings.masterVolume * settings.sfxVolume * 0.6);
+    expect(open).toBeLessThan(0.6);
     expect(ducked / open).toBeCloseTo(CHATTER.duckedGain);
-    expect(chatterVolume({ ...settings, muted: true }, 1)).toBe(0);
-    expect(chatterVolume({ ...settings, quality: 'low' }, 1)).toBe(0);
-    expect(chatterVolume({ ...settings, sfxVolume: 0.05 }, 1)).toBe(0);
+    expect(chatterLevel({ ...settings, muted: true }, 1)).toBe(0);
+    expect(chatterLevel({ ...settings, quality: 'low' }, 1)).toBe(0);
+    expect(chatterLevel({ ...settings, sfxVolume: 0.05 }, 1)).toBe(0);
     expect(reducedAudio(settings)).toBe(false);
   });
 
