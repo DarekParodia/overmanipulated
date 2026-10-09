@@ -443,6 +443,27 @@ export const cues = {
     severity: 1,
     sound: { ids: ['ambtyping'], bus: 'sfx', volume: 0.3, rateJitter: 0.1 },
   },
+  // S4-01 phone minigame: ringing, a tinkly hold-music beat per half second in the queue,
+  // the line picking up, and a wrong number. The overlay shows each of them as well.
+  'phone.ring': {
+    severity: 1,
+    sound: { ids: ['ambphone'], bus: 'sfx', volume: 0.9 },
+    haptic: 'tick',
+  },
+  'phone.hold': {
+    severity: 1,
+    sound: { ids: ['ping1', 'ping2', 'ping3'], bus: 'ui', volume: 0.45, rateJitter: 0.03 },
+  },
+  'phone.connect': {
+    severity: 1,
+    sound: { ids: ['chime'], bus: 'sfx', volume: 0.9 },
+    haptic: 'tick',
+  },
+  'phone.wrong': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'sfx', rateJitter: 0.05 },
+    haptic: 'thud',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

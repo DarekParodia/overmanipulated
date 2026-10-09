@@ -511,6 +511,43 @@ export const pl = {
         },
       },
     },
+    /** Phone minigame (S4-01): pick the right number, wait in the queue (reporters skip it). */
+    phone: {
+      task: 'Zadzwoń do źródła',
+      ringing: 'Dzwoni…',
+      onHold: 'Czekaj w kolejce',
+      seconds: (n: number) => `${n} s`,
+      skipped: 'Reporter: bez kolejki!',
+      connected: 'Połączono!',
+      wrong: 'Zły numer',
+      wrongBody: 'Nikt nie odebrał',
+      keys: {
+        keyboard: [
+          { keys: ['W', 'S'], label: 'wybierz' },
+          { keys: ['E'], label: 'dzwoń' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'dzwoń' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
+      /** Invented contacts of Nowe Brzegi used as wrong numbers next to the story's own source. */
+      decoys: [
+        'Komunikat prasowy ratusza',
+        'Mail od czytelnika',
+        'Portal „Brzeski Szpikulec”',
+        'Konto „Nowe Brzegi Info”',
+        'Rzecznik straży pożarnej',
+        'Biuro prasowe szpitala',
+        'Radio Nadrzecze',
+        'Wiadomość od sąsiada',
+        'Raport urzędu statystycznego',
+        'Fotoklub Nadrzecze',
+        'Stowarzyszenie Rowerowe NB',
+        'Dziennik „Kurier Nowobrzeski”',
+      ],
+    },
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
   pings: {
