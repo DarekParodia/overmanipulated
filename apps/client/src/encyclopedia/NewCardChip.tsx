@@ -36,7 +36,14 @@ export function useNewCards(storyIds: readonly string[], ready: boolean): string
   return ready ? unlocked : [];
 }
 
-export function NewCardChip({ cardIds }: { cardIds: readonly string[] }) {
+/** `compact` (the phone ribbon) drops the words on very narrow screens, keeping the icon. */
+export function NewCardChip({
+  cardIds,
+  compact = false,
+}: {
+  cardIds: readonly string[];
+  compact?: boolean;
+}) {
   const first = cardIds[0];
   if (first === undefined) {
     return null;
@@ -44,7 +51,7 @@ export function NewCardChip({ cardIds }: { cardIds: readonly string[] }) {
   return (
     <button
       type="button"
-      className={styles.newChip}
+      className={`${styles.newChip} ${compact ? styles.newCompact : ''}`}
       data-testid="new-card"
       aria-label={`${pl.encyclopedia.newCard} ${pl.encyclopedia.seeCard}`}
       onClick={() => {
@@ -53,7 +60,7 @@ export function NewCardChip({ cardIds }: { cardIds: readonly string[] }) {
       }}
     >
       <Icon name="book" size={22} />
-      {pl.encyclopedia.newCard}
+      <span className={styles.newLabel}>{pl.encyclopedia.newCard}</span>
       {cardIds.length > 1 && (
         <span className={styles.newMore}>{pl.encyclopedia.moreCards(cardIds.length)}</span>
       )}

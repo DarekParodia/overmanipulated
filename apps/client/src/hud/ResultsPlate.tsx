@@ -170,6 +170,7 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
               )}
             </p>
           </div>
+          {paged && showCards && <NewCardChip cardIds={newCards} compact />}
         </header>
 
         <div className={styles.summary}>
@@ -268,7 +269,7 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
                 {pl.debrief.count(cards.length)}
               </span>
             )}
-            {showCards && <NewCardChip cardIds={newCards} />}
+            {showCards && !paged && <NewCardChip cardIds={newCards} />}
           </h2>
           {!showCards ? (
             <div className={styles.board}>

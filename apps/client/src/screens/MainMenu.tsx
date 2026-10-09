@@ -73,7 +73,7 @@ export function MainMenu() {
           data-testid="open-encyclopedia"
           onClick={() => useEncyclopedia.getState().show()}
         >
-          {pl.encyclopedia.open}
+          <span className={styles.cornerLabel}>{pl.encyclopedia.open}</span>
         </Button>
         <Button
           icon={<Icon name="settings" size={28} label={pl.menu.settings} />}
