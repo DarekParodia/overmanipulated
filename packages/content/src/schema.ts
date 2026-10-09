@@ -232,6 +232,30 @@ export const levelSchema = z
 
 export const storyFileSchema = z.array(storySchema);
 
+/**
+ * Encyclopedia card (S5-04): one manipulation technique. Stories name theirs in `technique`; the
+ * card's `id` or one of its `aliases` must match, so near-duplicate ids share one collectible.
+ */
+export const techniqueSchema = z.object({
+  id: z.string().regex(kebab),
+  /** Other story technique ids that collect into this card. */
+  aliases: z.array(z.string().regex(kebab)).default([]),
+  name: text(40),
+  /** How the trick works. */
+  how: text(300),
+  /** How to expose it: which stations and what to look for. */
+  detect: text(300),
+  /** Stations that help; the first one gives the card its icon. */
+  stations: z.array(stationKindSchema).min(1).max(4),
+  /** A generic real-world analogue, without real names. */
+  realWorld: text(300),
+  /** Teaser shown on the locked card; must not give the trick away. */
+  hint: text(60),
+});
+
+export const techniqueFileSchema = z.array(techniqueSchema);
+export type Technique = z.infer<typeof techniqueSchema>;
+
 export type Stamp = z.infer<typeof stampSchema>;
 export type Story = z.infer<typeof storySchema>;
 export type Level = z.infer<typeof levelSchema>;

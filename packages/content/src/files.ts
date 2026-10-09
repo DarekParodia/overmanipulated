@@ -15,6 +15,7 @@ import l3Stories from '../stories/l3-afera.json';
 import l4Stories from '../stories/l4-zdrowie.json';
 import l5Stories from '../stories/l5-deepfake.json';
 import l6Stories from '../stories/l6-atak.json';
+import techniques from '../techniques/techniques.json';
 
 export const LEVEL_FILES: Readonly<Record<string, unknown>> = {
   'levels/l0-greybox.json': l0Level,
@@ -34,4 +35,9 @@ export const STORY_FILES: Readonly<Record<string, unknown>> = {
   'stories/l4-zdrowie.json': l4Stories,
   'stories/l5-deepfake.json': l5Stories,
   'stories/l6-atak.json': l6Stories,
+};
+
+// --- S5-04 technique encyclopedia ---
+export const TECHNIQUE_FILES: Readonly<Record<string, unknown>> = {
+  'techniques/techniques.json': techniques,
 };

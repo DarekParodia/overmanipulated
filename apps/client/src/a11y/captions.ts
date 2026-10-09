@@ -60,6 +60,8 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'ui.hover': skip('ui'),
   'ui.back': skip('ui'),
   'ui.copy': skip('ui'),
+  // The „Nowa karta!” chip in the Kolegium says it in words.
+  'encyclopedia.unlock': skip('visual-elsewhere'),
   'player.join': chip('user', t.playerJoined, 'info'),
   'player.reconnect': chip('user', t.playerBack, 'info'),
   'player.leave': chip('user', t.playerLeft, 'warn'),

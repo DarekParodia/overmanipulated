@@ -12,6 +12,7 @@ import {
   formatIssue,
   type Issue,
   validateContent,
+  validateTechniques,
 } from './checks.ts';
 
 const packageRoot = resolve(import.meta.dir, '..');
@@ -22,7 +23,7 @@ const issues: Issue[] = [];
 /** Every .json file found, with its contents when it is valid JSON. */
 const onDisk: { file: string; data?: unknown }[] = [];
 
-function load(dir: 'levels' | 'stories'): ContentFile[] {
+function load(dir: 'levels' | 'stories' | 'techniques'): ContentFile[] {
   const path = join(root, dir);
   if (!existsSync(path)) {
     issues.push({ severity: 'error', file: dir, path: '', message: 'directory not found' });
@@ -48,12 +49,20 @@ function load(dir: 'levels' | 'stories'): ContentFile[] {
 
 const levels = load('levels');
 const stories = load('stories');
+// A fixture root may have no techniques/ directory; the encyclopedia is then not checked.
+const checkEncyclopedia = !rootArg || existsSync(join(root, 'techniques'));
+const techniques = checkEncyclopedia ? load('techniques') : [];
 issues.push(...validateContent(levels, stories));
+if (checkEncyclopedia) {
+  issues.push(...validateTechniques(techniques, stories));
+}
 if (!rootArg) {
   try {
     // Imported only now, so invalid JSON in a registered file is reported above, not thrown here.
-    const { LEVEL_FILES, STORY_FILES } = await import('./files.ts');
-    issues.push(...checkRegistration(onDisk, { ...LEVEL_FILES, ...STORY_FILES }));
+    const { LEVEL_FILES, STORY_FILES, TECHNIQUE_FILES } = await import('./files.ts');
+    issues.push(
+      ...checkRegistration(onDisk, { ...LEVEL_FILES, ...STORY_FILES, ...TECHNIQUE_FILES }),
+    );
   } catch (error) {
     issues.push({ severity: 'error', file: 'src/files.ts', path: '', message: String(error) });
   }
@@ -65,7 +74,7 @@ for (const issue of issues) {
 const errors = issues.filter((issue) => issue.severity === 'error').length;
 const warnings = issues.length - errors;
 console.log(
-  `content: ${levels.length} level file(s), ${stories.length} story file(s): ${errors} error(s), ${warnings} warning(s)`,
+  `content: ${levels.length} level file(s), ${stories.length} story file(s), ${techniques.length} technique file(s): ${errors} error(s), ${warnings} warning(s)`,
 );
 if (errors > 0) {
   process.exit(1);

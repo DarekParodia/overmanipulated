@@ -1,0 +1,197 @@
+[
+  {
+    "id": "stare-zdjecie-nowy-podpis",
+    "aliases": ["zdjecie-w-zlym-czasie"],
+    "name": "Stare zdjęcie, nowy podpis",
+    "how": "Prawdziwe zdjęcie z innego miejsca lub dnia dostaje nowy podpis i udaje bieżące wydarzenie. Obraz się zgadza, kłamstwo siedzi w opisie.",
+    "detect": "Lupa obrazu pokazuje, gdzie to zdjęcie pojawiło się wcześniej. Archiwum i Kartoteka źródeł sprawdzą datę i autora.",
+    "stations": ["imageSearch", "archive", "sourceRegistry"],
+    "realWorld": "Po każdej burzy czy powodzi krążą zdjęcia sprzed lat, podpisane jako „stan na dziś”.",
+    "hint": "Zdjęcia z sieci nie zawsze są świeże."
+  },
+  {
+    "id": "podszywanie-sie-pod-instytucje",
+    "aliases": [],
+    "name": "Fałszywa instytucja",
+    "how": "Konto lub strona kopiuje logo i nazwę urzędu, szkoły albo firmy. Pilny ton ma sprawić, że klikniesz, zanim sprawdzisz, kto pisze.",
+    "detect": "Kartoteka źródeł pokaże, że konto jest nowe i niezweryfikowane. Telefon do prawdziwej instytucji rozstrzyga sprawę.",
+    "stations": ["sourceRegistry", "phone"],
+    "realWorld": "Fałszywe SMS-y „od przewoźnika” albo „od banku” z linkiem do opłaty, która ma być pilna.",
+    "hint": "Logo i słowo „PILNE” to nie dowód."
+  },
+  {
+    "id": "satyra-brana-na-powaznie",
+    "aliases": ["satyra", "satyra-bez-oznaczenia", "satyra-brana-na-serio"],
+    "name": "Satyra brana na serio",
+    "how": "Żart wygląda jak prawdziwa wiadomość. Po udostępnieniu znika stopka lub podpis, więc ludzie biorą go za informację.",
+    "detect": "Kartoteka źródeł pokaże, że strona jest satyryczna. Sprawdź stopkę i resztę serwisu, a przy publikacji dopisz, że to żart.",
+    "stations": ["sourceRegistry", "archive"],
+    "realWorld": "Absurdalne „doniesienia” z portali satyrycznych, które co jakiś czas wracają jako rzekome newsy.",
+    "hint": "Nie każdy news jest na serio."
+  },
+  {
+    "id": "anonimowy-informator",
+    "aliases": [],
+    "name": "Anonimowy informator",
+    "how": "Poważne oskarżenie pochodzi od „znajomego z wewnątrz”, bez nazwiska i dowodów. Brzmi sensacyjnie, ale nie da się go sprawdzić.",
+    "detect": "Zadzwoń do źródła albo do instytucji i poproś o potwierdzenie. Kartoteka źródeł pokaże, że nikt nie stoi za tą wiadomością.",
+    "stations": ["phone", "sourceRegistry"],
+    "realWorld": "Głosówka „od kogoś, kto tam pracuje”, przekazywana dalej bez ustalenia, kto ją nagrał.",
+    "hint": "Kto to powiedział i skąd wie?"
+  },
+  {
+    "id": "plotka-bez-zrodla",
+    "aliases": ["niepotwierdzona-plotka"],
+    "name": "Plotka bez źródła",
+    "how": "„Podobno” i „słyszałem od znajomej” zastępują dowód. Każde kolejne udostępnienie brzmi jak potwierdzenie, choć nikt niczego nie sprawdził.",
+    "detect": "Szukaj pierwszego źródła w Kartotece źródeł i w Archiwum. Gdy go nie ma, zadzwoń do osoby lub instytucji, której dotyczy wiadomość.",
+    "stations": ["sourceRegistry", "archive", "phone"],
+    "realWorld": "Szkolna plotka o nauczycielu, która obiega klasy w jeden dzień, bo każdy zna „kogoś, kto wie”.",
+    "hint": "Im więcej „podobno”, tym mniej faktów."
+  },
+  {
+    "id": "wyrwane-z-kontekstu",
+    "aliases": ["cytat-wyrwany-z-kontekstu", "wyrwany-z-kontekstu"],
+    "name": "Wyrwane z kontekstu",
+    "how": "Słowa lub kadr są prawdziwe, ale ktoś obciął początek i koniec. Bez reszty wypowiedź znaczy co innego.",
+    "detect": "Archiwum zawiera pełną wersję wypowiedzi lub materiału. Porównaj ją z wycinkiem i zapytaj osobę, której to dotyczy.",
+    "stations": ["archive", "phone"],
+    "realWorld": "Jedno zdanie z długiego wywiadu, które w nagłówku brzmi jak poparcie, choć w całości było zastrzeżeniem.",
+    "hint": "Prawdziwe słowa mogą kłamać."
+  },
+  {
+    "id": "zmyslony-cytat",
+    "aliases": [],
+    "name": "Zmyślony cytat",
+    "how": "Autentyczna twarz i nazwa uwiarygadniają zdanie, którego nikt nie wypowiedział. Cytat trafia na grafikę lub fałszywe konto.",
+    "detect": "Szukaj cytatu w Archiwum i u źródła. Kartoteka źródeł pokaże, czy konto naprawdę należy do tej osoby.",
+    "stations": ["archive", "sourceRegistry", "phone"],
+    "realWorld": "Grafika z portretem polityka i mocnym hasłem, którego nie ma w żadnym jego wystąpieniu.",
+    "hint": "Ładna grafika nie jest dowodem."
+  },
+  {
+    "id": "falszywy-sondaz",
+    "aliases": ["nieprezentatywna-proba"],
+    "name": "Sondaż bez metody",
+    "how": "Procenty i logo dają pozór nauki, ale nie ma metody ani badanych. Albo ankietę wypełniła mała, niereprezentatywna grupa.",
+    "detect": "Biblioteka danych pokaże, kto zbadał ilu ludzi i jak ich wybrał. Brak pracowni, próby i daty to znak ostrzegawczy.",
+    "stations": ["dataLibrary", "sourceRegistry"],
+    "realWorld": "Ankieta w grupie fanów jednego kandydata, podana jako „opinia mieszkańców”.",
+    "hint": "Skąd wzięły się te procenty?"
+  },
+  {
+    "id": "screenshot-bez-linku",
+    "aliases": [],
+    "name": "Zrzut ekranu bez linku",
+    "how": "Obrazek z rzekomą rozmową lub artykułem. Tekst na zrzucie edytuje się w minutę, a prawdziwy wpis ma adres, który można otworzyć.",
+    "detect": "Poproś o link i sprawdź go w Archiwum oraz Kartotece źródeł. Gdy wpisu nie ma, zrzut nie jest dowodem.",
+    "stations": ["archive", "sourceRegistry"],
+    "realWorld": "„Wyciekła rozmowa” w postaci obrazka, który ktoś przerobił w edytorze zdjęć.",
+    "hint": "Obrazek to jeszcze nie źródło."
+  },
+  {
+    "id": "argument-z-tlumu",
+    "aliases": ["presja-na-szybkosc"],
+    "name": "Presja tłumu",
+    "how": "„Wszyscy to wiedzą” i „udostępnij, zanim usuną” mają zastąpić dowody pośpiechem. Liczba udostępnień nic nie mówi o prawdzie.",
+    "detect": "Zatrzymaj się i zapytaj o fakty. Telefon do źródła i Kartoteka źródeł pokażą, czy ktoś w ogóle to potwierdził.",
+    "stations": ["sourceRegistry", "phone", "archive"],
+    "realWorld": "Wpis z tysiącami udostępnień, w którym nikt nie podaje, skąd to wie.",
+    "hint": "Tłum nie sprawdza faktów."
+  },
+  {
+    "id": "zmanipulowana-statystyka",
+    "aliases": ["wyrwana-statystyka"],
+    "name": "Kłamliwa statystyka",
+    "how": "Liczby są prawdziwe, ale pokazane tak, by mylić: wielki procent z maleńkiej próby, ucięta oś wykresu albo brak porównania.",
+    "detect": "Biblioteka danych pokaże pełną tabelę i wielkość próby. Sprawdź oś wykresu, podstawę procentu i to, kto zlecił badanie.",
+    "stations": ["dataLibrary", "sourceRegistry", "archive"],
+    "realWorld": "Reklama „9 na 10 osób poleca”, w której zapytano dziesięć osób wybranych przez producenta.",
+    "hint": "Liczby też potrafią mylić."
+  },
+  {
+    "id": "falszywy-ekspert",
+    "aliases": [],
+    "name": "Fałszywy ekspert",
+    "how": "Tytuł naukowy, biały fartuch i poważna nazwa instytutu mają budzić zaufanie, choć nikt nie sprawdził kwalifikacji.",
+    "detect": "Kartoteka źródeł pokaże, czy ta osoba i instytucja istnieją. Telefon do uczelni lub instytutu potwierdzi kwalifikacje.",
+    "stations": ["sourceRegistry", "phone", "dataLibrary"],
+    "realWorld": "Reklama preparatu, w której „lekarz” w fartuchu zachwala produkt, ale nie da się go znaleźć w żadnym rejestrze.",
+    "hint": "Tytuł to jeszcze nie wiedza."
+  },
+  {
+    "id": "korelacja-jako-przyczyna",
+    "aliases": [],
+    "name": "Korelacja to nie przyczyna",
+    "how": "Dwie rzeczy występują razem, więc ktoś twierdzi, że jedna powoduje drugą. Często oba zjawiska zależą od trzeciego czynnika.",
+    "detect": "W Bibliotece danych szukaj badania z grupą porównawczą i wyjaśnienia, co jeszcze mogło wpłynąć na wynik.",
+    "stations": ["dataLibrary", "archive"],
+    "realWorld": "„Tam, gdzie jest więcej lodziarni, jest więcej utonięć.” Obie liczby rosną latem.",
+    "hint": "Razem to nie znaczy: przez to."
+  },
+  {
+    "id": "tania-podrobka",
+    "aliases": [
+      "tania-podrobka-spowolnienie",
+      "tania-podrobka-wyciecie",
+      "zmanipulowane-nagranie",
+      "zmanipulowane-zdjecie"
+    ],
+    "name": "Tania podróbka",
+    "how": "Bez sztucznej inteligencji, prostym montażem: zwolnione tempo, wycięty fragment, podmieniony napis. Autentyczny materiał zmienia sens.",
+    "detect": "Archiwum ma oryginalną wersję do porównania. Lupa obrazu i Skaner AI pokażą cięcia, a Skaner może też dać fałszywy alarm.",
+    "stations": ["archive", "aiScanner", "imageSearch"],
+    "realWorld": "Nagranie spowolnione tak, że mówca brzmi, jakby był pijany.",
+    "hint": "Do oszustwa wystarczą nożyczki."
+  },
+  {
+    "id": "obraz-wygenerowany-ai",
+    "aliases": [],
+    "name": "Obraz z generatora",
+    "how": "Program tworzy realistyczną scenę, której nigdy nie było. Zdradzają ją dłonie, napisy, powtarzalne twarze i brak źródła.",
+    "detect": "Skaner AI szuka śladów generowania, a Lupa obrazu sprawdza, czy zdjęcie ma autora i wcześniejsze publikacje. Brak źródła to alarm.",
+    "stations": ["aiScanner", "imageSearch", "sourceRegistry"],
+    "realWorld": "Zdjęcie tłumu, na którym część osób ma zbyt wiele palców lub nieczytelne napisy.",
+    "hint": "Realistyczne nie znaczy prawdziwe."
+  },
+  {
+    "id": "deepfake-audio",
+    "aliases": ["klonowanie-glosu", "deepfake-wideo"],
+    "name": "Deepfake i klon głosu",
+    "how": "Program uczy się głosu lub twarzy z publicznych nagrań i mówi dowolny tekst. Brzmi znajomo, a presja czasu blokuje sprawdzanie.",
+    "detect": "Skaner AI wyłapie ślady syntezy, a telefon do osoby z nagrania potwierdzi, czy to ona mówiła. Pilność sama jest sygnałem alarmowym.",
+    "stations": ["aiScanner", "phone", "sourceRegistry"],
+    "realWorld": "Głosówka „od szefa” z pilną prośbą o przelew, nagrana przez program z kilkunastu sekund jego głosu.",
+    "hint": "Znajomy głos może być z programu."
+  },
+  {
+    "id": "siec-botow",
+    "aliases": ["sztuczny-hashtag", "koordynowane-dzialania"],
+    "name": "Boty i sztuczny tłum",
+    "how": "Wiele kont działa razem i powiela jeden komunikat albo hasztag. Ma to wyglądać jak głos niezależnych mieszkańców.",
+    "detect": "Kartoteka źródeł pokaże świeże, podobne konta. Wystarczy rozpoznać jedną kopię, by odrzucić całą falę.",
+    "stations": ["sourceRegistry", "aiScanner", "dataLibrary"],
+    "realWorld": "Setki niemal identycznych komentarzy pod jednym artykułem, dodanych w ciągu kilku minut.",
+    "hint": "Czy to na pewno różni ludzie?"
+  },
+  {
+    "id": "astroturfing",
+    "aliases": [],
+    "name": "Sztuczny ruch społeczny",
+    "how": "Zorganizowana kampania udaje oddolny, spontaniczny ruch. Prawdziwi ludzie podpisują gotowy tekst, a kto za tym stoi, zostaje ukryte.",
+    "detect": "Kartoteka źródeł i Telefon pokażą, kto zorganizował akcję. Biblioteka danych sprawdzi, ilu podpisów jest prawdziwych.",
+    "stations": ["sourceRegistry", "phone", "dataLibrary"],
+    "realWorld": "„Apel mieszkańców”, który okazuje się akcją jednej firmy, z gotowym tekstem do wklejenia.",
+    "hint": "Kto naprawdę za tym stoi?"
+  },
+  {
+    "id": "none",
+    "aliases": [],
+    "name": "Prawdziwa wiadomość",
+    "how": "Nie każda teczka to pułapka. Prawdziwe komunikaty, nawet nudne lub pilne, trzeba szybko opublikować. Skąd wiadomo, że są prawdziwe? Po potwierdzeniu.",
+    "detect": "Dwa zgodne źródła, właściwa instytucja i liczby zgodne z tabelą. Skaner AI bywa fałszywie czuły, więc nie ufaj mu ślepo.",
+    "stations": ["sourceRegistry", "phone", "archive"],
+    "realWorld": "Oficjalny komunikat urzędu o utrudnieniach w ruchu, potwierdzony w kilku miejscach.",
+    "hint": "Czasem teczka jest po prostu w porządku."
+  }
+]

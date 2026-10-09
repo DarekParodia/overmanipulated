@@ -973,6 +973,31 @@ export const pl = {
       record: 'Nowy rekord',
     },
   },
+  // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
+  encyclopedia: {
+    title: 'Encyklopedia technik',
+    open: 'Encyklopedia',
+    close: 'Zamknij encyklopedię',
+    done: 'Gotowe',
+    gridLabel: 'Karty technik',
+    collected: (n: number, total: number) => `${n} z ${total}`,
+    collectedLabel: (n: number, total: number) => `Zebrane karty: ${n} z ${total}`,
+    locked: '???',
+    lockedName: 'Zablokowana karta',
+    lockedLabel: (n: number) => `Zablokowana karta ${n}`,
+    lockedBody: 'Zagraj dalej, by ją odkryć',
+    newCard: 'Nowa karta!',
+    seeCard: 'Zobacz kartę',
+    moreCards: (n: number) => `+${n}`,
+    backToCards: 'Wróć do kart',
+    sections: {
+      how: 'Jak to działa',
+      detect: 'Jak to wykryć',
+      realWorld: 'Gdzie to się zdarza',
+      met: 'Spotkane w grze',
+    },
+    level: (n: number, title: string) => (n === 0 ? `Trening: ${title}` : `Poziom ${n}: ${title}`),
+  },
 } as const;
 
 export type Strings = typeof pl;

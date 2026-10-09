@@ -10,6 +10,7 @@ import { debriefCards } from '../debrief/debrief-model.ts';
 import { Kolegium, useBlunderVotes } from '../debrief/Kolegium.tsx';
 import { PHONE_QUERY, useMediaQuery } from '../debrief/use-media-query.ts';
 import { revealTimes, useReveal } from '../debrief/use-reveal.ts';
+import { NewCardChip, useNewCards } from '../encyclopedia/NewCardChip.tsx';
 import { formatSurvived, survivedSeconds } from '../endless/endless-model.ts';
 import { LeaderboardList, type OwnRun, Segmented } from '../endless/Leaderboard.tsx';
 import { emitCue } from '../fx/feedback.ts';
@@ -91,6 +92,11 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
     emitCue(step < levelEnd.stars ? 'debrief.star' : 'debrief.mark'),
   );
   const markShown = (index: number) => reveal.done || reveal.revealed > levelEnd.stars + index;
+  // S5-04: the techniques met in this debrief unlock encyclopedia cards.
+  const newCards = useNewCards(
+    levelEnd.results.map((result) => result.storyId),
+    reveal.done,
+  );
 
   // Any key finishes the reveal and does nothing else (so Enter can't skip the debrief).
   useEffect(() => {
@@ -164,6 +170,7 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
               )}
             </p>
           </div>
+          {paged && showCards && <NewCardChip cardIds={newCards} compact />}
         </header>
 
         <div className={styles.summary}>
@@ -262,6 +269,7 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
                 {pl.debrief.count(cards.length)}
               </span>
             )}
+            {showCards && !paged && <NewCardChip cardIds={newCards} />}
           </h2>
           {!showCards ? (
             <div className={styles.board}>

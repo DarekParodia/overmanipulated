@@ -263,6 +263,13 @@ const icons = {
     { d: 'M7.5 10v3.5M5.75 11.75h3.5' },
     { d: 'M15.5 10.8h.01M17.5 12.8h.01' },
   ],
+  // --- S5-04 encyclopedia ---
+  /** Open book (technique encyclopedia). */
+  book: [
+    { d: 'M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5Z', fill: 'tint' },
+    { d: 'M12 6.5c2-1.5 5-2 8.5-1.5v13.5c-3.5-.5-6.5 0-8.5 1.5Z', fill: 'tint' },
+    { d: 'M12 6.5V20M6.5 9c1.5-.2 3-.1 4 .4M17.5 9c-1.5-.2-3-.1-4 .4' },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;
