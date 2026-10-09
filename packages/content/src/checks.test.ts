@@ -1,9 +1,16 @@
 import { describe, expect, it } from 'bun:test';
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { correctVerdictFor } from '@redakcja/shared';
+import { correctVerdictFor, EVENTS } from '@redakcja/shared';
 import { BROKEN_CASES, realContent, toFiles } from './__fixtures__/broken.ts';
-import { checkRegistration, formatIssue, maxLevelScore, validateContent } from './checks.ts';
+import {
+  checkRegistration,
+  formatIssue,
+  maxLevelScore,
+  maxStoryScore,
+  validateContent,
+} from './checks.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { LEVELS, STORIES } from './index.ts';
 
@@ -48,6 +55,50 @@ describe('validateContent', () => {
         message: 'expected an array of stories',
       },
     ]);
+  });
+});
+
+describe('campaign level rules', () => {
+  const l1 = LEVELS.find((l) => l.id === 'l1-burza');
+  const l1Stories = STORIES.filter((s) => s.id.startsWith('l1-'));
+
+  it('warns when a campaign level has no topic or briefing points', () => {
+    if (!l1) {
+      throw new Error('level 1 missing');
+    }
+    const { topic: _topic, briefingPoints: _points, ...rest } = l1;
+    const issues = validateContent(
+      [{ file: 'levels/l1-burza.json', data: rest }],
+      [{ file: 'stories/l1-burza.json', data: l1Stories }],
+    );
+    expect(issues.map((i) => [i.severity, i.path])).toEqual([
+      ['warning', 'topic'],
+      ['warning', 'briefingPoints'],
+    ]);
+  });
+
+  it('counts event stories and bonuses in the maximum score', () => {
+    if (!l1) {
+      throw new Error('level 1 missing');
+    }
+    const byId = new Map(STORIES.map((s) => [s.id, s]));
+    const base = maxLevelScore(l1, byId);
+    const trueStory = l1Stories.find((s) => s.truth === 'true');
+    const falseStory = l1Stories.find((s) => s.truth === 'false');
+    if (!trueStory || !falseStory) {
+      throw new Error('level 1 needs a true and a false story');
+    }
+    const withEvents = {
+      ...l1,
+      events: [
+        { kind: 'bossCall' as const, atS: 10, storyId: trueStory.id, deadlineS: 30 },
+        { kind: 'correction' as const, atS: 50, storyId: falseStory.id, deadlineS: 30 },
+        { kind: 'outage' as const, atS: 90, station: 'imageSearch' as const, durationS: 20 },
+      ],
+    };
+    expect(maxLevelScore(withEvents, byId)).toBe(
+      base + maxStoryScore(trueStory) + EVENTS.bossCallBonusScore + EVENTS.correctionScore,
+    );
   });
 });
 
@@ -182,6 +233,23 @@ describe('validate CLI', () => {
     const result = run();
     expect(result.stdout.toString()).toContain('0 error(s), 0 warning(s)');
     expect(result.exitCode).toBe(0);
+  });
+
+  it('exits 0 when the content only has warnings', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'content-warnings-'));
+    try {
+      const content = realContent();
+      content.level.stars = { two: 230, three: 238 };
+      mkdirSync(join(dir, 'levels'));
+      mkdirSync(join(dir, 'stories'));
+      writeFileSync(join(dir, 'levels/l0-greybox.json'), JSON.stringify(content.level));
+      writeFileSync(join(dir, 'stories/l0-greybox.json'), JSON.stringify(content.stories));
+      const result = run(dir);
+      expect(result.stdout.toString()).toContain('0 error(s), 2 warning(s)');
+      expect(result.exitCode).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('fails on the broken fixtures with readable messages', () => {

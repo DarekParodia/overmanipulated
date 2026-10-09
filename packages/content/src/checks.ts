@@ -6,6 +6,8 @@ import {
   CONTENT_THREE_STARS_SHARE,
   CONTENT_TRUE_STORY_SHARE,
   CONTENT_TWO_STARS_SHARE,
+  EVENTS,
+  parseLayout,
   SCORE,
   type StationKind,
 } from '@redakcja/shared';
@@ -52,7 +54,11 @@ export function maxStoryScore(story: Pick<Story, 'priority' | 'correctVerdict'>)
   return base + SCORE.speedBonus;
 }
 
-/** The best score a perfect team can reach on a level. */
+/**
+ * The best score a perfect team can reach on a level: scheduled stories plus what the events add.
+ * A viral story scores like a normal one; a boss call adds its bonus for true stories; a bot raid
+ * is one verdict, one result; a correction folder scores `correctionScore` when filed.
+ */
 export function maxLevelScore(level: Level, storiesById: ReadonlyMap<string, Story>): number {
   let total = 0;
   for (const spawn of level.schedule) {
@@ -61,8 +67,28 @@ export function maxLevelScore(level: Level, storiesById: ReadonlyMap<string, Sto
       total += maxStoryScore(story);
     }
   }
+  for (const event of level.events) {
+    if (event.kind === 'outage') {
+      continue;
+    }
+    const story = storiesById.get(event.storyId);
+    if (!story) {
+      continue;
+    }
+    if (event.kind === 'correction') {
+      total += EVENTS.correctionScore;
+    } else {
+      total += maxStoryScore(story);
+      if (event.kind === 'bossCall' && story.truth === 'true') {
+        total += EVENTS.bossCallBonusScore;
+      }
+    }
+  }
   return total;
 }
+
+/** Same-kind level events closer than this (seconds) are reported. */
+export const EVENT_MIN_GAP_S = 10;
 
 /** Number in a content id: `l3-foo` → 3. */
 export function levelNumberOf(id: string): number | undefined {
@@ -120,10 +146,12 @@ export function validateContent(
   const storiesById = new Map([...stories].map(([id, located]) => [id, located.story]));
   const levelIds = new Set<string>();
   const used = new Set<string>();
+  /** Stations of every (parsed) level that schedules or spawns the story. */
+  const hostStations = new Map<string, Set<StationKind>>();
   for (const { file, data } of levelFiles) {
     // Read story ids from the raw data too, so a level that fails the schema does not make its
     // stories look unused.
-    for (const id of rawScheduleIds(data)) {
+    for (const id of rawStoryIds(data)) {
       used.add(id);
     }
     const parsed = levelSchema.safeParse(data);
@@ -144,6 +172,33 @@ export function validateContent(
       add(severity, file, path, message),
     );
     checkLevel(level, storiesById, (path, severity, message) => add(severity, file, path, message));
+    for (const id of [...level.schedule, ...level.events.filter((e) => e.kind !== 'outage')].map(
+      (entry) => ('storyId' in entry ? entry.storyId : ''),
+    )) {
+      const hosts = hostStations.get(id) ?? new Set<StationKind>();
+      for (const station of level.stations) {
+        hosts.add(station);
+      }
+      hostStations.set(id, hosts);
+    }
+  }
+
+  // A stamp from a station that no hosting level has can never be earned.
+  for (const [id, hosts] of hostStations) {
+    const located = stories.get(id);
+    if (!located) {
+      continue;
+    }
+    located.story.stamps.forEach((stamp, i) => {
+      if (!hosts.has(stamp.station)) {
+        add(
+          'error',
+          located.file,
+          [located.index, 'stamps', i, 'station'],
+          `stamp "${stamp.id}" uses station "${stamp.station}", which no level scheduling this story has`,
+        );
+      }
+    });
   }
 
   for (const [id, { file, index }] of stories) {
@@ -154,15 +209,15 @@ export function validateContent(
   return issues;
 }
 
-function rawScheduleIds(data: unknown): string[] {
-  if (typeof data !== 'object' || data === null || !('schedule' in data)) {
+function rawStoryIds(data: unknown): string[] {
+  if (typeof data !== 'object' || data === null) {
     return [];
   }
-  const { schedule } = data;
-  if (!Array.isArray(schedule)) {
-    return [];
-  }
-  return schedule.flatMap((spawn: unknown) =>
+  const entries = (['schedule', 'events'] as const).flatMap((key) => {
+    const list = (data as Record<string, unknown>)[key];
+    return Array.isArray(list) ? list : [];
+  });
+  return entries.flatMap((spawn: unknown) =>
     typeof spawn === 'object' &&
     spawn !== null &&
     'storyId' in spawn &&
@@ -193,6 +248,16 @@ function checkStory(story: Story, report: Report): void {
   if (justifyingStations.length > 0 && justifyingStations.every((s) => s === 'aiScanner')) {
     report(['justifyingStamps'], 'error', 'an AI scanner stamp must never be decisive alone');
   }
+  const hasOtherJustification = justifyingStations.some((station) => station !== 'aiScanner');
+  story.stamps.forEach((stamp, i) => {
+    if (stamp.station === 'aiScanner' && stamp.relevance === 'decisive' && !hasOtherJustification) {
+      report(
+        ['stamps', i, 'relevance'],
+        'error',
+        'an AI scanner stamp may only be decisive next to a justifying stamp from another station',
+      );
+    }
+  });
   if (story.truth === 'true' && story.technique !== 'none') {
     report(['technique'], 'error', 'a true story has technique "none"');
   }
@@ -243,11 +308,62 @@ export function checkTypography(value: string, path: readonly PathPart[], report
   }
 }
 
+/** Rules a story must meet to be spawned in a level (scheduled or by an event). */
+function checkStoryFitsLevel(
+  story: Story,
+  level: Level,
+  path: readonly PathPart[],
+  report: Report,
+): boolean {
+  const stations = new Set<StationKind>(level.stations);
+  const levelNumber = levelNumberOf(level.id);
+  const storyNumber = levelNumberOf(story.id);
+  if (storyNumber !== levelNumber) {
+    report(
+      path,
+      'error',
+      `story "${story.id}" belongs to level ${storyNumber}, not level ${levelNumber}`,
+    );
+  }
+  const stampStations = new Set(story.stamps.map((stamp) => stamp.station));
+  for (const station of level.stations) {
+    if (!stampStations.has(station)) {
+      report(path, 'error', `story "${story.id}" has no stamp for station "${station}"`);
+    }
+  }
+  // The AI scanner is never decisive alone, so it cannot make a story solvable.
+  const solvable = story.justifyingStamps.some((id) => {
+    const stamp = story.stamps.find((s) => s.id === id);
+    return stamp !== undefined && stamp.station !== 'aiScanner' && stations.has(stamp.station);
+  });
+  if (!solvable) {
+    const usable = [...stations].filter((station) => station !== 'aiScanner');
+    report(
+      path,
+      'error',
+      `story "${story.id}" is unsolvable: no justifying stamp comes from ${usable.join(', ')}`,
+    );
+  }
+  return solvable;
+}
+
 function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, report: Report): void {
   const levelNumber = levelNumberOf(level.id);
-  const stations = new Set<StationKind>(level.stations);
   const scheduled: Story[] = [];
   let broken = false;
+
+  if (levelNumber !== undefined && levelNumber >= 1) {
+    if (!level.topic) {
+      report(['topic'], 'warning', 'campaign levels need a topic for the briefing card');
+    }
+    if (!level.briefingPoints) {
+      report(
+        ['briefingPoints'],
+        'warning',
+        'campaign levels need briefingPoints (1–3 short lines)',
+      );
+    }
+  }
 
   level.schedule.forEach((spawn, i) => {
     const story = storiesById.get(spawn.storyId);
@@ -257,42 +373,17 @@ function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, repor
       return;
     }
     scheduled.push(story);
-    const storyNumber = levelNumberOf(story.id);
-    if (storyNumber !== levelNumber) {
-      report(
-        ['schedule', i, 'storyId'],
-        'error',
-        `story "${story.id}" belongs to level ${storyNumber}, not level ${levelNumber}`,
-      );
-    }
-    const stampStations = new Set(story.stamps.map((stamp) => stamp.station));
-    for (const station of level.stations) {
-      if (!stampStations.has(station)) {
-        report(
-          ['schedule', i, 'storyId'],
-          'error',
-          `story "${story.id}" has no stamp for station "${station}"`,
-        );
-      }
-    }
-    // The AI scanner is never decisive alone, so it cannot make a story solvable.
-    const solvable = story.justifyingStamps.some((id) => {
-      const stamp = story.stamps.find((s) => s.id === id);
-      return stamp !== undefined && stamp.station !== 'aiScanner' && stations.has(stamp.station);
-    });
-    if (!solvable) {
-      const usable = [...stations].filter((station) => station !== 'aiScanner');
-      report(
-        ['schedule', i, 'storyId'],
-        'error',
-        `story "${story.id}" is unsolvable: no justifying stamp comes from ${usable.join(', ')}`,
-      );
+    if (!checkStoryFitsLevel(story, level, ['schedule', i, 'storyId'], report)) {
       broken = true;
     }
     if (spawn.atS + spawn.deadlineS > level.durationS) {
       report(['schedule', i, 'deadlineS'], 'warning', 'deadline runs past the end of the level');
     }
   });
+
+  if (!checkEvents(level, storiesById, report)) {
+    broken = true;
+  }
 
   const unique = [...new Map(scheduled.map((story) => [story.id, story])).values()];
   if (unique.length > 0) {
@@ -315,11 +406,22 @@ function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, repor
   if (level.stars.three > max) {
     report(['stars', 'three'], 'error', `three stars need ${level.stars.three}, max is ${max}`);
   } else if (max > 0) {
+    const twoTooHigh = level.stars.two > max * 0.9;
+    if (twoTooHigh) {
+      report(
+        ['stars', 'two'],
+        'warning',
+        `two stars need ${level.stars.two}, over 90% of the max score ${max}`,
+      );
+    }
     const ranges = [
       ['two', level.stars.two, CONTENT_TWO_STARS_SHARE],
       ['three', level.stars.three, CONTENT_THREE_STARS_SHARE],
     ] as const;
     for (const [key, threshold, range] of ranges) {
+      if (key === 'two' && twoTooHigh) {
+        continue;
+      }
       const share = threshold / max;
       if (share < range.min || share > range.max) {
         report(
@@ -330,6 +432,79 @@ function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, repor
       }
     }
   }
+}
+
+/** Level event rules. Returns false when an event's story is missing or unsolvable. */
+function checkEvents(
+  level: Level,
+  storiesById: ReadonlyMap<string, Story>,
+  report: Report,
+): boolean {
+  let ok = true;
+  let conveyorTiles = 0;
+  try {
+    const map = parseLayout(level.layout);
+    conveyorTiles = map.fixtures.filter((f) => f.kind === 'conveyor').length;
+  } catch {
+    // The layout error is already reported by the level schema.
+  }
+
+  const lastOfKind = new Map<string, number>();
+  const outages: { atS: number; endS: number; station: StationKind }[] = [];
+  level.events.forEach((event, i) => {
+    const previousAt = lastOfKind.get(event.kind);
+    if (previousAt !== undefined && event.atS - previousAt < EVENT_MIN_GAP_S) {
+      report(
+        ['events', i, 'atS'],
+        'error',
+        `"${event.kind}" events must be at least ${EVENT_MIN_GAP_S} s apart (previous at ${previousAt} s)`,
+      );
+    }
+    lastOfKind.set(event.kind, event.atS);
+
+    if (event.kind === 'outage') {
+      outages.push({ atS: event.atS, endS: event.atS + event.durationS, station: event.station });
+      const down = new Set(
+        outages.filter((o) => o.atS <= event.atS && o.endS > event.atS).map((o) => o.station),
+      );
+      if (level.stations.every((station) => down.has(station))) {
+        report(
+          ['events', i],
+          'warning',
+          'every station is down during this outage; no one can stamp',
+        );
+      }
+      return;
+    }
+
+    const story = storiesById.get(event.storyId);
+    if (!story) {
+      report(['events', i, 'storyId'], 'error', `unknown story "${event.storyId}"`);
+      ok = false;
+      return;
+    }
+    if (!checkStoryFitsLevel(story, level, ['events', i, 'storyId'], report)) {
+      ok = false;
+    }
+    if (event.atS + event.deadlineS > level.durationS) {
+      report(['events', i, 'deadlineS'], 'warning', 'deadline runs past the end of the level');
+    }
+    if (event.kind === 'correction' && story.truth !== 'false' && story.truth !== 'misleading') {
+      report(
+        ['events', i, 'storyId'],
+        'error',
+        `a correction needs a false or misleading story, "${story.id}" is "${story.truth}"`,
+      );
+    }
+    if (event.kind === 'botRaid' && event.count > conveyorTiles) {
+      report(
+        ['events', i, 'count'],
+        'error',
+        `bot raid of ${event.count} folders exceeds the ${conveyorTiles} conveyor tiles in the layout`,
+      );
+    }
+  });
+  return ok;
 }
 
 /**
