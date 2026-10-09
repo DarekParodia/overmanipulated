@@ -17,6 +17,8 @@ export type MinigameProps = {
   stamp: Stamp | undefined;
   /** Device the player used last, for button prompts. */
   device: InputDevice;
+  /** The local player's role skips the phone queue (reporter, per `ROLE_STATIONS`). */
+  skipsQueue?: boolean;
   /** 0..1 share of the time limit already used (for urgency visuals). */
   timeUsed: number;
   /** Report the result exactly once; later calls are ignored by the overlay. */

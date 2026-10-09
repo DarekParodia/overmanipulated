@@ -2,7 +2,7 @@
 // the time limit and reports the outcome to the server exactly once. Also the two small plates
 // shown around it: the hold-to-work ring while working, and the lockout plate after a failure.
 import { getStory } from '@redakcja/content';
-import { type Folder, MINIGAME_TIME_LIMIT_MS, type Station } from '@redakcja/shared';
+import { type Folder, MINIGAME_TIME_LIMIT_MS, ROLE_STATIONS, type Station } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
@@ -31,6 +31,11 @@ export type StationOverlayProps = {
 
 export function StationOverlay({ station, folder, onResult, onClose }: StationOverlayProps) {
   const device = useApp((s) => s.inputDevice);
+  const role = useApp((s) => s.room?.players.find((p) => p.id === s.playerId)?.role);
+  const skipsQueue =
+    role !== undefined &&
+    role !== null &&
+    (ROLE_STATIONS[role] as readonly string[]).includes(station.kind);
   const story = folder ? getStory(folder.storyId) : undefined;
   const [startedAt] = useState(() => performance.now());
   const [now, setNow] = useState(startedAt);
@@ -120,6 +125,7 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
           story={story}
           stamp={story.stamps.find((s) => s.station === station.kind)}
           device={device}
+          skipsQueue={skipsQueue}
           timeUsed={timeUsed}
           onDone={finish}
         />

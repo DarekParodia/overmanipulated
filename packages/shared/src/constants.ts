@@ -261,3 +261,12 @@ export const ENDLESS = {
   /** `levelEnd.results` keeps at most this many (the latest) entries in a long run. */
   maxResultsSent: 512,
 } as const;
+// --- S4-01: phone station minigame ------------------------------------------------------------
+
+/** Numbers in the phone book the player picks from. */
+export const PHONE_CONTACT_COUNT = 4;
+/** The queue after the right number is dialled lasts between these (seeded); reporters skip it. */
+export const PHONE_QUEUE_MIN_MS = 2500;
+export const PHONE_QUEUE_MAX_MS = 4500;
+/** One beat of the hold music while waiting in the queue. */
+export const PHONE_HOLD_BEAT_MS = 500;
