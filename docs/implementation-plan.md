@@ -344,30 +344,30 @@ mix of laptops and phones, with full core feedback (animations, sounds, particle
 
 Goal: a polished vertical slice ready for the first playtest with students.
 
-- [ ] **S3-01 — Level 1 content.** 15 stories for "Pierwszy dzień — Burza nad miastem"
+- [x] **S3-01 — Level 1 content.** 15 stories for "Pierwszy dzień — Burza nad miastem"
   (old photo as new, fake institutional account), including the design-doc examples; images
   CC0/self-made with credits; `reviewed: false` until the supervisor signs off.
-- [ ] **S3-02 — Debrief screen (Kolegium).** List of the level's stories with what it was,
+- [x] **S3-02 — Debrief screen (Kolegium).** List of the level's stories with what it was,
   technique, tool, real-world analogue; player's verdicts vs correct; blunder-of-the-day vote
   (tallies stored per story in SQLite via Drizzle, exposed on `/api/stats/blunders` for the
   supervisor); stars.
-- [ ] **S3-03 — Briefing screen.** 15–20 s topic of the day + new mechanics, skippable when all
+- [x] **S3-03 — Briefing screen.** 15–20 s topic of the day + new mechanics, skippable when all
   ready.
-- [ ] **S3-04 — Level select / campaign map (minimal).** Levels with stars, locked/unlocked;
+- [x] **S3-04 — Level select / campaign map (minimal).** Levels with stars, locked/unlocked;
   progress stored per browser (localStorage, no accounts).
-- [ ] **S3-05 — First assets.** Kenney CC0 newsroom furniture and **rigged** characters with role
+- [x] **S3-05 — First assets.** Kenney CC0 newsroom furniture and **rigged** characters with role
   accessories, folder models per type; `CREDITS.md`; stay within the desktop and mobile budgets.
-- [ ] **S3-06 — Character animation v1.** Skeletal clips via `AnimationMixer` (idle, walk, run,
+- [x] **S3-06 — Character animation v1.** Skeletal clips via `AnimationMixer` (idle, walk, run,
   carry-walk, work-at-station, stamp, cheer, facepalm) with cross-fades driven by player state;
   procedural layer kept (lean, squash); animation LOD (lower update rate for far/off-screen
   characters on mobile).
-- [ ] **S3-07 — Ambient life.** Newsroom ambience (room tone, distant phones, printers),
+- [x] **S3-07 — Ambient life.** Newsroom ambience (room tone, distant phones, printers),
   idle props animation (ceiling fans, monitor flicker — respects no-flash, paper stacks wobble),
   dust motes particles in light beams (desktop "high" preset only).
-- [ ] **S3-08 — Screen and UI animation pass.** Briefing intro (newspaper spin-in), debrief
+- [x] **S3-08 — Screen and UI animation pass.** Briefing intro (newspaper spin-in), debrief
   stamps slamming onto story cards one by one, star reveal with sound, vote animation; all
   skippable and reduced-motion aware.
-- [ ] **S3-09 — Playtest kit.** `docs/playtests/` with a session script, observation sheet and a
+- [x] **S3-09 — Playtest kit.** `docs/playtests/` with a session script, observation sheet and a
   short student questionnaire; device checklist (school laptops, students' phones); log results
   as new tasks/balance notes.
 
@@ -384,7 +384,7 @@ feedback on desktop and phones; first playtest held.
   alone (enforced by content validation).
 - [ ] **S4-03 — Data library (`dataLibrary`).** Compare a number with the original table.
   (S4-01…S4-03: keyboard, gamepad and touch; success/failure cues.)
-- [ ] **S4-04 — Managing editor ability.** Extend one folder's deadline once per level.
+- [x] **S4-04 — Managing editor ability.** Extend one folder's deadline once per level.
 - [ ] **S4-05 — Event framework + `viral`.** Event scheduling from level data; growing share
   counter on a folder. Each event below ships with its own announce banner, sound and particles
   (e.g. `viral`: floating share/heart icons and notification pings; `bossCall`: ringing red
@@ -495,6 +495,7 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | Server-event cues own shared moments (desk opened, minigame failed, pings); overlays only add local UI clicks | One sound per moment when several units listen to the same event |
 | 2026-10-06 | Visual style changed from "newsroom paper" (cream paper, serif, typewriter) to "cartoon newsroom": bright flat colours, thick navy outlines, rounded chunky shapes, Baloo 2 + Nunito; plus clarity rules (one primary action, ≤ 8 words during play, smaller HUD, "what next" hints, first-level tutorial) | User feedback: the paper look read as generic/AI-made and the UI was hard to read; the game must be easy for anyone |
 | 2026-10-07 | Stage 3 contracts: room phase `briefing` between lobby and playing (auto-start after `BRIEFING_DURATION_MS` or when all connected players skip); `skipBriefing` and `voteBlunder` lobby actions; `roomState.briefing` and `roomState.blunderVotes`; `folderExpired` carries the folder's stamps | Lets S3 units build briefing, debrief and votes in parallel; fixes "missed stamps" for expired folders |
+| 2026-10-09 | S3 integrated: HUD motion and phone HUD readability shipped with S3-07; phone camera framing relies on compact folder strips plus the existing back margin | The compact HUD no longer hides back-wall station signs in screenshots at 640×360 | 
 | 2026-10-07 | S3-05 assets are built procedurally in code (flat-shaded primitives, hierarchical rigs animated with `AnimationMixer` clips) instead of Kenney packs | The build environment cannot download asset packs; procedural models keep the cartoon style consistent and the bundle small. Kenney/artist assets can replace them in S5-01 |
 
 ---
