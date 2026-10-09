@@ -152,6 +152,9 @@ function contextFor(event: GameplayEvent): CueContext {
       };
     case 'ping':
       return { ...aboutPlayer(event.playerId), ...at(playerPosition(event.playerId)) };
+    case 'levelEvent':
+    case 'raidResolved':
+      return {};
   }
 }
 

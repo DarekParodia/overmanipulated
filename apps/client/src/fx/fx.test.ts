@@ -251,6 +251,8 @@ const everyEvent: GameplayEvent[] = [
     missedStampIds: [],
   },
   { kind: 'ping', playerId: player, ping: 'needArchive' },
+  { kind: 'levelEvent', event: 'viral', phase: 'start', folderIds: ['f1'] },
+  { kind: 'raidResolved', raidId: 'r1', byFolderId: 'f1', folderIds: ['f1', 'f2'] },
 ];
 
 describe('gameplay event cues', () => {

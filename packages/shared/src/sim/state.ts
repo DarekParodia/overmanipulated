@@ -71,6 +71,7 @@ export function createGameState(options: GameStateOptions = {}): GameState {
         durationMs: 0,
         minigameSeed: 0,
         lockoutMs: 0,
+        outageMs: 0,
       };
     } else if (fixture.kind === 'desk') {
       desks[fixture.id] = { id: fixture.id, operatorId: null };

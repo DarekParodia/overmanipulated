@@ -13,6 +13,21 @@ export const folderLocationSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('floor'), x: finite, y: finite }),
 ]);
 
+/**
+ * Marks a folder that belongs to a level event (S4-05..S4-09). Untagged folders are ordinary.
+ * - viral: a share counter grows with age (`viralShares` in sim/events.ts); pure pressure.
+ * - bossCall: the editor-in-chief demands this folder be published until `untilMs`; obeying
+ *   scores only if the story was true.
+ * - botRaid: one of several near-identical folders; a verdict on one resolves the whole raid.
+ * - correction: a published story turned out manipulated; filing it recovers credibility.
+ */
+export const folderTagSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('viral') }),
+  z.object({ kind: z.literal('bossCall'), untilMs: finite }),
+  z.object({ kind: z.literal('botRaid'), raidId: id }),
+  z.object({ kind: z.literal('correction'), recoverCredibility: z.number().int().nonnegative() }),
+]);
+
 export const folderSchema = z.object({
   id,
   storyId: id,
@@ -25,6 +40,8 @@ export const folderSchema = z.object({
   deadlineMs: finite,
   /** True once `deadlineWarning` was emitted for this folder. */
   warned: z.boolean(),
+  /** Set on folders spawned by a level event. */
+  tag: folderTagSchema.optional(),
 });
 
 export const stationPhaseSchema = z.enum(['idle', 'working', 'minigame', 'lockout']);
@@ -44,6 +61,8 @@ export const stationSchema = z.object({
   minigameSeed: z.number().int(),
   /** Remaining lockout after a failed minigame. */
   lockoutMs: finite,
+  /** Remaining time the station is down (`outage` event); 0 when it works. */
+  outageMs: finite,
 });
 
 export const deskSchema = z.object({
@@ -78,6 +97,7 @@ export const levelOutcomeSchema = z.object({
   stars: z.number().int().min(0).max(3),
 });
 
+export type FolderTag = z.infer<typeof folderTagSchema>;
 export type FolderLocation = z.infer<typeof folderLocationSchema>;
 export type Folder = z.infer<typeof folderSchema>;
 export type StationPhase = z.infer<typeof stationPhaseSchema>;

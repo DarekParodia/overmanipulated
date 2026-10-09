@@ -207,3 +207,25 @@ export const BRIEFING_DURATION_MS = 18_000;
 
 /** Stored blunder votes older than this are deleted (same window as the leaderboard). */
 export const BLUNDER_VOTE_RETENTION_DAYS = LEADERBOARD_RETENTION_DAYS;
+
+// --- Level events (S4-05..S4-09) ------------------------------------------------------------
+
+export const EVENTS = {
+  /** `viral`: shares shown on the folder are `start * growthPerS ** ageS`, rounded. */
+  viralSharesStart: 120,
+  viralGrowthPerS: 1.07,
+  /** `bossCall`: how long the demand stands, and the bonus for publishing a true story in time. */
+  bossCallWindowMs: 12_000,
+  bossCallBonusScore: 10,
+  /** `outage`: used when level data gives no duration (design doc: 20 s). */
+  outageDefaultMs: 20_000,
+  /** `correction`: credibility lost when the event starts; filing recovers this fraction. */
+  correctionCredibilityLoss: 20,
+  correctionRecoverFraction: 0.5,
+  correctionScore: 10,
+} as const;
+
+// --- Endless mode (S4-11) -------------------------------------------------------------------
+
+/** Level id selected in the lobby for endless mode; not a content file. */
+export const ENDLESS_LEVEL_ID = 'endless';

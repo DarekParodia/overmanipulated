@@ -389,6 +389,7 @@ describe('stepStations: minigame', () => {
       phase: 'idle',
       operatorId: null,
       lockoutMs: 0,
+      outageMs: 0,
     });
     // The folder can be worked on again.
     result = tick(result.state, ['a']);

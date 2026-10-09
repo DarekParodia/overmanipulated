@@ -27,15 +27,26 @@ export const pingKindSchema = z.enum(['needArchive', 'fake', 'mine']);
 /** How a station's stamp bears on the verdict (content metadata, shown in the debrief). */
 export const stampRelevanceSchema = z.enum(['decisive', 'misleading', 'irrelevant']);
 
+/** Random level events (design doc, "Zdarzenia losowe"); scheduled from level data. */
+export const levelEventKindSchema = z.enum([
+  'viral',
+  'bossCall',
+  'botRaid',
+  'outage',
+  'correction',
+]);
+
 export type StationKind = z.infer<typeof stationKindSchema>;
 export type Verdict = z.infer<typeof verdictSchema>;
 export type Truth = z.infer<typeof truthSchema>;
 export type Priority = z.infer<typeof prioritySchema>;
 export type StoryType = z.infer<typeof storyTypeSchema>;
 export type Role = z.infer<typeof roleSchema>;
+export type LevelEventKind = z.infer<typeof levelEventKindSchema>;
 export type PingKind = z.infer<typeof pingKindSchema>;
 export type StampRelevance = z.infer<typeof stampRelevanceSchema>;
 
+export const LEVEL_EVENT_KINDS = levelEventKindSchema.options;
 export const STATION_KINDS = stationKindSchema.options;
 export const VERDICTS = verdictSchema.options;
 export const ROLES = roleSchema.options;

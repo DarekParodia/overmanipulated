@@ -81,6 +81,11 @@ export function cueForEvent(
       return 'desk.close';
     case 'verdictResult':
       return verdictCue(event, truthOf(event.storyId));
+    // Placeholders until the S4-05 client unit adds the event cues.
+    case 'levelEvent':
+      return 'folder.arrive';
+    case 'raidResolved':
+      return 'folder.drop';
     case 'ping':
       switch (event.ping) {
         case 'needArchive':

@@ -9,7 +9,13 @@ import {
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
 } from './constants.ts';
-import { pingKindSchema, roleSchema, stationKindSchema, verdictSchema } from './domain.ts';
+import {
+  levelEventKindSchema,
+  pingKindSchema,
+  roleSchema,
+  stationKindSchema,
+  verdictSchema,
+} from './domain.ts';
 import {
   deskSchema,
   folderLocationSchema,
@@ -276,6 +282,22 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     missedStampIds: z.array(entityId).max(16),
   }),
   z.object({ kind: z.literal('ping'), playerId: playerIdSchema, ping: pingKindSchema }),
+  /** A level event starts or ends (S4-05). `folderIds` are the folders it concerns. */
+  z.object({
+    kind: z.literal('levelEvent'),
+    event: levelEventKindSchema,
+    phase: z.enum(['start', 'end']),
+    folderIds: z.array(entityId).max(8),
+    stationId: entityId.optional(),
+    durationMs: finite.optional(),
+  }),
+  /** A verdict on one botRaid folder resolved the whole wave. */
+  z.object({
+    kind: z.literal('raidResolved'),
+    raidId: entityId,
+    byFolderId: entityId,
+    folderIds: z.array(entityId).max(8),
+  }),
 ]);
 
 export const eventMessageSchema = z.object({
