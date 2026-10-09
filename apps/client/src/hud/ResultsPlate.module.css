@@ -465,3 +465,67 @@
     justify-content: center;
   }
 }
+
+/* --- Endless mode: a friendly blue ribbon (information, not failure), tabs and the board ----- */
+
+.endless .ribbon {
+  background: var(--blue);
+}
+
+.endless .headline,
+.endless .lede {
+  color: var(--text-on-dark);
+}
+
+.endless .summary {
+  justify-content: center;
+}
+
+.record {
+  background: var(--yellow);
+}
+
+.recordChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 2px var(--space-3) 0 var(--space-2);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.tabs {
+  flex: none;
+  margin-bottom: var(--space-3);
+}
+
+.board {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-1) var(--space-3) var(--space-4) var(--space-2);
+  overflow-y: auto;
+}
+
+@media (max-height: 500px), (max-width: 760px) {
+  .endless .summary {
+    background: var(--blue);
+  }
+
+  .endless .summary .recordChip {
+    display: none;
+  }
+
+  .tabs {
+    margin-bottom: var(--space-2);
+  }
+
+  .board {
+    padding: var(--space-1) var(--space-1) var(--space-2);
+  }
+}

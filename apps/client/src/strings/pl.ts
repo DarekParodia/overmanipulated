@@ -666,6 +666,51 @@ export const pl = {
     next: 'Następna teczka',
     position: (n: number, total: number) => `${n} z ${total}`,
   },
+  /** Endless mode (S4-11): campaign card, briefing, HUD chip, results and the leaderboard. */
+  endless: {
+    title: 'Tryb bez końca',
+    pitch: 'Im dłużej, tym szybciej',
+    /** The only line of the briefing; there is no topic. */
+    briefing: 'Bez końca – im dłużej, tym szybciej',
+    briefingKicker: 'Bez końca',
+    tileHint: 'Rekord czeka',
+    locked: 'Zdobądź gwiazdkę na poziomie 1',
+    tileLabel: (best: string | null, locked: boolean) =>
+      locked
+        ? 'Tryb bez końca, zamknięty: zdobądź gwiazdkę na poziomie 1'
+        : `Tryb bez końca${best ? `, najlepszy wynik ${best}` : ''}`,
+    timer: 'Czas gry',
+    tempo: (n: number) => `Tempo ×${n}`,
+    tempoLabel: (n: number) => `Tempo: ${n} razy szybciej`,
+    headline: (score: string) => `Redakcja upadła – wynik: ${score}`,
+    lede: 'Spróbujcie jeszcze raz!',
+    score: 'Wynik',
+    survived: 'Czas gry',
+    best: 'Najlepszy wynik',
+    newRecord: 'Nowy rekord!',
+    noBest: 'Pierwszy wynik!',
+    tabs: { label: 'Wyniki i teczki', debrief: 'Teczki', room: 'Pokój', global: 'Wszyscy' },
+  },
+  /** Endless leaderboard (lobby button, dialog and the results tabs). */
+  leaderboard: {
+    title: 'Najlepsze wyniki',
+    open: 'Wyniki',
+    close: 'Zamknij wyniki',
+    done: 'Gotowe',
+    scopeLabel: 'Którzy gracze',
+    room: 'Pokój',
+    global: 'Wszyscy',
+    loading: 'Wczytuję wyniki…',
+    empty: 'Jeszcze pusto. Zagrajcie pierwsi!',
+    error: 'Nie udało się wczytać wyników.',
+    retry: 'Spróbuj ponownie',
+    you: 'To wy',
+    rank: (n: number) => `Miejsce ${n}`,
+    row: (rank: number, players: string, score: string, time: string) =>
+      `${rank}. ${players}: ${score} pkt, ${time}`,
+    listLabel: (scope: 'room' | 'global') =>
+      scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich',
+  },
 } as const;
 
 export type Strings = typeof pl;

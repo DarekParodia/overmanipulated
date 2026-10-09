@@ -1,0 +1,193 @@
+/* Endless leaderboard: pill switch on top, big rows with thick outlines below. */
+.board {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.segmented {
+  display: inline-flex;
+  min-width: 0;
+  margin: 0;
+  justify-self: start;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: 0.15em var(--space-4) 0;
+  border: var(--stroke) solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.segment svg {
+  flex: none;
+  margin-top: -0.15em;
+}
+
+.segmentOn {
+  background: var(--blue);
+  border-color: var(--outline);
+  color: var(--text-on-dark);
+  box-shadow: var(--pop);
+}
+
+.segment:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.segmentOn:focus-visible {
+  outline-color: var(--outline);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 3.5rem;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+}
+
+.mine {
+  background: var(--surface-soft);
+  border-color: var(--blue-dark);
+  outline: var(--stroke) solid var(--blue);
+  outline-offset: 2px;
+}
+
+.rank {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  line-height: 1;
+  padding-top: 0.12em;
+}
+
+.first {
+  background: var(--yellow);
+  padding-top: 0;
+}
+
+.crew {
+  display: grid;
+  min-width: 0;
+}
+
+.players {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-snug);
+  padding-top: 0.1em;
+}
+
+.you {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--blue-dark);
+}
+
+.score {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1;
+  padding-top: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+.time {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 4.5rem;
+  justify-content: flex-end;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.time svg {
+  flex: none;
+}
+
+.state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-5) var(--space-4);
+  background: var(--surface-soft);
+  border: var(--stroke) dashed var(--outline-a50);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-align: center;
+}
+
+.stateLine {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+@media (max-height: 520px) and (orientation: landscape), (max-width: 520px) {
+  .row {
+    min-height: 3rem;
+    gap: var(--space-2);
+  }
+  .players {
+    font-size: var(--text-md);
+  }
+  .score {
+    font-size: var(--text-lg);
+  }
+  .time {
+    min-width: 0;
+  }
+}

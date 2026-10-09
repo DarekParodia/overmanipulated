@@ -55,7 +55,10 @@ export type AnimationTrigger =
   | 'slump'
   // S3-07/08 HUD motion.
   /** The folder's queue card hops (more time on the clock); `folderId`. */
-  | 'cardHop';
+  | 'cardHop'
+  // S4-11 endless mode.
+  /** The „Tempo ×N” chip bumps when N grows (HUD). */
+  | 'tempoUp';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -442,6 +445,27 @@ export const cues = {
   'ambience.typing': {
     severity: 1,
     sound: { ids: ['ambtyping'], bus: 'sfx', volume: 0.3, rateJitter: 0.1 },
+  },
+  // S4-11 endless mode: the tempo steps up each minute; the run ends friendly, not as a failure.
+  'endless.tempo': {
+    severity: 2,
+    sound: { ids: ['ping3'], bus: 'sfx', volume: 0.7 },
+    haptic: 'tick',
+    animation: 'tempoUp',
+  },
+  'endless.over': {
+    severity: 3,
+    sound: { ids: ['chime'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'paperFlutter', count: 12 },
+    haptic: 'thud',
+    animation: 'shrug',
+    loop: 'stopAll',
+  },
+  'endless.record': {
+    severity: 3,
+    sound: { ids: ['win'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'confetti', count: 40 },
+    haptic: 'thud',
   },
 } as const satisfies Record<string, Cue>;
 
