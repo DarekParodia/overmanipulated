@@ -129,11 +129,11 @@ export function DataLibrary({ seed, story, stamp, device, onDone }: MinigameProp
         </div>
 
         <div className={styles.tableWrap} ref={tableRef}>
+          <div className={styles.caption}>
+            <span>{table.title}</span>
+            <span className={styles.unit}>{t.unitNote(table.unit)}</span>
+          </div>
           <table className={styles.table} aria-label={`${t.table}: ${table.title}`}>
-            <caption className={styles.caption}>
-              <span>{table.title}</span>
-              <span className={styles.unit}>{t.unitNote(table.unit)}</span>
-            </caption>
             <thead>
               <tr>
                 <td />
