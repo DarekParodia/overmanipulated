@@ -55,6 +55,8 @@ export type FeedbackOutputs = {
 /** Accessibility flags animation listeners must honour (no squash/shake, no blinking). */
 export type AnimationOptions = { reducedMotion: boolean; noFlash: boolean };
 
+export type CueListener = (id: CueId, context: CueContext) => void;
+
 export type AnimationListener = (
   trigger: AnimationTrigger,
   context: CueContext,
@@ -116,10 +118,14 @@ export function resolveCue(cue: Cue, settings: Settings, quality: QualityPreset)
 export function createFeedback(getSettings: () => Settings, getQuality: () => QualityPreset) {
   let outputs: FeedbackOutputs = {};
   const listeners = new Set<AnimationListener>();
+  const cueListeners = new Set<CueListener>();
 
   return {
     emit(id: CueId, context: CueContext = {}): void {
       const settings = getSettings();
+      for (const listener of cueListeners) {
+        listener(id, context);
+      }
       const resolved = resolveCue(cues[id], settings, getQuality());
       if (resolved.sound && outputs.playSound) {
         const pan =
@@ -180,6 +186,13 @@ export function createFeedback(getSettings: () => Settings, getQuality: () => Qu
           }
         }
         outputs = next;
+      };
+    },
+    /** Hears every emitted cue, muted or not (captions); returns the unsubscribe function. */
+    onCue(listener: CueListener): () => void {
+      cueListeners.add(listener);
+      return () => {
+        cueListeners.delete(listener);
       };
     },
     onAnimation(listener: AnimationListener): () => void {

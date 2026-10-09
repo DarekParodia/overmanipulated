@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
+import { startCaptions } from './a11y/caption-store.ts';
 import { PerfOverlay } from './debug/PerfOverlay.tsx';
 import { initAudio, playSound } from './fx/audio/audio-manager.ts';
 import { feedback } from './fx/feedback.ts';
@@ -33,12 +34,14 @@ export function App() {
     const stopAudio = initAudio();
     const disconnectOutputs = feedback.connect({ playSound, vibrate });
     const stopGameplayFeedback = startGameplayFeedback();
+    const stopCaptions = startCaptions();
     document.addEventListener('visibilitychange', handleVisibilityReturn);
     return () => {
       unsubscribeSettings();
       stopAudio();
       disconnectOutputs();
       stopGameplayFeedback();
+      stopCaptions();
       document.removeEventListener('visibilitychange', handleVisibilityReturn);
     };
   }, []);

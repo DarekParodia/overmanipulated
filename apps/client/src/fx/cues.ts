@@ -189,7 +189,7 @@ export const cues = {
     sound: { ids: ['buzzer'], bus: 'sfx', volume: 0.75 },
     particles: { preset: 'ash' },
     shake: 0.2,
-    haptic: 'thud',
+    haptic: 'alarm',
     animation: ['crumple', 'scorePop'],
   },
   'station.workStart': {
@@ -217,7 +217,7 @@ export const cues = {
     severity: 1,
     sound: { ids: ['fail'], bus: 'sfx', volume: 0.7 },
     particles: { preset: 'smoke' },
-    haptic: 'tick',
+    haptic: 'error',
     animation: 'wobble',
     loop: 'stop',
   },
@@ -237,7 +237,7 @@ export const cues = {
     severity: 2,
     sound: { ids: ['chime'], bus: 'sfx', volume: 0.8 },
     particles: { preset: 'confetti' },
-    haptic: 'tick',
+    haptic: 'success',
     animation: ['cheer', 'scorePop'],
   },
   'verdict.contextCorrect': {
@@ -246,14 +246,14 @@ export const cues = {
     particles: { preset: 'confetti', count: 34 },
     extraParticles: { preset: 'paperBits', count: 8 },
     shake: 0.12,
-    haptic: 'thud',
+    haptic: 'success',
     animation: ['cheer', 'scorePop'],
   },
   'verdict.wrongJustification': {
     severity: 2,
     sound: { ids: ['hmm'], bus: 'sfx', volume: 0.75 },
     particles: { preset: 'inkPuff', count: 8 },
-    haptic: 'tick',
+    haptic: 'error',
     animation: ['shrug', 'scorePop'],
   },
   /** Wrong verdict that is neither a published fake nor a rejected truth. */
@@ -262,7 +262,7 @@ export const cues = {
     sound: { ids: ['lowsting'], bus: 'sfx', volume: 0.6 },
     particles: { preset: 'ash', count: 8 },
     shake: 0.25,
-    haptic: 'thud',
+    haptic: 'error',
     animation: ['shrug', 'scorePop'],
   },
   'verdict.fakePublished': {
@@ -271,7 +271,7 @@ export const cues = {
     particles: { preset: 'redInk' },
     extraParticles: { preset: 'paperBits', count: 8 },
     shake: 0.7,
-    haptic: 'buzz',
+    haptic: 'alarm',
     animation: ['facepalm', 'credibilityCrack', 'scorePop'],
   },
   'verdict.truthRejected': {
@@ -279,7 +279,7 @@ export const cues = {
     sound: { ids: ['lowsting'], bus: 'sfx', volume: 0.8 },
     particles: { preset: 'ash', count: 12 },
     shake: 0.4,
-    haptic: 'thud',
+    haptic: 'error',
     animation: ['shrug', 'credibilityCrack', 'scorePop'],
   },
   'ping.needArchive': {
@@ -310,7 +310,7 @@ export const cues = {
     severity: 3,
     sound: { ids: ['win'], bus: 'sfx', volume: 0.9 },
     particles: { preset: 'confetti', count: 40 },
-    haptic: 'thud',
+    haptic: 'success',
     animation: 'cheer',
     loop: 'stopAll',
   },
@@ -318,7 +318,7 @@ export const cues = {
     severity: 3,
     sound: { ids: ['lose'], bus: 'sfx', volume: 0.9 },
     particles: { preset: 'paperBits', count: 24 },
-    haptic: 'buzz',
+    haptic: 'alarm',
     animation: 'slump',
     loop: 'stopAll',
   },
@@ -351,7 +351,7 @@ export const cues = {
   'sourceRegistry.mistake': {
     severity: 1,
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
-    haptic: 'thud',
+    haptic: 'error',
   },
   'sourceRegistry.file': {
     severity: 1,
@@ -372,12 +372,12 @@ export const cues = {
   'archive.miss': {
     severity: 1,
     sound: { ids: ['back'], bus: 'sfx', rateJitter: 0.05 },
-    haptic: 'buzz',
+    haptic: 'error',
   },
   'archive.found': {
     severity: 2,
     sound: { ids: ['stamp'], bus: 'sfx', volume: 0.8, rateJitter: 0.05 },
-    haptic: 'thud',
+    haptic: 'success',
   },
   // S2-04 image search minigame (placeholder sounds until the sound unit lands).
   'imageSearch.fragment': {
@@ -387,12 +387,12 @@ export const cues = {
   'imageSearch.match': {
     severity: 1,
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
-    haptic: 'tick',
+    haptic: 'success',
   },
   'imageSearch.miss': {
     severity: 1,
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
-    haptic: 'thud',
+    haptic: 'error',
   },
   // Lobby (S2-10): signing the duty roster as ready presses a small stamp.
   'lobby.ready': {
@@ -419,7 +419,7 @@ export const cues = {
   'debrief.star': {
     severity: 2,
     sound: { ids: ['chime'], bus: 'ui', volume: 0.8, rateJitter: 0.03 },
-    haptic: 'tick',
+    haptic: 'success',
   },
   'debrief.mark': {
     severity: 1,
@@ -463,12 +463,12 @@ export const cues = {
   'phone.connect': {
     severity: 1,
     sound: { ids: ['chime'], bus: 'sfx', volume: 0.9 },
-    haptic: 'tick',
+    haptic: 'success',
   },
   'phone.wrong': {
     severity: 1,
     sound: { ids: ['back'], bus: 'sfx', rateJitter: 0.05 },
-    haptic: 'thud',
+    haptic: 'error',
   },
   // S4-02 AI scanner minigame: the needle settling, then a chosen answer.
   'aiScanner.scan': {
@@ -483,7 +483,7 @@ export const cues = {
   'aiScanner.wrong': {
     severity: 1,
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
-    haptic: 'thud',
+    haptic: 'error',
   },
   // S4-03 data library minigame: a number matched against the original table.
   'dataLibrary.right': {
@@ -494,7 +494,7 @@ export const cues = {
   'dataLibrary.mistake': {
     severity: 1,
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
-    haptic: 'thud',
+    haptic: 'error',
   },
   // S4-11 endless mode: the tempo steps up each minute; the run ends friendly, not as a failure.
   'endless.tempo': {
@@ -507,7 +507,7 @@ export const cues = {
     severity: 3,
     sound: { ids: ['chime'], bus: 'sfx', volume: 0.9 },
     particles: { preset: 'paperFlutter', count: 12 },
-    haptic: 'thud',
+    haptic: 'alarm',
     animation: 'shrug',
     loop: 'stopAll',
   },
@@ -515,7 +515,7 @@ export const cues = {
     severity: 3,
     sound: { ids: ['win'], bus: 'sfx', volume: 0.9 },
     particles: { preset: 'confetti', count: 40 },
-    haptic: 'thud',
+    haptic: 'success',
   },
   // --- S4-05..S4-09 level events. Announce stingers (severity 3 = the whole table must look up),
   // each with its banner (events/EventBanners.tsx), badges and scene pieces (scene/Events*.tsx).
@@ -532,7 +532,7 @@ export const cues = {
     sound: { ids: ['evboss'], bus: 'sfx', volume: 0.9 },
     particles: { preset: 'alertBurst' },
     shake: 0.5,
-    haptic: 'buzz',
+    haptic: 'alarm',
     animation: 'eventAnnounce',
   },
   'event.botRaid.start': {
@@ -540,7 +540,7 @@ export const cues = {
     sound: { ids: ['evraid'], bus: 'sfx', volume: 0.85 },
     particles: { preset: 'glitchBits' },
     shake: 0.3,
-    haptic: 'buzz',
+    haptic: 'alarm',
     animation: 'eventAnnounce',
   },
   'event.outage.start': {
@@ -549,7 +549,7 @@ export const cues = {
     particles: { preset: 'sparks' },
     extraParticles: { preset: 'smoke', count: 8 },
     shake: 0.55,
-    haptic: 'thud',
+    haptic: 'alarm',
     animation: 'eventAnnounce',
   },
   'event.correction.start': {
@@ -557,7 +557,7 @@ export const cues = {
     sound: { ids: ['evcorrection'], bus: 'sfx', volume: 0.85 },
     particles: { preset: 'alertBurst', count: 26 },
     shake: 0.4,
-    haptic: 'buzz',
+    haptic: 'alarm',
     animation: 'eventAnnounce',
   },
   /** Power back on at a station that was down. */
@@ -581,7 +581,7 @@ export const cues = {
     particles: { preset: 'confetti', count: 30 },
     extraParticles: { preset: 'glitchBits', count: 10 },
     shake: 0.15,
-    haptic: 'thud',
+    haptic: 'success',
     animation: 'eventAnnounce',
   },
   /** Ambient crackle from a station that is down; fired by scene/EventsAmbient.tsx. */
