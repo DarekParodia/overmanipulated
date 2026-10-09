@@ -2,7 +2,7 @@
 // lands on the movement half (a faint one rests in the corner to show where); chunky round
 // action buttons with an icon and a short label sit under the other thumb. Mirrored for
 // left-handed players.
-import { type PointerEvent, useRef, useState } from 'react';
+import { type CSSProperties, type PointerEvent, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { pressPingAgain, usePings } from '../pings/ping-store.ts';
@@ -21,6 +21,10 @@ type Stick = {
 
 export function TouchControls() {
   const leftHanded = useSettings((s) => s.leftHanded);
+  const touchScale = useSettings((s) => s.touchScale);
+  const touchOpacity = useSettings((s) => s.touchOpacity);
+  // The live joystick grows with the button size, so reach and picture stay in step.
+  const radius = JOYSTICK_RADIUS_PX * touchScale;
   const [stick, setStick] = useState<Stick | null>(null);
   const stickRef = useRef<Stick | null>(null);
 
@@ -44,8 +48,8 @@ export function TouchControls() {
       return;
     }
     const point = { x: event.clientX, y: event.clientY };
-    touchInput.setMove(joystickVector(current.origin, point));
-    const next = { ...current, knob: knobOffset(current.origin, point) };
+    touchInput.setMove(joystickVector(current.origin, point, radius));
+    const next = { ...current, knob: knobOffset(current.origin, point, radius) };
     stickRef.current = next;
     setStick(next);
   }
@@ -62,6 +66,7 @@ export function TouchControls() {
   return (
     <div
       className={`${styles.layer} ${leftHanded ? styles.mirrored : ''}`}
+      style={{ '--touch-scale': touchScale, '--touch-opacity': touchOpacity } as CSSProperties}
       data-testid="touch-controls"
     >
       <div
@@ -83,10 +88,10 @@ export function TouchControls() {
           <div
             className={styles.ring}
             style={{
-              left: stick.origin.x - JOYSTICK_RADIUS_PX,
-              top: stick.origin.y - JOYSTICK_RADIUS_PX,
-              width: JOYSTICK_RADIUS_PX * 2,
-              height: JOYSTICK_RADIUS_PX * 2,
+              left: stick.origin.x - radius,
+              top: stick.origin.y - radius,
+              width: radius * 2,
+              height: radius * 2,
             }}
           >
             <div

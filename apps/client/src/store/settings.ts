@@ -33,6 +33,11 @@ const settingsSchema = z.object({
 
 export type Settings = z.infer<typeof settingsSchema>;
 
+/** Factory defaults (the schema's fallbacks), used by the settings screen's reset button. */
+export function defaultSettings(): Settings {
+  return settingsSchema.parse({});
+}
+
 const STORAGE_KEY = 'redakcja.settings.v1';
 
 function prefersReducedMotion(): boolean {

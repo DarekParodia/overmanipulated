@@ -47,6 +47,7 @@ export function Lobby() {
   const playerId = useApp((s) => s.playerId);
   const connection = useApp((s) => s.connection);
   const error = useApp((s) => s.error);
+  const setSettingsOpen = useApp((s) => s.setSettingsOpen);
   const [copied, setCopied] = useState(false);
   const [boardOpen, setBoardOpen] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,6 +121,10 @@ export function Lobby() {
           </span>
         </section>
         <div className={styles.topActions}>
+          <Button
+            icon={<Icon name="settings" size={24} label={pl.lobby.settings} />}
+            onClick={() => setSettingsOpen(true)}
+          />
           <Button icon={<Icon name="trophy" size={24} />} onClick={() => setBoardOpen(true)}>
             {pl.leaderboard.open}
           </Button>

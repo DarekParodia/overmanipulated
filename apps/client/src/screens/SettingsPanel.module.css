@@ -1,10 +1,13 @@
+/* Desktop: a centred panel with a tab rail on the left. Phones (short landscape): the same
+   layout as a full-screen sheet. Narrow portrait: the rail becomes a row on top. */
 .dialog {
   padding: 0;
   border: none;
   background: transparent;
-  width: min(60rem, calc(100vw - 2 * var(--space-4)));
+  width: min(54rem, calc(100vw - 2 * var(--space-4)));
+  height: min(34rem, calc(100dvh - 2 * var(--space-4)));
   max-width: none;
-  max-height: calc(100dvh - 2 * var(--space-4));
+  max-height: none;
   overflow: visible;
 }
 
@@ -14,9 +17,15 @@
 
 .sheet {
   display: grid;
-  gap: var(--space-4);
-  max-height: calc(100dvh - 2 * var(--space-4));
-  overflow-y: auto;
+  grid-template-columns: 11.5rem minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "rail header"
+    "rail body"
+    "rail footer";
+  column-gap: var(--space-5);
+  row-gap: var(--space-3);
+  height: 100%;
   padding: var(--space-5);
 }
 
@@ -24,14 +33,63 @@
   animation: sheet-in var(--motion-base) var(--ease-bounce) both;
 }
 
-.header {
-  position: sticky;
-  top: calc(-1 * var(--space-5));
-  z-index: 1;
-  margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) 0;
-  padding: var(--space-5) var(--space-5) var(--space-2);
+.rail {
+  grid-area: rail;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: calc(var(--text-2xl) + var(--space-3));
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: 0.1em var(--space-3) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
   background: var(--surface);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: var(--pop);
+  color: var(--outline);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.tab svg {
+  flex: none;
+  margin-top: -0.1em;
+}
+
+.tab:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+/* Selected: blue fill and a thicker outline, so it never relies on colour alone. */
+.tab[aria-selected="true"] {
+  background: var(--blue);
+  color: var(--text-on-dark);
+  border-width: var(--stroke-bold);
+}
+
+.tab:focus-visible,
+.option:has(.native:focus-visible) {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.tab[aria-selected="true"]:focus-visible {
+  outline-color: var(--outline);
+}
+
+.header {
+  grid-area: header;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -52,44 +110,27 @@
   margin-top: -0.12em;
 }
 
-/* Three groups side by side on desktop, stacked on narrow screens. */
-.groups {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-  gap: var(--space-4);
-  align-items: start;
+.body {
+  grid-area: body;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-1) var(--space-2) var(--space-3) var(--space-1);
+  margin: 0 calc(-1 * var(--space-2)) 0 calc(-1 * var(--space-1));
 }
 
-.group {
+.stack {
   display: grid;
   gap: var(--space-2);
+  align-content: start;
   min-width: 0;
-  margin: 0;
-  padding: var(--space-3) var(--space-4) var(--space-4);
-  background: var(--surface-soft);
-  border: var(--outline-border);
-  border-radius: var(--radius-md);
 }
 
-/* Legend as a heading chip sitting on the group's top edge. */
-.legend {
-  padding: 0.15em var(--space-3) 0;
-  background: var(--outline);
-  color: var(--text-on-dark);
-  border-radius: var(--radius-pill);
-  font-family: var(--font-display);
-  font-size: var(--text-lg);
-  font-weight: 800;
-}
-
-/* Sliders stack label over the track inside the narrow groups. */
-.group > div:has(> input[type="range"]) {
-  grid-template-columns: 1fr 3.5rem;
-  row-gap: 0;
-}
-
-.group > div:has(> input[type="range"]) > label {
-  grid-column: 1 / -1;
+/* Touch tab: preview and handedness left, sliders right. */
+.split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-4);
+  align-items: start;
 }
 
 .choice {
@@ -101,7 +142,7 @@
 
 .options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-2);
 }
 
@@ -110,7 +151,7 @@
   align-items: center;
   justify-content: center;
   min-height: var(--touch-target);
-  padding: 0.15em var(--space-3) 0;
+  padding: 0.15em var(--space-2) 0;
   border: var(--outline-border);
   border-radius: var(--radius-pill);
   background: var(--surface);
@@ -128,16 +169,10 @@
   box-shadow: var(--pop-pressed);
 }
 
-/* Selected: blue fill plus a thicker outline, so it never relies on colour alone. */
 .option:has(.native:checked) {
   background: var(--blue);
   color: var(--text-on-dark);
   border-width: var(--stroke-bold);
-}
-
-.option:has(.native:focus-visible) {
-  outline: 4px solid var(--blue);
-  outline-offset: 3px;
 }
 
 .native {
@@ -147,9 +182,176 @@
   height: 1px;
 }
 
+.note {
+  color: var(--text-soft);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
 .footer {
+  grid-area: footer;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Touch preview: a miniature of the real controls on a stage. */
+.stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 9rem;
+  padding: var(--space-3);
+  overflow: hidden;
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunk);
+}
+
+.stageMirrored {
+  flex-direction: row-reverse;
+}
+
+.pvStick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: 50%;
+  background: var(--outline-a20);
+  opacity: calc(var(--pv-opacity) * 0.65);
+  transform: scale(var(--pv-scale));
+  transform-origin: left bottom;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.stageMirrored .pvStick {
+  transform-origin: right bottom;
+}
+
+.pvKnob {
+  width: 48%;
+  height: 48%;
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--pop);
+}
+
+.pvButtons {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    ". ping"
+    "work interact";
+  align-items: end;
+  gap: var(--space-2);
+  opacity: var(--pv-opacity);
+  transform: scale(var(--pv-scale));
+  transform-origin: right bottom;
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.stageMirrored .pvButtons {
+  grid-template-areas:
+    "ping ."
+    "interact work";
+  transform-origin: left bottom;
+}
+
+.pvButton {
+  display: grid;
+  place-items: center;
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--pop);
+  color: var(--outline);
+}
+
+.pvInteract {
+  grid-area: interact;
+  width: 2.9rem;
+  height: 2.9rem;
+  background: var(--yellow);
+}
+
+.pvWork {
+  grid-area: work;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.pvPing {
+  grid-area: ping;
+  justify-self: center;
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
+/* Controls tab: one card per device, the one in use outlined thicker. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13.5rem, 1fr));
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.cards > .note {
+  grid-column: 1 / -1;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+}
+
+.cardCurrent {
+  border-width: var(--stroke-bold);
+  background: var(--surface);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+}
+
+.cardTitle svg {
+  flex: none;
+}
+
+.bindings {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.binding {
+  display: grid;
+  gap: var(--space-1);
+  font-weight: 700;
+}
+
+.binding dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.caps {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
 }
 
 @keyframes sheet-in {
@@ -163,21 +365,72 @@
   }
 }
 
+/* Phones in landscape: a full-screen sheet. */
 @media (max-height: 520px) and (orientation: landscape) {
-  .sheet {
-    padding: var(--space-3) var(--space-4);
-    gap: var(--space-3);
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
   }
-  .header {
-    top: calc(-1 * var(--space-3));
-    margin: calc(-1 * var(--space-3)) calc(-1 * var(--space-4)) 0;
-    padding: var(--space-3) var(--space-4) var(--space-2);
+  .sheet {
+    grid-template-columns: 9.5rem minmax(0, 1fr);
+    column-gap: var(--space-4);
+    row-gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-radius: 0;
+    border-width: 0;
+    box-shadow: none;
+  }
+  .rail {
+    padding-top: 0;
+    gap: var(--space-1);
+    align-self: center;
+  }
+  .tab {
+    font-size: var(--text-sm);
+    padding-inline: var(--space-2);
   }
   .title {
     font-size: var(--text-xl);
   }
-  .groups {
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-    gap: var(--space-3);
+  .stage {
+    height: 8rem;
+  }
+}
+
+/* Narrow portrait: the rail becomes a row of icon tabs on top. */
+@media (max-width: 640px) and (orientation: portrait) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    margin: 0;
+  }
+  .sheet {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "header"
+      "rail"
+      "body"
+      "footer";
+    border-radius: 0;
+    padding: var(--space-4);
+  }
+  .rail {
+    flex-direction: row;
+    padding-top: 0;
+    overflow-x: auto;
+    padding-bottom: var(--space-2);
+  }
+  .tab {
+    flex: 1 0 auto;
+    justify-content: center;
+  }
+  .tab span {
+    display: none;
+  }
+  .tab[aria-selected="true"] span {
+    display: inline;
   }
 }
