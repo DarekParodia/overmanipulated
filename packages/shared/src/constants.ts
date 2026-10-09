@@ -249,3 +249,6 @@ export const AI_SCANNER_MARGIN_MIN = 6;
 export const AI_SCANNER_MARGIN_MAX = 28;
 /** The side threshold: a reading is "AI" above it and "real" below it (percent). */
 export const AI_SCANNER_THRESHOLD = 50;
+/** The detector never reads exactly 0 or 100 (percent). */
+export const AI_SCANNER_READING_MIN = 3;
+export const AI_SCANNER_READING_MAX = 97;

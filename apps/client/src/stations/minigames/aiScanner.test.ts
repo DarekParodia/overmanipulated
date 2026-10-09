@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test';
 import { STORIES, type Story } from '@redakcja/content';
-import { AI_SCANNER_MARGIN_MAX, AI_SCANNER_MARGIN_MIN } from '@redakcja/shared';
+import {
+  AI_SCANNER_MARGIN_MAX,
+  AI_SCANNER_MARGIN_MIN,
+  AI_SCANNER_READING_MAX,
+  AI_SCANNER_READING_MIN,
+} from '@redakcja/shared';
 import {
   ANSWERS,
   classify,
@@ -28,8 +33,8 @@ describe('generateReading', () => {
     for (const s of STORIES) {
       for (let seed = 1; seed <= 60; seed++) {
         const r = generateReading(seed, s);
-        expect(r.percent).toBeGreaterThanOrEqual(3);
-        expect(r.percent).toBeLessThanOrEqual(97);
+        expect(r.percent).toBeGreaterThanOrEqual(AI_SCANNER_READING_MIN);
+        expect(r.percent).toBeLessThanOrEqual(AI_SCANNER_READING_MAX);
         expect(r.margin).toBeGreaterThanOrEqual(AI_SCANNER_MARGIN_MIN);
         expect(r.margin).toBeLessThanOrEqual(AI_SCANNER_MARGIN_MAX);
       }

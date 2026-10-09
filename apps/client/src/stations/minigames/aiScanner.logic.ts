@@ -10,6 +10,8 @@ import {
   AI_SCANNER_MARGIN_MIN,
   AI_SCANNER_MEDIA_SHIFT,
   AI_SCANNER_NOISE,
+  AI_SCANNER_READING_MAX,
+  AI_SCANNER_READING_MIN,
   AI_SCANNER_THRESHOLD,
   createRng,
   type StoryType,
@@ -52,7 +54,12 @@ export function generateReading(seed: number, story: StoryLike): ScannerReading 
   const rng = createRng(seed);
   const noise = (rng.next() * 2 - 1) * AI_SCANNER_NOISE;
   const margin = AI_SCANNER_MARGIN_MIN + rng.int(AI_SCANNER_MARGIN_MAX - AI_SCANNER_MARGIN_MIN + 1);
-  return { percent: Math.round(clamp(baseReading(story) + noise, 3, 97)), margin };
+  return {
+    percent: Math.round(
+      clamp(baseReading(story) + noise, AI_SCANNER_READING_MIN, AI_SCANNER_READING_MAX),
+    ),
+    margin,
+  };
 }
 
 /** Lower and upper end of the shaded range, clipped to the gauge. */

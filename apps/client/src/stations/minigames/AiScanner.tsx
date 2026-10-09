@@ -145,6 +145,7 @@ export function AiScanner({ seed, story, device, onDone }: MinigameProps) {
               key={answer}
               type="button"
               className={styles.answer}
+              tabIndex={-1}
               data-testid={`scanner-answer-${answer}`}
               data-answer={answer}
               data-focused={showCursor && state.cursor === i}
