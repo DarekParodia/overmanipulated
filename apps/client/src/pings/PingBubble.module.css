@@ -76,3 +76,10 @@
 :root[data-reduced-motion="true"] .bubble {
   animation: fade 160ms linear both;
 }
+
+/* The player's shape mark (colour-blind safe identity) sits in front of the ping text. */
+.bubble svg {
+  display: inline-block;
+  margin-right: 0.3em;
+  vertical-align: -0.12em;
+}

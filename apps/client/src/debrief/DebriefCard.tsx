@@ -3,7 +3,7 @@
 // stamps the team missed, and the blunder-of-the-day vote with a dot per voter.
 
 import type { Verdict } from '@redakcja/shared';
-import type { CSSProperties, PointerEvent } from 'react';
+import type { PointerEvent } from 'react';
 import { useRef } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { formatDelta } from '../hud/hud-model.ts';
@@ -11,7 +11,7 @@ import { KeyCap } from '../stations/kit.tsx';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
-import { playerColorVar } from '../ui/tokens.ts';
+import { PlayerMark } from '../ui/PlayerMark.tsx';
 import styles from './Debrief.module.css';
 import type { DebriefCard as Card, Voter } from './debrief-model.ts';
 
@@ -167,11 +167,9 @@ export function DebriefCard({
             <span className={styles.voters}>
               <span className={styles.dots} aria-hidden>
                 {voters.map((voter) => (
-                  <span
-                    key={voter.playerId}
-                    className={styles.dot}
-                    style={{ '--dot': playerColorVar(voter.colorIndex) } as CSSProperties}
-                  />
+                  <span key={voter.playerId} className={styles.dot}>
+                    <PlayerMark colorIndex={voter.colorIndex} size={26} />
+                  </span>
                 ))}
               </span>
               <span className={styles.count}>{pl.debrief.votes(voters.length)}</span>
