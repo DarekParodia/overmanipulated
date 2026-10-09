@@ -257,6 +257,34 @@ describe('botRaid', () => {
     expect(Object.keys(run.state.folders)).toHaveLength(4);
   });
 
+  it('takes as many free tiles as there are, at least two', () => {
+    const fillers = (n: number): Record<string, Folder> =>
+      Object.fromEntries(
+        Array.from({ length: n }, (_, i) => [
+          `x${i}`,
+          {
+            id: `x${i}`,
+            storyId: 't-true',
+            location: { kind: 'fixture', fixtureId: `conveyor-${i}` },
+            stamps: [],
+            spawnedAtMs: 0,
+            deadlineMs: 600_000,
+            warned: false,
+          } satisfies Folder,
+        ]),
+      );
+    const crowded = newRun(levelWith([raid(4)]));
+    crowded.state = { ...crowded.state, folders: fillers(3) };
+    runUntil(crowded, 1000);
+    // One free tile is not a wave: the raid waits.
+    expect(crowded.state.nextEventIndex).toBe(0);
+
+    const roomy = newRun(levelWith([raid(4)]));
+    roomy.state = { ...roomy.state, folders: fillers(2) };
+    runUntil(roomy, 1000);
+    expect(Object.values(roomy.state.folders).filter((f) => f.tag)).toHaveLength(2);
+  });
+
   it('one verdict resolves the wave with a single result', () => {
     const run = newRun(levelWith([raid(3)]), { p: AT_DESK });
     runUntil(run, 1000);

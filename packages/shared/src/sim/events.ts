@@ -176,8 +176,11 @@ function startFolderEvent(
   }
   const tiles = freeConveyors(state, frame.ctx.map);
   const total = frame.ctx.map.fixtures.filter((f) => f.kind === 'conveyor').length;
-  const wanted = event.kind === 'botRaid' ? Math.min(event.count, total) : 1;
-  if (tiles.length < wanted || wanted === 0) {
+  // A raid needs at least two free tiles to look like a wave; it takes as many as are free so a
+  // team that lets folders pile up on the conveyor does not hold the whole event schedule back.
+  const raidMin = Math.min(2, total);
+  const wanted = event.kind === 'botRaid' ? Math.min(event.count, total, tiles.length) : 1;
+  if (tiles.length < (event.kind === 'botRaid' ? raidMin : 1) || wanted === 0) {
     return null;
   }
   const tag = tagFor(event, state, index);
