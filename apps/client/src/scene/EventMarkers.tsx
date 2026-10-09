@@ -23,7 +23,9 @@ import { surfaceHeight } from './entities.ts';
 /** Height of the marker's anchor above the folder. */
 const MARKER_LIFT = 0.95;
 /** Height of the phone above the editorial desk's surface. */
-const DESK_PHONE_LIFT = 0.9;
+const DESK_PHONE_LIFT = 0.55;
+/** The phone stands left of the desk block's sign, so it never covers it. */
+const DESK_PHONE_SIDE = 0.9;
 
 /** Tagged folders as `id|kind` strings, stable across snapshots that change nothing here. */
 function useTaggedFolders(): { id: string; kind: string }[] {
@@ -145,7 +147,7 @@ function DeskPhone() {
       return [0, DESK_PHONE_LIFT, 0];
     }
     const center = tileCenter(desk.col, desk.row);
-    return [center.x, surfaceHeight(desk) + DESK_PHONE_LIFT, center.y];
+    return [center.x - DESK_PHONE_SIDE, surfaceHeight(desk) + DESK_PHONE_LIFT, center.y];
   }, []);
   return (
     <group position={position} name="event-desk-phone">

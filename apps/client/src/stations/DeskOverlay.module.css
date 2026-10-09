@@ -558,6 +558,10 @@
   gap: var(--space-4);
 }
 
+.correctionFile {
+  min-width: 0;
+}
+
 .correctionAct {
   display: grid;
   gap: var(--space-3);

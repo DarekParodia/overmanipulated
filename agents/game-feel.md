@@ -78,7 +78,13 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `level.lastSeconds` | timer crosses 30 s left | `timerPulse` (steady under no-flash) | clock strike over a low pulse; music → pressure layer (music unit) | timer pulses (HUD) | light tick | ●● |
 | `level.win` / `level.lose` | `levelEnd` message | `cheer` / `slump` | win / lose stinger; all loops stop | confetti / falling papers at the local player | thud / buzz | ●●● |
 | `ping.needArchive` / `ping.fake` / `ping.mine` | `ping` | `pingPop` (the ping layer draws the bubble) | short bell, pitch per type | ink puff in player colour; icon bubble (ping unit) | — | ● |
-| `event.*` | random events (stage 4) | per event | announce stinger | per event (shares, sparks, glitch, smoke) | per event | ●●–●●● |
+| `event.viral.start` | `levelEvent` viral start | banner; share/heart icons float off the folder, share counter chip (card + world) | notification pops (`evviral`) | orange/red share chips | small shake, tick | ●● |
+| `event.bossCall.start` | `levelEvent` bossCall start | banner; red phone rings over the editorial desk and on the folder, seconds chip shakes in its last 4 s | phone ring (`evboss`) | red/yellow alert dots | strong shake, buzz | ●●● |
+| `event.botRaid.start` | `levelEvent` botRaid start | banner; bot chip with red/blue glitch ghost on every wave folder, "×N" badge (static under no-flash) | glitch stutter (`evraid`) | blue/red/navy glitch squares | medium shake, buzz | ●●● |
+| `event.outage.start` / `.end` / `.spark` | `levelEvent` outage start / end; sparks every ~1 s while down | banner; station sign turns into "Awaria N" with an orange draining ring, navy "powered down" cover over the station | power-down crackle (`evoutage`) / power-up (`evback`) / spark crackle (`evzap`, quiet) | sparks + smoke / confetti / sparks | strong shake, thud / tick / — | ●●● / ●● / ● |
+| `event.correction.start` | `levelEvent` correction start | banner; siren with sweeping beam over the folder, yellow dot trail to the nearest desk | siren (`evcorrection`) | red/yellow alert dots | medium shake, buzz | ●●● |
+| `event.raidResolved` | `raidResolved` | banner "Nalot odparty!" | rising arpeggio (`evclear`) | confetti + glitch squares | small shake, thud | ●●● |
+| `event.end` | other `levelEvent` end | none | paper slap | dust | — | ● |
 | `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |

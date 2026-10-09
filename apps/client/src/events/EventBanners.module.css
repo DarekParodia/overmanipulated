@@ -1,17 +1,18 @@
 /*
- * Event banners: chunky cards under the HUD pill (top-left), clear of the folder queue, the
- * verdict toasts (top-centre), the hint bubble (bottom-centre) and the touch controls (bottom
- * corners). The coloured disc carries the event icon; the card slides in from the left.
+ * Event banners: chunky cards in the top-right corner under the screen tools and the room chip,
+ * clear of the HUD numbers (top-left), the folder queue and verdict toasts (top-centre), the
+ * hint bubble (bottom-centre) and the touch controls (bottom corners). The coloured disc
+ * carries the event icon; the card slides in from the right.
  */
 .banners {
   position: absolute;
-  top: calc(var(--hud-top) + var(--event-pill-h, 5.5rem) + var(--space-3));
-  left: var(--hud-left);
+  top: calc(var(--hud-top) + var(--event-tools-h, 6.25rem));
+  right: var(--hud-right);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: var(--space-2);
-  max-width: min(22rem, calc(50% - var(--hud-left) - var(--space-3)));
+  max-width: min(22rem, calc(50% - var(--hud-right) - var(--space-3)));
   margin: 0;
   padding: 0;
   list-style: none;
@@ -33,7 +34,7 @@
 
 @keyframes banner-in {
   0% {
-    transform: translateX(-120%);
+    transform: translateX(120%);
   }
   100% {
     transform: translateX(0);
@@ -114,10 +115,9 @@
 /* Phones: a smaller card, still ≥ 15 px text. */
 @media (max-height: 500px), (max-width: 760px) {
   .banners {
-    --event-pill-h: 6.75rem;
-    top: calc(var(--hud-top) + var(--event-pill-h) + var(--space-2));
+    --event-tools-h: 5.5rem;
     gap: var(--space-1);
-    max-width: calc(50% - var(--hud-left) - var(--space-2));
+    max-width: calc(50% - var(--hud-right) - var(--space-2));
   }
 
   .banner {

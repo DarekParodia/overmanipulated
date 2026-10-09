@@ -35,7 +35,7 @@ const COVER_PAD = 0.04;
 const COVER_HEIGHT = 0.55;
 const DOTS_PER_TRAIL = 14;
 const TRAILS = 2;
-const DOT_RADIUS = 0.1;
+const DOT_RADIUS = 0.15;
 const MARCH_SPEED = 0.9;
 
 const point = new Vector3();

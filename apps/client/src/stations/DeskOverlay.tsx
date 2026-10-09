@@ -96,7 +96,7 @@ function CorrectionView({ folder, story, pending, onVerdict, onClose }: DeskOver
       testId="desk-overlay"
     >
       <div className={styles.correction} data-testid="desk-correction">
-        <div className={styles.file}>
+        <div className={styles.correctionFile}>
           {story ? <FolderSheet folder={folder} story={story} /> : <p>{pl.desk.unknownStory}</p>}
         </div>
         <div className={styles.correctionAct}>
