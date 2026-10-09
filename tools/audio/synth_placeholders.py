@@ -382,6 +382,80 @@ def amb_typing():
     return normalize(distant(out * fade, 1800), 0.25)
 
 
+# --- Level events (S4-05..S4-09): announce stingers, appended last so earlier sounds stay identical ---
+
+
+def ev_viral():
+    """Viral: a quick run of rising notification pops, like shares piling up."""
+    parts = [delayed(bell(f, 0.16, 0.05, ((1, 1.0), (2.0, 0.3))), i * 0.085) for i, f in enumerate((880, 1109, 1397, 1760))]
+    return normalize(mix(*parts), 0.55)
+
+
+def ev_boss():
+    """Boss call: a desk phone ringing twice (two-tone bell, fast tremolo)."""
+    parts = []
+    for i in range(2):
+        x = t(0.36)
+        ring = (np.sin(2 * np.pi * 440 * x) + np.sin(2 * np.pi * 480 * x)) * (0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 22 * x)))
+        parts.append(delayed(ring * env(0.36, 0.004, 0.4), i * 0.5))
+    return normalize(lowpass(mix(*parts), 3200), 0.6)
+
+
+def ev_raid():
+    """Bot raid: a glitchy, bit-crushed stutter falling in pitch."""
+    n = int(RATE * 0.6)
+    x = np.arange(n) / RATE
+    sweep = np.sign(np.sin(2 * np.pi * np.cumsum(700 * np.exp(-3.2 * x)) / RATE)) * 0.5
+    gate = (np.floor(x * 24) % 3 != 2).astype(float)
+    crushed = np.round(sweep * 6) / 6
+    hiss = highpass(noise(0.6), 2500) * 0.25 * gate
+    return normalize(lowpass((crushed * gate + hiss) * env(0.6, 0.002, 0.5), 5000), 0.55)
+
+
+def ev_outage():
+    """Outage: power cutting out, a falling hum and a few electric crackles."""
+    n = int(RATE * 0.8)
+    x = np.arange(n) / RATE
+    hum = np.sin(2 * np.pi * np.cumsum(520 * np.exp(-3.5 * x) + 45) / RATE) * env(0.8, 0.003, 0.35)
+    crackle = np.zeros(n)
+    for at in (0.05, 0.19, 0.27, 0.46, 0.58):
+        i = int(RATE * at)
+        burst = highpass(noise(0.05), 1500) * env(0.05, 0.0005, 0.012)
+        crackle[i : i + len(burst)] += burst[: n - i]
+    return normalize(mix(hum * 0.7, crackle * 0.8), 0.6)
+
+
+def ev_correction():
+    """Correction: a newsroom siren, three rising-falling sweeps."""
+    n = int(RATE * 0.9)
+    x = np.arange(n) / RATE
+    freq = 760 + 220 * np.sin(2 * np.pi * 3.3 * x - np.pi / 2)
+    wave_ = np.sign(np.sin(2 * np.pi * np.cumsum(freq) / RATE)) * 0.5 + 0.5 * np.sin(2 * np.pi * np.cumsum(freq) / RATE)
+    return normalize(lowpass(wave_ * env(0.9, 0.01, 0.8), 2800), 0.55)
+
+
+def ev_clear():
+    """Raid solved: a bright rising arpeggio with a little sparkle."""
+    parts = [delayed(bell(f, 0.4, 0.14), i * 0.07) for i, f in enumerate((1047, 1319, 1568, 2093))]
+    sparkle = highpass(noise(0.3), 5000) * env(0.3, 0.001, 0.07) * 0.12
+    return normalize(mix(*parts, delayed(sparkle, 0.2)), 0.55)
+
+
+def ev_back():
+    """Station back online: power coming up, a rising sweep and a soft confirm chime."""
+    n = int(RATE * 0.35)
+    x = np.arange(n) / RATE
+    sweep = np.sin(2 * np.pi * np.cumsum(120 + 900 * x / 0.35) / RATE) * env(0.35, 0.01, 0.2)
+    return normalize(mix(sweep * 0.6, delayed(bell(1319, 0.35, 0.12), 0.25)), 0.5)
+
+
+def ev_zap():
+    """A small spark crackle for a down station (quiet, repeated)."""
+    s = highpass(noise(0.14), 1800) * env(0.14, 0.0005, 0.03)
+    s += 0.5 * highpass(noise(0.14), 3500) * np.roll(env(0.14, 0.0005, 0.02), 900)
+    return normalize(s, 0.35)
+
+
 SOUNDS = [
     ("click", click, False),
     ("hover", hover, False),
@@ -420,6 +494,15 @@ SOUNDS = [
     ("ambprinter", amb_printer, False),
     ("ambfax", amb_fax, False),
     ("ambtyping", amb_typing, False),
+    # S4-05 level events. Appended last for the same reason.
+    ("evviral", ev_viral, False),
+    ("evboss", ev_boss, False),
+    ("evraid", ev_raid, False),
+    ("evoutage", ev_outage, False),
+    ("evcorrection", ev_correction, False),
+    ("evclear", ev_clear, False),
+    ("evback", ev_back, False),
+    ("evzap", ev_zap, False),
 ]
 
 

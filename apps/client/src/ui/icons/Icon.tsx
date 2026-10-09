@@ -223,6 +223,36 @@ const icons = {
     { d: 'M7.5 5.5h-3v1.5a3.5 3.5 0 0 0 3.5 3.5M16.5 5.5h3v1.5a3.5 3.5 0 0 1-3.5 3.5' },
     { d: 'M12 14v3M8.5 20.5h7M9.5 20.5v-3.5h5v3.5' },
   ],
+  // --- Level events (S4-05) ----------------------------------------------------------------
+  /** Shares: three linked nodes. */
+  share: [
+    {
+      d: 'M15.5 5.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0ZM3.5 12a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0ZM15.5 18.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0Z',
+      fill: 'tint',
+    },
+    { d: 'M8.2 10.8L15.8 6.8M8.2 13.2L15.8 17.2' },
+  ],
+  /** Siren light (correction). */
+  siren: [
+    { d: 'M6 17.5V12a6 6 0 0 1 12 0v5.5Z', fill: 'tint' },
+    { d: 'M4 17.5h16v3.5H4Z', fill: 'tint' },
+    { d: 'M12 2.5V4M3.8 6.2l1.2 1.1M20.2 6.2l-1.2 1.1M9.5 12.5a2.5 2.5 0 0 1 2.5-2.5' },
+  ],
+  /** Lightning bolt (outage). */
+  bolt: [{ d: 'M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z', fill: 'tint' }],
+  /** Bot head (raid). */
+  bot: [
+    {
+      d: 'M5.5 8.5h13A2 2 0 0 1 20.5 10.5v7a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-7A2 2 0 0 1 5.5 8.5Z',
+      fill: 'tint',
+    },
+    { d: 'M12 8.5V5M10.5 4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0Z' },
+    {
+      d: 'M7.5 13.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0ZM14.1 13.5a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0Z',
+      fill: 'solid',
+    },
+    { d: 'M9.5 16.8h5' },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;

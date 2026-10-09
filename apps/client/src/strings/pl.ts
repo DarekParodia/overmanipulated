@@ -667,6 +667,48 @@ export const pl = {
       readonly string[]
     >,
   },
+  /** Level events (S4-05..S4-09): banners, folder badges, hints, the correction sheet. */
+  events: {
+    /** Big banner when an event starts: a short title and one short line. */
+    banner: {
+      viral: { title: 'To już wszędzie jest!', line: 'Najpierw sprawdź' },
+      bossCall: { title: 'Telefon od szefa!', line: 'Żąda publikacji' },
+      botRaid: { title: 'Nalot botów!', line: 'Jeden werdykt na wszystkie' },
+      outage: { title: 'Awaria!', line: (station: string) => `${station} nie działa` },
+      correction: { title: 'Sprostowanie!', line: 'Zanieś na stół' },
+    },
+    /** Short banners when something is over or solved. */
+    done: {
+      outage: { title: 'Naprawione', line: (station: string) => `${station} działa` },
+      raid: { title: 'Nalot odparty!', line: 'Wszystkie fałszywki z głowy' },
+    },
+    /** Accessible names of the badges (the badges themselves show an icon and a number). */
+    badge: {
+      shares: (n: string) => `${n} udostępnień`,
+      bossCall: (s: number) => `Szef czeka jeszcze ${s} s`,
+      bossCallOver: 'Szef się rozłączył',
+      raid: (n: number) => `Nalot botów: ${n} teczek`,
+      correction: 'Sprostowanie',
+      down: 'Awaria',
+    },
+    /** One-line hints (guidance bubble) for tagged folders. */
+    hint: {
+      viral: 'Viral! Sprawdź, zanim urośnie',
+      bossCall: 'Szef dzwoni — sprawdź najpierw!',
+      botRaid: 'Nalot! Jeden werdykt na wszystkie',
+      correction: 'Sprostowanie — zanieś na stół!',
+      stationDown: 'Stanowisko nie działa — zaczekaj',
+    },
+    /** Station overlay refused on a station that is down. */
+    stationDown: 'Awaria!',
+    /** Desk sheet for a correction folder. */
+    correction: {
+      title: 'Sprostowanie',
+      line: 'Opublikowany materiał był zmanipulowany',
+      button: 'Opublikuj sprostowanie',
+      recover: (n: number) => `Odzyskasz ${n} Wiarygodności`,
+    },
+  },
   /** Level results (S2-08/S2-09). */
   results: {
     wonHeadline: 'Wydanie gotowe!',

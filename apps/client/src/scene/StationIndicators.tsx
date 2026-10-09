@@ -9,6 +9,7 @@ import { useFrame } from '@react-three/fiber';
 import type { Fixture, Station } from '@redakcja/shared';
 import { useMemo } from 'react';
 import { Vector3 } from 'three';
+import { useEvents } from '../events/event-store.ts';
 import { useGame } from '../net/game-store.ts';
 import { runtime } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
@@ -113,7 +114,10 @@ function indicatorFor(sign: Sign): StationIndicator {
     return desk?.operatorId ? { kind: 'busy', operatorId: desk.operatorId } : { kind: 'none' };
   }
   const station: Station | undefined = state.stations.find((s) => s.id === sign.fixtureIds[0]);
-  return stationIndicator(station);
+  return stationIndicator(
+    station,
+    station ? useEvents.getState().outageTotals[station.id] : undefined,
+  );
 }
 
 /** The operator's player colour (shown on the badge outline), or the plain outline. */
@@ -127,6 +131,9 @@ function operatorColor(indicator: StationIndicator, players: RoomPlayers): strin
 function ringColor(indicator: StationIndicator, players: RoomPlayers): string {
   if (indicator.kind === 'lockout') {
     return 'var(--red)';
+  }
+  if (indicator.kind === 'down') {
+    return 'var(--orange)';
   }
   if (indicator.kind === 'working') {
     return 'var(--green)';
@@ -143,7 +150,11 @@ type SignHandle = {
   anchor: HTMLDivElement | null;
   element: HTMLDivElement | null;
   ring: SVGCircleElement | null;
+  /** Seconds left of an outage, written into the name pill while the station is down. */
+  seconds: HTMLSpanElement | null;
   shown: {
+    /** Outage seconds last written. */
+    secondsLeft: number;
     kind: StationIndicator['kind'];
     fraction: number;
     offset: string;
@@ -212,9 +223,28 @@ function SignBadge({ handle }: { handle: SignHandle }) {
             <span className={styles.cross}>
               <Icon name="cross" size={28} />
             </span>
+            <span className={styles.bolt}>
+              <Icon name="bolt" size={28} />
+            </span>
           </span>
         </span>
-        <span className={styles.name}>{pl.vocab.signs[sign.kind]}</span>
+        <span className={styles.name}>
+          <span className={styles.nameUp}>{pl.vocab.signs[sign.kind]}</span>
+          <span className={styles.nameDown}>
+            {pl.events.badge.down}{' '}
+            <span
+              ref={(element) => {
+                handle.seconds = element;
+                handle.shown = { ...handle.shown, secondsLeft: -1 };
+                return () => {
+                  if (handle.seconds === element) {
+                    handle.seconds = null;
+                  }
+                };
+              }}
+            />
+          </span>
+        </span>
       </div>
     </div>
   );
@@ -229,6 +259,10 @@ function updateSign(handle: SignHandle, delta: number, players: RoomPlayers): vo
   const indicator = indicatorFor(handle.sign);
   const current = handle.shown;
   const target = indicator.kind === 'busy' || indicator.kind === 'none' ? 1 : indicator.fraction;
+  if (indicator.kind === 'down' && handle.seconds && current.secondsLeft !== indicator.seconds) {
+    current.secondsLeft = indicator.seconds;
+    handle.seconds.textContent = String(indicator.seconds);
+  }
   if (indicator.kind !== current.kind) {
     current.kind = indicator.kind;
     current.fraction = target;
@@ -267,7 +301,15 @@ export function StationIndicators() {
           anchor: null,
           element: null,
           ring: null,
-          shown: { kind: 'none', fraction: 1, offset: '', color: '', operator: '' },
+          seconds: null,
+          shown: {
+            secondsLeft: -1,
+            kind: 'none',
+            fraction: 1,
+            offset: '',
+            color: '',
+            operator: '',
+          },
           at: '',
         }),
       ),

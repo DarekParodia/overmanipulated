@@ -128,6 +128,55 @@ export const particlePresets = {
     height: 1,
     colors: [colors.textFaint, colors.surfaceSunk],
   },
+  // --- S4-05 level events -------------------------------------------------------------------
+  /** Shares piling up: orange and red chips popping upwards, with white sparkles. */
+  shareBurst: {
+    count: 24,
+    life: [0.7, 1.2],
+    size: [0.06, 0.11],
+    speed: [0.6, 1.8],
+    rise: [2, 3.6],
+    gravity: 3,
+    drag: 1.6,
+    height: 0.9,
+    colors: [colors.orange, colors.red, colors.surface],
+  },
+  /** Alarm (boss call, correction): red and yellow dots thrown out like a ringing bell. */
+  alertBurst: {
+    count: 20,
+    life: [0.5, 0.9],
+    size: [0.06, 0.12],
+    speed: [1.4, 2.8],
+    rise: [0.6, 1.8],
+    gravity: 4,
+    drag: 2,
+    height: 0.9,
+    colors: [colors.red, colors.yellow, colors.surface],
+  },
+  /** Bot raid: hard-edged blue, red and navy squares jittering out (a glitch). */
+  glitchBits: {
+    count: 26,
+    life: [0.35, 0.8],
+    size: [0.05, 0.13],
+    speed: [1, 3],
+    rise: [0.2, 1.4],
+    gravity: 1,
+    drag: 3,
+    height: 0.6,
+    colors: [colors.blue, colors.red, colors.outline, colors.surface],
+  },
+  /** Electric sparks from a station that went down. */
+  sparks: {
+    count: 14,
+    life: [0.25, 0.55],
+    size: [0.03, 0.06],
+    speed: [0.8, 2.2],
+    rise: [1.2, 2.8],
+    gravity: 9,
+    drag: 1.2,
+    height: 1,
+    colors: [colors.yellow, colors.orange, colors.surface],
+  },
 } as const satisfies Record<string, EmitterPreset>;
 
 export type ParticlePresetId = keyof typeof particlePresets;

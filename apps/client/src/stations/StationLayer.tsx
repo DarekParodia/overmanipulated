@@ -5,6 +5,7 @@ import { getStory } from '@redakcja/content';
 import { type Folder, MINIGAME_FAIL_LOCKOUT_MS, type Verdict } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { installGameHook } from '../debug/game-hook.ts';
+import { stationIsDown } from '../events/event-model.ts';
 import { onGameEvent } from '../net/game-events.ts';
 import {
   selectFolderOn,
@@ -65,6 +66,9 @@ function StationHost({ playerId }: { playerId: string | null }) {
     }
   }, [phase, startLockout]);
 
+  // A station that is down (outage event) opens no minigame and shows no work prompt; the
+  // server also kicks the worker out, this covers the snapshot or two before that.
+  const down = stationIsDown(station);
   const operating = station !== undefined;
   useEffect(() => {
     if (!operating) {
@@ -85,7 +89,7 @@ function StationHost({ playerId }: { playerId: string | null }) {
 
   return (
     <>
-      {station?.phase === 'minigame' && round !== settledRound && (
+      {station?.phase === 'minigame' && round !== settledRound && !down && (
         <StationOverlay
           key={round}
           station={station}
@@ -94,7 +98,7 @@ function StationHost({ playerId }: { playerId: string | null }) {
           onClose={onClose}
         />
       )}
-      {station?.phase === 'working' && <WorkPrompt station={station} />}
+      {station?.phase === 'working' && !down && <WorkPrompt station={station} />}
       {lockoutUntil > 0 && (
         <LockoutNote key={lockoutUntil} until={lockoutUntil} onDone={() => setLockoutUntil(0)} />
       )}

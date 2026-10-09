@@ -34,5 +34,13 @@
   "ambphone": [24230, 2250, false],
   "ambprinter": [26600, 1860, false],
   "ambfax": [28580, 1500, false],
-  "ambtyping": [30200, 2200, false]
+  "ambtyping": [30200, 2200, false],
+  "evviral": [32520, 415, false],
+  "evboss": [33055, 860, false],
+  "evraid": [34035, 600, false],
+  "evoutage": [34755, 800, false],
+  "evcorrection": [35675, 900, false],
+  "evclear": [36695, 610, false],
+  "evback": [37425, 600, false],
+  "evzap": [38145, 140, false]
 }

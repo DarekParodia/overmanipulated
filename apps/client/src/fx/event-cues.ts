@@ -47,6 +47,30 @@ export function verdictCue(event: VerdictEvent, truth: Truth | undefined): CueId
   }
 }
 
+type LevelEventMessage = Extract<GameplayEvent, { kind: 'levelEvent' }>;
+
+/**
+ * Cue of a level event: an announce stinger per event when it starts; at the end only outages
+ * make noise (power back), the rest end quietly because their folders resolve on their own.
+ */
+export function levelEventCue(event: LevelEventMessage): CueId {
+  if (event.phase === 'end') {
+    return event.event === 'outage' ? 'event.outage.end' : 'event.end';
+  }
+  switch (event.event) {
+    case 'viral':
+      return 'event.viral.start';
+    case 'bossCall':
+      return 'event.bossCall.start';
+    case 'botRaid':
+      return 'event.botRaid.start';
+    case 'outage':
+      return 'event.outage.start';
+    case 'correction':
+      return 'event.correction.start';
+  }
+}
+
 /** The cue for a gameplay event. `truthOf` looks up a story's truth (for wrong verdicts). */
 export function cueForEvent(
   event: GameplayEvent,
@@ -81,11 +105,10 @@ export function cueForEvent(
       return 'desk.close';
     case 'verdictResult':
       return verdictCue(event, truthOf(event.storyId));
-    // Placeholders until the S4-05 client unit adds the event cues.
     case 'levelEvent':
-      return 'folder.arrive';
+      return levelEventCue(event);
     case 'raidResolved':
-      return 'folder.drop';
+      return 'event.raidResolved';
     case 'ping':
       switch (event.ping) {
         case 'needArchive':

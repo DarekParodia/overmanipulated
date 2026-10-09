@@ -58,7 +58,10 @@ export type AnimationTrigger =
   | 'cardHop'
   // S4-11 endless mode.
   /** The „Tempo ×N” chip bumps when N grows (HUD). */
-  | 'tempoUp';
+  | 'tempoUp'
+  // S4-05 level events.
+  /** A level event starts or ends (banner / badges listen via the game event feed). */
+  | 'eventAnnounce';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -513,6 +516,80 @@ export const cues = {
     sound: { ids: ['win'], bus: 'sfx', volume: 0.9 },
     particles: { preset: 'confetti', count: 40 },
     haptic: 'thud',
+  },
+  // --- S4-05..S4-09 level events. Announce stingers (severity 3 = the whole table must look up),
+  // each with its banner (events/EventBanners.tsx), badges and scene pieces (scene/Events*.tsx).
+  'event.viral.start': {
+    severity: 2,
+    sound: { ids: ['evviral'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'shareBurst' },
+    shake: 0.15,
+    haptic: 'tick',
+    animation: 'eventAnnounce',
+  },
+  'event.bossCall.start': {
+    severity: 3,
+    sound: { ids: ['evboss'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'alertBurst' },
+    shake: 0.5,
+    haptic: 'buzz',
+    animation: 'eventAnnounce',
+  },
+  'event.botRaid.start': {
+    severity: 3,
+    sound: { ids: ['evraid'], bus: 'sfx', volume: 0.85 },
+    particles: { preset: 'glitchBits' },
+    shake: 0.3,
+    haptic: 'buzz',
+    animation: 'eventAnnounce',
+  },
+  'event.outage.start': {
+    severity: 3,
+    sound: { ids: ['evoutage'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'sparks' },
+    extraParticles: { preset: 'smoke', count: 8 },
+    shake: 0.55,
+    haptic: 'thud',
+    animation: 'eventAnnounce',
+  },
+  'event.correction.start': {
+    severity: 3,
+    sound: { ids: ['evcorrection'], bus: 'sfx', volume: 0.85 },
+    particles: { preset: 'alertBurst', count: 26 },
+    shake: 0.4,
+    haptic: 'buzz',
+    animation: 'eventAnnounce',
+  },
+  /** Power back on at a station that was down. */
+  'event.outage.end': {
+    severity: 2,
+    sound: { ids: ['evback'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'confetti', count: 14 },
+    haptic: 'tick',
+    animation: 'eventAnnounce',
+  },
+  /** An event is over and nothing needs saying about it (quiet paper slap). */
+  'event.end': {
+    severity: 1,
+    sound: { ids: ['place'], bus: 'sfx', volume: 0.4 },
+    particles: { preset: 'dust', count: 3 },
+  },
+  /** One verdict cleared a whole bot wave. */
+  'event.raidResolved': {
+    severity: 3,
+    sound: { ids: ['evclear'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'confetti', count: 30 },
+    extraParticles: { preset: 'glitchBits', count: 10 },
+    shake: 0.15,
+    haptic: 'thud',
+    animation: 'eventAnnounce',
+  },
+  /** Ambient crackle from a station that is down; fired by scene/EventsAmbient.tsx. */
+  'event.outage.spark': {
+    severity: 1,
+    sound: { ids: ['evzap'], bus: 'sfx', volume: 0.3, rateJitter: 0.15 },
+    particles: { preset: 'sparks', count: 5 },
+    extraParticles: { preset: 'smoke', count: 2 },
   },
 } as const satisfies Record<string, Cue>;
 

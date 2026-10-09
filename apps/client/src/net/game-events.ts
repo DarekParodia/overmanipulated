@@ -79,6 +79,30 @@ function at(position: Point | undefined): CueContext {
   return position ? { position } : {};
 }
 
+/** Where the local player stands: the fallback place for events that belong to the whole room. */
+function fallbackPosition(): Point | undefined {
+  return renderState.local ?? undefined;
+}
+
+/**
+ * Where a level event bursts: on its station (outage), its first folder, the first editorial
+ * desk for the boss call (the phone rings there), else at the local player.
+ */
+function levelEventContext(event: Extract<GameplayEvent, { kind: 'levelEvent' }>): CueContext {
+  const folderId = event.folderIds[0];
+  const desk = runtime.map.fixtures.find((f) => f.kind === 'desk');
+  const position =
+    (event.stationId ? fixturePosition(event.stationId) : undefined) ??
+    (event.event === 'bossCall' && desk ? fixturePosition(desk.id) : undefined) ??
+    (folderId ? folderPosition(folderId) : undefined) ??
+    fallbackPosition();
+  return {
+    ...at(position),
+    ...(folderId ? { folderId } : {}),
+    ...(event.stationId ? { fixtureId: event.stationId } : {}),
+  };
+}
+
 /** Where and about whom each event happens. */
 function contextFor(event: GameplayEvent): CueContext {
   switch (event.kind) {
@@ -153,8 +177,12 @@ function contextFor(event: GameplayEvent): CueContext {
     case 'ping':
       return { ...aboutPlayer(event.playerId), ...at(playerPosition(event.playerId)) };
     case 'levelEvent':
+      return levelEventContext(event);
     case 'raidResolved':
-      return {};
+      return {
+        ...at(folderPosition(event.byFolderId) ?? fallbackPosition()),
+        folderId: event.byFolderId,
+      };
   }
 }
 
