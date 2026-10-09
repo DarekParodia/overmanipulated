@@ -3,9 +3,13 @@
 // broadcasts go through a `Hub`, so all of this is testable in-process.
 import {
   DEFAULT_LEVEL_ID,
+  generateEndlessLevel,
   getLevel,
+  LEVELS,
   type Level,
+  STORIES,
   type Story,
+  storiesForEndless,
   storiesForLevel,
 } from '@redakcja/content';
 import {
@@ -14,6 +18,8 @@ import {
   type ClientMessage,
   COMMAND_QUEUE_MAX,
   createGameState,
+  ENDLESS,
+  ENDLESS_LEVEL_ID,
   type ErrorCode,
   encodeMessage,
   type GameEvent,
@@ -107,6 +113,13 @@ export type RegistryOptions = {
     storyId: string;
     previousId: number | null;
   }) => number;
+  /** Persists a finished endless run for the leaderboard (S4-11). */
+  recordLeaderboardEntry?: (entry: {
+    roomCode: string;
+    players: string[];
+    score: number;
+    survivedS: number;
+  }) => void;
 };
 
 export type RoomRegistry = ReturnType<typeof createRoomRegistry>;
@@ -132,6 +145,18 @@ export function createRoomRegistry(options: RegistryOptions) {
       connection,
       detail === undefined ? { type: 'error', code } : { type: 'error', code, detail },
     );
+  }
+
+  /** Sets the room's level; an endless level is generated for this run with a fresh seed. */
+  function setLevel(room: Room, level: Level): void {
+    if (level.id === ENDLESS_LEVEL_ID) {
+      room.level = generateEndlessLevel(Math.floor(random() * 0x7fffffff), LEVELS, STORIES);
+      room.stories = storiesForEndless(room.level, STORIES);
+    } else {
+      room.level = level;
+      room.stories = storiesForLevel(level);
+    }
+    room.map = parseLayout(room.level.layout);
   }
 
   function broadcast(room: Room, message: ServerMessage): void {
@@ -385,9 +410,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         if (room.phase !== 'lobby') {
           return;
         }
-        room.level = level;
-        room.stories = storiesForLevel(level);
-        room.map = parseLayout(level.layout);
+        setLevel(room, level);
         room.game = createGameState({ map: room.map });
         // Every (re)selection asks players to confirm again, so nobody is ready for a level
         // they have not seen.
@@ -502,6 +525,10 @@ export function createRoomRegistry(options: RegistryOptions) {
   function startLevel(room: Room): void {
     room.phase = 'playing';
     room.briefing = null;
+    if (room.level.id === ENDLESS_LEVEL_ID) {
+      // Every endless run gets its own schedule.
+      setLevel(room, room.level);
+    }
     let game = createGameState({ map: room.map, seed: Math.floor(random() * 0x7fffffff) });
     for (const p of room.players.values()) {
       game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
@@ -670,11 +697,33 @@ export function createRoomRegistry(options: RegistryOptions) {
     });
   }
 
+  function recordEndlessRun(room: Room, survivedS: number): void {
+    if (!options.recordLeaderboardEntry) {
+      return;
+    }
+    try {
+      options.recordLeaderboardEntry({
+        roomCode: room.code,
+        players: [...room.players.values()].map((p) => p.nickname),
+        score: room.game.score,
+        survivedS,
+      });
+    } catch (error) {
+      // A failed write must not break the results screen.
+      log.error('leaderboard entry not stored', { room: room.code, error: String(error) });
+    }
+  }
+
   function endLevel(room: Room): void {
     const { game } = room;
     const outcome = game.ended ?? { won: false, stars: 0 };
     room.phase = 'results';
     log.info('level ended', { room: room.code, level: room.level.id, ...outcome });
+    const endless = room.level.id === ENDLESS_LEVEL_ID;
+    const survivedS = Math.floor(game.elapsedMs / 1000);
+    if (endless) {
+      recordEndlessRun(room, survivedS);
+    }
     broadcast(room, {
       type: 'levelEnd',
       levelId: room.level.id,
@@ -682,7 +731,8 @@ export function createRoomRegistry(options: RegistryOptions) {
       stars: outcome.stars,
       score: game.score,
       credibility: game.credibility,
-      results: game.results,
+      results: game.results.slice(-ENDLESS.maxResultsSent),
+      ...(endless ? { survivedS } : {}),
     });
     broadcastRoomState(room);
   }

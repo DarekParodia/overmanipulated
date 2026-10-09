@@ -15,6 +15,20 @@
       "when": 1791379560890,
       "tag": "0001_blunder_votes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791527926220,
+      "tag": "0002_drop_old_leaderboard",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791527926917,
+      "tag": "0003_endless_leaderboard",
+      "breakpoints": true
     }
   ]
 }

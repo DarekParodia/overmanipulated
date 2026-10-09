@@ -29,6 +29,10 @@ export function levelOutcome(state: GameState, level: SimLevel): LevelOutcome | 
   if (state.credibility <= 0) {
     return { won: false, stars: 0 };
   }
+  if (level.endless) {
+    // Endless runs end only when credibility is gone; the score is what counts, not won/stars.
+    return null;
+  }
   if (state.elapsedMs >= level.durationS * 1000) {
     const won = state.score > 0;
     return { won, stars: starsFor(state.score, won, level.stars) };
