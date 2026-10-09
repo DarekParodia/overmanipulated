@@ -1,5 +1,6 @@
 // Minigame per station kind. Stations without an entry use the placeholder.
-// imageSearch: S2-04, archive: S2-05, sourceRegistry: S2-06.
+// imageSearch: S2-04, archive: S2-05, sourceRegistry: S2-06, aiScanner: S4-02.
+import { AiScanner } from './AiScanner.tsx';
 import { Archive } from './Archive.tsx';
 import { ImageSearch } from './ImageSearch.tsx';
 import { PlaceholderMinigame } from './Placeholder.tsx';
@@ -12,6 +13,7 @@ export const minigames: MinigameRegistry = {
   imageSearch: ImageSearch,
   archive: Archive,
   sourceRegistry: SourceRegistry,
+  aiScanner: AiScanner,
 };
 
 export function minigameFor(kind: keyof MinigameRegistry): Minigame {

@@ -208,6 +208,8 @@ const icons = {
       d: 'M3.5 12h17M12 3.5c-2.5 2.5-3.5 5.5-3.5 8.5s1 6 3.5 8.5c2.5-2.5 3.5-5.5 3.5-8.5S14.5 6 12 3.5',
     },
   ],
+  /** Question mark: "not sure". */
+  question: [{ d: 'M8.5 9a3.5 3.5 0 1 1 5.2 3c-1.2.7-1.7 1.3-1.7 2.5' }, { d: 'M12 18.5h.01' }],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;

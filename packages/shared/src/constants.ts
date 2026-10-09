@@ -229,3 +229,23 @@ export const EVENTS = {
 
 /** Level id selected in the lobby for endless mode; not a content file. */
 export const ENDLESS_LEVEL_ID = 'endless';
+
+// --- S4-02 AI scanner minigame --------------------------------------------------------------
+
+/** Reading centre (percent "machine made") before noise, by story truth. */
+export const AI_SCANNER_BASE_BY_TRUTH = {
+  true: 18,
+  false: 80,
+  misleading: 62,
+  satire: 45,
+  unverifiable: 50,
+} as const;
+/** Pictures and recordings are easier for a detector than short texts and figures (percent). */
+export const AI_SCANNER_MEDIA_SHIFT = 8;
+/** The detector is noisy: the centre moves up to this far from the base (percent). */
+export const AI_SCANNER_NOISE = 24;
+/** Error margin shown as "± N%" is drawn from this range (percent, whole numbers). */
+export const AI_SCANNER_MARGIN_MIN = 6;
+export const AI_SCANNER_MARGIN_MAX = 28;
+/** The side threshold: a reading is "AI" above it and "real" below it (percent). */
+export const AI_SCANNER_THRESHOLD = 50;

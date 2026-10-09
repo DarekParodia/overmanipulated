@@ -443,6 +443,21 @@ export const cues = {
     severity: 1,
     sound: { ids: ['ambtyping'], bus: 'sfx', volume: 0.3, rateJitter: 0.1 },
   },
+  // S4-02 AI scanner minigame: the needle settling, then a chosen answer.
+  'aiScanner.scan': {
+    severity: 1,
+    sound: { ids: ['hover'], bus: 'ui', volume: 0.6, rateJitter: 0.1 },
+  },
+  'aiScanner.answer': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'aiScanner.wrong': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'thud',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

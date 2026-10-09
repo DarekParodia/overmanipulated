@@ -1,0 +1,242 @@
+/*
+ * Skaner AI: a big percent readout, a gauge with a shaded error-margin range (blue = information)
+ * and a navy needle, and three big answer buttons laid out in gauge order.
+ */
+.root {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-4);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.gauge {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  color: var(--text);
+}
+
+.readout {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.scale {
+  display: grid;
+  gap: var(--space-1);
+  /* Room for the needle head, which pokes above the track. */
+  padding-top: var(--space-2);
+}
+
+.track {
+  position: relative;
+  height: 2.5rem;
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+}
+
+/* The two halves only tint the track faintly; the left/right ends carry icons and words too. */
+.half {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 50%;
+  border-radius: var(--radius-pill) 0 0 var(--radius-pill);
+  background: var(--surface-soft);
+}
+
+.half[data-side="ai"] {
+  inset: 0 0 0 auto;
+  border-radius: 0 var(--radius-pill) var(--radius-pill) 0;
+  background: var(--surface-sunk);
+}
+
+/* The error margin: the whole shaded range the true value may hide in. */
+.range {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  background: var(--blue);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  transition:
+    left var(--motion-slow) var(--ease-bounce),
+    width var(--motion-slow) var(--ease-bounce);
+}
+
+/* The 50 % line: dashed, with its label hanging below the track. */
+.threshold {
+  position: absolute;
+  top: -0.5rem;
+  bottom: -0.5rem;
+  left: 50%;
+  width: 0;
+  border-left: 3px dashed var(--outline);
+}
+
+.thresholdLabel {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--text-soft);
+}
+
+.needle {
+  position: absolute;
+  top: -0.75rem;
+  bottom: -0.75rem;
+  width: 0.5rem;
+  margin-left: -0.25rem;
+  background: var(--outline);
+  border-radius: var(--radius-pill);
+  transition: left var(--motion-slow) var(--ease-bounce);
+}
+
+.needle::before {
+  content: "";
+  position: absolute;
+  top: -0.25rem;
+  left: 50%;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-left: -0.625rem;
+  background: var(--yellow);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-3);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+.ends span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.answers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.answer {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-1);
+  min-height: 4.5rem;
+  padding: var(--space-2) var(--space-2);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop-lg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.answer:hover {
+  transform: translateY(-1px);
+}
+
+.answer:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.answer[data-focused="true"],
+.answer:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+  transform: translateY(-3px);
+}
+
+.answerIcon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+/* Meaning of the icon chips: green = real, orange = unsure, red = machine. */
+.answer[data-answer="real"] .answerIcon {
+  background: var(--green);
+}
+
+.answer[data-answer="unsure"] .answerIcon {
+  background: var(--orange);
+}
+
+.answer[data-answer="ai"] .answerIcon {
+  background: var(--red);
+}
+
+/* Short landscape phones: smaller readout, buttons in a row of icon + word. */
+@media (max-height: 430px) {
+  .root {
+    gap: var(--space-2);
+  }
+
+  .gauge {
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .readout {
+    font-size: var(--text-2xl);
+  }
+
+  .track {
+    height: 2rem;
+  }
+
+  .ends {
+    margin-top: var(--space-2);
+  }
+
+  .answer {
+    grid-auto-flow: column;
+    min-height: 3.5rem;
+    font-size: var(--text-md);
+    box-shadow: var(--pop);
+  }
+
+  .answerIcon {
+    width: 2rem;
+    height: 2rem;
+  }
+}
