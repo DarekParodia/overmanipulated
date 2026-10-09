@@ -52,7 +52,10 @@ export type AnimationTrigger =
   /** Verdict sheet slides up on the desk / back down when closed. */
   | 'deskOpen'
   | 'deskClose'
-  | 'slump';
+  | 'slump'
+  // S3-07/08 HUD motion.
+  /** The folder's queue card hops (more time on the clock); `folderId`. */
+  | 'cardHop';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -173,7 +176,7 @@ export const cues = {
     severity: 1,
     sound: { ids: ['arrive'], bus: 'sfx', volume: 0.45, rateJitter: 0.04 },
     particles: { preset: 'paperFlutter', count: 4 },
-    animation: 'hop',
+    animation: ['hop', 'cardHop'],
   },
   'folder.expired': {
     severity: 2,
@@ -181,7 +184,7 @@ export const cues = {
     particles: { preset: 'ash' },
     shake: 0.2,
     haptic: 'thud',
-    animation: 'crumple',
+    animation: ['crumple', 'scorePop'],
   },
   'station.workStart': {
     severity: 1,
@@ -421,6 +424,24 @@ export const cues = {
     severity: 1,
     sound: { ids: ['place'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
     haptic: 'tick',
+  },
+  // S3-07 newsroom ambience: quiet, distant one-shots over the room tone, scheduled at random by
+  // fx/audio/ambience.ts (ducked under station and desk overlays). They carry no information.
+  'ambience.phone': {
+    severity: 1,
+    sound: { ids: ['ambphone'], bus: 'sfx', volume: 0.32, rateJitter: 0.04 },
+  },
+  'ambience.printer': {
+    severity: 1,
+    sound: { ids: ['ambprinter'], bus: 'sfx', volume: 0.3, rateJitter: 0.06 },
+  },
+  'ambience.fax': {
+    severity: 1,
+    sound: { ids: ['ambfax'], bus: 'sfx', volume: 0.22, rateJitter: 0.03 },
+  },
+  'ambience.typing': {
+    severity: 1,
+    sound: { ids: ['ambtyping'], bus: 'sfx', volume: 0.3, rateJitter: 0.1 },
   },
 } as const satisfies Record<string, Cue>;
 

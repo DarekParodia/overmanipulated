@@ -8,6 +8,7 @@ import { perfStats } from '../debug/perf-stats.ts';
 import { useApp } from '../store/app.ts';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
+import { Ambience } from './Ambience.tsx';
 import { CameraRig } from './CameraRig.tsx';
 import { Driver } from './Driver.tsx';
 import { Fixtures } from './Fixtures.tsx';
@@ -87,6 +88,7 @@ export function GameCanvas() {
       <CameraRig />
       <group key={levelId}>
         <Newsroom shadows={profile.shadows} />
+        <Ambience />
         <Fixtures shadows={profile.shadows} />
         <InteractionHighlight />
         <StationIndicators />

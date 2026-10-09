@@ -95,6 +95,7 @@
 /* --- Points -------------------------------------------------------------------------------- */
 
 .score {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -105,29 +106,97 @@
 }
 
 .counter {
+  display: inline-block;
   padding-top: 0.12em;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: var(--text-xl);
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  transform-origin: left center;
+}
+
+/*
+ * Floating "+N" / "−N" chip off the score (scorePop), just outside the pill's right edge (there
+ * is no room above it at the top of the screen): pops in, rises a little, shrinks away.
+ */
+.scorePop {
+  position: absolute;
+  left: calc(100% + var(--space-4) + var(--space-3));
+  top: -0.25rem;
+  padding: 0.1em var(--space-2) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--outline);
+  white-space: nowrap;
+  pointer-events: none;
+  animation: score-float 1.1s var(--ease-out) both;
+}
+
+.scoreGain {
+  background: var(--green);
+}
+
+.scoreLoss {
+  background: var(--red);
+}
+
+@keyframes score-float {
+  0% {
+    transform: translateY(0.5rem) scale(0.6);
+  }
+  18% {
+    transform: translateY(0) scale(1.12);
+  }
+  30% {
+    transform: translateY(0) scale(1);
+  }
+  80% {
+    transform: translateY(-1.25rem) scale(1);
+  }
+  100% {
+    transform: translateY(-1.5rem) scale(0);
+  }
+}
+
+@keyframes score-fade {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+:root[data-reduced-motion="true"] .scorePop {
+  animation: score-fade 1.1s linear both;
 }
 
 /* --- Credibility --------------------------------------------------------------------------- */
 
 .gauge {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "shield track value";
   align-items: center;
   gap: var(--space-2);
 }
 
 .shield {
+  grid-area: shield;
   flex: none;
 }
 
 .track {
+  grid-area: track;
   position: relative;
-  flex: 1;
   height: 1.125rem;
   overflow: hidden;
   border: var(--stroke) solid var(--outline);
@@ -164,11 +233,12 @@
 }
 
 .gaugeValue {
+  grid-area: value;
   min-width: 2ch;
   padding-top: 0.12em;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -201,6 +271,23 @@
   .clock {
     font-size: var(--text-xl);
   }
+
+  /* Narrow pill: shield and number on one row, the bar full width under them. */
+  .gauge {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "shield value"
+      "track track";
+    row-gap: var(--space-1);
+  }
+
+  .gaugeValue {
+    text-align: left;
+  }
+
+  .scorePop {
+    left: calc(100% + var(--space-3) + var(--space-3));
+  }
 }
 
 @media (max-height: 500px), (max-width: 760px) {
@@ -208,10 +295,11 @@
     --hud-top: max(var(--space-2), env(safe-area-inset-top));
     --hud-left: max(var(--space-2), env(safe-area-inset-left));
     --hud-right: max(var(--space-2), env(safe-area-inset-right));
-    --hud-pill-w: 8.25rem;
+    --hud-pill-w: 8.5rem;
     --hud-tools-w: calc(3 * 3rem + 2 * var(--space-2));
-    --hud-card-w: 5.25rem;
-    --hud-queue-h: 5.25rem;
+    /* Low cards on their side (FolderQueue.module.css) so they hide less of the station signs. */
+    --hud-card-w: auto;
+    --hud-queue-h: 3.25rem;
   }
 
   .pill {
@@ -220,15 +308,22 @@
     border-radius: var(--radius-md);
   }
 
-  .counter {
-    font-size: var(--text-lg);
+  /* HUD numbers stay ≥ 26 px on phones (redesign review): 30 px, the icons a touch smaller. */
+  .pill svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .score {
+    gap: var(--space-1);
   }
 
   .track {
-    height: 0.875rem;
+    height: 0.75rem;
   }
 
-  .gaugeValue {
+  .scorePop {
+    left: calc(100% + var(--space-2) + var(--space-3));
     font-size: var(--text-md);
   }
 }

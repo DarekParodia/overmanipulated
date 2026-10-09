@@ -176,35 +176,59 @@
     gap: var(--space-2);
   }
 
+  /*
+   * Short screens: a low card on its side (band on the left, icon over flags, countdown on the
+   * right), so the queue covers as little as possible of the station signs under it.
+   */
+  .card {
+    flex: 0 0 auto;
+    flex-direction: row;
+    align-items: stretch;
+    border-radius: var(--radius-sm);
+  }
+
   .band {
-    padding: 2px var(--space-1);
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    padding: 2px 3px;
+    border-bottom: none;
+    border-right: var(--outline-border);
+    border-radius: calc(var(--radius-sm) - var(--stroke)) 0 0 calc(var(--radius-sm) - var(--stroke));
+  }
+
+  .flags {
+    margin-right: 0;
   }
 
   .band > svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 
   .flags svg {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
   }
 
   .countdown {
-    padding: 2px var(--space-1) var(--space-1);
+    align-self: center;
+    min-width: 2.2em;
+    padding: 0.18em var(--space-1) 0;
     font-size: var(--text-lg);
+    line-height: 1;
   }
 
   .badge {
-    right: -0.45rem;
-    bottom: -0.45rem;
-    width: 1.625rem;
-    height: 1.625rem;
+    right: -0.4rem;
+    bottom: -0.4rem;
+    width: 1.375rem;
+    height: 1.375rem;
   }
 
   .badge svg {
-    width: 15px;
-    height: 15px;
+    width: 13px;
+    height: 13px;
   }
 
   .more {
