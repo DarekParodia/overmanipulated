@@ -49,7 +49,13 @@ export type StoryStamps = {
 export type NextStepInput = {
   playerId: string | null;
   folders: readonly Folder[];
-  stations: readonly { id: string; operatorId: string | null; phase: string }[];
+  stations: readonly {
+    id: string;
+    operatorId: string | null;
+    phase: string;
+    /** > 0 while the station is down (outage event). */
+    outageMs?: number;
+  }[];
   desks: readonly Desk[];
   map: TileMap;
   /** The fixture the local player currently faces (their interaction target), if any. */
@@ -76,6 +82,22 @@ function step(kind: NextStepKind, text: string, targetFixtureIds: string[] = [])
 
 function folderOn(folders: readonly Folder[], fixtureId: string): Folder | undefined {
   return folders.find((f) => f.location.kind === 'fixture' && f.location.fixtureId === fixtureId);
+}
+
+/** Hint for a folder that belongs to a level event, if it has one (S4-05..S4-09). */
+export function tagHint(folder: Folder): string | undefined {
+  switch (folder.tag?.kind) {
+    case 'viral':
+      return pl.events.hint.viral;
+    case 'bossCall':
+      return pl.events.hint.bossCall;
+    case 'botRaid':
+      return pl.events.hint.botRaid;
+    case 'correction':
+      return pl.events.hint.correction;
+    default:
+      return undefined;
+  }
 }
 
 function byDeadline(a: Folder, b: Folder): number {
@@ -114,9 +136,11 @@ export function stationsToVisit(
   return free.length > 0 ? free : pool;
 }
 
-/** The station is locked after a failed minigame: nothing can be done there for now. */
+/** The station is locked after a failed minigame or down in an outage: nothing to do there. */
 function isLocked(input: Pick<NextStepInput, 'stations'>, fixtureId: string): boolean {
-  return input.stations.some((s) => s.id === fixtureId && s.phase === 'lockout');
+  return input.stations.some(
+    (s) => s.id === fixtureId && (s.phase === 'lockout' || (s.outageMs ?? 0) > 0),
+  );
 }
 
 function stationNames(fixtures: readonly Fixture[]): string {
@@ -141,6 +165,13 @@ function carryingStep(input: NextStepInput, folder: Folder): NextStep {
   const target = input.targetFixtureId;
   const targetFree =
     target !== null && !folderOn(input.folders, target) && !isLocked(input, target);
+  // A correction needs no checking: straight to the desk.
+  if (folder.tag?.kind === 'correction') {
+    const desks = deskTargets(input);
+    return targetFree && desks.includes(target)
+      ? step('dropHere', guidance.hint.dropHere[input.device], [target])
+      : step('toDesk', guidance.hint.toDesk, desks);
+  }
   const visit = hasJustifyingStamp(folder, story) ? [] : stationsToVisit(folder, story, input);
   if (visit.length === 0) {
     const desks = deskTargets(input);
@@ -171,6 +202,9 @@ function stepAtTarget(input: NextStepInput, target: Fixture): NextStep | undefin
     const station = input.stations.find((s) => s.id === target.id);
     if (station?.operatorId && station.operatorId !== input.playerId) {
       return undefined;
+    }
+    if ((station?.outageMs ?? 0) > 0) {
+      return step('lockout', pl.events.hint.stationDown, [target.id]);
     }
     if (station?.phase === 'lockout') {
       return step('lockout', guidance.hint.lockout, [target.id]);
@@ -244,7 +278,9 @@ export function nextStep(input: NextStepInput): NextStep {
 
   const onConveyor = waitingFolders(input, 'conveyor')[0];
   if (onConveyor) {
-    return step('pickup', guidance.hint.pickupConveyor, [fixtureOf(onConveyor)]);
+    return step('pickup', tagHint(onConveyor) ?? guidance.hint.pickupConveyor, [
+      fixtureOf(onConveyor),
+    ]);
   }
   // Folders left on tables, stations and desks; most urgent first.
   const elsewhere = [
@@ -253,7 +289,9 @@ export function nextStep(input: NextStepInput): NextStep {
     ...waitingFolders(input, 'desk'),
   ].sort(byDeadline)[0];
   if (elsewhere) {
-    return step('pickup', guidance.hint.pickupWaiting, [fixtureOf(elsewhere)]);
+    return step('pickup', tagHint(elsewhere) ?? guidance.hint.pickupWaiting, [
+      fixtureOf(elsewhere),
+    ]);
   }
   // Dropped on the floor: no fixture to mark, but the folder still needs someone.
   if (input.folders.some((f) => f.location.kind === 'floor')) {

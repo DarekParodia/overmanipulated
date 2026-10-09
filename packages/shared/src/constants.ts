@@ -229,3 +229,13 @@ export const EVENTS = {
 
 /** Level id selected in the lobby for endless mode; not a content file. */
 export const ENDLESS_LEVEL_ID = 'endless';
+
+// --- S4-05..S4-09: level event presentation (client) -----------------------------------------
+
+/** How long an event banner stays up, and how many may be on screen at once. */
+export const EVENT_BANNER_MS = 3200;
+export const EVENT_BANNER_MAX = 2;
+/** A boss call badge shows urgency (shakes, red) in its last seconds. */
+export const EVENT_BOSS_URGENT_MS = 4000;
+/** Seconds between spark / smoke bursts on a station that is down. */
+export const EVENT_OUTAGE_SPARK_EVERY_S = 0.9;

@@ -5,6 +5,7 @@
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
 import type { Folder, GameEvent, Verdict } from '@redakcja/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { correctionStampId } from '../events/event-model.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { type NavIntent, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { onGameEvent } from '../net/game-events.ts';
@@ -49,10 +50,80 @@ const verdictKey = (verdict: Verdict) => `verdict:${verdict}`;
 
 export function DeskOverlay(props: DeskOverlayProps) {
   useInputCapture(true);
-  return props.result ? (
-    <ResultView {...props} result={props.result} />
+  if (props.result) {
+    return <ResultView {...props} result={props.result} />;
+  }
+  // A correction folder (level event) needs no evidence: one big button files the correction.
+  return props.folder.tag?.kind === 'correction' ? (
+    <CorrectionView {...props} />
   ) : (
     <VerdictView {...props} />
+  );
+}
+
+/**
+ * Desk sheet for a correction folder (S4-09): a published story turned out manipulated, so the
+ * only decision is to publish the correction. It goes out as "publish with context" with the
+ * story's first justifying stamp (the sim accepts any); no stamp picking.
+ */
+function CorrectionView({ folder, story, pending, onVerdict, onClose }: DeskOverlayProps) {
+  const device = useApp((s) => s.inputDevice);
+  const stampId = correctionStampId(story, folder);
+  const recover = folder.tag?.kind === 'correction' ? folder.tag.recoverCredibility : 0;
+  const canSend = stampId !== null && !pending;
+  const send = () => {
+    if (stampId !== null && canSend) {
+      onVerdict('publishWithContext', stampId);
+    }
+  };
+
+  useNavIntent((intent: NavIntent) => {
+    if (intent === 'back') {
+      emitCue('ui.back');
+      onClose();
+    } else if (intent === 'confirm') {
+      send();
+    }
+  });
+
+  return (
+    <OverlayFrame
+      title={pl.events.correction.title}
+      icon="siren"
+      closeLabel={pl.desk.close}
+      backKey={pl.station.backKey[device]}
+      onClose={onClose}
+      testId="desk-overlay"
+    >
+      <div className={styles.correction} data-testid="desk-correction">
+        <div className={styles.file}>
+          {story ? <FolderSheet folder={folder} story={story} /> : <p>{pl.desk.unknownStory}</p>}
+        </div>
+        <div className={styles.correctionAct}>
+          <p className={styles.correctionNote} role="status">
+            <Icon name="siren" size={26} className={`${styles.correctionIcon}`} />
+            <span>{typeset(pl.events.correction.line)}</span>
+          </p>
+          {recover > 0 && (
+            <p className={styles.correctionGain}>
+              {typeset(pl.events.correction.recover(recover))}
+            </p>
+          )}
+          <Button
+            variant="green"
+            big
+            wide
+            icon={<Icon name="publishWithContext" size={28} />}
+            disabled={!canSend}
+            data-focused={device !== 'touch'}
+            data-testid="desk-correction-publish"
+            onClick={send}
+          >
+            {pending ? pl.desk.sending : pl.events.correction.button}
+          </Button>
+        </div>
+      </div>
+    </OverlayFrame>
   );
 }
 

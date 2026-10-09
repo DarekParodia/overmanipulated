@@ -84,6 +84,38 @@
   display: grid;
 }
 
+.bolt {
+  position: absolute;
+  inset: 0;
+  display: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-sunk);
+  color: var(--orange-dark);
+}
+
+/* A station that is down: greyed face with a bolt, the ring drains in orange. */
+.sign[data-state="down"] .bolt {
+  display: grid;
+}
+
+.sign[data-state="down"] .name {
+  background: var(--orange);
+}
+
+.nameDown {
+  display: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.sign[data-state="down"] .nameUp {
+  display: none;
+}
+
+.sign[data-state="down"] .nameDown {
+  display: inline;
+}
+
 .name {
   padding: 0 10px;
   border: var(--stroke) solid var(--outline);

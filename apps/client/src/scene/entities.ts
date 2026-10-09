@@ -9,6 +9,7 @@ import {
   type Station,
   type StoryType,
 } from '@redakcja/shared';
+import { outageFraction, outageSeconds } from '../events/event-model.ts';
 import { clamp01 } from '../fx/animation/easing.ts';
 
 /** Height of the surface a folder lies on, per fixture kind (world units, floor = 0). */
@@ -148,12 +149,27 @@ export type StationIndicator =
   | { kind: 'none' }
   | { kind: 'working'; fraction: number; operatorId: string | null }
   | { kind: 'busy'; operatorId: string | null }
-  | { kind: 'lockout'; fraction: number };
+  | { kind: 'lockout'; fraction: number }
+  /** The station is down (outage event): time left as a fraction of the announced duration. */
+  | { kind: 'down'; fraction: number; seconds: number };
 
-/** What to show above a station: a work dial, a "busy" tag, or the lockout countdown. */
-export function stationIndicator(station: Station | undefined): StationIndicator {
+/**
+ * What to show above a station: a work dial, a "busy" tag, the lockout countdown, or the
+ * outage countdown (`outageTotalMs`: the duration the outage announced, if known).
+ */
+export function stationIndicator(
+  station: Station | undefined,
+  outageTotalMs?: number,
+): StationIndicator {
   if (!station) {
     return { kind: 'none' };
+  }
+  if (station.outageMs > 0) {
+    return {
+      kind: 'down',
+      fraction: outageFraction(station.outageMs, outageTotalMs),
+      seconds: outageSeconds(station.outageMs),
+    };
   }
   switch (station.phase) {
     case 'idle':

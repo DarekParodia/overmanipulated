@@ -242,3 +242,59 @@
     padding: var(--space-1) var(--space-3);
   }
 }
+
+/* --- Level event tag (S4-05..S4-09): a chip hanging off the card's top-right corner ---------- */
+
+.tag {
+  position: absolute;
+  top: -0.8rem;
+  right: -0.5rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-2) 0 var(--space-1);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop-pressed);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--outline);
+  white-space: nowrap;
+}
+
+.tag_warn {
+  background: var(--orange);
+}
+
+.tag_danger {
+  background: var(--red);
+}
+
+.tag_good {
+  background: var(--green);
+}
+
+.tagUrgent {
+  animation: shake 0.6s ease-in-out infinite;
+}
+
+:root[data-reduced-motion="true"] .tagUrgent {
+  animation: none;
+}
+
+@media (max-height: 500px), (max-width: 760px) {
+  .tag {
+    top: -0.75rem;
+    right: -0.35rem;
+    padding: 0 var(--space-1);
+  }
+
+  .tag svg {
+    width: 16px;
+    height: 16px;
+  }
+}

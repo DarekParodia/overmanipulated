@@ -1,0 +1,142 @@
+/*
+ * Event banners: chunky cards under the HUD pill (top-left), clear of the folder queue, the
+ * verdict toasts (top-centre), the hint bubble (bottom-centre) and the touch controls (bottom
+ * corners). The coloured disc carries the event icon; the card slides in from the left.
+ */
+.banners {
+  position: absolute;
+  top: calc(var(--hud-top) + var(--event-pill-h, 5.5rem) + var(--space-3));
+  left: var(--hud-left);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: min(22rem, calc(50% - var(--hud-left) - var(--space-3)));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-1);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  animation: banner-in var(--motion-slow) var(--ease-bounce) both;
+}
+
+@keyframes banner-in {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
+}
+
+.warn .mark {
+  background: var(--orange);
+}
+
+.danger .mark {
+  background: var(--red);
+}
+
+.good .mark {
+  background: var(--green);
+}
+
+/* The icon rings / shakes while the card is up (not with reduced motion). */
+.danger .mark svg {
+  animation: ring 0.5s ease-in-out 3;
+}
+
+@keyframes ring {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-14deg);
+  }
+  75% {
+    transform: rotate(14deg);
+  }
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.title {
+  padding-top: 0.12em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1.1;
+}
+
+.line {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1.2;
+  color: var(--text-soft);
+}
+
+:root[data-reduced-motion="true"] .banner {
+  animation: none;
+}
+
+:root[data-reduced-motion="true"] .danger .mark svg {
+  animation: none;
+}
+
+/* Phones: a smaller card, still ≥ 15 px text. */
+@media (max-height: 500px), (max-width: 760px) {
+  .banners {
+    --event-pill-h: 6.75rem;
+    top: calc(var(--hud-top) + var(--event-pill-h) + var(--space-2));
+    gap: var(--space-1);
+    max-width: calc(50% - var(--hud-left) - var(--space-2));
+  }
+
+  .banner {
+    gap: var(--space-2);
+    padding-right: var(--space-3);
+    border-width: var(--stroke);
+  }
+
+  .mark {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .mark svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .title {
+    font-size: var(--text-md);
+  }
+}

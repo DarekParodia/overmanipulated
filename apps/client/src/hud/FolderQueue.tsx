@@ -3,6 +3,7 @@
 // card hops (not with reduced motion). Deadline warnings already shake the card (CSS), and an
 // expired folder leaves the queue with the next snapshot, so neither needs a motion here.
 import { useMemo, useRef } from 'react';
+import { raidSizes, tagBadge } from '../events/event-model.ts';
 import { useGame } from '../net/game-store.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
@@ -20,6 +21,7 @@ export function FolderQueue() {
   const players = useApp((s) => s.room?.players);
   const { elapsedMs } = useLevelClock();
   const queue = useMemo(() => sortQueue(folders), [folders]);
+  const raids = useMemo(() => raidSizes(folders), [folders]);
   const nicknameOf = (id: string) => players?.find((p) => p.id === id)?.nickname;
   const shown = queue.slice(0, QUEUE_SHOWN);
   const hidden = queue.length - shown.length;
@@ -51,6 +53,7 @@ export function FolderQueue() {
               elapsedMs={elapsedMs}
               where={locationLabel(folder, nicknameOf)}
               whereKind={locationKind(folder)}
+              tag={tagBadge(folder, elapsedMs, (raidId) => raids.get(raidId) ?? 1)}
             />
           ))}
           {hidden > 0 && (
