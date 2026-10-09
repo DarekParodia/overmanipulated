@@ -1,11 +1,13 @@
 // The newsroom shell from the shared tile map, in the cartoon style (design-rules §7): a warm
-// plank floor (one textured plane), sky-blue instanced walls with light caps (tall at the back,
-// cut away at the front so players stay visible) and instanced orange-brown decorative
-// furniture. Interactive fixtures (conveyor, stations, desk, tables) are drawn by Fixtures.tsx.
+// plank floor (one textured plane), outlined instanced walls with a light cap, a baseboard and a
+// theme-coloured stripe (tall at the back, cut away at the front so players stay visible) and
+// instanced orange-brown decorative desks with drawers. Wall art and the rug come from Decor.tsx,
+// interactive fixtures (conveyor, stations, desk, tables) from Fixtures.tsx.
 
 import { fixtureAt, tileAt } from '@redakcja/shared';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import {
+  type BufferGeometry,
   CanvasTexture,
   type InstancedMesh,
   LinearMipmapLinearFilter,
@@ -14,9 +16,14 @@ import {
   SRGBColorSpace,
 } from 'three';
 import { runtime } from '../net/session.ts';
+import { useApp } from '../store/app.ts';
 import { colors } from '../ui/tokens.ts';
+import { Decor } from './Decor.tsx';
+import { useGeometries } from './geometry.ts';
+import { buildModel, bx, bxd, type Item } from './models.ts';
+import { type Theme, themeForLevel } from './theme.ts';
 
-const BACK_WALL_HEIGHT = 1.5;
+const BACK_WALL_HEIGHT = 1.8;
 const SIDE_WALL_HEIGHT = 0.9;
 const FRONT_WALL_HEIGHT = 0.22;
 const DESK_HEIGHT = 0.72;
@@ -64,28 +71,66 @@ type Block = { x: number; z: number; height: number };
 
 function collectBlocks() {
   const { width, height } = runtime.map;
-  const walls: Block[] = [];
+  const back: Block[] = [];
+  const side: Block[] = [];
+  const front: Block[] = [];
   const desks: Block[] = [];
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
       const kind = tileAt(runtime.map, col, row);
+      const at = { x: col + 0.5, z: row + 0.5 };
       if (kind === 'wall') {
-        const h =
-          row === 0 ? BACK_WALL_HEIGHT : row === height - 1 ? FRONT_WALL_HEIGHT : SIDE_WALL_HEIGHT;
-        walls.push({ x: col + 0.5, z: row + 0.5, height: h });
+        if (row === 0) {
+          back.push({ ...at, height: BACK_WALL_HEIGHT });
+        } else if (row === height - 1) {
+          front.push({ ...at, height: FRONT_WALL_HEIGHT });
+        } else {
+          side.push({ ...at, height: SIDE_WALL_HEIGHT });
+        }
       } else if (kind === 'furniture' && !fixtureAt(runtime.map, col, row)) {
-        desks.push({ x: col + 0.5, z: row + 0.5, height: DESK_HEIGHT });
+        desks.push({ ...at, height: DESK_HEIGHT });
       }
     }
   }
-  return { walls, desks };
+  return { back, side, front, desks };
 }
 
-function useInstances(
-  blocks: Block[],
-  yOffset: (b: Block) => number,
-  scaleY: (b: Block) => number,
-) {
+/** One wall block: outlined body, light cap, baseboard and a theme stripe (same height on every wall). */
+function wallGeometry(h: number, theme: Theme): BufferGeometry {
+  const items: Item[] = [
+    bx(theme.wall, 1, h, 1, { y: h / 2 }),
+    bxd(theme.wallCap, 1.01, WALL_CAP, 1.01, { y: h + WALL_CAP / 2 }),
+  ];
+  if (h > 0.5) {
+    items.push(
+      bxd(theme.accentDark, 1.006, 0.14, 1.006, { y: 0.07 }),
+      bxd(theme.accent, 1.012, 0.07, 1.012, { y: 0.45 }),
+    );
+  }
+  return buildModel(items);
+}
+
+/** Decorative desk: outlined body and top, two drawer fronts with knobs. */
+function deskGeometry(): BufferGeometry {
+  return buildModel([
+    bx(colors.furniture, 0.98, DESK_HEIGHT - DESK_TOP, 0.98, { y: (DESK_HEIGHT - DESK_TOP) / 2 }),
+    bx(colors.furnitureTop, 1.02, DESK_TOP, 1.02, { y: DESK_HEIGHT - DESK_TOP / 2 }),
+    bxd(colors.orangeDark, 0.4, 0.3, 0.02, { x: -0.24, y: 0.34, z: 0.49 }),
+    bxd(colors.orangeDark, 0.4, 0.3, 0.02, { x: 0.24, y: 0.34, z: 0.49 }),
+    bxd(colors.outline, 0.1, 0.035, 0.03, { x: -0.24, y: 0.42, z: 0.5 }),
+    bxd(colors.outline, 0.1, 0.035, 0.03, { x: 0.24, y: 0.42, z: 0.5 }),
+  ]);
+}
+
+function Instances({
+  geometry,
+  blocks,
+  shadows,
+}: {
+  geometry: BufferGeometry;
+  blocks: readonly Block[];
+  shadows: boolean;
+}) {
   const ref = useRef<InstancedMesh>(null);
   useLayoutEffect(() => {
     const mesh = ref.current;
@@ -94,38 +139,44 @@ function useInstances(
     }
     const dummy = new Object3D();
     blocks.forEach((block, i) => {
-      dummy.position.set(block.x, yOffset(block), block.z);
-      dummy.scale.set(1, scaleY(block), 1);
+      dummy.position.set(block.x, 0, block.z);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
     });
     mesh.instanceMatrix.needsUpdate = true;
     mesh.computeBoundingSphere();
-  }, [blocks, yOffset, scaleY]);
-  return ref;
+  }, [blocks]);
+  if (blocks.length === 0) {
+    return null;
+  }
+  return (
+    <instancedMesh
+      ref={ref}
+      args={[geometry, undefined, blocks.length]}
+      castShadow={shadows}
+      receiveShadow={shadows}
+    >
+      <meshLambertMaterial vertexColors />
+    </instancedMesh>
+  );
 }
-
-const wallY = (b: Block) => b.height / 2;
-const wallScale = (b: Block) => b.height;
-const deskY = (b: Block) => (b.height - DESK_TOP) / 2;
-const deskScale = (b: Block) => b.height - DESK_TOP;
-const topY = (b: Block) => b.height - DESK_TOP / 2;
-const topScale = () => DESK_TOP;
-const capY = (b: Block) => b.height + WALL_CAP / 2;
-const capScale = () => WALL_CAP;
 
 export function Newsroom({ shadows }: { shadows: boolean }) {
   const { width, height } = runtime.map;
   const floor = useMemo(createFloorTexture, []);
-  const { walls, desks } = useMemo(collectBlocks, []);
-  const wallRef = useInstances(walls, wallY, wallScale);
-  const capRef = useInstances(walls, capY, capScale);
-  const deskRef = useInstances(desks, deskY, deskScale);
-  const topRef = useInstances(desks, topY, topScale);
+  const theme = useMemo(() => themeForLevel(useApp.getState().room?.levelId ?? ''), []);
+  const blocks = useMemo(collectBlocks, []);
+  const g = useGeometries(() => ({
+    back: wallGeometry(BACK_WALL_HEIGHT, theme),
+    side: wallGeometry(SIDE_WALL_HEIGHT, theme),
+    front: wallGeometry(FRONT_WALL_HEIGHT, theme),
+    desk: deskGeometry(),
+  }));
 
   useLayoutEffect(() => {
     floor.repeat.set(width / 4, height / 4);
   }, [floor, width, height]);
+  useLayoutEffect(() => () => floor.dispose(), [floor]);
 
   return (
     <group>
@@ -133,31 +184,11 @@ export function Newsroom({ shadows }: { shadows: boolean }) {
         <planeGeometry args={[width, height]} />
         <meshLambertMaterial map={floor} />
       </mesh>
-      <instancedMesh
-        ref={wallRef}
-        args={[undefined, undefined, walls.length]}
-        castShadow={shadows}
-        receiveShadow={shadows}
-      >
-        <boxGeometry args={[1, 1, 1]} />
-        <meshLambertMaterial color={colors.wall} />
-      </instancedMesh>
-      <instancedMesh ref={capRef} args={[undefined, undefined, walls.length]}>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshLambertMaterial color={colors.wallTop} />
-      </instancedMesh>
-      <instancedMesh ref={deskRef} args={[undefined, undefined, desks.length]} castShadow={shadows}>
-        <boxGeometry args={[0.98, 1, 0.98]} />
-        <meshLambertMaterial color={colors.furniture} />
-      </instancedMesh>
-      <instancedMesh
-        ref={topRef}
-        args={[undefined, undefined, desks.length]}
-        receiveShadow={shadows}
-      >
-        <boxGeometry args={[1.02, 1, 1.02]} />
-        <meshLambertMaterial color={colors.furnitureTop} />
-      </instancedMesh>
+      <Instances geometry={g.back} blocks={blocks.back} shadows={shadows} />
+      <Instances geometry={g.side} blocks={blocks.side} shadows={shadows} />
+      <Instances geometry={g.front} blocks={blocks.front} shadows={shadows} />
+      <Instances geometry={g.desk} blocks={blocks.desks} shadows={shadows} />
+      <Decor theme={theme} />
     </group>
   );
 }
