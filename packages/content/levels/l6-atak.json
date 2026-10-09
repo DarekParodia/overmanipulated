@@ -1,0 +1,148 @@
+{
+  "id": "l6-atak",
+  "title": "Atak",
+  "topic": "Referendum o linii 12",
+  "briefingPoints": [
+    "Przed referendum ruszyła skoordynowana kampania.",
+    "Nalot botów: wystarczy rozpoznać jedną kopię.",
+    "Sprostowanie: napraw własny błąd, odzyskaj zaufanie."
+  ],
+  "briefing": "W niedzielę referendum w sprawie linii 12, a sieć zalewa skoordynowana kampania. Na taśmę wpadają fale niemal identycznych wpisów od botów: wystarczy rozpoznać jedną kopię. Czasem okaże się, że to my opublikowaliśmy fałsz: wtedy zanieście sprostowanie do stołu. Pracują wszystkie stanowiska, ale awaria jednego może was zaskoczyć.",
+  "durationS": 480,
+  "layout": [
+    "######################",
+    "#CCCCC..=I==A==R=...P#",
+    "#....................#",
+    "#.T..1.......2....T..#",
+    "#....................#",
+    "#.......T=DD=T.......#",
+    "#..==....====....==..#",
+    "#....................#",
+    "#...3............4...#",
+    "#....................#",
+    "#..==..=S==L=...==...#",
+    "######################"
+  ],
+  "stations": ["imageSearch", "archive", "sourceRegistry", "phone", "aiScanner", "dataLibrary"],
+  "schedule": [
+    {
+      "atS": 4,
+      "storyId": "l6-godziny-lokali",
+      "deadlineS": 70
+    },
+    {
+      "atS": 31,
+      "storyId": "l6-referendum-w-poniedzialek",
+      "deadlineS": 60
+    },
+    {
+      "atS": 58,
+      "storyId": "l6-apel-mieszkancow",
+      "deadlineS": 90
+    },
+    {
+      "atS": 85,
+      "storyId": "l6-sondaz-pracowni",
+      "deadlineS": 80
+    },
+    {
+      "atS": 112,
+      "storyId": "l6-sonda-w-grupie",
+      "deadlineS": 75
+    },
+    {
+      "atS": 139,
+      "storyId": "l6-tlum-przed-ratuszem",
+      "deadlineS": 70
+    },
+    {
+      "atS": 166,
+      "storyId": "l6-autobusy-w-niedziele",
+      "deadlineS": 70
+    },
+    {
+      "atS": 193,
+      "storyId": "l6-nagranie-zastepcy",
+      "deadlineS": 60
+    },
+    {
+      "atS": 220,
+      "storyId": "l6-satyra-linia-12",
+      "deadlineS": 75
+    },
+    {
+      "atS": 247,
+      "storyId": "l6-anonimowa-komisja",
+      "deadlineS": 60
+    },
+    {
+      "atS": 274,
+      "storyId": "l6-frekwencja-w-poludnie",
+      "deadlineS": 80
+    },
+    {
+      "atS": 301,
+      "storyId": "l6-hashtag-12-to-koniec",
+      "deadlineS": 85
+    },
+    {
+      "atS": 328,
+      "storyId": "l6-wyrwany-cytat-radnej",
+      "deadlineS": 75
+    },
+    {
+      "atS": 355,
+      "storyId": "l6-dowoz-seniorow",
+      "deadlineS": 70
+    },
+    {
+      "atS": 382,
+      "storyId": "l6-fotka-urny",
+      "deadlineS": 70
+    }
+  ],
+  "events": [
+    {
+      "kind": "botRaid",
+      "atS": 60,
+      "storyId": "l6-nalot-zostaje12",
+      "deadlineS": 75,
+      "count": 4
+    },
+    {
+      "kind": "correction",
+      "atS": 140,
+      "storyId": "l6-sprostowanie-apel",
+      "deadlineS": 80
+    },
+    {
+      "kind": "bossCall",
+      "atS": 195,
+      "storyId": "l6-szef-kaze-publikowac",
+      "deadlineS": 55
+    },
+    {
+      "kind": "outage",
+      "atS": 230,
+      "station": "dataLibrary",
+      "durationS": 20
+    },
+    {
+      "kind": "botRaid",
+      "atS": 285,
+      "storyId": "l6-nalot-hashtag",
+      "deadlineS": 85,
+      "count": 5
+    },
+    {
+      "kind": "correction",
+      "atS": 345,
+      "storyId": "l6-sprostowanie-tlum",
+      "deadlineS": 80
+    }
+  ],
+  "stars": {
+    "two": 201,
+    "three": 292
+  }
+}

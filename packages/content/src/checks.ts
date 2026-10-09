@@ -155,19 +155,24 @@ export function validateContent(
 }
 
 function rawScheduleIds(data: unknown): string[] {
-  if (typeof data !== 'object' || data === null || !('schedule' in data)) {
+  if (typeof data !== 'object' || data === null) {
     return [];
   }
-  const { schedule } = data;
-  if (!Array.isArray(schedule)) {
-    return [];
-  }
-  return schedule.flatMap((spawn: unknown) =>
-    typeof spawn === 'object' &&
-    spawn !== null &&
-    'storyId' in spawn &&
-    typeof spawn.storyId === 'string'
-      ? [spawn.storyId]
+  // Stories spawned by level events count as used too.
+  const lists = [
+    ('schedule' in data && data.schedule) || [],
+    ('events' in data && data.events) || [],
+  ];
+  return lists.flatMap((list) =>
+    Array.isArray(list)
+      ? list.flatMap((spawn: unknown) =>
+          typeof spawn === 'object' &&
+          spawn !== null &&
+          'storyId' in spawn &&
+          typeof spawn.storyId === 'string'
+            ? [spawn.storyId]
+            : [],
+        )
       : [],
   );
 }
