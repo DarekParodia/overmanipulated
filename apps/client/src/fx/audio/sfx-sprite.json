@@ -1,46 +1,227 @@
 {
-  "click": [0, 60, false],
-  "hover": [180, 40, false],
-  "back": [340, 80, false],
-  "copy": [540, 700, false],
-  "join": [1360, 900, false],
-  "leave": [2380, 800, false],
-  "step1": [3300, 110, false],
-  "step2": [3530, 110, false],
-  "start": [3760, 1400, false],
-  "stamp": [5280, 300, false],
-  "roomtone": [5700, 4000, true],
-  "arrive": [9820, 450, false],
-  "rustle": [10390, 250, false],
-  "place": [10760, 200, false],
-  "warn": [11080, 200, false],
-  "tick": [11400, 50, false],
-  "buzzer": [11570, 500, false],
-  "keys": [12190, 1000, true],
-  "slide": [13310, 250, false],
-  "fail": [13680, 330, false],
-  "deskopen": [14130, 250, false],
-  "chime": [14500, 660, false],
-  "fanfare": [15280, 1060, false],
-  "hmm": [16460, 430, false],
-  "alarm": [17010, 890, false],
-  "lowsting": [18020, 720, false],
-  "lastsec": [18860, 750, false],
-  "win": [19730, 1500, false],
-  "lose": [21350, 1500, false],
-  "ping1": [22970, 300, false],
-  "ping2": [23390, 300, false],
-  "ping3": [23810, 300, false],
-  "ambphone": [24230, 2250, false],
-  "ambprinter": [26600, 1860, false],
-  "ambfax": [28580, 1500, false],
-  "ambtyping": [30200, 2200, false],
-  "evviral": [32520, 415, false],
-  "evboss": [33055, 860, false],
-  "evraid": [34035, 600, false],
-  "evoutage": [34755, 800, false],
-  "evcorrection": [35675, 900, false],
-  "evclear": [36695, 610, false],
-  "evback": [37425, 600, false],
-  "evzap": [38145, 140, false]
+  "click": [
+    0,
+    60,
+    false
+  ],
+  "hover": [
+    180,
+    40,
+    false
+  ],
+  "back": [
+    340,
+    80,
+    false
+  ],
+  "copy": [
+    540,
+    700,
+    false
+  ],
+  "join": [
+    1360,
+    900,
+    false
+  ],
+  "leave": [
+    2380,
+    800,
+    false
+  ],
+  "step1": [
+    3300,
+    110,
+    false
+  ],
+  "step2": [
+    3530,
+    110,
+    false
+  ],
+  "start": [
+    3760,
+    1400,
+    false
+  ],
+  "stamp": [
+    5280,
+    300,
+    false
+  ],
+  "roomtone": [
+    5700,
+    4000,
+    true
+  ],
+  "arrive": [
+    9820,
+    450,
+    false
+  ],
+  "rustle": [
+    10390,
+    250,
+    false
+  ],
+  "place": [
+    10760,
+    200,
+    false
+  ],
+  "warn": [
+    11080,
+    200,
+    false
+  ],
+  "tick": [
+    11400,
+    50,
+    false
+  ],
+  "buzzer": [
+    11570,
+    500,
+    false
+  ],
+  "keys": [
+    12190,
+    1000,
+    true
+  ],
+  "slide": [
+    13310,
+    250,
+    false
+  ],
+  "fail": [
+    13680,
+    330,
+    false
+  ],
+  "deskopen": [
+    14130,
+    250,
+    false
+  ],
+  "chime": [
+    14500,
+    660,
+    false
+  ],
+  "fanfare": [
+    15280,
+    1060,
+    false
+  ],
+  "hmm": [
+    16460,
+    430,
+    false
+  ],
+  "alarm": [
+    17010,
+    890,
+    false
+  ],
+  "lowsting": [
+    18020,
+    720,
+    false
+  ],
+  "lastsec": [
+    18860,
+    750,
+    false
+  ],
+  "win": [
+    19730,
+    1700,
+    false
+  ],
+  "lose": [
+    21550,
+    1500,
+    false
+  ],
+  "ping1": [
+    23170,
+    300,
+    false
+  ],
+  "ping2": [
+    23590,
+    300,
+    false
+  ],
+  "ping3": [
+    24010,
+    300,
+    false
+  ],
+  "ambphone": [
+    24430,
+    2250,
+    false
+  ],
+  "ambprinter": [
+    26800,
+    1860,
+    false
+  ],
+  "ambfax": [
+    28780,
+    1500,
+    false
+  ],
+  "ambtyping": [
+    30400,
+    2200,
+    false
+  ],
+  "evviral": [
+    32720,
+    455,
+    false
+  ],
+  "evboss": [
+    33295,
+    890,
+    false
+  ],
+  "evraid": [
+    34305,
+    600,
+    false
+  ],
+  "evoutage": [
+    35025,
+    800,
+    false
+  ],
+  "evcorrection": [
+    35945,
+    900,
+    false
+  ],
+  "evclear": [
+    36965,
+    610,
+    false
+  ],
+  "evback": [
+    37695,
+    600,
+    false
+  ],
+  "evzap": [
+    38415,
+    140,
+    false
+  ],
+  "ambchatter": [
+    38675,
+    10000,
+    true
+  ]
 }
