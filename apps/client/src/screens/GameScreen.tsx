@@ -4,6 +4,7 @@
 import { useEffect } from 'react';
 import { startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
 import { requestMusic } from '../fx/audio/music.ts';
+import { ScreenFx } from '../fx/screen/ScreenFx.tsx';
 import { Guidance } from '../guidance/Guidance.tsx';
 import { Hud } from '../hud/Hud.tsx';
 import { RoomChip } from '../hud/RoomChip.tsx';
@@ -39,6 +40,7 @@ export function GameScreen() {
   return (
     <main className={styles.screen}>
       <GameCanvas />
+      <ScreenFx />
 
       <div className={styles.tools}>
         <div className={styles.toolRow}>

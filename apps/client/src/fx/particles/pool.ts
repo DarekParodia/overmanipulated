@@ -15,6 +15,11 @@ export type ParticlePool = {
   size: Float32Array;
   gravity: Float32Array;
   drag: Float32Array;
+  /** Sprite atlas frame index (fx/particles/sprites.ts). */
+  frame: Uint8Array;
+  /** Rotation around the view axis, radians, and its speed. */
+  rot: Float32Array;
+  spin: Float32Array;
   /** Packed 0xRRGGBB. */
   color: Uint32Array;
   /** Index where the next search for a free slot starts. */
@@ -37,6 +42,9 @@ export function createPool(capacity: number): ParticlePool {
     size: new Float32Array(capacity),
     gravity: new Float32Array(capacity),
     drag: new Float32Array(capacity),
+    frame: new Uint8Array(capacity),
+    rot: new Float32Array(capacity),
+    spin: new Float32Array(capacity),
     color: new Uint32Array(capacity),
     cursor: 0,
     count: 0,
@@ -55,6 +63,10 @@ export type ParticleInit = {
   gravity: number;
   drag: number;
   color: number;
+  /** Sprite frame (default 0), start rotation and spin in rad/s (default 0). */
+  frame?: number;
+  rot?: number;
+  spin?: number;
 };
 
 /** Spawns a particle; when full, recycles the oldest-found slot at the cursor. */
@@ -86,6 +98,9 @@ export function spawn(pool: ParticlePool, init: ParticleInit): number {
   pool.gravity[index] = init.gravity;
   pool.drag[index] = init.drag;
   pool.color[index] = init.color;
+  pool.frame[index] = init.frame ?? 0;
+  pool.rot[index] = init.rot ?? 0;
+  pool.spin[index] = init.spin ?? 0;
   return index;
 }
 
@@ -117,6 +132,7 @@ export function stepPool(pool: ParticlePool, dtSeconds: number): void {
     pool.px[i] = (pool.px[i] ?? 0) + vx * dtSeconds;
     pool.py[i] = (pool.py[i] ?? 0) + vy * dtSeconds;
     pool.pz[i] = pz;
+    pool.rot[i] = (pool.rot[i] ?? 0) + (pool.spin[i] ?? 0) * dtSeconds;
   }
 }
 
