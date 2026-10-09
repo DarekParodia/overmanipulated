@@ -11,6 +11,8 @@ import { colors } from '../ui/tokens.ts';
 import { Ambience } from './Ambience.tsx';
 import { CameraRig } from './CameraRig.tsx';
 import { Driver } from './Driver.tsx';
+import { EventMarkers } from './EventMarkers.tsx';
+import { EventsWorld } from './EventsWorld.tsx';
 import { Fixtures } from './Fixtures.tsx';
 import { Folders } from './Folders.tsx';
 import { GuidanceMarkers } from './GuidanceMarkers.tsx';
@@ -93,6 +95,8 @@ export function GameCanvas() {
         <InteractionHighlight />
         <StationIndicators />
         <Folders />
+        <EventsWorld />
+        <EventMarkers />
         <GuidanceMarkers />
       </group>
       <Players shadows={profile.shadows} />

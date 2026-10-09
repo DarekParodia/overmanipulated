@@ -1,7 +1,7 @@
 // Feedback driven by game state rather than single events: the station work loop (kept in step
 // with station phases), the deadline ticker, the last-30-seconds sting and the level-end
 // stingers. Also mounts the hit-stop and loop outputs of the feedback bus.
-import { LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
+import { ENDLESS_LEVEL_ID, LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
 import { useGame } from '../net/game-store.ts';
 import { renderState } from '../scene/render-state.ts';
 import { useApp } from '../store/app.ts';
@@ -75,12 +75,17 @@ export function startGameplayFeedback(): () => void {
 
     if (state.levelEnd && !previous.levelEnd) {
       stopAll();
-      emitCue(state.levelEnd.won ? 'level.win' : 'level.lose', {
+      const endless = useApp.getState().room?.levelId === ENDLESS_LEVEL_ID;
+      emitCue(endless ? 'endless.over' : state.levelEnd.won ? 'level.win' : 'level.lose', {
         ...(renderState.local ? { position: renderState.local } : {}),
       });
       return;
     }
-    if (!state.levelEnd && crossedLastSeconds(previous.timeLeftMs, state.timeLeftMs)) {
+    if (
+      !state.levelEnd &&
+      useApp.getState().room?.levelId !== ENDLESS_LEVEL_ID &&
+      crossedLastSeconds(previous.timeLeftMs, state.timeLeftMs)
+    ) {
       emitCue('level.lastSeconds');
     }
 

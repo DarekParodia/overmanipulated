@@ -43,6 +43,7 @@ function station(patch: Partial<Station>): Station {
     durationMs: 4000,
     minigameSeed: 1,
     lockoutMs: 0,
+    outageMs: 0,
     ...patch,
   };
 }

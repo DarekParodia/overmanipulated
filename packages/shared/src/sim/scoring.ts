@@ -4,6 +4,7 @@ import { CREDIBILITY, CREDIBILITY_MAX, SCORE } from '../constants.ts';
 import { expiryIsPenalized } from '../domain.ts';
 import type { FolderResult, LevelOutcome } from '../entities.ts';
 import type { SimLevel } from './content.ts';
+import { endActiveEvent, raidOfFolder } from './events.ts';
 import type { SimFrame } from './frame.ts';
 import type { GameState } from './state.ts';
 
@@ -28,6 +29,10 @@ export function levelOutcome(state: GameState, level: SimLevel): LevelOutcome | 
   if (state.credibility <= 0) {
     return { won: false, stars: 0 };
   }
+  if (level.endless) {
+    // Endless runs end only when credibility is gone; the score is what counts, not won/stars.
+    return null;
+  }
   if (state.elapsedMs >= level.durationS * 1000) {
     const won = state.score > 0;
     return { won, stars: starsFor(state.score, won, level.stars) };
@@ -39,9 +44,20 @@ export function stepScoring(state: GameState, frame: SimFrame): GameState {
   let score = state.score;
   let credibility = state.credibility;
   const expired: FolderResult[] = [];
-  for (const event of frame.events) {
+  let next = state;
+  const countedRaids = new Set<string>();
+  for (const event of [...frame.events]) {
     if (event.kind !== 'folderExpired') {
       continue;
+    }
+    // A botRaid wave expires as one: the first folder is counted, its siblings are not.
+    const raid = raidOfFolder(state, event.folderId);
+    if (raid) {
+      if (countedRaids.has(raid.raidId ?? '')) {
+        continue;
+      }
+      countedRaids.add(raid.raidId ?? '');
+      next = endActiveEvent(next, frame, raid);
     }
     const story = frame.ctx.stories[event.storyId];
     const penalized = story ? expiryIsPenalized(story.truth, story.priority) : true;
@@ -60,9 +76,8 @@ export function stepScoring(state: GameState, frame: SimFrame): GameState {
     });
   }
 
-  let next = state;
   if (expired.length > 0) {
-    next = { ...state, score, credibility, results: [...state.results, ...expired] };
+    next = { ...next, score, credibility, results: [...next.results, ...expired] };
   }
   if (next.ended) {
     return next;

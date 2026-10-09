@@ -123,6 +123,28 @@ export const spawnSchema = z.object({
   deadlineS: z.number().positive(),
 });
 
+const eventBase = { atS: z.number().nonnegative() };
+const spawnEventBase = { ...eventBase, storyId: contentIdSchema, deadlineS: z.number().positive() };
+
+/** Level events (S4-05..S4-09): see `folderTagSchema` for what each one does to folders. */
+export const levelEventSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('viral'), ...spawnEventBase }),
+  z.object({ kind: z.literal('bossCall'), ...spawnEventBase }),
+  z.object({ kind: z.literal('correction'), ...spawnEventBase }),
+  z.object({
+    kind: z.literal('botRaid'),
+    ...spawnEventBase,
+    /** Near-identical folders in the wave. */
+    count: z.number().int().min(2).max(6),
+  }),
+  z.object({
+    kind: z.literal('outage'),
+    ...eventBase,
+    station: stationKindSchema,
+    durationS: z.number().positive().max(60),
+  }),
+]);
+
 export const levelSchema = z
   .object({
     id: contentIdSchema,
@@ -139,6 +161,8 @@ export const levelSchema = z
     layout: z.array(z.string().min(1)).min(3),
     stations: z.array(stationKindSchema).min(1),
     schedule: z.array(spawnSchema).min(1),
+    /** Random events, sorted by `atS`. */
+    events: z.array(levelEventSchema).default([]),
     stars: z.object({ two: z.number().int().positive(), three: z.number().int().positive() }),
   })
   .superRefine((level, ctx) => {
@@ -178,6 +202,26 @@ export const levelSchema = z
           code: 'custom',
           path: ['schedule', i, 'atS'],
           message: 'spawns after the level ends',
+        });
+      }
+    });
+    level.events.forEach((event, i) => {
+      const previous = level.events[i - 1];
+      if (previous && event.atS < previous.atS) {
+        ctx.addIssue({ code: 'custom', path: ['events', i], message: 'events must be sorted' });
+      }
+      if (event.atS >= level.durationS) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['events', i, 'atS'],
+          message: 'event after the level ends',
+        });
+      }
+      if (event.kind === 'outage' && !level.stations.includes(event.station)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['events', i, 'station'],
+          message: `station "${event.station}" is not in this level`,
         });
       }
     });

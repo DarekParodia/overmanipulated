@@ -3,6 +3,7 @@
 // folder is. No headline: the card is read in a glance. Under ten seconds the card turns red
 // and shakes (no shake with reduced motion; nothing blinks).
 import type { Folder } from '@redakcja/shared';
+import type { TagBadge } from '../events/event-model.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './FolderQueue.module.css';
@@ -30,11 +31,14 @@ export function FolderCard({
   elapsedMs,
   where,
   whereKind,
+  tag = null,
 }: {
   folder: Folder;
   elapsedMs: number;
   where: string;
   whereKind: LocationKind;
+  /** Badge of the level event the folder belongs to (shares, boss call, raid, correction). */
+  tag?: TagBadge | null;
 }) {
   const story = hudStory(folder.storyId);
   const type = story?.type ?? 'article';
@@ -48,7 +52,19 @@ export function FolderCard({
       className={`${styles.card} ${styles[priority]} ${warn ? styles.warn : ''}`}
       data-folder={folder.id}
       data-warn={warn || undefined}
+      data-tag={tag?.kind}
     >
+      {tag && (
+        <span
+          className={`${styles.tag} ${styles[`tag_${tag.tone}`]} ${tag.urgent ? styles.tagUrgent : ''}`}
+          role="img"
+          aria-label={tag.label}
+          data-testid={`folder-tag-${tag.kind}`}
+        >
+          <Icon name={tag.icon} size={18} />
+          {tag.text && <span aria-hidden="true">{tag.text}</span>}
+        </span>
+      )}
       <div className={styles.band}>
         <Icon name={type} size={24} label={pl.vocab.storyTypes[type]} />
         <span className={styles.flags} role="img" aria-label={pl.vocab.priorities[priority]}>

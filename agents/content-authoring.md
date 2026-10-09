@@ -55,3 +55,33 @@ field names are English.
 - Keep folder text short — players read it while running. Headline ≤ 80 chars, body ≤ 200 chars.
 - Aim for a mix per level: roughly 30–40% true, the rest spread across the level's techniques.
 - Target volume: ~15 stories per campaign level, ~120 total including the endless-mode pool.
+
+## Automated checks (`bun run validate:content`)
+
+Errors fail the command, warnings are printed but pass. Rules beyond the Zod schemas
+(`packages/content/src/checks.ts`):
+
+**Errors**
+
+- The AI scanner is never decisive alone: a story must not be justified only by `aiScanner`
+  stamps, and an `aiScanner` stamp may be `decisive` only if a justifying stamp from another
+  station exists.
+- Every story spawned by a level (schedule **or** `events`) exists, belongs to the level number,
+  has a stamp for each level station and is solvable with a non-scanner station of that level.
+- A story's stamps may only use stations that exist in at least one level that schedules it.
+- `correction` events need a story whose truth is `false` or `misleading` (`bossCall` and
+  `viral` accept any truth).
+- `botRaid` `count` must not exceed the number of conveyor tiles (`C`) in the layout.
+- `outage` stations must be in the level's `stations` (and so placed in the layout).
+- Two events of the same kind must be at least 10 s apart.
+- `stars.three` must not exceed the maximum score (schedule plus events: viral/bossCall/botRaid
+  stories score like scheduled ones, a true `bossCall` adds the bonus, a correction adds
+  `correctionScore`).
+
+**Warnings**
+
+- `stars.two` above 90% of the maximum score; star thresholds outside the aim ranges.
+- An `outage` that takes down every station of the level (e.g. a single-station level).
+- Levels `l1` and later without `topic` / `briefingPoints`.
+- Deadlines running past the end of the level, an unbalanced share of true stories, unscheduled
+  stories, typography slips (three dots, hanging single-letter words).

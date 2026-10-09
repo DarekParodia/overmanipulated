@@ -36,6 +36,12 @@ export type SimSpawn = {
   deadlineS: number;
 };
 
+/** A scheduled level event. Every kind except `outage` spawns folders from `storyId`. */
+export type SimLevelEvent =
+  | { kind: 'viral' | 'bossCall' | 'correction'; atS: number; storyId: string; deadlineS: number }
+  | { kind: 'botRaid'; atS: number; storyId: string; deadlineS: number; count: number }
+  | { kind: 'outage'; atS: number; station: StationKind; durationS: number };
+
 export type SimLevel = {
   id: string;
   durationS: number;
@@ -43,6 +49,10 @@ export type SimLevel = {
   stations: readonly StationKind[];
   /** Sorted by `atS`. */
   schedule: readonly SimSpawn[];
+  /** Sorted by `atS`; absent or empty on levels without events. */
+  events?: readonly SimLevelEvent[];
+  /** Endless mode: no duration limit, the level ends only when credibility reaches 0. */
+  endless?: boolean;
   /** Score thresholds for two and three stars (one star = survived with a positive score). */
   stars: { two: number; three: number };
 };

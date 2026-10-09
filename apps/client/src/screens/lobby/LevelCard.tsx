@@ -3,9 +3,11 @@
 // (native radios under the tiles). Guests see the chosen level read-only: title plus two chips
 // (minutes, folders).
 import { getLevel, LEVELS } from '@redakcja/content';
+import { ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { useId } from 'react';
+import { endlessUnlocked } from '../../endless/endless-model.ts';
 import { emitCue } from '../../fx/feedback.ts';
-import { campaignTiles, useProgress } from '../../store/progress.ts';
+import { campaignTiles, useEndlessBest, useProgress } from '../../store/progress.ts';
 import { pl } from '../../strings/pl.ts';
 import { Icon } from '../../ui/icons/Icon.tsx';
 import styles from './LevelCard.module.css';
@@ -26,18 +28,29 @@ function keepInView(tile: HTMLElement | null): void {
 export function LevelCard({ levelId, isHost, onSelect, disabled = false }: LevelCardProps) {
   const groupName = useId();
   const best = useProgress((s) => s.best);
+  const endlessBest = useEndlessBest((s) => s.best);
+  const endless = levelId === ENDLESS_LEVEL_ID;
   const level = getLevel(levelId);
-  const chips = level && (
+  const chips = endless ? (
     <p className={styles.chips}>
       <span className={styles.chip}>
-        <Icon name="clock" size={22} />
-        {pl.lobbyRoles.levelMinutes(Math.round(level.durationS / 60))}
-      </span>
-      <span className={styles.chip}>
-        <Icon name="article" size={22} />
-        {pl.lobbyRoles.levelFolders(level.schedule.length)}
+        <Icon name="infinity" size={22} />
+        {pl.endless.pitch}
       </span>
     </p>
+  ) : (
+    level && (
+      <p className={styles.chips}>
+        <span className={styles.chip}>
+          <Icon name="clock" size={22} />
+          {pl.lobbyRoles.levelMinutes(Math.round(level.durationS / 60))}
+        </span>
+        <span className={styles.chip}>
+          <Icon name="article" size={22} />
+          {pl.lobbyRoles.levelFolders(level.schedule.length)}
+        </span>
+      </p>
+    )
   );
 
   if (!isHost) {
@@ -49,7 +62,7 @@ export function LevelCard({ levelId, isHost, onSelect, disabled = false }: Level
       >
         <p className={styles.kicker}>{pl.lobbyRoles.levelKicker}</p>
         <h2 id={`${groupName}-title`} className={styles.title}>
-          {level?.title ?? levelId}
+          {endless ? pl.endless.title : (level?.title ?? levelId)}
         </h2>
         {chips}
         {LEVELS.length > 1 && <p className={styles.hostOnly}>{pl.lobbyRoles.levelHostOnly}</p>}
@@ -58,6 +71,8 @@ export function LevelCard({ levelId, isHost, onSelect, disabled = false }: Level
   }
 
   const tiles = campaignTiles(LEVELS, best);
+  const endlessLocked = !endlessUnlocked(LEVELS, best);
+  const endlessScore = endlessBest ? String(endlessBest.score) : null;
   return (
     <section
       className={`panel ${styles.card} ${styles.map}`}
@@ -123,6 +138,41 @@ export function LevelCard({ levelId, isHost, onSelect, disabled = false }: Level
             </label>
           );
         })}
+        <label
+          className={`${styles.tile} ${styles.endlessTile} ${endless ? styles.current : ''} ${endlessLocked ? styles.locked : ''}`}
+          data-testid={`level-tile-${ENDLESS_LEVEL_ID}`}
+          ref={endless ? keepInView : undefined}
+        >
+          <input
+            type="radio"
+            name={groupName}
+            className={styles.native}
+            checked={endless}
+            disabled={endlessLocked}
+            aria-label={pl.endless.tileLabel(endlessScore, endlessLocked)}
+            onChange={() => {
+              emitCue('ui.click');
+              onSelect(ENDLESS_LEVEL_ID);
+            }}
+          />
+          <span className={styles.badge} aria-hidden="true">
+            <Icon name="infinity" size={28} />
+          </span>
+          <span className={styles.tileTitle} aria-hidden="true">
+            {pl.endless.title}
+          </span>
+          {endlessLocked ? (
+            <span className={styles.lock} aria-hidden="true">
+              <Icon name="lock" size={22} />
+              {pl.campaign.locked}
+            </span>
+          ) : (
+            <span className={styles.lock} aria-hidden="true">
+              <Icon name="trophy" size={22} />
+              {endlessBest ? endlessBest.score : pl.endless.tileHint}
+            </span>
+          )}
+        </label>
       </fieldset>
     </section>
   );

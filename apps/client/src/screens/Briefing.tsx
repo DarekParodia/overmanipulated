@@ -3,7 +3,7 @@
 // who is ready. The card spins in and slaps onto the desk (a fade under reduced motion); any
 // tap or key skips the intro. One main action: the yellow "Gotowy!".
 import { getLevel, LEVELS } from '@redakcja/content';
-import { BRIEFING_DURATION_MS, type StationKind } from '@redakcja/shared';
+import { BRIEFING_DURATION_MS, ENDLESS_LEVEL_ID, type StationKind } from '@redakcja/shared';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
@@ -115,6 +115,7 @@ export function Briefing() {
   const level = getLevel(room.levelId);
   const number = levelNumber(room.levelId);
   const training = number === 0;
+  const endless = room.levelId === ENDLESS_LEVEL_ID;
   const fresh: StationKind[] = level ? newStations(level, LEVELS) : [];
   const points = level?.briefingPoints;
   const players = room.players.filter((p) => p.connected);
@@ -141,7 +142,16 @@ export function Briefing() {
         <header className={styles.head}>
           <p className={styles.kicker}>
             <span className={styles.levelChip}>
-              {training ? pl.briefing.training : pl.briefing.levelNumber(number)}
+              {endless ? (
+                <>
+                  <Icon name="infinity" size={26} />
+                  {pl.endless.briefingKicker}
+                </>
+              ) : training ? (
+                pl.briefing.training
+              ) : (
+                pl.briefing.levelNumber(number)
+              )}
             </span>
             <span className="visually-hidden">{pl.briefing.label}</span>
           </p>
@@ -171,16 +181,18 @@ export function Briefing() {
             </div>
           )}
           <h1 id="briefing-title" className={styles.title}>
-            {level?.title ?? room.levelId}
+            {endless ? pl.endless.title : (level?.title ?? room.levelId)}
           </h1>
-          {level?.topic && (
+          {!endless && level?.topic && (
             <p className={styles.topic}>
               <span className={styles.topicLabel}>{pl.briefing.topic}</span> {typeset(level.topic)}
             </p>
           )}
         </header>
 
-        {points ? (
+        {endless ? (
+          <p className={styles.text}>{typeset(pl.endless.briefing)}</p>
+        ) : points ? (
           <ul className={styles.points}>
             {points.map((point) => (
               <li key={point}>

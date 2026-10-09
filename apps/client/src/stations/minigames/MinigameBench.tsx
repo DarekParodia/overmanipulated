@@ -15,6 +15,7 @@ export function MinigameBench() {
   const [kind, setKind] = useState<StationKind>(kinds[0] ?? 'imageSearch');
   const [storyIndex, setStoryIndex] = useState(0);
   const [round, setRound] = useState(1);
+  const [reporter, setReporter] = useState(false);
   const [result, setResult] = useState<boolean | null>(null);
   const [startedAt, setStartedAt] = useState(() => performance.now());
   const [now, setNow] = useState(() => performance.now());
@@ -54,14 +55,18 @@ export function MinigameBench() {
         ))}
         <Button onClick={() => restart({ storyIndex: storyIndex + 1 })}>{story.id}</Button>
         <Button onClick={() => restart({})}>seed {round}</Button>
+        <Button onClick={() => setReporter((r) => !r)} aria-pressed={reporter}>
+          {pl.vocab.roles.reporter}
+        </Button>
       </p>
       {result === null ? (
         <Game
-          key={`${kind}-${story.id}-${round}`}
+          key={`${kind}-${story.id}-${round}-${reporter}`}
           seed={round}
           story={story}
           stamp={story.stamps.find((s) => s.station === kind)}
           device={device}
+          skipsQueue={reporter}
           timeUsed={Math.min(1, (now - startedAt) / MINIGAME_TIME_LIMIT_MS)}
           onDone={(success) => setResult((r) => r ?? success)}
         />

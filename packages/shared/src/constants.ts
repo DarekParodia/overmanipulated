@@ -207,3 +207,109 @@ export const BRIEFING_DURATION_MS = 18_000;
 
 /** Stored blunder votes older than this are deleted (same window as the leaderboard). */
 export const BLUNDER_VOTE_RETENTION_DAYS = LEADERBOARD_RETENTION_DAYS;
+
+// --- Level events (S4-05..S4-09) ------------------------------------------------------------
+
+export const EVENTS = {
+  /** `viral`: shares shown on the folder are `start * growthPerS ** ageS`, rounded. */
+  viralSharesStart: 120,
+  viralGrowthPerS: 1.07,
+  /** `bossCall`: how long the demand stands, and the bonus for publishing a true story in time. */
+  bossCallWindowMs: 12_000,
+  bossCallBonusScore: 10,
+  /** `outage`: used when level data gives no duration (design doc: 20 s). */
+  outageDefaultMs: 20_000,
+  /** `correction`: credibility lost when the event starts; filing recovers this fraction. */
+  correctionCredibilityLoss: 20,
+  correctionRecoverFraction: 0.5,
+  correctionScore: 10,
+} as const;
+
+// --- Endless mode (S4-11) -------------------------------------------------------------------
+
+/** Level id selected in the lobby for endless mode; not a content file. */
+export const ENDLESS_LEVEL_ID = 'endless';
+
+/**
+ * Endless mode balance (S4-11). The generator in `@redakcja/content` builds the whole schedule up
+ * front; the folder interval shrinks by `intervalFactorPerMinute` every minute (down to
+ * `minIntervalS`) and the folder time by `deadlineShrinkPerMinuteS` (down to `minDeadlineS`).
+ */
+export const ENDLESS = {
+  /** Level length handed to the sim; effectively unlimited, a run ends only at 0 credibility. */
+  durationS: 86_400,
+  /** The generated schedule covers this much level time. */
+  scheduleLengthS: 3600,
+  firstSpawnS: 4,
+  startIntervalS: 18,
+  minIntervalS: 7,
+  intervalFactorPerMinute: 0.9,
+  /** Each interval is randomised by up to this fraction either way. */
+  intervalJitter: 0.15,
+  startDeadlineS: 80,
+  minDeadlineS: 35,
+  deadlineShrinkPerMinuteS: 3,
+  /** Random events start after this much level time, then come every `eventIntervalS`. */
+  eventsStartS: 150,
+  eventIntervalS: 75,
+  minEventIntervalS: 30,
+  eventIntervalFactorPerMinute: 0.95,
+  /** Wave size of a `botRaid` event. */
+  botRaidCount: 3,
+  /** Unused by endless scoring (no stars), required by the level shape. */
+  stars: { two: 500, three: 1000 },
+  /** `levelEnd.results` keeps at most this many (the latest) entries in a long run. */
+  maxResultsSent: 512,
+} as const;
+// --- S4-01: phone station minigame ------------------------------------------------------------
+
+/** Numbers in the phone book the player picks from. */
+export const PHONE_CONTACT_COUNT = 4;
+/** The queue after the right number is dialled lasts between these (seeded); reporters skip it. */
+export const PHONE_QUEUE_MIN_MS = 2500;
+export const PHONE_QUEUE_MAX_MS = 4500;
+/** One beat of the hold music while waiting in the queue. */
+export const PHONE_HOLD_BEAT_MS = 500;
+
+// --- S4-02 AI scanner minigame --------------------------------------------------------------
+
+/** Reading centre (percent "machine made") before noise, by story truth. */
+export const AI_SCANNER_BASE_BY_TRUTH = {
+  true: 18,
+  false: 80,
+  misleading: 62,
+  satire: 45,
+  unverifiable: 50,
+} as const;
+/** Pictures and recordings are easier for a detector than short texts and figures (percent). */
+export const AI_SCANNER_MEDIA_SHIFT = 8;
+/** The detector is noisy: the centre moves up to this far from the base (percent). */
+export const AI_SCANNER_NOISE = 24;
+/** Error margin shown as "± N%" is drawn from this range (percent, whole numbers). */
+export const AI_SCANNER_MARGIN_MIN = 6;
+export const AI_SCANNER_MARGIN_MAX = 28;
+/** The side threshold: a reading is "AI" above it and "real" below it (percent). */
+export const AI_SCANNER_THRESHOLD = 50;
+/** The detector never reads exactly 0 or 100 (percent). */
+export const AI_SCANNER_READING_MIN = 3;
+export const AI_SCANNER_READING_MAX = 97;
+
+// --- Minigame: data library (S4-03) ----------------------------------------------------------
+
+/** Wrong picks (a cell or "doesn't match") that end the data-library minigame as a failure. */
+export const DATA_LIBRARY_MAX_MISTAKES = 2;
+/** Rows and year columns of the original table (a „Średnia” column is added after the years). */
+export const DATA_LIBRARY_ROWS = 3;
+export const DATA_LIBRARY_YEARS = 3;
+/** Chance that the claimed figure is altered, for a folder without a data-library stamp. */
+export const DATA_LIBRARY_ALTERED_CHANCE = 0.6;
+
+// --- S4-05..S4-09: level event presentation (client) -----------------------------------------
+
+/** How long an event banner stays up, and how many may be on screen at once. */
+export const EVENT_BANNER_MS = 3200;
+export const EVENT_BANNER_MAX = 2;
+/** A boss call badge shows urgency (shakes, red) in its last seconds. */
+export const EVENT_BOSS_URGENT_MS = 4000;
+/** Seconds between spark / smoke bursts on a station that is down. */
+export const EVENT_OUTAGE_SPARK_EVERY_S = 0.9;

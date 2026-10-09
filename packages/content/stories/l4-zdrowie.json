@@ -1,0 +1,677 @@
+[
+  {
+    "id": "l4-dziewiec-na-dziesiec",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "9 na 10 klientów poleca suplement Lipowit!",
+    "body": "Baner w sieci: „Aż 90% badanych poleca Lipowit”. Pod spodem drobnym drukiem: „ankieta własna”.",
+    "source": "Reklama na portalu Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l4-dziewiec-na-dziesiec-source",
+        "station": "sourceRegistry",
+        "text": "Lipowit produkuje firma Zielona Kropla z Nowych Brzegów. To jej własna reklama.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-dziewiec-na-dziesiec-archive",
+        "station": "archive",
+        "text": "Takie samo hasło „9 na 10” widnieje na starych ulotkach firmy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-dziewiec-na-dziesiec-phone",
+        "station": "phone",
+        "text": "Firma nie odbiera telefonu. Na infolinii jest tylko nagranie reklamowe.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-dziewiec-na-dziesiec-data",
+        "station": "dataLibrary",
+        "text": "Ankietę zrobił producent wśród 10 osób, w tym 4 pracowników firmy. Brak grupy porównawczej.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-dziewiec-na-dziesiec-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Reklama oparta na „ankiecie” przeprowadzonej przez producenta wśród dziesięciu osób, z czego część pracowała w firmie.",
+      "technique": "Zmanipulowana statystyka: procent brzmi poważnie, ale podstawą jest mikroskopijna, niereprezentatywna próba wybrana przez zainteresowanego.",
+      "tool": "Biblioteka danych: porównanie hasła z tabelą źródłową pokazało, kto, kogo i ilu osób pytał.",
+      "realWorld": "Hasła w stylu „większość poleca” opierają się często na małych ankietach własnych firm. Zawsze pytaj: kto pytał, ile osób i kogo?"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-mniej-przeziebien",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Badanie: Lipowit zmniejsza liczbę przeziębień o 60%",
+    "body": "Portal podaje wynik „badania klinicznego”. Cytowany w nim Instytut Badań Prozdrowotnych potwierdza, że badanie się odbyło.",
+    "source": "Artykuł na portalu Zdrowie Brzegów",
+    "stamps": [
+      {
+        "id": "l4-mniej-przeziebien-source",
+        "station": "sourceRegistry",
+        "text": "Portal żyje z reklam producenta. Instytut istnieje od 6 lat i publikuje badania.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-mniej-przeziebien-archive",
+        "station": "archive",
+        "text": "W archiwum jest wcześniejszy tekst o tym samym badaniu, bez tytułu „kliniczne”.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-mniej-przeziebien-phone",
+        "station": "phone",
+        "text": "Instytut potwierdza badanie, ale mówi: to była próba pilotażowa.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-mniej-przeziebien-data",
+        "station": "dataLibrary",
+        "text": "Badało się 12 osób, bez grupy kontrolnej. Wynik „60%” to 3 przeziębienia zamiast 5.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-mniej-przeziebien-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Prawdziwe, ale bardzo małe badanie pilotażowe: 12 osób i brak grupy kontrolnej, więc wyniku nie da się uogólnić.",
+      "technique": "Zmanipulowana statystyka: duży procent z maleńkiej liczby osób wygląda imponująco, choć to może być przypadek.",
+      "tool": "Biblioteka danych: oryginalna tabela pokazała liczebność próby i brak grupy porównawczej. Telefon do instytutu tylko potwierdził, że badanie było.",
+      "realWorld": "Doniesienia o „cudownych badaniach” często pomijają liczebność próby. Wynik pilotażowy to dopiero początek, nie dowód."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-profesor-wrzosowiec",
+    "type": "quote",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Prof. Wrzosowiec: „Lipowit to przełom w medycynie!”",
+    "body": "W reklamie występuje „kardiolog, profesor”. Podpis: „Prof. dr hab. Alojzy Wrzosowiec, Akademia Zdrowia”.",
+    "source": "Spot reklamowy Lipowitu",
+    "stamps": [
+      {
+        "id": "l4-profesor-wrzosowiec-source",
+        "station": "sourceRegistry",
+        "text": "Brak profilu naukowego tej osoby. Strona „Akademii Zdrowia” powstała 2 miesiące temu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-profesor-wrzosowiec-archive",
+        "station": "archive",
+        "text": "Ten sam mężczyzna występował w starej reklamie jako „trener życia”.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-profesor-wrzosowiec-phone",
+        "station": "phone",
+        "text": "Uniwersytet w Nowych Brzegach i szpital miejski: nikt taki tam nie pracuje.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-profesor-wrzosowiec-data",
+        "station": "dataLibrary",
+        "text": "Brak publikacji pod tym nazwiskiem w bazie prac naukowych miasta.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l4-profesor-wrzosowiec-phone"],
+    "technique": "falszywy-ekspert",
+    "debrief": {
+      "what": "Reklama z aktorem w roli „profesora”. Tytuł i uczelnia są wymyślone, żeby zwiększyć wiarygodność produktu.",
+      "technique": "Fałszywy ekspert: tytuł naukowy i biały fartuch mają wzbudzać zaufanie, choć nikt nie sprawdził kwalifikacji.",
+      "tool": "Telefon do uczelni i szpitala: oba miejsca zaprzeczyły, że ktoś taki tam pracuje. Brak publikacji w bazie tylko wskazywał trop.",
+      "realWorld": "Reklamy chętnie pokazują „lekarzy” i „profesorów”. Sprawdź, gdzie pracuje ta osoba i czy cokolwiek opublikowała."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-ankieta-uczniow",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Miejski raport: 4 na 10 uczniów śpi za krótko",
+    "body": "Przychodnia szkolna opublikowała wyniki ankiety wśród uczniów liceów. Zachęca do rozmowy z pielęgniarką.",
+    "source": "Komunikat przychodni szkolnej",
+    "stamps": [
+      {
+        "id": "l4-ankieta-uczniow-source",
+        "station": "sourceRegistry",
+        "text": "Konto przychodni zweryfikowane, prowadzone od 5 lat przez miasto.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-ankieta-uczniow-archive",
+        "station": "archive",
+        "text": "Poprzednie raporty z lat ubiegłych mają podobny wynik.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-ankieta-uczniow-phone",
+        "station": "phone",
+        "text": "Pielęgniarka potwierdza, że ankietę zebrano w październiku.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-ankieta-uczniow-data",
+        "station": "dataLibrary",
+        "text": "Tabela zgadza się z komunikatem: 1 180 uczniów, 41% śpi poniżej 7 godzin.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-ankieta-uczniow-source", "l4-ankieta-uczniow-data"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy raport miejskiej przychodni szkolnej, oparty na dużej, losowo dobranej grupie uczniów.",
+      "technique": "Brak manipulacji. Liczby zgadzają się z tabelą, a próba jest duża i opisana.",
+      "tool": "Biblioteka danych: dane w tabeli zgadzają się z komunikatem. Kartoteka źródeł potwierdziła autora.",
+      "realWorld": "Miasta publikują raporty z ankiet szkolnych. Warto sprawdzić liczebność próby i czy liczby zgadzają się z tabelą."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-brzozolin-i-oceny",
+    "type": "post",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Klasy z programem „Brzozolin” mają lepsze oceny!",
+    "body": "Producent soku brzozowego chwali się: w klasach, które piją Brzozolin, średnia jest o punkt wyższa.",
+    "source": "Post producenta napoju Brzozolin",
+    "stamps": [
+      {
+        "id": "l4-brzozolin-i-oceny-source",
+        "station": "sourceRegistry",
+        "text": "Profil producenta, napój od 2 lat w sprzedaży. Post ma charakter reklamowy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-brzozolin-i-oceny-archive",
+        "station": "archive",
+        "text": "Podobny post w ubiegłym roku dotyczył innego napoju tej firmy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-brzozolin-i-oceny-phone",
+        "station": "phone",
+        "text": "Dyrektor szkoły: do programu zgłosiły się klasy z wyższą średnią.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-brzozolin-i-oceny-data",
+        "station": "dataLibrary",
+        "text": "Tabela: średnia tych klas była wyższa już przed programem. To korelacja, nie wpływ.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-brzozolin-i-oceny-data"],
+    "technique": "korelacja-jako-przyczyna",
+    "debrief": {
+      "what": "Prawdziwe dane, ale z fałszywym wnioskiem: klasy z lepszą średnią zapisywały się do programu, więc napój nie jest powodem wyniku.",
+      "technique": "Korelacja jako przyczyna: dwie rzeczy występują razem, ale jedna nie musi powodować drugiej. Tu zadziałał wybór klas.",
+      "tool": "Biblioteka danych: tabela ze średnimi sprzed programu pokazała, że różnica istniała już wcześniej.",
+      "realWorld": "W reklamach i artykułach łatwo o zdanie „kto robi X, ma Y”. Zawsze pytaj, co było przed i co mogło wpłynąć na oba zjawiska."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-doktor-kwietnik",
+    "type": "article",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dr Kwietnik z Instytutu Zdrowia: „Kuracja w 3 dni”",
+    "body": "Autorka wywiadu o suplemencie Lipowit przedstawia się jako „doktor z Narodowego Instytutu Zdrowia Natury”.",
+    "source": "Wywiad na blogu Zdrowa Strona",
+    "stamps": [
+      {
+        "id": "l4-doktor-kwietnik-source",
+        "station": "sourceRegistry",
+        "text": "Instytut zarejestrowano 5 tygodni temu. Na stronie jest tylko sklep z suplementami.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-doktor-kwietnik-archive",
+        "station": "archive",
+        "text": "W archiwum brak wcześniejszych wywiadów z tą osobą.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-doktor-kwietnik-phone",
+        "station": "phone",
+        "text": "Pod numerem z wizytówki odbiera sprzedawca suplementów.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-doktor-kwietnik-data",
+        "station": "dataLibrary",
+        "text": "Nie ma raportów ani tabel z danymi, tylko opinie klientów.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-doktor-kwietnik-source"],
+    "technique": "falszywy-ekspert",
+    "debrief": {
+      "what": "Wywiad z osobą, która nazywa się doktorem, ale reprezentuje instytut założony niedawno wyłącznie po to, by sprzedawać produkty.",
+      "technique": "Fałszywy ekspert i pozorna instytucja: poważna nazwa i tytuł mają tworzyć wrażenie autorytetu.",
+      "tool": "Kartoteka źródeł: data rejestracji instytutu i profil strony pokazały, że to sklep, nie placówka naukowa.",
+      "realWorld": "Wiele sklepów internetowych tworzy „instytuty” i „stowarzyszenia”, żeby ich opinie wyglądały na niezależne."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-raport-pielegniarek",
+    "type": "article",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Wizyt u szkolnych pielęgniarek przybyło o 12%",
+    "body": "Instytut Zdrowia Publicznego w Nowych Brzegach opisuje wzrost zgłoszeń uczniów z bólami głowy. Zachęca do rozmowy z opiekunem.",
+    "source": "Raport Instytutu Zdrowia Publicznego",
+    "stamps": [
+      {
+        "id": "l4-raport-pielegniarek-source",
+        "station": "sourceRegistry",
+        "text": "Instytut miejski, od 15 lat publikuje raporty. Strona zweryfikowana.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-raport-pielegniarek-archive",
+        "station": "archive",
+        "text": "Poprzedni raport z 2024 r. potwierdza punkt wyjścia: liczbę wizyt rok wcześniej.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-raport-pielegniarek-phone",
+        "station": "phone",
+        "text": "Rzeczniczka instytutu potwierdza, że raport jest prawdziwy.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-raport-pielegniarek-data",
+        "station": "dataLibrary",
+        "text": "Tabela: 2 410 wizyt, rok wcześniej 2 150. Wzrost o 12% jest policzony poprawnie.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-raport-pielegniarek-source", "l4-raport-pielegniarek-data"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy raport miejskiego instytutu z poprawnie policzonym wzrostem.",
+      "technique": "Brak manipulacji. Liczby w tekście zgadzają się z tabelą źródłową, a raport nie wyciąga zbyt daleko idących wniosków.",
+      "tool": "Biblioteka danych: liczby z tabeli zgadzają się z tekstem. Kartoteka źródeł potwierdziła instytut.",
+      "realWorld": "Instytuty publikują raporty z danych administracyjnych. Warto porównać procent z tabelą, bo to najprostszy test rzetelności."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-apteki-i-chorzy",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Gdzie więcej aptek, tam więcej chorych!",
+    "body": "Blog pokazuje mapę: dzielnice z dużą liczbą aptek mają też najwięcej zgłoszeń chorób. „Czy apteki szkodzą?”",
+    "source": "Wpis na blogu Dane z Brzegów",
+    "stamps": [
+      {
+        "id": "l4-apteki-i-chorzy-source",
+        "station": "sourceRegistry",
+        "text": "Blog prowadzi student, pisze o danych miejskich od roku. Tytuły bywają clickbaitowe.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-apteki-i-chorzy-archive",
+        "station": "archive",
+        "text": "Podobne mapy z innymi danymi pojawiały się na blogu wcześniej.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-apteki-i-chorzy-phone",
+        "station": "phone",
+        "text": "W urzędzie nikt nie zna tego badania, bo to zestawienie autora bloga.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-apteki-i-chorzy-data",
+        "station": "dataLibrary",
+        "text": "Tabela: dzielnice z aptekami mają też najwięcej mieszkańców. Na 1 000 osób wynik jest podobny.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-apteki-i-chorzy-data"],
+    "technique": "korelacja-jako-przyczyna",
+    "debrief": {
+      "what": "Mapa pokazuje, że w gęsto zaludnionych dzielnicach jest więcej aptek i więcej zgłoszeń. Apteki nie są przyczyną chorób.",
+      "technique": "Korelacja jako przyczyna: oba zjawiska zależą od trzeciego czynnika, czyli liczby mieszkańców.",
+      "tool": "Biblioteka danych: przeliczenie na 1 000 mieszkańców pokazało prawie identyczne wyniki w każdej dzielnicy.",
+      "realWorld": "Zestawienie liczb bez przeliczenia na mieszkańców bywa mylące. Zadaj pytanie: co jeszcze mogło wpłynąć na oba wyniki?"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-wykres-bez-osi",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Nowy suplement DZIESIĘCIOKROTNIE skuteczniejszy!",
+    "body": "Wykres w reklamie: słupek Lipowitu wielokrotnie wyższy niż „zwykłego preparatu”. Oś zaczyna się od 96%.",
+    "source": "Plakat sieci sklepów zielarskich",
+    "stamps": [
+      {
+        "id": "l4-wykres-bez-osi-source",
+        "station": "sourceRegistry",
+        "text": "Sieć zielarska, 6 sklepów w mieście. Plakat firmowy, bez wskazania autora badań.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-wykres-bez-osi-archive",
+        "station": "archive",
+        "text": "Ten sam plakat wisiał miesiąc temu, ale z innym wykresem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-wykres-bez-osi-phone",
+        "station": "phone",
+        "text": "Sklep nie podaje źródła, odsyła do „materiałów producenta”.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-wykres-bez-osi-data",
+        "station": "dataLibrary",
+        "text": "Tabela: skuteczność 98% i 96%. Różnica 2 punkty, a oś wykresu zaczyna się od 96%.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-wykres-bez-osi-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Prawdziwe liczby (98% i 96%) przedstawione na wykresie z uciętą osią tak, że mała różnica wygląda na ogromną.",
+      "technique": "Zmanipulowana statystyka: ucięta oś pionowa wizualnie powiększa różnice. Wykres nie kłamie liczbami, ale kłamie proporcjami.",
+      "tool": "Biblioteka danych: oryginalna tabela pokazała dokładne wartości, a wykres bez zera na osi się z nimi nie zgadzał.",
+      "realWorld": "Uciętą oś stosuje się w reklamach i wykresach politycznych. Zawsze sprawdź, od jakiej wartości zaczyna się oś."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-darmowe-badania-wzroku",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Bezpłatne badania wzroku w szkołach w czwartek",
+    "body": "Miasto zaprasza uczniów klas pierwszych na przesiewowe badania wzroku. Badania w godzinach lekcji, za zgodą rodziców.",
+    "source": "Komunikat Urzędu Miasta Nowe Brzegi",
+    "stamps": [
+      {
+        "id": "l4-darmowe-badania-wzroku-source",
+        "station": "sourceRegistry",
+        "text": "Konto urzędu zweryfikowane od 9 lat. Komunikat ma numer i datę.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-darmowe-badania-wzroku-archive",
+        "station": "archive",
+        "text": "W archiwum jest podobny komunikat z ubiegłego roku, o tej samej akcji.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-darmowe-badania-wzroku-phone",
+        "station": "phone",
+        "text": "Wydział zdrowia potwierdza termin i listę szkół.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-darmowe-badania-wzroku-data",
+        "station": "dataLibrary",
+        "text": "Tabela szkół z harmonogramem zgadza się z komunikatem.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-darmowe-badania-wzroku-source", "l4-darmowe-badania-wzroku-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy komunikat urzędu o cyklicznej akcji badań przesiewowych w szkołach.",
+      "technique": "Brak manipulacji. Źródło, termin i lista szkół zostały potwierdzone w kilku miejscach.",
+      "tool": "Kartoteka źródeł i telefon do wydziału zdrowia potwierdziły komunikat. Archiwum pokazało, że akcja jest cykliczna.",
+      "realWorld": "Miasta ogłaszają badania przesiewowe zwykle w komunikatach urzędowych. Warto sprawdzić, czy ten sam komunikat jest na stronie urzędu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-sondaz-w-stolowkach",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Sondaż: 82% uczniów chce suplementów w stołówce",
+    "body": "Wynik krąży jako „sondaż szkolny”. Głosowało 340 osób. Link do sondy wysłano w czacie fanów Lipowitu.",
+    "source": "Wpis na grupie Smacznie i Zdrowo",
+    "stamps": [
+      {
+        "id": "l4-sondaz-w-stolowkach-source",
+        "station": "sourceRegistry",
+        "text": "Grupa założona przez sprzedawcę suplementów. 70% członków to konta bez zdjęć.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-sondaz-w-stolowkach-archive",
+        "station": "archive",
+        "text": "Ten sam sondaż pojawił się wcześniej pod innym tytułem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-sondaz-w-stolowkach-phone",
+        "station": "phone",
+        "text": "Dyrekcja szkół nie prowadziła takiego sondażu i nie wie o nim.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-sondaz-w-stolowkach-data",
+        "station": "dataLibrary",
+        "text": "Sonda była otwarta: te same adresy głosowały po 20 razy, a wśród głosujących prawie nie było uczniów.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l4-sondaz-w-stolowkach-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Sonda w sieci, w której głosować mógł każdy i wiele razy. Wynik nie ma nic wspólnego z opinią uczniów.",
+      "technique": "Zmanipulowana statystyka: sondaże na własnej grupie lub otwarte sondy nie są reprezentatywne.",
+      "tool": "Biblioteka danych: dane o głosowaniu pokazały powtarzające się adresy i brak uczniów wśród głosujących.",
+      "realWorld": "Sondy w mediach społecznościowych łatwo „napompować”. Wiarygodne sondaże mają opis próby i metody wyboru badanych."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-cytat-dyrektorki",
+    "type": "quote",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Dyrektorka przychodni: „Lipowit nie szkodzi!”",
+    "body": "Wycinek wypowiedzi krąży jako „potwierdzenie bezpieczeństwa”. Źródło: wywiad dla lokalnej telewizji.",
+    "source": "Post fanpage’a Lipowitu",
+    "stamps": [
+      {
+        "id": "l4-cytat-dyrektorki-source",
+        "station": "sourceRegistry",
+        "text": "Fanpage prowadzi producent. Cytat z wywiadu jest prawdziwy, ale wycięty.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-cytat-dyrektorki-archive",
+        "station": "archive",
+        "text": "W archiwum telewizji jest pełny wywiad. Zdanie padło w trakcie dłuższej odpowiedzi.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-cytat-dyrektorki-phone",
+        "station": "phone",
+        "text": "Dyrektorka: „W badaniach nie wykryto szkód, ale nie wykazano też działania”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-cytat-dyrektorki-data",
+        "station": "dataLibrary",
+        "text": "Brak tabel. Wypowiedź nie dotyczy konkretnych liczb.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-cytat-dyrektorki-archive", "l4-cytat-dyrektorki-phone"],
+    "technique": "cytat-wyrwany-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe zdanie z wywiadu, ale bez dalszej części, która zmienia jego sens.",
+      "technique": "Cytat wyrwany z kontekstu: obcięta wypowiedź brzmi jak poparcie, choć w całości było to zastrzeżenie.",
+      "tool": "Archiwum: pełny zapis wywiadu. Telefon do dyrektorki potwierdził pełne brzmienie wypowiedzi.",
+      "realWorld": "Skrócone cytaty to częsty sposób na „poparcie” produktu przez autorytet. Szukaj pełnej wypowiedzi w źródle."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-nowa-pracownia",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Szkoła nr 4 otwiera pracownię dietetyczną",
+    "body": "Uczniowie będą uczyć się planować posiłki na zajęciach z pielęgniarką. Otwarcie w piątek o 10:00.",
+    "source": "Strona Szkoły Podstawowej nr 4",
+    "stamps": [
+      {
+        "id": "l4-nowa-pracownia-source",
+        "station": "sourceRegistry",
+        "text": "Oficjalna strona szkoły, zweryfikowana od 7 lat. Ogłoszenie ma podpis dyrekcji.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-nowa-pracownia-archive",
+        "station": "archive",
+        "text": "W archiwum jest zapowiedź projektu z poprzedniego semestru.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-nowa-pracownia-phone",
+        "station": "phone",
+        "text": "Sekretariat potwierdza termin otwarcia i program zajęć.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-nowa-pracownia-data",
+        "station": "dataLibrary",
+        "text": "Brak liczb do sprawdzenia, ogłoszenie nie zawiera statystyk.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-nowa-pracownia-source", "l4-nowa-pracownia-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe ogłoszenie szkoły o nowej pracowni.",
+      "technique": "Brak manipulacji. To zwykły komunikat, który wystarczy potwierdzić u źródła.",
+      "tool": "Kartoteka źródeł i telefon do sekretariatu potwierdziły termin i program otwarcia.",
+      "realWorld": "Szkoły ogłaszają nowe pracownie na swoich stronach. Gdy ogłoszenie jest tylko na komunikatorze, warto zadzwonić do szkoły."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-woda-z-kranu",
+    "type": "article",
+    "priority": "normal",
+    "truth": "satire",
+    "correctVerdict": "publishWithContext",
+    "headline": "Naukowcy: woda z kranu leczy wszystko, nawet poniedziałki",
+    "body": "Artykuł „Brzeskiego Kuriera Absurdu” z wypowiedziami „ekspertów”, w tym kota prof. Mruczka. Wiele osób udostępnia go na poważnie.",
+    "source": "Portal Brzeski Kurier Absurdu",
+    "stamps": [
+      {
+        "id": "l4-woda-z-kranu-source",
+        "station": "sourceRegistry",
+        "text": "Serwis satyryczny, w stopce: „Wszystko tu jest zmyślone”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-woda-z-kranu-archive",
+        "station": "archive",
+        "text": "W archiwum wiele podobnych żartów tego serwisu o „odkryciach”.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-woda-z-kranu-phone",
+        "station": "phone",
+        "text": "Redakcja Kuriera potwierdza: to satyra, nie badanie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-woda-z-kranu-data",
+        "station": "dataLibrary",
+        "text": "Brak tabel i liczb, cytowane „wyniki” są absurdalne.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-woda-z-kranu-source"],
+    "technique": "satyra-brana-na-serio",
+    "debrief": {
+      "what": "Satyryczny tekst o „cudownej” wodzie z kranu. Nikt nie powinien brać go za informację.",
+      "technique": "Satyra brana na serio: żart pozbawiony podpisu lub kontekstu zaczyna krążyć jako prawda.",
+      "tool": "Kartoteka źródeł: stopka i profil serwisu pokazują, że wszystko na nim jest zmyślone.",
+      "realWorld": "Satyryczne portale bywają cytowane jak poważne. Warto opublikować z dopiskiem, że to żart."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-alarm-zakaz-lipowitu",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "PILNE! Inspekcja zakazuje Lipowitu, wyrzućcie z domów!",
+    "body": "Post z logo „Państwowej Inspekcji Zdrowia” zbiera tysiące udostępnień. Wezwanie do natychmiastowego usunięcia produktu.",
+    "source": "Konto „PIZ_Nowe_Brzegi”",
+    "stamps": [
+      {
+        "id": "l4-alarm-zakaz-lipowitu-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone wczoraj, bez weryfikacji. Prawdziwa inspekcja ma inną nazwę.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-alarm-zakaz-lipowitu-archive",
+        "station": "archive",
+        "text": "W archiwum brak takiego komunikatu inspekcji.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-alarm-zakaz-lipowitu-phone",
+        "station": "phone",
+        "text": "Inspekcja: żadnego zakazu nie wydano, logo ktoś skopiował.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-alarm-zakaz-lipowitu-data",
+        "station": "dataLibrary",
+        "text": "Brak danych do sprawdzenia: komunikat nie powołuje się na żadne badanie.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-alarm-zakaz-lipowitu-source", "l4-alarm-zakaz-lipowitu-phone"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywe konto podszywające się pod inspekcję. Żadnego zakazu nie wydano.",
+      "technique": "Podszywanie się pod instytucję: logo i pilny ton wywołują panikę, zanim ktoś sprawdzi, kto pisze.",
+      "tool": "Kartoteka źródeł: konto nowe i niezweryfikowane. Telefon do inspekcji potwierdził brak zakazu.",
+      "realWorld": "Alarmowe posty „od urzędów” rozchodzą się tym szybciej, im bardziej straszą. Zanim udostępnisz, sprawdź konto i oficjalną stronę."
+    },
+    "reviewed": false
+  }
+]

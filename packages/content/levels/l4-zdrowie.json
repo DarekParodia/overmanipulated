@@ -1,0 +1,116 @@
+{
+  "id": "l4-zdrowie",
+  "title": "Zdrowie",
+  "topic": "Suplement i „cudowne badanie”",
+  "briefingPoints": [
+    "Nowy suplement i „cudowne badanie”.",
+    "Biblioteka danych: czy liczby się zgadzają?",
+    "Uwaga: stanowisko może się zepsuć!"
+  ],
+  "briefing": "Po mieście krąży nowy suplement i „cudowne badanie”. Biblioteka danych porówna liczby z oryginalną tabelą: kto pytał i ilu osób? Kartoteka źródeł sprawdzi eksperta, Archiwum znajdzie pełne cytaty, a Telefon potwierdzi u źródła. Uwaga: stanowisko może się zepsuć!",
+  "durationS": 420,
+  "layout": [
+    "####################",
+    "#CCCCC.R..A..P..L..#",
+    "#..................#",
+    "#.T...1......2...T.#",
+    "#..................#",
+    "#......T=DD=T......#",
+    "#.==....====....==.#",
+    "#..................#",
+    "#...3..........4...#",
+    "#..................#",
+    "#..==..........==..#",
+    "####################"
+  ],
+  "stations": ["sourceRegistry", "archive", "phone", "dataLibrary"],
+  "schedule": [
+    {
+      "atS": 4,
+      "storyId": "l4-dziewiec-na-dziesiec",
+      "deadlineS": 80
+    },
+    {
+      "atS": 28,
+      "storyId": "l4-ankieta-uczniow",
+      "deadlineS": 70
+    },
+    {
+      "atS": 52,
+      "storyId": "l4-profesor-wrzosowiec",
+      "deadlineS": 80
+    },
+    {
+      "atS": 76,
+      "storyId": "l4-mniej-przeziebien",
+      "deadlineS": 85
+    },
+    {
+      "atS": 100,
+      "storyId": "l4-darmowe-badania-wzroku",
+      "deadlineS": 70
+    },
+    {
+      "atS": 124,
+      "storyId": "l4-brzozolin-i-oceny",
+      "deadlineS": 80
+    },
+    {
+      "atS": 148,
+      "storyId": "l4-doktor-kwietnik",
+      "deadlineS": 75
+    },
+    {
+      "atS": 172,
+      "storyId": "l4-alarm-zakaz-lipowitu",
+      "deadlineS": 55
+    },
+    {
+      "atS": 196,
+      "storyId": "l4-raport-pielegniarek",
+      "deadlineS": 85
+    },
+    {
+      "atS": 220,
+      "storyId": "l4-sondaz-w-stolowkach",
+      "deadlineS": 80
+    },
+    {
+      "atS": 244,
+      "storyId": "l4-apteki-i-chorzy",
+      "deadlineS": 80
+    },
+    {
+      "atS": 268,
+      "storyId": "l4-nowa-pracownia",
+      "deadlineS": 70
+    },
+    {
+      "atS": 292,
+      "storyId": "l4-wykres-bez-osi",
+      "deadlineS": 85
+    },
+    {
+      "atS": 316,
+      "storyId": "l4-woda-z-kranu",
+      "deadlineS": 75
+    },
+    {
+      "atS": 340,
+      "storyId": "l4-cytat-dyrektorki",
+      "deadlineS": 75
+    }
+  ],
+  "events": [
+    {
+      "kind": "outage",
+      "atS": 200,
+      "station": "dataLibrary",
+      "durationS": 20
+    }
+  ],
+  "stars": {
+    "two": 215,
+    "three": 315
+  }
+}

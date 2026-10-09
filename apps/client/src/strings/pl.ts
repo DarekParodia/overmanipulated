@@ -511,6 +511,151 @@ export const pl = {
         },
       },
     },
+    /** Phone minigame (S4-01): pick the right number, wait in the queue (reporters skip it). */
+    phone: {
+      task: 'Zadzwoń do źródła',
+      onHold: 'Czekaj w kolejce',
+      seconds: (n: number) => `${n} s`,
+      skipped: 'Reporter: bez kolejki!',
+      connected: 'Połączono!',
+      wrong: 'Zły numer',
+      wrongBody: 'Nikt nie odebrał',
+      keys: {
+        keyboard: [
+          { keys: ['W', 'S'], label: 'wybierz' },
+          { keys: ['E'], label: 'dzwoń' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'dzwoń' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
+      /** Invented contacts of Nowe Brzegi used as wrong numbers next to the story's own source. */
+      decoys: [
+        'Komunikat prasowy ratusza',
+        'Mail od czytelnika',
+        'Portal „Brzeski Szpikulec”',
+        'Konto „Nowe Brzegi Info”',
+        'Rzecznik straży pożarnej',
+        'Biuro prasowe szpitala',
+        'Radio Nadrzecze',
+        'Wiadomość od sąsiada',
+        'Raport urzędu statystycznego',
+        'Fotoklub Nadrzecze',
+        'Stowarzyszenie Rowerowe NB',
+        'Dziennik „Kurier Nowobrzeski”',
+      ],
+    },
+    aiScanner: {
+      task: 'Odczytaj skaner',
+      reading: (percent: number, margin: number) => `${percent}\u00a0% ± ${margin}\u00a0%`,
+      readingLabel: (percent: number, margin: number) =>
+        `Skaner: ${percent} procent, błąd plus minus ${margin} procent`,
+      human: 'prawdziwe',
+      machine: 'AI',
+      margin: 'margines błędu',
+      answers: { real: 'Raczej prawdziwe', unsure: 'Nie wiem', ai: 'Raczej AI' },
+      done: {
+        ambiguous: 'Zakres obejmuje 50\u00a0%: „Nie wiem” trafia',
+        clearAi: 'Cały zakres po stronie AI',
+        clearReal: 'Cały zakres po stronie prawdy',
+      },
+      failed: {
+        ambiguous: 'Margines sięga 50\u00a0%: skaner nie rozstrzyga',
+        clearAi: 'Cały zakres był po stronie AI',
+        clearReal: 'Cały zakres był po stronie prawdy',
+      },
+      success: 'Dobry odczyt!',
+      failure: 'Zły odczyt',
+      keys: {
+        keyboard: [
+          { keys: ['A', 'D'], label: 'wybierz' },
+          { keys: ['E'], label: 'potwierdź' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
+    },
+    dataLibrary: {
+      task: 'Znajdź liczbę lub zgłoś: nie pasuje',
+      claimTitle: 'W artykule',
+      average: (from: number, to: number) => `średnio ${from}–${to}`,
+      mismatch: 'Nie pasuje',
+      table: 'Tabela źródłowa',
+      averageColumn: 'Średnia',
+      cell: (row: string, column: string, value: string) => `${row}, ${column}: ${value}`,
+      unitNote: (unit: string) => `w ${unit}`,
+      right: 'Zgadza się!',
+      wrong: 'Pudło!',
+      /** Shown after the round: why the claim fits or what was changed. */
+      reasons: {
+        match: 'Ta liczba jest w tabeli.',
+        wrongYear: 'Liczba z innego roku.',
+        wrongRow: 'Liczba z innego wiersza.',
+        wrongUnit: 'Inna jednostka niż w tabeli.',
+        cherryPick: 'Najlepszy rok zamiast średniej.',
+        invented: 'Takiej liczby nie ma w tabeli.',
+      },
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+          { keys: ['Q'], label: 'nie pasuje' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+          { keys: ['Y'], label: 'nie pasuje' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
+      /**
+       * Original tables. All invented: Nowe Brzegi, no real institutions. `unit` is what the
+       * table gives; `altUnit` is the wrong unit a manipulated claim uses. `step` rounds values.
+       */
+      topics: [
+        {
+          title: 'Wydatki miasta',
+          unit: 'tys. zł',
+          altUnit: 'mln zł',
+          min: 400,
+          max: 4800,
+          step: 10,
+          rows: ['Drogi', 'Szkoły', 'Parki', 'Transport', 'Kultura'],
+        },
+        {
+          title: 'Mieszkańcy dzielnic',
+          unit: 'osób',
+          altUnit: 'tys. osób',
+          min: 1200,
+          max: 9800,
+          step: 10,
+          rows: ['Nadrzecze', 'Stare Miasto', 'Lipowa', 'Klonowa', 'Osiedle Słoneczne'],
+        },
+        {
+          title: 'Frekwencja w szkołach',
+          unit: '%',
+          altUnit: 'pkt proc.',
+          min: 55,
+          max: 98,
+          step: 1,
+          rows: ['Szkoła nr 1', 'Szkoła nr 2', 'Liceum nr 2', 'Technikum', 'Szkoła nr 5'],
+        },
+        {
+          title: 'Zgłoszenia alarmowe',
+          unit: 'zgłoszeń',
+          altUnit: 'tys. zgłoszeń',
+          min: 120,
+          max: 2400,
+          step: 5,
+          rows: ['Pożary', 'Wypadki', 'Zalania', 'Awarie prądu', 'Kolizje'],
+        },
+      ],
+    },
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
   pings: {
@@ -521,6 +666,48 @@ export const pl = {
       Device,
       readonly string[]
     >,
+  },
+  /** Level events (S4-05..S4-09): banners, folder badges, hints, the correction sheet. */
+  events: {
+    /** Big banner when an event starts: a short title and one short line. */
+    banner: {
+      viral: { title: 'To już wszędzie jest!', line: 'Najpierw sprawdź' },
+      bossCall: { title: 'Telefon od szefa!', line: 'Żąda publikacji' },
+      botRaid: { title: 'Nalot botów!', line: 'Jeden werdykt na wszystkie' },
+      outage: { title: 'Awaria!', line: (station: string) => `${station} nie działa` },
+      correction: { title: 'Sprostowanie!', line: 'Zanieś na stół' },
+    },
+    /** Short banners when something is over or solved. */
+    done: {
+      outage: { title: 'Naprawione', line: (station: string) => `${station} działa` },
+      raid: { title: 'Nalot odparty!', line: 'Wszystkie fałszywki z głowy' },
+    },
+    /** Accessible names of the badges (the badges themselves show an icon and a number). */
+    badge: {
+      shares: (n: string) => `${n} udostępnień`,
+      bossCall: (s: number) => `Szef czeka jeszcze ${s} s`,
+      bossCallOver: 'Szef się rozłączył',
+      raid: (n: number) => `Nalot botów: ${n} teczek`,
+      correction: 'Sprostowanie',
+      down: 'Awaria',
+    },
+    /** One-line hints (guidance bubble) for tagged folders. */
+    hint: {
+      viral: 'Viral! Sprawdź, zanim urośnie',
+      bossCall: 'Szef dzwoni — sprawdź najpierw!',
+      botRaid: 'Nalot! Jeden werdykt na wszystkie',
+      correction: 'Sprostowanie — zanieś na stół!',
+      stationDown: 'Stanowisko nie działa — zaczekaj',
+    },
+    /** Station overlay refused on a station that is down. */
+    stationDown: 'Awaria!',
+    /** Desk sheet for a correction folder. */
+    correction: {
+      title: 'Sprostowanie',
+      line: 'Opublikowany materiał był zmanipulowany',
+      button: 'Opublikuj sprostowanie',
+      recover: (n: number) => `Odzyskasz ${n} Wiarygodności`,
+    },
   },
   /** Level results (S2-08/S2-09). */
   results: {
@@ -665,6 +852,51 @@ export const pl = {
     prev: 'Poprzednia teczka',
     next: 'Następna teczka',
     position: (n: number, total: number) => `${n} z ${total}`,
+  },
+  /** Endless mode (S4-11): campaign card, briefing, HUD chip, results and the leaderboard. */
+  endless: {
+    title: 'Tryb bez końca',
+    pitch: 'Im dłużej, tym szybciej',
+    /** The only line of the briefing; there is no topic. */
+    briefing: 'Bez końca – im dłużej, tym szybciej',
+    briefingKicker: 'Bez końca',
+    tileHint: 'Rekord czeka',
+    locked: 'Zdobądź gwiazdkę na poziomie 1',
+    tileLabel: (best: string | null, locked: boolean) =>
+      locked
+        ? 'Tryb bez końca, zamknięty: zdobądź gwiazdkę na poziomie 1'
+        : `Tryb bez końca${best ? `, najlepszy wynik ${best}` : ''}`,
+    timer: 'Czas gry',
+    tempo: (n: number) => `Tempo ×${n}`,
+    tempoLabel: (n: number) => `Tempo: ${n} razy szybciej`,
+    headline: (score: string) => `Redakcja upadła – wynik: ${score}`,
+    lede: 'Spróbujcie jeszcze raz!',
+    score: 'Wynik',
+    survived: 'Czas gry',
+    best: 'Najlepszy wynik',
+    newRecord: 'Nowy rekord!',
+    noBest: 'Pierwszy wynik!',
+    tabs: { label: 'Wyniki i teczki', debrief: 'Teczki', room: 'Pokój', global: 'Wszyscy' },
+  },
+  /** Endless leaderboard (lobby button, dialog and the results tabs). */
+  leaderboard: {
+    title: 'Najlepsze wyniki',
+    open: 'Wyniki',
+    close: 'Zamknij wyniki',
+    done: 'Gotowe',
+    scopeLabel: 'Którzy gracze',
+    room: 'Pokój',
+    global: 'Wszyscy',
+    loading: 'Wczytuję wyniki…',
+    empty: 'Jeszcze pusto. Zagrajcie pierwsi!',
+    error: 'Nie udało się wczytać wyników.',
+    retry: 'Spróbuj ponownie',
+    you: 'To wy',
+    rank: (n: number) => `Miejsce ${n}`,
+    row: (rank: number, players: string, score: string, time: string) =>
+      `${rank}. ${players}: ${score} pkt, ${time}`,
+    listLabel: (scope: 'room' | 'global') =>
+      scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich',
   },
 } as const;
 

@@ -1,0 +1,325 @@
+/*
+ * Biblioteka danych: a quoted figure (newspaper cut-out) next to the original table. Cells are
+ * big white tiles; the average column is tinted. A wrong cell is struck out in red, the right
+ * one turns green. The one yellow action is „Nie pasuje”.
+ */
+.root {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-3);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* Narrow: claim, table, button stacked. */
+.body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Wide / landscape: claim and button on the left, the table on the right. */
+@container (min-width: 34rem) {
+  .body {
+    grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+    grid-template-areas:
+      "claim table"
+      "foot table";
+    grid-template-rows: auto 1fr;
+    align-items: start;
+  }
+
+  .claim {
+    grid-area: claim;
+  }
+
+  .tableWrap {
+    grid-area: table;
+  }
+
+  .foot {
+    grid-area: foot;
+    align-self: end;
+  }
+}
+
+/* --- The quoted figure ---------------------------------------------------------------- */
+
+.claim {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  color: var(--text);
+}
+
+.claimTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+.claimWhat {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.claimFigure {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.claimUnit {
+  font-size: var(--text-md);
+  white-space: nowrap;
+}
+
+/* --- The original table --------------------------------------------------------------- */
+
+.tableWrap {
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+  color: var(--text);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: var(--space-1);
+  table-layout: fixed;
+}
+
+.caption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0 var(--space-3);
+  padding-bottom: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  color: var(--text);
+}
+
+.unit {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+.table th {
+  padding: 0 var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.table thead th {
+  text-align: center;
+}
+
+.table tbody th {
+  width: 26%;
+  text-align: left;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.table td {
+  padding: 0;
+}
+
+/* One tile per number. */
+.cell {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0 var(--space-1);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 3px 0 var(--outline);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.cell[data-average="true"] {
+  background: var(--surface-soft);
+}
+
+.cell:disabled {
+  cursor: default;
+}
+
+.cell:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: var(--pop-pressed);
+}
+
+/* Keyboard/gamepad cursor: blue outline and a lift. */
+.cell[data-focused="true"],
+.cell:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 0;
+  transform: translateY(-2px);
+}
+
+/* Wrong: struck out in red. */
+.cell[data-struck="true"] {
+  background: var(--surface-sunk);
+  border-color: var(--red-dark);
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 3px;
+}
+
+/* Right: green tile. After a failure the answer is shown dashed. */
+.cell[data-right="true"] {
+  background: var(--green);
+  border-color: var(--green-dark);
+  color: var(--text);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+.cell[data-revealed="true"] {
+  border-style: dashed;
+  border-color: var(--green-dark);
+  background: var(--surface);
+  outline: 3px solid var(--green);
+  outline-offset: 0;
+}
+
+/* --- The main action -------------------------------------------------------------------- */
+
+.foot {
+  display: grid;
+}
+
+.mismatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 3.75rem;
+  padding: var(--space-3) var(--space-5);
+  background: var(--yellow);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop-lg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-xl);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.mismatch:hover {
+  transform: translateY(-1px);
+}
+
+.mismatch:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.mismatch[data-focused="true"],
+.mismatch:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* Already tried and wrong: dimmed, no second penalty. */
+.mismatch[data-struck="true"] {
+  background: var(--surface-sunk);
+  box-shadow: var(--pop);
+  color: var(--text-soft);
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+:global(:root[data-reduced-motion="true"]) .cell[data-right="true"] {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell[data-right="true"] {
+    animation: none;
+  }
+}
+
+/* Short landscape phones: tighter tiles so title, table, button and task fit without scrolling. */
+@media (max-height: 430px) {
+  .root,
+  .body {
+    gap: var(--space-2);
+  }
+
+  .claim {
+    padding: var(--space-2);
+  }
+
+  .claimFigure {
+    font-size: var(--text-lg);
+  }
+
+  .tableWrap {
+    padding: var(--space-1) var(--space-2) var(--space-2);
+  }
+
+  .table {
+    border-spacing: 3px;
+  }
+
+  .cell {
+    min-height: var(--touch-target);
+    font-size: var(--text-md);
+  }
+
+  .mismatch {
+    min-height: 3.25rem;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-lg);
+  }
+}

@@ -1,5 +1,6 @@
 // Verification stations: occupancy, hold-to-work, minigame round, stamps, lockout (S2-03).
-// Emits: workStarted, workCancelled, minigameStarted, minigameFailed, stampApplied.
+// Emits: workStarted, workCancelled, minigameStarted, minigameFailed, stampApplied, and the end
+// of an outage levelEvent (S4-08: a station with outageMs > 0 accepts no work).
 // Consumes commands: minigameResult, cancel (when operating a station).
 import {
   MINIGAME_FAIL_LOCKOUT_MS,
@@ -93,6 +94,27 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
     // Each folder lies on one fixture, so earlier stations' stamp writes never affect this one.
     const folder = folderOnFixture(state, stationId);
     const operatorId = station.operatorId;
+
+    if (station.outageMs > 0) {
+      // A down station accepts no work: the operator is kicked out, the countdown runs.
+      const outageMs = Math.max(0, station.outageMs - dtMs);
+      if (operatorId !== null) {
+        operators.delete(operatorId);
+        frame.events.push({ kind: 'workCancelled', stationId, playerId: operatorId });
+      }
+      if (outageMs === 0) {
+        frame.events.push({
+          kind: 'levelEvent',
+          event: 'outage',
+          phase: 'end',
+          folderIds: [],
+          stationId,
+        });
+      }
+      stations[stationId] = { ...idleStation(station), outageMs };
+      changed = true;
+      continue;
+    }
 
     switch (station.phase) {
       case 'idle': {

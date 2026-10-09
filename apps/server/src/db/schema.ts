@@ -2,25 +2,23 @@
 // here (AGENTS.md rule 9). After changing this file run `bun run db:generate`.
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-export const gameModes = ['campaign', 'endless'] as const;
-export type GameMode = (typeof gameModes)[number];
-
+/** Endless-mode leaderboard (S4-11): one row per finished run. Nicknames only, no other data. */
 export const leaderboardEntries = sqliteTable(
   'leaderboard_entries',
   {
     id: integer().primaryKey({ autoIncrement: true }),
     roomCode: text().notNull(),
-    mode: text({ enum: gameModes }).notNull(),
-    levelId: text().notNull(),
+    players: text({ mode: 'json' }).$type<string[]>().notNull(),
     score: integer().notNull(),
-    /** Nicknames only — no other personal data. */
-    nicknames: text({ mode: 'json' }).$type<string[]>().notNull(),
+    /** Whole seconds the newsroom survived. */
+    survivedS: integer().notNull(),
     createdAt: integer({ mode: 'timestamp_ms' })
       .notNull()
       .$defaultFn(() => new Date()),
   },
   (table) => [
-    index('leaderboard_mode_score_idx').on(table.mode, table.score),
+    index('leaderboard_score_idx').on(table.score),
+    index('leaderboard_room_idx').on(table.roomCode),
     index('leaderboard_created_at_idx').on(table.createdAt),
   ],
 );

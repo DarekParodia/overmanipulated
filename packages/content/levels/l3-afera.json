@@ -1,0 +1,128 @@
+{
+  "id": "l3-afera",
+  "title": "Afera w szkole",
+  "topic": "Viral o dyrektorze liceum",
+  "briefingPoints": [
+    "Sieć huczy: afera wokół dyrektora liceum.",
+    "Telefon: zapytaj źródło pierwotne.",
+    "Viral: „wszyscy to widzą” to nie dowód."
+  ],
+  "briefing": "Sieć huczy od plotek o dyrektorze liceum, a posty mnożą się w oczach. Przy stole z telefonem możecie zadzwonić do źródła pierwotnego: szkoły, kuratorium, autora. Uwaga na „To już wszędzie jest!”: liczba udostępnień rośnie, ale nie jest dowodem.",
+  "durationS": 420,
+  "layout": [
+    "####################",
+    "#CCCCC..=I==R=..=A=#",
+    "#..................#",
+    "#.T...1......2...T.#",
+    "#..................#",
+    "#......T=DD=T......#",
+    "#.==....====....==.#",
+    "#..................#",
+    "#...3....=P=....4..#",
+    "#..................#",
+    "#..==..........==..#",
+    "####################"
+  ],
+  "stations": ["imageSearch", "sourceRegistry", "archive", "phone"],
+  "schedule": [
+    {
+      "atS": 4,
+      "storyId": "l3-dzien-otwarty",
+      "deadlineS": 70
+    },
+    {
+      "atS": 28,
+      "storyId": "l3-dyrektor-zwolniony",
+      "deadlineS": 85
+    },
+    {
+      "atS": 52,
+      "storyId": "l3-screen-wiadomosci",
+      "deadlineS": 60
+    },
+    {
+      "atS": 76,
+      "storyId": "l3-regulamin-telefonow",
+      "deadlineS": 80
+    },
+    {
+      "atS": 100,
+      "storyId": "l3-koperta-z-pieniedzmi",
+      "deadlineS": 75
+    },
+    {
+      "atS": 124,
+      "storyId": "l3-petycja-poparcia",
+      "deadlineS": 85
+    },
+    {
+      "atS": 148,
+      "storyId": "l3-wszyscy-wiedza",
+      "deadlineS": 55
+    },
+    {
+      "atS": 172,
+      "storyId": "l3-najgorsze-liceum",
+      "deadlineS": 80
+    },
+    {
+      "atS": 196,
+      "storyId": "l3-satyra-poniedzialki",
+      "deadlineS": 80
+    },
+    {
+      "atS": 220,
+      "storyId": "l3-kontrola-kuratorium",
+      "deadlineS": 70
+    },
+    {
+      "atS": 244,
+      "storyId": "l3-szkola-zamknieta",
+      "deadlineS": 50
+    },
+    {
+      "atS": 268,
+      "storyId": "l3-nagranie-krzykow",
+      "deadlineS": 80
+    },
+    {
+      "atS": 292,
+      "storyId": "l3-oswiadczenie-dyrektora",
+      "deadlineS": 75
+    },
+    {
+      "atS": 316,
+      "storyId": "l3-screen-z-gazety",
+      "deadlineS": 70
+    },
+    {
+      "atS": 340,
+      "storyId": "l3-apel-o-spokoj",
+      "deadlineS": 60
+    }
+  ],
+  "events": [
+    {
+      "kind": "viral",
+      "atS": 92,
+      "storyId": "l3-viral-ukryta-kontrola",
+      "deadlineS": 65
+    },
+    {
+      "kind": "viral",
+      "atS": 200,
+      "storyId": "l3-viral-pakuje-sie",
+      "deadlineS": 60
+    },
+    {
+      "kind": "viral",
+      "atS": 304,
+      "storyId": "l3-viral-pozegnanie",
+      "deadlineS": 60
+    }
+  ],
+  "stars": {
+    "two": 240,
+    "three": 330
+  }
+}

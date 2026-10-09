@@ -1,0 +1,128 @@
+{
+  "id": "l5-deepfake",
+  "title": "Głęboka podróbka",
+  "topic": "Nagranie burmistrza",
+  "briefingPoints": [
+    "Skaner AI: tylko podpowiedź, może się mylić.",
+    "Telefon i Archiwum rozstrzygają sprawę.",
+    "Szef krzyczy „publikuj”? Najpierw sprawdź."
+  ],
+  "briefing": "W Nowych Brzegach krążą nagrania i zdjęcia burmistrza. Skaner AI ocenia, czy materiał wygenerował program, ale to tylko szacunek z marginesem błędu. Prawdziwe źródło potwierdzą Telefon, Archiwum i Kartoteka. Uwaga: szef będzie żądał natychmiastowej publikacji!",
+  "durationS": 420,
+  "layout": [
+    "####################",
+    "#CCCCC.=I=.=S=.=R=.#",
+    "#..................#",
+    "#.T...1......2...T.#",
+    "#..................#",
+    "#......T=DD=T......#",
+    "#.==....====....==.#",
+    "#..................#",
+    "#...3..........4...#",
+    "#..................#",
+    "#..=A=......=P=....#",
+    "####################"
+  ],
+  "stations": ["imageSearch", "aiScanner", "sourceRegistry", "phone", "archive"],
+  "schedule": [
+    {
+      "atS": 4,
+      "storyId": "l5-nagranie-podatek",
+      "deadlineS": 80
+    },
+    {
+      "atS": 28,
+      "storyId": "l5-przemowa-na-rynku",
+      "deadlineS": 90
+    },
+    {
+      "atS": 52,
+      "storyId": "l5-burmistrz-na-jachcie",
+      "deadlineS": 80
+    },
+    {
+      "atS": 76,
+      "storyId": "l5-wolne-tempo",
+      "deadlineS": 85
+    },
+    {
+      "atS": 100,
+      "storyId": "l5-glosowka-przelew",
+      "deadlineS": 55
+    },
+    {
+      "atS": 124,
+      "storyId": "l5-przecinanie-wstegi",
+      "deadlineS": 80
+    },
+    {
+      "atS": 148,
+      "storyId": "l5-wyciety-cytat",
+      "deadlineS": 85
+    },
+    {
+      "atS": 172,
+      "storyId": "l5-wideo-ewakuacja",
+      "deadlineS": 55
+    },
+    {
+      "atS": 196,
+      "storyId": "l5-komunikat-budzet",
+      "deadlineS": 80
+    },
+    {
+      "atS": 220,
+      "storyId": "l5-zdjecie-sprzed-lat",
+      "deadlineS": 85
+    },
+    {
+      "atS": 244,
+      "storyId": "l5-glosowka-radnej",
+      "deadlineS": 85
+    },
+    {
+      "atS": 268,
+      "storyId": "l5-parodia-rap",
+      "deadlineS": 85
+    },
+    {
+      "atS": 292,
+      "storyId": "l5-tlum-na-wiecu",
+      "deadlineS": 80
+    },
+    {
+      "atS": 316,
+      "storyId": "l5-wywiad-radio",
+      "deadlineS": 80
+    },
+    {
+      "atS": 340,
+      "storyId": "l5-wideo-obietnica",
+      "deadlineS": 70
+    }
+  ],
+  "events": [
+    {
+      "kind": "bossCall",
+      "atS": 90,
+      "storyId": "l5-boss-obwodnica",
+      "deadlineS": 60
+    },
+    {
+      "kind": "outage",
+      "atS": 170,
+      "station": "aiScanner",
+      "durationS": 20
+    },
+    {
+      "kind": "bossCall",
+      "atS": 250,
+      "storyId": "l5-boss-dymisja",
+      "deadlineS": 60
+    }
+  ],
+  "stars": {
+    "two": 205,
+    "three": 300
+  }
+}

@@ -1,0 +1,587 @@
+[
+  {
+    "id": "l2-debata-w-ratuszu",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Debata kandydatów na prezydenta miasta w sobotę o 18:00",
+    "body": "Komisja wyborcza zaprasza na debatę w sali ratusza. Wejście wolne, transmisja w lokalnym radiu.",
+    "source": "Komunikat Miejskiej Komisji Wyborczej",
+    "stamps": [
+      {
+        "id": "l2-debata-w-ratuszu-image",
+        "station": "imageSearch",
+        "text": "Komunikat nie zawiera zdjęcia, tylko plakat z datą i godziną.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-debata-w-ratuszu-archive",
+        "station": "archive",
+        "text": "W archiwum są ogłoszenia o poprzednich debatach, ale nic o tej.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-debata-w-ratuszu-source",
+        "station": "sourceRegistry",
+        "text": "Komunikat pochodzi z oficjalnego profilu komisji. Ta sama data jest na stronie ratusza.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-debata-w-ratuszu-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy komunikat komisji wyborczej o debacie kandydatów.",
+      "technique": "Brak manipulacji. W kampanii większość informacji jest zwyczajna, a nudne komunikaty też trzeba szybko publikować.",
+      "tool": "Kartoteka źródeł: oficjalny profil komisji i ta sama data na stronie ratusza.",
+      "realWorld": "Terminy debat i wyborów ogłaszają komisje wyborcze oraz urzędy. Warto je sprawdzić u źródła, zanim ktoś przerobi plakat."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-cytat-o-liceach",
+    "type": "quote",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Kandydatka Szelągowska: „Zamknę połowę liceów w mieście”",
+    "body": "Grafika z jej zdjęciem i cytatem obiega grupy rodziców. Podpis: „Tak mówiła na wczorajszym spotkaniu z mieszkańcami”.",
+    "source": "Grafika z komunikatora",
+    "stamps": [
+      {
+        "id": "l2-cytat-o-liceach-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie kandydatki jest prawdziwe, z jej strony kampanijnej. Cytat dodano później.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l2-cytat-o-liceach-archive",
+        "station": "archive",
+        "text": "Zapis całego spotkania z mieszkańcami: nie padły tam takie słowa ani nic podobnego.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-cytat-o-liceach-source",
+        "station": "sourceRegistry",
+        "text": "Autor grafiki to anonimowe konto, które nie opublikowało nic innego.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l2-cytat-o-liceach-archive"],
+    "technique": "zmyslony-cytat",
+    "debrief": {
+      "what": "Zmyślony cytat doklejony do prawdziwego zdjęcia kandydatki. Nic takiego nie zostało powiedziane.",
+      "technique": "Zmyślony cytat: autentyczna twarz i miejsce uwiarygadniają zdanie, którego nikt nie wypowiedział.",
+      "tool": "Archiwum: pełny zapis spotkania nie zawiera tych słów.",
+      "realWorld": "Grafiki z „cytatami” polityków łatwo zrobić w minutę. Zanim uznasz słowa za prawdziwe, szukaj nagrania albo stenogramu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-podatki-wyrwane-z-kontekstu",
+    "type": "quote",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Orzechowski: „Podatki trzeba podnieść”",
+    "body": "Krótki fragment wystąpienia kandydata trafił do sieci z komentarzem: „Chce nas obłożyć nowymi podatkami!”.",
+    "source": "Filmik na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l2-podatki-wyrwane-z-kontekstu-image",
+        "station": "imageSearch",
+        "text": "Kadr z filmiku jest autentyczny, to wystąpienie z zeszłego tygodnia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-podatki-wyrwane-z-kontekstu-archive",
+        "station": "archive",
+        "text": "Pełne nagranie: „Podatki trzeba podnieść, jeśli nic nie zmienimy – ale ja chcę oszczędności”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-podatki-wyrwane-z-kontekstu-source",
+        "station": "sourceRegistry",
+        "text": "Autor filmiku to znany mieszkaniec, aktywny od lat. To jeszcze nie znaczy, że cytat jest pełny.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-podatki-wyrwane-z-kontekstu-archive"],
+    "technique": "cytat-wyrwany-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe zdanie kandydata, ucięte w połowie. W całości mówiło coś odwrotnego.",
+      "technique": "Cytat wyrwany z kontekstu: słowa są autentyczne, ale po obcięciu początku i końca zmieniają sens.",
+      "tool": "Archiwum: pełne nagranie wystąpienia pokazuje, co było przed zdaniem i po nim.",
+      "realWorld": "Krótkie fragmenty wypowiedzi to ulubiony materiał kampanijnych kłótni. Dobra redakcja zawsze sprawdza całość."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-sondaz-bez-pracowni",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Sondaż: 72% mieszkańców za Orzechowskim",
+    "body": "Kolorowy wykres z logo „Pracowni Opinii” pokazuje miażdżącą przewagę kandydata. Udostępniono go już tysiące razy.",
+    "source": "Wykres z portalu społecznościowego",
+    "stamps": [
+      {
+        "id": "l2-sondaz-bez-pracowni-image",
+        "station": "imageSearch",
+        "text": "Logo „Pracowni Opinii” wygląda oficjalnie, ale to kopia grafiki z innej strony.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l2-sondaz-bez-pracowni-archive",
+        "station": "archive",
+        "text": "W archiwum nie ma żadnych sondaży z takimi wynikami.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-sondaz-bez-pracowni-source",
+        "station": "sourceRegistry",
+        "text": "Pracownia Opinii nie opublikowała tego sondażu. Wykres dodało konto sztabu kandydata.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-sondaz-bez-pracowni-source"],
+    "technique": "falszywy-sondaz",
+    "debrief": {
+      "what": "Sondaż, którego nikt nie przeprowadził. Wykres z wymyślonymi liczbami podpisano logiem prawdziwej pracowni.",
+      "technique": "Fałszywy sondaż: liczby, procenty i logo dają pozór nauki, ale nie ma metody ani badanych.",
+      "tool": "Kartoteka źródeł: pracownia nie ma tego wyniku, a wykres dodało zainteresowane konto.",
+      "realWorld": "Przed wyborami krążą „sondaże” robione na zamówienie. Prawdziwy sondaż ma opis metody, próby i daty badania."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-ankieta-na-stu-osobach",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Wyniki: 64% za kandydatką Szelągowską",
+    "body": "Ankieta w sieci pokazuje wyraźną przewagę kandydatki. W opisie mała czcionka: „odpowiedziało 97 osób”.",
+    "source": "Ankieta na stronie lokalnego bloga",
+    "stamps": [
+      {
+        "id": "l2-ankieta-na-stu-osobach-image",
+        "station": "imageSearch",
+        "text": "Wykres to zwykły zrzut ekranu z narzędzia do ankiet.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-ankieta-na-stu-osobach-archive",
+        "station": "archive",
+        "text": "Ta sama ankieta była już wypełniana w innej wersji: wyniki zależą od tego, kto ją dostał.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-ankieta-na-stu-osobach-source",
+        "station": "sourceRegistry",
+        "text": "Blog jest prawdziwy i prowadzony od lat. Autorka nie ukrywa, że ankieta jest dla zabawy.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-ankieta-na-stu-osobach-archive"],
+    "technique": "falszywy-sondaz",
+    "debrief": {
+      "what": "Prawdziwa ankieta, ale na 97 chętnych osobach z bloga. Nie pokazuje opinii mieszkańców.",
+      "technique": "Fałszywy sondaż w łagodnej wersji: liczby są prawdziwe, tylko próba jest mała i nieprzypadkowa.",
+      "tool": "Archiwum: starsza wersja tej ankiety pokazała zupełnie inne wyniki w innym gronie.",
+      "realWorld": "Ankiety w sieci wypełniają zwykle ci, którzy mają zdanie. Sondaż wymaga losowej próby i opisu metody."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-wiec-na-rynku",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Tłum na wiecu kandydata Wierzchowskiego na Rynku",
+    "body": "Czytelnik przysłał zdjęcie pełnego Rynku. Podpis: „Wiec zakończył się godzinę temu, ludzie jeszcze stoją”.",
+    "source": "Zdjęcie od czytelnika",
+    "stamps": [
+      {
+        "id": "l2-wiec-na-rynku-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 19:40, Rynek w Nowych Brzegach.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-wiec-na-rynku-archive",
+        "station": "archive",
+        "text": "Archiwum ma zdjęcia Rynku z innych wydarzeń, ale nie z tego dnia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-wiec-na-rynku-source",
+        "station": "sourceRegistry",
+        "text": "Autor to stały czytelnik. Sztab kandydata potwierdza termin i miejsce wiecu.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-wiec-na-rynku-image", "l2-wiec-na-rynku-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie z wiecu, potwierdzone przez sztab.",
+      "technique": "Brak manipulacji. Zdjęcie tłumu nie musi być wyreżyserowane ani stare.",
+      "tool": "Lupa obrazu: brak starszych kopii i zgodne metadane. Kartoteka źródeł: znany czytelnik.",
+      "realWorld": "Zdjęcia z wieców bywają i prawdziwe, i podmieniane. Szukaj starszych kopii oraz sprawdź, kto je zrobił."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-puste-krzesla",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Wiec Szelągowskiej: sala świeciła pustkami!",
+    "body": "Zdjęcie pustej sali z hasłem kandydatki krąży z komentarzem: „Nikt nie przyszedł, kampania upada”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l2-puste-krzesla-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie zrobiono godzinę przed wiecem, podczas ustawiania krzeseł. Pełna sala jest na późniejszych ujęciach.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-puste-krzesla-archive",
+        "station": "archive",
+        "text": "W archiwum nie ma materiałów z tej sali z ostatnich miesięcy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-puste-krzesla-source",
+        "station": "sourceRegistry",
+        "text": "Autor posta jest zwykłym użytkownikiem, ale nie był na wiecu.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-puste-krzesla-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie, tylko zrobione zbyt wcześnie. Wiec odbył się później i zgromadził ludzi.",
+      "technique": "Zdjęcie w złym czasie: autentyczny kadr z innej chwili pokazuje coś innego niż podpis.",
+      "tool": "Lupa obrazu: metadane i inne zdjęcia z dnia pokazują, że wykonano je przed wiecem.",
+      "realWorld": "W kampaniach często pokazuje się „puste sale” albo „tłumy” z niewłaściwej chwili. Czas wykonania zdjęcia ma znaczenie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-sciezki-rowerowe",
+    "type": "quote",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Wierzchowski obiecywał ścieżki rowerowe już w 2022 r.",
+    "body": "Mieszkaniec przypomina zdanie kandydata sprzed lat: „Ścieżka nad rzeką powstanie w pierwszej kadencji”.",
+    "source": "Wiadomość od czytelnika",
+    "stamps": [
+      {
+        "id": "l2-sciezki-rowerowe-image",
+        "station": "imageSearch",
+        "text": "Do wiadomości nie dołączono zdjęcia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-sciezki-rowerowe-archive",
+        "station": "archive",
+        "text": "Archiwum ma wywiad z 2022 r. z tym samym zdaniem, w pełnym kontekście.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-sciezki-rowerowe-source",
+        "station": "sourceRegistry",
+        "text": "Czytelnik ma konto od tygodnia. Samo to nie dowodzi, że się myli.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-sciezki-rowerowe-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy cytat z wywiadu z 2022 r., przypomniany czytelnikom przed wyborami.",
+      "technique": "Brak manipulacji. Nowe konto nie oznacza fałszywej informacji, trzeba sprawdzić samą treść.",
+      "tool": "Archiwum: wywiad z 2022 r. potwierdza słowa i ich kontekst.",
+      "realWorld": "Przypominanie dawnych obietnic to zwykła praca redakcji. Zawsze szukaj oryginału, nie cudzego przytoczenia."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-uciety-wywiad",
+    "type": "article",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Szelągowska o szkołach: „Nie obiecam żadnych zmian”",
+    "body": "Fragment rozmowy w internetowym radiu jest cytowany jako przyznanie się do braku planu. Kandydatka milczy.",
+    "source": "Skrót wywiadu na blogu",
+    "stamps": [
+      {
+        "id": "l2-uciety-wywiad-image",
+        "station": "imageSearch",
+        "text": "Ilustracją jest zdjęcie z mikrofonem, pobrane z banku grafik.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-uciety-wywiad-archive",
+        "station": "archive",
+        "text": "W pełnym wywiadzie dodaje: „…bez wcześniejszych rozmów z nauczycielami. Najpierw ich wysłucham”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-uciety-wywiad-source",
+        "station": "sourceRegistry",
+        "text": "Blog jest zarejestrowany i prowadzony od lat, ale skrót nie zawiera całej rozmowy.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-uciety-wywiad-archive"],
+    "technique": "cytat-wyrwany-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwy fragment wywiadu, z którego usunięto połowę zdania. Kandydatka wcale nie rezygnowała z planów.",
+      "technique": "Cytat wyrwany z kontekstu: skrót zmienia sens, mimo że każde słowo jest prawdziwe.",
+      "tool": "Archiwum: pełny zapis wywiadu pokazuje cały sens wypowiedzi.",
+      "realWorld": "Skróty wywiadów w sieci często służą do wywołania oburzenia. Pełne nagranie zwykle jest dostępne w archiwum stacji."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-metro-do-brzegow",
+    "type": "article",
+    "priority": "normal",
+    "truth": "satire",
+    "correctVerdict": "publishWithContext",
+    "headline": "Orzechowski obiecuje metro do Nowych Brzegów",
+    "body": "„Pod rzeką pociągnę linię, a stacje będą ogrzewane”. Tekst udostępniają jako prawdziwą obietnicę wyborczą.",
+    "source": "Portal „Brzeski Szpikulec”",
+    "stamps": [
+      {
+        "id": "l2-metro-do-brzegow-image",
+        "station": "imageSearch",
+        "text": "Ilustracja z wagonem pochodzi z darmowego banku grafik.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-metro-do-brzegow-archive",
+        "station": "archive",
+        "text": "W archiwum nie ma takiej obietnicy, ale też nic jej nie zaprzecza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-metro-do-brzegow-source",
+        "station": "sourceRegistry",
+        "text": "„Brzeski Szpikulec” w zakładce „O nas” przedstawia się jako portal satyryczny.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-metro-do-brzegow-source"],
+    "technique": "satyra-brana-na-powaznie",
+    "debrief": {
+      "what": "Żart portalu satyrycznego o wyborczych obietnicach, który część czytelników wzięła poważnie.",
+      "technique": "Satyra brana na poważnie: po udostępnieniu poza stroną autora znika znak, że to żart.",
+      "tool": "Kartoteka źródeł: portal sam opisuje się jako satyryczny.",
+      "realWorld": "W czasie kampanii łatwo uznać żart za program. Zawsze sprawdzaj, czy portal nie jest satyryczny."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-sondaz-pracowni",
+    "type": "statistic",
+    "priority": "urgent",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Nowy sondaż: Wierzchowski i Szelągowska prawie łeb w łeb",
+    "body": "Pracownia „Opinia Brzeska” podaje 41% do 39%. Zbadano 1000 mieszkańców, błąd to 3 punkty procentowe.",
+    "source": "Komunikat pracowni badawczej „Opinia Brzeska”",
+    "stamps": [
+      {
+        "id": "l2-sondaz-pracowni-image",
+        "station": "imageSearch",
+        "text": "Wykres jest zwykłym wykresem słupkowym bez ozdobników.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-sondaz-pracowni-archive",
+        "station": "archive",
+        "text": "Archiwum ma poprzednie sondaże pracowni, ale nie ten.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-sondaz-pracowni-source",
+        "station": "sourceRegistry",
+        "text": "Pracownia działa od 10 lat i podaje próbę oraz metodę. Wyniki są na jej stronie.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-sondaz-pracowni-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy sondaż pracowni, z opisem próby, metody i błędu.",
+      "technique": "Brak manipulacji. Prawdziwy sondaż pokazuje metodę, więc można ocenić jego wartość.",
+      "tool": "Kartoteka źródeł: znana pracownia z opublikowaną metodą i dokładnie tymi liczbami na stronie.",
+      "realWorld": "Wiarygodne sondaże podają liczbę badanych, termin i margines błędu. Brak tych informacji to powód do ostrożności."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-nagranie-z-parkingu",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "unverifiable",
+    "correctVerdict": "reject",
+    "headline": "Nagranie: kandydat przyjmuje pieniądze od dewelopera?",
+    "body": "Rozmowa z parkingu, w tle słychać męski głos. Nadawca podpisał się: „Ktoś z ratusza”. Brak daty.",
+    "source": "Anonimowy plik z komunikatora",
+    "stamps": [
+      {
+        "id": "l2-nagranie-z-parkingu-image",
+        "station": "imageSearch",
+        "text": "Do nagrania nie dołączono obrazu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-nagranie-z-parkingu-archive",
+        "station": "archive",
+        "text": "Brak podobnego nagrania w archiwum. Głosu i miejsca nie da się potwierdzić.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-nagranie-z-parkingu-source",
+        "station": "sourceRegistry",
+        "text": "Nadawcy nie da się ustalić. Żadna instytucja nie potwierdza tej sprawy.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-nagranie-z-parkingu-source", "l2-nagranie-z-parkingu-archive"],
+    "technique": "anonimowy-informator",
+    "debrief": {
+      "what": "Anonimowe nagranie bez daty, miejsca i autora. Nie da się go ani potwierdzić, ani obalić.",
+      "technique": "Anonimowy informator: poważne oskarżenie bez nazwiska i dowodów brzmi sensacyjnie, ale nie da się go sprawdzić.",
+      "tool": "Kartoteka źródeł i Archiwum: brak nadawcy, daty i zgodnych materiałów.",
+      "realWorld": "Przed wyborami krążą „kompromitujące nagrania”. Bez autora i potwierdzenia nie publikuje się oskarżeń o korupcję."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-rezygnacja-kandydata",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Wierzchowski: „Wycofuję się z wyborów”",
+    "body": "Post z logiem sztabu, cytat: „Rezygnuję z kandydowania, głosujcie na kogoś innego”. Kilkaset udostępnień w godzinę.",
+    "source": "Konto „Sztab_Wierzchowski”",
+    "stamps": [
+      {
+        "id": "l2-rezygnacja-kandydata-image",
+        "station": "imageSearch",
+        "text": "Logo sztabu to kopia z oficjalnej strony kandydata.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l2-rezygnacja-kandydata-archive",
+        "station": "archive",
+        "text": "W archiwum nie ma żadnego wystąpienia o rezygnacji.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-rezygnacja-kandydata-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone wczoraj, bez weryfikacji. Prawdziwy profil sztabu zaprzecza rezygnacji.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-rezygnacja-kandydata-source"],
+    "technique": "zmyslony-cytat",
+    "debrief": {
+      "what": "Fałszywy post z wymyślonym cytatem o wycofaniu się. Kandydat nadal startuje.",
+      "technique": "Zmyślony cytat na fałszywym koncie: logo i nazwa sztabu uwiarygadniają słowa, których nikt nie powiedział.",
+      "tool": "Kartoteka źródeł: nowe, niezweryfikowane konto, a prawdziwy profil sztabu zaprzecza.",
+      "realWorld": "Wiadomości o „rezygnacji” rozsyłają się szybko, bo zmieniają decyzje wyborców. Warto zajrzeć na oficjalny profil."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-frekwencja-wyborcza",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Frekwencja w Nowych Brzegach: 48% do godz. 17:00",
+    "body": "Miejska komisja podała wynik cząstkowy. To o sześć punktów więcej niż w poprzednich wyborach o tej porze.",
+    "source": "Komunikat Miejskiej Komisji Wyborczej",
+    "stamps": [
+      {
+        "id": "l2-frekwencja-wyborcza-image",
+        "station": "imageSearch",
+        "text": "Do komunikatu dołączono tylko wykres bez ozdobników.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-frekwencja-wyborcza-archive",
+        "station": "archive",
+        "text": "Archiwum ma frekwencję z poprzednich wyborów, ale z innej pory dnia. Trzeba uważać.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l2-frekwencja-wyborcza-source",
+        "station": "sourceRegistry",
+        "text": "Oficjalny profil komisji, liczby zgodne z komunikatem na stronie ratusza.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l2-frekwencja-wyborcza-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy wynik cząstkowy frekwencji, podany przez komisję.",
+      "technique": "Brak manipulacji. Uważaj na porównania, bo frekwencja o różnej porze dnia nie jest porównywalna.",
+      "tool": "Kartoteka źródeł: oficjalny profil komisji i zgodna strona ratusza.",
+      "realWorld": "Dane o frekwencji publikuje komisja wyborcza. Media powinny podawać źródło i porę, o której zrobiono pomiar."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-przerobione-banery",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Szelągowska pod sztandarem z hasłem „Wyprzedaż szkół”",
+    "body": "Zdjęcie z wiecu: za kandydatką widać wielki baner z napisem. Komentarze mówią o skandalu.",
+    "source": "Zdjęcie na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l2-przerobione-banery-image",
+        "station": "imageSearch",
+        "text": "Oryginał zdjęcia ma baner z hasłem kampanii. Napis zmieniono w programie graficznym.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-przerobione-banery-archive",
+        "station": "archive",
+        "text": "Archiwum ma inne ujęcia z tego wiecu, bez wzmianki o takim haśle.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-przerobione-banery-source",
+        "station": "sourceRegistry",
+        "text": "Autor posta to znany mieszkaniec. Mógł nie wiedzieć, że zdjęcie przerobiono.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-przerobione-banery-image"],
+    "technique": "zmanipulowane-zdjecie",
+    "debrief": {
+      "what": "Przerobione zdjęcie: na prawdziwej fotografii z wiecu zmieniono napis na banerze.",
+      "technique": "Zmanipulowane zdjęcie: autentyczna scena z podmienionym szczegółem robi z hasła skandal.",
+      "tool": "Lupa obrazu: porównanie z oryginałem pokazuje inny napis i ślady edycji.",
+      "realWorld": "Przeróbki zdjęć przed wyborami są coraz łatwiejsze. Warto zawsze znaleźć najstarszą wersję obrazu."
+    },
+    "reviewed": false
+  }
+]

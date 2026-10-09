@@ -378,26 +378,26 @@ feedback on desktop and phones; first playtest held.
 
 ## Stage 4 — Remaining stations, events and levels
 
-- [ ] **S4-01 — Phone (`phone`).** Choose the right number, then a waiting queue; reporter skips
+- [x] **S4-01 — Phone (`phone`).** Choose the right number, then a waiting queue; reporter skips
   the queue.
-- [ ] **S4-02 — AI scanner (`aiScanner`).** Probability readout with error margin; never decisive
+- [x] **S4-02 — AI scanner (`aiScanner`).** Probability readout with error margin; never decisive
   alone (enforced by content validation).
-- [ ] **S4-03 — Data library (`dataLibrary`).** Compare a number with the original table.
+- [x] **S4-03 — Data library (`dataLibrary`).** Compare a number with the original table.
   (S4-01…S4-03: keyboard, gamepad and touch; success/failure cues.)
 - [x] **S4-04 — Managing editor ability.** Extend one folder's deadline once per level.
-- [ ] **S4-05 — Event framework + `viral`.** Event scheduling from level data; growing share
+- [x] **S4-05 — Event framework + `viral`.** Event scheduling from level data; growing share
   counter on a folder. Each event below ships with its own announce banner, sound and particles
   (e.g. `viral`: floating share/heart icons and notification pings; `bossCall`: ringing red
   phone, shaking desk; `botRaid`: swarm of identical folders with glitch effect; `outage`: sparks,
   smoke and powered-down station; `correction`: siren + highlighted folder trail).
-- [ ] **S4-06 — `bossCall`.** Editor-in-chief demands instant publish; points only if true.
-- [ ] **S4-07 — `botRaid`.** Wave of near-identical folders; recognising one resolves all.
-- [ ] **S4-08 — `outage`.** A station is down for 20 s.
-- [ ] **S4-09 — `correction`.** A previously published story turns out manipulated; first team
+- [x] **S4-06 — `bossCall`.** Editor-in-chief demands instant publish; points only if true.
+- [x] **S4-07 — `botRaid`.** Wave of near-identical folders; recognising one resolves all.
+- [x] **S4-08 — `outage`.** A station is down for 20 s.
+- [x] **S4-09 — `correction`.** A previously published story turns out manipulated; first team
   member to file a correction recovers half the lost credibility.
-- [ ] **S4-10 — Levels 2–6 content.** ~15 stories each, following the campaign table; one task per
+- [x] **S4-10 — Levels 2–6 content.** ~15 stories each, following the campaign table; one task per
   level (`S4-10a` … `S4-10e`) so content can be written in parallel.
-- [ ] **S4-11 — Endless mode.** Random stories from all levels, speeds up every minute; room
+- [x] **S4-11 — Endless mode.** Random stories from all levels, speeds up every minute; room
   leaderboard per room and global top list stored via Drizzle (`leaderboard_entries`), served
   from `/api/leaderboard` with retention from `constants.ts`.
 
@@ -496,6 +496,9 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-06 | Visual style changed from "newsroom paper" (cream paper, serif, typewriter) to "cartoon newsroom": bright flat colours, thick navy outlines, rounded chunky shapes, Baloo 2 + Nunito; plus clarity rules (one primary action, ≤ 8 words during play, smaller HUD, "what next" hints, first-level tutorial) | User feedback: the paper look read as generic/AI-made and the UI was hard to read; the game must be easy for anyone |
 | 2026-10-07 | Stage 3 contracts: room phase `briefing` between lobby and playing (auto-start after `BRIEFING_DURATION_MS` or when all connected players skip); `skipBriefing` and `voteBlunder` lobby actions; `roomState.briefing` and `roomState.blunderVotes`; `folderExpired` carries the folder's stamps | Lets S3 units build briefing, debrief and votes in parallel; fixes "missed stamps" for expired folders |
 | 2026-10-09 | S3 integrated: HUD motion and phone HUD readability shipped with S3-07; phone camera framing relies on compact folder strips plus the existing back margin | The compact HUD no longer hides back-wall station signs in screenshots at 640×360 | 
+| 2026-10-09 | Stage 4 contracts: level events are data (`level.events`), spawn folders carrying a `folder.tag`, and outages live on `station.outageMs`; protocol gains `levelEvent` and `raidResolved` events | One uniform framework lets the five events, their client presentation and levels 2–6 be built in parallel |
+| 2026-10-09 | Event rules: `viral` is pressure only (shares = start × growth^age); `bossCall` pays a bonus only for a correct publish of a true story within the window and costs nothing when ignored; `botRaid` resolves all siblings from one verdict and counts expiry once; `correction` costs credibility at the start and filing it recovers half; `outage` blocks one station for its duration | Matches the design doc, with numbers in `EVENTS` in constants.ts |
+| 2026-10-09 | Endless mode is level id `endless`, generated at runtime; it ends only at credibility 0; leaderboard entries are `{roomCode, players, score, survivedS}` | Keeps content files out of it and the wire format fixed before the server and client units start |
 | 2026-10-07 | S3-05 assets are built procedurally in code (flat-shaded primitives, hierarchical rigs animated with `AnimationMixer` clips) instead of Kenney packs | The build environment cannot download asset packs; procedural models keep the cartoon style consistent and the bundle small. Kenney/artist assets can replace them in S5-01 |
 
 ---
