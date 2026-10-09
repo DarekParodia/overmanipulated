@@ -12,13 +12,17 @@ import {
 } from 'three';
 import { BONE_REST, type BoneName } from './rig.ts';
 
-type Rot = readonly [number, number, number];
+export type Rot = readonly [number, number, number];
 
 const euler = new Euler();
 const quat = new Quaternion();
 
 /** Rotation keyframes (Euler XYZ radians) for one bone. */
-function rot(bone: BoneName, times: readonly number[], values: readonly Rot[]): KeyframeTrack {
+export function rot(
+  bone: BoneName,
+  times: readonly number[],
+  values: readonly Rot[],
+): KeyframeTrack {
   const flat: number[] = [];
   for (const [x, y, z] of values) {
     quat.setFromEuler(euler.set(x, y, z));
@@ -28,7 +32,7 @@ function rot(bone: BoneName, times: readonly number[], values: readonly Rot[]): 
 }
 
 /** Hip height keyframes as offsets from the rest position. */
-function hipsY(times: readonly number[], offsets: readonly number[]): KeyframeTrack {
+export function hipsY(times: readonly number[], offsets: readonly number[]): KeyframeTrack {
   const [x, y, z] = BONE_REST.hips;
   return new VectorKeyframeTrack(
     'hips.position',
@@ -48,8 +52,8 @@ function quarters(duration: number): number[] {
 }
 
 /** Every bone gets a track in every clip, so blending never falls back to a stale pose. */
-const ARM_OUT = 0.12;
-const REST_POSE: Record<BoneName, Rot> = {
+export const ARM_OUT = 0.12;
+export const REST_POSE: Record<BoneName, Rot> = {
   hips: [0, 0, 0],
   torso: [0, 0, 0],
   head: [0, 0, 0],
@@ -59,7 +63,7 @@ const REST_POSE: Record<BoneName, Rot> = {
   legR: [0, 0, 0],
 };
 
-function clip(name: string, duration: number, tracks: KeyframeTrack[]): AnimationClip {
+export function clip(name: string, duration: number, tracks: KeyframeTrack[]): AnimationClip {
   const covered = new Set(tracks.map((t) => t.name));
   for (const bone of Object.keys(REST_POSE) as BoneName[]) {
     if (!covered.has(`${bone}.quaternion`)) {
@@ -71,6 +75,11 @@ function clip(name: string, duration: number, tracks: KeyframeTrack[]): Animatio
   }
   return new AnimationClip(name, duration, tracks);
 }
+
+/** Leg swing amplitude (radians) of the locomotion clips: sets how far one step reaches. */
+export const LEG_SWING = { walk: 0.6, run: 1.15, carryWalk: 1.0 } as const;
+/** Hip-to-sole length of a leg (rig.ts: leg capsule plus shoe). */
+export const LEG_LENGTH = 0.31;
 
 /** Length of one locomotion cycle (two steps); walk, run and carry-walk share it to stay in sync. */
 export const STRIDE_S = 0.5;
@@ -434,10 +443,10 @@ let cached: CharacterClips | null = null;
 export function characterClips(): CharacterClips {
   cached ??= {
     idle: idle(),
-    walk: locomotion('walk', 0.5, 0.45, -0.06, 0.035, ARM_OUT),
-    run: locomotion('run', 0.85, 0.85, -0.18, 0.07, 0.25),
+    walk: locomotion('walk', LEG_SWING.walk, 0.55, -0.06, 0.035, ARM_OUT),
+    run: locomotion('run', LEG_SWING.run, 0.95, -0.18, 0.07, 0.25),
     carryIdle: carryIdle(),
-    carryWalk: locomotion('carryWalk', 0.45, null, 0.04, 0.03, 0),
+    carryWalk: locomotion('carryWalk', LEG_SWING.carryWalk, null, 0.04, 0.03, 0),
     work: work(),
     stamp: stamp(),
     cheer: cheer(),

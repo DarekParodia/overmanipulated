@@ -1,23 +1,34 @@
-// Cartoon character (S3-05): a skinned bone rig in the player's colour with a navy outline hull
-// and a role accessory (scene/character/rig.ts), animated by an AnimationMixer whose layers follow
-// the player's state (idle, walk, run, carry, work) and the feedback triggers (stamp, cheer,
-// facepalm, shrug, slump; scene/character/controller.ts). The procedural layer on top adds lean,
-// squash & stretch, the spawn pop, a hop and a wobble. A white name pill outlined in the player's
-// colour floats above the head.
+// Cartoon character (S3-05, S5-02): a skinned bone rig in the player's colour with a navy outline
+// hull and a role accessory (scene/character/rig.ts), animated by an AnimationMixer whose layers
+// follow the player's state (idle, walk, run, carry, work) and the feedback triggers (stamp,
+// cheer, facepalm, shrug, slump; scene/character/controller.ts). On top: role fidgets and
+// celebrations, ping emotes (also on remote players), hand IK that holds a carried folder and
+// reaches for fixtures, a head that leads turns and looks at the station in use, footsteps timed
+// to the foot contacts of the clips, and the procedural layer (lean, squash & stretch, spawn pop,
+// hop with landing squash, wobble). A white name pill outlined in the player's colour floats
+// above the head.
 
 import { useFrame } from '@react-three/fiber';
-import { PLAYER_SPEED_TILES_PER_S, type Role } from '@redakcja/shared';
+import {
+  type FolderLocation,
+  fixtureById,
+  PLAYER_SPEED_TILES_PER_S,
+  type Role,
+  tileCenter,
+} from '@redakcja/shared';
 import { useEffect, useMemo, useRef } from 'react';
 import { Frustum, type Group, Matrix4, Sphere, Vector3 } from 'three';
-import { animateCharacter, createAnimator } from '../fx/animation/procedural.ts';
+import { animateCharacter, createAnimator, landingSquash } from '../fx/animation/procedural.ts';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
 import { emitCue, feedback } from '../fx/feedback.ts';
+import { onGameEvent } from '../net/game-events.ts';
 import {
   selectCarried,
   selectOperatedDesk,
   selectOperatedStation,
   useGame,
 } from '../net/game-store.ts';
+import { runtime } from '../net/session.ts';
 import { useSettings } from '../store/settings.ts';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { playerColor, playerColorVar } from '../ui/tokens.ts';
@@ -25,10 +36,15 @@ import {
   type CharacterController,
   type CharacterState,
   createCharacterController,
+  emoteForPing,
   gestureForTrigger,
+  hashString,
   mixerInterval,
 } from './character/controller.ts';
-import { CHARACTER_HEIGHT, createCharacterRig } from './character/rig.ts';
+import { allowFootstep, createFootstepGate } from './character/footsteps.ts';
+import { CARRY_FOLDER_AHEAD, handAnchors, type Vec3, worldToTorso } from './character/hands.ts';
+import { BODY_TURN_RATE, headLook, turnTowards } from './character/look.ts';
+import { CHARACTER_HEIGHT, type CharacterRig, createCharacterRig } from './character/rig.ts';
 import { facingToRotationY } from './coords.ts';
 import { screenTransform, useOverlay } from './overlay.ts';
 import styles from './PlayerAvatar.module.css';
@@ -46,6 +62,72 @@ const LEAN_SHARE = 0.5;
 const SPEED_SMOOTHING = 10;
 /** Radius of the bounding sphere used for the on-screen test. */
 const CULL_RADIUS = 1.1;
+/** Where the glove centre sits in the hand bone's space (rig.ts: glove under the arm capsule). */
+const GLOVE_OFFSET = new Vector3(0, -0.29, 0);
+/** Reach target height above the floor (table top) and distance ahead when picking up. */
+const REACH_HEIGHT = 0.85;
+const REACH_AHEAD = 0.85;
+
+/** Footstep gate shared by all avatars (rate limits are across players). */
+const footstepGate = createFootstepGate();
+
+/** Debug (`?debug`): frozen poses for screenshots, by player id. */
+const debugControllers = new Map<string, CharacterController>();
+if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
+  (window as unknown as { __pose?: unknown }).__pose = (
+    id: string,
+    clip: string | null,
+    time = 0,
+  ) => {
+    const controller = debugControllers.get(id);
+    if (!controller) {
+      return false;
+    }
+    if (clip === null) {
+      controller.unfreeze();
+    } else {
+      controller.seek(clip as never, time);
+    }
+    return true;
+  };
+}
+
+/** Starts a two-handed reach for a tile (or, with no target, a spot ahead of the player). */
+function reachAt(
+  id: string,
+  controller: CharacterController | null,
+  bodyYaw: number,
+  target: { x: number; y: number } | null,
+  out: Vec3,
+): void {
+  const player = renderState.players.get(id);
+  if (!controller || !player || Number.isNaN(bodyYaw)) {
+    return;
+  }
+  let dx = target ? target.x - player.x : 0;
+  let dz = target ? target.y - player.y : 0;
+  if (Math.hypot(dx, dz) < 0.35) {
+    dx = Math.cos(player.facing) * REACH_AHEAD;
+    dz = Math.sin(player.facing) * REACH_AHEAD;
+  }
+  controller.reachFor(worldToTorso(dx, dz, REACH_HEIGHT, bodyYaw, out));
+}
+
+function fixtureTarget(fixtureId: string): { x: number; y: number } | undefined {
+  const fixture = fixtureById(runtime.map, fixtureId);
+  return fixture ? tileCenter(fixture.col, fixture.row) : undefined;
+}
+
+function locationTarget(location: FolderLocation): { x: number; y: number } | undefined {
+  switch (location.kind) {
+    case 'fixture':
+      return fixtureTarget(location.fixtureId);
+    case 'floor':
+      return { x: location.x, y: location.y };
+    default:
+      return undefined;
+  }
+}
 
 export type PlayerAvatarProps = {
   id: string;
@@ -62,13 +144,25 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
   const animator = useMemo(createAnimator, []);
   const pop = useRef<SpringState>({ value: 1, velocity: 0 });
   const wobble = useRef<SpringState>({ value: 0, velocity: 0 });
-  const motion = useRef({ hopT: -1, speed: 0, lastX: Number.NaN, lastY: 0, pendingMixer: 0 });
+  const rigRef = useRef<CharacterRig | null>(null);
+  const motion = useRef({
+    hopT: -1,
+    speed: 0,
+    lastX: Number.NaN,
+    lastY: 0,
+    pendingMixer: 0,
+    bodyYaw: Number.NaN,
+  });
   const scratch = useMemo(
     () => ({
       frustum: new Frustum(),
       matrix: new Matrix4(),
       sphere: new Sphere(new Vector3(), CULL_RADIUS),
       state: { moving: false, speedFraction: 0, carrying: false, working: false } as CharacterState,
+      look: { yaw: 0, pitch: 0 },
+      reach: { x: 0, y: 0, z: 0 } as Vec3,
+      glove: new Vector3(),
+      gloveR: new Vector3(),
     }),
     [],
   );
@@ -87,18 +181,25 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
     };
     syncOutline();
     const stopQuality = useQuality.subscribe(syncOutline);
-    const ctrl = createCharacterController(rig.root);
+    const ctrl = createCharacterController(rig.root, { role, seed: hashString(id) });
     controller.current = ctrl;
+    rigRef.current = rig;
+    debugControllers.set(id, ctrl);
     return () => {
       stopQuality();
       parent.remove(rig.root);
       ctrl.dispose();
       rig.dispose();
+      handAnchors.delete(id);
+      if (debugControllers.get(id) === ctrl) {
+        debugControllers.delete(id);
+      }
       if (controller.current === ctrl) {
         controller.current = null;
+        rigRef.current = null;
       }
     };
-  }, [colorIndex, role, shadows]);
+  }, [colorIndex, role, shadows, id]);
 
   useEffect(
     () =>
@@ -107,7 +208,10 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
         if (context.playerId !== undefined && context.playerId !== id) {
           return;
         }
-        const gesture = gestureForTrigger(trigger);
+        const gesture = gestureForTrigger(trigger, {
+          team: context.playerId === undefined,
+          role,
+        });
         if (gesture) {
           controller.current?.play(gesture);
           return;
@@ -124,7 +228,28 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
           wobble.current.velocity = 9;
         }
       }),
-    [id],
+    [id, role],
+  );
+
+  // Ping emotes (visible on remote players too) and hand reaches for pick-up / put-down.
+  useEffect(
+    () =>
+      onGameEvent((event) => {
+        if (event.kind === 'ping' && event.playerId === id) {
+          controller.current?.playUpper(emoteForPing(event.ping));
+        } else if (event.kind === 'folderPickedUp' && event.playerId === id) {
+          reachAt(id, controller.current, motion.current.bodyYaw, null, scratch.reach);
+        } else if (event.kind === 'folderPutDown' && event.playerId === id) {
+          reachAt(
+            id,
+            controller.current,
+            motion.current.bodyYaw,
+            locationTarget(event.location) ?? null,
+            scratch.reach,
+          );
+        }
+      }),
+    [id, scratch],
   );
 
   // Name tag in a DOM layer over the canvas, moved to the head every frame.
@@ -182,9 +307,6 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
     if (events.started) {
       emitCue('player.start', { position, playerId: id });
     }
-    if (events.footstep) {
-      emitCue(player.local ? 'player.step' : 'player.stepRemote', { position, playerId: id });
-    }
 
     // Rendered speed (smoothed), for walk vs run.
     const m = motion.current;
@@ -198,13 +320,32 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
 
     const game = useGame.getState();
     const station = selectOperatedStation(game, id);
+    const desk = selectOperatedDesk(game, id);
     const state = scratch.state;
     state.moving = player.moving;
     state.speedFraction = player.moving ? Math.min(1, m.speed / PLAYER_SPEED_TILES_PER_S) : 0;
     state.carrying = selectCarried(game, id) !== undefined;
     state.working =
       (station !== undefined && station.phase !== 'idle' && station.phase !== 'lockout') ||
-      selectOperatedDesk(game, id) !== undefined;
+      desk !== undefined;
+    state.allowFidget = !reducedMotion;
+
+    // Body turns towards the facing a little late; the head leads (or looks at the station).
+    const targetYaw = facingToRotationY(player.facing);
+    m.bodyYaw =
+      Number.isNaN(m.bodyYaw) || reducedMotion
+        ? targetYaw
+        : turnTowards(m.bodyYaw, targetYaw, delta, BODY_TURN_RATE);
+    const interaction = station?.id ?? desk?.id;
+    const look = headLook(
+      m.bodyYaw,
+      player.facing,
+      position,
+      state.working && interaction ? (fixtureTarget(interaction) ?? null) : null,
+      scratch.look,
+    );
+    state.lookYaw = reducedMotion ? 0 : look.yaw;
+    state.lookPitch = reducedMotion ? 0 : look.pitch;
 
     // Animation LOD: off-screen, far away or on the low preset the mixer runs less often.
     scratch.matrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
@@ -219,7 +360,23 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
       mixerDt = m.pendingMixer;
       m.pendingMixer = 0;
     }
-    controller.current?.update(state, delta, mixerDt);
+    const ctrl = controller.current;
+    ctrl?.update(state, delta, mixerDt);
+
+    // Footsteps at the clips' foot contacts: the local player and the nearest others only.
+    const contacts = ctrl?.consumeSteps() ?? 0;
+    if (contacts > 0 && onScreen) {
+      const now = performance.now() / 1000;
+      if (
+        allowFootstep(
+          footstepGate,
+          { id, local: player.local, now, x: player.x, y: player.y },
+          renderState.players,
+        )
+      ) {
+        emitCue(player.local ? 'player.step' : 'player.stepRemote', { position, playerId: id });
+      }
+    }
 
     // Procedural layer: spawn pop, hop, wobble, lean, squash & stretch.
     stepSpring(pop.current, 1, delta, 3.5, 0.45);
@@ -230,16 +387,38 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
       hop = m.hopT < HOP_S ? Math.sin((Math.PI * m.hopT) / HOP_S) * HOP_HEIGHT : 0;
       if (m.hopT >= HOP_S) {
         m.hopT = -1;
+        if (!reducedMotion) {
+          landingSquash(animator);
+        }
       }
     }
     const popScale = reducedMotion ? 1 : pop.current.value;
     const wobbleAngle = reducedMotion ? 0 : wobble.current.value * 0.25;
 
     group.position.set(player.x, hop, player.y);
-    group.rotation.y = facingToRotationY(player.facing);
+    group.rotation.y = m.bodyYaw;
     inner.rotation.set(wobbleAngle, 0, -pose.lean * LEAN_SHARE);
     const sideways = 1 / Math.sqrt(pose.squash);
     inner.scale.set(sideways * popScale, pose.squash * popScale, sideways * popScale);
+
+    // The carried folder follows the gloves.
+    const rig = rigRef.current;
+    if (rig && state.carrying) {
+      group.updateMatrixWorld(true);
+      const left = rig.bones.armL.localToWorld(scratch.glove.copy(GLOVE_OFFSET));
+      const right = rig.bones.armR.localToWorld(scratch.gloveR.copy(GLOVE_OFFSET));
+      const forward = -m.bodyYaw;
+      let anchor = handAnchors.get(id);
+      if (!anchor) {
+        anchor = { x: 0, y: 0, height: 0 };
+        handAnchors.set(id, anchor);
+      }
+      anchor.x = (left.x + right.x) / 2 + Math.cos(forward) * CARRY_FOLDER_AHEAD;
+      anchor.y = (left.z + right.z) / 2 + Math.sin(forward) * CARRY_FOLDER_AHEAD;
+      anchor.height = (left.y + right.y) / 2;
+    } else if (handAnchors.has(id)) {
+      handAnchors.delete(id);
+    }
   });
 
   return (
