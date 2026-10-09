@@ -52,7 +52,10 @@ export type AnimationTrigger =
   /** Verdict sheet slides up on the desk / back down when closed. */
   | 'deskOpen'
   | 'deskClose'
-  | 'slump';
+  | 'slump'
+  // S3-07/08 HUD motion.
+  /** The folder's queue card hops (more time on the clock); `folderId`. */
+  | 'cardHop';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -173,7 +176,7 @@ export const cues = {
     severity: 1,
     sound: { ids: ['arrive'], bus: 'sfx', volume: 0.45, rateJitter: 0.04 },
     particles: { preset: 'paperFlutter', count: 4 },
-    animation: 'hop',
+    animation: ['hop', 'cardHop'],
   },
   'folder.expired': {
     severity: 2,
@@ -181,7 +184,7 @@ export const cues = {
     particles: { preset: 'ash' },
     shake: 0.2,
     haptic: 'thud',
-    animation: 'crumple',
+    animation: ['crumple', 'scorePop'],
   },
   'station.workStart': {
     severity: 1,
