@@ -443,6 +443,17 @@ export const cues = {
     severity: 1,
     sound: { ids: ['ambtyping'], bus: 'sfx', volume: 0.3, rateJitter: 0.1 },
   },
+  // S4-03 data library minigame: a number matched against the original table.
+  'dataLibrary.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'dataLibrary.mistake': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'thud',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

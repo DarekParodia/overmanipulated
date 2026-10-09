@@ -511,6 +511,82 @@ export const pl = {
         },
       },
     },
+    dataLibrary: {
+      task: 'Znajdź liczbę lub zgłoś: nie pasuje',
+      claimTitle: 'W artykule',
+      average: (from: number, to: number) => `średnio ${from}–${to}`,
+      mismatch: 'Nie pasuje',
+      table: 'Tabela źródłowa',
+      averageColumn: 'Średnia',
+      cell: (row: string, column: string, value: string) => `${row}, ${column}: ${value}`,
+      unitNote: (unit: string) => `w ${unit}`,
+      right: 'Zgadza się!',
+      wrong: 'Pudło!',
+      /** Shown after the round: why the claim fits or what was changed. */
+      reasons: {
+        match: 'Ta liczba jest w tabeli.',
+        wrongYear: 'Liczba z innego roku.',
+        wrongRow: 'Liczba z innego wiersza.',
+        wrongUnit: 'Inna jednostka niż w tabeli.',
+        cherryPick: 'Najlepszy rok zamiast średniej.',
+        invented: 'Takiej liczby nie ma w tabeli.',
+      },
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+          { keys: ['Q'], label: 'nie pasuje' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+          { keys: ['Y'], label: 'nie pasuje' },
+        ],
+        touch: [],
+      } satisfies KeyHints,
+      /**
+       * Original tables. All invented: Nowe Brzegi, no real institutions. `unit` is what the
+       * table gives; `altUnit` is the wrong unit a manipulated claim uses. `step` rounds values.
+       */
+      topics: [
+        {
+          title: 'Wydatki miasta',
+          unit: 'tys. zł',
+          altUnit: 'mln zł',
+          min: 400,
+          max: 4800,
+          step: 10,
+          rows: ['Drogi', 'Szkoły', 'Parki', 'Transport', 'Kultura'],
+        },
+        {
+          title: 'Mieszkańcy dzielnic',
+          unit: 'osób',
+          altUnit: 'tys. osób',
+          min: 1200,
+          max: 9800,
+          step: 10,
+          rows: ['Nadrzecze', 'Stare Miasto', 'Lipowa', 'Klonowa', 'Osiedle Słoneczne'],
+        },
+        {
+          title: 'Frekwencja w szkołach',
+          unit: '%',
+          altUnit: 'pkt proc.',
+          min: 55,
+          max: 98,
+          step: 1,
+          rows: ['Szkoła nr 1', 'Szkoła nr 2', 'Liceum nr 2', 'Technikum', 'Szkoła nr 5'],
+        },
+        {
+          title: 'Zgłoszenia alarmowe',
+          unit: 'zgłoszeń',
+          altUnit: 'tys. zgłoszeń',
+          min: 120,
+          max: 2400,
+          step: 5,
+          rows: ['Pożary', 'Wypadki', 'Zalania', 'Awarie prądu', 'Kolizje'],
+        },
+      ],
+    },
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
   pings: {
