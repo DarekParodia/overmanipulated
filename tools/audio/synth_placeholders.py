@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Synthesises the placeholder sound effects and packs them into one audio sprite.
+"""Synthesises the sound effects and packs them into one audio sprite (final-quality pass, S5-08).
 
 All sounds are generated here from oscillators and filtered noise, so they are self-made and
-free of licensing questions (agents/game-feel.md, design-rules.md). Replace with recorded or
-designed sounds in stage 5; keep the sprite ids stable.
+free of licensing questions (agents/game-feel.md, design-rules.md). Keep the sprite ids stable;
+new ids go at the end of SOUNDS. Every sound goes through `finish()`: click-free fades, DC removal,
+and a loudness target per class (see LEVELS), so the mix is consistent whatever the source.
+Offsets in the sprite change whenever a sound's length does; the json is regenerated with the audio.
 
 Usage: python3 tools/audio/synth_placeholders.py   (requires numpy and ffmpeg)
 Outputs:
-  apps/client/public/assets/audio/sfx.webm, sfx.mp3     the sprite
+  apps/client/public/assets/audio/sfx.webm, sfx.mp3     the sprite (mono, 32 kHz)
   apps/client/src/fx/audio/sfx-sprite.json              id -> [offset ms, duration ms, loop]
 """
 import json
@@ -57,10 +59,38 @@ def noise(seconds):
     return rng.uniform(-1, 1, int(RATE * seconds))
 
 
+def band(signal, low=0.0, high=None):
+    """Zero-phase FFT band filter with soft (one-octave) skirts; fast for long signals."""
+    spec = np.fft.rfft(signal)
+    f = np.fft.rfftfreq(len(signal), 1 / RATE)
+    mask = np.ones_like(f)
+    if low > 0:
+        mask *= np.clip(np.log2(np.maximum(f, 1e-3) / low) + 1, 0, 1)
+    if high is not None:
+        mask *= np.clip(1 - np.log2(np.maximum(f, 1e-3) / high), 0, 1)
+    return np.fft.irfft(spec * mask, len(signal))
+
+
+def transient(seconds=0.012, low=2500, gain=1.0):
+    """A short, bright noise tick that gives a sound a defined attack."""
+    n = noise(seconds)
+    return gain * band(n, low, 14000) * env(seconds, 0.0003, seconds / 3)
+
+
+def thump(freq=60, seconds=0.25, decay=0.07, drop=0.6):
+    """Low body of an impact: a sine whose pitch falls quickly."""
+    x = t(seconds)
+    f = freq * (1 + drop * np.exp(-x / 0.025))
+    return np.sin(2 * np.pi * np.cumsum(f) / RATE) * env(seconds, 0.001, decay)
+
+
 def bell(freq, seconds, decay, partials=((1, 1.0), (2.76, 0.35), (5.4, 0.12))):
     x = t(seconds)
     s = sum(a * np.sin(2 * np.pi * freq * r * x) for r, a in partials)
-    return s * env(seconds, 0.002, decay)
+    s = s * env(seconds, 0.002, decay)
+    # Mallet strike: a tiny noise tick so the bell has a clear onset.
+    s[: int(RATE * 0.01)] += 0.25 * transient(0.01, 3000)[: int(RATE * 0.01)]
+    return s
 
 
 def normalize(signal, peak):
@@ -122,6 +152,8 @@ def stamp_thud():
     s = np.sin(2 * np.pi * 70 * t(0.3)) * env(0.3, 0.001, 0.06)
     s += 0.6 * np.sin(2 * np.pi * 180 * t(0.3)) * env(0.3, 0.001, 0.025)
     s += 0.5 * highpass(noise(0.3), 1500) * env(0.3, 0.0005, 0.01)
+    s += 0.9 * thump(52, 0.3, 0.09)
+    s[: int(RATE * 0.012)] += 0.5 * transient(0.012, 1800)[: int(RATE * 0.012)]
     return normalize(s, 0.9)
 
 
@@ -301,6 +333,8 @@ def win_stinger():
     notes = (523, 659, 784, 1047)
     parts = [delayed(bell(f, 0.6, 0.22), i * 0.11) for i, f in enumerate(notes)]
     parts.append(delayed(bell(1047, 1.0, 0.5) + bell(784, 1.0, 0.5) + bell(659, 1.0, 0.5), 0.5))
+    parts.append(delayed(0.5 * bell(262, 1.2, 0.6, ((1, 1.0), (2.0, 0.3))), 0.5))
+    parts.append(delayed(highpass(noise(0.6), 6000) * env(0.6, 0.002, 0.12) * 0.1, 0.5))
     return normalize(mix(*parts), 0.6)
 
 
@@ -308,7 +342,8 @@ def lose_stinger():
     """Level lost: slow falling bells into a low thud."""
     notes = (523, 466, 392, 311)
     parts = [delayed(bell(f, 0.7, 0.3), i * 0.22) for i, f in enumerate(notes)]
-    parts.append(delayed(np.sin(2 * np.pi * 55 * t(0.6)) * env(0.6, 0.003, 0.2), 0.9))
+    parts.append(delayed(thump(55, 0.6, 0.2, 0.4), 0.9))
+    parts.append(delayed(lowpass(noise(0.3), 500) * env(0.3, 0.002, 0.06) * 0.5, 0.9))
     return normalize(mix(*parts), 0.55)
 
 
@@ -386,34 +421,40 @@ def amb_typing():
 
 
 def ev_viral():
-    """Viral: a quick run of rising notification pops, like shares piling up."""
-    parts = [delayed(bell(f, 0.16, 0.05, ((1, 1.0), (2.0, 0.3))), i * 0.085) for i, f in enumerate((880, 1109, 1397, 1760))]
+    """Viral: a quick run of rising notification pops with a soft whomp and a sparkle on top."""
+    parts = [delayed(bell(f, 0.2, 0.06, ((1, 1.0), (2.0, 0.3))), i * 0.085) for i, f in enumerate((880, 1109, 1397, 1760))]
+    parts.append(0.6 * thump(120, 0.2, 0.05, 0.5))
+    parts.append(delayed(highpass(noise(0.2), 6000) * env(0.2, 0.002, 0.05) * 0.18, 0.25))
     return normalize(mix(*parts), 0.55)
 
-
 def ev_boss():
-    """Boss call: a desk phone ringing twice (two-tone bell, fast tremolo)."""
-    parts = []
+    """Boss call: a desk phone ringing twice (two-tone bell, fast tremolo) after a handset clack."""
+    parts = [transient(0.02, 800, 0.5)]
     for i in range(2):
         x = t(0.36)
         ring = (np.sin(2 * np.pi * 440 * x) + np.sin(2 * np.pi * 480 * x)) * (0.6 + 0.4 * np.sign(np.sin(2 * np.pi * 22 * x)))
-        parts.append(delayed(ring * env(0.36, 0.004, 0.4), i * 0.5))
-    return normalize(lowpass(mix(*parts), 3200), 0.6)
-
+        ring += 0.25 * (np.sin(2 * np.pi * 880 * x) + np.sin(2 * np.pi * 960 * x))
+        parts.append(delayed(ring * env(0.36, 0.004, 0.4), 0.03 + i * 0.5))
+    return normalize(lowpass(mix(*parts), 3600), 0.6)
 
 def ev_raid():
-    """Bot raid: a glitchy, bit-crushed stutter falling in pitch."""
+    """Bot raid: a glitchy, bit-crushed stutter falling in pitch, with a digital thud and ticks."""
     n = int(RATE * 0.6)
     x = np.arange(n) / RATE
     sweep = np.sign(np.sin(2 * np.pi * np.cumsum(700 * np.exp(-3.2 * x)) / RATE)) * 0.5
     gate = (np.floor(x * 24) % 3 != 2).astype(float)
     crushed = np.round(sweep * 6) / 6
     hiss = highpass(noise(0.6), 2500) * 0.25 * gate
-    return normalize(lowpass((crushed * gate + hiss) * env(0.6, 0.002, 0.5), 5000), 0.55)
-
+    body = lowpass((crushed * gate + hiss) * env(0.6, 0.002, 0.5), 5000)
+    ticks = np.zeros(n)
+    for at in (0.0, 0.11, 0.2, 0.33):
+        i = int(RATE * at)
+        tick = tone(2600, 0.02, 0.0003, 0.004)
+        ticks[i : i + len(tick)] += tick[: n - i] * 0.5
+    return normalize(mix(body, ticks, 0.9 * thump(70, 0.3, 0.07)), 0.55)
 
 def ev_outage():
-    """Outage: power cutting out, a falling hum and a few electric crackles."""
+    """Outage: a relay clack, power cutting out in a falling hum and a few electric crackles."""
     n = int(RATE * 0.8)
     x = np.arange(n) / RATE
     hum = np.sin(2 * np.pi * np.cumsum(520 * np.exp(-3.5 * x) + 45) / RATE) * env(0.8, 0.003, 0.35)
@@ -422,17 +463,18 @@ def ev_outage():
         i = int(RATE * at)
         burst = highpass(noise(0.05), 1500) * env(0.05, 0.0005, 0.012)
         crackle[i : i + len(burst)] += burst[: n - i]
-    return normalize(mix(hum * 0.7, crackle * 0.8), 0.6)
-
+    clack = mix(0.8 * transient(0.02, 600), 0.6 * thump(90, 0.2, 0.04))
+    return normalize(mix(hum * 0.7, crackle * 0.8, clack), 0.6)
 
 def ev_correction():
-    """Correction: a newsroom siren, three rising-falling sweeps."""
+    """Correction: a newsroom siren, rising-falling sweeps, with an alert tick and a low pulse."""
     n = int(RATE * 0.9)
     x = np.arange(n) / RATE
     freq = 760 + 220 * np.sin(2 * np.pi * 3.3 * x - np.pi / 2)
-    wave_ = np.sign(np.sin(2 * np.pi * np.cumsum(freq) / RATE)) * 0.5 + 0.5 * np.sin(2 * np.pi * np.cumsum(freq) / RATE)
-    return normalize(lowpass(wave_ * env(0.9, 0.01, 0.8), 2800), 0.55)
-
+    phase = 2 * np.pi * np.cumsum(freq) / RATE
+    wave_ = np.sign(np.sin(phase)) * 0.5 + 0.5 * np.sin(phase)
+    siren = lowpass(wave_ * env(0.9, 0.01, 0.8), 2800)
+    return normalize(mix(siren, 0.7 * transient(0.015, 1500), 0.6 * thump(80, 0.4, 0.1)), 0.55)
 
 def ev_clear():
     """Raid solved: a bright rising arpeggio with a little sparkle."""
@@ -454,6 +496,97 @@ def ev_zap():
     s = highpass(noise(0.14), 1800) * env(0.14, 0.0005, 0.03)
     s += 0.5 * highpass(noise(0.14), 3500) * np.roll(env(0.14, 0.0005, 0.02), 900)
     return normalize(s, 0.35)
+
+
+def formant(signal, centre, width=0.16):
+    """Narrow spectral peak around `centre` Hz (a vowel formant)."""
+    spec = np.fft.rfft(signal)
+    f = np.fft.rfftfreq(len(signal), 1 / RATE)
+    mask = np.exp(-0.5 * (np.log2(np.maximum(f, 1.0) / centre) / width) ** 2)
+    return np.fft.irfft(spec * mask, len(signal))
+
+
+def amb_chatter():
+    """Voice-less newsroom chatter: syllable-like blips (a buzzy source through two vowel formants,
+    no words) from three 'speakers', over a muffled murmur. A 10 s seamless loop; the client plays
+    it very quietly and ducks it under overlays."""
+    seconds = 10.0
+    n = int(RATE * seconds)
+    out = np.zeros(n)
+    speakers = [(108, 0.9), (150, 1.05), (210, 1.25)]  # (pitch Hz, formant scale)
+    vowels = [(730, 1090), (530, 1840), (270, 2290), (570, 840), (390, 1990)]
+    xs = np.arange(n) / RATE
+    murmur = band(noise(seconds), 250, 1400) * (0.6 + 0.4 * np.sin(2 * np.pi * xs / seconds * 3 + 1.0))
+    out += 0.5 * murmur / (np.max(np.abs(murmur)) or 1)
+    phrase_starts = [0.3, 1.9, 3.4, 4.6, 6.2, 7.7, 8.9]
+    for pi, start in enumerate(phrase_starts):
+        pitch, fscale = speakers[pi % 3]
+        at = start
+        for _ in range(3 + (pi * 2) % 4):
+            dur = 0.07 + 0.08 * rng.random()
+            v1, v2 = vowels[int(rng.integers(len(vowels)))]
+            m = int(RATE * dur)
+            sx = np.arange(m) / RATE
+            f0 = pitch * (1 + 0.08 * (0.5 - sx / dur)) * (1 + 0.04 * rng.random())
+            ph = np.cumsum(f0) / RATE
+            src = sum(np.sin(2 * np.pi * h * ph) / h for h in range(1, 18))
+            voiced = formant(src, v1 * fscale, 0.14) + 0.6 * formant(src, v2 * fscale, 0.12)
+            amp = np.sin(np.pi * np.clip(sx / dur, 0, 1)) ** 0.7
+            onset = band(noise(0.012), 1800, 5000) * env(0.012, 0.001, 0.004)
+            syl = voiced / (np.max(np.abs(voiced)) or 1) * amp
+            syl[: len(onset)] += 0.25 * onset
+            i = int(RATE * at) % n
+            end = i + len(syl)
+            if end <= n:
+                out[i:end] += syl * 0.8
+            else:
+                out[i:] += syl[: n - i] * 0.8
+                out[: end - n] += syl[n - i :] * 0.8
+            at += dur + 0.02 + 0.05 * rng.random()
+    out = band(out, 120, 2600)  # muffled, as heard through a wall
+    return normalize(out, 0.5)
+
+
+# --- Finishing: click-free edges and a loudness target per class ----------------------------------
+
+# Target RMS (dBFS) over the audible part of a sound, by class. The cues' own `volume` then tunes
+# sounds relative to each other. See docs/audio.md.
+LEVELS = {
+    "ui": -26.0,  # click, hover, back, copy, pings
+    "fx": -22.0,  # gameplay feedback: steps, rustle, place, ticks, keys, bells
+    "heavy": -19.0,  # stamp, buzzer, alarms, stingers, events
+    "ambshot": -24.0,  # distant one-shots (phone, printer, fax, typing); cues play them at ~0.3
+    "amb": -34.0,  # the room tone and chatter beds (quiet by design)
+}
+CLASS_OF = {
+    **{k: "ui" for k in ("click", "hover", "back", "copy", "ping1", "ping2", "ping3", "slide", "deskopen")},
+    **{k: "heavy" for k in ("start", "stamp", "buzzer", "alarm", "lowsting", "lastsec", "win", "lose", "fanfare", "evviral", "evboss", "evraid", "evoutage", "evcorrection", "evclear", "evback")},
+    **{k: "ambshot" for k in ("ambphone", "ambprinter", "ambfax", "ambtyping", "evzap")},
+    **{k: "amb" for k in ("roomtone", "ambchatter")},
+}
+PEAK_CEILING = 0.9
+LOOPS = {"roomtone", "keys", "ambchatter"}
+
+
+def finish(name, signal):
+    """Fades (loops excepted), loudness target by class, soft peak ceiling."""
+    s = signal.astype(np.float64)
+    if name in LOOPS:
+        s = s - np.mean(s)
+    else:
+        fi, fo = int(RATE * 0.0015), int(RATE * 0.008)
+        s[:fi] *= np.linspace(0, 1, fi)
+        s[-fo:] *= np.linspace(1, 0, fo)
+    peak = float(np.max(np.abs(s))) or 1.0
+    active = s[np.abs(s) > 0.05 * peak]
+    rms = float(np.sqrt(np.mean(active**2))) or 1.0
+    s = s / rms * 10 ** (LEVELS[CLASS_OF.get(name, "fx")] / 20)
+    if float(np.max(np.abs(s))) > PEAK_CEILING:
+        # Sparse transients exceed the ceiling first: round them with a soft knee, not a clip.
+        k = PEAK_CEILING * 0.75
+        over = np.abs(s) > k
+        s[over] = np.sign(s[over]) * (k + (PEAK_CEILING - k) * np.tanh((np.abs(s[over]) - k) / (PEAK_CEILING - k)))
+    return s
 
 
 SOUNDS = [
@@ -503,6 +636,8 @@ SOUNDS = [
     ("evclear", ev_clear, False),
     ("evback", ev_back, False),
     ("evzap", ev_zap, False),
+    # S5-08 final pass. Appended last; the ids above never change meaning.
+    ("ambchatter", amb_chatter, True),
 ]
 
 
@@ -513,7 +648,7 @@ def main():
     sprite = {}
     cursor = 0.0
     for name, fn, loop in SOUNDS:
-        s = fn().astype(np.float64)
+        s = finish(name, fn())
         sprite[name] = [round(cursor * 1000), round(len(s) / RATE * 1000), loop]
         parts.append(s)
         gap = np.zeros(int(RATE * GAP_S))
@@ -528,12 +663,14 @@ def main():
             w.setsampwidth(2)
             w.setframerate(RATE)
             w.writeframes(pcm.tobytes())
-        for ext, args in (("webm", ["-c:a", "libopus", "-b:a", "32k", "-vbr", "constrained"]), ("mp3", ["-c:a", "libmp3lame", "-b:a", "40k"])):
+        for ext, args in (("webm", ["-ar", "48000", "-c:a", "libopus", "-b:a", "28k", "-vbr", "constrained"]), ("mp3", ["-ar", "32000", "-c:a", "libmp3lame", "-b:a", "32k"])):
             subprocess.run(
-                ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav_path), *args, str(OUT_AUDIO / f"sfx.{ext}")],
+                ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav_path), "-ac", "1", *args, str(OUT_AUDIO / f"sfx.{ext}")],
                 check=True,
             )
-    OUT_JSON.write_text(json.dumps(sprite, indent=2) + "\n")
+    # One line per sound, as Biome formats it (so `bun run format` leaves the file alone).
+    lines = [f"  {json.dumps(k)}: {json.dumps(v)}" for k, v in sprite.items()]
+    OUT_JSON.write_text("{\n" + ",\n".join(lines) + "\n}\n")
     print(f"wrote {len(sprite)} sounds, {cursor:.1f} s", file=sys.stderr)
 
 

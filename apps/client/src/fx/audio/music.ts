@@ -1,28 +1,46 @@
-// Music v1 (S2-13): a menu loop, and two in-sync level layers (calm + pressure) whose mix follows
-// the game's intensity (music-intensity.ts). Screens request a scene with `requestMusic`; a small
-// ticker cross-fades between scenes, slews the intensity and the tempo, and applies the music bus
-// volume from settings. Global mute and hidden-tab mute are handled by `initAudio`.
-// Nothing starts before the first user gesture (browser autoplay policy).
+// Music (S2-13, S5-08): a menu loop, and per level (1-6 and endless) two in-sync layers (calm +
+// pressure) with their own key, tempo and instrumentation. The mix follows the game's intensity
+// (music-intensity.ts) and dips under big stingers (duck.ts). Screens request a scene with
+// `requestMusic`; a small ticker cross-fades between scenes, slews the intensity and the tempo,
+// and applies the music bus volume from settings. Global mute and hidden-tab mute are handled by
+// `initAudio`. Nothing is fetched or started before the first user gesture (autoplay policy), and
+// a level's files are fetched only when that level starts (never in the first-load path).
 import { Howl } from 'howler';
 import { useGame } from '../../net/game-store.ts';
+import { useApp } from '../../store/app.ts';
 import { useSettings } from '../../store/settings.ts';
-import { busVolume } from './audio-manager.ts';
-import { MUSIC_TUNING, slew, targetIntensity, targetRate } from './music-intensity.ts';
+import { busVolume, installMasterLimiter } from './audio-manager.ts';
+import { musicDucker } from './duck.ts';
+import {
+  layerGains,
+  MUSIC_TUNING,
+  slew,
+  type TrackSet,
+  targetIntensity,
+  targetRate,
+  trackSetForLevel,
+} from './music-intensity.ts';
+import manifest from './music-manifest.json';
 
 export type MusicScene = 'menu' | 'game';
 type TrackId = 'menu' | 'calm' | 'pressure';
 
-/** All loops are 16 bars at 104 BPM (tools/audio/synth_music.py); the sprite cuts encoder padding. */
-const LOOP_MS = ((16 * 4 * 60) / 104) * 1000;
+const loopLengths = manifest as Record<string, { loopMs: number }>;
+/** Loop length of a track set (tools/audio/synth_music.py); the sprite cuts the encoder padding. */
+function loopMs(set: TrackSet | 'menu'): number {
+  return loopLengths[set]?.loopMs ?? 36_923;
+}
 const TRACK_IDS: readonly TrackId[] = ['menu', 'calm', 'pressure'];
 /** Per-track mix level relative to the music bus. */
-const TRACK_LEVEL: Record<TrackId, number> = { menu: 0.8, calm: 0.75, pressure: 0.8 };
+const TRACK_LEVEL: Record<TrackId, number> = { menu: 0.8, calm: 0.8, pressure: 0.9 };
 const TICK_MS = 50;
 /** Ticks can stall in a background tab; never slew further than this in one step. */
 const MAX_DT_S = 0.25;
 const GESTURES = ['pointerdown', 'keydown', 'touchend'] as const;
 
-const howls: Record<TrackId, Howl | null> = { menu: null, calm: null, pressure: null };
+/** Howls by file name (`menu`, `l3`, `l3-pressure`); a level's pair is dropped when another starts. */
+const howls = new Map<string, Howl>();
+let activeSet: TrackSet = 'l1';
 const playIds: Record<TrackId, number | null> = { menu: null, calm: null, pressure: null };
 const volumes: Record<TrackId, number> = { menu: 0, calm: 0, pressure: 0 };
 
@@ -35,22 +53,43 @@ let rate = 1;
 let timer: ReturnType<typeof setInterval> | null = null;
 let lastTick = 0;
 
+function fileOf(track: TrackId): string {
+  return track === 'menu' ? 'menu' : track === 'calm' ? activeSet : `${activeSet}-pressure`;
+}
+
 function howl(track: TrackId): Howl {
-  let h = howls[track];
+  const file = fileOf(track);
+  let h = howls.get(file);
   if (!h) {
     h = new Howl({
-      src: [`/assets/audio/music/${track}.webm`, `/assets/audio/music/${track}.mp3`],
-      sprite: { loop: [0, LOOP_MS, true] },
+      src: [`/assets/audio/music/${file}.webm`, `/assets/audio/music/${file}.mp3`],
+      sprite: { loop: [0, loopMs(track === 'menu' ? 'menu' : activeSet), true] },
       volume: 0,
       preload: true,
     });
-    howls[track] = h;
+    howls.set(file, h);
+    installMasterLimiter();
   }
   return h;
 }
 
 function loaded(track: TrackId): boolean {
-  return howls[track]?.state() === 'loaded';
+  return howls.get(fileOf(track))?.state() === 'loaded';
+}
+
+/** Switches to the level's track set; the previous set's files are stopped and unloaded. */
+function selectSet(set: TrackSet): void {
+  if (set === activeSet) {
+    return;
+  }
+  stop('calm');
+  stop('pressure');
+  for (const suffix of ['', '-pressure']) {
+    const old = howls.get(`${activeSet}${suffix}`);
+    old?.unload();
+    howls.delete(`${activeSet}${suffix}`);
+  }
+  activeSet = set;
 }
 
 function start(track: TrackId): void {
@@ -63,7 +102,7 @@ function start(track: TrackId): void {
 function stop(track: TrackId): void {
   const id = playIds[track];
   if (id !== null) {
-    howls[track]?.stop(id);
+    howls.get(fileOf(track))?.stop(id);
   }
   playIds[track] = null;
   volumes[track] = 0;
@@ -98,9 +137,24 @@ function tick(): void {
     return;
   }
 
+  // Fetch only what the requested scene needs, and only now that a gesture unlocked audio.
+  const levelId = useApp.getState().room?.levelId;
+  if (requested === 'game' && levelId) {
+    selectSet(trackSetForLevel(levelId));
+  }
+  if (requested === 'menu') {
+    howl('menu');
+  } else if (requested === 'game') {
+    howl('calm');
+    howl('pressure');
+  }
+
+  // A scene fades in once its files are ready, so a slow download never starts mid-fade.
+  const menuReady = requested === 'menu' && loaded('menu');
+  const gameReady = requested === 'game' && loaded('calm') && loaded('pressure');
   const fade = MUSIC_TUNING.fadePerS;
-  menuGain = slew(menuGain, requested === 'menu' ? 1 : 0, fade, fade, dt);
-  gameGain = slew(gameGain, requested === 'game' ? 1 : 0, fade, fade, dt);
+  menuGain = slew(menuGain, menuReady ? 1 : 0, fade, fade, dt);
+  gameGain = slew(gameGain, gameReady ? 1 : 0, fade, fade, dt);
   const game = useGame.getState();
   const inGame = requested === 'game';
   intensity = slew(
@@ -134,15 +188,17 @@ function tick(): void {
     rate = 1;
   }
 
-  const bus = busVolume(useSettings.getState(), 'music');
+  const duck = musicDucker.step(now, dt);
+  const bus = busVolume(useSettings.getState(), 'music') * duck;
+  const layers = layerGains(gameGain, intensity);
   const gains: Record<TrackId, number> = {
     menu: menuGain,
-    calm: gameGain,
-    pressure: gameGain * intensity,
+    calm: layers.calm,
+    pressure: layers.pressure,
   };
   for (const track of TRACK_IDS) {
     const id = playIds[track];
-    const h = howls[track];
+    const h = howls.get(fileOf(track));
     if (id === null || !h) {
       continue;
     }
@@ -169,11 +225,9 @@ function tick(): void {
  * scene in the meantime (menu → lobby keeps the menu loop playing without a gap).
  */
 export function requestMusic(scene: MusicScene): () => void {
-  if (scene === 'menu') {
-    howl('menu');
-  } else {
-    howl('calm');
-    howl('pressure');
+  const levelId = useApp.getState().room?.levelId;
+  if (scene === 'game' && levelId) {
+    selectSet(trackSetForLevel(levelId));
   }
   if (!unlocked) {
     listenForGesture();
@@ -189,6 +243,8 @@ export function requestMusic(scene: MusicScene): () => void {
 
 export type MusicDebug = {
   requested: MusicScene | null;
+  /** Track set of the level music (`l1`..`l6`, `endless`). */
+  set: TrackSet;
   unlocked: boolean;
   playing: TrackId[];
   intensity: number;
@@ -209,6 +265,7 @@ export function musicDebug(): MusicDebug {
   }
   return {
     requested,
+    set: activeSet,
     unlocked,
     playing,
     intensity,
