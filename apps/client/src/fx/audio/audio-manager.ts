@@ -168,3 +168,15 @@ export function initAudio(): () => void {
     document.removeEventListener('visibilitychange', apply);
   };
 }
+
+/** S5-07: loads and decodes the SFX sprite ahead of the first match; resolves when ready (or failed). */
+export function preloadSfx(): Promise<void> {
+  const howl = load();
+  if (howl.state() === 'loaded') {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    howl.once('load', () => resolve());
+    howl.once('loaderror', () => resolve());
+  });
+}

@@ -80,9 +80,16 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
     }
     const rig = createCharacterRig(playerColor(colorIndex), role, { shadows });
     parent.add(rig.root);
+    // Adaptive quality can drop the navy outline hull as a last resort.
+    const syncOutline = () => {
+      rig.outline.visible = useQuality.getState().profile.outlines;
+    };
+    syncOutline();
+    const stopQuality = useQuality.subscribe(syncOutline);
     const ctrl = createCharacterController(rig.root);
     controller.current = ctrl;
     return () => {
+      stopQuality();
       parent.remove(rig.root);
       ctrl.dispose();
       rig.dispose();

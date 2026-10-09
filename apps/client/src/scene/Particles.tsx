@@ -59,7 +59,12 @@ export function Particles() {
           }
           const p: EmitterPreset = particlePresets[id];
           const colors = p.colors ?? [context.color ?? tokens.outline, ...(p.accent ?? [])];
-          for (let i = 0; i < count; i++) {
+          // Adaptive quality cuts the number of particles per burst, never the effect itself.
+          const scaled = Math.max(
+            1,
+            Math.round(count * useQuality.getState().profile.particleScale),
+          );
+          for (let i = 0; i < scaled; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = between(p.speed);
             spawn(pool, {

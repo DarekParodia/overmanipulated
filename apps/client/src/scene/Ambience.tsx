@@ -131,7 +131,6 @@ function useInstanceColors(mesh: RefObject<InstancedMesh | null>, count: number)
 
 export function Ambience() {
   const detail = useQuality((s) => s.profile.detail);
-  const preset = useQuality((s) => s.profile.preset);
   const layout = useMemo(() => ambienceLayout(runtime.map), []);
   const g = useGeometries(() => ({
     static: staticParts(layout),
@@ -147,7 +146,7 @@ export function Ambience() {
   const screens = useRef<InstancedMesh>(null);
   const stacks = useRef<InstancedMesh>(null);
   const motes = useRef<InstancedMesh>(null);
-  const showMotes = preset === 'high';
+  const showMotes = useQuality((s) => s.profile.motes);
   const moteCount = showMotes ? MOTES_PER_COLUMN * layout.motes.length : 0;
   useInstanceColors(screens, layout.monitors.length);
 
