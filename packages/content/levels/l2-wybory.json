@@ -1,0 +1,108 @@
+{
+  "id": "l2-wybory",
+  "title": "Kampania",
+  "topic": "Kampania na prezydenta miasta",
+  "briefingPoints": [
+    "Kampania na prezydenta miasta – sieć huczy.",
+    "Archiwum: co naprawdę powiedział kandydat?",
+    "Werdykt „z kontekstem”: prawda, ale niepełna."
+  ],
+  "briefing": "Za kilka dni wybory na prezydenta Nowych Brzegów! W sieci pełno cytatów i sondaży. Archiwum pokaże pełne nagrania i stare materiały. Gdy coś jest prawdziwe, ale ucięte, wybierz „opublikuj z kontekstem”. Lupa obrazu i Kartoteka źródeł działają jak dotąd.",
+  "durationS": 420,
+  "layout": [
+    "####################",
+    "#CCCCC....==A==....#",
+    "#..................#",
+    "#=R=...T....T...=I=#",
+    "#..................#",
+    "#...1..........2...#",
+    "#..T..........T....#",
+    "#..................#",
+    "#...3..........4...#",
+    "#..==..........==..#",
+    "#.......=DD=.......#",
+    "####################"
+  ],
+  "stations": ["imageSearch", "archive", "sourceRegistry"],
+  "schedule": [
+    {
+      "atS": 4,
+      "storyId": "l2-debata-w-ratuszu",
+      "deadlineS": 75
+    },
+    {
+      "atS": 28,
+      "storyId": "l2-cytat-o-liceach",
+      "deadlineS": 80
+    },
+    {
+      "atS": 52,
+      "storyId": "l2-podatki-wyrwane-z-kontekstu",
+      "deadlineS": 85
+    },
+    {
+      "atS": 76,
+      "storyId": "l2-sondaz-bez-pracowni",
+      "deadlineS": 80
+    },
+    {
+      "atS": 100,
+      "storyId": "l2-ankieta-na-stu-osobach",
+      "deadlineS": 80
+    },
+    {
+      "atS": 124,
+      "storyId": "l2-wiec-na-rynku",
+      "deadlineS": 80
+    },
+    {
+      "atS": 148,
+      "storyId": "l2-puste-krzesla",
+      "deadlineS": 80
+    },
+    {
+      "atS": 172,
+      "storyId": "l2-sciezki-rowerowe",
+      "deadlineS": 75
+    },
+    {
+      "atS": 196,
+      "storyId": "l2-uciety-wywiad",
+      "deadlineS": 80
+    },
+    {
+      "atS": 220,
+      "storyId": "l2-metro-do-brzegow",
+      "deadlineS": 75
+    },
+    {
+      "atS": 244,
+      "storyId": "l2-sondaz-pracowni",
+      "deadlineS": 60
+    },
+    {
+      "atS": 268,
+      "storyId": "l2-nagranie-z-parkingu",
+      "deadlineS": 60
+    },
+    {
+      "atS": 292,
+      "storyId": "l2-rezygnacja-kandydata",
+      "deadlineS": 60
+    },
+    {
+      "atS": 316,
+      "storyId": "l2-frekwencja-wyborcza",
+      "deadlineS": 60
+    },
+    {
+      "atS": 340,
+      "storyId": "l2-przerobione-banery",
+      "deadlineS": 70
+    }
+  ],
+  "stars": {
+    "two": 206,
+    "three": 300
+  }
+}
