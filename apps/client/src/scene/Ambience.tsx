@@ -197,14 +197,16 @@ export function Ambience() {
   }, [layout, glowB]);
 
   useFrame(({ clock }, delta) => {
-    const t = clock.elapsedTime;
     const { reducedMotion, noFlash } = useSettings.getState();
+    // Reduced motion: fans and dust stand still (the clock still ticks, the screens still breathe).
+    const t = clock.elapsedTime;
+    const still = reducedMotion ? 0 : t;
 
     const f = fans.current;
     if (f) {
       layout.fans.forEach((fan, i) => {
         dummy.position.set(fan.x, FAN_Y, fan.z + FAN_SHIFT);
-        dummy.rotation.set(0, t * FAN_SPEED + i * 0.9, 0);
+        dummy.rotation.set(0, still * FAN_SPEED + i * 0.9, 0);
         dummy.scale.set(1, 1, 1);
         dummy.updateMatrix();
         f.setMatrixAt(i, dummy.matrix);
@@ -283,14 +285,14 @@ export function Ambience() {
     const m = motes.current;
     if (m && moteCount > 0) {
       moteSeeds.forEach((seed, i) => {
-        const rise = (seed.phase + t * seed.speed) % 1;
-        const a = seed.angle + t * 0.15;
+        const rise = (seed.phase + still * seed.speed) % 1;
+        const a = seed.angle + still * 0.15;
         dummy.position.set(
-          seed.column.x + Math.cos(a) * seed.radius + Math.sin(t * 0.7 + seed.phase) * 0.06,
+          seed.column.x + Math.cos(a) * seed.radius + Math.sin(still * 0.7 + seed.phase) * 0.06,
           0.35 + rise * 1.7,
           seed.column.z + Math.sin(a) * seed.radius,
         );
-        dummy.rotation.set(t + seed.phase, t * 0.5, 0);
+        dummy.rotation.set(still + seed.phase, still * 0.5, 0);
         // Grow in, shrink out: no fading, no popping.
         const size = Math.sin(rise * Math.PI);
         dummy.scale.set(size, size, size);

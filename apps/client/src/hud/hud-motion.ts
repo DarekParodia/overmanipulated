@@ -1,6 +1,6 @@
 // HUD motion (S3-08): the HUD's side of the feedback catalogue. HUD components subscribe to the
 // animation triggers aimed at them (`scorePop`, `credibilityCrack`, `timerPulse`, and the folder
-// card triggers `hop`, `tremble`, `crumple`) and play short Web Animations on their own elements.
+// card trigger `cardHop`) and play short Web Animations on their own elements.
 // Reduced motion: no scale, shake or bounce (only the static state change stays). No-flash: no
 // pulsing; nothing here ever blinks.
 import { useEffect, useRef } from 'react';
@@ -73,17 +73,7 @@ const hop: Motion = {
   options: { duration: 360, easing: EASE_BOUNCE },
 };
 
-/** A card crumpling away (folder expired). */
-const crumple: Motion = {
-  keyframes: [
-    { transform: 'scale(1) rotate(0deg)' },
-    { transform: 'scale(0.85, 0.7) rotate(-6deg)', offset: 0.4 },
-    { transform: 'scale(0.6, 0.5) rotate(8deg)' },
-  ],
-  options: { duration: 380, easing: 'ease-in', fill: 'forwards' },
-};
-
-export const hudMotions = { bump, shake, pulse, hop, crumple } as const;
+export const hudMotions = { bump, shake, pulse, hop } as const;
 export type HudMotion = keyof typeof hudMotions;
 
 /** Whether a motion may play under the player's settings. */

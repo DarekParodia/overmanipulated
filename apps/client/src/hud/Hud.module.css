@@ -95,6 +95,7 @@
 /* --- Points -------------------------------------------------------------------------------- */
 
 .score {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -119,10 +120,6 @@
  * Floating "+N" / "−N" chip off the score (scorePop), just outside the pill's right edge (there
  * is no room above it at the top of the screen): pops in, rises a little, shrinks away.
  */
-.score {
-  position: relative;
-}
-
 .scorePop {
   position: absolute;
   left: calc(100% + var(--space-4) + var(--space-3));
@@ -233,11 +230,6 @@
 
 .low .ghost {
   background: var(--text-faint);
-}
-
-/* A big hit: the bar's lost part shows red under the cracked shield for a moment. */
-.cracked .fill {
-  background: var(--red);
 }
 
 .gaugeValue {

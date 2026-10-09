@@ -4,6 +4,7 @@
 // sounds stay clear. Pure scheduler over a small backend so it can be tested without Howler;
 // audio-manager.ts wires it to the sfx sprite (master/sfx volume and mute apply there).
 import type { CueId } from '../cues.ts';
+import { slew } from './music-intensity.ts';
 
 export type AmbienceCue = Extract<CueId, `ambience.${string}`>;
 
@@ -79,9 +80,7 @@ export function createAmbience(
       const dt = Math.min(MAX_DT_S, Math.max(0, (nowMs - lastMs) / 1000));
       lastMs = nowMs;
       const target = ducked ? AMBIENCE_TUNING.duckedGain : 1;
-      const rate = target < gain ? AMBIENCE_TUNING.duckPerS : AMBIENCE_TUNING.unduckPerS;
-      gain =
-        target < gain ? Math.max(target, gain - rate * dt) : Math.min(target, gain + rate * dt);
+      gain = slew(gain, target, AMBIENCE_TUNING.unduckPerS, AMBIENCE_TUNING.duckPerS, dt);
       backend.setBedGain(gain);
 
       for (const layer of AMBIENCE_LAYERS) {
