@@ -42,8 +42,12 @@ export function getStory(id: string): Story | undefined {
 /** The stories a level schedules, keyed by id, as the simulation consumes them. */
 export function storiesForLevel(level: Level): StoryBook & Readonly<Record<string, Story>> {
   const book: Record<string, Story> = {};
-  for (const spawn of level.schedule) {
-    const story = storiesById.get(spawn.storyId);
+  const storyIds = [
+    ...level.schedule.map((spawn) => spawn.storyId),
+    ...level.events.flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId])),
+  ];
+  for (const storyId of storyIds) {
+    const story = storiesById.get(storyId);
     if (story) {
       book[story.id] = story;
     }
