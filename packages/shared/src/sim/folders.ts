@@ -6,7 +6,7 @@ import {
   FLOOR_DROP_DISTANCE_TILES,
   INTERACTION_REACH_TILES,
 } from '../constants.ts';
-import type { Folder, FolderLocation } from '../entities.ts';
+import type { Folder, FolderLocation, FolderTag } from '../entities.ts';
 import type { SimFrame } from './frame.ts';
 import {
   type Fixture,
@@ -69,36 +69,52 @@ function spawnFolders(state: GameState, frame: SimFrame): GameState {
       next = { ...next, nextSpawnIndex: next.nextSpawnIndex + 1 };
       continue;
     }
-    const current = next;
-    const free = frame.ctx.map.fixtures.find(
-      (f) => f.kind === 'conveyor' && !folderOnFixture(current, f.id),
-    );
+    const free = freeConveyors(next, frame.ctx.map)[0];
     if (!free) {
       break;
     }
-    const folder: Folder = {
-      id: `f${next.nextFolderNumber}`,
-      storyId: entry.storyId,
-      location: { kind: 'fixture', fixtureId: free.id },
-      stamps: [],
-      spawnedAtMs: next.elapsedMs,
-      deadlineMs: next.elapsedMs + Math.round(entry.deadlineS * 1000),
-      warned: false,
-    };
-    next = {
-      ...next,
-      folders: { ...next.folders, [folder.id]: folder },
-      nextFolderNumber: next.nextFolderNumber + 1,
-      nextSpawnIndex: next.nextSpawnIndex + 1,
-    };
-    frame.events.push({
-      kind: 'folderSpawned',
-      folderId: folder.id,
-      storyId: folder.storyId,
-      fixtureId: free.id,
-    });
+    next = spawnFolderAt(next, frame, free, entry);
+    next = { ...next, nextSpawnIndex: next.nextSpawnIndex + 1 };
   }
   return next;
+}
+
+/** Conveyor tiles with no folder on them, in map order. */
+export function freeConveyors(state: GameState, map: TileMap): Fixture[] {
+  return map.fixtures.filter((f) => f.kind === 'conveyor' && !folderOnFixture(state, f.id));
+}
+
+/**
+ * Puts a new folder on a conveyor tile (the caller picked a free one) and emits `folderSpawned`.
+ * Shared by the level schedule and by level events; `tag` marks event folders.
+ */
+export function spawnFolderAt(
+  state: GameState,
+  frame: SimFrame,
+  tile: Fixture,
+  spec: { storyId: string; deadlineS: number; tag?: FolderTag },
+): GameState {
+  const folder: Folder = {
+    id: `f${state.nextFolderNumber}`,
+    storyId: spec.storyId,
+    location: { kind: 'fixture', fixtureId: tile.id },
+    stamps: [],
+    spawnedAtMs: state.elapsedMs,
+    deadlineMs: state.elapsedMs + Math.round(spec.deadlineS * 1000),
+    warned: false,
+    ...(spec.tag ? { tag: spec.tag } : {}),
+  };
+  frame.events.push({
+    kind: 'folderSpawned',
+    folderId: folder.id,
+    storyId: folder.storyId,
+    fixtureId: tile.id,
+  });
+  return {
+    ...state,
+    folders: { ...state.folders, [folder.id]: folder },
+    nextFolderNumber: state.nextFolderNumber + 1,
+  };
 }
 
 /** Pick up / put down for every player who pressed interact, in join order (first wins). */

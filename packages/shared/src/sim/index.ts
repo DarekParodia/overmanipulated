@@ -1,5 +1,6 @@
 export * from './content.ts';
 export * from './desk.ts';
+export * from './events.ts';
 export * from './folders.ts';
 export * from './frame.ts';
 export * from './map.ts';

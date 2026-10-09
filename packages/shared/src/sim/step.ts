@@ -1,6 +1,7 @@
 // One simulation tick. Pure: (state, inputs, commands, context) → new state + events.
 import type { GameEvent, InputMessage } from '../protocol.ts';
 import { stepDesk } from './desk.ts';
+import { stepEvents } from './events.ts';
 import { stepFolders } from './folders.ts';
 import type { PlayerIntent, QueuedCommand, SimContext, SimFrame, Subsystem } from './frame.ts';
 import type { TileMap } from './map.ts';
@@ -15,13 +16,14 @@ export type PlayerInput = Pick<InputMessage, 'seq' | 'move' | 'actions'>;
 
 /**
  * Gameplay subsystems in the order they run each tick, after movement. Folders first (so a
- * folder put on a station this tick can be worked on), scoring last (it reads the tick's events).
+ * folder put on a station this tick can be worked on), events after pings, scoring last (it reads the tick's events).
  */
 const SUBSYSTEMS: readonly Subsystem[] = [
   stepFolders,
   stepStations,
   stepDesk,
   stepPings,
+  stepEvents,
   stepScoring,
 ];
 
