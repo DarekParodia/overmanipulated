@@ -2,6 +2,7 @@
 // imageSearch: S2-04, archive: S2-05, sourceRegistry: S2-06, phone: S4-01, aiScanner: S4-02.
 import { AiScanner } from './AiScanner.tsx';
 import { Archive } from './Archive.tsx';
+import { DataLibrary } from './DataLibrary.tsx';
 import { ImageSearch } from './ImageSearch.tsx';
 import { Phone } from './Phone.tsx';
 import { PlaceholderMinigame } from './Placeholder.tsx';
@@ -16,6 +17,7 @@ export const minigames: MinigameRegistry = {
   sourceRegistry: SourceRegistry,
   phone: Phone,
   aiScanner: AiScanner,
+  dataLibrary: DataLibrary,
 };
 
 export function minigameFor(kind: keyof MinigameRegistry): Minigame {

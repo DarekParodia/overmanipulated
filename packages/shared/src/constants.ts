@@ -293,3 +293,13 @@ export const AI_SCANNER_THRESHOLD = 50;
 /** The detector never reads exactly 0 or 100 (percent). */
 export const AI_SCANNER_READING_MIN = 3;
 export const AI_SCANNER_READING_MAX = 97;
+
+// --- Minigame: data library (S4-03) ----------------------------------------------------------
+
+/** Wrong picks (a cell or "doesn't match") that end the data-library minigame as a failure. */
+export const DATA_LIBRARY_MAX_MISTAKES = 2;
+/** Rows and year columns of the original table (a „Średnia” column is added after the years). */
+export const DATA_LIBRARY_ROWS = 3;
+export const DATA_LIBRARY_YEARS = 3;
+/** Chance that the claimed figure is altered, for a folder without a data-library stamp. */
+export const DATA_LIBRARY_ALTERED_CHANCE = 0.6;
