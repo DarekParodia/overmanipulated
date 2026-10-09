@@ -514,7 +514,6 @@ export const pl = {
     /** Phone minigame (S4-01): pick the right number, wait in the queue (reporters skip it). */
     phone: {
       task: 'Zadzwoń do źródła',
-      ringing: 'Dzwoni…',
       onHold: 'Czekaj w kolejce',
       seconds: (n: number) => `${n} s`,
       skipped: 'Reporter: bez kolejki!',

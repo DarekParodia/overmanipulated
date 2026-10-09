@@ -151,8 +151,3 @@ export function reduce(state: PhoneState, action: Action): [PhoneState, Effect |
 export function queueSeconds(leftMs: number): number {
   return Math.max(1, Math.ceil(leftMs / 1000));
 }
-
-/** Whether the local player's role skips the queue (the reporter's bonus). */
-export function skipsQueueFor(role: string | null | undefined): boolean {
-  return role === 'reporter';
-}

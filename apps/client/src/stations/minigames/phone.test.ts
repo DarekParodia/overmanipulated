@@ -4,7 +4,6 @@ import {
   PHONE_HOLD_BEAT_MS,
   PHONE_QUEUE_MAX_MS,
   PHONE_QUEUE_MIN_MS,
-  ROLE_STATIONS,
 } from '@redakcja/shared';
 import {
   generatePuzzle,
@@ -12,7 +11,6 @@ import {
   type PhoneState,
   queueSeconds,
   reduce,
-  skipsQueueFor,
 } from './phone.logic.ts';
 
 const STORY = { source: 'Komunikat prasowy ratusza' };
@@ -101,13 +99,6 @@ describe('phone rules', () => {
     });
     expect(s.phase).toBe('success');
     expect(effect).toBe('connected');
-  });
-
-  test('role helper matches the reporter station mapping', () => {
-    expect(ROLE_STATIONS.reporter).toContain('phone');
-    expect(skipsQueueFor('reporter')).toBe(true);
-    expect(skipsQueueFor('archivist')).toBe(false);
-    expect(skipsQueueFor(null)).toBe(false);
   });
 
   test('input is ignored once the call is decided; ticks only count in the queue', () => {

@@ -74,7 +74,7 @@ export function Phone({ seed, story, stamp, device, skipsQueue = false, onDone }
     let last = performance.now();
     const timer = setInterval(() => {
       const now = performance.now();
-      dispatch({ type: 'tick', dtMs: now - last });
+      dispatch({ type: 'tick', dtMs: Math.min(now - last, 4 * TICK_MS) });
       last = now;
     }, TICK_MS);
     return () => clearInterval(timer);
