@@ -95,7 +95,7 @@ function collectBlocks() {
   return { back, side, front, desks };
 }
 
-/** One wall block: outlined body, light cap, baseboard and a theme stripe wrapping all faces. */
+/** One wall block: outlined body, light cap, baseboard and a theme stripe (same height on every wall). */
 function wallGeometry(h: number, theme: Theme): BufferGeometry {
   const items: Item[] = [
     bx(theme.wall, 1, h, 1, { y: h / 2 }),
@@ -104,10 +104,9 @@ function wallGeometry(h: number, theme: Theme): BufferGeometry {
   if (h > 0.5) {
     items.push(
       bxd(theme.accentDark, 1.006, 0.14, 1.006, { y: 0.07 }),
-      bxd(theme.accent, 1.012, 0.07, 1.012, { y: h * 0.5 }),
+      bxd(theme.accent, 1.012, 0.07, 1.012, { y: 0.45 }),
     );
   }
-  // The cap is part of the block: lift the body so it ends under it.
   return buildModel(items);
 }
 
@@ -189,7 +188,7 @@ export function Newsroom({ shadows }: { shadows: boolean }) {
       <Instances geometry={g.side} blocks={blocks.side} shadows={shadows} />
       <Instances geometry={g.front} blocks={blocks.front} shadows={shadows} />
       <Instances geometry={g.desk} blocks={blocks.desks} shadows={shadows} />
-      <Decor />
+      <Decor theme={theme} />
     </group>
   );
 }

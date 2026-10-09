@@ -1,6 +1,7 @@
 // Where the wall decor hangs (S5-01), derived from any level's tile map: windows and posters on
 // the back wall's free columns only (never behind a station or the conveyor, whose floating signs
-// cover that part of the wall, nor behind the Ambience wall clock), at most a handful so the
+// cover that part of the wall, nor behind the Ambience wall clock; on crowded walls the layout falls
+// back to hanging art right beside the signs), at most a handful so the
 // wall stays calm. Free of three.js and React so it can be unit-tested.
 import { type TileMap, tileAt } from '@redakcja/shared';
 import { ambienceLayout } from './ambience-layout.ts';
@@ -68,10 +69,11 @@ function slotsFor(map: TileMap, theme: Theme, signReach: number): DecorSlot[] {
     }
   }
   const slots: DecorSlot[] = [];
-  const stride = Math.max(1, Math.ceil(spaced.length / DECOR_LIMIT));
   let poster = 0;
-  for (let i = 0; i < spaced.length && slots.length < DECOR_LIMIT; i += stride) {
-    const col = spaced[i];
+  const count = Math.min(DECOR_LIMIT, spaced.length);
+  for (let n = 0; n < count; n++) {
+    // Evenly spread picks, so the limit is reached whenever there is room.
+    const col = spaced[count === 1 ? 0 : Math.round((n * (spaced.length - 1)) / (count - 1))];
     if (col === undefined) {
       continue;
     }

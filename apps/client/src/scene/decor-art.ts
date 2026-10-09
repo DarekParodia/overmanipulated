@@ -373,9 +373,16 @@ export function createDecorAtlas(): CanvasTexture {
   texture.magFilter = LinearFilter;
   texture.anisotropy = 4;
   // Lettering uses the display font: redraw once it is ready.
+  let disposed = false;
+  texture.addEventListener('dispose', () => {
+    disposed = true;
+  });
   void document.fonts
     ?.load(`800 24px ${FONT}`)
     .then(() => {
+      if (disposed) {
+        return;
+      }
       drawDecorAtlas(canvas);
       texture.needsUpdate = true;
     })

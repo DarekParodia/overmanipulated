@@ -3,7 +3,7 @@
 // "inverted hull" merged into the SAME geometry: an inflated copy of the part with flipped
 // triangles, so it only shows around the silhouette (like the characters' outline) and costs no
 // extra draw call. A whole prop is one geometry, repeated props are one instanced draw.
-import type { BufferGeometry } from 'three';
+import { BufferGeometry } from 'three';
 import { colors } from '../ui/tokens.ts';
 import type { Placed } from './geometry.ts';
 import { box, cylinder, merge, paint, ring } from './geometry.ts';
@@ -81,6 +81,9 @@ function inverted(geometry: BufferGeometry): BufferGeometry {
 
 /** Fill parts in their own colours, plus one navy inverted hull per outlined part. */
 export function buildModel(items: readonly Item[], outlineWidth = OUTLINE): BufferGeometry {
+  if (items.length === 0) {
+    return new BufferGeometry();
+  }
   const parts: BufferGeometry[] = items.map((item) => paint(item.make(0), item.color));
   for (const item of items) {
     if (item.outline) {

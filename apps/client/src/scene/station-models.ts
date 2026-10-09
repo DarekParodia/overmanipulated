@@ -63,7 +63,7 @@ function deskBody(): Item[] {
 /** Light table with photo slides and a big magnifying glass leaning on its front (0.8). */
 function imageSearch(detail: boolean): Item[] {
   const tilt = -0.2;
-  const lens = { x: 0.2, y: 0.4, z: 0.47 };
+  const lens = { x: 0.2, y: 0.4, z: 0.42 };
   const items: Item[] = [
     ...legs(0.34, 0.66),
     bx(colors.surfaceSunk, 0.84, 0.12, 0.84, { y: 0.66 }),
@@ -72,7 +72,7 @@ function imageSearch(detail: boolean): Item[] {
     // The lens: blue frame, pale glass, a stubby handle, standing on the plinth.
     tor(colors.blueDark, 0.22, 0.055, { ...lens, rx: tilt }),
     cyld(colors.sky, 0.21, 0.03, { ...lens, rx: Math.PI / 2 + tilt }, 16),
-    bx(colors.blueDark, 0.09, 0.3, 0.09, { x: 0.43, y: 0.16, z: 0.47, rz: 0.75 }),
+    bx(colors.blueDark, 0.09, 0.3, 0.09, { x: 0.43, y: 0.16, z: 0.42, rz: 0.75 }),
   ];
   if (detail) {
     items.push(
@@ -146,7 +146,7 @@ function sourceRegistry(detail: boolean): Item[] {
       const pulled = row === 1 && col === 2;
       const x = -0.26 + col * 0.26;
       const y = 0.19 + row * 0.15;
-      const z = pulled ? 0.53 : 0.385;
+      const z = pulled ? 0.5 : 0.385;
       const color = CARD_COLORS[(row * 3 + col) % CARD_COLORS.length] ?? colors.blue;
       items.push(bx(color, 0.23, 0.12, 0.03, { x, y, z }));
       items.push(bxd(colors.surface, 0.1, 0.03, 0.03, { x, y: y + 0.0, z: z + 0.025 }));

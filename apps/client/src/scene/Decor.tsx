@@ -9,7 +9,6 @@ import type { TileMap } from '@redakcja/shared';
 import { useEffect, useMemo } from 'react';
 import { type BufferGeometry, ConeGeometry, PlaneGeometry } from 'three';
 import { runtime } from '../net/session.ts';
-import { useApp } from '../store/app.ts';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { type AtlasCell, cellUv, createDecorAtlas, createRainTexture } from './decor-art.ts';
@@ -17,7 +16,7 @@ import { type DecorSlot, decorSlots } from './decor-layout.ts';
 import { merge, paint } from './geometry.ts';
 import { buildModel, bxd } from './models.ts';
 import { useQuality } from './quality.ts';
-import { type Theme, themeForLevel } from './theme.ts';
+import type { Theme } from './theme.ts';
 
 /** Back wall front face (the wall block ends at z = 1) and art heights. */
 const WALL_FACE = 1;
@@ -52,7 +51,7 @@ function pennant(x: number, y: number, color: string): BufferGeometry {
   const flag = new ConeGeometry(0.11, 0.24, 3);
   flag.rotateZ(Math.PI);
   flag.scale(1, 1, 0.12);
-  flag.translate(x, y, WALL_FACE + 0.06);
+  flag.translate(x, y, WALL_FACE + 0.015);
   return paint(flag, color);
 }
 
@@ -78,7 +77,7 @@ function pennantString(theme: Theme, width: number): BufferGeometry[] {
         bxd(colors.outline, length, 0.025, 0.025, {
           x: (x0 + x1) / 2,
           y: (y0 + y1) / 2,
-          z: WALL_FACE + 0.05,
+          z: WALL_FACE + 0.012,
           rz: Math.atan2(y1 - y0, x1 - x0),
         }),
       ]),
@@ -172,12 +171,11 @@ function buildLayer(map: TileMap, theme: Theme, detail: boolean): Layer {
   };
 }
 
-export function Decor() {
+export function Decor({ theme }: { theme: Theme }) {
   const detail = useQuality((s) => s.profile.detail);
-  const theme = useMemo(() => themeForLevel(useApp.getState().room?.levelId ?? ''), []);
   const layer = useMemo(() => buildLayer(runtime.map, theme, detail), [theme, detail]);
   const atlas = useMemo(createDecorAtlas, []);
-  const rainTexture = useMemo(createRainTexture, []);
+  const rainTexture = useMemo(() => (layer.rain ? createRainTexture() : null), [layer.rain]);
   useEffect(
     () => () => {
       layer.solid.dispose();
@@ -189,12 +187,12 @@ export function Decor() {
   useEffect(
     () => () => {
       atlas.dispose();
-      rainTexture.dispose();
+      rainTexture?.dispose();
     },
     [atlas, rainTexture],
   );
   useFrame((_, delta) => {
-    if (layer.rain && detail && !useSettings.getState().reducedMotion) {
+    if (rainTexture && detail && !useSettings.getState().reducedMotion) {
       rainTexture.offset.y = (rainTexture.offset.y + delta * RAIN_SCROLL) % 1;
     }
   });
@@ -208,7 +206,7 @@ export function Decor() {
           <meshBasicMaterial map={atlas} />
         </mesh>
       )}
-      {layer.rain && (
+      {layer.rain && rainTexture && (
         <mesh geometry={layer.rain}>
           <meshBasicMaterial map={rainTexture} alphaTest={0.5} />
         </mesh>
