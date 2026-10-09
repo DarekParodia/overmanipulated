@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { PerfOverlay } from './debug/PerfOverlay.tsx';
+import { EncyclopediaScreen } from './encyclopedia/EncyclopediaScreen.tsx';
 import { initAudio, playSound } from './fx/audio/audio-manager.ts';
 import { feedback } from './fx/feedback.ts';
 import { startGameplayFeedback } from './fx/gameplay-feedback.ts';
@@ -55,6 +56,7 @@ export function App() {
       )}
       {screen === 'styleguide' && <Styleguide />}
       <SettingsPanel />
+      <EncyclopediaScreen />
       <PerfOverlay />
     </>
   );

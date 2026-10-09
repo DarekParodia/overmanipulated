@@ -2,8 +2,15 @@
 // broken file fails fast on both server and client. New files are registered in files.ts.
 import { ENDLESS_LEVEL_ID, type StoryBook } from '@redakcja/shared';
 import { ENDLESS_PREVIEW_SEED, generateEndlessLevel } from './endless.ts';
-import { LEVEL_FILES, STORY_FILES } from './files.ts';
-import { type Level, levelSchema, type Story, storyFileSchema } from './schema.ts';
+import { LEVEL_FILES, STORY_FILES, TECHNIQUE_FILES } from './files.ts';
+import {
+  type Level,
+  levelSchema,
+  type Story,
+  storyFileSchema,
+  type Technique,
+  techniqueFileSchema,
+} from './schema.ts';
 
 export * from './endless.ts';
 export * from './schema.ts';
@@ -13,6 +20,11 @@ export const LEVELS: readonly Level[] = Object.values(LEVEL_FILES).map((file) =>
 );
 export const STORIES: readonly Story[] = Object.values(STORY_FILES).flatMap((file) =>
   storyFileSchema.parse(file),
+);
+
+/** Encyclopedia cards, in display order (S5-04). */
+export const TECHNIQUES: readonly Technique[] = Object.values(TECHNIQUE_FILES).flatMap((file) =>
+  techniqueFileSchema.parse(file),
 );
 
 /** The level a new room starts with. */

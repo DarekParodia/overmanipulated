@@ -12,7 +12,14 @@ import {
   type StationKind,
 } from '@redakcja/shared';
 import type { z } from 'zod';
-import { type Level, levelSchema, type Story, storySchema } from './schema.ts';
+import {
+  type Level,
+  levelSchema,
+  type Story,
+  storySchema,
+  type Technique,
+  techniqueSchema,
+} from './schema.ts';
 
 export type Severity = 'error' | 'warning';
 
@@ -536,6 +543,78 @@ export function checkRegistration(
   for (const file of Object.keys(registered)) {
     if (!diskNames.has(file)) {
       error('src/files.ts', `registers "${file}", which does not exist`);
+    }
+  }
+  return issues;
+}
+
+/**
+ * Encyclopedia rules (S5-04): every technique id a story uses resolves to exactly one card (its
+ * id or an alias), ids and aliases are unique, and no card is left without a story.
+ */
+export function validateTechniques(
+  techniqueFiles: readonly ContentFile[],
+  storyFiles: readonly ContentFile[],
+): Issue[] {
+  const issues: Issue[] = [];
+  const add = (severity: Severity, file: string, path: readonly PathPart[], message: string) =>
+    issues.push({ severity, file, path: formatPath(path), message });
+  /** Technique id or alias to the card it collects into. */
+  const owner = new Map<string, string>();
+  const cards: { technique: Technique; file: string; index: number }[] = [];
+  for (const { file, data } of techniqueFiles) {
+    if (!Array.isArray(data)) {
+      add('error', file, [], 'expected an array of techniques');
+      continue;
+    }
+    data.forEach((entry: unknown, index) => {
+      const parsed = techniqueSchema.safeParse(entry);
+      if (!parsed.success) {
+        for (const issue of parsed.error.issues) {
+          add('error', file, [index, ...issue.path], issue.message);
+        }
+        return;
+      }
+      const technique = parsed.data;
+      cards.push({ technique, file, index });
+      for (const id of [technique.id, ...technique.aliases]) {
+        const taken = owner.get(id);
+        if (taken !== undefined) {
+          add('error', file, [index, 'id'], `"${id}" already belongs to technique "${taken}"`);
+        } else {
+          owner.set(id, technique.id);
+        }
+      }
+      for (const [field, value] of Object.entries(technique)) {
+        if (typeof value === 'string') {
+          checkTypography(value, [index, field], (path, severity, message) =>
+            add(severity, file, path, message),
+          );
+        }
+      }
+    });
+  }
+  const used = new Set<string>();
+  for (const { file, data } of storyFiles) {
+    if (!Array.isArray(data)) {
+      continue;
+    }
+    data.forEach((entry: unknown, index) => {
+      const id = (entry as { technique?: unknown } | null)?.technique;
+      if (typeof id !== 'string') {
+        return;
+      }
+      const card = owner.get(id);
+      if (card === undefined) {
+        add('warning', file, [index, 'technique'], `technique "${id}" has no encyclopedia card`);
+      } else {
+        used.add(card);
+      }
+    });
+  }
+  for (const { technique, file, index } of cards) {
+    if (!used.has(technique.id)) {
+      add('warning', file, [index, 'id'], `technique "${technique.id}" is used by no story`);
     }
   }
   return issues;

@@ -591,6 +591,13 @@ export const cues = {
     particles: { preset: 'sparks', count: 5 },
     extraParticles: { preset: 'smoke', count: 2 },
   },
+  // --- S5-04 technique encyclopedia: a new card pops into the collection (DOM animation lives
+  // in encyclopedia/NewCardToast, this is its sound and buzz). ---
+  'encyclopedia.unlock': {
+    severity: 2,
+    sound: { ids: ['chime'], bus: 'ui', volume: 0.9, rateJitter: 0.03 },
+    haptic: 'tick',
+  },
 } as const satisfies Record<string, Cue>;
 
 export type CueId = keyof typeof cues;

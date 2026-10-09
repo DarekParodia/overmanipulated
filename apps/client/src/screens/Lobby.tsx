@@ -2,6 +2,7 @@
 // role picker, the level, and one main action — "Gotowy" for guests, "Do składu!" for the host.
 import { MAX_PLAYERS, type Role } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
+import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
@@ -120,6 +121,13 @@ export function Lobby() {
           </span>
         </section>
         <div className={styles.topActions}>
+          <Button
+            icon={<Icon name="book" size={24} />}
+            data-testid="open-encyclopedia"
+            onClick={() => useEncyclopedia.getState().show()}
+          >
+            {pl.encyclopedia.open}
+          </Button>
           <Button icon={<Icon name="trophy" size={24} />} onClick={() => setBoardOpen(true)}>
             {pl.leaderboard.open}
           </Button>

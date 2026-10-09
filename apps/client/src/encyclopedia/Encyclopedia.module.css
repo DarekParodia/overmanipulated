@@ -1,0 +1,566 @@
+/*
+ * Technique encyclopedia: a white panel over a dimmed screen. Left, a grid of sticker tiles
+ * (collected = coloured badge and name, locked = grey silhouette with "???"); right, the selected
+ * card as a bigger sticker with the reading material. Portrait phones show one of the two.
+ */
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: min(64rem, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--outline-a50);
+}
+
+.sheet {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  height: min(44rem, calc(100dvh - 2 * var(--space-4)));
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  overflow: hidden;
+}
+
+.dialog[open] .sheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.08em;
+  min-width: 0;
+}
+
+.title svg {
+  flex: none;
+  margin-top: -0.12em;
+  --icon-fill: var(--blue);
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3) 0 var(--space-2);
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--space-4);
+  min-height: 0;
+}
+
+/* --- Grid of tiles --------------------------------------------------------------------------- */
+
+.grid {
+  margin: 0;
+  border: 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.25rem, 1fr));
+  grid-auto-rows: max-content;
+  gap: var(--space-3);
+  align-content: start;
+  min-height: 0;
+  overflow-y: auto;
+  /* Room for the pop shadow and the lift of the selected tile. */
+  padding: var(--space-2) var(--space-2) var(--space-3);
+}
+
+.tile {
+  --card-accent: var(--blue);
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: var(--space-2);
+  min-height: 6.5rem;
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transform: rotate(var(--tilt, 0deg));
+  transition:
+    transform var(--motion-fast) var(--ease-bounce),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+/* Stickers sit a little crooked, like they were stuck in by hand. */
+.tile:nth-child(3n + 1) {
+  --tilt: -1.2deg;
+}
+
+.tile:nth-child(3n + 2) {
+  --tilt: 0.8deg;
+}
+
+.tile:nth-child(3n) {
+  --tilt: -0.5deg;
+}
+
+.tile:hover {
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.tile:active {
+  transform: rotate(0deg) translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.tile:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* Selected: lifted, straight, with a bold blue frame; the frame is also a thicker outline, so it
+   never relies on colour alone. */
+.tileSelected {
+  transform: rotate(0deg) translateY(-3px);
+  border-color: var(--blue-dark);
+  border-width: var(--stroke-bold);
+  box-shadow: 0 6px 0 var(--blue-dark);
+}
+
+.tileBadge {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--card-accent);
+  color: var(--text-on-dark);
+}
+
+.tileBadge svg {
+  --icon-fill: var(--card-accent);
+}
+
+.tileName {
+  padding-top: 0.1em;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* Locked: a grey silhouette; the badge shows the shape of the sticker but not its colour. */
+.tileLocked {
+  background: var(--surface-soft);
+  color: var(--text-soft);
+  border-style: dashed;
+}
+
+.tileLocked .tileBadge {
+  background: var(--surface-sunk);
+  border-color: var(--text-faint);
+  color: var(--text-faint);
+}
+
+.tileLocked .tileBadge svg {
+  --icon-fill: var(--surface-sunk);
+}
+
+.tileLocked .tileName {
+  font-size: var(--text-lg);
+}
+
+/* --- Detail card ----------------------------------------------------------------------------- */
+
+.detail {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-1) var(--space-2) var(--space-3) var(--space-1);
+  overscroll-behavior: contain;
+}
+
+.card {
+  --card-accent: var(--blue);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--pop-lg);
+  animation: card-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes card-in {
+  0% {
+    transform: scale(0.92) rotate(-1.5deg);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+:root[data-reduced-motion="true"] .card,
+:root[data-reduced-motion="true"] .newChip {
+  animation: none;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cardBadge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--card-accent);
+  color: var(--text-on-dark);
+}
+
+.cardBadge svg {
+  --icon-fill: var(--card-accent);
+}
+
+.cardName {
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.1em;
+}
+
+.section {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  color: var(--text);
+}
+
+.sectionTitle svg {
+  flex: none;
+  --icon-fill: var(--yellow);
+}
+
+.text {
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px var(--space-3) 0 var(--space-2);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip svg {
+  --icon-fill: var(--blue);
+}
+
+.examples {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.example {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.exampleHeadline {
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.exampleLevel {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.cardLocked {
+  justify-items: center;
+  text-align: center;
+  border-style: dashed;
+  background: var(--surface-soft);
+}
+
+.cardLocked .cardHead {
+  flex-direction: column;
+}
+
+.cardLocked .cardBadge {
+  width: 6rem;
+  height: 6rem;
+  background: var(--surface-sunk);
+  border-color: var(--text-faint);
+  color: var(--text-faint);
+}
+
+.cardLocked .cardBadge svg {
+  width: 3.5rem;
+  height: 3.5rem;
+  --icon-fill: var(--surface-sunk);
+}
+
+.cardLocked .cardName {
+  font-size: var(--text-2xl);
+  color: var(--text-soft);
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+
+.hint svg {
+  flex: none;
+}
+
+.lockedBody {
+  font-size: var(--text-md);
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+/* --- „Nowa karta!” chip in the Kolegium title ------------------------------------------------ */
+
+.newChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--touch-target);
+  padding: 2px var(--space-3) 0 var(--space-2);
+  border: var(--stroke) solid var(--blue-dark);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--blue-dark);
+  color: var(--blue-dark);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: chip-pop var(--motion-slow) var(--ease-bounce) both;
+}
+
+.newChip:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--blue-dark);
+}
+
+.newChip:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.newChip svg {
+  flex: none;
+  --icon-fill: var(--blue);
+}
+
+.newMore {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--blue-dark);
+  color: var(--text-on-dark);
+  line-height: 1.4;
+}
+
+@keyframes chip-pop {
+  0% {
+    transform: scale(0.5) rotate(-6deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.12) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* --- Small screens --------------------------------------------------------------------------- */
+
+/* Landscape phones (640×360): tighter panel, narrower tiles. */
+@media (max-height: 520px) {
+  .dialog {
+    width: calc(100vw - 2 * var(--space-2));
+    max-height: calc(100dvh - 2 * var(--space-2));
+  }
+
+  .sheet {
+    height: calc(100dvh - 2 * var(--space-2));
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3) var(--space-3);
+    border-width: var(--stroke);
+    border-radius: var(--radius-md);
+  }
+
+  .title {
+    font-size: var(--text-lg);
+  }
+
+  .title svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+    gap: var(--space-2);
+  }
+
+  .tile {
+    min-height: 5.5rem;
+    padding: var(--space-2) var(--space-1);
+  }
+
+  .tileBadge {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .card {
+    padding: var(--space-3);
+    gap: var(--space-2);
+    border-width: var(--stroke);
+    border-radius: var(--radius-md);
+  }
+
+  .cardBadge {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
+
+  .cardName {
+    font-size: var(--text-lg);
+  }
+
+  .cardLocked .cardBadge {
+    width: 4.5rem;
+    height: 4.5rem;
+  }
+
+  .cardLocked .cardName {
+    font-size: var(--text-xl);
+  }
+
+  .section {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* Portrait phones: the grid or the card, one at a time. */
+@media (max-width: 640px) and (orientation: portrait) {
+  .dialog {
+    width: calc(100vw - 2 * var(--space-2));
+  }
+
+  .sheet {
+    padding: var(--space-3);
+  }
+
+  .header {
+    flex-wrap: wrap;
+  }
+
+  .title {
+    flex: 1 1 100%;
+    order: -1;
+  }
+
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
