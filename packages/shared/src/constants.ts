@@ -229,3 +229,35 @@ export const EVENTS = {
 
 /** Level id selected in the lobby for endless mode; not a content file. */
 export const ENDLESS_LEVEL_ID = 'endless';
+
+/**
+ * Endless mode balance (S4-11). The generator in `@redakcja/content` builds the whole schedule up
+ * front; the folder interval shrinks by `intervalFactorPerMinute` every minute (down to
+ * `minIntervalS`) and the folder time by `deadlineShrinkPerMinuteS` (down to `minDeadlineS`).
+ */
+export const ENDLESS = {
+  /** Level length handed to the sim; effectively unlimited, a run ends only at 0 credibility. */
+  durationS: 86_400,
+  /** The generated schedule covers this much level time. */
+  scheduleLengthS: 3600,
+  firstSpawnS: 4,
+  startIntervalS: 18,
+  minIntervalS: 7,
+  intervalFactorPerMinute: 0.9,
+  /** Each interval is randomised by up to this fraction either way. */
+  intervalJitter: 0.15,
+  startDeadlineS: 80,
+  minDeadlineS: 35,
+  deadlineShrinkPerMinuteS: 3,
+  /** Random events start after this much level time, then come every `eventIntervalS`. */
+  eventsStartS: 150,
+  eventIntervalS: 75,
+  minEventIntervalS: 30,
+  eventIntervalFactorPerMinute: 0.95,
+  /** Wave size of a `botRaid` event. */
+  botRaidCount: 3,
+  /** Unused by endless scoring (no stars), required by the level shape. */
+  stars: { two: 500, three: 1000 },
+  /** `levelEnd.results` keeps at most this many (the latest) entries in a long run. */
+  maxResultsSent: 512,
+} as const;

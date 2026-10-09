@@ -11,12 +11,11 @@ import {
   insertLeaderboardEntry,
 } from './queries/leaderboard.ts';
 
-const entry = (score: number, createdAt = new Date()) => ({
-  roomCode: 'ABCD',
-  mode: 'endless' as const,
-  levelId: 'endless',
+const entry = (score: number, createdAt = new Date(), roomCode = 'ABCD', survivedS = 100) => ({
+  roomCode,
+  players: ['Ala', 'Bartek'],
   score,
-  nicknames: ['Ala', 'Bartek'],
+  survivedS,
   createdAt,
 });
 
@@ -30,24 +29,29 @@ describe('database', () => {
     expect(tables.map((t) => t.name)).toContain('blunder_votes');
   });
 
-  it('stores and returns top entries by score', () => {
+  it('stores and returns top entries by score, then survival time', () => {
     const db = openDatabase(':memory:');
     insertLeaderboardEntry(db, entry(50));
-    insertLeaderboardEntry(db, entry(120));
-    insertLeaderboardEntry(db, { ...entry(500), mode: 'campaign', levelId: 'level-1' });
-    const top = getTopEntries(db, { mode: 'endless' });
-    expect(top.map((e) => e.score)).toEqual([120, 50]);
-    expect(top[0]?.nicknames).toEqual(['Ala', 'Bartek']);
+    insertLeaderboardEntry(db, entry(120, new Date(), 'ABCD', 200));
+    insertLeaderboardEntry(db, entry(120, new Date(), 'ABCD', 300));
+    const top = getTopEntries(db);
+    expect(top.map((e) => [e.score, e.survivedS])).toEqual([
+      [120, 300],
+      [120, 200],
+      [50, 100],
+    ]);
+    expect(top[0]?.players).toEqual(['Ala', 'Bartek']);
   });
 
-  it('filters by level and limits results', () => {
+  it('filters by room and limits results', () => {
     const db = openDatabase(':memory:');
     for (let i = 0; i < 5; i++) {
-      insertLeaderboardEntry(db, { ...entry(i), mode: 'campaign', levelId: 'level-1' });
+      insertLeaderboardEntry(db, entry(i));
     }
-    insertLeaderboardEntry(db, { ...entry(99), mode: 'campaign', levelId: 'level-2' });
-    const top = getTopEntries(db, { mode: 'campaign', levelId: 'level-1', limit: 2 });
-    expect(top.map((e) => e.score)).toEqual([4, 3]);
+    insertLeaderboardEntry(db, entry(99, new Date(), 'WXYZ'));
+    expect(getTopEntries(db, { roomCode: 'ABCD', limit: 2 }).map((e) => e.score)).toEqual([4, 3]);
+    expect(getTopEntries(db, { roomCode: 'WXYZ' }).map((e) => e.score)).toEqual([99]);
+    expect(getTopEntries(db, { limit: 1 }).map((e) => e.score)).toEqual([99]);
   });
 
   it('deletes entries past the retention window', () => {
@@ -56,7 +60,7 @@ describe('database', () => {
     insertLeaderboardEntry(db, entry(1, new Date('2026-01-01T00:00:00Z')));
     insertLeaderboardEntry(db, entry(2, new Date('2026-10-01T00:00:00Z')));
     expect(deleteExpiredEntries(db, now)).toBe(1);
-    expect(getTopEntries(db, { mode: 'endless' }).map((e) => e.score)).toEqual([2]);
+    expect(getTopEntries(db).map((e) => e.score)).toEqual([2]);
   });
 });
 

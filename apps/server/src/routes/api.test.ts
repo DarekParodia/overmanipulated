@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { PROTOCOL_VERSION } from '@redakcja/shared';
+import { leaderboardResponseSchema, PROTOCOL_VERSION } from '@redakcja/shared';
 import { createFakeHub } from '../__fixtures__/fake-transport.ts';
 import { createApp } from '../app.ts';
 import { openDatabase } from '../db/client.ts';
@@ -38,25 +38,43 @@ describe('REST routes', () => {
     expect(res.status).toBe(503);
   });
 
-  it('GET /api/leaderboard returns entries', async () => {
+  it('GET /api/leaderboard returns global entries in the wire format', async () => {
     const { app, db } = setup();
+    insertLeaderboardEntry(db, { roomCode: 'ABCD', players: ['Ala'], score: 42, survivedS: 300 });
     insertLeaderboardEntry(db, {
-      roomCode: 'ABCD',
-      mode: 'endless',
-      levelId: 'endless',
-      score: 42,
-      nicknames: ['Ala'],
+      roomCode: 'WXYZ',
+      players: ['Ola', 'Ewa'],
+      score: 90,
+      survivedS: 480,
     });
-    const res = await app.request('/api/leaderboard?mode=endless');
+    const res = await app.request('/api/leaderboard');
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { entries: { score: number }[] };
-    expect(body.entries.map((e) => e.score)).toEqual([42]);
+    const body = leaderboardResponseSchema.parse(await res.json());
+    expect(body.scope).toBe('global');
+    expect(body.entries.map((e) => [e.roomCode, e.score, e.survivedS])).toEqual([
+      ['WXYZ', 90, 480],
+      ['ABCD', 42, 300],
+    ]);
+    expect(body.entries[0]?.players).toEqual(['Ola', 'Ewa']);
+  });
+
+  it('GET /api/leaderboard scopes to a room and honours limit', async () => {
+    const { app, db } = setup();
+    for (const score of [1, 2, 3]) {
+      insertLeaderboardEntry(db, { roomCode: 'ABCD', players: ['Ala'], score, survivedS: 10 });
+    }
+    insertLeaderboardEntry(db, { roomCode: 'WXYZ', players: ['Ola'], score: 99, survivedS: 10 });
+    const res = await app.request('/api/leaderboard?scope=room&room=abcd&limit=2');
+    const body = leaderboardResponseSchema.parse(await res.json());
+    expect(body.scope).toBe('room');
+    expect(body.entries.map((e) => e.score)).toEqual([3, 2]);
   });
 
   it('GET /api/leaderboard validates the query', async () => {
     const { app } = setup();
-    expect((await app.request('/api/leaderboard?mode=cheat')).status).toBe(400);
-    expect((await app.request('/api/leaderboard?mode=endless&limit=500')).status).toBe(400);
+    expect((await app.request('/api/leaderboard?scope=cheat')).status).toBe(400);
+    expect((await app.request('/api/leaderboard?limit=500')).status).toBe(400);
+    expect((await app.request('/api/leaderboard?scope=room')).status).toBe(400);
   });
 
   it('GET /api/stats/blunders returns vote counts per story for a level', async () => {

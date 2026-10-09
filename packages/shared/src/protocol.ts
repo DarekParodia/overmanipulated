@@ -2,6 +2,7 @@
 // receipt; TypeScript types are inferred from them (AGENTS.md rule 5).
 import { z } from 'zod';
 import {
+  ENDLESS,
   MAX_PLAYERS,
   NICKNAME_MAX_LENGTH,
   NICKNAME_MIN_LENGTH,
@@ -334,7 +335,9 @@ export const levelEndMessageSchema = z.object({
   stars: z.number().int().min(0).max(3),
   score: z.number().int(),
   credibility: z.number().int(),
-  results: z.array(folderResultSchema).max(128),
+  results: z.array(folderResultSchema).max(ENDLESS.maxResultsSent),
+  /** Endless runs only: whole seconds the newsroom survived (also stored on the leaderboard). */
+  survivedS: z.number().int().nonnegative().optional(),
 });
 
 export const heartbeatAckMessageSchema = z.object({

@@ -1,9 +1,11 @@
 // Game content: levels and stories, validated against the schemas when this module loads, so a
 // broken file fails fast on both server and client. New files are registered in files.ts.
-import type { StoryBook } from '@redakcja/shared';
+import { ENDLESS_LEVEL_ID, type StoryBook } from '@redakcja/shared';
+import { ENDLESS_PREVIEW_SEED, generateEndlessLevel } from './endless.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { type Level, levelSchema, type Story, storyFileSchema } from './schema.ts';
 
+export * from './endless.ts';
 export * from './schema.ts';
 
 export const LEVELS: readonly Level[] = Object.values(LEVEL_FILES).map((file) =>
@@ -19,7 +21,17 @@ export const DEFAULT_LEVEL_ID = 'l0-greybox';
 const storiesById = new Map(STORIES.map((story) => [story.id, story]));
 const levelsById = new Map(LEVELS.map((level) => [level.id, level]));
 
+let endlessPreview: Level | undefined;
+
+/**
+ * A level by id. The endless id returns a preview built with a fixed seed (title, briefing,
+ * layout); the real run's schedule is generated per run with `generateEndlessLevel`.
+ */
 export function getLevel(id: string): Level | undefined {
+  if (id === ENDLESS_LEVEL_ID) {
+    endlessPreview ??= generateEndlessLevel(ENDLESS_PREVIEW_SEED, LEVELS, STORIES);
+    return endlessPreview;
+  }
   return levelsById.get(id);
 }
 

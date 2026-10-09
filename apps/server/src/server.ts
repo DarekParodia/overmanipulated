@@ -4,7 +4,7 @@ import type { Server } from 'bun';
 import { createApp } from './app.ts';
 import { type Db, openDatabase } from './db/client.ts';
 import { deleteExpiredBlunderVotes, recordBlunderVote } from './db/queries/blunder-votes.ts';
-import { deleteExpiredEntries } from './db/queries/leaderboard.ts';
+import { deleteExpiredEntries, insertLeaderboardEntry } from './db/queries/leaderboard.ts';
 import type { Env } from './env.ts';
 import { log } from './log.ts';
 import { createGameLoop } from './loop.ts';
@@ -29,6 +29,9 @@ export function startServer(env: Env): RunningServer {
     onActive: () => loop.start(),
     briefingMs: env.BRIEFING_MS,
     recordBlunderVote: (vote) => recordBlunderVote(db, vote),
+    recordLeaderboardEntry: (entry) => {
+      insertLeaderboardEntry(db, entry);
+    },
   });
   const loop = createGameLoop(registry);
   const app = createApp({ db, registry, devLatencyMs: env.DEV_LATENCY_MS });

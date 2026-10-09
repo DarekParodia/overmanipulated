@@ -1,30 +1,28 @@
 import { LEADERBOARD_DEFAULT_LIMIT, LEADERBOARD_RETENTION_DAYS } from '@redakcja/shared';
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { desc, eq, lt } from 'drizzle-orm';
 import type { Db } from '../client.ts';
-import {
-  type GameMode,
-  type LeaderboardEntry,
-  leaderboardEntries,
-  type NewLeaderboardEntry,
-} from '../schema.ts';
+import { type LeaderboardEntry, leaderboardEntries, type NewLeaderboardEntry } from '../schema.ts';
 
+/** Stores a finished endless run. */
 export function insertLeaderboardEntry(db: Db, entry: NewLeaderboardEntry): LeaderboardEntry {
   return db.insert(leaderboardEntries).values(entry).returning().get();
 }
 
+/** Best runs first (score, then longer survival, then earlier). `roomCode` limits to one room. */
 export function getTopEntries(
   db: Db,
-  filter: { mode: GameMode; levelId?: string | undefined; limit?: number | undefined },
+  filter: { roomCode?: string | undefined; limit?: number | undefined } = {},
 ): LeaderboardEntry[] {
-  const conditions = [eq(leaderboardEntries.mode, filter.mode)];
-  if (filter.levelId !== undefined) {
-    conditions.push(eq(leaderboardEntries.levelId, filter.levelId));
+  let query = db.select().from(leaderboardEntries).$dynamic();
+  if (filter.roomCode !== undefined) {
+    query = query.where(eq(leaderboardEntries.roomCode, filter.roomCode));
   }
-  return db
-    .select()
-    .from(leaderboardEntries)
-    .where(and(...conditions))
-    .orderBy(desc(leaderboardEntries.score), leaderboardEntries.createdAt)
+  return query
+    .orderBy(
+      desc(leaderboardEntries.score),
+      desc(leaderboardEntries.survivedS),
+      leaderboardEntries.createdAt,
+    )
     .limit(filter.limit ?? LEADERBOARD_DEFAULT_LIMIT)
     .all();
 }
