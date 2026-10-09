@@ -1,0 +1,1153 @@
+[
+  {
+    "id": "l6-godziny-lokali",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Lokale referendum w niedzielę czynne od 7:00 do 21:00",
+    "body": "Miejska Komisja Referendalna przypomina: głosować można w 24 lokalach. Z dowodem lub paszportem. Lista adresów na stronie urzędu.",
+    "source": "Profil „Komisja Referendalna Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l6-godziny-lokali-image",
+        "station": "imageSearch",
+        "text": "Post bez zdjęcia, tylko grafika z godzinami.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-godziny-lokali-archive",
+        "station": "archive",
+        "text": "Podobne komunikaty komisji były przy poprzednich głosowaniach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-godziny-lokali-source",
+        "station": "sourceRegistry",
+        "text": "Profil zweryfikowany, godziny zgodne z uchwałą komisji na stronie urzędu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-godziny-lokali-phone",
+        "station": "phone",
+        "text": "Infolinia komisji zajęta, w kolejce 12 osób.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-godziny-lokali-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst raczej ludzki (82%). Margines błędu 15 p.p.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-godziny-lokali-data",
+        "station": "dataLibrary",
+        "text": "Lista lokali w zestawieniu ma 23 pozycje zamiast 24. To literówka w tabeli.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l6-godziny-lokali-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy komunikat komisji o godzinach otwarcia lokali.",
+      "technique": "Brak manipulacji. Przed referendum prawdziwe komunikaty organizacyjne też trzeba szybko publikować.",
+      "tool": "Kartoteka źródeł: zweryfikowany profil i zgodność z oficjalną stroną urzędu.",
+      "realWorld": "Przed głosowaniami komisje podają godziny i adresy lokali na swoich stronach. Warto porównać post z oficjalnym źródłem."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-referendum-w-poniedzialek",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "PILNE: referendum przeniesione na poniedziałek!",
+    "body": "„Z powodu awarii drukarni głosowanie odbędzie się dzień później. Nie idźcie w niedzielę!”. Udostępnij, zanim będzie za późno.",
+    "source": "Konto „KomisjaReferendalna_NB”",
+    "stamps": [
+      {
+        "id": "l6-referendum-w-poniedzialek-image",
+        "station": "imageSearch",
+        "text": "Grafika to prosty szablon, bez herbu miasta.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-archive",
+        "station": "archive",
+        "text": "Archiwum: uchwała komisji nie zmieniała terminu. Niedziela pozostaje w mocy.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone wczoraj, brak weryfikacji. Prawdziwa komisja ma inną nazwę.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-phone",
+        "station": "phone",
+        "text": "Telefon do komisji: „Słyszeliśmy plotki, sprawdzamy”. Bez jasnej odpowiedzi.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: 55% szans, że tekst napisała maszyna. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak zestawień dotyczących terminu.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": [
+      "l6-referendum-w-poniedzialek-archive",
+      "l6-referendum-w-poniedzialek-source"
+    ],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywy komunikat o zmianie terminu referendum, rozsyłany z konta udającego komisję.",
+      "technique": "Podszywanie się pod instytucję, by zniechęcić do głosowania: pilność i autorytet mają wyłączyć sprawdzanie.",
+      "tool": "Kartoteka źródeł: nowe konto bez weryfikacji. Archiwum: brak uchwały o zmianie terminu.",
+      "realWorld": "Przed wyborami w wielu krajach krążą fałszywe komunikaty o zmianie daty lub miejsca głosowania. Najlepszym antidotum jest oficjalna strona komisji."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-apel-mieszkancow",
+    "type": "article",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Spontaniczny apel mieszkańców: „Ratujmy linię 12!”",
+    "body": "Setki wpisów w kilku grupach: „Jestem zwykłym mieszkańcem i nie wyobrażam sobie życia bez 12”. Apel wygląda na oddolny ruch.",
+    "source": "Wpisy w grupach mieszkańców",
+    "stamps": [
+      {
+        "id": "l6-apel-mieszkancow-image",
+        "station": "imageSearch",
+        "text": "Wszystkie wpisy mają to samo zdjęcie autobusu, ze zdjęcia reklamowego.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-apel-mieszkancow-archive",
+        "station": "archive",
+        "text": "Archiwum: ten sam tekst pojawił się w 40 grupach w ciągu godziny, z drobnymi zmianami.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-apel-mieszkancow-source",
+        "station": "sourceRegistry",
+        "text": "Konta wyglądają na prawdziwe: starsze niż rok, ze zdjęciami profilowymi.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-apel-mieszkancow-phone",
+        "station": "phone",
+        "text": "Biuro kampanii „Zostaje12” przyznaje: apel przygotowała agencja na zlecenie komitetu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-apel-mieszkancow-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: 48% szans, że teksty napisała maszyna. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-apel-mieszkancow-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o liczbie pasażerów linii 12 w tym tygodniu.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-apel-mieszkancow-archive", "l6-apel-mieszkancow-phone"],
+    "technique": "astroturfing",
+    "debrief": {
+      "what": "Apel wygląda na głos mieszkańców, ale przygotowała go agencja na zlecenie komitetu. Poparcie dla linii 12 jest prawdziwe, tylko skala wygląda na większą.",
+      "technique": "Astroturfing: zorganizowana akcja udaje spontaniczny, oddolny ruch. Prawdziwi ludzie dostają gotowy tekst do wklejenia.",
+      "tool": "Archiwum: identyczne wpisy w wielu grupach. Telefon: potwierdzenie od organizatorów.",
+      "realWorld": "Kampanie polityczne i firmy zlecają „głosy zwykłych ludzi”. Taki materiał warto publikować z informacją, kto naprawdę za nim stoi."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-sondaz-pracowni",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Sondaż: 48% za likwidacją linii 12, 44% przeciw",
+    "body": "Pracownia Badań Nowe Brzegi zapytała 1200 losowo wybranych mieszkańców. Margines błędu 3 pkt proc., 8% niezdecydowanych.",
+    "source": "Raport Pracowni Badań Nowe Brzegi",
+    "stamps": [
+      {
+        "id": "l6-sondaz-pracowni-image",
+        "station": "imageSearch",
+        "text": "Raport zawiera tylko wykresy, bez zdjęć do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sondaz-pracowni-archive",
+        "station": "archive",
+        "text": "Poprzednie sondaże pracowni mieściły się w granicach błędu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sondaz-pracowni-source",
+        "station": "sourceRegistry",
+        "text": "Pracownia działa od 9 lat, publikuje metodologię i listę klientów.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-sondaz-pracowni-phone",
+        "station": "phone",
+        "text": "Pracownia potwierdza liczby, ale nie odpowiada na pytania o klientów.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sondaz-pracowni-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: raport napisany przez człowieka (88%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sondaz-pracowni-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: próba losowa, wyniki zgodne z metodologią, różnica mieści się w błędzie.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-sondaz-pracowni-source", "l6-sondaz-pracowni-data"],
+    "technique": "none",
+    "debrief": {
+      "what": "Rzetelny sondaż z jawną metodologią i uczciwie podanym marginesem błędu.",
+      "technique": "Brak manipulacji. Różnica 4 punktów mieści się w błędzie, więc nie wolno pisać o „wyraźnym prowadzeniu”.",
+      "tool": "Kartoteka źródeł: pracownia z historią i metodologią. Biblioteka danych: losowa próba.",
+      "realWorld": "Dobre sondaże podają wielkość próby, sposób doboru i margines błędu. Brak tych informacji powinien wzbudzić podejrzenia."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-sonda-w-grupie",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "78% mieszkańców przeciw zmianom w komunikacji",
+    "body": "Ankieta w grupie „Nowobrzeżanie wściekli na urząd”: 312 głosów, 78% na „NIE”. Autor pisze: „Tak myśli całe miasto”.",
+    "source": "Ankieta w grupie mieszkańców",
+    "stamps": [
+      {
+        "id": "l6-sonda-w-grupie-image",
+        "station": "imageSearch",
+        "text": "Zrzut ekranu ankiety jest autentyczny, bez śladów przeróbek.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sonda-w-grupie-archive",
+        "station": "archive",
+        "text": "Brak wcześniejszych ankiet tej grupy w archiwum.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sonda-w-grupie-source",
+        "station": "sourceRegistry",
+        "text": "Autor ankiety to realny mieszkaniec, od lat aktywny w grupie.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-sonda-w-grupie-phone",
+        "station": "phone",
+        "text": "Administrator grupy nie odbiera telefonu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sonda-w-grupie-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (79%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sonda-w-grupie-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: grupa ma 410 członków, zapisanych po jednym wpisie krytykującym urząd.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-sonda-w-grupie-data"],
+    "technique": "nieprezentatywna-proba",
+    "debrief": {
+      "what": "Ankieta jest prawdziwa, ale pokazuje opinię jednej niezadowolonej grupy, a nie całego miasta.",
+      "technique": "Nieprezentatywna próba: ankietę wypełniają ci, którzy ją zobaczyli i chcą się wypowiedzieć. Liczby są prawdziwe, wniosek nie.",
+      "tool": "Biblioteka danych: skład grupy i sposób zbierania głosów pokazują, że próba nie jest losowa.",
+      "realWorld": "Ankiety w mediach społecznościowych często pokazują opinię własnej „bańki”. Warto dodać komentarz o próbie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-tlum-przed-ratuszem",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Tłumy pod ratuszem! Mieszkańcy żądają anulowania referendum",
+    "body": "Zdjęcie ogromnego tłumu z podpisem: „Dziś pod ratuszem. Władze przestraszyły się ludzi”. Udostępnione tysiące razy.",
+    "source": "Post na profilu „Prawda o Brzegach”",
+    "stamps": [
+      {
+        "id": "l6-tlum-przed-ratuszem-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie z koncertu na rynku w 2022 r. Widać scenę, której dziś nie ma pod ratuszem.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-archive",
+        "station": "archive",
+        "text": "Brak informacji o zgromadzeniu pod ratuszem w tym tygodniu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-source",
+        "station": "sourceRegistry",
+        "text": "Profil istnieje 3 lata i ma wielu obserwujących. Zwykle pisze o lokalnych sprawach.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-phone",
+        "station": "phone",
+        "text": "Rzecznik ratusza nie odbiera.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie w 20% wygenerowane. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o liczbie uczestników zgromadzeń.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-tlum-przed-ratuszem-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Stare zdjęcie z koncertu na rynku, podpisane jako dzisiejszy protest.",
+      "technique": "Stare zdjęcie z nowym podpisem: obraz jest prawdziwy, ale miejsce, czas i okoliczności zostały zmienione.",
+      "tool": "Lupa obrazu: wyszukiwanie obrazem znalazło publikację z 2022 r.",
+      "realWorld": "Zdjęcia tłumów często służą do udawania poparcia lub oburzenia. Zawsze sprawdzaj, kiedy zdjęcie opublikowano po raz pierwszy."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-autobusy-w-niedziele",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "W dniu referendum autobusy do lokali jeżdżą bezpłatnie",
+    "body": "Zarząd Transportu: w niedzielę wszystkie linie, także 12, kursują co 20 minut. Do lokalu pojedziesz za darmo.",
+    "source": "Profil „Zarząd Transportu Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l6-autobusy-w-niedziele-image",
+        "station": "imageSearch",
+        "text": "Grafika z rozkładem, bez zdjęć do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-archive",
+        "station": "archive",
+        "text": "W archiwum są podobne komunikaty z poprzednich wyborów.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-source",
+        "station": "sourceRegistry",
+        "text": "Profil zweryfikowany. Ten sam komunikat jest na stronie Zarządu Transportu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-phone",
+        "station": "phone",
+        "text": "Dyspozytornia potwierdza: bezpłatne przejazdy w niedzielę, od rana do 21:30.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (85%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak zestawień o ruchu w niedzielę.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-autobusy-w-niedziele-source", "l6-autobusy-w-niedziele-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja o darmowej komunikacji w dniu referendum.",
+      "technique": "Brak manipulacji. Zwykła informacja usługowa od właściwej instytucji.",
+      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie dyspozytora.",
+      "realWorld": "Miasta organizują dodatkowe lub darmowe przejazdy przy głosowaniach. Ogłasza je zazwyczaj operator transportu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-nagranie-zastepcy",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Nagranie: zastępca burmistrza „Linię 12 i tak zlikwidujemy”",
+    "body": "20 sekund rozmowy z ukrytego mikrofonu. Głos zastępcy burmistrza mówi: „Referendum to teatr, decyzja już zapadła”.",
+    "source": "Nagranie wysłane do redakcji",
+    "stamps": [
+      {
+        "id": "l6-nagranie-zastepcy-image",
+        "station": "imageSearch",
+        "text": "Nagranie ma tylko okładkę, bez zdjęć do porównania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-archive",
+        "station": "archive",
+        "text": "Archiwum: zdania zmontowano z dwóch wystąpień zastępcy z zeszłego roku, o innych sprawach.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-source",
+        "station": "sourceRegistry",
+        "text": "Nadawca to znany mieszkaniec, ale nie był na nagraniu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-phone",
+        "station": "phone",
+        "text": "Rzecznik ratusza: „Nagranie jest zmontowane, takiej rozmowy nie było”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: głos w 70% może być syntetyczny. Margines błędu duży.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o wypowiedziach urzędników.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-nagranie-zastepcy-archive", "l6-nagranie-zastepcy-phone"],
+    "technique": "zmanipulowane-nagranie",
+    "debrief": {
+      "what": "Zmontowane nagranie: zdania wycięto z dawnych wystąpień i ułożono w fałszywą wypowiedź.",
+      "technique": "Zmanipulowane nagranie: prawdziwy głos składa się w nowe, nigdy niewypowiedziane zdania.",
+      "tool": "Archiwum pokazuje źródło fragmentów. Skaner AI wskazał podejrzenie, ale sam niczego nie dowodzi.",
+      "realWorld": "Przed głosowaniami pojawiają się „przecieki” z nagrań. Montaż i sztuczne głosy zdarzają się coraz częściej, dlatego szukaj oryginału."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-satyra-linia-12",
+    "type": "article",
+    "priority": "normal",
+    "truth": "satire",
+    "correctVerdict": "publishWithContext",
+    "headline": "Burmistrz: „Linia 12 będzie latać, dojedziemy na księżyc”",
+    "body": "Serwis „Brzeskie Kurierki” opisuje, jak urząd „modernizuje” linię 12 o loty kosmiczne. Tekst krąży bez nazwy serwisu.",
+    "source": "Link w komunikatorze",
+    "stamps": [
+      {
+        "id": "l6-satyra-linia-12-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie autobusu z kadrem rakiety to oczywisty fotomontaż.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-satyra-linia-12-archive",
+        "station": "archive",
+        "text": "W archiwum są inne żartobliwe teksty tego serwisu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-satyra-linia-12-source",
+        "station": "sourceRegistry",
+        "text": "Serwis „Brzeskie Kurierki” opisuje się jako satyryczny, tekst w zakładce „Humor”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-satyra-linia-12-phone",
+        "station": "phone",
+        "text": "Redakcja serwisu nie odbiera telefonu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-satyra-linia-12-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst w 61% może być napisany przez maszynę. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-satyra-linia-12-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o lotach autobusów.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-satyra-linia-12-source"],
+    "technique": "satyra-bez-oznaczenia",
+    "debrief": {
+      "what": "Tekst satyryczny, który po wycięciu z serwisu wygląda jak prawdziwa wiadomość.",
+      "technique": "Satyra bez oznaczenia: żart traci kontekst i bywa brany za informację. Można go pokazać, jeśli jasno dopiszemy, że to satyra.",
+      "tool": "Kartoteka źródeł: serwis opisuje się jako satyryczny.",
+      "realWorld": "Satyryczne teksty bywają przesyłane jako prawdziwe, szczególnie w czasie emocji. Warto sprawdzić, kto jest autorem."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-anonimowa-komisja",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "unverifiable",
+    "correctVerdict": "reject",
+    "headline": "Komisja nr 5 podobno wpuszcza bez dokumentów",
+    "body": "Anonimowy wpis: „Moja koleżanka widziała, jak w liceum nr 2 dają karty bez sprawdzania dowodu”. Brak nazwisk i zdjęć.",
+    "source": "Anonimowy wpis na forum",
+    "stamps": [
+      {
+        "id": "l6-anonimowa-komisja-image",
+        "station": "imageSearch",
+        "text": "Wpis nie zawiera zdjęć.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-anonimowa-komisja-archive",
+        "station": "archive",
+        "text": "Brak podobnych zgłoszeń z poprzednich głosowań.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-anonimowa-komisja-source",
+        "station": "sourceRegistry",
+        "text": "Konto anonimowe, założone dziś. Brak świadków, brak możliwości potwierdzenia.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-anonimowa-komisja-phone",
+        "station": "phone",
+        "text": "Telefon do komisji nr 5: „Nic takiego nie zgłoszono”. To nie wyklucza zdarzenia.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-anonimowa-komisja-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (74%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-anonimowa-komisja-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o przebiegu głosowania w tym lokalu.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-anonimowa-komisja-source"],
+    "technique": "niepotwierdzona-plotka",
+    "debrief": {
+      "what": "Anonimowa plotka o nieprawidłowościach, której nie da się potwierdzić ani obalić.",
+      "technique": "Niepotwierdzona plotka: opowieść z drugiej ręki, bez świadków i dowodów. Pilność ma skłonić do udostępnienia bez sprawdzania.",
+      "tool": "Kartoteka źródeł: konto bez historii, brak możliwości kontaktu z autorem.",
+      "realWorld": "Przy głosowaniach krążą plotki o nieprawidłowościach, które podważają zaufanie. Pilny temat bez dowodów lepiej odrzucić."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-frekwencja-w-poludnie",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Frekwencja w południe: 21,4%, wyżej niż pięć lat temu",
+    "body": "Miejska Komisja Referendalna: do godziny 12:00 zagłosowało 21,4% uprawnionych. Przy poprzednim głosowaniu było 17,9%.",
+    "source": "Komunikat Miejskiej Komisji Referendalnej",
+    "stamps": [
+      {
+        "id": "l6-frekwencja-w-poludnie-image",
+        "station": "imageSearch",
+        "text": "Komunikat bez zdjęć, tylko tabela z lokalami.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-archive",
+        "station": "archive",
+        "text": "Archiwum: poprzednia frekwencja w południe wyniosła 17,9%, tak jak w komunikacie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-source",
+        "station": "sourceRegistry",
+        "text": "Zweryfikowane konto komisji, dane zgodne ze stroną urzędu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-phone",
+        "station": "phone",
+        "text": "Biuro komisji potwierdza liczbę, ale prosi o czekanie na dane wieczorne.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (91%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: suma głosów ze wszystkich lokali daje 21,4%.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-frekwencja-w-poludnie-source", "l6-frekwencja-w-poludnie-data"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe dane o frekwencji z oficjalnego źródła, zgodne z archiwum i sumą z lokali.",
+      "technique": "Brak manipulacji. Do prawdziwych danych porównanie z poprzednim głosowaniem dodaje kontekst.",
+      "tool": "Biblioteka danych: sumowanie wyników z lokali. Kartoteka źródeł: zweryfikowany nadawca.",
+      "realWorld": "Komisje podają frekwencję w ciągu dnia. Sprawdź, czy liczby pochodzą z komisji i czy porównanie jest uczciwe."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-hashtag-12-to-koniec",
+    "type": "post",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "#12ToKoniec numerem 1 w mieście. Ludzie mają dość!",
+    "body": "Zrzut ekranu „najpopularniejszych tematów”: hasztag #12ToKoniec ma 9 tys. wpisów. Podpis: „To głos Nowych Brzegów”.",
+    "source": "Zrzut ekranu z platformy",
+    "stamps": [
+      {
+        "id": "l6-hashtag-12-to-koniec-image",
+        "station": "imageSearch",
+        "text": "Zrzut ekranu jest autentyczny, nie był przerabiany.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-archive",
+        "station": "archive",
+        "text": "Archiwum: hasztag pojawił się 6 godzin temu, wcześniej nikt go nie używał.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-source",
+        "station": "sourceRegistry",
+        "text": "Brak jednego autora, zrzut krąży anonimowo.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-phone",
+        "station": "phone",
+        "text": "Platforma nie komentuje trendów.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst raczej ludzki (66%). Margines błędu 15 p.p.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: 83% wpisów z hasztagiem pochodzi z 220 kont, które piszą w tych samych minutach.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-hashtag-12-to-koniec-archive", "l6-hashtag-12-to-koniec-data"],
+    "technique": "sztuczny-hashtag",
+    "debrief": {
+      "what": "Hasztag sztucznie wypromowany przez niewielką grupę kont, a nie wyraz opinii miasta.",
+      "technique": "Sztuczny hasztag: kilka kont wielokrotnie publikuje to samo, by trafić do „popularnych tematów” i wywołać wrażenie masowego poparcia.",
+      "tool": "Biblioteka danych: analiza kont i godzin wpisów. Archiwum: czas pojawienia się hasztagu.",
+      "realWorld": "Popularność tematów w sieci łatwo sfałszować. Warto sprawdzić, ilu różnych ludzi naprawdę go używa."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-wyrwany-cytat-radnej",
+    "type": "quote",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Radna: „Linię 12 trzeba zlikwidować”",
+    "body": "Cytat z sesji rady: „Linię 12 trzeba zlikwidować”. Post dodaje: „Radna chce zostawić seniorów bez autobusu”.",
+    "source": "Post na profilu „Mieszkańcy Pilnują”",
+    "stamps": [
+      {
+        "id": "l6-wyrwany-cytat-radnej-image",
+        "station": "imageSearch",
+        "text": "Nagrania z sesji nie ma, tylko wycinek tekstu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-archive",
+        "station": "archive",
+        "text": "Archiwum: pełne zdanie brzmi „Linię 12 trzeba zlikwidować w obecnym kształcie i zastąpić lepszą trasą”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-source",
+        "station": "sourceRegistry",
+        "text": "Profil istnieje 2 lata, publikuje lokalne cytaty. Cytat jest prawdziwy co do słów.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-phone",
+        "station": "phone",
+        "text": "Radna: „Chcę nowej trasy 12A przez osiedle seniorów, nie likwidacji obsługi”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (80%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o trasie 12A.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-wyrwany-cytat-radnej-archive", "l6-wyrwany-cytat-radnej-phone"],
+    "technique": "wyrwany-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwy cytat bez końcówki zdania. Pełna wypowiedź radnej mówiła o zmianie trasy, a nie o odebraniu seniorom autobusu.",
+      "technique": "Wyrwanie z kontekstu: ucięte słowa są prawdziwe, ale zmieniają sens wypowiedzi.",
+      "tool": "Archiwum: pełna wersja zdania z sesji. Telefon: wyjaśnienie radnej.",
+      "realWorld": "Wypowiedzi polityków w kampaniach są często skracane tak, by wywołać oburzenie. Zawsze szukaj całej wypowiedzi."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-dowoz-seniorow",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Seniorzy dojadą do lokalu: bezpłatny dowóz mikrobusem",
+    "body": "Ośrodek Pomocy Społecznej uruchamia w niedzielę dowóz do lokali dla seniorów i osób niepełnosprawnych. Zapisy do soboty, 14:00.",
+    "source": "Profil „OPS Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l6-dowoz-seniorow-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie mikrobusu jest zdjęciem poglądowym z archiwum ośrodka.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-dowoz-seniorow-archive",
+        "station": "archive",
+        "text": "W archiwum są podobne usługi z poprzednich głosowań.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-dowoz-seniorow-source",
+        "station": "sourceRegistry",
+        "text": "Profil zweryfikowany, ten sam komunikat jest na stronie ośrodka.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-dowoz-seniorow-phone",
+        "station": "phone",
+        "text": "Ośrodek potwierdza: numer zapisów, godziny i trasy zgodne z postem.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-dowoz-seniorow-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (87%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-dowoz-seniorow-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o liczbie zapisanych.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-dowoz-seniorow-source", "l6-dowoz-seniorow-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja o usłudze dla osób, które trudniej dojadą do lokalu.",
+      "technique": "Brak manipulacji. Zwykły komunikat usługowy od właściwej instytucji.",
+      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie ośrodka.",
+      "realWorld": "Gminy organizują dowóz do lokali dla seniorów. Prawdziwy komunikat ma dane kontaktowe, które można sprawdzić."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-fotka-urny",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Pełna urna w piątek wieczorem? Zdjęcie z lokalu nr 9",
+    "body": "Zdjęcie urny z podpisem: „W piątek, trzy dni przed głosowaniem, w lokalu nr 9 już pełno kart”. Udostępnia setka kont w kilka minut.",
+    "source": "Seria wpisów w grupach",
+    "stamps": [
+      {
+        "id": "l6-fotka-urny-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie to urna z próbnego głosowania szkolnego w 2023 r., widać szkolną tablicę.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-fotka-urny-archive",
+        "station": "archive",
+        "text": "Archiwum: komisja nr 9 faktycznie była w piątek w lokalu, przygotowywała salę.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-fotka-urny-source",
+        "station": "sourceRegistry",
+        "text": "112 kont udostępniło wpis w ciągu 4 minut, większość założona w tym miesiącu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-fotka-urny-phone",
+        "station": "phone",
+        "text": "Komisja nr 9 nie odbiera, bo lokal jest zamknięty.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-fotka-urny-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 90%, nie jest generowane.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-fotka-urny-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o liczbie kart w lokalu.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-fotka-urny-image", "l6-fotka-urny-source"],
+    "technique": "koordynowane-dzialania",
+    "debrief": {
+      "what": "Stare zdjęcie szkolnej urny zostało podane jako dowód oszustwa. Wpis rozesłała zgrana grupa kont.",
+      "technique": "Skoordynowane nieautentyczne działania: wiele kont działa razem, by wyglądać jak niezależni mieszkańcy. Zdjęcie jest prawdziwe, kontekst nie.",
+      "tool": "Lupa obrazu znalazła źródło zdjęcia. Kartoteka źródeł pokazała, że konta działały razem.",
+      "realWorld": "Fałszywe oskarżenia o oszustwa wyborcze zwykle opierają się na starych lub wyrwanych z kontekstu zdjęciach, a rozsyła je zgrana grupa kont."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-nalot-zostaje12",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dziękuję komitetowi „Zostaje12” za walkę o nasz autobus!",
+    "body": "„Jako mieszkanka osiedla Nadrzecze dziękuję komitetowi za walkę o linię 12. Głosuję NIE!”. Wpisy różnią się tylko imieniem.",
+    "source": "Cztery konta w komentarzach",
+    "stamps": [
+      {
+        "id": "l6-nalot-zostaje12-image",
+        "station": "imageSearch",
+        "text": "Zdjęcia profilowe to wygenerowane twarze bez śladów w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-zostaje12-archive",
+        "station": "archive",
+        "text": "Archiwum: te same zdania, ten sam błąd w słowie „walkę”, wpisy w tej samej minucie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-nalot-zostaje12-source",
+        "station": "sourceRegistry",
+        "text": "Konta założone 2–3 dni temu, bez znajomych. Brak innych wpisów poza tymi.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-nalot-zostaje12-phone",
+        "station": "phone",
+        "text": "Komitet nie odbiera, trwa spotkanie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-zostaje12-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: 58% szans, że teksty napisała maszyna. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-nalot-zostaje12-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: konta wskazują to samo miasto, ale jest ich za mało na wnioski.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l6-nalot-zostaje12-archive", "l6-nalot-zostaje12-source"],
+    "technique": "siec-botow",
+    "debrief": {
+      "what": "Cztery niemal identyczne wpisy z nowych, pustych kont, wysłane w tej samej minucie. To fala botów.",
+      "technique": "Sieć botów: automatyczne konta publikują wiele kopii jednego komunikatu, by wyglądać jak głos wielu ludzi. Wystarczy rozpoznać jedną kopię.",
+      "tool": "Archiwum: identyczne zdania i ten sam błąd. Kartoteka źródeł: wiek kont i brak aktywności.",
+      "realWorld": "Przed głosowaniami sieci botów zalewają komentarze podobnymi wpisami. Cechy wspólne to nowe konta, identyczne zdania i ta sama minuta."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-nalot-hashtag",
+    "type": "post",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Mam dość drogich biletów! #12ToKoniec #TakDlaZmian",
+    "body": "Pięć wpisów o treści: „Mam dość! Autobus 12 kosztuje fortunę. Głosuję TAK. #12ToKoniec”. Wszystkie opublikowane o 14:07.",
+    "source": "Pięć kont na platformie",
+    "stamps": [
+      {
+        "id": "l6-nalot-hashtag-image",
+        "station": "imageSearch",
+        "text": "Zdjęcia profilowe to ten sam kadr w różnych filtrach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-hashtag-archive",
+        "station": "archive",
+        "text": "Archiwum: pięć wpisów w tej samej minucie, te same hasztagi i ten sam układ zdań.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-nalot-hashtag-source",
+        "station": "sourceRegistry",
+        "text": "Konta założone w tym tygodniu, mają po 1–2 wpisy, wszystkie o referendum.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-nalot-hashtag-phone",
+        "station": "phone",
+        "text": "Platforma nie komentuje pojedynczych kont.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-hashtag-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst w 52% może być napisany przez maszynę. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-nalot-hashtag-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: kilka kont publikuje z tego samego adresu sieciowego.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": [
+      "l6-nalot-hashtag-archive",
+      "l6-nalot-hashtag-source",
+      "l6-nalot-hashtag-data"
+    ],
+    "technique": "siec-botow",
+    "debrief": {
+      "what": "Pięć niemal identycznych wpisów z kont, które działają razem. Ceny biletów w tej fali są pretekstem.",
+      "technique": "Sieć botów i sztuczny hasztag: automaty powielają jeden komunikat, aby wypromować hasło i wywołać wrażenie masowej opinii.",
+      "tool": "Archiwum: ta sama minuta i ten sam układ zdań. Kartoteka źródeł i biblioteka danych: nowe konta z jednego adresu.",
+      "realWorld": "Boty często powielają jeden tekst z drobnymi zmianami. Gdy kilka kont publikuje to samo o tej samej godzinie, to znak ostrzegawczy."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-sprostowanie-apel",
+    "type": "article",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Publikowaliśmy: „Apel 600 mieszkańców”. To była zlecona akcja",
+    "body": "Wcześniej opublikowaliśmy apel „spontanicznych mieszkańców”. Teraz wiemy, że tekst przygotowała agencja na zlecenie komitetu.",
+    "source": "Sprostowanie redakcji",
+    "stamps": [
+      {
+        "id": "l6-sprostowanie-apel-image",
+        "station": "imageSearch",
+        "text": "Zdjęcia w apelu to zdjęcia reklamowe, bez znaczenia dla sprostowania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-apel-archive",
+        "station": "archive",
+        "text": "Archiwum: nasza publikacja i identyczne wpisy w 40 grupach, zaczynające się w tym samym kwadransie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-sprostowanie-apel-source",
+        "station": "sourceRegistry",
+        "text": "Faktura agencji potwierdza zlecenie, komitet nie ukrywa współpracy.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-sprostowanie-apel-phone",
+        "station": "phone",
+        "text": "Komitet: „Mieszkańcy sami zgłosili się do akcji”. To tylko część prawdy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-sprostowanie-apel-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst raczej ludzki (71%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-apel-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak zestawień o liczbie zgłoszeń do akcji.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-sprostowanie-apel-archive", "l6-sprostowanie-apel-source"],
+    "technique": "astroturfing",
+    "debrief": {
+      "what": "Sprostowanie do wcześniejszej publikacji: apel wyglądał na oddolny, a został przygotowany i rozesłany na zlecenie komitetu.",
+      "technique": "Astroturfing: zorganizowana kampania udaje spontaniczny ruch obywatelski. Poparcie jest częściowo prawdziwe, ale źle opisane.",
+      "tool": "Archiwum: identyczne wpisy w wielu grupach. Kartoteka źródeł: dokumenty o zleceniu.",
+      "realWorld": "Redakcje, które się pomylą, powinny to jasno przyznać. Sprostowanie odzyskuje zaufanie czytelników."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-sprostowanie-tlum",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Publikowaliśmy zdjęcie wiecu przed ratuszem. Pochodzi sprzed roku",
+    "body": "Zdjęcie w naszej wcześniejszej publikacji pokazywało „dzisiejszy wiec”. Teraz wiemy, że to wiec z zeszłego roku, o innej sprawie.",
+    "source": "Sprostowanie redakcji",
+    "stamps": [
+      {
+        "id": "l6-sprostowanie-tlum-image",
+        "station": "imageSearch",
+        "text": "Wyszukiwanie obrazem: to samo zdjęcie opublikowano rok temu, przy okazji innego wiecu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-archive",
+        "station": "archive",
+        "text": "Archiwum: nasza publikacja i oryginał z datą sprzed roku.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-source",
+        "station": "sourceRegistry",
+        "text": "Nadawca wiedział o dacie, ale nie wspomniał o niej w opisie.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-phone",
+        "station": "phone",
+        "text": "Organizatorzy wiecu nie odbierają.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 93%.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o liczbie uczestników.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-sprostowanie-tlum-image", "l6-sprostowanie-tlum-archive"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Sprostowanie: wcześniej opublikowaliśmy stare zdjęcie jako aktualne. Trzeba to przyznać.",
+      "technique": "Stare zdjęcie z nowym podpisem. Redakcja dała się nabrać, bo materiał pasował do tezy i szedł szybko.",
+      "tool": "Lupa obrazu i archiwum pokazały, że zdjęcie ma rok.",
+      "realWorld": "Nawet doświadczone redakcje czasem się mylą. Ważne, by szybko sprostować i wyjaśnić, co poszło nie tak."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-szef-kaze-publikowac",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Komitet ujawnia: urząd przerabia listy uprawnionych!",
+    "body": "„Mamy dowód: 2000 nieżyjących osób na liście”. Szef redakcji woła z gabinetu: „Publikujcie, wszyscy już o tym piszą!”",
+    "source": "Komunikat komitetu referendalnego",
+    "stamps": [
+      {
+        "id": "l6-szef-kaze-publikowac-image",
+        "station": "imageSearch",
+        "text": "Załącznik to zrzut tabeli bez metadanych.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-archive",
+        "station": "archive",
+        "text": "Archiwum: liczba „2000” pochodzi z błędnie zsumowanej kolumny listy, nie z danych o zmarłych.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-source",
+        "station": "sourceRegistry",
+        "text": "Komitet jest zarejestrowany, ale to strona sporu, nie arbiter.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-phone",
+        "station": "phone",
+        "text": "Urząd: lista aktualizowana co miesiąc z rejestru, 41 pozycji do wyjaśnienia, nie 2000.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (84%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: liczba 2000 to wszystkie wiersze tabeli, a nie błędne wpisy.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": [
+      "l6-szef-kaze-publikowac-archive",
+      "l6-szef-kaze-publikowac-phone",
+      "l6-szef-kaze-publikowac-data"
+    ],
+    "technique": "presja-na-szybkosc",
+    "debrief": {
+      "what": "Komitet pomylił sumę wszystkich wierszy tabeli z liczbą błędnych wpisów. To fałszywy dowód na rzekome oszustwo.",
+      "technique": "Presja szybkości: „wszyscy już o tym piszą” ma zastąpić sprawdzanie. Sensacyjna liczba bez źródła to znak ostrzegawczy.",
+      "tool": "Biblioteka danych: porównanie liczby z całą tabelą. Telefon do urzędu: właściwa skala.",
+      "realWorld": "Przy głosowaniach strony sporu publikują „dowody” szybko, zanim ktoś je sprawdzi. Sensacja nie zastępuje weryfikacji."
+    },
+    "reviewed": false
+  }
+]
