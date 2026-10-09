@@ -481,6 +481,24 @@
   justify-content: center;
 }
 
+.endless .figure {
+  position: relative;
+  justify-content: space-between;
+}
+
+.endless .figure dt {
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.caption {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  padding-top: 0.1em;
+}
+
 .record {
   background: var(--yellow);
 }
@@ -519,6 +537,14 @@
 
   .endless .summary .recordChip {
     display: none;
+  }
+
+  .caption {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 
   .tabs {

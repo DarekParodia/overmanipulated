@@ -172,7 +172,8 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
               <dl className={styles.figures}>
                 <div className={styles.figure}>
                   <dt>
-                    <Icon name="clock" size={28} label={pl.endless.survived} />
+                    <Icon name="clock" size={28} />
+                    <span className={styles.caption}>{pl.endless.survived}</span>
                   </dt>
                   <dd data-testid="endless-survived">{formatSurvived(run.survivedS)}</dd>
                 </div>
@@ -181,9 +182,9 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
                     <Icon
                       name="trophy"
                       size={28}
-                      label={pl.endless.best}
                       style={{ '--icon-fill': 'var(--yellow)' } as CSSProperties}
                     />
+                    <span className={styles.caption}>{pl.endless.best}</span>
                   </dt>
                   <dd data-testid="endless-best">{run.best ? formatScore(run.best.score) : '–'}</dd>
                 </div>
