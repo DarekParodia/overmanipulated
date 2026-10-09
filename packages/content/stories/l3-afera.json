@@ -1,0 +1,828 @@
+[
+  {
+    "id": "l3-dzien-otwarty",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Dzień otwarty w Liceum nr 3 w sobotę o 10:00",
+    "body": "Szkoła zaprasza gimnazjalistów i rodziców na dzień otwarty. Będą pokazy w pracowniach i rozmowy z nauczycielami.",
+    "source": "Profil „LO nr 3 Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l3-dzien-otwarty-image",
+        "station": "imageSearch",
+        "text": "Plakat jest oryginalny, nie znaleziono wcześniejszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-dzien-otwarty-source",
+        "station": "sourceRegistry",
+        "text": "Profil zweryfikowany przez miasto. Ten sam termin jest na stronie szkoły.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-dzien-otwarty-archive",
+        "station": "archive",
+        "text": "W archiwum są dni otwarte z poprzednich lat, zawsze w soboty.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-dzien-otwarty-phone",
+        "station": "phone",
+        "text": "Sekretariat: „Tak, zapraszamy”. Nic ponad ogłoszenie.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-dzien-otwarty-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Zwykłe, prawdziwe ogłoszenie szkoły o dniu otwartym.",
+      "technique": "Brak manipulacji. W gorącym tygodniu łatwo odrzucić wszystko, co dotyczy szkoły, a zwykłe komunikaty też trzeba publikować.",
+      "tool": "Kartoteka źródeł: zweryfikowany profil i zgodność ze stroną szkoły.",
+      "realWorld": "Szkoły i urzędy ogłaszają terminy na swoich oficjalnych profilach. Porównanie z drugim oficjalnym kanałem zajmuje chwilę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-dyrektor-zwolniony",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dyrektor liceum zwolniony za mobbing! Wszyscy o tym mówią",
+    "body": "„Słyszałem od znajomej, że dyrektor Wrzosek wyleciał dziś rano. Podobno przez skargi nauczycieli”. Post ma już tysiące udostępnień.",
+    "source": "Anonimowy post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-dyrektor-zwolniony-image",
+        "station": "imageSearch",
+        "text": "Do posta nie dołączono żadnego zdjęcia ani dokumentu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-dyrektor-zwolniony-source",
+        "station": "sourceRegistry",
+        "text": "Konto bez nazwiska, założone wczoraj. Nie ma kogo zapytać.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-dyrektor-zwolniony-archive",
+        "station": "archive",
+        "text": "W archiwum brak jakiejkolwiek wzmianki o skargach czy zwolnieniu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-dyrektor-zwolniony-phone",
+        "station": "phone",
+        "text": "Kuratorium: dyrektor jest na stanowisku, nikt go nie odwołał.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-dyrektor-zwolniony-phone"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Plotka o zwolnieniu dyrektora, bez dokumentu i bez nazwiska autora.",
+      "technique": "Plotka bez źródła: „podobno”, „słyszałem od znajomej” i liczba udostępnień zastępują dowód. Każdy kolejny przekaz brzmi jak potwierdzenie, choć nikt niczego nie sprawdził.",
+      "tool": "Telefon: zapytanie źródła pierwotnego, czyli organu, który zatrudnia dyrektora, rozstrzyga sprawę w minutę.",
+      "realWorld": "Przy każdej szkolnej czy urzędniczej aferze krążą plotki o zwolnieniach. Zanim je powtórzysz, zapytaj instytucję, której dotyczą."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-screen-wiadomosci",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Wyciekła rozmowa: dyrektor obraża uczniów",
+    "body": "Zrzut ekranu czatu, w którym „dyrektor” wyzywa klasę. Bez linku, bez daty, za to z dopiskiem „UDOSTĘPNIJ, ZANIM USUNĄ”.",
+    "source": "Zrzut ekranu z komunikatora",
+    "stamps": [
+      {
+        "id": "l3-screen-wiadomosci-image",
+        "station": "imageSearch",
+        "text": "Ten sam układ okna znaleziono w innej rozmowie, o meczu. Tekst podmieniono.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-screen-wiadomosci-source",
+        "station": "sourceRegistry",
+        "text": "Nie da się sprawdzić autora: zrzut przesłano dalej wiele razy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-screen-wiadomosci-archive",
+        "station": "archive",
+        "text": "Brak wzmianek o takiej rozmowie w archiwum szkoły.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-screen-wiadomosci-phone",
+        "station": "phone",
+        "text": "Dyrektor: „Nie mam konta w tym komunikatorze”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-screen-wiadomosci-image", "l3-screen-wiadomosci-phone"],
+    "technique": "screenshot-bez-linku",
+    "debrief": {
+      "what": "Podrobiony zrzut ekranu rozmowy. Tekst wstawiono w prawdziwy układ okna czatu.",
+      "technique": "Zrzut ekranu bez linku: nie da się go sprawdzić u źródła, a edycja tekstu zajmuje minutę. Napis „udostępnij, zanim usuną” ma wywołać pośpiech.",
+      "tool": "Lupa obrazu pokazała oryginał układu, a telefon do dyrektora potwierdził, że takiego konta nie ma.",
+      "realWorld": "Podrobione rozmowy i „wycieki” pojawiają się przy każdym sporze. Prawdziwy dowód ma link, datę i dającego się sprawdzić autora."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-regulamin-telefonow",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Rada pedagogiczna: telefony w szkole tylko na przerwach",
+    "body": "Nowy regulamin liceum wchodzi od poniedziałku. Uczniowie mogą korzystać z telefonów na przerwach i w bibliotece.",
+    "source": "Informacja z tablicy ogłoszeń szkoły",
+    "stamps": [
+      {
+        "id": "l3-regulamin-telefonow-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie tablicy jest świeże, wykonane dziś rano.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-regulamin-telefonow-source",
+        "station": "sourceRegistry",
+        "text": "Ogłoszenie podpisane przez sekretariat, ten sam wzór co zawsze.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-regulamin-telefonow-archive",
+        "station": "archive",
+        "text": "Uchwała rady pedagogicznej z zeszłego tygodnia jest w archiwum.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-regulamin-telefonow-phone",
+        "station": "phone",
+        "text": "Wicedyrektor potwierdza treść regulaminu i datę wejścia.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-regulamin-telefonow-archive", "l3-regulamin-telefonow-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa zmiana regulaminu szkoły, przyjęta uchwałą rady pedagogicznej.",
+      "technique": "Brak manipulacji. To nudna, ale ważna informacja, którą łatwo pominąć, kiedy sieć żyje aferą.",
+      "tool": "Archiwum: uchwała z datą. Telefon: potwierdzenie od osoby, która regulamin wprowadza.",
+      "realWorld": "Zmiany regulaminów szkół są zapisane w uchwałach. Dokument i zgodny komentarz osoby odpowiedzialnej to mocne potwierdzenie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-koperta-z-pieniedzmi",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Dyrektor odbiera kopertę pełną gotówki!",
+    "body": "Zdjęcie: dyrektor Wrzosek trzyma grubą kopertę przy wejściu do szkoły. Podpis sugeruje łapówkę.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-koperta-z-pieniedzmi-image",
+        "station": "imageSearch",
+        "text": "Pierwotny kadr ma podpis: „Zbiórka rodziców na wycieczkę klas drugich”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-koperta-z-pieniedzmi-source",
+        "station": "sourceRegistry",
+        "text": "Konto lokalnego komentatora, często ostro krytykuje szkołę.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-koperta-z-pieniedzmi-archive",
+        "station": "archive",
+        "text": "W archiwum jest zgoda rady rodziców na zbiórkę na wycieczkę.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-koperta-z-pieniedzmi-phone",
+        "station": "phone",
+        "text": "Skarbnik rady rodziców: „Przekazaliśmy pieniądze na bilety”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": [
+      "l3-koperta-z-pieniedzmi-image",
+      "l3-koperta-z-pieniedzmi-archive",
+      "l3-koperta-z-pieniedzmi-phone"
+    ],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie, ale z wycieczkowej zbiórki rodziców, a nie z łapówki.",
+      "technique": "Wyrwane z kontekstu: kadr jest autentyczny, fałszywy jest podpis, który podsuwa gotową interpretację.",
+      "tool": "Lupa obrazu odnalazła pierwotny podpis, a telefon do skarbnika potwierdził cel pieniędzy.",
+      "realWorld": "Zdjęcia osób z pieniędzmi, kopertą czy prezentem często opisuje się tak, jakby coś ukrywały. Pytanie „co było przed tym kadrem?” zwykle wszystko wyjaśnia."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-petycja-poparcia",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Petycja za dyrektorem: ponad 400 podpisów uczniów i rodziców",
+    "body": "Rada rodziców zebrała podpisy pod listem poparcia. List trafi do kuratorium w piątek.",
+    "source": "Post rady rodziców",
+    "stamps": [
+      {
+        "id": "l3-petycja-poparcia-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie listy podpisów jest oryginalne, nie znaleziono kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-petycja-poparcia-source",
+        "station": "sourceRegistry",
+        "text": "Profil rady rodziców działa od trzech lat, znany w mieście.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-petycja-poparcia-archive",
+        "station": "archive",
+        "text": "Brak wcześniejszych petycji w archiwum. Nic to nie przesądza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-petycja-poparcia-phone",
+        "station": "phone",
+        "text": "Przewodnicząca rady rodziców potwierdza liczbę podpisów.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-petycja-poparcia-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa petycja poparcia, zebrana przez radę rodziców.",
+      "technique": "Brak manipulacji. Poparcie dla dyrektora nie jest dowodem jego niewinności, ale informacją o nastrojach, i tak ją podajemy.",
+      "tool": "Telefon do organizatorów: tylko oni znają prawdziwą liczbę podpisów.",
+      "realWorld": "Liczby z petycji i zbiórek najlepiej potwierdzać u organizatorów. To oni mają listy."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-wszyscy-wiedza",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Wszyscy wiedzą, że dyrektor wziął łapówkę od firmy remontowej",
+    "body": "„Jak wszyscy, to musi być prawda”. Post ma 3 tys. udostępnień i setki komentarzy „ja też słyszałem”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-wszyscy-wiedza-image",
+        "station": "imageSearch",
+        "text": "Do posta dołączono tylko ogólne zdjęcie budynku szkoły.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-wszyscy-wiedza-source",
+        "station": "sourceRegistry",
+        "text": "Autor ukryty, post powtarzany przez kilkadziesiąt kont.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-wszyscy-wiedza-archive",
+        "station": "archive",
+        "text": "Przetarg na remont był jawny, wygrała najtańsza oferta. Brak zarzutów.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-wszyscy-wiedza-phone",
+        "station": "phone",
+        "text": "Gmina: nie wpłynęło żadne zgłoszenie dotyczące remontu.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-wszyscy-wiedza-archive", "l3-wszyscy-wiedza-phone"],
+    "technique": "argument-z-tlumu",
+    "debrief": {
+      "what": "Oskarżenie o łapówkę poparte wyłącznie liczbą udostępnień i komentarzy.",
+      "technique": "Argument z tłumu: to, że wiele osób coś powtarza, nie jest dowodem. Presja „wszyscy to wiedzą” ma sprawić, że przestajesz pytać o fakty.",
+      "tool": "Archiwum: jawna dokumentacja przetargu. Telefon: gmina nie ma żadnego zgłoszenia.",
+      "realWorld": "Popularność posta mówi o emocjach, nie o prawdzie. Przy ciężkich zarzutach potrzebny jest dokument albo świadek, a nie liczba polubień."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-najgorsze-liceum",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Liceum nr 3 najgorsze w mieście: 41% niezdanych matur!",
+    "body": "Grafika z jedną czerwoną liczbą. Autor pisze, że „statystyki nie kłamią” i apeluje o zmianę dyrekcji.",
+    "source": "Grafika z prywatnego profilu",
+    "stamps": [
+      {
+        "id": "l3-najgorsze-liceum-image",
+        "station": "imageSearch",
+        "text": "Wykres wycięty z większego zestawienia, brak oryginalnej legendy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-najgorsze-liceum-source",
+        "station": "sourceRegistry",
+        "text": "Autor to rodzic ucznia z innej szkoły, bez podanych danych.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-najgorsze-liceum-archive",
+        "station": "archive",
+        "text": "Zestawienie matur: 41% dotyczy jednej grupy z rozszerzonej matematyki.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-najgorsze-liceum-phone",
+        "station": "phone",
+        "text": "Okręgowa komisja: ogółem szkoła zdała maturę lepiej niż średnia miasta.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-najgorsze-liceum-archive", "l3-najgorsze-liceum-phone"],
+    "technique": "wyrwana-statystyka",
+    "debrief": {
+      "what": "Prawdziwa liczba, ale dotyczy jednej małej grupy i jednego przedmiotu.",
+      "technique": "Wyrwana statystyka: jedna liczba bez próby i porównania tworzy fałszywy obraz całej szkoły.",
+      "tool": "Archiwum pokazało pełne zestawienie, a telefon do komisji potwierdził średnią.",
+      "realWorld": "Rankingi i wyniki szkół łatwo „ustawić” wyborem fragmentu danych. Zawsze pytaj: kogo dotyczy ta liczba i z czym ją porównano?"
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-satyra-poniedzialki",
+    "type": "article",
+    "priority": "normal",
+    "truth": "satire",
+    "correctVerdict": "publishWithContext",
+    "headline": "Dyrektor zakazał wchodzenia do szkoły w poniedziałki",
+    "body": "Artykuł twierdzi, że od teraz uczniowie mają „odpoczywać po weekendzie” i przychodzić dopiero we wtorek.",
+    "source": "Portal „Brzegi Bez Powagi”",
+    "stamps": [
+      {
+        "id": "l3-satyra-poniedzialki-image",
+        "station": "imageSearch",
+        "text": "Ilustracja to rysunek wygenerowany na potrzeby portalu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-satyra-poniedzialki-source",
+        "station": "sourceRegistry",
+        "text": "Portal opisany w stopce jako satyryczny. Wszystkie teksty są zmyślone.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-satyra-poniedzialki-archive",
+        "station": "archive",
+        "text": "Portal publikuje takie żarty co tydzień, są w archiwum.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-satyra-poniedzialki-phone",
+        "station": "phone",
+        "text": "Sekretariat, śmiejąc się: „Poniedziałki są jak zawsze”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-satyra-poniedzialki-source"],
+    "technique": "satyra-brana-na-powaznie",
+    "debrief": {
+      "what": "Żart z portalu satyrycznego, który ktoś wziął za prawdziwą wiadomość.",
+      "technique": "Satyra brana na poważnie: tekst wygląda jak news, a żart zdradza dopiero stopka. Kiedy emocje są wysokie, nikt jej nie czyta.",
+      "tool": "Kartoteka źródeł: opis portalu jako satyrycznego.",
+      "realWorld": "Satyryczne portale co jakiś czas „informują” o absurdalnych zakazach, a ludzie dzielą się tym jak prawdą. Przed publikacją dodaj informację, że to żart."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-kontrola-kuratorium",
+    "type": "article",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Kuratorium sprawdzi liceum. Kontrola zaczyna się we wtorek",
+    "body": "Rutynowa kontrola obejmie dokumentację i organizację zajęć. Kuratorium zapowiada raport za dwa tygodnie.",
+    "source": "Informacja prasowa kuratorium",
+    "stamps": [
+      {
+        "id": "l3-kontrola-kuratorium-image",
+        "station": "imageSearch",
+        "text": "Nie dołączono zdjęcia, tylko skan pisma.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-kontrola-kuratorium-source",
+        "station": "sourceRegistry",
+        "text": "Komunikat z oficjalnej strony kuratorium, wiarygodny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-kontrola-kuratorium-archive",
+        "station": "archive",
+        "text": "Kontrole odbywają się co kilka lat. Poprzednia była w 2022 r.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-kontrola-kuratorium-phone",
+        "station": "phone",
+        "text": "Rzecznik kuratorium potwierdza termin. To kontrola planowa, nie skutek afery.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-kontrola-kuratorium-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa, planowa kontrola kuratorium, która nie ma związku z plotkami.",
+      "technique": "Brak manipulacji, ale łatwo ją opisać tak, jakby była skutkiem afery. Rzecznik doprecyzował, że to rutyna.",
+      "tool": "Telefon do kuratorium: potwierdzenie terminu i charakteru kontroli.",
+      "realWorld": "Plotki o aferze często „przyklejają się” do zwykłych działań urzędu. Rozmowa z rzecznikiem pozwala je rozdzielić."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-szkola-zamknieta",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Szkoła zamknięta od jutra, dyrektor ustąpił. Kliknij i sprawdź",
+    "body": "Post z logo liceum. „Pilne! Zajęcia odwołane do odwołania. Szczegóły pod linkiem”.",
+    "source": "Konto „LO3_NoweBrzegi_info”",
+    "stamps": [
+      {
+        "id": "l3-szkola-zamknieta-image",
+        "station": "imageSearch",
+        "text": "Logo to kopia ze strony szkoły, wycięta z ogłoszenia.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-szkola-zamknieta-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone wczoraj, bez weryfikacji. Prawdziwy profil ma inną nazwę.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-szkola-zamknieta-archive",
+        "station": "archive",
+        "text": "W archiwum szkoła nigdy nie ogłaszała zamknięcia takim komunikatem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-szkola-zamknieta-phone",
+        "station": "phone",
+        "text": "Sekretariat: „Zajęcia trwają, nikt niczego nie zamykał”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-szkola-zamknieta-source", "l3-szkola-zamknieta-phone"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywy komunikat konta podszywającego się pod szkołę.",
+      "technique": "Podszywanie się pod instytucję i nacisk czasu: logo, słowo „pilne” i link mają sprawić, że klikniesz, zanim zadzwonisz.",
+      "tool": "Kartoteka źródeł: wiek konta i brak weryfikacji. Telefon: sekretariat zaprzecza.",
+      "realWorld": "Fałszywe komunikaty o zamknięciu szkół czy odwołaniu zajęć krążą po każdym większym zamieszaniu. Prawdziwa szkoła nie ogłasza tego pod linkiem."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-nagranie-krzykow",
+    "type": "recording",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Nagranie: dyrektor krzyczy na uczniów na korytarzu",
+    "body": "Dwunastosekundowe nagranie głosu, ktoś krzyczy „Ma być cicho i koniec!”. Podpis: „Tak traktuje młodzież”.",
+    "source": "Nagranie z komunikatora",
+    "stamps": [
+      {
+        "id": "l3-nagranie-krzykow-image",
+        "station": "imageSearch",
+        "text": "Dołączono nieostry kadr z korytarza, bez dat.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-nagranie-krzykow-source",
+        "station": "sourceRegistry",
+        "text": "Nagranie przesłane dalej bez autora, nie da się go namierzyć.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-nagranie-krzykow-archive",
+        "station": "archive",
+        "text": "W kronice szkoły jest zapis próby spektaklu „Sąd nad klasą” w tym dniu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-nagranie-krzykow-phone",
+        "station": "phone",
+        "text": "Opiekunka koła teatralnego: dyrektor zagrał w próbie rolę srogiego sędziego.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-nagranie-krzykow-archive", "l3-nagranie-krzykow-phone"],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe nagranie, ale to scena z próby szkolnego spektaklu, w której dyrektor gra rolę.",
+      "technique": "Wyrwane z kontekstu: krótki fragment dźwięku bez początku i końca pozwala dopisać dowolną historię.",
+      "tool": "Archiwum (kronika szkoły) i telefon do opiekunki koła pokazały, co naprawdę się działo.",
+      "realWorld": "Krótkie nagrania „z ukrycia” często pochodzą ze spektakli, żartów czy gier. Zapytaj, co działo się przed i po nagraniu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-oswiadczenie-dyrektora",
+    "type": "quote",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Dyrektor: „Nie ukrywam żadnych dokumentów”",
+    "body": "W krótkim oświadczeniu dyrektor Wrzosek zaprasza kuratorium do wglądu w dokumentację i prosi o spokój.",
+    "source": "Oświadczenie na stronie szkoły",
+    "stamps": [
+      {
+        "id": "l3-oswiadczenie-dyrektora-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie dyrektora jest z oficjalnej galerii szkoły.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-oswiadczenie-dyrektora-source",
+        "station": "sourceRegistry",
+        "text": "Oświadczenie opublikowane na zweryfikowanej stronie szkoły.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-oswiadczenie-dyrektora-archive",
+        "station": "archive",
+        "text": "Brak podobnych oświadczeń w archiwum, to pierwsze.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-oswiadczenie-dyrektora-phone",
+        "station": "phone",
+        "text": "Sekretariat potwierdza autentyczność oświadczenia.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-oswiadczenie-dyrektora-source", "l3-oswiadczenie-dyrektora-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe oświadczenie dyrektora opublikowane na oficjalnej stronie szkoły.",
+      "technique": "Brak manipulacji. Cytat jest autentyczny, więc go publikujemy, nawet jeśli nie rozstrzyga sporu.",
+      "tool": "Kartoteka źródeł: oficjalna strona. Telefon: potwierdzenie z sekretariatu.",
+      "realWorld": "Oświadczenia osób publicznych warto brać z ich oficjalnych kanałów, a nie z cytatów w komentarzach."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-screen-z-gazety",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Gazeta pisze o aferze w liceum. Zobacz screen artykułu",
+    "body": "Zrzut ekranu z nagłówkiem „AFERA W LICEUM: DYREKTOR ZNIKA Z PIENIĘDZMI”. Brak linku do strony.",
+    "source": "Zrzut ekranu z grupy",
+    "stamps": [
+      {
+        "id": "l3-screen-z-gazety-image",
+        "station": "imageSearch",
+        "text": "Obraz ma ślady edycji, czcionka nagłówka nie pasuje do reszty.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-screen-z-gazety-source",
+        "station": "sourceRegistry",
+        "text": "Redakcja „Gazety Brzegowej” zaprzecza, że wydała taki tekst.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-screen-z-gazety-archive",
+        "station": "archive",
+        "text": "W archiwum gazety nie ma takiego artykułu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-screen-z-gazety-phone",
+        "station": "phone",
+        "text": "Redakcja po telefonie: „To nie nasz materiał”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": [
+      "l3-screen-z-gazety-source",
+      "l3-screen-z-gazety-archive",
+      "l3-screen-z-gazety-phone"
+    ],
+    "technique": "screenshot-bez-linku",
+    "debrief": {
+      "what": "Zmyślony zrzut ekranu rzekomego artykułu. Gazeta nigdy go nie opublikowała.",
+      "technique": "Zrzut ekranu bez linku: prawdziwy artykuł ma adres, który można otworzyć. Nagłówek zmontowano, by wyglądał na wiadomość z mediów.",
+      "tool": "Archiwum gazety i telefon do redakcji: brak takiego tekstu.",
+      "realWorld": "Fałszywe „artykuły” z logo znanej redakcji są powszechne, bo zaufanie do marki przenosi się na treść. Zawsze szukaj tekstu na stronie wydawcy."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-apel-o-spokoj",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Szkoła prosi: nie udostępniajcie niepotwierdzonych informacji",
+    "body": "Samorząd uczniowski i dyrekcja apelują o spokój. Uczniowie mogą rozmawiać z pedagogiem w gabinecie 12.",
+    "source": "Profil samorządu uczniowskiego",
+    "stamps": [
+      {
+        "id": "l3-apel-o-spokoj-image",
+        "station": "imageSearch",
+        "text": "Grafika apelu jest oryginalna, wykonana przez samorząd.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-apel-o-spokoj-source",
+        "station": "sourceRegistry",
+        "text": "Profil samorządu zweryfikowany przez szkołę.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-apel-o-spokoj-archive",
+        "station": "archive",
+        "text": "Brak podobnych apeli w archiwum.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-apel-o-spokoj-phone",
+        "station": "phone",
+        "text": "Pedagog szkolny potwierdza, że apel jest wspólny i że gabinet 12 jest otwarty.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-apel-o-spokoj-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwy apel samorządu i dyrekcji o niedzielenie niepotwierdzonymi wiadomościami.",
+      "technique": "Brak manipulacji. To przykład dobrej praktyki: prośba o sprawdzanie zanim się udostępni.",
+      "tool": "Telefon do pedagoga potwierdził, że apel jest wspólny i prawdziwy.",
+      "realWorld": "Szkoły i redakcje coraz częściej publikują apele przeciwko dezinformacji. Warto je pokazywać, bo działają tam, gdzie plotki."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-viral-ukryta-kontrola",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dyrektor ukrył wyniki kontroli! Udostępnij, zanim zniknie",
+    "body": "„Kontrola wykazała skandal, a dyrektor schował raport”. Post rośnie w oczach, a komentarze żądają dymisji.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-viral-ukryta-kontrola-image",
+        "station": "imageSearch",
+        "text": "Dołączono rozmazane zdjęcie dokumentu, nic nie da się odczytać.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-viral-ukryta-kontrola-source",
+        "station": "sourceRegistry",
+        "text": "Autor posta nie ma historii, konto aktywne od kilku dni.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-viral-ukryta-kontrola-archive",
+        "station": "archive",
+        "text": "W archiwum brak raportu, bo kontrola jeszcze trwa.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-viral-ukryta-kontrola-phone",
+        "station": "phone",
+        "text": "Kuratorium: kontrola trwa, raport będzie za dwa tygodnie. Nic nie ukryto.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l3-viral-ukryta-kontrola-phone"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Wirusowy post, który ogłasza wynik kontroli, zanim kontrola się skończyła.",
+      "technique": "Plotka bez źródła połączona z presją tłumu: „wszędzie to widać” i „zanim zniknie” mają skłonić do natychmiastowego udostępnienia.",
+      "tool": "Telefon do kuratorium: kontrola jeszcze trwa, więc raport nie może być ukryty.",
+      "realWorld": "Gdy trwa jakieś postępowanie, internet chętnie ogłasza jego wynik przed czasem. Liczba udostępnień nie przyspiesza prawdy."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-viral-pakuje-sie",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Dyrektor wynosi pudła ze szkoły. Pakuje się?",
+    "body": "Zdjęcie: dyrektor niesie kartony do samochodu. Komentarze: „To koniec, uciekł”. Zdjęcie jest już wszędzie.",
+    "source": "Zdjęcie z grupy Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-viral-pakuje-sie-image",
+        "station": "imageSearch",
+        "text": "Pierwotny podpis: „Przenosimy bibliotekę na czas remontu”. Zdjęcie jest z dziś.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-viral-pakuje-sie-source",
+        "station": "sourceRegistry",
+        "text": "Autor to uczeń, który dołączył zdjęcie z komentarzem „kto wie, co w tych pudłach”.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-viral-pakuje-sie-archive",
+        "station": "archive",
+        "text": "W archiwum jest harmonogram remontu biblioteki w tym tygodniu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-viral-pakuje-sie-phone",
+        "station": "phone",
+        "text": "Bibliotekarka: „Pan dyrektor pomagał nam nosić książki”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": [
+      "l3-viral-pakuje-sie-image",
+      "l3-viral-pakuje-sie-archive",
+      "l3-viral-pakuje-sie-phone"
+    ],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie z przenosin szkolnej biblioteki na czas remontu.",
+      "technique": "Wyrwane z kontekstu i podkręcone presją tłumu: komentarze dopisują historię, której zdjęcie nie pokazuje.",
+      "tool": "Lupa obrazu odnalazła pierwotny podpis, a telefon do bibliotekarki potwierdził, co było w pudłach.",
+      "realWorld": "W czasie afery każdy gest jest interpretowany jako dowód. Gdy „wszyscy to widzą”, sprawdź, co zdjęcie naprawdę pokazuje."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-viral-pozegnanie",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Pożegnalny wpis dyrektora: „Rezygnuję, to wszystko prawda”",
+    "body": "Zrzut ekranu z wpisem, który ma pochodzić z profilu dyrektora. Bez linku. Podano go dalej już 5 tys. razy.",
+    "source": "Zrzut ekranu z komunikatora",
+    "stamps": [
+      {
+        "id": "l3-viral-pozegnanie-image",
+        "station": "imageSearch",
+        "text": "Obraz zmontowany: awatar i czcionka pochodzą z różnych źródeł.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-viral-pozegnanie-source",
+        "station": "sourceRegistry",
+        "text": "Dyrektor nie ma profilu w tym serwisie, wpis nie istnieje.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-viral-pozegnanie-archive",
+        "station": "archive",
+        "text": "W archiwum brak wcześniejszych wpisów dyrektora online.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-viral-pozegnanie-phone",
+        "station": "phone",
+        "text": "Dyrektor: „Nie rezygnuję i niczego takiego nie pisałem”.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": [
+      "l3-viral-pozegnanie-image",
+      "l3-viral-pozegnanie-source",
+      "l3-viral-pozegnanie-phone"
+    ],
+    "technique": "screenshot-bez-linku",
+    "debrief": {
+      "what": "Zmyślony zrzut ekranu rzekomego pożegnalnego wpisu dyrektora.",
+      "technique": "Screenshot bez linku w towarzystwie presji tłumu: skoro „wszyscy to dzielą”, zrzut wydaje się prawdziwy. Nikt nie sprawdza, czy wpis w ogóle istnieje.",
+      "tool": "Kartoteka źródeł: profil nie istnieje. Telefon do dyrektora: wyraźne zaprzeczenie.",
+      "realWorld": "Podrobione wpisy „na pożegnanie” krążą przy niemal każdej aferze. Najszybciej obalić je, pytając osobę, której rzekomo dotyczą."
+    },
+    "reviewed": false
+  }
+]

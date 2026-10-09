@@ -160,6 +160,12 @@ export function validateContent(
       continue;
     }
     const level = parsed.data;
+    // Event folders (viral, bossCall, ...) come from their own stories, not from the schedule.
+    for (const event of level.events) {
+      if ('storyId' in event) {
+        used.add(event.storyId);
+      }
+    }
     if (levelIds.has(level.id)) {
       add('error', file, ['id'], `duplicate level id "${level.id}"`);
       continue;
