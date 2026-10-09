@@ -6,7 +6,6 @@
 // Reduced motion or no-flash: all of them stand still (the information stays, nothing moves).
 // The glitch bars also stand still on the low quality preset.
 import { type CSSProperties, memo } from 'react';
-import { useLevelClock } from '../../hud/use-level-clock.ts';
 import { useGame } from '../../net/game-store.ts';
 import { useQuality } from '../../scene/quality.ts';
 import { useSettings } from '../../store/settings.ts';
@@ -53,17 +52,15 @@ const GlitchEdge = memo(function GlitchEdge({ side }: { side: 'left' | 'right' }
 });
 
 export function ScreenFx() {
-  const credibility = useGame((s) => s.credibility);
-  const raid = useGame((s) => isRaidActive(s.folders));
-  const folders = useGame((s) => s.folders);
-  const { elapsedMs } = useLevelClock();
+  // Selectors return small values, so the component re-renders only when an effect changes.
+  const vignette = useGame((s) => (s.levelEnd ? 0 : vignetteLevel(s.credibility)));
+  const raid = useGame((s) => !s.levelEnd && isRaidActive(s.folders));
+  const tier = useGame((s) => (s.levelEnd ? 0 : pressureTier(s.folders, s.elapsedMs)));
   const reducedMotion = useSettings((s) => s.reducedMotion);
   const noFlash = useSettings((s) => s.noFlash);
   const preset = useQuality((s) => s.profile.preset);
 
   const settings = { reducedMotion, noFlash };
-  const vignette = vignetteLevel(credibility);
-  const tier = pressureTier(folders, elapsedMs);
   const moving = effectsAnimated(settings);
 
   if (vignette === 0 && !raid && tier === 0) {

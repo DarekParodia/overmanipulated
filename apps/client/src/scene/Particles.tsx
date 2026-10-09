@@ -11,6 +11,7 @@ import {
   InstancedBufferAttribute,
   InstancedBufferGeometry,
   LinearFilter,
+  LinearMipmapLinearFilter,
   type Mesh,
   PlaneGeometry,
   ShaderMaterial,
@@ -86,9 +87,9 @@ function createAtlas(): CanvasTexture {
     drawSpriteAtlas(ctx);
   }
   const texture = new CanvasTexture(canvas);
-  texture.minFilter = LinearFilter;
+  texture.minFilter = LinearMipmapLinearFilter;
   texture.magFilter = LinearFilter;
-  texture.generateMipmaps = false;
+  texture.generateMipmaps = true;
   return texture;
 }
 
@@ -111,6 +112,7 @@ export function Particles() {
     const geo = new InstancedBufferGeometry();
     geo.index = quad.index;
     geo.setAttribute('position', quad.getAttribute('position'));
+    quad.dispose();
     const attributes = {
       pos: instanced(capacity, 3),
       size: instanced(capacity, 1),
@@ -135,9 +137,10 @@ export function Particles() {
     return { geometry: geo, material: mat, buffers: attributes };
   }, [capacity]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-warm whenever the buffers are recreated
   useLayoutEffect(() => {
     warmFrames.current = 3;
-  }, []);
+  }, [geometry]);
 
   useEffect(
     () => () => {

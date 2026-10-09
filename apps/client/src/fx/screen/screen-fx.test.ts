@@ -73,6 +73,7 @@ describe('particle sprites', () => {
         expect(frameIndex(frame)).toBeGreaterThanOrEqual(0);
       }
     }
+    expect(new Set(spriteFrames).size).toBe(spriteFrames.length);
     expect(typeof drawSpriteAtlas).toBe('function');
   });
 });
