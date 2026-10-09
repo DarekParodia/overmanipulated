@@ -19,6 +19,11 @@ export async function closePlayers(): Promise<void> {
   await Promise.all(openContexts.splice(0).map((context) => context.close()));
 }
 
+/** Registers a context opened by a spec itself, so `closePlayers` disposes of it too. */
+export function trackContext(context: BrowserContext): void {
+  openContexts.push(context);
+}
+
 export async function openPlayer(
   browser: Browser,
   nickname: string,

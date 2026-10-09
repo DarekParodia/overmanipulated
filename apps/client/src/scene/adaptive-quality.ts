@@ -8,7 +8,8 @@
 // - A recovery that makes the game slow again within `RELAPSE_S` is undone, the step is never
 //   tried again, and the next attempt waits twice as long. After `MAX_RELAPSES` the controller
 //   stops trying to recover at all. This is what keeps it from flapping.
-// - Stalls (hidden tab, debugger, GC hitch above `MAX_FRAME_S`) are not samples.
+// - Stalls (hidden tab, debugger, a frame over `STALL_S`) are not samples. Slow frames below that
+//   count, each capped at `SAMPLE_CAP_S` so one hitch can't fill a window on its own.
 
 export const ADAPTIVE = {
   /** Frame times are averaged over windows of this length. */
@@ -29,8 +30,10 @@ export const ADAPTIVE = {
   RELAPSE_S: 25,
   /** After this many relapses recovery is switched off for the session. */
   MAX_RELAPSES: 2,
-  /** Longer frames are stalls, not performance samples. */
-  MAX_FRAME_S: 0.25,
+  /** A longer frame is a stall (tab was hidden, debugger), not a performance sample. */
+  STALL_S: 1,
+  /** Slower frames count as this long, so a single hitch is only one bad sample. */
+  SAMPLE_CAP_S: 0.25,
 } as const;
 
 export type AdaptiveDecision = -1 | 0 | 1;
@@ -97,15 +100,19 @@ export function createAdaptiveController(): AdaptiveController {
     },
     update(deltaS, stage, maxStage) {
       sinceRaise += deltaS;
-      if (deltaS <= 0 || deltaS > ADAPTIVE.MAX_FRAME_S) {
+      if (deltaS <= 0) {
+        return 0;
+      }
+      if (deltaS > ADAPTIVE.STALL_S) {
         clearWindow();
         return 0;
       }
+      const sampleS = Math.min(deltaS, ADAPTIVE.SAMPLE_CAP_S);
       if (settle > 0) {
         settle -= deltaS;
         return 0;
       }
-      windowTime += deltaS;
+      windowTime += sampleS;
       windowFrames++;
       if (windowTime < ADAPTIVE.WINDOW_S) {
         return 0;

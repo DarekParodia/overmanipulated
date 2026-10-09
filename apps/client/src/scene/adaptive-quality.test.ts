@@ -60,6 +60,32 @@ describe('adaptive quality controller', () => {
     const stage = { value: 0 };
     for (let i = 0; i < 100; i++) {
       c.update(2, stage.value, 4);
+      c.update(GOOD, stage.value, 4);
+    }
+    expect(stage.value).toBe(0);
+  });
+
+  it('degrades a device that only produces very long frames', () => {
+    const c = createAdaptiveController();
+    const stage = { value: 0 };
+    run(c, 60, 0.4, stage, 4);
+    expect(stage.value).toBeGreaterThan(0);
+  });
+
+  it('degrades when long frames alternate with quick ones (GPU backlog)', () => {
+    const c = createAdaptiveController();
+    const stage = { value: 0 };
+    for (let i = 0; i < 400; i++) {
+      stage.value += c.update(i % 2 ? 0.4 : GOOD, stage.value, 4);
+    }
+    expect(stage.value).toBeGreaterThan(0);
+  });
+
+  it('does not degrade on a single hitch in a healthy game', () => {
+    const c = createAdaptiveController();
+    const stage = { value: 0 };
+    for (let i = 0; i < 60 * 120; i++) {
+      stage.value += c.update(i % 600 === 0 ? 0.3 : GOOD, stage.value, 4);
     }
     expect(stage.value).toBe(0);
   });
