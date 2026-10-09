@@ -21,6 +21,14 @@ const settingsSchema = z.object({
   noFlash: z.boolean().catch(false),
   haptics: z.boolean().catch(true),
   leftHanded: z.boolean().catch(false),
+  /** Stage 5 keys (settings screen S5-06, accessibility S5-05, haptics S5-10). */
+  /** Visual captions for every audio-only cue. */
+  captions: z.boolean().catch(false),
+  /** Scales vibration strength on phones and gamepad rumble; 0 turns it off. */
+  rumbleIntensity: unit.catch(1),
+  /** Touch controls: size multiplier and opacity. */
+  touchScale: z.number().min(0.8).max(1.4).catch(1),
+  touchOpacity: z.number().min(0.4).max(1).catch(0.85),
 });
 
 export type Settings = z.infer<typeof settingsSchema>;
