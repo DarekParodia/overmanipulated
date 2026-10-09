@@ -378,26 +378,26 @@ feedback on desktop and phones; first playtest held.
 
 ## Stage 4 — Remaining stations, events and levels
 
-- [ ] **S4-01 — Phone (`phone`).** Choose the right number, then a waiting queue; reporter skips
+- [x] **S4-01 — Phone (`phone`).** Choose the right number, then a waiting queue; reporter skips
   the queue.
-- [ ] **S4-02 — AI scanner (`aiScanner`).** Probability readout with error margin; never decisive
+- [x] **S4-02 — AI scanner (`aiScanner`).** Probability readout with error margin; never decisive
   alone (enforced by content validation).
-- [ ] **S4-03 — Data library (`dataLibrary`).** Compare a number with the original table.
+- [x] **S4-03 — Data library (`dataLibrary`).** Compare a number with the original table.
   (S4-01…S4-03: keyboard, gamepad and touch; success/failure cues.)
 - [x] **S4-04 — Managing editor ability.** Extend one folder's deadline once per level.
-- [ ] **S4-05 — Event framework + `viral`.** Event scheduling from level data; growing share
+- [x] **S4-05 — Event framework + `viral`.** Event scheduling from level data; growing share
   counter on a folder. Each event below ships with its own announce banner, sound and particles
   (e.g. `viral`: floating share/heart icons and notification pings; `bossCall`: ringing red
   phone, shaking desk; `botRaid`: swarm of identical folders with glitch effect; `outage`: sparks,
   smoke and powered-down station; `correction`: siren + highlighted folder trail).
-- [ ] **S4-06 — `bossCall`.** Editor-in-chief demands instant publish; points only if true.
-- [ ] **S4-07 — `botRaid`.** Wave of near-identical folders; recognising one resolves all.
-- [ ] **S4-08 — `outage`.** A station is down for 20 s.
-- [ ] **S4-09 — `correction`.** A previously published story turns out manipulated; first team
+- [x] **S4-06 — `bossCall`.** Editor-in-chief demands instant publish; points only if true.
+- [x] **S4-07 — `botRaid`.** Wave of near-identical folders; recognising one resolves all.
+- [x] **S4-08 — `outage`.** A station is down for 20 s.
+- [x] **S4-09 — `correction`.** A previously published story turns out manipulated; first team
   member to file a correction recovers half the lost credibility.
-- [ ] **S4-10 — Levels 2–6 content.** ~15 stories each, following the campaign table; one task per
+- [x] **S4-10 — Levels 2–6 content.** ~15 stories each, following the campaign table; one task per
   level (`S4-10a` … `S4-10e`) so content can be written in parallel.
-- [ ] **S4-11 — Endless mode.** Random stories from all levels, speeds up every minute; room
+- [x] **S4-11 — Endless mode.** Random stories from all levels, speeds up every minute; room
   leaderboard per room and global top list stored via Drizzle (`leaderboard_entries`), served
   from `/api/leaderboard` with retention from `constants.ts`.
 
