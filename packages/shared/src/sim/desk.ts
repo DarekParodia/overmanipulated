@@ -1,9 +1,11 @@
 // Editorial desk: opening the verdict sheet, verdict evaluation and justification (S2-07).
 // Emits: deskOpened, deskClosed, verdictResult (with score/credibility deltas applied here).
+// Level-event folders (S4-05..S4-09): correction filing, bossCall bonus, botRaid resolution.
 // Consumes commands: verdict, cancel (when operating a desk), extendDeadline.
 import {
   CREDIBILITY,
   DEADLINE_EXTENSION_MS,
+  EVENTS,
   SCORE,
   SPEED_BONUS_REMAINING_FRACTION,
   WRONG_JUSTIFICATION_SCORE_FACTOR,
@@ -12,6 +14,7 @@ import {
 import type { Verdict } from '../domain.ts';
 import type { Desk, Folder, FolderOutcome } from '../entities.ts';
 import type { SimStory } from './content.ts';
+import { endActiveEvent, raidOfFolder } from './events.ts';
 import type { SimFrame } from './frame.ts';
 import { findInteractionTarget } from './map.ts';
 import { applyCredibility } from './scoring.ts';
@@ -104,6 +107,60 @@ export function evaluateVerdict(
 }
 
 /**
+ * `evaluateVerdict` plus the rules of level-event folders (S4-05..S4-09): a correction filed with
+ * `publishWithContext` recovers credibility whatever the stamp, and obeying a bossCall on a true
+ * story in time adds a bonus. Everything else is judged as usual.
+ */
+function evaluateTagged(
+  story: SimStory,
+  folder: Folder,
+  verdict: Verdict,
+  justifyingStampId: string,
+  nowMs: number,
+): VerdictEvaluation {
+  const tag = folder.tag;
+  if (tag?.kind === 'correction' && verdict === 'publishWithContext') {
+    return {
+      outcome: 'correct',
+      scoreDelta: EVENTS.correctionScore,
+      credibilityDelta: tag.recoverCredibility,
+      speedBonus: false,
+      missedStampIds: [],
+    };
+  }
+  const result = evaluateVerdict(story, folder, verdict, justifyingStampId, nowMs);
+  if (
+    tag?.kind === 'bossCall' &&
+    verdict === 'publish' &&
+    story.truth === 'true' &&
+    nowMs <= tag.untilMs
+  ) {
+    return { ...result, scoreDelta: result.scoreDelta + EVENTS.bossCallBonusScore };
+  }
+  return result;
+}
+
+/** One verdict on a botRaid folder resolves the whole wave: siblings vanish without results. */
+function resolveRaid(state: GameState, frame: SimFrame, folder: Folder): GameState {
+  const raid = folder.tag?.kind === 'botRaid' ? raidOfFolder(state, folder.id) : undefined;
+  if (!raid) {
+    return state;
+  }
+  const siblings = raid.folderIds.filter((id) => id !== folder.id && id in state.folders);
+  const folders = { ...state.folders };
+  for (const id of siblings) {
+    delete folders[id];
+  }
+  frame.events.push({
+    kind: 'raidResolved',
+    raidId: raid.raidId ?? '',
+    byFolderId: folder.id,
+    folderIds: siblings,
+  });
+  return endActiveEvent({ ...state, folders }, frame, raid);
+}
+
+/**
  * Whether a player may use the managing editor's deadline extension: the managing editor, or,
  * when nobody took that role and at most three play, anyone (design doc: with three players the
  * person at the desk takes the role; simplified to any player).
@@ -157,7 +214,7 @@ export function stepDesk(state: GameState, frame: SimFrame): GameState {
         if (!desk || !folder || !story || folder.id !== command.folderId) {
           break;
         }
-        const result = evaluateVerdict(
+        const result = evaluateTagged(
           story,
           folder,
           command.verdict,
@@ -196,6 +253,7 @@ export function stepDesk(state: GameState, frame: SimFrame): GameState {
           speedBonus: result.speedBonus,
           missedStampIds: result.missedStampIds,
         });
+        next = resolveRaid(next, frame, folder);
         close(desk.id, playerId);
         break;
       }

@@ -24,6 +24,17 @@ export type CrewMember = {
   lastPingMs: number;
 };
 
+/** A running folder-based level event (outages live on the station and need no entry). */
+export type ActiveEvent = {
+  kind: 'viral' | 'bossCall' | 'botRaid' | 'correction';
+  /** The folders the event spawned (all of them, even after some are gone). */
+  folderIds: string[];
+  /** Set for `botRaid`: the id shared by the wave's folders. */
+  raidId?: string;
+  /** Set for `bossCall`: level time when the demand lapses. */
+  untilMs?: number;
+};
+
 export type GameState = {
   tick: number;
   /** Level time since start, in ms. */
@@ -37,6 +48,10 @@ export type GameState = {
   nextFolderNumber: number;
   /** Index into the level schedule of the next folder to spawn. */
   nextSpawnIndex: number;
+  /** Index into the level's event list of the next event to start (sim/events.ts). */
+  nextEventIndex: number;
+  /** Folder-based level events that have started and not yet ended. */
+  activeEvents: ActiveEvent[];
   /** Keyed by station fixture id. */
   stations: Record<string, Station>;
   /** Keyed by desk fixture id. */
@@ -86,6 +101,8 @@ export function createGameState(options: GameStateOptions = {}): GameState {
     folders: {},
     nextFolderNumber: 1,
     nextSpawnIndex: 0,
+    nextEventIndex: 0,
+    activeEvents: [],
     stations,
     desks,
     score: 0,
