@@ -47,6 +47,7 @@ import {
   type TileMap,
   timeLeftMs,
 } from '@redakcja/shared';
+import { MAX_ROOMS } from '../limits.ts';
 import { log } from '../log.ts';
 import { generateReconnectToken, generateRoomCode, secureRandom } from './codes.ts';
 import { CLOSE_REPLACED, type Connection, type Hub } from './connection.ts';
@@ -113,6 +114,8 @@ export type RegistryOptions = {
     storyId: string;
     previousId: number | null;
   }) => number;
+  /** Rooms alive at once; creating another is refused with `roomFull`. */
+  maxRooms?: number;
   /** Persists a finished endless run for the leaderboard (S4-11). */
   recordLeaderboardEntry?: (entry: {
     roomCode: string;
@@ -281,6 +284,11 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
 
     if (message.roomCode === undefined) {
+      if (rooms.size >= (options.maxRooms ?? MAX_ROOMS)) {
+        log.warn('room limit reached', { rooms: rooms.size });
+        sendError(connection, 'roomFull', 'server is busy');
+        return;
+      }
       const code = generateRoomCode(random, new Set(rooms.keys()));
       const level = requireLevel(DEFAULT_LEVEL_ID);
       const map = parseLayout(level.layout);
