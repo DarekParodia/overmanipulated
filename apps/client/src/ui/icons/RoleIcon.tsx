@@ -34,6 +34,9 @@ const paths: Record<RoleIconName, readonly IconPart[]> = {
   none: [{ d: 'M5 3.5h14v17H5Z', fill: 'tint' }, { d: 'M9 12h6' }],
 };
 
+/** Every role (and `none`) that has a drawing; the style guide lists them. */
+export const ROLE_ICON_NAMES = Object.keys(paths) as RoleIconName[];
+
 export type RoleIconProps = {
   role: RoleIconName;
   size?: number;

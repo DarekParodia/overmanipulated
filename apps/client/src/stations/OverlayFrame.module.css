@@ -3,8 +3,9 @@
 .frame {
   position: absolute;
   z-index: 30;
-  /* Below the screen tools (fullscreen, settings, leave), which stay reachable. */
-  top: max(calc(var(--touch-target) + var(--space-5)), env(safe-area-inset-top));
+  /* Below the screen tools, their room chip and the folder queue (7 rem cards), which stay
+     visible and reachable. */
+  top: max(8rem, env(safe-area-inset-top));
   bottom: max(var(--space-4), env(safe-area-inset-bottom));
   right: max(var(--space-4), env(safe-area-inset-right));
   width: min(50vw, 46rem);

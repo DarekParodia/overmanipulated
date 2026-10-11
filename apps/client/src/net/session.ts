@@ -160,9 +160,11 @@ function handleMessage(message: ServerMessage): void {
       if (message.code === 'reconnectFailed') {
         setSlot(null);
         closeSession();
+        useApp.setState({ connection: 'idle' });
       } else if (!app.playerId) {
-        // A failed join leaves nothing to keep open.
+        // A failed join leaves nothing to keep open; the menu must accept a retry.
         closeSession();
+        useApp.setState({ connection: 'idle' });
       }
       return;
     case 'heartbeatAck':

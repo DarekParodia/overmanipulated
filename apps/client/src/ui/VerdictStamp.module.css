@@ -1,0 +1,100 @@
+/* Chunky hand-lettered verdict stamp: flat fill, navy outline, outlined white letters, hard
+   shadow, a fixed tilt per kind (so the same verdict always lands the same way). */
+.stamp {
+  --stamp-rotation: 0deg;
+  --stamp-fill: var(--green);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  padding: 0.05em 0.5em 0 0.35em;
+  background: var(--stamp-fill);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--pop);
+  color: var(--surface);
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.35;
+  white-space: nowrap;
+  transform: rotate(var(--stamp-rotation));
+  transform-origin: center;
+  /* A second, thinner navy frame inside the fill: the "stamped" double border. */
+  outline: 2px solid var(--outline);
+  outline-offset: -9px;
+}
+
+.stamp svg {
+  flex: none;
+  stroke-width: 3;
+  color: var(--surface);
+}
+
+/* Letters: white with their own navy outline, painted under the fill. */
+.word {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  -webkit-text-stroke: 0.2em var(--outline);
+  paint-order: stroke fill;
+}
+
+.publish {
+  --stamp-fill: var(--green);
+  --stamp-rotation: -4deg;
+}
+
+.reject {
+  --stamp-fill: var(--red);
+  --stamp-rotation: 3deg;
+}
+
+.publishWithContext {
+  --stamp-fill: var(--orange);
+  --stamp-rotation: -2deg;
+}
+
+.correction {
+  --stamp-fill: var(--blue);
+  --stamp-rotation: 4deg;
+}
+
+.expired {
+  --stamp-fill: var(--text-faint);
+  --stamp-rotation: -3deg;
+}
+
+.sm {
+  font-size: var(--text-md);
+  border-width: var(--stroke);
+  outline-offset: -7px;
+  outline-width: 1.5px;
+  box-shadow: var(--pop-pressed);
+}
+
+.md {
+  font-size: var(--text-lg);
+}
+
+.lg {
+  font-size: var(--text-xl);
+  box-shadow: var(--pop-lg);
+}
+
+/* Slam: drops in big, overshoots, settles on its tilt (design-rules §8). */
+.slam {
+  animation: stamp-slam var(--motion-slow) var(--ease-bounce) both;
+}
+
+@keyframes stamp-slam {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--stamp-rotation)) scale(1.8);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--stamp-rotation)) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(var(--stamp-rotation)) scale(1);
+  }
+}
