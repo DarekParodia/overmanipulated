@@ -407,27 +407,27 @@ feedback on desktop and phones; first playtest held.
 
 ## Stage 5 — Presentation
 
-- [ ] **S5-01 — Final models and newsroom art pass** (low-poly, paper/wood palette, editorial red).
-- [ ] **S5-02 — Character animation polish** (role-specific idles and celebrations, emotes on
+- [x] **S5-01 — Final models and newsroom art pass** (low-poly, paper/wood palette, editorial red).
+- [x] **S5-02 — Character animation polish** (role-specific idles and celebrations, emotes on
   pings, hand IK on folders, footstep sync with sounds, blend tuning).
-- [ ] **S5-09 — VFX polish.** Final particle art (ink, paper, confetti, sparks, smoke, glitch),
+- [x] **S5-09 — VFX polish.** Final particle art (ink, paper, confetti, sparks, smoke, glitch),
   stylised outlines/toon shading pass within budget, screen-space touches (vignette on low
   credibility, subtle chromatic glitch on `botRaid`) — all disabled by reduced motion / low
   quality.
-- [ ] **S5-10 — Haptics and controller polish.** Tuned vibration patterns per cue on Android and
+- [x] **S5-10 — Haptics and controller polish.** Tuned vibration patterns per cue on Android and
   gamepads; rumble intensity setting.
 - [ ] **S5-03 — UI art pass** on top of the S1-17 foundation: final textures, complete icon set,
   final stamp lettering, every screen re-checked against the design rules and the reference board.
-- [ ] **S5-04 — Technique encyclopedia** with unlockable cards and in-game examples.
-- [ ] **S5-05 — Accessibility** (colour-blind safe palette audit, text scaling, no-flash mode,
+- [x] **S5-04 — Technique encyclopedia** with unlockable cards and in-game examples.
+- [x] **S5-05 — Accessibility** (colour-blind safe palette audit, text scaling, no-flash mode,
   reduced motion, subtitles/visual equivalents for every audio-only cue, full gamepad and
   touch navigation in menus, left-handed touch layout option).
-- [ ] **S5-06 — Settings screen** (quality preset, volumes per bus, accessibility, haptics,
+- [x] **S5-06 — Settings screen** (quality preset, volumes per bus, accessibility, haptics,
   touch control size/opacity, controls help per input device).
-- [ ] **S5-07 — Loading and performance** (asset progress bar, ≤10 MB first load, compressed
+- [x] **S5-07 — Loading and performance** (asset progress bar, ≤10 MB first load, compressed
   textures (KTX2) and Draco/meshopt models, 60 FPS on UHD 620 and the mobile reference devices,
   adaptive quality that drops particles/shadows/DPR when frame time rises, instancing audit).
-- [ ] **S5-08 — Full audio pass** (per-level music, all SFX final, mix and loudness pass,
+- [x] **S5-08 — Full audio pass** (per-level music, all SFX final, mix and loudness pass,
   stingers for events, voice-less "gibberish" newsroom chatter).
 
 ---
