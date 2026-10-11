@@ -23,6 +23,11 @@ export default defineConfig({
   },
   build: {
     target: 'es2022',
+    // The manifest lets tools/perf/check-bundle.ts follow the real import graph of each route.
+    manifest: true,
+    // The game chunk (three.js + scene) is big on purpose and only loads when a match starts;
+    // tools/perf/check-bundle.ts enforces the real first-load budget in gzip bytes. Manual vendor
+    // chunks were tried and made the menu import three.js, so rolldown's default split stays.
     chunkSizeWarningLimit: 1500,
   },
 });

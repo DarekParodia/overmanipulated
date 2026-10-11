@@ -1,18 +1,21 @@
-// Collects frame time and renderer counters, and steps quality down automatically when the
-// device can't hold the budget (only when the player left quality on "auto").
+// Collects frame time and renderer counters, and walks the degrade ladder when the device can't
+// hold the budget (only when the player left quality on "auto"; see adaptive-quality.ts).
 import { useFrame, useThree } from '@react-three/fiber';
-import { useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { perfStats, smoothFrameTime } from '../debug/perf-stats.ts';
 import { useSettings } from '../store/settings.ts';
-import { isCoarsePointer, lowerPreset, profileFor, useQuality } from './quality.ts';
-
-/** Average frame time above this for STEP_DOWN_AFTER_S seconds lowers the preset. */
-const SLOW_FRAME_MS = 24;
-const STEP_DOWN_AFTER_S = 3;
+import { createAdaptiveController } from './adaptive-quality.ts';
+import { degradeLadder, useQuality } from './quality.ts';
 
 export function PerfProbe() {
   const gl = useThree((s) => s.gl);
-  const slowFor = useRef(0);
+  const controller = useMemo(createAdaptiveController, []);
+  const base = useQuality((s) => s.base);
+  const maxStage = useMemo(() => degradeLadder(base).length - 1, [base]);
+
+  // A new base preset (detection finished, or the player picked one) starts with a clean slate.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `base` is the trigger, not a value.
+  useEffect(() => controller.reset(), [controller, base]);
 
   useFrame((_, delta) => {
     const ms = delta * 1000;
@@ -22,18 +25,14 @@ export function PerfProbe() {
     perfStats.drawCalls = gl.info.render.calls;
     perfStats.triangles = gl.info.render.triangles;
 
-    const { auto, profile, set } = useQuality.getState();
-    if (!auto || useSettings.getState().quality !== null || profile.preset === 'low') {
-      slowFor.current = 0;
+    const quality = useQuality.getState();
+    // A fixed preset in settings is never touched; hidden tabs don't produce samples.
+    if (!quality.auto || useSettings.getState().quality !== null || document.hidden) {
       return;
     }
-    slowFor.current = perfStats.frameMs > SLOW_FRAME_MS ? slowFor.current + delta : 0;
-    if (slowFor.current > STEP_DOWN_AFTER_S) {
-      slowFor.current = 0;
-      set(
-        profileFor(lowerPreset(profile.preset), isCoarsePointer(), window.devicePixelRatio),
-        true,
-      );
+    const decision = controller.update(delta, quality.stage, maxStage);
+    if (decision !== 0) {
+      quality.setStage(quality.stage + decision);
     }
   });
 

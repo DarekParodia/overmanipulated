@@ -2,8 +2,10 @@
 // fullscreen, settings and leaving (with the room chip under them), touch controls on touch
 // devices and the rotate prompt.
 import { useEffect } from 'react';
+import { CaptionStack } from '../a11y/CaptionStack.tsx';
 import { startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
 import { requestMusic } from '../fx/audio/music.ts';
+import { ScreenFx } from '../fx/screen/ScreenFx.tsx';
 import { Guidance } from '../guidance/Guidance.tsx';
 import { Hud } from '../hud/Hud.tsx';
 import { RoomChip } from '../hud/RoomChip.tsx';
@@ -39,6 +41,7 @@ export function GameScreen() {
   return (
     <main className={styles.screen}>
       <GameCanvas />
+      <ScreenFx />
 
       <div className={styles.tools}>
         <div className={styles.toolRow}>
@@ -58,6 +61,7 @@ export function GameScreen() {
       </div>
 
       <Hud />
+      <CaptionStack />
       <Guidance />
       <StationLayer />
       <PingPicker />

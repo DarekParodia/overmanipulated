@@ -1,5 +1,6 @@
 // Emitter presets as data (agents/game-feel.md). Colours come from design tokens.
 import { colors } from '../../ui/tokens.ts';
+import type { SpriteFrame } from './sprites.ts';
 
 export type EmitterPreset = {
   /** Base particle count before quality/reduced-motion scaling. */
@@ -18,7 +19,14 @@ export type EmitterPreset = {
   colors: readonly string[] | null;
   /** With `colors: null`: extra fixed colours mixed in with the cue colour. */
   accent?: readonly string[];
+  /** Sprite shapes to pick from (fx/particles/sprites.ts); default: square chips. */
+  frames?: readonly SpriteFrame[];
+  /** Spin speed range in rad/s (sign is randomised); default: no spin. */
+  spin?: [min: number, max: number];
 };
+
+/** Sprites are drawn this much larger than the old chips so their outlines stay readable. */
+export const SPRITE_SCALE = 2.6;
 
 export const particlePresets = {
   dust: {
@@ -31,6 +39,7 @@ export const particlePresets = {
     drag: 3,
     height: 0.03,
     colors: [colors.floorDark, colors.surface, colors.furnitureTop],
+    frames: ['dot', 'flake'],
   },
   inkPuff: {
     count: 18,
@@ -42,6 +51,7 @@ export const particlePresets = {
     drag: 2.2,
     height: 0.5,
     colors: null,
+    frames: ['puff', 'dot', 'drop'],
   },
   paperBits: {
     count: 14,
@@ -53,6 +63,8 @@ export const particlePresets = {
     drag: 1.4,
     height: 0.6,
     colors: [colors.surface, colors.folder, colors.sky],
+    frames: ['scrap', 'strip', 'square'],
+    spin: [2, 7],
   },
   // --- S2-12 core gameplay feedback ---------------------------------------------------------
   /** A few sheets lifting as a folder lands on the conveyor. */
@@ -66,6 +78,8 @@ export const particlePresets = {
     drag: 2.5,
     height: 0.75,
     colors: [colors.surface, colors.folder, colors.surfaceSoft],
+    frames: ['scrap', 'strip'],
+    spin: [1, 4],
   },
   /** Flat ink drops thrown sideways from under a stamp. */
   inkSplat: {
@@ -78,6 +92,7 @@ export const particlePresets = {
     drag: 4,
     height: 0.62,
     colors: [colors.outline, colors.textSoft],
+    frames: ['splat', 'drop', 'dot'],
   },
   /** Verdict celebration: chips in the verdict colour mixed with white and sky blue. */
   confetti: {
@@ -91,6 +106,8 @@ export const particlePresets = {
     height: 0.7,
     colors: null,
     accent: [colors.surface, colors.sky],
+    frames: ['strip', 'square', 'triangle', 'dot', 'star'],
+    spin: [3, 9],
   },
   /** Published fake: heavy red ink thrown up and splattering down. */
   redInk: {
@@ -103,6 +120,7 @@ export const particlePresets = {
     drag: 1.2,
     height: 0.7,
     colors: [colors.red, colors.redDark, colors.outline],
+    frames: ['splat', 'drop', 'dot'],
   },
   /** Crumpled folder falling apart into grey dust. */
   ash: {
@@ -115,6 +133,8 @@ export const particlePresets = {
     drag: 2.5,
     height: 0.65,
     colors: [colors.textFaint, colors.textSoft, colors.surfaceSunk],
+    frames: ['flake'],
+    spin: [1, 3],
   },
   /** Small grey wisp rising from a failed minigame (negative gravity lifts it). */
   smoke: {
@@ -127,6 +147,7 @@ export const particlePresets = {
     drag: 1.5,
     height: 1,
     colors: [colors.textFaint, colors.surfaceSunk],
+    frames: ['puff'],
   },
   // --- S4-05 level events -------------------------------------------------------------------
   /** Shares piling up: orange and red chips popping upwards, with white sparkles. */
@@ -140,6 +161,8 @@ export const particlePresets = {
     drag: 1.6,
     height: 0.9,
     colors: [colors.orange, colors.red, colors.surface],
+    frames: ['share', 'heart', 'star', 'dot'],
+    spin: [1, 3],
   },
   /** Alarm (boss call, correction): red and yellow dots thrown out like a ringing bell. */
   alertBurst: {
@@ -152,6 +175,8 @@ export const particlePresets = {
     drag: 2,
     height: 0.9,
     colors: [colors.red, colors.yellow, colors.surface],
+    frames: ['burst', 'dot', 'triangle'],
+    spin: [2, 5],
   },
   /** Bot raid: hard-edged blue, red and navy squares jittering out (a glitch). */
   glitchBits: {
@@ -164,6 +189,8 @@ export const particlePresets = {
     drag: 3,
     height: 0.6,
     colors: [colors.blue, colors.red, colors.outline, colors.surface],
+    frames: ['glitch', 'square', 'strip'],
+    spin: [4, 12],
   },
   /** Electric sparks from a station that went down. */
   sparks: {
@@ -176,6 +203,23 @@ export const particlePresets = {
     drag: 1.2,
     height: 1,
     colors: [colors.yellow, colors.orange, colors.surface],
+    frames: ['spark', 'dot'],
+    spin: [2, 8],
+  },
+  // --- S5-09 VFX polish ---------------------------------------------------------------------
+  /** Stars and bursts popping out of a big success (win, publish with context). */
+  starBurst: {
+    count: 16,
+    life: [0.6, 1],
+    size: [0.07, 0.12],
+    speed: [1.2, 2.8],
+    rise: [1.6, 3.4],
+    gravity: 5,
+    drag: 1.8,
+    height: 0.9,
+    colors: [colors.yellow, colors.orange, colors.surface],
+    frames: ['star', 'burst', 'spark'],
+    spin: [2, 6],
   },
 } as const satisfies Record<string, EmitterPreset>;
 

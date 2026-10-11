@@ -57,3 +57,33 @@
 :root[data-reduced-motion="true"] .dots span {
   animation: none;
 }
+
+.stack {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  width: min(22rem, 80vw);
+}
+
+/* Chunky progress bar: navy outline, blue (information) fill that grows from the left. */
+.track {
+  width: 100%;
+  height: 1.5rem;
+  overflow: hidden;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunk);
+  box-shadow: var(--pop);
+}
+
+.fill {
+  width: 100%;
+  height: 100%;
+  background: var(--blue);
+  transform-origin: left center;
+  transition: transform 0.2s var(--ease-out);
+}
+
+:root[data-reduced-motion="true"] .fill {
+  transition: none;
+}

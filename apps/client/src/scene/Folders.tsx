@@ -25,6 +25,7 @@ import { useGame } from '../net/game-store.ts';
 import { runtime } from '../net/session.ts';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
+import { handAnchors } from './character/hands.ts';
 import {
   ATLAS_PRIORITIES,
   ATLAS_TYPES,
@@ -270,6 +271,15 @@ export function Folders() {
       if (!target) {
         group.visible = false;
         continue;
+      }
+      if (folder.location.kind === 'carried') {
+        // The carrier's hands (character IK) hold the folder.
+        const hands = handAnchors.get(folder.location.playerId);
+        if (hands) {
+          target.x = hands.x;
+          target.y = hands.y;
+          target.height = hands.height;
+        }
       }
       let m = motion.current.get(folder.id);
       if (!m) {

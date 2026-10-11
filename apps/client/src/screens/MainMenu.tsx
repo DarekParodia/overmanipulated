@@ -2,6 +2,7 @@
 // nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner.
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
@@ -67,6 +68,13 @@ export function MainMenu() {
   return (
     <main className={styles.page}>
       <div className={styles.corner}>
+        <Button
+          icon={<Icon name="book" size={26} />}
+          data-testid="open-encyclopedia"
+          onClick={() => useEncyclopedia.getState().show()}
+        >
+          <span className={styles.cornerLabel}>{pl.encyclopedia.open}</span>
+        </Button>
         <Button
           icon={<Icon name="settings" size={28} label={pl.menu.settings} />}
           onClick={() => setSettingsOpen(true)}

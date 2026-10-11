@@ -10,6 +10,7 @@ import {
   maxLevelScore,
   maxStoryScore,
   validateContent,
+  validateTechniques,
 } from './checks.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { LEVELS, STORIES } from './index.ts';
@@ -291,5 +292,58 @@ describe('validate CLI', () => {
     ]) {
       expect(out).toContain(line);
     }
+  });
+});
+
+describe('validateTechniques', () => {
+  const stories = [
+    { file: 'stories/l0-x.json', data: [{ technique: 'a-alias' }, { technique: 'none' }] },
+  ];
+  const card = (id: string, aliases: string[] = []) => ({
+    id,
+    aliases,
+    name: 'Nazwa',
+    how: 'Jak to działa.',
+    detect: 'Jak to wykryć.',
+    stations: ['archive'],
+    realWorld: 'Przykład.',
+    hint: 'Podpowiedź.',
+  });
+  const file = (...cards: unknown[]) => [{ file: 'techniques/t.json', data: cards }];
+
+  it('accepts the real techniques for the real stories', () => {
+    const real = (dir: 'techniques' | 'stories') =>
+      readdirSync(join(packageRoot, dir))
+        .filter((name) => name.endsWith('.json'))
+        .map((name) => ({
+          file: `${dir}/${name}`,
+          data: JSON.parse(readFileSync(join(packageRoot, dir, name), 'utf8')),
+        }));
+    expect(validateTechniques(real('techniques'), real('stories'))).toEqual([]);
+  });
+
+  it('maps aliases to their card without warnings', () => {
+    expect(validateTechniques(file(card('a', ['a-alias']), card('none')), stories)).toEqual([]);
+  });
+
+  it('warns about a story technique without a card and about an unused card', () => {
+    const issues = validateTechniques(file(card('none'), card('unused')), stories);
+    expect(issues.map((i) => [i.severity, i.path, i.message])).toEqual([
+      ['warning', '[0].technique', 'technique "a-alias" has no encyclopedia card'],
+      ['warning', '[1].id', 'technique "unused" is used by no story'],
+    ]);
+  });
+
+  it('errors on a duplicate id or alias', () => {
+    const issues = validateTechniques(file(card('a', ['x']), card('b', ['x']), card('a')), stories);
+    expect(issues.filter((i) => i.severity === 'error').map((i) => i.message)).toEqual([
+      '"x" already belongs to technique "a"',
+      '"a" already belongs to technique "a"',
+    ]);
+  });
+
+  it('errors on a card that breaks the schema', () => {
+    const issues = validateTechniques(file({ ...card('a'), stations: [] }), stories);
+    expect(issues.some((i) => i.severity === 'error' && i.path === '[0].stations')).toBe(true);
   });
 });

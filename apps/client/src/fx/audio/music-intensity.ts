@@ -1,6 +1,6 @@
 // Pure music-intensity model (S2-13): how hard the "pressure" layer should push, derived from
 // the latest game state. Kept free of Howler and the DOM so it is unit-testable.
-import { DEADLINE_WARNING_MS } from '@redakcja/shared';
+import { DEADLINE_WARNING_MS, ENDLESS_LEVEL_ID } from '@redakcja/shared';
 
 /** Music tuning. Client-only feel numbers, not game balance. */
 export const MUSIC_TUNING = {
@@ -77,4 +77,36 @@ export function slew(
     return Math.min(target, current + upPerS * dtS);
   }
   return Math.max(target, current - downPerS * dtS);
+}
+
+// --- Per-level tracks and layer mix (S5-08) ---------------------------------------------------
+
+/** Music track sets: the level's key, tempo and instrumentation (tools/audio/synth_music.py). */
+export const TRACK_SETS = ['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'endless'] as const;
+export type TrackSet = (typeof TRACK_SETS)[number];
+
+/** Level id → track set: `l3-afera` → `l3`, endless mode → `endless`, anything else (greybox) → `l1`. */
+export function trackSetForLevel(levelId: string | null | undefined): TrackSet {
+  if (levelId === ENDLESS_LEVEL_ID) {
+    return 'endless';
+  }
+  const match = /^l([1-6])(?:-|$)/.exec(levelId ?? '');
+  return match ? (`l${match[1]}` as TrackSet) : 'l1';
+}
+
+/** What the calm layer's gain is multiplied by at full intensity: the pressure layer takes over. */
+export const CALM_DIP_AT_FULL = 0.35;
+
+/**
+ * Gains of the two level layers (0..1, before the per-track level and the bus volume).
+ * Pressure fades in with the intensity while calm dips a little, so the loudness stays level.
+ */
+export function layerGains(
+  sceneGain: number,
+  intensity: number,
+): { calm: number; pressure: number } {
+  return {
+    calm: sceneGain * (1 - CALM_DIP_AT_FULL * intensity),
+    pressure: sceneGain * intensity,
+  };
 }

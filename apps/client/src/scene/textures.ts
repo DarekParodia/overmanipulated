@@ -132,6 +132,18 @@ export function createBeltTexture(): CanvasTexture {
     for (let x = 0; x < 64; x += 16) {
       ctx.fillRect(x, 0, 4, 64);
     }
+    // Pale chevrons pointing along the belt's travel (+u), so the direction reads even when idle.
+    ctx.strokeStyle = colors.textFaint;
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (const x of [8, 40]) {
+      ctx.beginPath();
+      ctx.moveTo(x - 3, 20);
+      ctx.lineTo(x + 3, 32);
+      ctx.lineTo(x - 3, 44);
+      ctx.stroke();
+    }
   }
   const texture = new CanvasTexture(canvas);
   texture.colorSpace = SRGBColorSpace;

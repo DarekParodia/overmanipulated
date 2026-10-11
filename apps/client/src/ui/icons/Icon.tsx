@@ -253,6 +253,23 @@ const icons = {
     },
     { d: 'M9.5 16.8h5' },
   ],
+  // --- Settings screen (S5-06) -------------------------------------------------------------
+  /** Game controller (controls tab). */
+  gamepad: [
+    {
+      d: 'M7.5 7h9a4.5 4.5 0 0 1 4.4 3.6l.9 4.6a2.4 2.4 0 0 1-4.1 2l-1.9-2.2H8.2l-1.9 2.2a2.4 2.4 0 0 1-4.1-2l.9-4.6A4.5 4.5 0 0 1 7.5 7Z',
+      fill: 'tint',
+    },
+    { d: 'M7.5 10v3.5M5.75 11.75h3.5' },
+    { d: 'M15.5 10.8h.01M17.5 12.8h.01' },
+  ],
+  // --- S5-04 encyclopedia ---
+  /** Open book (technique encyclopedia). */
+  book: [
+    { d: 'M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5Z', fill: 'tint' },
+    { d: 'M12 6.5c2-1.5 5-2 8.5-1.5v13.5c-3.5-.5-6.5 0-8.5 1.5Z', fill: 'tint' },
+    { d: 'M12 6.5V20M6.5 9c1.5-.2 3-.1 4 .4M17.5 9c-1.5-.2-3-.1-4 .4' },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;

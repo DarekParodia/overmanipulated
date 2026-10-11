@@ -15,6 +15,8 @@
   top: max(var(--space-4), env(safe-area-inset-top));
   right: max(var(--space-4), env(safe-area-inset-right));
   z-index: 2;
+  display: flex;
+  gap: var(--space-2);
 }
 
 .header {
@@ -101,6 +103,14 @@
   .card {
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
+  }
+  /* Icon only: the corner must not reach over the panel column. */
+  .cornerLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .corner {
     top: max(var(--space-2), env(safe-area-inset-top));

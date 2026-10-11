@@ -3,8 +3,10 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { type PerspectiveCamera, Vector3 } from 'three';
+import { addPunch, createPunch, stepPunch } from '../fx/camera/punch.ts';
 import { addTrauma, createShake, stepShake } from '../fx/camera/shake.ts';
 import { feedback } from '../fx/feedback.ts';
+import { fxTimeScale } from '../fx/time-scale.ts';
 import { runtime } from '../net/session.ts';
 import { renderState } from './render-state.ts';
 
@@ -23,6 +25,7 @@ export function CameraRig() {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const size = useThree((s) => s.size);
   const shake = useMemo(createShake, []);
+  const punch = useMemo(createPunch, []);
   const focus = useRef(new Vector3(runtime.map.width / 2, 0, runtime.map.height / 2));
   const tmp = useMemo(() => new Vector3(), []);
 
@@ -36,13 +39,16 @@ export function CameraRig() {
   useEffect(
     () =>
       feedback.connect({
-        addTrauma: (amount) => addTrauma(shake, amount),
+        addTrauma: (amount) => {
+          addTrauma(shake, amount);
+          addPunch(punch, amount);
+        },
         screenX: (position) => {
           tmp.set(position.x, 0.5, position.y).project(camera);
           return tmp.x;
         },
       }),
-    [camera, shake, tmp],
+    [camera, shake, punch, tmp],
   );
 
   useFrame((_, delta) => {
@@ -79,8 +85,10 @@ export function CameraRig() {
     focus.current.lerp(target, k);
 
     const vertical = visibleDepth * Math.sin(ELEVATION);
-    const distance = vertical / 2 / Math.tan((FOV * Math.PI) / 360);
-    const offset = stepShake(shake, delta);
+    // Hit-stop freezes the shake and the punch recovery too, so a slam holds for a beat.
+    const fxDelta = delta * fxTimeScale();
+    const distance = (vertical / 2 / Math.tan((FOV * Math.PI) / 360)) * stepPunch(punch, fxDelta);
+    const offset = stepShake(shake, fxDelta);
     camera.position.set(
       focus.current.x + offset.x,
       Math.sin(ELEVATION) * distance,

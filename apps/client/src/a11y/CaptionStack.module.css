@@ -1,0 +1,116 @@
+/*
+ * Caption stack: left edge under the HUD pill (and its endless-mode tempo chip). Chips are
+ * compact pills; the coloured disc repeats the cue's tone, the icon and the words carry the
+ * meaning so colour is never the only signal.
+ */
+.stack {
+  position: absolute;
+  z-index: 10;
+  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 9.75rem);
+  left: max(var(--space-3), env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: min(15rem, 38%);
+  pointer-events: none;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 0.125rem var(--space-3) 0.125rem 0.125rem;
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  animation: caption-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes caption-in {
+  0% {
+    transform: translateX(-30%) scale(0.85);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
+}
+
+.info .mark {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.warn .mark {
+  background: var(--orange);
+}
+
+.danger .mark {
+  background: var(--red);
+}
+
+.good .mark {
+  background: var(--green);
+}
+
+.text {
+  min-width: 0;
+  padding-top: 0.12em; /* Baloo sits high in its box */
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+
+.suggest {
+  display: flex;
+  gap: var(--space-2);
+  pointer-events: auto;
+}
+
+/* Compact landscape (phones, 640x360): the HUD pill is taller, so the stack drops lower, shows
+   only the two newest chips and uses smaller ones. */
+@media (max-height: 500px) {
+  .stack {
+    top: calc(max(var(--space-3), env(safe-area-inset-top)) + 11rem);
+    max-width: min(13rem, 34%);
+  }
+
+  .chip:nth-last-child(n + 3) {
+    display: none;
+  }
+
+  .mark {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .text {
+    font-size: var(--text-sm);
+  }
+}

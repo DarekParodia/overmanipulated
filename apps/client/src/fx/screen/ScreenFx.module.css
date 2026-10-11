@@ -1,0 +1,192 @@
+/*
+ * Screen-space touches (ScreenFx.tsx): flat bands only, no gradients or blur. They sit above the
+ * 3D canvas and below the HUD (z-index 10), never take pointer events, and stay on the very
+ * edge so folders and HUD numbers stay readable.
+ */
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* --- Low credibility: a red frame, thicker the lower credibility is ------------------------- */
+.vignette {
+  position: absolute;
+  inset: 0;
+  --band: calc(0.7vmin + var(--level) * 2.4vmin);
+}
+
+.vignette::before,
+.vignette::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 5vmin;
+}
+
+.vignette::before {
+  box-shadow: inset 0 0 0 calc(var(--band) * 2) var(--red);
+  opacity: 0.3;
+}
+
+.vignette::after {
+  box-shadow: inset 0 0 0 var(--band) var(--red);
+  opacity: 0.6;
+}
+
+.beat {
+  animation: vignette-beat 1.1s steps(2, jump-none) infinite;
+}
+
+@keyframes vignette-beat {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
+/* --- Bot raid: blue and red bars jumping on the left and right edge --------------------------- */
+.glitch {
+  position: absolute;
+  inset: 0;
+}
+
+.edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6vmin;
+}
+
+.left {
+  left: 0;
+}
+
+.right {
+  right: 0;
+}
+
+.bar {
+  position: absolute;
+  height: var(--thick);
+  width: var(--len);
+  border-radius: 0.3vmin;
+  opacity: 0.7;
+}
+
+.left .bar {
+  left: 0;
+}
+
+.right .bar {
+  right: 0;
+}
+
+.blue {
+  background: var(--blue);
+}
+
+.red {
+  background: var(--red);
+}
+
+.moving .bar {
+  animation: glitch-jump 1.3s steps(1, end) infinite;
+  animation-delay: var(--delay);
+}
+
+.moving .right .bar {
+  animation-name: glitch-jump-right;
+}
+
+@keyframes glitch-jump {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  18% {
+    transform: translateX(var(--jump));
+  }
+  26% {
+    transform: translateX(0);
+  }
+  63% {
+    transform: translateX(calc(var(--jump) * -0.4));
+  }
+  70% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes glitch-jump-right {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  18% {
+    transform: translateX(calc(var(--jump) * -1));
+  }
+  26% {
+    transform: translateX(0);
+  }
+  63% {
+    transform: translateX(calc(var(--jump) * 0.4));
+  }
+  70% {
+    transform: translateX(0);
+  }
+}
+
+/* --- Deadline pressure: red bars on the top and bottom edge ------------------------------------ */
+.pressure {
+  position: absolute;
+  inset: 0;
+  opacity: 0.8;
+}
+
+.pressure::before,
+.pressure::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1.4vmin;
+  background: var(--red);
+}
+
+.pressure::before {
+  top: 0;
+}
+
+.pressure::after {
+  bottom: 0;
+}
+
+.slow {
+  animation: pressure-pulse 1.2s steps(3, jump-none) infinite alternate;
+}
+
+.fast {
+  animation: pressure-pulse 0.6s steps(3, jump-none) infinite alternate;
+}
+
+@keyframes pressure-pulse {
+  0% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+/* Safety net on top of the component: nothing moves with reduced motion or no-flash. */
+:root[data-reduced-motion="true"] .layer *,
+:root[data-reduced-motion="true"] .layer,
+:root[data-no-flash="true"] .layer *,
+:root[data-no-flash="true"] .layer {
+  animation: none;
+}

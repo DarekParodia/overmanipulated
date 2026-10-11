@@ -369,12 +369,8 @@
 }
 
 .dot {
-  width: 1.5rem;
-  height: 1.5rem;
+  display: inline-flex;
   margin-right: -0.25rem;
-  background: var(--dot);
-  border: var(--outline-border);
-  border-radius: 50%;
   animation: vote-pop var(--motion-base) var(--ease-bounce) both;
 }
 

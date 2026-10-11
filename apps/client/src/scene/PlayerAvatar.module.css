@@ -13,7 +13,9 @@
   position: absolute;
   top: 0;
   left: 0;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   will-change: transform;
   padding: 0 10px;
   border: var(--stroke) solid;

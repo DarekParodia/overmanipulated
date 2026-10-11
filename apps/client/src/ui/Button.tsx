@@ -42,6 +42,7 @@ export function Button({
     <button
       {...rest}
       type={type}
+      data-nav-back={back || undefined}
       className={`${styles.button} ${styles[variant]} ${wide ? styles.wide : ''} ${big ? styles.big : ''}`}
       onClick={(event) => {
         emitCue(back ? 'ui.back' : 'ui.click');

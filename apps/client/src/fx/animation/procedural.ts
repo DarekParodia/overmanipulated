@@ -26,6 +26,10 @@ const START_SQUASH = 0.82;
 const STOP_STRETCH = 1.12;
 const BREATH_HZ = 0.35;
 const BREATH_AMOUNT = 0.015;
+/** Anticipation: a quick lean back (radians) before the first step. */
+const START_LEAN_BACK = -0.07;
+/** Landing after a hop squashes the body for a moment. */
+const LANDING_SQUASH = 0.86;
 
 export function createAnimator(): CharacterAnimator {
   return {
@@ -35,6 +39,12 @@ export function createAnimator(): CharacterAnimator {
     squash: { value: 1, velocity: 0 },
     idleTime: 0,
   };
+}
+
+/** Squashes the character as it lands from a hop (the spring brings it back). */
+export function landingSquash(animator: CharacterAnimator): void {
+  animator.squash.value = Math.min(animator.squash.value, LANDING_SQUASH);
+  animator.squash.velocity = 0;
 }
 
 export type StepEvents = { started: boolean; stopped: boolean; footstep: boolean };
@@ -56,6 +66,8 @@ export function animateCharacter(
   if (started) {
     animator.squash.value = START_SQUASH;
     animator.squash.velocity = 0;
+    animator.lean.value = START_LEAN_BACK;
+    animator.lean.velocity = 0;
   } else if (stopped) {
     animator.squash.value = STOP_STRETCH;
     animator.squash.velocity = 0;
