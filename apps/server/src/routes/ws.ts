@@ -92,7 +92,7 @@ export function createWsHandler(deps: WsDeps) {
         if (parsed.message.type === 'join') {
           const createsRoom = parsed.message.roomCode === undefined;
           if (!joins.take(address) || (createsRoom && !newRooms.take(address))) {
-            log.warn('join rate limited', { address });
+            log.warn('join rate limited');
             registry.sendError(current, 'invalidMessage', 'too many requests, try again soon');
             return;
           }
