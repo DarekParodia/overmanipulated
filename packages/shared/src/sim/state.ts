@@ -3,7 +3,6 @@ import { CREDIBILITY_START } from '../constants.ts';
 import type { Role } from '../domain.ts';
 import type { Desk, Folder, FolderResult, LevelOutcome, Station } from '../entities.ts';
 import type { TileMap, Vec2 } from './map.ts';
-import type { RngState } from './rng.ts';
 
 export type PlayerState = {
   id: string;
@@ -39,7 +38,16 @@ export type GameState = {
   tick: number;
   /** Level time since start, in ms. */
   elapsedMs: number;
-  rng: RngState;
+  /**
+   * The match seed; constant for the whole level. Minigame seeds are derived from it per folder
+   * spawn key, station kind and attempt (`drawMinigameSeed`), never drawn from a running RNG.
+   */
+  seed: number;
+  /**
+   * Minigame rounds that ended without a stamp, keyed `${spawnKey}:${kind}`
+   * (`minigameAttemptKey`). Sim-only; stations in MINIGAME_STABLE_SEED_STATIONS never count.
+   */
+  minigameAttempts: Record<string, number>;
   /** Keyed by player id; insertion order is join order. */
   players: Record<string, PlayerState>;
   crew: Record<string, CrewMember>;
@@ -95,7 +103,8 @@ export function createGameState(options: GameStateOptions = {}): GameState {
   return {
     tick: 0,
     elapsedMs: 0,
-    rng: (options.seed ?? 1) | 0,
+    seed: (options.seed ?? 1) | 0,
+    minigameAttempts: {},
     players: {},
     crew: {},
     folders: {},

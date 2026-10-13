@@ -50,13 +50,17 @@ Runtime (`music.ts`): scenes (menu/game) cross-fade at 0.7 gain/s and only fade 
 are decoded. In game, `targetIntensity` (last minute and urgent folders) drives the pressure
 layer while the calm layer dips by 35 % at full intensity (`layerGains`), so the sum stays level. The
 last 30 s raise the playback rate by 6 %. Stingers listed in `duck.ts` dip the music to 45 % (for the sprite length of the sound, if audible) while
-they ring.
+they ring. Intro voice lines dip it deeper, to 30 % (`DUCK_TUNING.voiceDepth`, see Voice). When dips
+overlap the lowest depth wins, and a voice line cut short releases its dip at once.
 
 ## Buses and mix
 
-Effective volume = master x bus slider x `BUS_TRIM[bus]` (`mix.ts`: music 1, sfx 1, ui 0.9) x cue
-`volume`. The master output goes through a limiter (DynamicsCompressor, threshold -9 dB, knee 6 dB,
-ratio 12, attack 3 ms, release 180 ms) installed by `installMasterLimiter()` in `audio-manager.ts`.
+Four buses, each with its own slider under Ustawienia → Dźwięk: `music` (Muzyka), `sfx` (Efekty),
+`ui` (Przyciski) and `voice` (Lektor, the intro voiceover only). Effective volume =
+`busVolume(settings, bus)` = master x bus slider x `BUS_TRIM[bus]` (`mix.ts`: music 1, sfx 1, ui 0.9,
+voice 1) x cue `volume`. The master output goes through a limiter (DynamicsCompressor, threshold
+-9 dB, knee 6 dB, ratio 12, attack 3 ms, release 180 ms) installed by `installMasterLimiter()` in
+`limiter.ts`.
 
 Loudness targets (RMS over the audible part of a file, dBFS, before any volume):
 
@@ -81,6 +85,31 @@ each bus' in-game spread against a window.
 volume, follows the ambience duck down to 15 % under station/desk overlays and the results screen,
 and is off entirely in reduced-audio setups (`reducedAudio`: muted, the effective quality preset is `low` (Auto resolved), or
 master x sfx volume below 0.12).
+
+## Voice
+
+The intro voiceover (S7-99 to S7-102) plays on the `voice` bus. Its slider, Lektor
+(`settings.voiceVolume`), defaults to 0.9, so a line plays at 0.72 with the default master. No cue
+uses the bus: the intro subtitles every line, so voice lines are not cues and need no captions.
+`fx/audio/voice.ts` holds the runtime:
+
+- `loadVoice(clips)` creates one Howl over `/assets/voice/intro.webm` and `intro.mp3` with the clip
+  table of the voice sprite json. It resolves true once decoded, and false on a load error or after
+  4 s (`VOICE_LOAD_TIMEOUT_MS`). A load that lands later still plays. Nothing is fetched before the
+  call, and never in the first-load path.
+- `voiceStatus()` is `unloaded`, `muted` (global mute, or master x Lektor at 0), `locked` (no user
+  gesture on the page yet: `navigator.userActivation`, else Howler's audio context state) or
+  `ready`.
+- `playVoice(id, onEnd)` plays one line, stops the previous one, and dips the music to 30 % for the
+  clip's length. Unless the status is `ready` it does nothing and `onEnd` never runs: the intro keeps
+  its fallback timer and the subtitles carry the line. It returns a function that stops the line;
+  `stopVoice()` stops whatever is playing. A stopped line releases its dip at once.
+- `applyVoiceVolume(settings)` runs from `initAudio`'s settings subscription, so moving the slider
+  reaches a line that is playing.
+
+The audio files, the voice sprite json, their loudness window and size budget, and the licence
+notes come with S7-100. Until then `loadVoice` resolves false and the intro runs on subtitles and
+fallback timing alone.
 
 ## Budget
 

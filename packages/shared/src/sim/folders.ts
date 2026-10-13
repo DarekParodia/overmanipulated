@@ -1,13 +1,17 @@
-// Folders: spawning from the level schedule, pick up / put down, deadlines and expiry (S2-02).
+// Folders: spawning from the level schedule, pick up / put down, deadlines and expiry (S2-02);
+// the next scheduled folder and the full-conveyor flag for snapshots (S7-08); extra time for
+// multi-stamp folders (S7-18).
 // Emits: folderSpawned, folderPickedUp, folderPutDown, deadlineWarning, folderExpired.
 // Expired folders are removed here; their score and credibility are applied in scoring.ts.
 import {
   DEADLINE_WARNING_MS,
   FLOOR_DROP_DISTANCE_TILES,
   INTERACTION_REACH_TILES,
+  MULTI_STAMP_EXTRA_DEADLINE_MS,
 } from '../constants.ts';
-import type { Folder, FolderLocation, FolderTag } from '../entities.ts';
-import type { SimFrame } from './frame.ts';
+import type { Folder, FolderLocation, FolderTag, NextFolder } from '../entities.ts';
+import { requiredStampsOf, type SimSpawn, type SimStory } from './content.ts';
+import type { SimContext, SimFrame } from './frame.ts';
 import {
   type Fixture,
   findInteractionTarget,
@@ -39,6 +43,7 @@ function checkDeadlines(state: GameState, frame: SimFrame): GameState {
       frame.events.push({
         kind: 'folderExpired',
         folderId: folder.id,
+        spawnKey: folder.spawnKey,
         storyId: folder.storyId,
         stamps: [...folder.stamps],
       });
@@ -54,15 +59,15 @@ function checkDeadlines(state: GameState, frame: SimFrame): GameState {
 /**
  * Spawns every due schedule entry onto the first free conveyor tile. When the conveyor is full
  * the entry waits (and holds back later ones) until a tile frees up; it is never skipped.
- * Entries whose story is missing from the story book are skipped.
+ * Entries whose story is missing from the story book are skipped. Each folder's spawn key is
+ * `s<scheduleIndex>`, so it is the same in every newsroom whatever their belts look like.
  */
 function spawnFolders(state: GameState, frame: SimFrame): GameState {
   const { schedule } = frame.ctx.level;
   let next = state;
   while (next.nextSpawnIndex < schedule.length) {
     const entry = schedule[next.nextSpawnIndex];
-    // Rounded to whole ms so fractional seconds in content (1.1 s) do not miss a tick.
-    if (!entry || next.elapsedMs < Math.round(entry.atS * 1000)) {
+    if (!entry || next.elapsedMs < spawnAtMs(entry)) {
       break;
     }
     if (!frame.ctx.stories[entry.storyId]) {
@@ -73,7 +78,7 @@ function spawnFolders(state: GameState, frame: SimFrame): GameState {
     if (!free) {
       break;
     }
-    next = spawnFolderAt(next, frame, free, entry);
+    next = spawnFolderAt(next, frame, free, { ...entry, spawnKey: `s${next.nextSpawnIndex}` });
     next = { ...next, nextSpawnIndex: next.nextSpawnIndex + 1 };
   }
   return next;
@@ -85,22 +90,35 @@ export function freeConveyors(state: GameState, map: TileMap): Fixture[] {
 }
 
 /**
+ * Time a folder of this story gets on top of its schedule or event `deadlineS`: one
+ * `MULTI_STAMP_EXTRA_DEADLINE_MS` per proof beyond the first (0 for a classic folder).
+ */
+export function multiStampExtraMs(story: Pick<SimStory, 'requiredStamps'>): number {
+  return (requiredStampsOf(story) - 1) * MULTI_STAMP_EXTRA_DEADLINE_MS;
+}
+
+/**
  * Puts a new folder on a conveyor tile (the caller picked a free one) and emits `folderSpawned`.
- * Shared by the level schedule and by level events; `tag` marks event folders.
+ * Shared by the level schedule and by level events; `tag` marks event folders and `spawnKey`
+ * names where the folder came from (`s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`). The
+ * deadline is `deadlineS` from now plus the multi-stamp extra time of the story.
  */
 export function spawnFolderAt(
   state: GameState,
   frame: SimFrame,
   tile: Fixture,
-  spec: { storyId: string; deadlineS: number; tag?: FolderTag },
+  spec: { spawnKey: string; storyId: string; deadlineS: number; tag?: FolderTag },
 ): GameState {
+  const story = frame.ctx.stories[spec.storyId];
+  const extraMs = story ? multiStampExtraMs(story) : 0;
   const folder: Folder = {
     id: `f${state.nextFolderNumber}`,
+    spawnKey: spec.spawnKey,
     storyId: spec.storyId,
     location: { kind: 'fixture', fixtureId: tile.id },
     stamps: [],
     spawnedAtMs: state.elapsedMs,
-    deadlineMs: state.elapsedMs + Math.round(spec.deadlineS * 1000),
+    deadlineMs: state.elapsedMs + Math.round(spec.deadlineS * 1000) + extraMs,
     warned: false,
     ...(spec.tag ? { tag: spec.tag } : {}),
   };
@@ -115,6 +133,56 @@ export function spawnFolderAt(
     folders: { ...state.folders, [folder.id]: folder },
     nextFolderNumber: state.nextFolderNumber + 1,
   };
+}
+
+/** Level time a schedule entry is due; whole ms, so 1.1 s in content never misses a tick. */
+function spawnAtMs(entry: SimSpawn): number {
+  return Math.round(entry.atS * 1000);
+}
+
+/**
+ * The next folder the schedule will bring, from `nextSpawnIndex` on, skipping entries whose story
+ * is missing (spawnFolders skips those too); `sinceMs` is when the previous scheduled folder was
+ * due (0 before the first). Level-event folders are not scheduled, so they are never announced.
+ * Null once the schedule is used up. A held entry (full conveyor) keeps its past `atMs`.
+ */
+export function nextScheduledSpawn(
+  state: GameState,
+  ctx: Pick<SimContext, 'level' | 'stories'>,
+): NextFolder | null {
+  const { schedule } = ctx.level;
+  const known = (index: number): SimSpawn | undefined => {
+    const entry = schedule[index];
+    return entry && ctx.stories[entry.storyId] ? entry : undefined;
+  };
+  // Index loops: this runs for every room on every tick, so no copies of the schedule.
+  let next: SimSpawn | undefined;
+  for (let i = state.nextSpawnIndex; i < schedule.length && !next; i++) {
+    next = known(i);
+  }
+  if (!next) {
+    return null;
+  }
+  let previous: SimSpawn | undefined;
+  for (let i = Math.min(state.nextSpawnIndex, schedule.length) - 1; i >= 0 && !previous; i--) {
+    previous = known(i);
+  }
+  return { atMs: spawnAtMs(next), sinceMs: previous ? spawnAtMs(previous) : 0 };
+}
+
+/**
+ * A scheduled folder is due but waits because every conveyor tile holds a folder (spawnFolders
+ * holds it until a tile frees up). A level-event folder waiting for a tile does not count: event
+ * folders are never announced, so the flag must not give them away.
+ */
+export function conveyorBlocked(
+  state: GameState,
+  ctx: Pick<SimContext, 'level' | 'stories' | 'map'>,
+): boolean {
+  const next = nextScheduledSpawn(state, ctx);
+  return (
+    next !== null && state.elapsedMs >= next.atMs && freeConveyors(state, ctx.map).length === 0
+  );
 }
 
 /** Pick up / put down for every player who pressed interact, in join order (first wins). */

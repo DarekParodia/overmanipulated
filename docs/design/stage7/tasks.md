@@ -563,6 +563,7 @@ bun run check is green.
 - An effective-hints selector (setting && DIFFICULTY[d].hints) hides guidance on Ekspert and switches the FolderCard evidenceBadge to it (×N on Ekspert).
 - next-step suggests folder.bagStation first when it is among the stations it would suggest anyway.
 - The desk result is unchanged across difficulties.
+- From S7-17: StationHost starts its local lockout estimate at failLockoutMs(d) (the event still sets the real length), and the HUD expiry toast (`expiredToast`) scales its deltas with scalePenalty(·, DIFFICULTY[d].penaltyFactor), because `folderExpired` carries no deltas.
 - MinigameBench uses Normal defaults.
 
 **Done when**

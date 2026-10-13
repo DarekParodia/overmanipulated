@@ -8,6 +8,11 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | --- | --- | --- |
 | Zgłoszenie | `story` | Content unit: the claim/material to verify (data) |
 | Teczka | `folder` | In-world object carrying one story; has position, holder, stamps, deadline |
+| Klucz teczki | `spawnKey` | Where a folder came from: `s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`. The same in every newsroom of a match, unlike the per-sim folder id `f<n>` |
+| Ziarno rozgrywki | `seed` (`GameState.seed`) | Constant for one level run; minigame seeds are derived from it |
+| Ziarno minigry | `minigameSeed` (`minigameSeedFor`, `drawMinigameSeed`) | Derived from (seed, spawnKey, station kind, attempt); the client builds the puzzle from it |
+| Podejście | `attempt` (`minigameAttempts`, key `spawnKey:kind`) | Minigame rounds of one station kind on one folder that ended without a stamp (failure or cancel) |
+| Ta sama karta | stable-seed station (`MINIGAME_STABLE_SEED_STATIONS`) | `sourceRegistry`: attempts are not counted, so a retry shows the same Kartoteka card |
 | Pieczątka | `stamp` | Result of a station on a folder |
 | Stanowisko | `station` | Verification workstation with a minigame |
 | Stół redakcyjny | `editorialDesk` (`desk`) | Where verdicts are made |
@@ -21,6 +26,8 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Licznik czasu | `deadline` / `timeLeftMs` | |
 | Premia za tempo | `speedBonus` | Balance value `SCORE.speedBonus`; on a folder result it is `bonuses.speed` |
 | Premie | `bonuses` (`speed`, `multiStamp`, `bossCall`) | Points on top of a folder's base points; base = `scoreDelta − Σ bonuses` |
+| Premia za komplet dowodów | `multiStampBonus` | Balance value `SCORE.multiStampBonus`, paid per proof beyond the first; on a folder result it is `bonuses.multiStamp` |
+| Teczka z kilkoma dowodami | multi-stamp folder | Its story has `requiredStamps` > 1; spawns with `MULTI_STAMP_EXTRA_DEADLINE_MS` more per extra proof (`multiStampExtraMs`), schedule and event folders alike; content warns before level `MULTI_STAMP_FIRST_LEVEL` |
 | Przeterminowane | `expired` | |
 | Wynik teczki | `folderResult` (`FolderResult`) | Outcome, reason, deltas, cited stamps and bonuses of one folder |
 | Powód wyniku | `reason` (`FolderReason`) | Why a folder ended the way it did; 14 values, each belongs to one outcome. Its title `pl.outcome.title[reason]` is shared by the toast, the desk and the Kolegium |
@@ -29,12 +36,18 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Za mało dowodów | `incompleteProof` | Reason: fewer countable proofs than required, e.g. only the AI scanner cited; half points |
 | Wskazane dowody | `justifyingStampIds` | Stamps cited at the desk with a verdict (1–3) |
 | Wymagane dowody | `requiredStamps` | Distinct justifying, non-hint stamps a story needs; 1 unless set |
+| Rozwiązywalna historia | solvable story (`proofCount`) | The level's stations give at least `requiredStamps` proofs: `proofCount(story, stations)` counts distinct justifying, non-hint stamps from those stations; checked by `checkStoryFitsLevel` and endless `isSolvable` |
 | Stanowisko-podpowiedź | hint-only station (`HINT_ONLY_STATIONS`, `isHintOnly`) | `aiScanner`: its stamp may justify, but never counts as proof (`countsAsProof`) |
 | Stanowisko rozstrzygające (Rozstrzyga) | deciding station (`decidingStations`, S7-20) | A station on the level's map with a justifying, non-hint stamp of the story; the desk result names it after „Rozstrzyga:” |
 | Linie wyniku werdyktu | `deskResultLines` (`DeskResultLine`) | At most two lines under the desk result: `proof`, `weakProof`, `tooFewProofs`, `hintOnly`, `decidedBy`, `correctVerdict`, `proofInFolder`, `notChecked`; the same on every difficulty |
 | Powód porażki | `lossReason` (`credibility` / `score`) | Why a level was lost; null when won |
 | Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
+| Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |
+| Worek stanowisk | station bag (`bag`, constants `BAG_*`) | Run generation: folders are dealt in shuffled rounds over the stations that decide the level's stories |
+| Talia stanowiska (tryb nieskończony) | station deck | Endless stories one station can decide; should hold at least `ENDLESS_MIN_DECK` |
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
+| Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced |
+| Taśma pełna | `conveyorFull` (`conveyorBlocked`) | Snapshot flag: a scheduled folder is due but waits, because every conveyor tile holds a folder |
 | Status prawdziwości | `truth` | |
 | Prawda / Fałsz / Zwodnicze / Satyra / Niepotwierdzalne | `true` / `false` / `misleading` / `satire` / `unverifiable` | |
 | Poziom | `level` | |
@@ -93,6 +106,20 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Awaria | `outage` |
 | Sprostowanie | `correction` |
 
+## Difficulty (`Difficulty`)
+
+| Polish | English | Notes |
+| --- | --- | --- |
+| Poziom trudności | `difficulty` | Set per room (default `DEFAULT_DIFFICULTY`); picks one `DIFFICULTY` preset |
+| Łatwy / Normalny / Trudny / Ekspert | `easy` / `normal` / `hard` / `expert` | `DIFFICULTIES`, easiest first; every Normal factor is 1 |
+| Ustawienia poziomu trudności | `DifficultyPreset` | Factors for deadlines, spawn gap, work time, lockout, penalties and minigame time; extra mistakes; hints; answer reveal |
+| Strojenie symulacji | `SimTuning` (`simTuning`, `NORMAL_TUNING`) | The preset part the simulation applies: work time, lockout, penalties |
+| Limit pomyłek | `mistakeLimit` | Mistakes a minigame allows on a difficulty; never below `MINIGAME_MIN_MISTAKES` |
+| Blokada stanowiska | lockout (`failLockoutMs`, `tunedLockoutMs`) | How long a failed minigame blocks its station; announced in `minigameFailed.lockoutMs` |
+| Skalowanie kar | `scalePenalty` (`penaltyFactor`) | Wrong-verdict, expiry and correction penalties × the factor, halves rounded away from zero; rewards are never scaled |
+| Utrata / odzysk przy sprostowaniu | `correctionLoss` / `correctionRecover` | Credibility a correction costs (scaled) and the share of it a filed correction gives back |
+| Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
+
 ## Screens (`ScreenId`)
 
 | Polish | English |
@@ -118,5 +145,25 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | No-flash mode | `noFlash` | Setting; no blinking/strobing |
 | Virtual joystick | `touchJoystick` | Touch movement control |
 | Input device | `inputDevice`: `keyboard` / `gamepad` / `touch` | Last used device drives prompts |
+| Key hints | `KeyHints` (`pl.minigames.<kind>.keys`) | Key-cap chips under a minigame for the device in use; on touch they name the gesture („Stuknij”, „Przesuń”) or the button |
+| Station help (Pomoc stanowiska) | `stationHelp` (`pl.stationHelp.kinds[kind]`) | Per station: `purpose`, `proves`, 2–3 `steps` per device, `realWorld`; one source for the help card, practice, lobby details and contest legends |
+| Polish plural | `pluralPl(n, one, few, many)` | Polish noun form for a count (`strings/plural.ts`) |
+| Audio bus | `AudioBus`: `music` / `sfx` / `ui` / `voice` | Each bus has its own volume slider; effective volume is `busVolume(settings, bus)` (`fx/audio/mix.ts`) |
+| Lektor (intro voiceover) | `voice` bus, `voiceVolume`, `fx/audio/voice.ts` (`loadVoice`, `playVoice`, `voiceStatus`) | Narrator lines of the intro; its own slider 'Lektor'; dips the music to `DUCK_TUNING.voiceDepth` (0.3); silent and skipped when muted, not loaded or locked |
+| Music duck | `Ducker`, `musicDucker`, `DUCK_TUNING` (`fx/audio/duck.ts`) | Short dip of the music bus under a stinger (`depth` 0.45) or a voice line (`voiceDepth` 0.3); the lowest active depth wins |
+
+## Server config and ads (Stage 7)
+
+| Polish | English (code) | Notes |
+| --- | --- | --- |
+| Konfiguracja publiczna | `publicConfig` (`PublicConfig`, `publicConfigSchema`, `DEFAULT_PUBLIC_CONFIG`) | What the client may know of the server's `config.json`, derived per request host; its own schema, never a pick of the server config. Served by `GET /api/config` and embedded in the HTML shell (`PUBLIC_CONFIG_ELEMENT_ID`) |
+| Flaga funkcji | `featureFlag` (`FeatureFlags`, `DEFAULT_FEATURE_FLAGS`) | `roomBrowser` (off by default), `versus`, `spectators`, `intro`; gates entry points only, running matches keep going |
+| Komunikat redakcji | `motd` (`motdSchema`) | Operator message in the main menu: stable `id`, `text` ≤ `MOTD_MAX_CHARS`, `tone` `info` / `warning` |
+| Reklama / miejsce reklamy | `ad` / `adPlacement` (`menu`, `lobby`, `results`, `spectator`) | Never during play; `slots` maps a placement to an AdSense ad unit |
+| Odbiorcy reklam (wiek) | `ageTreatment` (`child` / `teen` / `unspecified`) | Age tag on every ad request; default `teen` (`DEFAULT_AD_AGE_TREATMENT`) |
+| Reklamy ograniczone | ads mode `limited` | Google's limited ads: no cookies, no local storage, no personalisation; the only mode accepted while `ageTreatment` is `teen` or `child` (`adModeAllowed`) |
+| Reklamy niespersonalizowane | ads mode `nonPersonalized` | May use cookies, so they need consent; adults only (`ageTreatment: 'unspecified'`). Personalised ads are never offered |
+| Domena / host | `normalizeHost`, `hostAllowed`, `hostnameSchema` | Bare lower-case host without port; ad domains match exactly, never a parent or wildcard |
+| Znacznik nonce CSP | `CSP_NONCE_PLACEHOLDER` | Placeholder Vite writes into the built `index.html`; the HTML shell swaps in a per-request nonce |
 
 Missing a term? Add it here in the same commit that introduces it.

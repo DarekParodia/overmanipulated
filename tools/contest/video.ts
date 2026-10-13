@@ -144,6 +144,7 @@ export async function main() {
             credibility: 90,
             results: stories.map((s, i) => ({
               folderId: `v${i}`,
+              spawnKey: `s${i}`,
               storyId: s.id,
               outcome: i === 3 ? 'expired' : 'correct',
               reason: i === 3 ? 'expired' : 'correctImportant',

@@ -1,7 +1,13 @@
 // Dev-only HUD fixture (vite dev server + ?debug): `window.__hud` fills the game store with a
 // believable mid-level state and plays verdict events, so the HUD and the results page can be
 // reviewed before the gameplay units spawn real folders. Never installed in production builds.
-import type { Folder, FolderResult, GameEvent, LevelEndMessage } from '@redakcja/shared';
+import type {
+  Folder,
+  FolderResult,
+  GameEvent,
+  LevelEndMessage,
+  NextFolder,
+} from '@redakcja/shared';
 import { type GameplayEvent, handleGameEvent } from '../net/game-events.ts';
 import { useGame } from '../net/game-store.ts';
 import { useApp } from '../store/app.ts';
@@ -12,7 +18,13 @@ type VerdictEvent = Extract<GameEvent, { kind: 'verdictResult' }>;
 export type HudDevApi = {
   /** Loads folders, score, credibility and timers; snapshots then only advance the clock. */
   play(options?: { timeLeftMs?: number; score?: number; credibility?: number }): void;
-  set(patch: { score?: number; credibility?: number; timeLeftMs?: number }): void;
+  set(patch: {
+    score?: number;
+    credibility?: number;
+    timeLeftMs?: number;
+    nextFolder?: NextFolder | null;
+    conveyorFull?: boolean;
+  }): void;
   verdict(patch?: Partial<VerdictEvent>): void;
   expire(storyId?: string): void;
   end(won: boolean, stars: number): void;
@@ -21,6 +33,8 @@ export type HudDevApi = {
 };
 
 const FIXTURE_ELAPSED_MS = 120_000;
+/** l0's schedule at the fixture time: a folder came at 120 s, the next one comes at 140 s. */
+const FIXTURE_NEXT_FOLDER: NextFolder = { atMs: 140_000, sinceMs: 120_000 };
 /** The l0 greybox level's star thresholds and best possible score. */
 const FIXTURE_STARS = { two: 120, three: 190 };
 const FIXTURE_MAX_SCORE = 240;
@@ -36,6 +50,8 @@ function fixtureFolders(playerId: string): Folder[] {
     stamps: string[],
   ): Folder => ({
     id,
+    // `f-3` was the schedule's third folder (s2).
+    spawnKey: `s${Number(id.slice(2)) - 1}`,
     storyId,
     location,
     stamps,
@@ -73,6 +89,7 @@ function fixtureResults(): FolderResult[] {
     speed = 0,
   ): FolderResult => ({
     folderId,
+    spawnKey: `s${Number(folderId.slice(2)) - 1}`,
     storyId,
     outcome,
     reason,
@@ -132,6 +149,8 @@ export function installHudDevFixture(): (() => void) | undefined {
         score: options.score ?? 145,
         credibility: options.credibility ?? 70,
         folders: fixtureFolders(useApp.getState().playerId ?? 'p-dev'),
+        nextFolder: FIXTURE_NEXT_FOLDER,
+        conveyorFull: false,
         levelEnd: null,
       });
     },
@@ -139,9 +158,11 @@ export function installHudDevFixture(): (() => void) | undefined {
       useGame.setState(patch);
     },
     verdict(patch = {}) {
+      const n = serial++;
       const event: VerdictEvent = {
         kind: 'verdictResult',
-        folderId: `dev-${serial++}`,
+        folderId: `dev-${n}`,
+        spawnKey: `s${n}`,
         storyId: 'l0-zalany-rynek',
         playerId: useApp.getState().playerId ?? 'p-dev',
         verdict: 'reject',
@@ -158,7 +179,14 @@ export function installHudDevFixture(): (() => void) | undefined {
       handleGameEvent(event satisfies GameplayEvent);
     },
     expire(storyId = 'l0-nocny-autobus') {
-      handleGameEvent({ kind: 'folderExpired', folderId: `dev-${serial++}`, storyId, stamps: [] });
+      const n = serial++;
+      handleGameEvent({
+        kind: 'folderExpired',
+        folderId: `dev-${n}`,
+        spawnKey: `s${n}`,
+        storyId,
+        stamps: [],
+      });
     },
     end(won, stars) {
       const state = useGame.getState();

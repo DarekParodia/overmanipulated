@@ -4,8 +4,11 @@ import {
   ENDLESS,
   ENDLESS_LEVEL_ID,
   levelOutcome,
+  NORMAL_TUNING,
   parseLayout,
   type SimLevel,
+  step,
+  TICK_MS,
 } from '@redakcja/shared';
 import {
   ENDLESS_STATIONS,
@@ -127,6 +130,28 @@ describe('generateEndlessLevel', () => {
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
   });
 
+  it('draws a multi-stamp story only when the six stations give all its proofs', () => {
+    const original = STORIES.find((s) => s.id.startsWith('l1-') && s.justifyingStamps.length === 1);
+    if (!original) {
+      throw new Error('level 1 needs a story with one justifying stamp');
+    }
+    const poolWith = (variant: Story) =>
+      endlessStoryPool(
+        LEVELS,
+        STORIES.map((s) => (s.id === original.id ? variant : s)),
+      ).map((s) => s.id);
+    expect(poolWith(original)).toContain(original.id);
+    // Two proofs required, one available: never drawn.
+    expect(poolWith({ ...original, requiredStamps: 2 })).not.toContain(original.id);
+    const proven: Story = {
+      ...original,
+      stamps: original.stamps.map((stamp) => ({ ...stamp, relevance: 'decisive' as const })),
+      justifyingStamps: original.stamps.map((stamp) => stamp.id),
+      requiredStamps: 2,
+    };
+    expect(poolWith(proven)).toContain(original.id);
+  });
+
   it('getLevel serves a preview of the endless level', () => {
     expect(getLevel(ENDLESS_LEVEL_ID)?.title).toBe(generate(0).title);
   });
@@ -145,5 +170,42 @@ describe('endless outcome', () => {
       stars: 0,
       lossReason: 'credibility',
     });
+  });
+});
+
+describe('endless spawn keys', () => {
+  it('names schedule folders s<index> and event folders e<eventIndex>.<waveIndex>', () => {
+    const level = generate(1);
+    const map = parseLayout(level.layout);
+    const ctx = {
+      dtMs: TICK_MS,
+      map,
+      level,
+      stories: storiesForEndless(level, STORIES),
+      tuning: NORMAL_TUNING,
+    };
+    let state = createGameState({ map, seed: 1 });
+    const seen = new Map<string, string>();
+    while (state.elapsedMs < 400_000) {
+      state = step(state, {}, [], ctx).state;
+      for (const folder of Object.values(state.folders)) {
+        seen.set(folder.spawnKey, folder.storyId);
+      }
+      // A team that clears the belt at once, so every spawn and event arrives on time.
+      state = { ...state, folders: {} };
+    }
+    const scheduled = [...seen].filter(([key]) => key.startsWith('s'));
+    const fromEvents = [...seen].filter(([key]) => key.startsWith('e'));
+    expect(scheduled.length).toBeGreaterThan(10);
+    expect(fromEvents.length).toBeGreaterThan(0);
+    for (const [key, storyId] of scheduled) {
+      expect(level.schedule[Number(key.slice(1))]?.storyId).toBe(storyId);
+    }
+    for (const [key, storyId] of fromEvents) {
+      const [eventIndex, waveIndex] = key.slice(1).split('.').map(Number);
+      const event = level.events[eventIndex ?? -1];
+      expect(event && event.kind !== 'outage' ? event.storyId : null).toBe(storyId);
+      expect(waveIndex).toBeLessThan(event?.kind === 'botRaid' ? event.count : 1);
+    }
   });
 });

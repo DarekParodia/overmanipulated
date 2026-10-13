@@ -3,7 +3,8 @@
 import type { HapticPattern } from './haptics.ts';
 import type { ParticlePresetId } from './particles/presets.ts';
 
-export type AudioBus = 'ui' | 'sfx' | 'music';
+/** `voice` carries only the intro voiceover (fx/audio/voice.ts); no cue plays on it. */
+export type AudioBus = 'ui' | 'sfx' | 'music' | 'voice';
 
 export type SoundLayer = {
   /** One id, or several to pick from at random (variation). */

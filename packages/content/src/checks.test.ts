@@ -2,13 +2,14 @@ import { describe, expect, it } from 'bun:test';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { correctVerdictFor, EVENTS } from '@redakcja/shared';
+import { correctVerdictFor, EVENTS, parseLayout } from '@redakcja/shared';
 import { BROKEN_CASES, realContent, toFiles } from './__fixtures__/broken.ts';
 import {
   checkRegistration,
   formatIssue,
   maxLevelScore,
   maxStoryScore,
+  proofCount,
   validateContent,
   validateTechniques,
 } from './checks.ts';
@@ -103,6 +104,54 @@ describe('campaign level rules', () => {
   });
 });
 
+describe('multi-stamp stories (S7-18)', () => {
+  it('adds the multi-stamp bonus for every proof beyond the first to the best score', () => {
+    expect(maxStoryScore({ priority: 'normal', correctVerdict: 'publish' })).toBe(15);
+    expect(
+      maxStoryScore({ priority: 'important', correctVerdict: 'reject', requiredStamps: 1 }),
+    ).toBe(25);
+    expect(
+      maxStoryScore({ priority: 'important', correctVerdict: 'reject', requiredStamps: 2 }),
+    ).toBe(35);
+    expect(
+      maxStoryScore({
+        priority: 'normal',
+        correctVerdict: 'publishWithContext',
+        requiredStamps: 3,
+      }),
+    ).toBe(55);
+  });
+
+  it('counts the bonus in the level maximum', () => {
+    const content = realContent();
+    const flood = content.stories.find((s) => s.id === 'l0-zalany-rynek');
+    if (!flood) {
+      throw new Error('greybox story l0-zalany-rynek missing');
+    }
+    flood.requiredStamps = 2;
+    const byId = new Map(content.stories.map((s) => [s.id, s]));
+    expect(maxLevelScore(content.level, byId)).toBe(250);
+  });
+
+  it('counts distinct proofs from the given stations, never a hint-only stamp', () => {
+    const story = {
+      stamps: [
+        { id: 'image', station: 'imageSearch' as const },
+        { id: 'archive', station: 'archive' as const },
+        { id: 'ai', station: 'aiScanner' as const },
+        { id: 'phone', station: 'phone' as const },
+      ],
+      justifyingStamps: ['image', 'archive', 'ai', 'phone', 'image'],
+    };
+    expect(proofCount(story, ['imageSearch', 'archive', 'aiScanner', 'phone'])).toBe(3);
+    expect(proofCount(story, ['imageSearch', 'sourceRegistry'])).toBe(1);
+    expect(proofCount(story, ['aiScanner'])).toBe(0);
+    expect(
+      proofCount({ ...story, justifyingStamps: ['ai', 'phone'] }, ['aiScanner', 'phone']),
+    ).toBe(1);
+  });
+});
+
 describe('greybox content', () => {
   const level = LEVELS.find((l) => l.id === 'l0-greybox');
   const scheduled = STORIES.filter((s) => level?.schedule.some((spawn) => spawn.storyId === s.id));
@@ -179,6 +228,27 @@ describe('level 1 content', () => {
     expect(level.stars.two / max).toBeLessThanOrEqual(0.65);
     expect(level.stars.three / max).toBeGreaterThanOrEqual(0.75);
     expect(level.stars.three / max).toBeLessThanOrEqual(0.9);
+  });
+});
+
+describe('level 2 content', () => {
+  const level = LEVELS.find((l) => l.id === 'l2-wybory');
+  const byId = new Map(STORIES.map((s) => [s.id, s]));
+
+  it('is registered with the Archiwum and the three-station layout', () => {
+    if (!level) {
+      throw new Error('level 2 missing');
+    }
+    expect(level.stations).toEqual(['imageSearch', 'archive', 'sourceRegistry']);
+    expect(parseLayout(level.layout).spawns).toHaveLength(4);
+    expect(level.events).toEqual([]);
+  });
+
+  it('uses publishWithContext for at least a quarter of its folders', () => {
+    const scheduled = level?.schedule.map((spawn) => byId.get(spawn.storyId)) ?? [];
+    const withContext = scheduled.filter((s) => s?.correctVerdict === 'publishWithContext');
+    expect(scheduled.length).toBeGreaterThan(0);
+    expect(withContext.length / scheduled.length).toBeGreaterThanOrEqual(0.25);
   });
 });
 

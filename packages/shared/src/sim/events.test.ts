@@ -1,20 +1,30 @@
 import { describe, expect, it } from 'bun:test';
 import { CREDIBILITY_START, EVENTS, SCORE } from '../constants.ts';
+import { NORMAL_TUNING, simTuning } from '../difficulty.ts';
 import type { Folder } from '../entities.ts';
 import { folderSchema, stationSchema } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
+import {
+  BELT_FULL_RAID_AT_MS,
+  BELT_FULL_RAID_LEVEL,
+  takeOffBelt,
+} from './__fixtures__/belt-full-raid.ts';
 import {
   runStep,
   TEST_LEVEL,
   TEST_MAP,
   testCommand,
   testContext,
+  testFolder,
   testInput,
 } from './__fixtures__/greybox.ts';
 import type { SimLevel, SimLevelEvent } from './content.ts';
-import { viralShares } from './events.ts';
+import { correctionLoss, correctionRecover, viralShares } from './events.ts';
+import { freeConveyors } from './folders.ts';
 import type { QueuedCommand, SimContext } from './frame.ts';
+import { minigameSeedFor } from './rng.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
+import { drawMinigameSeed } from './stations.ts';
 
 /** A level without a schedule so only the events under test spawn folders. */
 function levelWith(events: SimLevelEvent[], extra: Partial<SimLevel> = {}): SimLevel {
@@ -33,12 +43,16 @@ const AT_IMAGE_SEARCH = { x: 8.5, y: 2.5 };
 
 type Run = { state: GameState; events: GameEvent[]; ctx: SimContext; seq: number };
 
-function newRun(level: SimLevel, players: Record<string, { x: number; y: number }> = {}): Run {
+function newRun(
+  level: SimLevel,
+  players: Record<string, { x: number; y: number }> = {},
+  ctx: Partial<SimContext> = {},
+): Run {
   let state = createGameState({ map: TEST_MAP, seed: 5 });
   for (const [id, at] of Object.entries(players)) {
     state = addPlayer(state, id, at);
   }
-  return { state, events: [], ctx: testContext({ level }), seq: 0 };
+  return { state, events: [], ctx: testContext({ level, ...ctx }), seq: 0 };
 }
 
 function tick(
@@ -127,15 +141,11 @@ describe('conveyor full', () => {
     const run = newRun(levelWith([{ kind: 'bossCall', atS: 1, storyId: 't-true', deadlineS: 30 }]));
     const filler: Record<string, Folder> = {};
     for (let i = 0; i < 4; i++) {
-      filler[`x${i}`] = {
-        id: `x${i}`,
+      filler[`x${i}`] = testFolder(`x${i}`, {
         storyId: 't-false',
         location: { kind: 'fixture', fixtureId: `conveyor-${i}` },
-        stamps: [],
-        spawnedAtMs: 0,
         deadlineMs: 600_000,
-        warned: false,
-      };
+      });
     }
     run.state = { ...run.state, folders: filler };
     runUntil(run, 3000);
@@ -193,15 +203,11 @@ describe('bossCall', () => {
     plain.state = {
       ...plain.state,
       folders: {
-        f1: {
-          id: 'f1',
+        f1: testFolder('f1', {
           storyId: 't-false',
           location: { kind: 'fixture', fixtureId: 'desk-0' },
           stamps: ['t-false-image'],
-          spawnedAtMs: 0,
-          deadlineMs: 60_000,
-          warned: false,
-        },
+        }),
       },
       desks: { 'desk-0': { id: 'desk-0', operatorId: 'p' } },
     };
@@ -266,15 +272,10 @@ describe('botRaid', () => {
       Object.fromEntries(
         Array.from({ length: n }, (_, i) => [
           `x${i}`,
-          {
-            id: `x${i}`,
-            storyId: 't-true',
+          testFolder(`x${i}`, {
             location: { kind: 'fixture', fixtureId: `conveyor-${i}` },
-            stamps: [],
-            spawnedAtMs: 0,
             deadlineMs: 600_000,
-            warned: false,
-          } satisfies Folder,
+          }),
         ]),
       );
     const crowded = newRun(levelWith([raid(4)]));
@@ -373,15 +374,10 @@ describe('outage', () => {
     run.state = {
       ...run.state,
       folders: {
-        f1: {
-          id: 'f1',
-          storyId: 't-true',
+        f1: testFolder('f1', {
           location: { kind: 'fixture', fixtureId: 'imageSearch-0' },
-          stamps: [],
-          spawnedAtMs: 0,
           deadlineMs: 600_000,
-          warned: false,
-        },
+        }),
       },
       players: { p: { ...must(run.state.players.p), facing: -Math.PI / 2 } },
     };
@@ -402,15 +398,10 @@ describe('outage', () => {
     run.state = {
       ...run.state,
       folders: {
-        f1: {
-          id: 'f1',
-          storyId: 't-true',
+        f1: testFolder('f1', {
           location: { kind: 'fixture', fixtureId: 'imageSearch-0' },
-          stamps: [],
-          spawnedAtMs: 0,
           deadlineMs: 600_000,
-          warned: false,
-        },
+        }),
       },
       players: { p: { ...must(run.state.players.p), facing: -Math.PI / 2 } },
       stations: {
@@ -505,6 +496,36 @@ describe('correction', () => {
     expect(run.state.credibility).toBeLessThan(
       CREDIBILITY_START - EVENTS.correctionCredibilityLoss,
     );
+  });
+
+  it('costs 30 credibility on expert and gives 15 back when filed', () => {
+    const run = newRun(levelWith([correction]), { p: AT_DESK }, { tuning: simTuning('expert') });
+    runUntil(run, 1000);
+    expect(run.state.credibility).toBe(70);
+    expect(run.state.folders.f1?.tag).toEqual({ kind: 'correction', recoverCredibility: 15 });
+    putOnDesk(run, 'f1', []);
+    tick(run, [
+      testCommand('p', {
+        kind: 'verdict',
+        folderId: 'f1',
+        verdict: 'publishWithContext',
+        justifyingStampIds: ['whatever'],
+      }),
+    ]);
+    expect(run.state.credibility).toBe(85);
+    // The filing reward is a reward: never scaled.
+    expect(run.state.score).toBe(10);
+  });
+
+  it('scales the loss and the recovery with the penalty factor', () => {
+    expect(correctionLoss(NORMAL_TUNING)).toBe(20);
+    expect(correctionRecover(NORMAL_TUNING)).toBe(10);
+    expect(correctionLoss(simTuning('easy'))).toBe(10);
+    expect(correctionRecover(simTuning('easy'))).toBe(5);
+    expect(correctionLoss(simTuning('hard'))).toBe(25);
+    expect(correctionRecover(simTuning('hard'))).toBe(13);
+    expect(correctionLoss(simTuning('expert'))).toBe(30);
+    expect(correctionRecover(simTuning('expert'))).toBe(15);
   });
 
   it('can end the level when credibility hits zero', () => {
@@ -631,5 +652,107 @@ describe('scripted scenario', () => {
     const ends = levelEvents(run.events, 'end').length;
     expect(starts).toBe(5);
     expect(ends).toBe(5);
+  });
+});
+
+describe('spawn keys across newsrooms (S7-13)', () => {
+  /** Ticks until level time `ms`, remembering every folder by its spawn key (first sighting). */
+  function runRecording(run: Run, ms: number, seen: Map<string, Folder>): void {
+    while (run.state.elapsedMs < ms && !run.state.ended) {
+      tick(run);
+      for (const folder of Object.values(run.state.folders)) {
+        if (!seen.has(folder.spawnKey)) {
+          seen.set(folder.spawnKey, folder);
+        }
+      }
+    }
+  }
+
+  /** Works the folder spawned as `spawnKey` at image search and returns the minigame seed. */
+  function imageSearchSeed(run: Run, spawnKey: string): number {
+    const folder = must(Object.values(run.state.folders).find((f) => f.spawnKey === spawnKey));
+    run.state = {
+      ...run.state,
+      folders: {
+        ...run.state.folders,
+        [folder.id]: { ...folder, location: { kind: 'fixture', fixtureId: 'imageSearch-0' } },
+      },
+      players: { p: { ...must(run.state.players.p), facing: -Math.PI / 2 } },
+    };
+    for (let i = 0; i < 200; i++) {
+      const started = tick(run, [], { work: true }).find((e) => e.kind === 'minigameStarted');
+      if (started?.kind === 'minigameStarted') {
+        expect(started.folderId).toBe(folder.id);
+        return started.seed;
+      }
+    }
+    throw new Error('minigame never started');
+  }
+
+  it('match when one newsroom meets a botRaid with one free tile less', () => {
+    const a = newRun(BELT_FULL_RAID_LEVEL, { p: AT_IMAGE_SEARCH });
+    const b = newRun(BELT_FULL_RAID_LEVEL, { p: AT_IMAGE_SEARCH });
+    const seenA = new Map<string, Folder>();
+    const seenB = new Map<string, Folder>();
+    runRecording(a, 2000, seenA);
+    runRecording(b, 2000, seenB);
+    // Newsroom B takes s0 off the belt before the raid; newsroom A leaves it there.
+    b.state = takeOffBelt(b.state, 's0');
+    expect(freeConveyors(a.state, TEST_MAP)).toHaveLength(2);
+    expect(freeConveyors(b.state, TEST_MAP)).toHaveLength(3);
+
+    runRecording(a, BELT_FULL_RAID_AT_MS, seenA);
+    runRecording(b, BELT_FULL_RAID_AT_MS, seenB);
+    const wave = (run: Run) =>
+      Object.values(run.state.folders)
+        .filter((f) => f.tag?.kind === 'botRaid')
+        .map((f) => f.spawnKey);
+    expect(wave(a)).toEqual(['e0.0', 'e0.1']);
+    expect(wave(b)).toEqual(['e0.0', 'e0.1', 'e0.2']);
+
+    // The raid expires at 7 s; s2 and s3 waited for the belt and arrive then.
+    runRecording(a, 8000, seenA);
+    runRecording(b, 8000, seenB);
+    expect([...seenA.keys()].sort()).toEqual(['e0.0', 'e0.1', 's0', 's1', 's2', 's3']);
+    expect([...seenB.keys()].sort()).toEqual(['e0.0', 'e0.1', 'e0.2', 's0', 's1', 's2', 's3']);
+    // Folder ids diverge from the raid on; the keys do not.
+    expect(seenA.get('s2')?.id).toBe('f5');
+    expect(seenB.get('s2')?.id).toBe('f6');
+    expect(seenB.get('e0.2')?.id).toBe('f5');
+
+    for (const [key, folderA] of seenA) {
+      const folderB = must(seenB.get(key));
+      expect(folderB.storyId).toBe(folderA.storyId);
+      for (const kind of BELT_FULL_RAID_LEVEL.stations) {
+        expect(drawMinigameSeed(b.state, folderB, kind)).toBe(
+          drawMinigameSeed(a.state, folderA, kind),
+        );
+      }
+    }
+    // The expired wave is one result in each newsroom, under the same key.
+    expect(a.state.results.map((r) => [r.spawnKey, r.outcome])).toEqual([['e0.0', 'expired']]);
+    expect(b.state.results.map((r) => [r.spawnKey, r.outcome])).toEqual([['e0.0', 'expired']]);
+
+    // Working the same later folder gives both newsrooms the same puzzle.
+    const seedA = imageSearchSeed(a, 's2');
+    const seedB = imageSearchSeed(b, 's2');
+    expect(seedA).toBe(seedB);
+    expect(seedA).toBe(minigameSeedFor(5, 's2', 'imageSearch', 0));
+  });
+
+  it('names every event folder e<eventIndex>.<waveIndex>', () => {
+    const run = newRun(
+      levelWith([
+        { kind: 'outage', atS: 1, station: 'archive', durationS: 2 },
+        { kind: 'viral', atS: 1, storyId: 't-true', deadlineS: 30 },
+        { kind: 'botRaid', atS: 1, storyId: 't-false', deadlineS: 30, count: 2 },
+      ]),
+    );
+    runUntil(run, 1000);
+    expect(Object.values(run.state.folders).map((f) => [f.id, f.spawnKey])).toEqual([
+      ['f1', 'e1.0'],
+      ['f2', 'e2.0'],
+      ['f3', 'e2.1'],
+    ]);
   });
 });

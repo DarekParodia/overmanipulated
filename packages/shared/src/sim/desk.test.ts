@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { simTuning } from '../difficulty.ts';
 import type { Priority, Truth, Verdict } from '../domain.ts';
 import { correctVerdictFor } from '../domain.ts';
 import type { Folder, FolderReason, FolderResult } from '../entities.ts';
@@ -9,6 +10,7 @@ import {
   TEST_STORIES,
   testCommand,
   testContext,
+  testFolder,
   testInput,
 } from './__fixtures__/greybox.ts';
 import { countsAsProof, type SimStory } from './content.ts';
@@ -27,16 +29,11 @@ function must<T>(value: T | undefined): T {
 const AT_DESK = { x: 9.5, y: 6.5 };
 
 function folder(overrides: Partial<Folder> = {}): Folder {
-  return {
-    id: 'f1',
-    storyId: 't-true',
+  return testFolder(overrides.id ?? 'f1', {
     location: { kind: 'fixture', fixtureId: 'desk-0' },
     stamps: ['t-true-image'],
-    spawnedAtMs: 0,
-    deadlineMs: 60_000,
-    warned: false,
     ...overrides,
-  };
+  });
 }
 
 function story(truth: Truth, priority: Priority): SimStory {
@@ -71,6 +68,7 @@ function frameFor(
   state: GameState,
   commands: QueuedCommand[] = [],
   intents: Partial<Record<string, { work?: boolean; moving?: boolean }>> = {},
+  ctx = testContext(),
 ): SimFrame {
   const all: SimFrame['intents'] = Object.fromEntries(
     Object.keys(state.players).map((id) => [
@@ -78,7 +76,7 @@ function frameFor(
       { interact: false, work: intents[id]?.work ?? false, moving: intents[id]?.moving ?? false },
     ]),
   );
-  return { ctx: testContext(), intents: all, commands, events: [] };
+  return { ctx, intents: all, commands, events: [] };
 }
 
 function withOperator(state: GameState, playerId = 'p1'): GameState {
@@ -176,6 +174,58 @@ describe('evaluateVerdict — scoring table', () => {
   it('never pays a speed bonus for a wrong verdict', () => {
     const r = evaluateVerdict(story('true', 'normal'), collected(), 'reject', ['s-image'], 0);
     expect(r.bonuses).toEqual({ speed: 0, multiStamp: 0, bossCall: 0 });
+  });
+});
+
+describe('evaluateVerdict — difficulty (Stage 7)', () => {
+  const fake = story('false', 'normal');
+
+  it('takes 30 points and 38 credibility for a published fake on expert', () => {
+    const r = evaluateVerdict(fake, collected(), 'publish', ['s-image'], 0, simTuning('expert'));
+    expect(r).toMatchObject({ reason: 'publishedFake', scoreDelta: -30, credibilityDelta: -38 });
+  });
+
+  it('takes 10 points and 13 credibility for a published fake on easy', () => {
+    const r = evaluateVerdict(fake, collected(), 'publish', ['s-image'], 0, simTuning('easy'));
+    expect(r).toMatchObject({ reason: 'publishedFake', scoreDelta: -10, credibilityDelta: -13 });
+  });
+
+  it('scales the penalties the table adds for context stories', () => {
+    const r = evaluateVerdict(
+      story('misleading', 'normal'),
+      collected(),
+      'publish',
+      ['s-image'],
+      0,
+      simTuning('hard'),
+    );
+    expect(r).toMatchObject({
+      reason: 'publishedWithoutContext',
+      scoreDelta: -13,
+      credibilityDelta: -13,
+    });
+  });
+
+  it('never scales a reward, a half reward or the speed bonus', () => {
+    const expert = simTuning('expert');
+    const fast = evaluateVerdict(
+      story('misleading', 'normal'),
+      collected(),
+      'publishWithContext',
+      ['s-image'],
+      0,
+      expert,
+    );
+    expect(fast).toMatchObject({ scoreDelta: 35, credibilityDelta: 5 });
+    const weak = evaluateVerdict(
+      story('true', 'important'),
+      collected(),
+      'publish',
+      ['s-archive'],
+      30_000,
+      expert,
+    );
+    expect(weak).toMatchObject({ reason: 'weakProof', scoreDelta: 10, credibilityDelta: 0 });
   });
 });
 
@@ -344,7 +394,8 @@ describe('evaluateVerdict — cited proof (Stage 7)', () => {
     });
     expect(evaluateVerdict(twoProofs, f, 'reject', ['s-image', 's-archive'], LATE)).toMatchObject({
       outcome: 'correct',
-      scoreDelta: 10,
+      scoreDelta: 20,
+      bonuses: { speed: 0, multiStamp: 10, bossCall: 0 },
     });
   });
 
@@ -366,6 +417,116 @@ describe('evaluateVerdict — cited proof (Stage 7)', () => {
       LATE,
     );
     expect(r).toMatchObject({ outcome: 'correct', reason: 'correctNormal', scoreDelta: 10 });
+  });
+});
+
+describe('evaluateVerdict — multi-stamp folders (S7-18)', () => {
+  const m2 = must(TEST_STORIES.m2);
+  /** m2 spawned at 1 s with 60 s plus 20 s for its second proof; both proofs collected. */
+  const m2Folder = (stamps: string[] = ['m2-image', 'm2-archive']): Folder =>
+    folder({ storyId: 'm2', stamps, spawnedAtMs: 1000, deadlineMs: 81_000 });
+  /** 61 s of 80 s left: the speed bonus is earned. */
+  const EARLY = 20_000;
+
+  it('pays 35 for m2 with both proofs cited early: 20 + speed 5 + multi-stamp 10', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-archive'], EARLY);
+    expect(r).toEqual({
+      outcome: 'correct',
+      reason: 'correctImportant',
+      scoreDelta: 35,
+      credibilityDelta: 5,
+      bonuses: { speed: 5, multiStamp: 10, bossCall: 0 },
+      missedStampIds: [],
+    });
+  });
+
+  it('calls one cited proof of two incomplete: half the base points, no bonuses', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image'], EARLY);
+    expect(r).toEqual({
+      outcome: 'wrongJustification',
+      reason: 'incompleteProof',
+      scoreDelta: 10,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    });
+  });
+
+  it('calls a non-justifying cite weak even next to a valid proof', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-source'], EARLY);
+    expect(r).toMatchObject({
+      outcome: 'wrongJustification',
+      reason: 'weakProof',
+      scoreDelta: 10,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+    });
+  });
+
+  it('names the uncollected proof when the folder holds only one', () => {
+    const r = evaluateVerdict(m2, m2Folder(['m2-image']), 'reject', ['m2-image'], EARLY);
+    expect(r).toMatchObject({ reason: 'incompleteProof', scoreDelta: 10 });
+    expect(r.missedStampIds).toEqual(['m2-archive']);
+  });
+
+  it('counts the same proof cited twice once', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-image'], EARLY);
+    expect(r).toMatchObject({ reason: 'incompleteProof', scoreDelta: 10 });
+  });
+
+  it('pays the multi-stamp bonus without the speed bonus late, and never scales it', () => {
+    const late = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-archive'], 60_000);
+    expect(late).toMatchObject({ scoreDelta: 30, bonuses: { speed: 0, multiStamp: 10 } });
+    const expert = simTuning('expert');
+    const onExpert = evaluateVerdict(
+      m2,
+      m2Folder(),
+      'reject',
+      ['m2-image', 'm2-archive'],
+      EARLY,
+      expert,
+    );
+    expect(onExpert).toMatchObject({ scoreDelta: 35, bonuses: { speed: 5, multiStamp: 10 } });
+    // A wrong verdict pays no bonus, only the scaled penalty.
+    const wrong = evaluateVerdict(m2, m2Folder(), 'publish', ['m2-image'], EARLY, expert);
+    expect(wrong).toMatchObject({
+      outcome: 'wrong',
+      reason: 'publishedFake',
+      scoreDelta: -30,
+      credibilityDelta: -38,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+    });
+  });
+
+  it('records the bonus, the cites and the required count on the verdict result', () => {
+    const state = withOperator(deskState(m2Folder()));
+    const at = { ...state, elapsedMs: EARLY };
+    const command = testCommand('p1', {
+      kind: 'verdict',
+      folderId: 'f1',
+      verdict: 'reject',
+      justifyingStampIds: ['m2-image', 'm2-archive'],
+    });
+    const frame = frameFor(at, [command]);
+    const next = stepDesk(at, frame);
+    expect(next.score).toBe(35);
+    expect(next.credibility).toBe(100);
+    expect(next.results).toEqual([
+      {
+        folderId: 'f1',
+        spawnKey: 's1',
+        storyId: 'm2',
+        outcome: 'correct',
+        reason: 'correctImportant',
+        verdict: 'reject',
+        scoreDelta: 35,
+        credibilityDelta: 5,
+        justifyingStampIds: ['m2-image', 'm2-archive'],
+        requiredStamps: 2,
+        bonuses: { speed: 5, multiStamp: 10, bossCall: 0 },
+        missedStampIds: [],
+      },
+    ]);
   });
 });
 
@@ -452,6 +613,7 @@ describe('stepDesk — verdicts', () => {
     expect(next.score).toBe(10);
     const result: FolderResult & { verdict: Verdict } = {
       folderId: 'f1',
+      spawnKey: 's1',
       storyId: 't-true',
       outcome: 'correct',
       reason: 'correctNormal',
@@ -495,6 +657,16 @@ describe('stepDesk — verdicts', () => {
     expect(next.credibility).toBe(75);
     expect(next.results[0]).toMatchObject({ outcome: 'wrong', reason: 'publishedFake' });
     expect(next.results[0]?.missedStampIds).toEqual(['t-false-image']);
+  });
+
+  it('applies the difficulty from the context to a wrong verdict', () => {
+    const state = withOperator(deskState(folder({ storyId: 't-false', stamps: [] })));
+    const ctx = testContext({ tuning: simTuning('expert') });
+    const frame = frameFor(state, [verdict('publish', 't-false-image')], {}, ctx);
+    const next = stepDesk(state, frame);
+    expect(next.score).toBe(-30);
+    expect(next.credibility).toBe(62);
+    expect(next.results[0]).toMatchObject({ scoreDelta: -30, credibilityDelta: -38 });
   });
 
   it('clamps credibility at the maximum', () => {

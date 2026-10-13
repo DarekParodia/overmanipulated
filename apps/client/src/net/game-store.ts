@@ -1,7 +1,14 @@
 // Latest authoritative gameplay state besides player positions (those go through the snapshot
-// buffer and prediction): folders, stations, desks, score, credibility, level timer, and the
-// level result. Updated on every snapshot; UI subscribes with selectors.
-import type { Desk, Folder, LevelEndMessage, SnapshotMessage, Station } from '@redakcja/shared';
+// buffer and prediction): folders, stations, desks, score, credibility, level timer, the next
+// scheduled folder and the level result. Updated on every snapshot; UI subscribes with selectors.
+import type {
+  Desk,
+  Folder,
+  LevelEndMessage,
+  NextFolder,
+  SnapshotMessage,
+  Station,
+} from '@redakcja/shared';
 import { create } from 'zustand';
 
 export type GameStore = {
@@ -15,6 +22,10 @@ export type GameStore = {
   desks: readonly Desk[];
   /** The level's one deadline extension has been used. */
   deadlineExtensionUsed: boolean;
+  /** Level times of the next scheduled folder and the previous one; null when none is left. */
+  nextFolder: NextFolder | null;
+  /** A scheduled folder is due but waits for a free conveyor tile. */
+  conveyorFull: boolean;
   /** Set when the level ends; cleared when a new level starts. */
   levelEnd: LevelEndMessage | null;
   applySnapshot(snapshot: SnapshotMessage): void;
@@ -32,10 +43,19 @@ const EMPTY = {
   stations: [],
   desks: [],
   deadlineExtensionUsed: false,
+  nextFolder: null,
+  conveyorFull: false,
   levelEnd: null,
 } satisfies Partial<GameStore>;
 
-export const useGame = create<GameStore>((set) => ({
+/** Same level times: keep the old object, so selectors do not re-render 20 times a second. */
+function stableNextFolder(previous: NextFolder | null, next: NextFolder | null): NextFolder | null {
+  return previous && next && previous.atMs === next.atMs && previous.sinceMs === next.sinceMs
+    ? previous
+    : next;
+}
+
+export const useGame = create<GameStore>((set, get) => ({
   ...EMPTY,
   applySnapshot(snapshot) {
     set({
@@ -48,6 +68,8 @@ export const useGame = create<GameStore>((set) => ({
       stations: snapshot.stations,
       desks: snapshot.desks,
       deadlineExtensionUsed: snapshot.deadlineExtensionUsed,
+      nextFolder: stableNextFolder(get().nextFolder, snapshot.nextFolder),
+      conveyorFull: snapshot.conveyorFull,
     });
   },
   setLevelEnd(message) {

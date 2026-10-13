@@ -7,6 +7,17 @@ import { stationKindSchema, verdictSchema } from './domain.ts';
 const finite = z.number().finite();
 const id = z.string().min(1).max(64);
 
+/**
+ * Where a folder came from, the same in every newsroom of a match (S7-13): `s<scheduleIndex>` for
+ * a scheduled folder, `e<eventIndex>.<waveIndex>` for a level-event folder (the wave index counts
+ * a botRaid's folders, 0 for other events). Minigame seeds and versus pairing key on it; the
+ * folder id (`f<n>`) stays the per-sim handle.
+ */
+export const spawnKeySchema = z
+  .string()
+  .max(32)
+  .regex(/^(s\d+|e\d+\.\d+)$/);
+
 export const folderLocationSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('carried'), playerId: id }),
   /** On a conveyor tile, table, station or desk; the fixture id comes from the tile map. */
@@ -31,6 +42,7 @@ export const folderTagSchema = z.discriminatedUnion('kind', [
 
 export const folderSchema = z.object({
   id,
+  spawnKey: spawnKeySchema,
   storyId: id,
   location: folderLocationSchema,
   /** Stamp ids collected so far, in the order they were applied. */
@@ -123,6 +135,7 @@ export const folderBonusesSchema = z.object({
 /** One folder's fate, collected for the level summary (Kolegium redakcyjne). */
 export const folderResultSchema = z.object({
   folderId: id,
+  spawnKey: spawnKeySchema,
   storyId: id,
   outcome: folderOutcomeSchema,
   reason: folderReasonSchema,
@@ -141,6 +154,16 @@ export const folderResultSchema = z.object({
 /** Why a level was lost: credibility ran out, or time ran out without a positive score. */
 export const lossReasonSchema = z.enum(['credibility', 'score']);
 
+/**
+ * The next folder the level schedule brings (S7-08): the level time it is due and the level
+ * time the previous scheduled folder was due (0 before the first), so the HUD can count down
+ * and fill a ring between the two. Level-event folders are never announced.
+ */
+export const nextFolderSchema = z.object({
+  atMs: finite.nonnegative(),
+  sinceMs: finite.nonnegative(),
+});
+
 export const levelOutcomeSchema = z.object({
   won: z.boolean(),
   stars: z.number().int().min(0).max(3),
@@ -148,6 +171,7 @@ export const levelOutcomeSchema = z.object({
   lossReason: lossReasonSchema.nullable(),
 });
 
+export type SpawnKey = z.infer<typeof spawnKeySchema>;
 export type FolderTag = z.infer<typeof folderTagSchema>;
 export type FolderLocation = z.infer<typeof folderLocationSchema>;
 export type Folder = z.infer<typeof folderSchema>;
@@ -160,6 +184,7 @@ export type FolderBonuses = z.infer<typeof folderBonusesSchema>;
 export type FolderResult = z.infer<typeof folderResultSchema>;
 export type LossReason = z.infer<typeof lossReasonSchema>;
 export type LevelOutcome = z.infer<typeof levelOutcomeSchema>;
+export type NextFolder = z.infer<typeof nextFolderSchema>;
 
 /** A result without any bonus points (frozen: results share it). */
 export const NO_BONUSES: Readonly<FolderBonuses> = Object.freeze({

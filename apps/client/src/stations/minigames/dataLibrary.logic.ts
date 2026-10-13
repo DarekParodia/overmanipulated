@@ -11,11 +11,11 @@ import {
   DATA_LIBRARY_MAX_MISTAKES,
   DATA_LIBRARY_ROWS,
   DATA_LIBRARY_YEARS,
+  hashText,
+  type Rng,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 import { cardHasFlags } from './sourceRegistry.logic.ts';
-
-type Rng = ReturnType<typeof createRng>;
 
 export type MismatchKind = 'wrongYear' | 'wrongRow' | 'wrongUnit' | 'cherryPick' | 'invented';
 export type Verdict = 'match' | MismatchKind;
@@ -59,15 +59,9 @@ export function columnCount(table: DataTable): number {
   return table.years.length + 1;
 }
 
-/** FNV-1a, so the headline and stamp text steer the puzzle without any new content field. */
-export function hashText(text: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return hash | 0;
-}
+// FNV-1a (now in the shared sim, S7-13), so the headline and stamp text steer the puzzle without
+// any new content field.
+export { hashText };
 
 function pick<T>(rng: Rng, items: readonly T[]): T {
   const item = items[rng.int(items.length)];

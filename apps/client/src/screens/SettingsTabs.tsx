@@ -57,6 +57,12 @@ export function SoundTab() {
         {...spec}
         onChange={(v) => s.update({ uiVolume: v })}
       />
+      <Slider
+        label={pl.settings.voice}
+        value={s.voiceVolume}
+        {...spec}
+        onChange={(v) => s.update({ voiceVolume: v })}
+      />
       <Checkbox
         label={pl.settings.mute}
         checked={s.muted}

@@ -1,6 +1,6 @@
-// Pure helpers behind the HUD: queue order, clock formatting, folder location labels and the
-// verdict toast text (titles by reason, shared with the desk and the Kolegium). Kept free of
-// React so they are unit-tested directly.
+// Pure helpers behind the HUD: queue order, the next folder, clock formatting, folder location
+// labels and the verdict toast text (titles by reason, shared with the desk and the Kolegium).
+// Kept free of React so they are unit-tested directly.
 import {
   CREDIBILITY as CREDIBILITY_DELTAS,
   DEADLINE_WARNING_MS,
@@ -8,6 +8,7 @@ import {
   type Folder,
   type FolderOutcome,
   type FolderReason,
+  type NextFolder,
   type Priority,
   SCORE,
   STATION_KINDS,
@@ -39,6 +40,28 @@ export function folderTimeLeftMs(folder: Folder, elapsedMs: number): number {
 
 export function isDeadlineWarning(folder: Folder, elapsedMs: number): boolean {
   return folderTimeLeftMs(folder, elapsedMs) < DEADLINE_WARNING_MS;
+}
+
+/** The next scheduled folder as the queue shows it (S7-09 ghost card). */
+export type NextFolderState = { kind: 'in'; ms: number } | { kind: 'full' } | { kind: 'none' };
+
+/**
+ * `full` while a due folder waits for a free conveyor tile; otherwise the time until the next
+ * scheduled folder arrives (never below 0, `elapsedMs` being the HUD's level clock), or `none`
+ * once the schedule is used up. Level-event folders are never announced.
+ */
+export function nextFolderState(
+  next: NextFolder | null,
+  full: boolean,
+  elapsedMs: number,
+): NextFolderState {
+  if (full) {
+    return { kind: 'full' };
+  }
+  if (!next) {
+    return { kind: 'none' };
+  }
+  return { kind: 'in', ms: Math.max(0, next.atMs - elapsedMs) };
 }
 
 /** `m:ss`, rounding up so "0:00" only shows when time is really out. */

@@ -24,6 +24,7 @@ import { PingBubbles } from './PingBubbles.tsx';
 import { Players } from './Players.tsx';
 import { detectPreset, deviceHints, isCoarsePointer, profileFor, useQuality } from './quality.ts';
 import { StationIndicators } from './StationIndicators.tsx';
+import { SunLight } from './SunLight.tsx';
 import { Warmup } from './Warmup.tsx';
 
 function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
@@ -36,7 +37,8 @@ function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
 export function GameCanvas() {
   const profile = useQuality((s) => s.profile);
   const chosen = useSettings((s) => s.quality);
-  // World props read `runtime.map` once; remount them when a level with another map starts.
+  // World props (and the sun's shadow box) read `runtime.map` once; remount them when a level
+  // with another map starts.
   const levelId = useApp((s) => s.room?.levelId ?? '');
 
   // A preset picked in settings is final (auto off). Back on "auto" the detected preset returns.
@@ -78,20 +80,10 @@ export function GameCanvas() {
     >
       <color attach="background" args={[colors.sky]} />
       <hemisphereLight args={[colors.surface, colors.furniture, 1.6]} />
-      <directionalLight
-        position={[4, 12, 6]}
-        intensity={1.5}
-        color={colors.surface}
-        castShadow={profile.shadows}
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-14}
-        shadow-camera-right={14}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
-      />
       <Driver />
       <CameraRig />
       <group key={levelId}>
+        <SunLight shadows={profile.shadows} />
         <Newsroom shadows={profile.shadows} />
         <Ambience />
         <Fixtures shadows={profile.shadows} />

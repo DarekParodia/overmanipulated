@@ -410,4 +410,75 @@ export const BROKEN_CASES: readonly BrokenCase[] = [
       message: '100% of stories are true; aim for 25–45%',
     },
   },
+  {
+    name: 'two required proofs where one is the hint-only AI scanner',
+    breakIt: (c) => {
+      const s = story(c, 'l0-nocny-autobus');
+      s.stamps.push(
+        {
+          id: 'l0-nocny-autobus-ai',
+          station: 'aiScanner',
+          text: 'Zdjęcie rozkładu: 8% szans, że to obraz generowany.',
+          relevance: 'decisive',
+        },
+        {
+          id: 'l0-nocny-autobus-phone',
+          station: 'phone',
+          text: 'Przewoźnik potwierdza: linia N3 rusza w poniedziałek.',
+          relevance: 'decisive',
+        },
+      );
+      s.justifyingStamps = ['l0-nocny-autobus-ai', 'l0-nocny-autobus-phone'];
+      s.requiredStamps = 2;
+    },
+    expected: {
+      severity: 'error',
+      file: STORY_FILE,
+      path: '[1].requiredStamps',
+      message:
+        'needs 2 proofs, but only 1 justifying stamp(s) count as proof (hint-only stations never do)',
+    },
+  },
+  {
+    name: 'more required proofs than the level stations give',
+    breakIt: (c) => {
+      story(c, 'l0-zalany-rynek').requiredStamps = 2;
+      c.level.stations = ['imageSearch', 'sourceRegistry'];
+    },
+    expected: {
+      severity: 'error',
+      file: LEVEL_FILE,
+      path: 'schedule[0].storyId',
+      message: 'story "l0-zalany-rynek" needs 2 proofs, but this level\'s stations give only 1',
+    },
+  },
+  {
+    name: 'multi-stamp extra time that runs the deadline past the end of the level',
+    breakIt: (c) => {
+      // 140 s + 90 s ends at 230 s of 240 s; the second proof's 20 s ends it at 250 s.
+      story(c, 'l0-rowery-miejskie').requiredStamps = 2;
+      const spawn = c.level.schedule.find((entry) => entry.storyId === 'l0-rowery-miejskie');
+      if (spawn) {
+        spawn.deadlineS = 90;
+      }
+    },
+    expected: {
+      severity: 'warning',
+      file: LEVEL_FILE,
+      path: 'schedule[7].deadlineS',
+      message: 'deadline runs past the end of the level',
+    },
+  },
+  {
+    name: 'multi-stamp story before level 4 (warning only)',
+    breakIt: (c) => {
+      story(c, 'l0-zalany-rynek').requiredStamps = 2;
+    },
+    expected: {
+      severity: 'warning',
+      file: LEVEL_FILE,
+      path: 'schedule[0].storyId',
+      message: 'story "l0-zalany-rynek" needs 2 proofs; multi-stamp folders start at level 4',
+    },
+  },
 ];

@@ -5,11 +5,13 @@ import {
   createRng,
   ENDLESS,
   ENDLESS_LEVEL_ID,
+  type Rng,
+  requiredStampsOf,
   type SimLevelEvent,
   type StationKind,
   type StoryBook,
 } from '@redakcja/shared';
-import { levelNumberOf } from './checks.ts';
+import { levelNumberOf, proofCount } from './checks.ts';
 import type { Level, Story } from './schema.ts';
 
 /** An endless level: a regular `Level` that the sim ends only at 0 credibility. */
@@ -48,12 +50,12 @@ export const ENDLESS_STATIONS: readonly StationKind[] = [
 /** Seed used for the level shown before a run starts (lobby card, briefing). */
 export const ENDLESS_PREVIEW_SEED = 0;
 
-/** A story all six stations can solve: some non-scanner stamp justifies the verdict. */
+/**
+ * A story the endless stations can solve: they give at least as many proofs (justifying stamps
+ * that are not hint-only) as the story requires, the rule `checkStoryFitsLevel` applies.
+ */
 function isSolvable(story: Story): boolean {
-  return story.justifyingStamps.some((id) => {
-    const stamp = story.stamps.find((s) => s.id === id);
-    return stamp !== undefined && stamp.station !== 'aiScanner';
-  });
+  return proofCount(story, ENDLESS_STATIONS) >= requiredStampsOf(story);
 }
 
 /** Campaign order: level number first, then id; stable for any set of content files. */
@@ -108,8 +110,6 @@ function endlessEventIntervalS(atS: number): number {
 }
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
-
-type Rng = ReturnType<typeof createRng>;
 
 const jitter = (rng: Rng) => 1 + (rng.next() * 2 - 1) * ENDLESS.intervalJitter;
 

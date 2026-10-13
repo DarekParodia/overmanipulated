@@ -13,6 +13,7 @@ import {
 function result(folderId: string, storyId: string, patch: Partial<FolderResult> = {}) {
   return {
     folderId,
+    spawnKey: `s${folderId.slice(1)}`,
     storyId,
     outcome: 'correct',
     reason: 'correctNormal',

@@ -14,6 +14,7 @@ import {
   PLAYER_SPEED_TILES_PER_S,
   type PlayerCommand,
   type PlayerInput,
+  type Rng,
   raidOfFolder,
   type SimContext,
   type SimStory,
@@ -95,7 +96,7 @@ export class Bot {
   private verdictAtMs = 0;
   private readonly memory = new Map<string, Memory>();
   private readonly wanted = new Map<string, boolean>();
-  private readonly rng: ReturnType<typeof createRng>;
+  private readonly rng: Rng;
   private readonly extensionUser: boolean;
 
   constructor(
@@ -449,7 +450,7 @@ export class Bot {
     const cost = (kind: StationKind): number => {
       const fixture = ctx.map.fixtures.find((f) => f.station === kind);
       const walk = fixture ? walkSeconds(distanceTo(ctx.map, fixture.id, me)) : 99;
-      return walk + workDurationMs(state, this.playerId, kind) / 1000;
+      return walk + workDurationMs(state, this.playerId, kind, ctx.tuning) / 1000;
     };
     const ordered = mem.informed
       ? [

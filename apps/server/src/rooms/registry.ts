@@ -18,6 +18,7 @@ import {
   BRIEFING_DURATION_MS,
   type ClientMessage,
   COMMAND_QUEUE_MAX,
+  conveyorBlocked,
   createGameState,
   ENDLESS,
   ENDLESS_LEVEL_ID,
@@ -30,6 +31,8 @@ import {
   type JoinMessage,
   type LobbyAction,
   MAX_PLAYERS,
+  NORMAL_TUNING,
+  nextScheduledSpawn,
   PLAYER_COLOR_COUNT,
   type PlayerCommand,
   type PlayerInput,
@@ -669,6 +672,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         map: room.map,
         level: room.level,
         stories: room.stories,
+        // Rooms play on Normal until the lobby can pick a difficulty (S7-23).
+        tuning: NORMAL_TUNING,
       };
       const result = stepGame(room.game, inputs, commands, ctx);
       room.game = result.state;
@@ -684,6 +689,7 @@ export function createRoomRegistry(options: RegistryOptions) {
 
   function broadcastSnapshot(room: Room): void {
     const game = room.game;
+    const schedule = { level: room.level, stories: room.stories, map: room.map };
     broadcast(room, {
       type: 'snapshot',
       tick: game.tick,
@@ -703,6 +709,8 @@ export function createRoomRegistry(options: RegistryOptions) {
       stations: Object.values(game.stations),
       desks: Object.values(game.desks),
       deadlineExtensionUsed: game.deadlineExtensionUsed,
+      nextFolder: nextScheduledSpawn(game, schedule),
+      conveyorFull: conveyorBlocked(game, schedule),
     });
   }
 

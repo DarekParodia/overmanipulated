@@ -299,6 +299,7 @@ async function injectScene(
         folders.push({
           ...base,
           id: 'demo-st',
+          spawnKey: 's0',
           storyId: s.station.folderStoryId,
           location: { kind: 'fixture', fixtureId: st.id },
         });
@@ -316,6 +317,7 @@ async function injectScene(
       folders.push({
         ...base,
         id: 'demo-desk',
+        spawnKey: 's1',
         storyId: s.desk.storyId,
         stamps: s.desk.stamps,
         location: { kind: 'fixture', fixtureId: state.desks[0].id },
@@ -326,6 +328,7 @@ async function injectScene(
       folders.push({
         ...base,
         id: f.id,
+        spawnKey: `e${i}.0`,
         storyId: f.storyId,
         tag: f.tag,
         location: { kind: 'fixture', fixtureId: f.fixture ?? conveyors[i % conveyors.length].id },
@@ -509,6 +512,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
       await emit(six.page, {
         kind: 'verdictResult',
         folderId: 'demo-desk',
+        spawnKey: 's1',
         storyId: deskStory.id,
         playerId: me,
         verdict: deskStory.correctVerdict,
@@ -529,6 +533,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
       await emit(six.page, {
         kind: 'verdictResult',
         folderId: 'demo-desk',
+        spawnKey: 's1',
         storyId: deskStory.id,
         playerId: me,
         verdict: 'publish',
@@ -653,6 +658,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
         results: l1Stories.map((s, i) => ({
           ...outcomeBase,
           folderId: `r${i}`,
+          spawnKey: `s${i}`,
           storyId: s.id,
           outcome: outcomes[i],
           reason: FIXTURE_REASON[outcomes[i] ?? 'correct'],
@@ -701,6 +707,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
       .map((s, i) => ({
         ...outcomeBase,
         folderId: `e${i}`,
+        spawnKey: `s${i}`,
         storyId: s.id,
         outcome: i === 3 ? 'wrong' : 'correct',
         reason: i === 3 ? FIXTURE_REASON.wrong : FIXTURE_REASON.correct,

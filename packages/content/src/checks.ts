@@ -6,9 +6,16 @@ import {
   CONTENT_THREE_STARS_SHARE,
   CONTENT_TRUE_STORY_SHARE,
   CONTENT_TWO_STARS_SHARE,
+  countsAsProof,
   EVENTS,
+  isHintOnly,
+  MULTI_STAMP_FIRST_LEVEL,
+  multiStampExtraMs,
+  type ProofStory,
   parseLayout,
+  requiredStampsOf,
   SCORE,
+  type SimStory,
   type StationKind,
 } from '@redakcja/shared';
 import type { z } from 'zod';
@@ -50,15 +57,34 @@ export function formatIssue(issue: Issue): string {
   return `${issue.severity === 'error' ? 'error  ' : 'warning'} ${where}: ${issue.message}`;
 }
 
-/** Points for a correct verdict delivered with more than half the time left (design doc). */
-export function maxStoryScore(story: Pick<Story, 'priority' | 'correctVerdict'>): number {
+/**
+ * Points for a correct verdict delivered with more than half the time left (design doc), plus
+ * the multi-stamp bonus for every proof beyond the first (S7-18).
+ */
+export function maxStoryScore(
+  story: Pick<SimStory, 'priority' | 'correctVerdict' | 'requiredStamps'>,
+): number {
   const base =
     story.correctVerdict === 'publishWithContext'
       ? SCORE.correctWithContext
       : story.priority === 'normal'
         ? SCORE.correctNormal
         : SCORE.correctImportant;
-  return base + SCORE.speedBonus;
+  return base + SCORE.speedBonus + (requiredStampsOf(story) - 1) * SCORE.multiStampBonus;
+}
+
+/**
+ * Distinct proofs `stations` can give the story: justifying stamps that count as proof
+ * (`countsAsProof`, so never a hint-only stamp) from one of those stations. The story can be
+ * solved there when this reaches `requiredStampsOf(story)`.
+ */
+export function proofCount(story: ProofStory, stations: Iterable<StationKind>): number {
+  const available = new Set(stations);
+  const proofs = story.justifyingStamps.filter((id) => {
+    const station = story.stamps.find((stamp) => stamp.id === id)?.station;
+    return station !== undefined && available.has(station) && countsAsProof(story, id);
+  });
+  return new Set(proofs).size;
 }
 
 /**
@@ -321,6 +347,14 @@ export function checkTypography(value: string, path: readonly PathPart[], report
   }
 }
 
+/**
+ * Level time in seconds when a folder spawned at `atS` with `deadlineS` expires: the sim adds the
+ * multi-stamp extra time at spawn (`multiStampExtraMs`).
+ */
+function dueS(atS: number, deadlineS: number, story: Story): number {
+  return atS + deadlineS + multiStampExtraMs(story) / 1000;
+}
+
 /** Rules a story must meet to be spawned in a level (scheduled or by an event). */
 function checkStoryFitsLevel(
   story: Story,
@@ -344,20 +378,31 @@ function checkStoryFitsLevel(
       report(path, 'error', `story "${story.id}" has no stamp for station "${station}"`);
     }
   }
-  // The AI scanner is never decisive alone, so it cannot make a story solvable.
-  const solvable = story.justifyingStamps.some((id) => {
-    const stamp = story.stamps.find((s) => s.id === id);
-    return stamp !== undefined && stamp.station !== 'aiScanner' && stations.has(stamp.station);
-  });
-  if (!solvable) {
-    const usable = [...stations].filter((station) => station !== 'aiScanner');
+  // A hint-only stamp (the AI scanner) is never proof, so it cannot make a story solvable.
+  const required = requiredStampsOf(story);
+  const proofs = proofCount(story, stations);
+  if (proofs === 0) {
+    const usable = [...stations].filter((station) => !isHintOnly(station));
     report(
       path,
       'error',
       `story "${story.id}" is unsolvable: no justifying stamp comes from ${usable.join(', ')}`,
     );
+  } else if (proofs < required) {
+    report(
+      path,
+      'error',
+      `story "${story.id}" needs ${required} proofs, but this level's stations give only ${proofs}`,
+    );
   }
-  return solvable;
+  if (required > 1 && levelNumber !== undefined && levelNumber < MULTI_STAMP_FIRST_LEVEL) {
+    report(
+      path,
+      'warning',
+      `story "${story.id}" needs ${required} proofs; multi-stamp folders start at level ${MULTI_STAMP_FIRST_LEVEL}`,
+    );
+  }
+  return proofs >= required;
 }
 
 function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, report: Report): void {
@@ -389,7 +434,7 @@ function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, repor
     if (!checkStoryFitsLevel(story, level, ['schedule', i, 'storyId'], report)) {
       broken = true;
     }
-    if (spawn.atS + spawn.deadlineS > level.durationS) {
+    if (dueS(spawn.atS, spawn.deadlineS, story) > level.durationS) {
       report(['schedule', i, 'deadlineS'], 'warning', 'deadline runs past the end of the level');
     }
   });
@@ -499,7 +544,7 @@ function checkEvents(
     if (!checkStoryFitsLevel(story, level, ['events', i, 'storyId'], report)) {
       ok = false;
     }
-    if (event.atS + event.deadlineS > level.durationS) {
+    if (dueS(event.atS, event.deadlineS, story) > level.durationS) {
       report(['events', i, 'deadlineS'], 'warning', 'deadline runs past the end of the level');
     }
     if (event.kind === 'correction' && story.truth !== 'false' && story.truth !== 'misleading') {

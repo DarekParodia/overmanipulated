@@ -12,6 +12,7 @@ import {
   createGameState,
   type GameEvent,
   type LevelEventKind,
+  NORMAL_TUNING,
   type PlayerInput,
   parseLayout,
   type QueuedCommand,
@@ -89,7 +90,8 @@ export function runGame(scenario: Scenario): RunResult {
     state = addPlayer(state, id, spawnPoint(map, index), roles[index] ?? null);
     bots.push(new Bot(id, profile, team, seed * 1009 + index * 7919 + 13));
   });
-  const ctx: SimContext = { dtMs: TICK_MS, map, level, stories };
+  // Normal until the harness runs per difficulty (S7-34).
+  const ctx: SimContext = { dtMs: TICK_MS, map, level, stories, tuning: NORMAL_TUNING };
 
   const endless = level.endless === true;
   const capMs = (scenario.capS ?? level.durationS) * 1000;

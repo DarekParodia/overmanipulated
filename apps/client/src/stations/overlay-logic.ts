@@ -1,6 +1,7 @@
 // Pure helpers for the station overlay and the desk sheet: focus movement for keyboard/gamepad
 // navigation, stable seeds for stamp drawings and number formatting. Kept free of React so they
 // can be unit-tested.
+import { hashText } from '@redakcja/shared';
 import type { NavIntent } from '../input/ui-nav.ts';
 
 /** Focusable items laid out in rows; each item is an id. Rows may differ in length. */
@@ -49,12 +50,7 @@ export function moveFocus(
 
 /** Stable 31-bit seed from a string id (FNV-1a), for seeded stamp rotation and ink. */
 export function seedFromId(id: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) {
-    hash ^= id.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0) % 0x7fffffff;
+  return (hashText(id) >>> 0) % 0x7fffffff;
 }
 
 /** Signed integer with a typographic minus („−5”, „+12”, „0”). */
