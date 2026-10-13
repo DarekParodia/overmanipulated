@@ -1,8 +1,9 @@
-// Role abilities (S7-37): the shared ability preview, the useAbility press and the per-tick
-// progress of running abilities. The same preview runs in the simulation, the client HUD and
-// the balance bots, so a press never names its target: the server resolves it here.
-// Emits: ability (armed/disarmed/started/done/cancelled), stampApplied (via fieldCall),
-// folderRescued.
+// Role abilities (S7-37, S7-38): the shared ability preview, the useAbility press and the
+// per-tick progress of running abilities. The same preview runs in the simulation, the client
+// HUD and the balance bots, so a press never names its target: the server resolves it here.
+// Armed Ekspertyza and Druga szansa trigger inside `stepStations` (stations.ts).
+// Emits: ability (armed/disarmed/started/done/cancelled), stampApplied (via expertise or
+// fieldCall), minigameStarted (an immediate Druga szansa), folderRescued.
 // Consumes commands: useAbility.
 // Runs first in the tick, before folder expiry, so a press or a rescue on a folder's deadline
 // tick still counts.
@@ -11,9 +12,10 @@ import type { Ability, Role, StationKind } from '../domain.ts';
 import type { AbilityState, Desk, Folder, Station } from '../entities.ts';
 import { raidOfFolder } from './events.ts';
 import type { SimContext, SimFrame } from './frame.ts';
-import type { TileMap } from './map.ts';
-import { abilityOf } from './roles.ts';
+import { findInteractionTarget, fixtureById, type TileMap, tileCenter } from './map.ts';
+import { abilityOf, expertiseCovers, spendAbility } from './roles.ts';
 import type { CrewMember, GameState } from './state.ts';
+import { drawMinigameSeed, idleStation, workDurationMs } from './stations.ts';
 
 /** The game facts the preview reads; `GameState` and the client's snapshot view both fit it. */
 export type AbilityView = {
@@ -33,7 +35,7 @@ export type AbilityStory = { stamps: readonly { id: string; station: StationKind
 export type AbilityEnv = {
   map: TileMap;
   story(storyId: string): AbilityStory | undefined;
-  /** Disconnected players; Podaj teczkę never targets them (S7-38). */
+  /** Disconnected players; Podaj teczkę never targets them. */
   absent?: ReadonlySet<string>;
 };
 
@@ -56,7 +58,7 @@ export type AbilityPreview =
   | { kind: 'armed' }
   | { kind: 'cooling'; readyAtMs: number }
   | { kind: 'blocked'; reason: AbilityBlockReason }
-  /** A press arms the ability (Ekspertyza, Druga szansa; S7-38). */
+  /** A press arms the ability (Ekspertyza, Druga szansa). */
   | { kind: 'arm' }
   /** A press acts at once on the named target. */
   | { kind: 'now'; folderId?: string; stationId?: string; targetPlayerId?: string };
@@ -68,6 +70,26 @@ function carriedIn(view: AbilityView, playerId: string): Folder | undefined {
   );
 }
 
+/** The folder lying on a fixture of the view, if any. */
+function folderOn(view: AbilityView, fixtureId: string): Folder | undefined {
+  return Object.values(view.folders).find(
+    (f) => f.location.kind === 'fixture' && f.location.fixtureId === fixtureId,
+  );
+}
+
+/** Whether the player operates a station (working, minigame) or a desk. */
+function operatesAnything(view: AbilityView, playerId: string): boolean {
+  return (
+    Object.values(view.stations).some((station) => station.operatorId === playerId) ||
+    Object.values(view.desks).some((desk) => desk.operatorId === playerId)
+  );
+}
+
+/** The stamp of the folder's story for a station kind, if the story has one. */
+function stampOfKind(folder: Folder, kind: StationKind, env: AbilityEnv): string | undefined {
+  return env.story(folder.storyId)?.stamps.find((stamp) => stamp.station === kind)?.id;
+}
+
 /** The first phone station of the view (map reading order), if the level has one. */
 function phoneStationId(view: AbilityView): string | undefined {
   return Object.values(view.stations).find((station) => station.kind === 'phone')?.id;
@@ -75,7 +97,7 @@ function phoneStationId(view: AbilityView): string | undefined {
 
 /** The phone stamp of a folder's story, if the story has one. */
 function phoneStampOf(folder: Folder, env: AbilityEnv): string | undefined {
-  return env.story(folder.storyId)?.stamps.find((stamp) => stamp.station === 'phone')?.id;
+  return stampOfKind(folder, 'phone', env);
 }
 
 /**
@@ -127,9 +149,135 @@ function fieldCallPreview(view: AbilityView, playerId: string, env: AbilityEnv):
   return { kind: 'now', folderId: folder.id };
 }
 
+/**
+ * Ekspertyza's minigame target: the station the player plays a minigame at, when the role's
+ * Ekspertyza covers it and the folder there still lacks the station's stamp.
+ */
+function expertiseTarget(
+  view: AbilityView,
+  playerId: string,
+  role: Role | null,
+  env: AbilityEnv,
+): { station: Station; folder: Folder; stampId: string } | undefined {
+  const station = Object.values(view.stations).find(
+    (s) => s.operatorId === playerId && s.phase === 'minigame',
+  );
+  if (!station || !expertiseCovers(role, station.kind)) {
+    return undefined;
+  }
+  const folder = folderOn(view, station.id);
+  const stampId = folder ? stampOfKind(folder, station.kind, env) : undefined;
+  if (!folder || stampId === undefined || folder.stamps.includes(stampId)) {
+    return undefined;
+  }
+  return { station, folder, stampId };
+}
+
+/**
+ * Ekspertyza: `now` in a covered minigame, else `arm` (the next covered minigame is solved
+ * when it would open) when the level has a station of the role's family, else `noStation`.
+ */
+function expertisePreview(
+  view: AbilityView,
+  playerId: string,
+  role: Role | null,
+  env: AbilityEnv,
+): AbilityPreview {
+  const target = expertiseTarget(view, playerId, role, env);
+  if (target) {
+    return { kind: 'now', stationId: target.station.id, folderId: target.folder.id };
+  }
+  return Object.values(view.stations).some((station) => expertiseCovers(role, station.kind))
+    ? { kind: 'arm' }
+    : { kind: 'blocked', reason: 'noStation' };
+}
+
+/** A station locked after a failed minigame, with the folder still on it. */
+function lockedWithFolder(view: AbilityView, station: Station | undefined): Folder | undefined {
+  return station?.phase === 'lockout' ? folderOn(view, station.id) : undefined;
+}
+
+/**
+ * Druga szansa: `now` for a free player at a locked station (the faced one, else the nearest
+ * within `ABILITY.secondChance.rangeTiles`, ties in station order); otherwise `arm`, so the next
+ * failed minigame reopens at once. Never blocked.
+ */
+function secondChancePreview(view: AbilityView, playerId: string, env: AbilityEnv): AbilityPreview {
+  const player = view.players[playerId];
+  if (!player || operatesAnything(view, playerId)) {
+    return { kind: 'arm' };
+  }
+  const faced = findInteractionTarget(env.map, player, player.facing);
+  const facedStation = faced ? view.stations[faced.id] : undefined;
+  const facedFolder = lockedWithFolder(view, facedStation);
+  if (facedStation && facedFolder) {
+    return { kind: 'now', stationId: facedStation.id, folderId: facedFolder.id };
+  }
+  let best: { stationId: string; folderId: string; distance: number } | undefined;
+  for (const station of Object.values(view.stations)) {
+    const folder = lockedWithFolder(view, station);
+    const fixture = fixtureById(env.map, station.id);
+    if (!folder || !fixture) {
+      continue;
+    }
+    const center = tileCenter(fixture.col, fixture.row);
+    const distance = Math.hypot(center.x - player.x, center.y - player.y);
+    if (distance <= ABILITY.secondChance.rangeTiles && (!best || distance < best.distance)) {
+      best = { stationId: station.id, folderId: folder.id, distance };
+    }
+  }
+  return best
+    ? { kind: 'now', stationId: best.stationId, folderId: best.folderId }
+    : { kind: 'arm' };
+}
+
+/**
+ * Podaj teczkę's receiver: the nearest teammate within `ABILITY.passFolder.rangeTiles` (no line
+ * of sight) who is connected (not in `env.absent`), carries no folder and operates no station or
+ * desk; ties go to join order. Null when nobody qualifies.
+ */
+export function pickPassTarget(
+  view: AbilityView,
+  playerId: string,
+  env: AbilityEnv,
+): string | null {
+  const passer = view.players[playerId];
+  if (!passer) {
+    return null;
+  }
+  let best: { id: string; distance: number } | undefined;
+  for (const [id, player] of Object.entries(view.players)) {
+    if (
+      id === playerId ||
+      env.absent?.has(id) ||
+      carriedIn(view, id) ||
+      operatesAnything(view, id)
+    ) {
+      continue;
+    }
+    const distance = Math.hypot(player.x - passer.x, player.y - passer.y);
+    if (distance <= ABILITY.passFolder.rangeTiles && (!best || distance < best.distance)) {
+      best = { id, distance };
+    }
+  }
+  return best?.id ?? null;
+}
+
+function passFolderPreview(view: AbilityView, playerId: string, env: AbilityEnv): AbilityPreview {
+  const folder = carriedIn(view, playerId);
+  if (!folder) {
+    return { kind: 'blocked', reason: 'noFolder' };
+  }
+  const targetPlayerId = pickPassTarget(view, playerId, env);
+  return targetPlayerId === null
+    ? { kind: 'blocked', reason: 'noTarget' }
+    : { kind: 'now', folderId: folder.id, targetPlayerId };
+}
+
 /** The per-ability rule, once the player has a ready, unarmed, idle ability. */
 function ruleFor(
   ability: Ability,
+  role: Role | null,
   view: AbilityView,
   playerId: string,
   env: AbilityEnv,
@@ -143,13 +291,12 @@ function ruleFor(
     }
     case 'fieldCall':
       return fieldCallPreview(view, playerId, env);
-    // Ekspertyza, Druga szansa and Podaj teczkę get their rules in S7-38; until then a press
-    // does nothing.
     case 'expertise':
+      return expertisePreview(view, playerId, role, env);
     case 'secondChance':
-      return { kind: 'blocked', reason: 'noStation' };
+      return secondChancePreview(view, playerId, env);
     case 'passFolder':
-      return { kind: 'blocked', reason: 'noTarget' };
+      return passFolderPreview(view, playerId, env);
   }
 }
 
@@ -181,13 +328,13 @@ export function abilityPreview(
   if (view.elapsedMs < member.abilityReadyAtMs) {
     return { kind: 'cooling', readyAtMs: member.abilityReadyAtMs };
   }
-  return ruleFor(ability, view, playerId, env);
+  return ruleFor(ability, member.role, view, playerId, env);
 }
 
 /** The preview environment of a level run (the simulation's and the balance bots'). */
-export function abilityEnvOf(ctx: Pick<SimContext, 'map' | 'stories'>): AbilityEnv {
-  const { map, stories } = ctx;
-  return { map, story: (storyId) => stories[storyId] };
+export function abilityEnvOf(ctx: Pick<SimContext, 'map' | 'stories' | 'absent'>): AbilityEnv {
+  const { map, stories, absent } = ctx;
+  return { map, story: (storyId) => stories[storyId], ...(absent ? { absent } : {}) };
 }
 
 /**
@@ -229,15 +376,115 @@ function withMember(state: GameState, playerId: string, member: CrewMember): Gam
 
 /** The effect happened: disarm and start the cooldown. */
 function consume(state: GameState, playerId: string, ability: Ability): GameState {
+  const crew = spendAbility(state.crew, playerId, ability, state.elapsedMs);
+  return crew === state.crew ? state : { ...state, crew };
+}
+
+/** Ekspertyza in a running minigame: the stamp lands at once and the station is free. */
+function applyExpertise(state: GameState, frame: SimFrame, playerId: string): GameState {
   const member = state.crew[playerId];
-  if (!member) {
+  const target = expertiseTarget(state, playerId, member?.role ?? null, abilityEnvOf(frame.ctx));
+  if (!target) {
     return state;
   }
-  return withMember(state, playerId, {
-    ...member,
-    abilityArmed: false,
-    abilityReadyAtMs: state.elapsedMs + ABILITY[ability].cooldownMs,
+  const { station, folder, stampId } = target;
+  frame.events.push(
+    {
+      kind: 'stampApplied',
+      stationId: station.id,
+      playerId,
+      folderId: folder.id,
+      stampId,
+      via: 'expertise',
+    },
+    {
+      kind: 'ability',
+      playerId,
+      ability: 'expertise',
+      stage: 'done',
+      stationId: station.id,
+      folderId: folder.id,
+    },
+  );
+  const next: GameState = {
+    ...state,
+    folders: { ...state.folders, [folder.id]: { ...folder, stamps: [...folder.stamps, stampId] } },
+    stations: { ...state.stations, [station.id]: idleStation(station) },
+  };
+  return consume(next, playerId, 'expertise');
+}
+
+/**
+ * Druga szansa at a locked station: the lockout ends and the player gets the next minigame
+ * round at once, without the hold (the seed follows `drawMinigameSeed`).
+ */
+function applySecondChance(
+  state: GameState,
+  frame: SimFrame,
+  playerId: string,
+  stationId: string,
+  folderId: string,
+): GameState {
+  const station = state.stations[stationId];
+  const folder = state.folders[folderId];
+  if (!station || !folder) {
+    return state;
+  }
+  const seed = drawMinigameSeed(state, folder, station.kind);
+  const durationMs = workDurationMs(state, playerId, station.kind, frame.ctx.tuning);
+  frame.events.push(
+    {
+      kind: 'minigameStarted',
+      stationId,
+      station: station.kind,
+      playerId,
+      folderId,
+      seed,
+    },
+    { kind: 'ability', playerId, ability: 'secondChance', stage: 'done', stationId, folderId },
+  );
+  const reopened: Station = {
+    ...station,
+    operatorId: playerId,
+    phase: 'minigame',
+    minigameSeed: seed,
+    lockoutMs: 0,
+    progressMs: durationMs,
+    durationMs,
+  };
+  return consume(
+    { ...state, stations: { ...state.stations, [stationId]: reopened } },
+    playerId,
+    'secondChance',
+  );
+}
+
+/** Podaj teczkę: the carried folder is in the receiver's hands at once (the arc is cosmetic). */
+function applyPassFolder(
+  state: GameState,
+  frame: SimFrame,
+  playerId: string,
+  folderId: string,
+  targetPlayerId: string,
+): GameState {
+  const folder = state.folders[folderId];
+  if (!folder) {
+    return state;
+  }
+  frame.events.push({
+    kind: 'ability',
+    playerId,
+    ability: 'passFolder',
+    stage: 'done',
+    folderId,
+    targetPlayerId,
   });
+  const passed: Folder = { ...folder, location: { kind: 'carried', playerId: targetPlayerId } };
+  return consume(
+    { ...state, folders: { ...state.folders, [folderId]: passed } },
+    playerId,
+    'passFolder',
+  );
 }
 
 /** Applies an ability whose preview is `now`. */
@@ -285,11 +532,16 @@ function apply(
         },
       });
     }
-    // No `now` preview exists for these until S7-38.
     case 'expertise':
+      return applyExpertise(state, frame, playerId);
     case 'secondChance':
+      return preview.stationId === undefined || preview.folderId === undefined
+        ? state
+        : applySecondChance(state, frame, playerId, preview.stationId, preview.folderId);
     case 'passFolder':
-      return state;
+      return preview.folderId === undefined || preview.targetPlayerId === undefined
+        ? state
+        : applyPassFolder(state, frame, playerId, preview.folderId, preview.targetPlayerId);
   }
 }
 

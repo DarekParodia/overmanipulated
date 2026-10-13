@@ -1,4 +1,4 @@
-// The six verification stations as chunky toy models, each with its own silhouette that matches
+// The ten verification stations as chunky toy models, each with its own silhouette that matches
 // its real-world tool, readable from the top-down camera and at phone zoom:
 //   imageSearch    light table with a big magnifying glass leaning on it   ("Lupa obrazu")
 //   archive        filing cabinet whose drawers are film reels             ("Archiwum")
@@ -6,8 +6,10 @@
 //   phone          telephone switchboard: jacks and patch cords            ("Telefon")
 //   aiScanner      slate terminal with an eye screen, gantry, scan corners ("Skaner AI")
 //   dataLibrary    data shelf: rows of colourful books, LEDs               ("Biblioteka danych")
-// The four Stage 7 stations (geolocation "Mapa", transcript "Stenogram", crossCheck "Inne media",
-// metadata "Metadane") use a temporary plain desk with an accent panel until S7-51 models them.
+//   geolocation    map board with a big red pin, folded map over the edge ("Mapa")
+//   transcript     stenotype and paper roll, hanging strip with a yellow line ("Stenogram")
+//   crossCheck     rack of three newspapers, a TV with antenna and a radio  ("Inne media")
+//   metadata       camera, monitor with data rows, luggage tag on a string ("Metadane")
 // The station sign (StationIndicators) floats over the top of each model, so the identifying
 // art lives on the FRONT faces, below the sign, and tall parts are kept few and wide. Bodies are
 // pale grey-blue on a blue plinth so stations stand out from the orange-brown decoration. Each
@@ -74,7 +76,7 @@ function imageSearch(detail: boolean): Item[] {
     // The lens: blue frame, pale glass, a stubby handle, standing on the plinth.
     tor(colors.blueDark, 0.22, 0.055, { ...lens, rx: tilt }),
     cyld(colors.sky, 0.21, 0.03, { ...lens, rx: Math.PI / 2 + tilt }, 16),
-    bx(colors.blueDark, 0.09, 0.3, 0.09, { x: 0.43, y: 0.16, z: 0.42, rz: 0.75 }),
+    bx(colors.blueDark, 0.09, 0.26, 0.09, { x: 0.38, y: 0.17, z: 0.42, rz: 0.75 }),
   ];
   if (detail) {
     items.push(
@@ -141,7 +143,7 @@ function sourceRegistry(detail: boolean): Item[] {
     bx(colors.surfaceSunk, 0.84, 0.5, 0.74, { y: 0.34 }),
     bx(colors.surfaceSoft, 0.9, 0.1, 0.8, { y: 0.65 }),
     // The pulled-out drawer: shell and fanned index cards.
-    bx(colors.surface, 0.21, 0.11, 0.22, { x: 0.26, y: 0.36, z: 0.42 }),
+    bx(colors.surface, 0.21, 0.11, 0.22, { x: 0.26, y: 0.36, z: 0.4 }),
   ];
   for (let row = 0; row < 3; row++) {
     for (let col = 0; col < 3; col++) {
@@ -283,17 +285,221 @@ function dataLibrary(detail: boolean): Item[] {
   return items;
 }
 
-/**
- * Temporary model for a Stage 7 station (S7-48): the standard desk with a coloured front panel
- * and a matching back board, so the kind reads apart until its own model lands (S7-51).
- */
-function plainStation(accent: string): (detail: boolean) => Item[] {
-  return () => [
+/** Back-edge board of the four Stage 7 desks: depth, centre and where its front art sits. */
+const BOARD_Z = -0.45;
+const BOARD_ART_Z = BOARD_Z + 0.032;
+
+/** Point `local` on a part centred at `at` and tilted by `rx` around x (front art on a tilt). */
+function onTilt(
+  at: { x: number; y: number; z: number },
+  rx: number,
+  local: { x?: number; y?: number; z?: number },
+): { x: number; y: number; z: number; rx: number } {
+  const ly = local.y ?? 0;
+  const lz = local.z ?? 0;
+  return {
+    x: at.x + (local.x ?? 0),
+    y: at.y + ly * Math.cos(rx) - lz * Math.sin(rx),
+    z: at.z + ly * Math.sin(rx) + lz * Math.cos(rx),
+    rx,
+  };
+}
+
+/** Map board on the back edge with a big red pin, a folded map hanging over the front (0.76). */
+function geolocation(detail: boolean): Item[] {
+  const pin = { x: 0.16, y: 1.1 };
+  const items: Item[] = [
     ...deskBody(),
-    bxd(accent, 0.6, 0.36, 0.03, { y: 0.4, z: FRONT + 0.01 }),
-    bx(colors.surfaceSunk, 0.88, 0.4, 0.06, { y: 1.0, z: -0.45 }),
-    bxd(accent, 0.7, 0.14, 0.04, { y: 1.03, z: -0.41 }),
+    // The map board: park, river and city blocks on a white sheet.
+    bx(colors.surface, 0.88, 0.5, 0.05, { y: 1.0, z: BOARD_Z }),
+    bxd(colors.green, 0.26, 0.18, 0.012, { x: -0.22, y: 1.11, z: BOARD_ART_Z }),
+    bxd(colors.blue, 0.8, 0.07, 0.012, { y: 0.97, z: BOARD_ART_Z + 0.004, rz: 0.22 }),
+    bxd(colors.orange, 0.14, 0.1, 0.012, { x: 0.28, y: 0.86, z: BOARD_ART_Z }),
+    bxd(colors.orange, 0.12, 0.09, 0.012, { x: -0.3, y: 0.85, z: BOARD_ART_Z }),
+    bxd(colors.orange, 0.1, 0.12, 0.012, { x: 0.02, y: 1.16, z: BOARD_ART_Z }),
+    // The push-pin: a thick red head on a short stem, sticking out of the board.
+    cyld(colors.textSoft, 0.018, 0.12, { ...pin, z: BOARD_Z + 0.07, rx: Math.PI / 2 }, 6),
+    cyl(colors.red, 0.1, 0.08, { ...pin, z: BOARD_Z + 0.13, rx: Math.PI / 2 }, 16),
+    cyld(colors.surface, 0.035, 0.012, { x: 0.13, y: 1.13, z: BOARD_Z + 0.175, rx: Math.PI / 2 }),
+    // The folded map: a flap on the desk and three panels hanging over the front.
+    bxd(colors.surface, 0.5, 0.014, 0.1, { x: -0.06, y: 0.767, z: 0.39 }),
+    bx(colors.surface, 0.5, 0.38, 0.03, { x: -0.06, y: 0.55, z: FRONT + 0.02 }),
+    bxd(colors.surfaceSunk, 0.015, 0.38, 0.012, { x: -0.14, y: 0.55, z: FRONT + 0.04 }),
+    bxd(colors.surfaceSunk, 0.015, 0.38, 0.012, { x: 0.03, y: 0.55, z: FRONT + 0.04 }),
+    bxd(colors.blue, 0.5, 0.06, 0.012, { x: -0.06, y: 0.52, z: FRONT + 0.045, rz: -0.3 }),
+    cyld(colors.red, 0.045, 0.012, { x: 0.08, y: 0.63, z: FRONT + 0.05, rx: Math.PI / 2 }, 12),
   ];
+  if (detail) {
+    // A compass on the front-right corner of the desk.
+    items.push(
+      cyld(colors.yellowDark, 0.08, 0.02, { x: 0.32, y: 0.77, z: 0.32 }, 16),
+      cyld(colors.surface, 0.06, 0.022, { x: 0.32, y: 0.771, z: 0.32 }, 16),
+      bxd(colors.red, 0.02, 0.012, 0.09, { x: 0.32, y: 0.785, z: 0.32, ry: 0.5 }),
+    );
+  }
+  return items;
+}
+
+/** Stenotype and paper roll on the back edge, a hanging strip with one highlight (0.76). */
+function transcript(detail: boolean): Item[] {
+  const strip = { x: 0, y: 0.45, z: FRONT + 0.02 };
+  const items: Item[] = [
+    ...deskBody(),
+    // The stenotype machine: a low slate block with rows of keys.
+    bx(colors.textSoft, 0.58, 0.12, 0.2, { y: 0.82, z: -0.37 }),
+    // The paper roll on two posts above it.
+    bx(colors.surfaceSunk, 0.05, 0.36, 0.05, { x: -0.36, y: 0.94, z: -0.42 }),
+    bx(colors.surfaceSunk, 0.05, 0.36, 0.05, { x: 0.36, y: 0.94, z: -0.42 }),
+    cyl(colors.surface, 0.1, 0.62, { y: 1.1, z: -0.42, rz: Math.PI / 2 }, 14),
+    // The strip of paper: a flap on the desk, then hanging down the front.
+    bxd(colors.surface, 0.36, 0.014, 0.1, { y: 0.767, z: 0.39 }),
+    bx(colors.surface, 0.36, 0.54, 0.03, strip),
+  ];
+  const rows = detail ? [0.12, 0.18, 0.18, 0, 0.14, 0.18] : [0.12, 0.18, 0, 0.14, 0.18];
+  for (const [i, inset] of rows.entries()) {
+    const y = 0.64 - i * (detail ? 0.075 : 0.09);
+    if (inset === 0) {
+      // The highlighted line: a yellow marker bar under a text bar.
+      items.push(
+        bxd(colors.yellow, 0.32, 0.085, 0.012, { y, z: FRONT + 0.04 }),
+        bxd(colors.outline, 0.2, 0.03, 0.012, { y, z: FRONT + 0.045 }),
+      );
+    } else {
+      const w = 0.26 - inset * 0.3;
+      items.push(bxd(colors.outline, w, 0.03, 0.012, { x: w / 2 - 0.13, y, z: FRONT + 0.04 }));
+    }
+  }
+  const keyRows = detail ? [-0.43, -0.37, -0.31] : [-0.41, -0.33];
+  for (const z of keyRows) {
+    items.push(bxd(colors.surface, 0.48, 0.02, 0.035, { y: 0.89, z }));
+  }
+  if (detail) {
+    // The curled bottom end of the strip.
+    items.push(cyld(colors.surface, 0.03, 0.36, { y: 0.17, z: FRONT + 0.05, rz: Math.PI / 2 }, 8));
+  }
+  return items;
+}
+
+/** Rack of three newspapers on the front, a TV and a radio on the back edge (0.76). */
+function crossCheck(detail: boolean): Item[] {
+  const tilt = -0.15;
+  const items: Item[] = [
+    ...deskBody(),
+    // The rack: a low lip the papers stand in.
+    bx(colors.textSoft, 0.8, 0.06, 0.05, { y: 0.2, z: FRONT + 0.06 }),
+  ];
+  const mastheads = [colors.blue, colors.red, colors.green] as const;
+  for (const [i, masthead] of mastheads.entries()) {
+    const at = { x: -0.26 + i * 0.26, y: 0.42, z: FRONT + 0.03 };
+    items.push(
+      bx(colors.surface, 0.22, 0.34, 0.025, { ...at, rx: tilt }),
+      bxd(masthead, 0.2, 0.06, 0.01, onTilt(at, tilt, { y: 0.12, z: 0.018 })),
+    );
+    for (const [line, w] of (detail ? [0.16, 0.12, 0.16, 0.1] : [0.16, 0.12]).entries()) {
+      items.push(
+        bxd(
+          colors.textFaint,
+          w,
+          0.022,
+          0.01,
+          onTilt(at, tilt, { y: 0.04 - line * 0.05, z: 0.018 }),
+        ),
+      );
+    }
+  }
+  // The TV: slate box, sky screen, V antenna.
+  const tv = { x: -0.2, y: 0.9, z: -0.37 };
+  items.push(
+    bx(colors.textSoft, 0.36, 0.28, 0.2, tv),
+    bxd(colors.sky, 0.28, 0.2, 0.012, { ...tv, z: tv.z + 0.106 }),
+    bx(colors.outline, 0.02, 0.22, 0.02, { x: tv.x - 0.06, y: 1.13, z: tv.z, rz: 0.45 }),
+    bx(colors.outline, 0.02, 0.22, 0.02, { x: tv.x + 0.06, y: 1.13, z: tv.z, rz: -0.45 }),
+  );
+  // The radio: an orange box with a speaker and a handle.
+  const radio = { x: 0.25, y: 0.86, z: -0.38 };
+  items.push(
+    bx(colors.orange, 0.3, 0.2, 0.14, radio),
+    cyld(
+      colors.outline,
+      0.06,
+      0.012,
+      { x: 0.2, y: radio.y, z: radio.z + 0.076, rx: Math.PI / 2 },
+      12,
+    ),
+    bx(colors.outline, 0.22, 0.03, 0.03, { x: radio.x, y: 1.0, z: radio.z }),
+  );
+  if (detail) {
+    items.push(
+      cyld(colors.red, 0.025, 0.04, { x: tv.x - 0.11, y: 1.23, z: tv.z }, 8),
+      cyld(colors.red, 0.025, 0.04, { x: tv.x + 0.11, y: 1.23, z: tv.z }, 8),
+      cyld(
+        colors.surface,
+        0.03,
+        0.012,
+        { x: 0.33, y: radio.y, z: radio.z + 0.076, rx: Math.PI / 2 },
+        10,
+      ),
+    );
+  }
+  return items;
+}
+
+/** Camera and a data monitor on the back edge, a luggage tag hanging at the front (0.76). */
+function metadata(detail: boolean): Item[] {
+  const camera = { x: -0.23, y: 0.87, z: -0.4 };
+  const screen = { x: 0.22, y: 1.05, z: -0.4 };
+  const tag = { x: 0.24, y: 0.42, z: FRONT + 0.03 };
+  const photo = { x: -0.17, y: 0.5 };
+  const items: Item[] = [
+    ...deskBody(),
+    // The camera: navy body, viewfinder bump, big sky lens facing the players.
+    bx(colors.outline, 0.32, 0.2, 0.16, camera),
+    bx(colors.outline, 0.12, 0.06, 0.1, { x: camera.x - 0.06, y: 1.0, z: camera.z }),
+    cyl(colors.sky, 0.085, 0.08, { x: camera.x, y: camera.y, z: -0.3, rx: Math.PI / 2 }, 16),
+    cyld(colors.skyDeep, 0.045, 0.084, { x: camera.x, y: camera.y, z: -0.3, rx: Math.PI / 2 }, 12),
+    // The monitor: slate frame on a stand, a dark screen with data rows.
+    bx(colors.textSoft, 0.06, 0.16, 0.06, { x: screen.x, y: 0.84, z: screen.z }),
+    bx(colors.textSoft, 0.38, 0.28, 0.05, screen),
+    bxd(colors.outline, 0.32, 0.22, 0.012, { ...screen, z: screen.z + 0.027 }),
+    // A photo print hanging on the front: the file the data belongs to.
+    bx(colors.surface, 0.3, 0.28, 0.03, { x: photo.x, y: photo.y, z: FRONT + 0.02 }),
+    bxd(colors.sky, 0.26, 0.16, 0.012, { x: photo.x, y: photo.y + 0.04, z: FRONT + 0.04 }),
+    bxd(colors.green, 0.26, 0.07, 0.012, { x: photo.x, y: photo.y - 0.075, z: FRONT + 0.04 }),
+    // The luggage tag on a string: body, stepped top, hole.
+    bxd(colors.outline, 0.015, 0.16, 0.015, { x: tag.x, y: tag.y + 0.22, z: tag.z }),
+    bx(colors.yellowDark, 0.2, 0.22, 0.03, tag),
+    bx(colors.yellowDark, 0.12, 0.07, 0.03, { ...tag, y: tag.y + 0.14 }),
+    cyld(colors.outline, 0.025, 0.012, {
+      x: tag.x,
+      y: tag.y + 0.14,
+      z: tag.z + 0.02,
+      rx: Math.PI / 2,
+    }),
+  ];
+  const rows = detail ? [0.24, 0.16, 0.2, 0.12, 0.18] : [0.24, 0.16, 0.2];
+  for (const [i, w] of rows.entries()) {
+    items.push(
+      bxd(i % 2 === 0 ? colors.green : colors.blue, w, 0.03, 0.01, {
+        x: screen.x - 0.13 + w / 2,
+        y: screen.y + 0.08 - i * (detail ? 0.04 : 0.06),
+        z: screen.z + 0.035,
+      }),
+    );
+  }
+  if (detail) {
+    items.push(
+      bxd(colors.surface, 0.06, 0.03, 0.02, { x: camera.x + 0.09, y: 0.94, z: camera.z + 0.07 }),
+      bxd(colors.outline, 0.13, 0.025, 0.01, { x: tag.x, y: tag.y + 0.02, z: tag.z + 0.02 }),
+      bxd(colors.outline, 0.09, 0.025, 0.01, { x: tag.x, y: tag.y - 0.04, z: tag.z + 0.02 }),
+      cyld(colors.yellow, 0.03, 0.012, {
+        x: photo.x + 0.08,
+        y: photo.y + 0.08,
+        z: FRONT + 0.045,
+        rx: Math.PI / 2,
+      }),
+    );
+  }
+  return items;
 }
 
 const BUILDERS: Record<StationKind, (detail: boolean) => Item[]> = {
@@ -303,10 +509,10 @@ const BUILDERS: Record<StationKind, (detail: boolean) => Item[]> = {
   phone,
   aiScanner,
   dataLibrary,
-  geolocation: plainStation(colors.green),
-  transcript: plainStation(colors.yellowDark),
-  crossCheck: plainStation(colors.orange),
-  metadata: plainStation(colors.blueDark),
+  geolocation,
+  transcript,
+  crossCheck,
+  metadata,
 };
 
 /** The merged, outlined model of one station kind (one draw call). */
