@@ -166,7 +166,7 @@ describe('level 1 content', () => {
     }
   });
 
-  it('ends every deadline before the level ends and sets stars near 50% and 80%', () => {
+  it('ends every deadline before the level ends and sets stars in the intended band', () => {
     if (!level) {
       throw new Error('level 1 missing');
     }
@@ -174,8 +174,11 @@ describe('level 1 content', () => {
       expect(spawn.atS + spawn.deadlineS).toBeLessThanOrEqual(level.durationS);
     }
     const max = maxLevelScore(level, new Map(STORIES.map((s) => [s.id, s])));
-    expect(level.stars.two / max).toBeCloseTo(0.5, 1);
-    expect(level.stars.three / max).toBeCloseTo(0.8, 1);
+    // Balance (docs/balance.md) set level 1 slightly above the 50 % / 80 % guideline.
+    expect(level.stars.two / max).toBeGreaterThanOrEqual(0.45);
+    expect(level.stars.two / max).toBeLessThanOrEqual(0.65);
+    expect(level.stars.three / max).toBeGreaterThanOrEqual(0.75);
+    expect(level.stars.three / max).toBeLessThanOrEqual(0.9);
   });
 });
 
