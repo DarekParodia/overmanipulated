@@ -322,9 +322,17 @@ describe('validate CLI', () => {
       'l4-woda-z-kranu-phone',
       'l6-frekwencja-w-poludnie-archive',
     ]);
-    // S7-30 writes l3 stories that S7-31 puts into the l3 bag pool.
-    const unscheduled = [...out.matchAll(/story "([^"]+)" is not scheduled/g)];
-    expect(unscheduled.map((match) => match[1])).toEqual([
+    // New stories wait for their level's bag pool: S7-32 writes l4 stories and S7-33 converts
+    // the level; S7-30 writes l3 stories and S7-31 puts them into the l3 pool.
+    const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([
+      'l4-tlumy-na-sorze',
+      'l4-zimna-woda-po-obiedzie',
+      'l4-ratownik-o-kaskach',
+      'l4-basen-zamkniety',
+      'l4-sobotnie-szczepienia',
+    ]);
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([
       'l3-zalana-sala',
       'l3-dyrektor-na-plazy',
       'l3-pusta-stolowka',
@@ -332,7 +340,8 @@ describe('validate CLI', () => {
       'l3-psycholog-z-sieci',
       'l3-zajecia-przed-matura',
     ]);
-    expect(out).toContain('0 error(s), 12 warning(s)');
+    const warnings = decisiveNotJustifying.length + notScheduled.length;
+    expect(out).toContain(`0 error(s), ${warnings} warning(s)`);
     expect(result.exitCode).toBe(0);
   });
 

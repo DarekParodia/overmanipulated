@@ -673,5 +673,230 @@
       "realWorld": "Alarmowe posty „od urzędów” rozchodzą się tym szybciej, im bardziej straszą. Zanim udostępnisz, sprawdź konto i oficjalną stronę."
     },
     "reviewed": false
+  },
+  {
+    "id": "l4-tlumy-na-sorze",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Tłumy na SOR-ze! Szpital miejski nie radzi sobie z grypą",
+    "body": "Zdjęcie zatłoczonego korytarza z podpisem: „Dziś rano w szpitalu w Nowych Brzegach. Grypa zbiera żniwo!”.",
+    "source": "Post profilu „Zdrowie NB Alert”",
+    "stamps": [
+      {
+        "id": "l4-tlumy-na-sorze-source",
+        "station": "sourceRegistry",
+        "text": "Profil „Zdrowie NB Alert” założono w tym tygodniu. Nie podaje autora.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-tlumy-na-sorze-archive",
+        "station": "archive",
+        "text": "To zdjęcie „Gazeta Brzegowa” opublikowała w 2017 r. przy ćwiczeniach ewakuacyjnych.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-tlumy-na-sorze-phone",
+        "station": "phone",
+        "text": "Rzecznik szpitala jest na urlopie. Sekretariat prosi o maila.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-tlumy-na-sorze-data",
+        "station": "dataLibrary",
+        "text": "Szpital nie publikuje dziennych danych o liczbie pacjentów na SOR-ze.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-tlumy-na-sorze-archive"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Straszący podpis o grypie dopisano do starego zdjęcia z ćwiczeń ewakuacyjnych w szpitalu sprzed kilku lat.",
+      "technique": "Stare zdjęcie, nowy podpis: autentyczna fotografia dostaje nową datę i miejsce, żeby straszyć „dzisiejszym” tłokiem.",
+      "tool": "Archiwum: to samo zdjęcie ukazało się w 2017 r. w artykule o ćwiczeniach. Nowy profil bez autora był tylko sygnałem ostrzegawczym.",
+      "realWorld": "W sezonie grypowym często krążą stare zdjęcia zatłoczonych szpitali. Zanim udostępnisz, poszukaj, kiedy zdjęcie pojawiło się pierwszy raz."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-zimna-woda-po-obiedzie",
+    "type": "post",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Lekarze ostrzegają: zimna woda po obiedzie szkodzi sercu",
+    "body": "Łańcuszek na komunikatorze: „Lekarz ze szpitala w Nowych Brzegach prosi: przekaż dalej 10 osobom!”. Brak nazwiska lekarza.",
+    "source": "Wiadomość przekazana na czacie klasowym",
+    "stamps": [
+      {
+        "id": "l4-zimna-woda-po-obiedzie-source",
+        "station": "sourceRegistry",
+        "text": "Nie da się ustalić, kto pierwszy wysłał wiadomość. Brak autora.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-zimna-woda-po-obiedzie-archive",
+        "station": "archive",
+        "text": "Ten sam łańcuszek krążył w 2019 i 2022 r., za każdym razem z innym szpitalem w treści.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-zimna-woda-po-obiedzie-phone",
+        "station": "phone",
+        "text": "Szpital ma infolinię tylko dla pacjentów. Nikt nie chce komentować.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-zimna-woda-po-obiedzie-data",
+        "station": "dataLibrary",
+        "text": "Wiadomość nie podaje liczb ani badań, z którymi można porównać dane.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-zimna-woda-po-obiedzie-archive"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Stary łańcuszek z wymyśloną poradą „od lekarza”, który co kilka lat wraca z nazwą innego szpitala. Żadne badania nie pokazują, że zimna woda po posiłku szkodzi sercu.",
+      "technique": "Plotka bez źródła: brak nazwiska, brak badań, za to prośba o przekazanie dalej i nazwa znanego szpitala dla powagi.",
+      "tool": "Archiwum: ta sama treść krążyła już dwa razy, tylko z innym szpitalem. Brak autora wskazywał trop, ale nie przesądzał.",
+      "realWorld": "Łańcuszki z „poradami lekarzy” wracają falami. Wpisz fragment tekstu w wyszukiwarkę: często okazuje się, że ma kilka lat."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-ratownik-o-kaskach",
+    "type": "quote",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Ratownik medyczny: „Kask rowerowy nic nie daje”",
+    "body": "Grafika z cytatem krąży wśród rowerzystów. Podpis: „Ratownik z 20-letnim stażem, wywiad dla Radia Brzegi”.",
+    "source": "Grafika na forum „Rowerem po NB”",
+    "stamps": [
+      {
+        "id": "l4-ratownik-o-kaskach-source",
+        "station": "sourceRegistry",
+        "text": "Forum prowadzą miłośnicy rowerów. Grafikę wrzucił anonimowy użytkownik.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-ratownik-o-kaskach-archive",
+        "station": "archive",
+        "text": "Pełny wywiad w archiwum radia: „Kask nic nie daje, jeśli jest źle zapięty i za luźny”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-ratownik-o-kaskach-phone",
+        "station": "phone",
+        "text": "Ratownik jest na dyżurze w karetce. Oddzwoni po weekendzie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-ratownik-o-kaskach-data",
+        "station": "dataLibrary",
+        "text": "Brak tabel. Wypowiedź nie dotyczy konkretnych liczb.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-ratownik-o-kaskach-archive"],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwa wypowiedź ratownika z radiowego wywiadu, ucięta w połowie zdania. W całości była radą, jak dobrze zapiąć kask.",
+      "technique": "Cytat wyrwany z kontekstu: obcięcie zastrzeżenia odwraca sens wypowiedzi. Słowa są prawdziwe, ale przekaz już nie.",
+      "tool": "Archiwum: pełny zapis wywiadu w radiu pokazał całe zdanie i jego sens.",
+      "realWorld": "Krótkie cytaty na grafikach łatwo przyciąć tak, by mówiły coś przeciwnego. Szukaj pełnej wypowiedzi w oryginalnym nagraniu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-basen-zamkniety",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Basen przy Parkowej zamknięty do 20 listopada",
+    "body": "Miejski basen nie przyjmie pływaków przez dwa tygodnie. Powód: wymiana filtrów i badanie wody przez sanepid.",
+    "source": "Notka w serwisie „Nowe Brzegi Info”",
+    "stamps": [
+      {
+        "id": "l4-basen-zamkniety-source",
+        "station": "sourceRegistry",
+        "text": "Serwis istnieje od lat, ale notka nie ma autora ani linku do źródła.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-basen-zamkniety-archive",
+        "station": "archive",
+        "text": "W archiwum jest komunikat sanepidu z 3 listopada: basen zamknięty do 20 listopada.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-basen-zamkniety-phone",
+        "station": "phone",
+        "text": "Kasa basenu nie odbiera. Automat podaje stare godziny otwarcia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-basen-zamkniety-data",
+        "station": "dataLibrary",
+        "text": "Brak danych liczbowych do porównania. Komunikat podaje tylko daty.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-basen-zamkniety-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja o czasowym zamknięciu basenu, oparta na oficjalnym komunikacie sanepidu.",
+      "technique": "Brak manipulacji. Notka powtarza daty i powód z komunikatu, choć zapomniała podać źródło.",
+      "tool": "Archiwum: komunikat sanepidu z tymi samymi datami potwierdził notkę.",
+      "realWorld": "Lokalne serwisy często skracają komunikaty urzędów. Jeśli brakuje linku, znajdź oryginalny komunikat i porównaj daty."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-sobotnie-szczepienia",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Przychodnia na Lipowej: w sobotę szczepienia na grypę bez zapisów",
+    "body": "Mama ucznia pisze na grupie rodziców: „W sobotę od 9 do 14 można przyjść bez rejestracji. Wystarczy dowód osobisty”.",
+    "source": "Post na grupie „Rodzice z Nowych Brzegów”",
+    "stamps": [
+      {
+        "id": "l4-sobotnie-szczepienia-source",
+        "station": "sourceRegistry",
+        "text": "Autorka posta nie pracuje w przychodni. Grupa nie weryfikuje wpisów.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-sobotnie-szczepienia-archive",
+        "station": "archive",
+        "text": "W zeszłym roku podobna akcja odbyła się w październiku.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-sobotnie-szczepienia-phone",
+        "station": "phone",
+        "text": "Rejestracja przychodni potwierdza: sobota 9–14, bez zapisów, z dowodem osobistym.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-sobotnie-szczepienia-data",
+        "station": "dataLibrary",
+        "text": "Brak danych liczbowych do porównania.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-sobotnie-szczepienia-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja o sobotniej akcji szczepień, przekazana przez rodzica na grupie w sieci.",
+      "technique": "Brak manipulacji. Wpis był zgodny z tym, co mówi sama przychodnia, choć autorka nie była oficjalnym źródłem.",
+      "tool": "Telefon do rejestracji przychodni potwierdził godziny i zasady akcji.",
+      "realWorld": "Na grupach mieszkańców krąży wiele praktycznych informacji. Gdy chodzi o zdrowie, krótki telefon do źródła rozwiewa wątpliwości."
+    },
+    "reviewed": false
   }
 ]
