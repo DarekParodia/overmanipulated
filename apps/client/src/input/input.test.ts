@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { radialDeadzone, readGamepad } from './gamepad.ts';
 import { keysToMove } from './keyboard.ts';
+import { createRisingEdge, escapeOpensMenu, startPressed } from './menu-button.ts';
 import { joystickVector, knobOffset } from './touch.ts';
 
 const pad = (axes: number[], pressed: number[] = []) => ({
@@ -57,5 +58,35 @@ describe('touch joystick', () => {
   it('keeps the knob on the ring', () => {
     const offset = knobOffset(origin, { x: 100, y: 400 });
     expect(offset.y).toBeCloseTo(56, 5);
+  });
+});
+
+describe('in-game menu keys (S7-10)', () => {
+  const key = {
+    code: 'Escape',
+    repeat: false,
+    captured: false,
+    tutorialActive: false,
+  };
+
+  it('opens the menu with Esc only when nothing else owns it', () => {
+    expect(escapeOpensMenu(key)).toBe(true);
+    // An overlay, the settings or the open menu close on Esc instead.
+    expect(escapeOpensMenu({ ...key, captured: true })).toBe(false);
+    // The tutorial card skips first; the menu ignores that press.
+    expect(escapeOpensMenu({ ...key, tutorialActive: true })).toBe(false);
+    expect(escapeOpensMenu({ ...key, repeat: true })).toBe(false);
+    expect(escapeOpensMenu({ ...key, code: 'KeyE' })).toBe(false);
+  });
+
+  it('reads Start as button 9 and counts only the rising edge', () => {
+    expect(startPressed(pad([0, 0], [9]))).toBe(true);
+    expect(startPressed(pad([0, 0], [8]))).toBe(false);
+    expect(startPressed(null)).toBe(false);
+    const edge = createRisingEdge();
+    expect([true, true, false, true, false].map(edge)).toEqual([true, false, false, true, false]);
+    // Held when the screen mounts: it must be released before it counts.
+    const held = createRisingEdge(true);
+    expect([true, false, true].map(held)).toEqual([false, false, true]);
   });
 });

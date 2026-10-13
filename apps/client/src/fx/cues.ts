@@ -135,6 +135,15 @@ export const cues = {
     shake: 0.25,
     haptic: 'thud',
   },
+  /**
+   * The solo player's in-game menu holds the level still (`paused` rising edge, fx/
+   * gameplay-feedback.ts); the menu sheet shows the „Pauza” chip and the sheet slides in.
+   */
+  'game.paused': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
+  },
   'stamp.applied': {
     severity: 2,
     sound: { ids: ['stamp'], bus: 'sfx', rateJitter: 0.05 },
@@ -614,6 +623,81 @@ export const cues = {
     sound: { ids: ['evzap'], bus: 'sfx', volume: 0.3, rateJitter: 0.15 },
     particles: { preset: 'sparks', count: 5 },
     extraParticles: { preset: 'smoke', count: 2 },
+  },
+  // --- S7-36 role abilities and Koło ratunkowe. Placeholder sounds from the current sprite until
+  // the ability sounds land (S7-42). ---
+  /** Ekspertyza or Druga szansa waits armed for its trigger. */
+  'ability.armed': {
+    severity: 1,
+    sound: { ids: ['copy'], bus: 'sfx', volume: 0.5 },
+    particles: { preset: 'inkPuff', count: 6 },
+    haptic: 'tick',
+  },
+  /** A second press put the armed ability away. */
+  'ability.disarmed': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'sfx', volume: 0.4 },
+    particles: { preset: 'dust', count: 2 },
+  },
+  /** Ekspertyza solved the station's task: the stamp lands without a minigame. */
+  'ability.expertise': {
+    severity: 2,
+    sound: { ids: ['chime'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'starBurst' },
+    extraParticles: { preset: 'inkPuff', count: 6 },
+    haptic: 'success',
+  },
+  /** Telefon z terenu starts dialling while the reporter walks. */
+  'ability.call.start': {
+    severity: 1,
+    sound: { ids: ['ping3'], bus: 'sfx', volume: 0.7 },
+    particles: { preset: 'inkPuff', count: 4 },
+    haptic: 'tick',
+  },
+  /** The field call got through (`stamp.applied` slams the stamp itself). */
+  'ability.call.done': {
+    severity: 1,
+    sound: { ids: ['ping3'], bus: 'sfx', volume: 0.5, rateJitter: 0.04 },
+    particles: { preset: 'paperBits', count: 8 },
+  },
+  /** The field call was cut: the folder left the reporter's hands or is gone. */
+  'ability.call.dropped': {
+    severity: 1,
+    sound: { ids: ['fail'], bus: 'sfx', volume: 0.5 },
+    particles: { preset: 'smoke', count: 4 },
+    animation: 'wobble',
+  },
+  /** Przedłużenie: +20 s for a folder (replaces folder.deadlineExtended in S7-37). */
+  'ability.extendDeadline': {
+    severity: 1,
+    sound: { ids: ['arrive'], bus: 'sfx', volume: 0.6, rateJitter: 0.04 },
+    particles: { preset: 'paperFlutter', count: 6 },
+    haptic: 'success',
+    animation: ['hop', 'cardHop'],
+  },
+  /** Druga szansa: the lockout is gone and the minigame opens again. */
+  'ability.secondChance': {
+    severity: 1,
+    sound: { ids: ['evback'], bus: 'sfx', volume: 0.5 },
+    particles: { preset: 'sparks', count: 6 },
+    haptic: 'tick',
+  },
+  /** Podaj teczkę: the folder lands in a teammate's hands. */
+  'ability.pass': {
+    severity: 1,
+    sound: { ids: ['rustle'], bus: 'sfx', volume: 0.8, rateJitter: 0.08 },
+    particles: { preset: 'paperFlutter', count: 3 },
+    haptic: 'tick',
+    animation: 'hop',
+  },
+  /** Koło ratunkowe: a folder at its deadline in a Ratownik's hands got more time. */
+  'role.rescue': {
+    severity: 2,
+    sound: { ids: ['evclear'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'starBurst' },
+    shake: 0.15,
+    haptic: 'success',
+    animation: ['hop', 'cardHop'],
   },
   // --- S5-04 technique encyclopedia: a new card pops into the collection (DOM animation lives
   // in encyclopedia/NewCardToast, this is its sound and buzz). ---

@@ -58,6 +58,8 @@ export function createRuntime(
   let seq = 0;
   let accumulator = 0;
   let localKnown = false;
+  /** The server holds the level still (solo menu, S7-10): no input is sent or predicted. */
+  let paused = false;
 
   return {
     get map() {
@@ -69,6 +71,12 @@ export function createRuntime(
     },
 
     onSnapshot(snapshot, receivedAt) {
+      if (paused && !snapshot.paused) {
+        // The server's tick stood still while the clock ran on: learn its offset again, or a
+        // teammate who just joined would be drawn from stale timing.
+        buffer.clear();
+      }
+      paused = snapshot.paused;
       buffer.push(snapshot, receivedAt);
       const localId = getLocalId();
       const mine = snapshot.players.find((p) => p.id === localId);
@@ -90,7 +98,7 @@ export function createRuntime(
         if (sample.ping) {
           openPingPicker(now);
         }
-        if (!localKnown) {
+        if (!localKnown || paused) {
           continue;
         }
         const input: InputMessage = {
@@ -135,6 +143,7 @@ export function createRuntime(
       seq = 0;
       accumulator = 0;
       localKnown = false;
+      paused = false;
     },
   };
 }

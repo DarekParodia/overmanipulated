@@ -6,11 +6,11 @@ import { stepSpring } from './animation/spring.ts';
 import { createLoopManager } from './audio/loops.ts';
 import sprite from './audio/sfx-sprite.json';
 import { addTrauma, createShake, stepShake } from './camera/shake.ts';
-import { type Cue, cueIds, cues } from './cues.ts';
+import { type Cue, type CueId, cueIds, cues } from './cues.ts';
 import { TICK_FAST_MS, TICK_SLOW_MS, tickIntervalMs, urgentTimeLeft } from './deadline-ticker.ts';
 import { cueForEvent, type GameplayEvent, wrongVerdictCue } from './event-cues.ts';
 import { createFeedback, resolveCue } from './feedback.ts';
-import { beltJustFilled, crossedLastSeconds } from './gameplay-feedback.ts';
+import { beltJustFilled, crossedLastSeconds, justPaused } from './gameplay-feedback.ts';
 import { createPool, scaleAt, spawn, stepPool } from './particles/pool.ts';
 import { particleCapacity, particlePresets } from './particles/presets.ts';
 import { createHitStop, HIT_STOP_SCALE, timeScaleAt, triggerHitStop } from './time-scale.ts';
@@ -240,6 +240,7 @@ const everyEvent: GameplayEvent[] = [
     playerId: player,
     folderId: 'f1',
     stampId: 'x',
+    via: 'minigame',
   },
   { kind: 'deskOpened', deskId: 'desk-0', playerId: player, folderId: 'f1' },
   { kind: 'deskClosed', deskId: 'desk-0', playerId: player },
@@ -262,6 +263,85 @@ const everyEvent: GameplayEvent[] = [
   { kind: 'ping', playerId: player, ping: 'needArchive' },
   { kind: 'levelEvent', event: 'viral', phase: 'start', folderIds: ['f1'] },
   { kind: 'raidResolved', raidId: 'r1', byFolderId: 'f1', folderIds: ['f1', 'f2'] },
+  { kind: 'ability', playerId: player, ability: 'expertise', stage: 'armed' },
+  {
+    kind: 'folderRescued',
+    playerId: player,
+    folderId: 'f1',
+    addedMs: 20_000,
+    folderIds: ['f1'],
+  },
+];
+
+/** Every ability stage the simulation reports (S7-36), with the cue each one plays. */
+const abilityStages: [Extract<GameplayEvent, { kind: 'ability' }>, CueId][] = [
+  [{ kind: 'ability', playerId: player, ability: 'expertise', stage: 'armed' }, 'ability.armed'],
+  [
+    { kind: 'ability', playerId: player, ability: 'secondChance', stage: 'disarmed' },
+    'ability.disarmed',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'expertise',
+      stage: 'done',
+      stationId: 'imageSearch-0',
+      folderId: 'f1',
+    },
+    'ability.expertise',
+  ],
+  [
+    { kind: 'ability', playerId: player, ability: 'fieldCall', stage: 'started', folderId: 'f1' },
+    'ability.call.start',
+  ],
+  [
+    { kind: 'ability', playerId: player, ability: 'fieldCall', stage: 'done', folderId: 'f1' },
+    'ability.call.done',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'fieldCall',
+      stage: 'cancelled',
+      folderId: 'f1',
+      reason: 'dropped',
+    },
+    'ability.call.dropped',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'extendDeadline',
+      stage: 'done',
+      folderId: 'f1',
+      addedMs: 20_000,
+    },
+    'ability.extendDeadline',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'secondChance',
+      stage: 'done',
+      stationId: 'archive-0',
+    },
+    'ability.secondChance',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'passFolder',
+      stage: 'done',
+      folderId: 'f1',
+      targetPlayerId: 'p2',
+    },
+    'ability.pass',
+  ],
 ];
 
 describe('gameplay event cues', () => {
@@ -281,6 +361,17 @@ describe('gameplay event cues', () => {
         `ping.${ping}`,
       );
     }
+  });
+
+  it('gives every ability stage and a rescue a cue with sound and a visual layer (S7-36)', () => {
+    for (const [event, id] of abilityStages) {
+      expect(cueForEvent(event, () => undefined)).toBe(id);
+      const cue: Cue = cues[id];
+      expect(cue.sound).toBeDefined();
+      expect(cue.particles !== undefined || cue.animation !== undefined).toBe(true);
+    }
+    const rescued = everyEvent.find((e) => e.kind === 'folderRescued');
+    expect(rescued && cueForEvent(rescued, () => undefined)).toBe('role.rescue');
   });
 
   it('maps verdict outcomes by severity', () => {
@@ -479,6 +570,23 @@ describe('full belt', () => {
     expect(cues['folder.beltFull']).toEqual({
       severity: 1,
       sound: { ids: ['hmm'], bus: 'ui', volume: 0.6 },
+      haptic: 'tick',
+    });
+  });
+});
+
+describe('solo pause (S7-10)', () => {
+  it('sounds once, when the server starts holding the level', () => {
+    expect(justPaused(false, true)).toBe(true);
+    expect(justPaused(true, true)).toBe(false);
+    expect(justPaused(true, false)).toBe(false);
+    expect(justPaused(false, false)).toBe(false);
+  });
+
+  it('is a soft ui-bus slide with a light tick', () => {
+    expect(cues['game.paused']).toEqual({
+      severity: 1,
+      sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
       haptic: 'tick',
     });
   });

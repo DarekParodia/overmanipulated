@@ -12,14 +12,18 @@ import {
   ROOM_CODE_LENGTH,
 } from './constants.ts';
 import {
+  abilitySchema,
+  abilityStageSchema,
   difficultySchema,
   levelEventKindSchema,
   pingKindSchema,
   roleSchema,
+  stampSourceSchema,
   stationKindSchema,
   verdictSchema,
 } from './domain.ts';
 import {
+  abilityStateSchema,
   deskSchema,
   folderLocationSchema,
   folderResultSchema,
@@ -90,6 +94,11 @@ export const lobbyActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('voteBlunder'), storyId: entityId }),
   /** Host only, lobby only; resets every player's ready flag like `selectLevel` (S7-23). */
   z.object({ kind: z.literal('setDifficulty'), difficulty: difficultySchema }),
+  /**
+   * In-game menu (S7-10): pause or resume. Pausing is accepted only while playing a co-op room
+   * with exactly one connected player and no spectators; anyone joining clears it.
+   */
+  z.object({ kind: z.literal('setPaused'), paused: z.boolean() }),
 ]);
 
 export const lobbyMessageSchema = z.object({
@@ -122,8 +131,13 @@ export const playerCommandSchema = z.discriminatedUnion('kind', [
   /** Close the station minigame or desk sheet without a result. */
   z.object({ kind: z.literal('cancel') }),
   z.object({ kind: z.literal('ping'), ping: pingKindSchema }),
-  /** Managing editor: extend one folder's deadline, once per level. */
+  /** Managing editor: extend one folder's deadline, once per level (removed by S7-37). */
   z.object({ kind: z.literal('extendDeadline'), folderId: entityId }),
+  /**
+   * Press of the role ability (R / RB / the fourth touch button). It carries no target: the
+   * server resolves it with the shared ability preview, which the HUD shows too (S7-36).
+   */
+  z.object({ kind: z.literal('useAbility') }),
 ]);
 
 export const commandMessageSchema = z.object({
@@ -222,6 +236,9 @@ export const playerSnapshotSchema = z.object({
   lastInputSeq: z.number().int().min(-1),
 });
 
+/** One player's ability state in a snapshot; roles stay in `roomState.players` (S7-36). */
+export const crewSnapshotSchema = abilityStateSchema.extend({ id: playerIdSchema });
+
 export const snapshotMessageSchema = z.object({
   type: z.literal('snapshot'),
   tick: z.number().int().nonnegative(),
@@ -240,6 +257,10 @@ export const snapshotMessageSchema = z.object({
   nextFolder: nextFolderSchema.nullable(),
   /** A scheduled folder is due but waits, because every conveyor tile holds a folder. */
   conveyorFull: z.boolean(),
+  /** Every player's ability state, in join order (S7-36). */
+  crew: z.array(crewSnapshotSchema).max(MAX_PLAYERS),
+  /** A solo player has the in-game menu open: the room is not stepped (S7-10). */
+  paused: z.boolean(),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [
@@ -295,6 +316,8 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     playerId: playerIdSchema,
     folderId: entityId,
     stampId: entityId,
+    /** What earned the stamp: the minigame, Ekspertyza or Telefon z terenu (S7-36). */
+    via: stampSourceSchema,
   }),
   z.object({
     kind: z.literal('deskOpened'),
@@ -318,6 +341,33 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     folderIds: z.array(entityId).max(8),
     stationId: entityId.optional(),
     durationMs: finite.optional(),
+  }),
+  /**
+   * A role ability changed stage (S7-36). `folderId`, `stationId` and `targetPlayerId` name what
+   * it acted on, `addedMs` the time Przedłużenie added; `reason` is set only when a Telefon z
+   * terenu call is cancelled.
+   */
+  z.object({
+    kind: z.literal('ability'),
+    playerId: playerIdSchema,
+    ability: abilitySchema,
+    stage: abilityStageSchema,
+    folderId: entityId.optional(),
+    stationId: entityId.optional(),
+    targetPlayerId: playerIdSchema.optional(),
+    addedMs: finite.optional(),
+    reason: z.enum(['dropped', 'gone']).optional(),
+  }),
+  /**
+   * Koło ratunkowe saved a folder that reached its deadline in a Ratownik's hands (S7-36).
+   * `folderIds` lists every folder that got the time (a botRaid wave moves together).
+   */
+  z.object({
+    kind: z.literal('folderRescued'),
+    playerId: playerIdSchema,
+    folderId: entityId,
+    addedMs: finite,
+    folderIds: z.array(entityId).min(1).max(8),
   }),
   /** A verdict on one botRaid folder resolved the whole wave. */
   z.object({
@@ -409,6 +459,7 @@ export type LobbyPlayer = z.infer<typeof lobbyPlayerSchema>;
 export type WelcomeMessage = z.infer<typeof welcomeMessageSchema>;
 export type RoomStateMessage = z.infer<typeof roomStateMessageSchema>;
 export type PlayerSnapshot = z.infer<typeof playerSnapshotSchema>;
+export type CrewSnapshot = z.infer<typeof crewSnapshotSchema>;
 export type SnapshotMessage = z.infer<typeof snapshotMessageSchema>;
 export type GameEvent = z.infer<typeof gameEventSchema>;
 export type EventMessage = z.infer<typeof eventMessageSchema>;
