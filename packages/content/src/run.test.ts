@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { DIFFICULTIES, ENDLESS_LEVEL_ID } from '@redakcja/shared';
+import { BAG_PREVIEW_SEED, DIFFICULTIES, ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { bagContent, FIXTURE_BAG } from './__fixtures__/bag-level.ts';
 import { realContent } from './__fixtures__/broken.ts';
 import { bagDeadlineS, bagSlotTimes, generateBagLevel, starThresholds } from './bag.ts';
@@ -7,7 +7,7 @@ import { LEVEL_FILES } from './files.ts';
 import { getLevel, LEVELS, prepareLevelRun, STORIES } from './index.ts';
 import { levelStoryIds, maxLevelScore, proofCount } from './rules.ts';
 import { applyDifficulty, prepareRun, resolveLevel, runSummary } from './run.ts';
-import { type Level, levelSchema } from './schema.ts';
+import { type Level, levelFileSchema, levelSchema } from './schema.ts';
 
 const { level: bagFile, stories } = bagContent();
 const byId = new Map(stories.map((story) => [story.id, story]));
@@ -189,10 +189,21 @@ describe('prepareRun and applyDifficulty', () => {
 });
 
 describe('LEVELS', () => {
+  const files = Object.values(LEVEL_FILES).map((file) => levelFileSchema.parse(file));
+
   it('serves every level with an authored schedule exactly as its file', () => {
-    const files = Object.values(LEVEL_FILES).map((file) => levelSchema.parse(file));
-    const fixed = files.filter((level: Level) => !level.bag);
-    expect(fixed.length).toBe(LEVELS.length);
-    expect(LEVELS).toEqual(fixed);
+    expect(LEVELS.map((level) => level.id)).toEqual(files.map((file) => file.id));
+    const fixed = files.filter((file) => !file.bag).map((file) => levelSchema.parse(file));
+    expect(LEVELS.filter((level: Level) => !level.bag)).toEqual(fixed);
+  });
+
+  it('serves every bag level as its Normal preview run', () => {
+    const bagged = files.filter((file) => file.bag);
+    expect(bagged.map((file) => file.id)).toContain('l0-greybox');
+    for (const file of bagged) {
+      expect(getLevel(file.id)).toEqual(
+        generateBagLevel(file, STORIES, BAG_PREVIEW_SEED, 'normal'),
+      );
+    }
   });
 });

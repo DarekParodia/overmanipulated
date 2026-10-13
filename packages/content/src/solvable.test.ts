@@ -16,7 +16,7 @@ import {
   TICK_MS,
 } from '@redakcja/shared';
 import { maxStoryScore } from './checks.ts';
-import { getLevel, LEVELS, storiesForLevel } from './index.ts';
+import { getLevel, getStory, LEVELS, storiesForLevel } from './index.ts';
 import type { Level, Story } from './schema.ts';
 
 /** The campaign levels and the endless preview (its pool is filtered by `isSolvable`). */
@@ -125,9 +125,24 @@ describe('every level is solvable', () => {
     });
   }
 
+  for (const level of LEVELS.filter((l) => l.bag)) {
+    it(`${level.id}: every bag pool story earns its maximum score, dealt or not`, () => {
+      const pool = level.bag?.pool ?? [];
+      expect(pool.length).toBeGreaterThan(0);
+      const issues = pool.flatMap((id) => {
+        const story = getStory(id);
+        const deadlineS = story ? level.bag?.deadlineS[story.priority] : undefined;
+        return story && deadlineS !== undefined
+          ? playStory(level, story, deadlineS)
+          : [`${id} is not a story`];
+      });
+      expect(issues).toEqual([]);
+    });
+  }
+
   it('covers a multi-stamp story: two proofs, 20 s more, and the bonus on top', () => {
     const level = LEVELS.find((l) => l.id === 'l0-greybox');
-    const flood = level ? storiesForLevel(level)['l0-zalany-rynek'] : undefined;
+    const flood = getStory('l0-zalany-rynek');
     if (!level || !flood) {
       throw new Error('greybox level or l0-zalany-rynek missing');
     }

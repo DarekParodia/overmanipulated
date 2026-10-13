@@ -1,7 +1,8 @@
-// A bag level for checks.test.ts and run.test.ts (S7-21): the real greybox level with its schedule
-// and stars replaced by a station bag, and seven extra greybox stories retargeted so every bag
-// station has its pinned target (⌈10 Normal folders / 3 stations⌉ = 4). `thinBagContent` keeps
-// only the ten real stories, which cannot cover a run without repeats.
+// A bag level for checks.test.ts and run.test.ts (S7-21): the greybox schedule fixture with its
+// schedule and stars replaced by a station bag, and seven extra greybox stories retargeted so every
+// bag station has its pinned target (⌈10 Normal folders / 3 stations⌉ = 4). `thinBagContent` keeps
+// only the ten scheduled stories, which cannot cover a run without repeats. Independent of the real
+// l0 bag (S7-27), so content edits do not move these expectations.
 import type { StationKind } from '@redakcja/shared';
 import type { LevelBag, LevelFile, Story } from '../schema.ts';
 import { realContent } from './broken.ts';

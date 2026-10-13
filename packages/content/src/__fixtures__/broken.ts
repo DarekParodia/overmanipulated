@@ -1,21 +1,30 @@
-// Broken content for checks.test.ts: each case takes a fresh copy of the real greybox content,
+// Broken content for checks.test.ts: each case takes a fresh copy of the greybox schedule fixture,
 // breaks exactly one rule and names the issue the validator must report.
 // The JSON files in ./broken/ are the same idea on disk, for the validate.ts CLI.
-import l0Level from '../../levels/l0-greybox.json';
 import l0Stories from '../../stories/l0-greybox.json';
 import type { ContentFile, Issue } from '../checks.ts';
 import { type Level, type LevelFile, levelSchema, type Story, storyFileSchema } from '../schema.ts';
+import greyboxSchedule from './greybox-schedule.json';
 
 export const LEVEL_FILE = 'levels/l0-greybox.json';
 export const STORY_FILE = 'stories/l0-greybox.json';
 
 export type Content = { level: Level; stories: Story[]; extraStories?: Story[] };
 
-/** A deep copy of the real greybox content, safe to mutate. */
+/**
+ * A deep copy of the greybox as an authored-schedule level, safe to mutate: the real l0 plays a
+ * station bag since S7-27, so its last authored schedule and stars are frozen in
+ * `greybox-schedule.json` and keep the schedule rules covered. The stories are the real ones it
+ * schedules, in file order (they stay first in the story file, so issue paths are stable).
+ */
 export function realContent(): Content {
+  const level = levelSchema.parse(greyboxSchedule);
+  const scheduled = new Set(level.schedule.map((spawn) => spawn.storyId));
   return {
-    level: structuredClone(levelSchema.parse(l0Level)),
-    stories: structuredClone(storyFileSchema.parse(l0Stories)),
+    level: structuredClone(level),
+    stories: structuredClone(
+      storyFileSchema.parse(l0Stories).filter((story) => scheduled.has(story.id)),
+    ),
   };
 }
 
