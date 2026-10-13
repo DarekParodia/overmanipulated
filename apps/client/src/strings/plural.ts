@@ -16,3 +16,11 @@ export function pluralPl(n: number, one: string, few: string, many: string): str
   }
   return many;
 }
+
+/** Joins a Polish list: „Lupa”, „Lupa i Mapa”, „Lupa, Skaner, Mapa i Metadane”. */
+export function listPl(items: readonly string[]): string {
+  if (items.length <= 1) {
+    return items[0] ?? '';
+  }
+  return `${items.slice(0, -1).join(', ')} i ${items[items.length - 1]}`;
+}

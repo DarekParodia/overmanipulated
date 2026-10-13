@@ -3,7 +3,7 @@
 import type { Ability, Difficulty, Role, StationFamily, StationKind } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 5;
+export const PROTOCOL_VERSION = 6;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -108,6 +108,10 @@ export const STATION_WORK_MS = {
   phone: 6000,
   aiScanner: 3000,
   dataLibrary: 5000,
+  geolocation: 4000,
+  transcript: 5000,
+  crossCheck: 4000,
+  metadata: 4000,
 } as const satisfies Record<StationKind, number>;
 
 // --- Stage 7: roles, station families, abilities (S7-36) --------------------------------------
@@ -119,10 +123,14 @@ export const STATION_WORK_MS = {
 export const STATION_FAMILY = {
   imageSearch: 'image',
   aiScanner: 'image',
+  geolocation: 'image',
+  metadata: 'image',
   archive: 'documents',
   dataLibrary: 'documents',
+  transcript: 'documents',
   sourceRegistry: 'sources',
   phone: 'sources',
+  crossCheck: 'sources',
 } as const satisfies Record<StationKind, StationFamily>;
 
 /** What a role brings: its passive work bonus, its active ability and its special rules. */
@@ -143,7 +151,7 @@ export type RolePerk = {
 
 export const ROLE_PERKS = {
   photoEditor: {
-    fasterAt: ['imageSearch', 'aiScanner'],
+    fasterAt: ['imageSearch', 'aiScanner', 'geolocation', 'metadata'],
     workFactor: 0.6,
     ability: 'expertise',
     expertiseFamily: 'image',
@@ -151,7 +159,7 @@ export const ROLE_PERKS = {
     rescuesPerLevel: 0,
   },
   archivist: {
-    fasterAt: ['archive'],
+    fasterAt: ['archive', 'transcript'],
     workFactor: 0.6,
     ability: 'expertise',
     expertiseFamily: 'documents',
@@ -159,7 +167,7 @@ export const ROLE_PERKS = {
     rescuesPerLevel: 0,
   },
   reporter: {
-    fasterAt: ['phone'],
+    fasterAt: ['phone', 'crossCheck'],
     workFactor: 0.6,
     ability: 'fieldCall',
     expertiseFamily: null,
@@ -498,6 +506,44 @@ export const DATA_LIBRARY_ROWS = 3;
 export const DATA_LIBRARY_YEARS = 3;
 /** Chance that the claimed figure is altered, for a folder without a data-library stamp. */
 export const DATA_LIBRARY_ALTERED_CHANCE = 0.6;
+
+// --- Stage 7: Mapa (geolocation) minigame (S7-48, played from S7-55) --------------------------
+
+export const GEOLOCATION_MAX_MISTAKES = 2;
+/** The town map: 12 district tiles. */
+export const GEOLOCATION_MAP = { columns: 4, rows: 3 } as const;
+/** Without a geolocation stamp: chance the photo is not from the captioned place. */
+export const GEOLOCATION_PROBLEM_CHANCE = 0.5;
+/** A photo not from the captioned place comes from another district (else another town). */
+export const GEOLOCATION_OTHER_DISTRICT_SHARE = 0.5;
+
+// --- Stage 7: Stenogram (transcript) minigame (S7-48, played from S7-53) ----------------------
+
+export const TRANSCRIPT_MAX_MISTAKES = 2;
+/** Lines of the full record; fits 640x360 as a 2x2 grid of lines at least 48 px tall. */
+export const TRANSCRIPT_LINES = 4;
+/** Without a transcript stamp: chance the clip is cut or absent. */
+export const TRANSCRIPT_PROBLEM_CHANCE = 0.5;
+
+// --- Stage 7: Inne media (crossCheck) minigame (S7-48, played from S7-54) ---------------------
+
+/** Three answers; like aiScanner and phone, one wrong pick fails. */
+export const CROSS_CHECK_MAX_MISTAKES = 1;
+export const CROSS_CHECK_CARDS = 5;
+/** Independent confirmations needed for „Potwierdzają”. */
+export const CROSS_CHECK_CONFIRMATIONS = 2;
+
+// --- Stage 7: Metadane (metadata) minigame (S7-48, played from S7-52) -------------------------
+
+export const METADATA_MAX_MISTAKES = 2;
+/** File fields compared with the claim: taken, device, software, place. */
+export const METADATA_FIELDS = 4;
+/** Without a metadata stamp: weights of the three puzzle outcomes. */
+export const METADATA_NO_STAMP_WEIGHTS = {
+  consistent: 0.4,
+  contradiction: 0.4,
+  stripped: 0.2,
+} as const;
 
 // --- S4-05..S4-09: level event presentation (client) -----------------------------------------
 

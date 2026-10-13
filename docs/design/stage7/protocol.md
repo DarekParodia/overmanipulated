@@ -1,6 +1,6 @@
 # Stage 7 — protocol ledger
 
-PROTOCOL_VERSION ledger. Current value: 5 (S7-36).
+PROTOCOL_VERSION ledger. Current value: 6 (S7-48).
 
 Rules
 - At most one bump per milestone. A milestone is a deployment unit.

@@ -18,6 +18,10 @@ export const STATION_ICON: Record<StationKind, IconName> = {
   phone: 'phone',
   aiScanner: 'aiScanner',
   dataLibrary: 'dataLibrary',
+  geolocation: 'geolocation',
+  transcript: 'transcript',
+  crossCheck: 'crossCheck',
+  metadata: 'metadata',
 };
 
 /** One key cap: a small white chip with a thick outline, like a physical key. */

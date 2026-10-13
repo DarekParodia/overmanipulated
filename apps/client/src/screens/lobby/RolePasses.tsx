@@ -17,7 +17,7 @@ function roleBonus(role: Role): string {
   return (
     special[role] ??
     pl.lobbyRoles.fasterAt(
-      ROLE_PERKS[role].fasterAt.map((station) => pl.vocab.stations[station]),
+      ROLE_PERKS[role].fasterAt.map((station) => pl.guidance.stationShort[station]),
       Math.round((1 - ROLE_PERKS[role].workFactor) * 100),
     )
   );

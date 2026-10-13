@@ -16,10 +16,15 @@ information: deadline warning and ticks ("Termin blisko"), last seconds, pings, 
   not compile until it is decided; `captions.test.ts` also fails for a sound cue without an entry,
   for captions longer than 3 words and for unknown icons.
 - Cues reach the stack through `feedback.onCue` (muted or not). Chips of one group refresh one
-  chip (deadline ticks never pile up); at most 3 are visible (2 on compact screens).
-- The stack sits on the left under the HUD pill; it never covers HUD numbers, the folder queue,
-  event banners (right) or the touch controls (bottom corners). With reduced motion the pop
-  animation has zero duration.
+  chip (deadline ticks never pile up); at most 3 are visible (only the newest on compact screens).
+- The stack sits on the left under the measured HUD band (`hud/hud-band.ts`, S7-11): GameScreen
+  publishes the lowest edge of the pill, the folder queue and the menu button as `--hud-band`,
+  and the captions, event banners and verdict toasts start under it at any screen size and text
+  scale. It never covers HUD numbers, the folder queue, event banners (right) or the touch
+  controls (bottom corners). With reduced motion the pop animation has zero duration.
+- On phones the HUD pill is one low row (clock, points, credibility; about 56 px tall at
+  640×360, band about 64 px), so the captions start right under it; the numbers stay 30 px. A
+  long number widens the pill rather than clipping it, and the folder queue moves along.
 - When sound is muted and captions are off, a one-time "Włącz napisy" chip offers them.
 
 ## Colour blindness
@@ -89,5 +94,7 @@ desktop browsers simply do nothing.
 ## Left-handed mode
 
 Outside `TouchControls` the guidance dock and the ping picker already mirror. The caption stack
-(top-left), event banners (top-right), HUD and room chip never sit in the bottom corners where the
-mirrored controls live, so nothing collides.
+(top-left; on compact screens it moves to the right edge, at its old 10 rem offset under the
+event banners and never above the HUD band), event banners (top-right), the HUD and the menu
+button never sit in the bottom corners where the mirrored controls live, so nothing collides.
+The one-row phone pill (S7-11) changes none of this.

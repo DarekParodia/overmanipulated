@@ -83,6 +83,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Kampania | `campaign` | |
 | Tryb nieskończony | `endlessMode` | |
 | Pokój, kod pokoju | `room`, `roomCode` | |
+| Pas HUD | `hudBand` (`hud/hud-band.ts`: `bandBottom`, `useHudBand`, `useHudBandMeasure`; CSS `--hud-band`, `--hud-pill-right`) | How far down the top-of-screen HUD reaches: the lowest edge of the elements marked `data-hud-band` (pill, folder queue, menu button, endless tempo chip) that start in the upper half of the screen, capped at `HUD_BAND_MAX_SHARE` of its height. Captions, event banners and verdict toasts start under it; the follow camera frames the room below it (S7-12) |
 | Menu gry | `gameMenu` (`hud/GameMenu.tsx`, `GameMenuButton.tsx`, `useGameMenu`, `pl.gameMenu`) | The in-game menu: one top-right button (Esc, Start) opening a sheet with „Wróć do gry”, settings, fullscreen, room code and „Wyjdź z redakcji” (two presses within `LEAVE_CONFIRM_MS`). Replaces the tool buttons and the room chip |
 | Pauza | `paused` (snapshot, `GameStore.paused`), lobby action `setPaused` | A solo player's open menu holds the level: the registry skips stepping the room. Only while playing with exactly one connected player; anyone joining or reconnecting clears it. With teammates the menu shows „Gra trwa dalej” and nothing pauses |
 | Gospodarz | `host` | |
@@ -107,7 +108,11 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | statystyka | `statistic` |
 | artykuł | `article` |
 
-## Stations (`StationId`)
+## Stations (`StationKind`)
+
+`stationKindSchema` / `STATION_KINDS`. Layout letters in `sim/map.ts`: `I A R P S L` and, from
+Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint name
+`pl.guidance.stationShort`.
 
 | Polish | English | Real-world analogue |
 | --- | --- | --- |
@@ -117,6 +122,10 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Telefon | `phone` | Contacting the original source |
 | Skaner AI | `aiScanner` | AI/edit detectors |
 | Biblioteka danych | `dataLibrary` | Official statistics, source reports |
+| Mapa | `geolocation` (letter `G`) | Geolocation with maps and street imagery |
+| Stenogram | `transcript` (letter `Q`, for quote) | Full transcripts and recordings of statements |
+| Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
+| Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
 ## Roles (`RoleId`)
 
@@ -125,9 +134,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 
 | Polish | English | Bonus (passive) | Ability |
 | --- | --- | --- | --- |
-| Fotoedytor | `photoEditor` | `imageSearch` and `aiScanner` 40% faster | Ekspertyza (`image` family) |
-| Archiwista | `archivist` | `archive` 40% faster | Ekspertyza (`documents` family) |
-| Reporter | `reporter` | `phone` 40% faster; skips the `phone` queue | Telefon z terenu |
+| Fotoedytor | `photoEditor` | `imageSearch`, `aiScanner`, `geolocation` and `metadata` 40% faster | Ekspertyza (`image` family) |
+| Archiwista | `archivist` | `archive` and `transcript` 40% faster | Ekspertyza (`documents` family) |
+| Reporter | `reporter` | `phone` and `crossCheck` 40% faster; skips the `phone` queue | Telefon z terenu |
 | Redaktor prowadzący | `managingEditor` | — | Przedłużenie |
 
 ## Abilities (`Ability`, Stage 7)
@@ -155,9 +164,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 
 | Polish | English | Stations |
 | --- | --- | --- |
-| Obraz | `image` | `imageSearch`, `aiScanner` |
-| Dokumenty | `documents` | `archive`, `dataLibrary` |
-| Źródła | `sources` | `sourceRegistry`, `phone` |
+| Obraz | `image` | `imageSearch`, `aiScanner`, `geolocation`, `metadata` |
+| Dokumenty | `documents` | `archive`, `dataLibrary`, `transcript` |
+| Źródła | `sources` | `sourceRegistry`, `phone`, `crossCheck` |
 
 ## Random events (`EventKind`)
 

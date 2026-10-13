@@ -9,6 +9,7 @@ import {
   EVENTS,
   parseLayout,
   STAR_SHARES,
+  STATION_KINDS,
 } from '@redakcja/shared';
 import {
   type BagContent,
@@ -41,7 +42,7 @@ import {
 import { ENDLESS_LAYOUT } from './endless.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { LEVELS, STORIES } from './index.ts';
-import { type LevelBag, type LevelFile, levelFileSchema } from './schema.ts';
+import { type LevelBag, type LevelFile, levelFileSchema, storySchema } from './schema.ts';
 
 const packageRoot = resolve(import.meta.dir, '..');
 
@@ -176,6 +177,38 @@ describe('multi-stamp stories (S7-18)', () => {
     expect(
       proofCount({ ...story, justifyingStamps: ['ai', 'phone'] }, ['aiScanner', 'phone']),
     ).toBe(1);
+  });
+});
+
+describe('story stamps (S7-48: ten station kinds)', () => {
+  const base = STORIES.find((story) => story.id === 'l0-zalany-rynek');
+  const stampFor = (station: string, i: number) => ({
+    id: `l0-zalany-rynek-${i}`,
+    station,
+    text: 'Pieczątka testowa.',
+    relevance: i === 0 ? 'decisive' : 'irrelevant',
+  });
+
+  it('accepts one stamp for each of the 10 station kinds', () => {
+    expect(STATION_KINDS).toHaveLength(10);
+    const stamps = STATION_KINDS.map(stampFor);
+    const result = storySchema.safeParse({
+      ...base,
+      stamps,
+      justifyingStamps: ['l0-zalany-rynek-0'],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an eleventh stamp', () => {
+    const stamps = [...STATION_KINDS.map(stampFor), stampFor('imageSearch', 10)];
+    const result = storySchema.safeParse({
+      ...base,
+      stamps,
+      justifyingStamps: ['l0-zalany-rynek-0'],
+    });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.some((issue) => issue.code === 'too_big')).toBe(true);
   });
 });
 

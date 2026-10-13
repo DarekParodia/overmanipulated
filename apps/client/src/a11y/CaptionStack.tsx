@@ -1,7 +1,7 @@
 // Caption stack (S5-05): short icon + word chips for sounds that carry information, in a
-// compact column on the left under the HUD pill — clear of the HUD numbers, the folder queue,
-// the event banners (right) and the touch controls (bottom corners). Also offers captions once
-// when the sound is muted.
+// compact column on the left under the measured HUD band (`--hud-band`, hud/hud-band.ts) —
+// clear of the HUD numbers, the folder queue, the event banners (right) and the touch controls
+// (bottom corners). Also offers captions once when the sound is muted.
 import { useEffect, useState } from 'react';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';

@@ -173,6 +173,10 @@ export const STATION_PURPOSE = {
   phone: help.phone.purpose,
   aiScanner: help.aiScanner.purpose,
   dataLibrary: help.dataLibrary.purpose,
+  geolocation: help.geolocation.purpose,
+  transcript: help.transcript.purpose,
+  crossCheck: help.crossCheck.purpose,
+  metadata: help.metadata.purpose,
 } satisfies Record<StationKind, string>;
 
 export const ICON_FOR_STATION = {
@@ -182,4 +186,8 @@ export const ICON_FOR_STATION = {
   phone: 'phone',
   aiScanner: 'aiScanner',
   dataLibrary: 'dataLibrary',
-} as const satisfies Record<string, IconName>;
+  geolocation: 'geolocation',
+  transcript: 'transcript',
+  crossCheck: 'crossCheck',
+  metadata: 'metadata',
+} as const satisfies Record<StationKind, IconName>;

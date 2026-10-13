@@ -1,7 +1,10 @@
 // Game vocabulary shared by content, simulation and protocol. Names follow agents/glossary.md.
 import { z } from 'zod';
 
-/** Verification stations from the design document. Stage 2 levels use the first three. */
+/**
+ * Verification stations from the design document. Stage 2 levels use the first three; Stage 7
+ * (M4) adds Mapa, Stenogram, Inne media and Metadane.
+ */
 export const stationKindSchema = z.enum([
   'imageSearch',
   'archive',
@@ -9,6 +12,10 @@ export const stationKindSchema = z.enum([
   'phone',
   'aiScanner',
   'dataLibrary',
+  'geolocation',
+  'transcript',
+  'crossCheck',
+  'metadata',
 ]);
 
 export const verdictSchema = z.enum(['publish', 'reject', 'publishWithContext']);

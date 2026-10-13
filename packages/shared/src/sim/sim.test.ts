@@ -34,6 +34,16 @@ describe('parseLayout', () => {
     expect(() => parseLayout(['#2#'])).toThrow();
   });
 
+  it('maps the Stage 7 station letters G, Q, X and E to the four new kinds', () => {
+    const map = parseLayout(['######', '#GQXE#', '#.1..#', '######']);
+    expect(map.fixtures.map((f) => [f.id, f.station])).toEqual([
+      ['geolocation-0', 'geolocation'],
+      ['transcript-0', 'transcript'],
+      ['crossCheck-0', 'crossCheck'],
+      ['metadata-0', 'metadata'],
+    ]);
+  });
+
   it('has four spawn points on floor in the greybox newsroom', () => {
     expect(GREYBOX_MAP.spawns).toHaveLength(4);
     for (const spawn of GREYBOX_MAP.spawns) {

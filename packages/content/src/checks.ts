@@ -378,12 +378,12 @@ function checkStory(story: Story, report: Report): void {
     const station = stampsById.get(id)?.station;
     return station ? [station] : [];
   });
-  if (justifyingStations.length > 0 && justifyingStations.every((s) => s === 'aiScanner')) {
+  if (justifyingStations.length > 0 && justifyingStations.every(isHintOnly)) {
     report(['justifyingStamps'], 'error', 'an AI scanner stamp must never be decisive alone');
   }
-  const hasOtherJustification = justifyingStations.some((station) => station !== 'aiScanner');
+  const hasOtherJustification = justifyingStations.some((station) => !isHintOnly(station));
   story.stamps.forEach((stamp, i) => {
-    if (stamp.station === 'aiScanner' && stamp.relevance === 'decisive' && !hasOtherJustification) {
+    if (isHintOnly(stamp.station) && stamp.relevance === 'decisive' && !hasOtherJustification) {
       report(
         ['stamps', i, 'relevance'],
         'error',
