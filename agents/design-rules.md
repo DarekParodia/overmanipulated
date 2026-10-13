@@ -17,7 +17,11 @@ blocks you, raise it in the plan's *Open questions*; don't quietly break it.
    only yellow (`primary`) button. Everything else is white (`secondary`) or a text link.
 2. **Show, don't write.** Icon + one short word beats a sentence. Instructions are at most one
    line (≤ 8 words). Explanations belong in the tutorial or the debrief, never in the middle of
-   play.
+   play. Exception (S7-95): the first-use station help card (`StationHelpCard`, variant
+   `inPlay`) is the one explanation allowed in play. It covers the minigame, pauses the client
+   minigame clock while it is up (the folder deadline keeps running and the card says so), keeps
+   every line ≤ 8 words and has one yellow „Rozumiem”. It shows by itself only on a station's
+   first use per browser; after that only the '?' in the overlay header (H / Select) opens it.
 3. **Big numbers, few numbers.** The HUD shows only time, points, credibility and up to 3 folders;
    a free queue slot may hold one dashed ghost card counting down to the next folder (or „Taśma
    pełna”). Level-event folders are not telegraphed. Anything else is hidden or moved to the

@@ -307,7 +307,7 @@ export function ImageSearch({
       cycleFragment();
     } else if (intent === 'confirm') {
       choose(state.cursor);
-    } else if (intent !== 'back' && intent !== 'ability') {
+    } else if (intent !== 'back' && intent !== 'ability' && intent !== 'help') {
       const cursor = moveCursor(state.cursor, intent, puzzle.results.length);
       if (cursor !== state.cursor) {
         const next = { ...state, cursor };

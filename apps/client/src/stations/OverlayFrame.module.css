@@ -95,6 +95,37 @@
   box-shadow: var(--pop-pressed);
 }
 
+/* Station help '?' (S7-95): a smaller purple (help, design-rules §3) round button before the
+   close, 48 px so it stays a full touch target. */
+.help {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  background: var(--purple);
+  color: var(--text-on-dark);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.help svg {
+  stroke-width: 3;
+}
+
+.help:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
 /* --- Time bar ------------------------------------------------------------------------- */
 
 .time {
@@ -145,6 +176,26 @@
 .urgent .clock {
   color: var(--red-dark);
   animation: wobble 600ms ease-in-out infinite;
+}
+
+.content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The station help card over the body (S7-95): bounded by the panel, so the card's own body
+   scrolls and its footer („Rozumiem”) always shows, down to 640×360. */
+.cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  background: var(--surface);
 }
 
 .body {
@@ -218,6 +269,10 @@
 
   .body {
     padding: var(--space-2) var(--space-3);
+  }
+
+  .cover {
+    padding: var(--space-2);
   }
 }
 

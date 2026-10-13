@@ -19,6 +19,30 @@ export async function closePlayers(): Promise<void> {
   await Promise.all(openContexts.splice(0).map((context) => context.close()));
 }
 
+/** Every station kind (`stationKindSchema` in packages/shared; e2e cannot import workspaces). */
+const STATION_KINDS = [
+  'imageSearch',
+  'archive',
+  'sourceRegistry',
+  'phone',
+  'aiScanner',
+  'dataLibrary',
+  'geolocation',
+  'transcript',
+  'crossCheck',
+  'metadata',
+] as const;
+
+/**
+ * Marks every station's help card as seen in this page's browser (S7-95), so a station overlay
+ * opens straight on its minigame. Call after the page loaded the game's origin.
+ */
+export async function skipStationHelp(page: Page): Promise<void> {
+  await page.evaluate((kinds) => {
+    localStorage.setItem('redakcja.stationHelp.v1', JSON.stringify(kinds));
+  }, STATION_KINDS);
+}
+
 /** Registers a context opened by a spec itself, so `closePlayers` disposes of it too. */
 export function trackContext(context: BrowserContext): void {
   openContexts.push(context);

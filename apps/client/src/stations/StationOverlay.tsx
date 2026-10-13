@@ -4,6 +4,10 @@
 // A station that keeps its card (the Kartoteka, MINIGAME_STABLE_SEED_STATIONS) starts a round
 // that follows a cancel with the clock that was left (S7-14, retry-memory.ts). The room's
 // difficulty sets the time limit and whether a failure shows the answer (S7-24, rules.ts).
+// The first time this browser opens a station, its help card covers the minigame, which starts
+// only when the card is closed; the '?' in the header (H / Select) brings the card back. While
+// the card is up the client clock stands still and the card takes every nav intent (S7-95). The
+// server's folder deadline keeps running, and the card says so.
 import { getStory } from '@redakcja/content';
 import {
   type Folder,
@@ -13,26 +17,21 @@ import {
 } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
-import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
+import { type NavIntent, subscribeNav, useInputCapture } from '../input/ui-nav.ts';
 import { sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { KeyCap, ResultMark, STATION_ICON } from './kit.tsx';
 import { minigameFor } from './minigames/index.ts';
-import {
-  recallCard,
-  remainingAfter,
-  roundClockMs,
-  useRetryMemory,
-} from './minigames/retry-memory.ts';
+import { recallCard, roundClockMs, useRetryMemory } from './minigames/retry-memory.ts';
 import { roundRules } from './minigames/rules.ts';
 import { OverlayFrame } from './OverlayFrame.tsx';
 import { secondsLeft } from './overlay-logic.ts';
+import { StationHelpCard } from './StationHelpCard.tsx';
 import styles from './StationOverlay.module.css';
-
-/** How often the minigame clock re-renders. */
-const CLOCK_INTERVAL_MS = 100;
+import { markStationHelpSeen, stationHelpSeen } from './station-help-store.ts';
+import { useMinigameClock } from './use-minigame-clock.ts';
 
 export type StationOverlayProps = {
   station: Station;
@@ -56,21 +55,41 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
   // minigame phase, so a Kartoteka retry (same seed, same key) still mounts afresh.
   const [rules] = useState(() => roundRules(station.kind, difficulty));
   const limitMs = rules.timeLimitMs;
-  const [{ clockMs, resumeMs }] = useState(() => {
+  // A Kartoteka card put down unfinished resumes with the clock it had (S7-14).
+  const [resumeMs] = useState(() => {
     const entry = keepsCard ? recallCard(seed) : undefined;
-    const clock = roundClockMs(entry, limitMs);
     const resumed = entry !== undefined && entry.remainingMs !== null;
-    return { clockMs: clock, resumeMs: resumed ? clock : undefined };
+    return resumed ? roundClockMs(entry, limitMs) : undefined;
   });
-  const [startedAt] = useState(() => performance.now());
-  const [now, setNow] = useState(startedAt);
+  // First use: the help card is up and the minigame waits for „Rozumiem”.
+  const [helpOpen, setHelpOpen] = useState(() => !stationHelpSeen(station.kind));
+  const [gameStarted, setGameStarted] = useState(!helpOpen);
+  const helpOpenRef = useRef(helpOpen);
+  helpOpenRef.current = helpOpen;
+  const clock = useMinigameClock(limitMs, helpOpen, resumeMs);
   const settled = useRef(false);
-  const elapsed = now - startedAt;
   const playable = story !== undefined;
 
   useInputCapture(true);
   useEffect(() => {
     emitCue('station.open');
+  }, []);
+  useEffect(() => {
+    markStationHelpSeen(station.kind);
+  }, [station.kind]);
+
+  const openHelp = useCallback(() => {
+    // Set at once, so an intent that arrives before the next render already goes to the card.
+    helpOpenRef.current = true;
+    setHelpOpen(true);
+  }, []);
+  const closeHelp = useCallback(() => {
+    if (!helpOpenRef.current) {
+      return;
+    }
+    helpOpenRef.current = false;
+    setHelpOpen(false);
+    setGameStarted(true);
   }, []);
 
   const finish = useCallback(
@@ -93,57 +112,88 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
     [station.id, keepsCard, seed, onResult],
   );
 
+  const { readRemaining } = clock;
   const close = useCallback(() => {
     if (settled.current) {
       return;
     }
     settled.current = true;
-    if (keepsCard && playable) {
+    if (keepsCard && playable && gameStarted) {
       // Putting the card down keeps the clock where it was: no fresh time for a peek.
-      const left = remainingAfter(clockMs, performance.now() - startedAt);
-      useRetryMemory.getState().rememberCancel(seed, left);
+      useRetryMemory.getState().rememberCancel(seed, readRemaining());
     }
     sendCommand({ kind: 'cancel' });
     onClose();
-  }, [keepsCard, playable, clockMs, startedAt, seed, onClose]);
+  }, [keepsCard, playable, gameStarted, readRemaining, seed, onClose]);
 
   useEffect(() => {
-    if (!playable) {
-      return;
-    }
-    const timer = setInterval(() => setNow(performance.now()), CLOCK_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [playable]);
-
-  useEffect(() => {
-    if (playable && elapsed >= clockMs) {
+    if (playable && clock.remainingMs <= 0) {
       finish(false);
     }
-  }, [playable, elapsed, clockMs, finish]);
+  }, [playable, clock.remainingMs, finish]);
 
-  // The frame only takes `back`; everything else goes on to the minigame inside.
-  useNavIntent((intent) => {
+  // The frame takes `back` and `help`; everything else goes on to the minigame inside. While
+  // the help card is up it takes every intent: confirm, back and help close the card (never the
+  // station), the rest does nothing.
+  const onIntent = useRef<(intent: NavIntent) => unknown>(() => false);
+  onIntent.current = (intent) => {
+    if (helpOpenRef.current) {
+      if (intent === 'confirm' || intent === 'back' || intent === 'help') {
+        emitCue(intent === 'back' ? 'ui.back' : 'ui.click');
+        closeHelp();
+      }
+      return true;
+    }
+    if (intent === 'help') {
+      emitCue('ui.click');
+      openHelp();
+      return true;
+    }
     if (intent !== 'back') {
       return false;
     }
     emitCue('ui.back');
     close();
     return true;
-  });
+  };
+  // Subscribed again once the minigame mounts (after the first-use card), so the frame stays
+  // the newest listener and sees every intent before the minigame does.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: gameStarted re-subscribes on purpose
+  useEffect(() => subscribeNav((intent) => onIntent.current(intent)), [gameStarted]);
 
   const Game = minigameFor(station.kind);
-  const timeLeft = remainingAfter(clockMs, elapsed);
+  const timeLeft = clock.remainingMs;
   // Shares of the full limit, so a resumed round shows the clock as it was left.
-  const timeUsed = Math.min(1, 1 - timeLeft / limitMs);
+  const timeUsed = clock.timeUsed;
+  const name = pl.vocab.stations[station.kind];
 
   return (
     <OverlayFrame
-      title={pl.vocab.stations[station.kind]}
+      title={name}
       icon={STATION_ICON[station.kind]}
       closeLabel={pl.station.leave}
       backKey={pl.station.backKey[device]}
       onClose={close}
       testId="station-overlay"
+      help={
+        helpOpen
+          ? undefined
+          : {
+              onOpen: openHelp,
+              label: pl.stationHelp.openLabel(name),
+              keyCap: pl.stationHelp.key[device],
+            }
+      }
+      cover={
+        helpOpen ? (
+          <StationHelpCard
+            kind={station.kind}
+            device={device}
+            focusGot={device !== 'touch'}
+            onClose={closeHelp}
+          />
+        ) : undefined
+      }
       time={
         playable
           ? {
@@ -154,7 +204,7 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
           : undefined
       }
     >
-      {story ? (
+      {!gameStarted ? null : story ? (
         <Game
           seed={seed}
           folderId={folder?.id ?? ''}
