@@ -1461,6 +1461,213 @@
     "reviewed": false
   },
   {
+    "id": "l6-plakat-sprzed-lat",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Plakat ZT: „Dwunastka zostaje na zawsze!”. A teraz referendum?",
+    "body": "Zdjęcie plakatu Zarządu Transportu na przystanku Rynek, z hasłem „Dwunastka zostaje na zawsze!”. Wpis: „Obiecali, a teraz chcą ją zlikwidować”.",
+    "source": "Profil komitetu „Zostaje12”",
+    "stamps": [
+      {
+        "id": "l6-plakat-sprzed-lat-image",
+        "station": "imageSearch",
+        "text": "Lupa: plakat z jubileuszu 50 lat linii 12 w 2015 r. Prawdziwy, ale sprzed lat.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-archive",
+        "station": "archive",
+        "text": "Archiwum: wycinki o linii 12 dotyczą głównie zmian rozkładu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-source",
+        "station": "sourceRegistry",
+        "text": "Zarejestrowany komitet referendalny, aktywny od trzech miesięcy. Podaje skład zarządu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-phone",
+        "station": "phone",
+        "text": "Rzeczniczka Zarządu Transportu oddzwoni po południu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne (91%), nie jest generowane.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o plakatach i kampaniach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-map",
+        "station": "geolocation",
+        "text": "Plakat wisi na przystanku Rynek. Miejsce się zgadza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, plakat krąży tylko w grupach.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-plakat-sprzed-lat-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Prawdziwy plakat Zarządu Transportu, ale z 2015 r., z jubileuszu 50 lat linii 12. Hasło było życzeniem na urodziny linii, a nie obietnicą na dziś.",
+      "technique": "Stare zdjęcie z nowym podpisem: autentyczny obraz sprzed lat pokazany tak, jakby był aktualny. Każdy szczegół jest prawdziwy, myli tylko czas.",
+      "tool": "Lupa obrazu: pierwsza publikacja zdjęcia plakatu pochodzi z 2015 r. Mapa potwierdziła tylko miejsce, a nie datę.",
+      "realWorld": "W kampaniach wracają stare plakaty i hasła jako „dowód złamanych obietnic”. Sprawdź, kiedy zdjęcie pojawiło się pierwszy raz i z jakiej okazji powstało hasło."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-baner-na-dwunastce",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Miejska spółka agituje? Na dwunastce baner „Głosuj NIE”",
+    "body": "Zdjęcie autobusu linii 12 w zajezdni przy ulicy Portowej, z wielkim banerem „W niedzielę głosuj NIE”. Wpis: „Zarząd Transportu łamie zasady kampanii za nasze pieniądze”.",
+    "source": "Wpis na profilu „Patrzymy Władzy na Ręce”",
+    "stamps": [
+      {
+        "id": "l6-baner-na-dwunastce-image",
+        "station": "imageSearch",
+        "text": "Lupa: oryginał w galerii Zarządu Transportu z 2023 r. Ten sam autobus, bez banera.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych skarg na reklamy w autobusach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-source",
+        "station": "sourceRegistry",
+        "text": "Profil istnieje od 2 lat, często pisze o komunikacji miejskiej.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-phone",
+        "station": "phone",
+        "text": "Rzecznik Zarządu Transportu na urlopie, biuro nic nie wie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 74%. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o reklamach w pojazdach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-map",
+        "station": "geolocation",
+        "text": "Zajezdnia przy ulicy Portowej, miejsce się zgadza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-media",
+        "station": "crossCheck",
+        "text": "Trzy portale to powtarzają – same kopie wpisu.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l6-baner-na-dwunastce-image"],
+    "technique": "zmanipulowane-zdjecie",
+    "debrief": {
+      "what": "Fotomontaż: na zdjęcie autobusu z galerii Zarządu Transportu doklejono baner, którego nigdy nie było.",
+      "technique": "Tania podróbka: prosty montaż w edytorze zdjęć, bez sztucznej inteligencji. Jeden doklejony element zmienia sens całego obrazu.",
+      "tool": "Lupa obrazu: wyszukiwanie obrazem znalazło oryginał bez banera. Skaner AI nic nie wykrył, bo to nie obraz z generatora.",
+      "realWorld": "W kampaniach krążą zdjęcia z doklejonymi hasłami na autobusach, budynkach czy transparentach. Wyszukiwanie obrazem często szybko odnajduje oryginał."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-kronika-dwunastki",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Dwunastkę skrócono już w 2009 r. Wróciła po pół roku",
+    "body": "Wpis pasjonata komunikacji: „W 2009 r. linię 12 skrócono do Rynku. Po protestach mieszkańców wróciła pełna trasa. Historia lubi się powtarzać”.",
+    "source": "Blog „Kronika komunikacji NB”",
+    "stamps": [
+      {
+        "id": "l6-kronika-dwunastki-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-archive",
+        "station": "archive",
+        "text": "Archiwum: „Kurier Nowobrzeski” z 2009 r. opisuje skrócenie linii 12 i powrót pełnej trasy po pół roku.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-kronika-dwunastki-source",
+        "station": "sourceRegistry",
+        "text": "Anonimowy blog bez nazwiska autora i danych kontaktowych.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kronika-dwunastki-phone",
+        "station": "phone",
+        "text": "Zarząd Transportu: dokumenty sprzed 2010 r. są w składnicy, sprawdzimy za tydzień.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst wygenerowany w 55%. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kronika-dwunastki-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: liczba pasażerów dopiero od 2012 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-map",
+        "station": "geolocation",
+        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, to stara historia.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-kronika-dwunastki-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa ciekawostka: archiwalne wydanie gazety potwierdza, że w 2009 r. linię 12 skrócono, a po pół roku przywrócono pełną trasę.",
+      "technique": "Brak manipulacji. Anonimowy blog i niepewny wynik skanera AI nie przesądzają o fałszu – liczy się to, co da się sprawdzić w źródłach.",
+      "tool": "Archiwum: wycinek z 2009 r. potwierdza oba fakty. Rejestr źródeł i skaner AI tylko budziły wątpliwości.",
+      "realWorld": "Historyczne ciekawostki często krążą bez podanego źródła. Cyfrowe archiwa gazet i bibliotek pozwalają szybko je sprawdzić, zanim uznamy je za plotkę."
+    },
+    "reviewed": false
+  },
+  {
     "id": "l6-nalot-zostaje12",
     "type": "post",
     "priority": "important",
