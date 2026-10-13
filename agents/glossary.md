@@ -128,7 +128,7 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`):
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`, `geolocation.logic.ts`, `crossCheck.logic.ts`):
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -142,6 +142,12 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, 
 | Wycięty cytat (Sens zmieniony) | `cut` (`TranscriptVariant`; judgement `changed`) | The left-out words were the point; the cut flips the meaning. The cut words are `cutWords(line, clip)` |
 | Nie ma w zapisie | `absent` (`TranscriptVariant`; action `notInTranscript`) | Nobody said the clip; a decoy line shares its words but says something else |
 | Szukanie / Ocena | `Phase`: `find` / `judge` | Stenogram's two phases: find the clip's line, then judge the cut |
+| Podpis / Dzielnica / Obiekt | `GeoPuzzle.claimed` / `MapTile` (`district`) / `Landmark` | Mapa: the district the photo's caption names / one of the 12 districts of the town map (`GEOLOCATION_MAP`, 4×3), each with a unique pair of landmarks / one of the ten landmark glyphs (`LANDMARKS`, `landmarks.tsx`), told apart by shape alone |
+| Zgodne miejsce / Inna dzielnica / Inne miasto (Nie ma na mapie) | `match` / `otherDistrict` / `otherTown` (`GeoOutcome`; answer `NOT_HERE` for `otherTown`) | Mapa: the photo is from the captioned district / from another district on the map / from off the map; an off-map photo shares one landmark with a district (a decoy) |
+| Relacja (agencja, redakcja, satyra, anonim, portal-klon) | `CoverageCard` (`OutletKind`: `agency`, `newsroom`, `satire`, `anonymous`, `junk`) | Inne media: what another outlet says about the folder's claim, with its stance (`confirms`, `denies`, `echoes`) and source line |
+| Kopia (pisze to samo, za: …) | `echoes` (`Stance`) | Repeats someone else's post: looks exactly like a confirmation, counts for nothing; gets the „kopia” stamp after the round |
+| Niezależne źródło | `isIndependent(card)` | An agency or newsroom card with its own reporter (not an echo). Only these count |
+| Potwierdzają / Zaprzeczają / Za mało źródeł | `confirmed` / `denied` / `unconfirmed` (`Conclusion`, `conclude(cards)`) | Any independent denial → denied; ≥ `CROSS_CHECK_CONFIRMATIONS` (2) independent confirmations → confirmed; else unconfirmed |
 
 ## Roles (`RoleId`)
 
@@ -154,6 +160,8 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Archiwista | `archivist` | `archive` and `transcript` 40% faster | Ekspertyza (`documents` family) |
 | Reporter | `reporter` | `phone` and `crossCheck` 40% faster; skips the `phone` queue | Telefon z terenu |
 | Redaktor prowadzący | `managingEditor` | — | Przedłużenie |
+| Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
+| Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
 
 ## Abilities (`Ability`, Stage 7)
 
@@ -248,6 +256,14 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Audio bus | `AudioBus`: `music` / `sfx` / `ui` / `voice` | Each bus has its own volume slider; effective volume is `busVolume(settings, bus)` (`fx/audio/mix.ts`) |
 | Lektor (intro voiceover) | `voice` bus, `voiceVolume`, `fx/audio/voice.ts` (`loadVoice`, `playVoice`, `voiceStatus`) | Narrator lines of the intro; its own slider 'Lektor'; dips the music to `DUCK_TUNING.voiceDepth` (0.3); silent and skipped when muted, not loaded or locked |
 | Music duck | `Ducker`, `musicDucker`, `DUCK_TUNING` (`fx/audio/duck.ts`) | Short dip of the music bus under a stinger (`depth` 0.45) or a voice line (`voiceDepth` 0.3); the lowest active depth wins |
+| Wprowadzenie (intro) | `intro` (`apps/client/src/intro/`, `pl.intro`) | The narrated walk-through of the game (60–90 s): autoplays once per browser in the training lobby, replayable from „Jak grać?” and the settings |
+| Scena wprowadzenia | intro scene (`IntroScene`, `INTRO_SCENES`, `IntroSceneId`) | One of 11 steps (`welcome` … `end`); its stage is UI-kit art (`kit`) or the live sim (`engine`) |
+| Klip lektora | intro clip (`IntroClip`, `INTRO_CLIPS`, `IntroClipId`) | One narrator line: 8 shared plus 3 × 3 device variants (`pickup.touch`) = 17; the id keys the voice sprite and the line export |
+| Ścieżka sterowania sceny | scripted input track (`IntroTrackId`) | The inputs that drive the local sim in a gameplay scene: `conveyorArrivals`, `pickUpFolder`, `holdWork`, `earnStamp`, `citeAndVerdict` |
+| Napisy lektora | subtitles (`subtitleChunks`, `SubtitleChunk`) | Always on; one sentence per chunk, timed by its share of characters, at most 2 lines at 640×360 (`INTRO_SUBTITLE_LINE_CHARS`) |
+| Czas bez głosu | fallback timing (`fallbackMs`, `sceneDurationMs`, `introReducer`) | A scene without a voice lasts 400 ms per word, 2.5–12 s; with a voice it moves on 450 ms after the clip ends (at the latest the clip + 1.5 s) |
+| Wprowadzenie obejrzane | intro seen flag (`redakcja.intro.seen.v1`, `introSeen`, `markIntroSeen`, `shouldAutoplayIntro`) | Set on finishing or skipping; the game starting mid-intro does not set it |
+| Tekst dla lektora | TTS text (`ttsText`, `PRONOUNCE`, `tools/audio/intro-lines.ts`) | A subtitle as the voice says it: plain spaces, no quotes, key names respelled („klawiszem er”) |
 
 ## Server config and ads (Stage 7)
 
@@ -281,5 +297,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Statystyki meczu | match stats (`playerStatsSchema`, `PlayerStats`, `matchStats`, `levelEnd.stats`) | Per player: verdicts, correct, wrong, stamps, minigame fails, abilities; sent to spectators at 1 Hz (`SPECTATOR_STATS_INTERVAL_TICKS`) and in `levelEnd` |
 | Wynik pojedynku | versus summary (`versusSummarySchema`, `VersusSummary`, `levelEnd.versus`, `versusEndReason`) | `{winnerTeam (null on a draw), reason: score / credibility / forfeit / draw, teams, rivalResults}`; `rivalResults` pair with the team's own results by `spawnKey` |
 | Minimalny czas rozwiązania | `MINIGAME_MIN_SOLVE_MS` | Versus only: a minigame success reported sooner after the minigame opened counts as a failure (anti-cheat, enforced from S7-80) |
+| Ładowarka reklam | `ensureAdSense`, `AdLoaderState` (`idle` / `loading` / `ready` / `blocked`), `useAdLoader` (`apps/client/src/ads/adsense.ts`) | Injects Google's script once, when the first `AdSlot` mounts; the request flags (`AD_QUEUE_FLAGS`) are on the queue first. An error or `ADS_LOAD_TIMEOUT_MS` without a load means `blocked`: no ads, no message |
+| Ramka reklamy | `AdSlot` (`placement`) | The white "Reklama" frame around one fixed-size unit (`AD_PLACEMENTS`); renders nothing on phones, with ads off, without a unit for the placement or when the loader is blocked. No cue, never focusable |
+| Ekran reklamowy | `adEligible({screen, levelEnded, spectating})`, `AD_ELIGIBLE_SCREENS` | Main menu, lobby, results of a finished level, spectator view; nowhere else |
+| Wstrzymanie reklam | `useAdRequestPause`, `setAdRequestsPaused` (`pauseAdRequests`) | Pause guard mounted in `App`: ad requests are paused on every screen that is not an ad screen |
+| Odstęp od reklamy | `--space-ad-gap` (9.5rem), `AD_MIN_GAP_PX` (150) | Clear space between an ad and any control (AdSense game-page guidance) |
+| Znacznik wieku zgody | `data-tag-for-under-age-of-consent` (TFUA), `data-tag-for-age-treatment` (TFAT) | Per-unit tags from `adRequestAttributes`: TFUA in `limited` mode (Google serves limited ads), TFAT `1` child / `2` teen |
 
 Missing a term? Add it here in the same commit that introduces it.

@@ -103,7 +103,11 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   rescues left hangs on the ring. Folder cards carry the ability marks: an hourglass „+20” chip
   on the top-right corner after Przedłużenie or Koło ratunkowe, a lifebuoy on the top-left corner
   while a Ratownik with the rescue left carries the folder, and a dashed blue outline on the card
-  the player's ready press would act on. Captions, event banners and verdict toasts start
+  the player's ready press would act on. In a minigame the player's Ekspertyza covers, the
+  overlay header shows a white „Ekspert” pill (green bolt, key cap) between the time bar and
+  the back key, icon-only 48 px on phones (S7-41); the lockout plate adds a blue
+  „[R] Druga szansa” line while that press would reopen the station (a hint: hidden with hints
+  off and on Ekspert). Captions, event banners and verdict toasts start
   under the measured HUD band (`--hud-band`: the lowest edge of the pill, the queue and the
   menu button), never at a fixed offset, so nothing covers the HUD at any screen or text size.
 - **In-game menu** (the top-right button, Esc, a pad's Start): one sheet, never a second screen.

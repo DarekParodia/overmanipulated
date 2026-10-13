@@ -19,6 +19,7 @@ import type {
 import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
+import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import { listPl, pluralPl } from './plural.ts';
 
@@ -72,6 +73,10 @@ export const pl = {
     /** Message of the day (S7-72): the banner's name and its close button. */
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
+  },
+  /** Ads (S7-73): the frame's label, also its name for screen readers. */
+  ads: {
+    label: 'Reklama',
   },
   lobby: {
     codeLabel: 'Kod pokoju',
@@ -314,6 +319,8 @@ export const pl = {
       archivist: 'Archiwista',
       reporter: 'Reporter',
       managingEditor: 'Redaktor prowadzący',
+      generalist: 'Wszechstronny',
+      rescuer: 'Ratownik',
     } satisfies Record<Role, string>,
     /** Role abilities (S7-36, glossary): the HUD chip's accessible name and the help texts. */
     abilities: {
@@ -351,6 +358,19 @@ export const pl = {
     noRoleBonus: 'Bez premii',
     /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor), short station names. */
     fasterAt: (stations: readonly string[], percent: number) => `${listPl(stations)} +${percent}%`,
+    /** Speed bonus line of a role that is faster at every station (Wszechstronny). */
+    everywhereFaster: (percent: number) => `Wszędzie +${percent}%`,
+    /** Bonus line of a role with Koło ratunkowe (Ratownik), from RESCUE_ADD_MS. */
+    rescuePassive: (seconds: number) => `Raz ratuje teczkę (+${seconds}\u00a0s)`,
+    /** What each role's ability does, in a few words (lobby detail panel, tutorial; S7-44/45). */
+    abilityWhat: {
+      photoEditor: 'zadanie przy obrazie od razu',
+      archivist: 'zadanie przy dokumentach od razu',
+      reporter: 'pieczątka Telefonu bez chodzenia',
+      managingEditor: `+${ABILITY.extendDeadline.addMs / 1000}\u00a0s dla teczki w\u00a0ręce lub najpilniejszej`,
+      generalist: 'po pudle od razu jeszcze raz',
+      rescuer: 'rzut do najbliższej wolnej osoby',
+    } satisfies Record<Role, string>,
     /** Roles whose bonus is not (only) speed get their own line. */
     specialBonuses: {
       reporter: 'Telefon bez kolejki',
@@ -549,6 +569,13 @@ export const pl = {
     seconds: (s: number) => `${s} s`,
     noFolder: 'Brak teczki na stanowisku.',
     unknownStory: 'Nieznana teczka.',
+    /**
+     * Role abilities around the overlay (S7-41). The header's Ekspertyza button shows
+     * `touch.ability.expertise` (accessible name from `vocab.abilities`) and the lockout plate's
+     * line `vocab.abilities.secondChance`; this is the button while the press is on its way
+     * (the overlay closes when the stamp lands).
+     */
+    expertiseSending: 'Ekspertyza…',
   },
   desk: {
     title: 'Stół redakcyjny',
@@ -974,6 +1001,72 @@ export const pl = {
       ],
     },
     /**
+     * Mapa (S7-55): the folder's photo shows two landmarks and its caption names a district; the
+     * town map shows each district's two landmarks. All districts are invented parts of Nowe
+     * Brzegi; the landmarks are generic shapes, no real buildings.
+     */
+    geolocation: {
+      task: 'Znajdź na mapie miejsce ze zdjęcia',
+      /** The caption chip on the photo: where the folder says it was taken. */
+      caption: (district: string) => `Podpis: ${district}`,
+      notHere: 'Nie ma na mapie',
+      right: 'Namierzone!',
+      wrong: 'Pudło!',
+      /** Shown after the round: where the photo was really taken. */
+      reasons: {
+        match: () => 'Zdjęcie z miejsca z podpisu.',
+        otherDistrict: (claimed: string, actual: string) => `To nie ${claimed} – to ${actual}.`,
+        otherTown: () => 'Tych miejsc nie ma w Nowych Brzegach.',
+      } satisfies Record<GeoOutcome, (claimed: string, actual: string) => string>,
+      /** Screen-reader names: the photo and one district tile. */
+      photoLabel: (a: string, b: string) => `Zdjęcie: ${a} i ${b}`,
+      tileLabel: (district: string, a: string, b: string) => `${district}: ${a} i ${b}`,
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'tu!' },
+          { keys: ['Q'], label: 'nie ma na mapie' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'tu!' },
+          { keys: ['Y'], label: 'nie ma na mapie' },
+        ],
+        touch: [
+          { keys: ['Stuknij'], label: 'dzielnicę' },
+          { keys: ['Nie ma na mapie'], label: 'inne miasto' },
+        ],
+      } satisfies KeyHints,
+      /** Twelve invented districts of Nowe Brzegi, each ≤ 9 characters to fit a map tile. */
+      districts: [
+        'Rynek',
+        'Port',
+        'Dworzec',
+        'Lipowa',
+        'Klonowa',
+        'Młyny',
+        'Zatoka',
+        'Wzgórze',
+        'Park',
+        'Nadrzecze',
+        'Stocznia',
+        'Błonia',
+      ],
+      /** Landmark names, for screen readers (the glyphs carry the meaning on screen). */
+      landmarks: {
+        clockTower: 'wieża zegarowa',
+        archBridge: 'most łukowy',
+        fountain: 'fontanna',
+        tramStop: 'przystanek tramwajowy',
+        twinChurch: 'kościół z dwiema wieżami',
+        waterTower: 'wieża ciśnień',
+        portCrane: 'dźwig portowy',
+        windmill: 'wiatrak',
+        lighthouse: 'latarnia morska',
+        monument: 'pomnik',
+      } satisfies Record<Landmark, string>,
+    },
+    /**
      * Metadane (S7-52): the folder's description of a file next to the file's own data. One
      * field contradicts the description, none does, or a social site stripped the data.
      * All places, devices and programs are invented; no real brands or towns.
@@ -1254,6 +1347,77 @@ export const pl = {
         'Dziękuję, przejdźmy do głosowania.',
       ],
     },
+    /**
+     * Inne media (S7-54): what other outlets say about the folder's claim. Only agencies and
+     * newsrooms with their own reporter count; copies of someone else's post, satire and
+     * anonymous groups do not. Every outlet is invented (Nowe Brzegi); no real brands.
+     */
+    crossCheck: {
+      task: 'Co mówią niezależne media?',
+      claimTitle: 'W teczce',
+      cardsTitle: 'Inne media',
+      /** The kind badge on a coverage card. */
+      kinds: {
+        agency: 'agencja',
+        newsroom: 'redakcja',
+        satire: 'satyra',
+        anonymous: 'anonim',
+        junk: 'portal-klon',
+      },
+      /** The stance chip: a copy looks exactly like a confirmation. */
+      stances: { confirms: 'pisze to samo', echoes: 'pisze to samo', denies: 'zaprzecza' },
+      /** The source line: own reporter, a copied post, none named, or made up for a joke. */
+      sources: {
+        own: 'własny reporter',
+        unnamed: 'bez źródła',
+        invented: 'wymyślone',
+        copied: (via: string) => `za: ${via}`,
+      },
+      /** What a copy took the claim from. */
+      vias: ['post z grupy', 'wpis w sieci', 'film z sieci', 'inny portal'],
+      /** The stamp a copied card (an echo) gets after the round; satire and anonymous fade. */
+      copy: 'kopia',
+      card: (outlet: string, kind: string, stance: string, source: string) =>
+        `${outlet} (${kind}): ${stance}, ${source}`,
+      answers: {
+        confirmed: 'Potwierdzają',
+        denied: 'Zaprzeczają',
+        unconfirmed: 'Za mało źródeł',
+      },
+      right: 'Trafione!',
+      wrong: 'Pudło!',
+      /** Shown after the round: what the independent coverage says. */
+      reasons: {
+        confirmed: 'Co najmniej dwa niezależne źródła to potwierdzają.',
+        denied: 'Niezależne źródło temu zaprzecza.',
+        unconfirmed: 'Za mało niezależnych źródeł, by potwierdzić.',
+      },
+      keys: {
+        keyboard: [
+          { keys: ['←', '→'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+        ],
+        touch: [{ keys: ['Stuknij'], label: 'odpowiedź' }],
+      } satisfies KeyHints,
+      /** Invented outlets of Nowe Brzegi, per kind. */
+      outlets: {
+        agency: ['Agencja Nadrzecze', 'Agencja Fala'],
+        newsroom: [
+          'Radio Nadrzecze',
+          'Kurier Nowobrzeski',
+          'TV Brzegi',
+          'Gazeta Portowa',
+          'Tygodnik Błonia',
+        ],
+        satire: ['Brzeski Szpikulec', 'Kurier Absurdu'],
+        anonymous: ['Grupa „Nowe Brzegi Info”', 'Grupa „Plotki z Portu”'],
+        junk: ['nb-prawda24.top', 'szok-brzegi24.top'],
+      },
+    },
   },
   /** Station help (S7-15): what each station checks and how to work it on every device. */
   stationHelp: {
@@ -1405,31 +1569,30 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
-      // Stage 7 stations (S7-48): provisional copy for Mapa and Inne media; each minigame task
-      // (S7-54, S7-55) settles the steps against its final controls and button labels. Metadane
-      // (S7-52) and Stenogram (S7-53) are final.
+      // Stage 7 stations (S7-48): Metadane (S7-52), Stenogram (S7-53), Inne media (S7-54) and
+      // Mapa (S7-55) are final, settled against each minigame's controls and button labels.
       geolocation: {
         purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
         proves: 'Zdjęcie jest z innego miejsca niż podpis',
         steps: {
           keyboard: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
             'Strzałki wybierają dzielnicę, spacja ją wskazuje',
-            'Q, gdy takiego miejsca nie ma na mapie',
+            'Nie ma obu? Q – „Nie ma na mapie”',
           ],
           gamepad: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
             'Krzyżak wybiera dzielnicę, A ją wskazuje',
-            'Y, gdy takiego miejsca nie ma na mapie',
+            'Nie ma obu? Y – „Nie ma na mapie”',
           ],
           touch: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
-            'Stuknij dzielnicę, w której oba stoją',
-            'Nie ma ich na mapie? Stuknij przycisk',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
+            'Stuknij dzielnicę, w której stoją oba',
+            'Nie ma obu? Stuknij „Nie ma na mapie”',
           ],
         },
         realWorld:
-          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic.',
+          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic. Podpis może kłamać, widok nie.',
       },
       transcript: {
         purpose: 'Czy wycięty cytat znaczy to samo co całość?',
@@ -1459,23 +1622,23 @@ export const pl = {
         proves: 'Niezależne media potwierdzają albo zaprzeczają',
         steps: {
           keyboard: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             '← i → wybierają odpowiedź, spacja potwierdza',
           ],
           gamepad: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Krzyżak wybiera odpowiedź, A potwierdza',
           ],
           touch: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Stuknij swoją odpowiedź',
           ],
         },
         realWorld:
-          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje.',
+          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje. Kopia cudzego wpisu niczego nie potwierdza.',
       },
       metadata: {
         purpose: 'Kiedy, czym i gdzie powstał plik?',
@@ -1683,6 +1846,63 @@ export const pl = {
       minigame: 'Rozwiąż zadanie na stanowisku',
       verdict: 'Zanieś teczkę na stół, wybierz werdykt',
       done: 'Super! Tak trzymaj!',
+    },
+  },
+  /**
+   * The intro (S7-99): the player's buttons and the narrator's script. The narrator is the
+   * editor-in-chief; each line is both the subtitle (typeset at render) and the voiceover text
+   * (`tools/audio/intro-lines.ts` respells key names for the TTS). One sentence is one subtitle
+   * chunk and must fit two lines at 640×360 (intro/intro-script.test.ts). The scenes, their
+   * order and the scripted input tracks are in `intro/intro-script.ts`.
+   */
+  intro: {
+    label: 'Wprowadzenie',
+    skip: 'Pomiń',
+    next: 'Dalej',
+    prev: 'Wstecz',
+    pause: 'Pauza',
+    resume: 'Wznów',
+    /** „Dalej” on the last scene. */
+    finish: 'Do roboty!',
+    /** The chip shown while the browser still blocks audio; subtitles run on regardless. */
+    soundLocked: 'Stuknij, by włączyć głos',
+    scene: (n: number, total: number) => `Scena ${n} z ${total}`,
+    voice: {
+      welcome:
+        'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
+      folders:
+        'Każda teczka to zgłoszenie: prawda, fałszywka albo prawda bez kontekstu. Karta „Następna teczka” pokazuje, za ile sekund wpadnie kolejna.',
+      pickup: {
+        keyboard: 'Chodzisz klawiszami W, A, S i D. Podejdź do taśmy i weź teczkę klawiszem E.',
+        gamepad: 'Chodzisz lewą gałką. Podejdź do taśmy i weź teczkę przyciskiem A.',
+        touch:
+          'Chodzisz, przesuwając kciukiem po lewej stronie ekranu. Przy taśmie wciśnij przycisk „Podnieś”.',
+      } satisfies Record<Device, string>,
+      work: {
+        keyboard:
+          'Zanieś teczkę na stanowisko i przytrzymaj spację. Potem rozwiąż krótkie zadanie.',
+        gamepad:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk X. Potem rozwiąż krótkie zadanie.',
+        touch:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk „Pracuj”. Potem rozwiąż krótkie zadanie.',
+      } satisfies Record<Device, string>,
+      stations:
+        'Każde stanowisko sprawdza co innego, na przykład Lupa szuka starszych kopii zdjęcia. Dobrze rozwiązane zadanie daje pieczątkę: to twój dowód.',
+      desk: 'Z dowodami idź do stołu redakcyjnego. Najpierw wskaż dowód, potem werdykt: Publikuj, Odrzuć albo Z kontekstem.',
+      proof:
+        'Liczy się dowód, który naprawdę rozstrzyga. Słaby dowód to tylko połowa punktów, nawet przy dobrym werdykcie. Trudniejsze teczki wymagają dwóch albo trzech dowodów.',
+      credibility:
+        'Pilnuj terminów i wiarygodności gazety. Spóźnienie kosztuje, ale fałszywka w druku kosztuje najwięcej. Gdy wiarygodność spadnie do zera, wydanie przepada.',
+      roles: {
+        keyboard:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz klawiszem R, a potem musi się odnowić.',
+        gamepad:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz przyciskiem RB, a potem musi się odnowić.',
+        touch:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz czwartym przyciskiem po prawej, a potem musi się odnowić.',
+      } satisfies Record<Device, string>,
+      team: 'Rozmawiajcie i dzielcie się pracą. Fioletowy dymek podpowie, co dalej.',
+      end: 'Po wydaniu Kolegium wyjaśni każdą teczkę i pokaże, za co są punkty i gwiazdki. Do roboty!',
     },
   },
   /** Editorial briefing before a level (S3-03). */

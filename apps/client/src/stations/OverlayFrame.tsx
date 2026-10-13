@@ -1,6 +1,8 @@
 // The panel that station minigames and the desk sheet sit on: one white cartoon panel with a
 // header (icon, name, a chunky time bar when timed, big round close button). Desktop: the
 // right half of the screen, the newsroom stays visible on the left. Phones: full width.
+// Header order (README §1.2): title, the time bar, `headerAction` (Ekspertyza, S7-41), the
+// back key cap, close.
 import type { ReactNode } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
@@ -17,6 +19,8 @@ export type OverlayFrameProps = {
   onClose(): void;
   /** Time bar: share of the time left (1 → 0) and an accessible text. */
   time?: { left: number; label: string; testId?: string } | undefined;
+  /** A secondary action next to the close button, e.g. the Ekspertyza button (S7-41). */
+  headerAction?: ReactNode;
   /** Keyboard/gamepad focus is on the close button. */
   closeFocused?: boolean;
   testId?: string;
@@ -34,6 +38,7 @@ export function OverlayFrame({
   backKey,
   onClose,
   time,
+  headerAction,
   closeFocused = false,
   testId,
   children,
@@ -52,6 +57,7 @@ export function OverlayFrame({
         </span>
         <h2 className={styles.title}>{title}</h2>
         {time ? <TimeBar {...time} /> : <span className={styles.spacer} />}
+        {headerAction}
         {backKey && (
           <span className={styles.backKey} aria-hidden="true">
             <KeyCap>{backKey}</KeyCap>
