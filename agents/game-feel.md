@@ -75,6 +75,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `minigame.success` / `fail` | minigame result | card flip / wobble | success ding / fail buzz | sparkle / smoke wisp | — | ● |
 | `station.open` / `desk.open` | minigame sheet / desk folder opens | sheet slides in | paper slide | — | light tick (mobile) | ● |
 | `desk.justify` | justifying stamp picked on the desk | slip pulled out, tab appears | click | — | light tick (mobile) | ● |
+| `desk.unjustify` | evidence stamp deselected on the desk (multi-stamp pick, S7-19) | slip pushed back, numbered tick goes | soft back | — | light tick (mobile) | ● |
 | `credibility.low` | credibility < 30 | — | heartbeat layer | vignette | — | ●● |
 | `level.lastSeconds` | timer crosses 30 s left | `timerPulse` (steady under no-flash) | clock strike over a low pulse; music → pressure layer (music unit) | timer pulses (HUD) | light tick | ●● |
 | `level.win` / `level.lose` | `levelEnd` message | `cheer` / `slump` | win / lose stinger; all loops stop | confetti / falling papers at the local player | thud / buzz | ●●● |
@@ -98,6 +99,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `folder.deadlineExtended` HUD | `cardHop` | the folder's queue card hops | — | — | — | ● |
 | `briefing.intro` / `briefing.land` / `briefing.ready` | briefing card appears / lands on the desk / "Gotowy!" pressed | newspaper spins and drops in, squashes on landing (fade under reduced motion; tap skips) | paper slide / paper slap / stamp | — | — / thud / tick | ● → ●● |
 | `debrief.star` / `debrief.mark` | results reveal: each earned star, then each Kolegium card's outcome mark (skippable by any tap/key; off with reduced motion) | star pop / mark slams on like a stamp | chime / stamp thud | — (DOM) | tick | ●● / ● |
+| `debrief.row` | results reveal: each row of the „Za co punkty” totals table, after the stars and the progress line (skippable by any tap/key; off with reduced motion) | row slides in, its points count up from 0 (`useRolledNumber`) | soft tick (`tick`, ui bus) | — (DOM) | tick | ● |
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
 
 Add a row here when you add a cue, in the same commit.

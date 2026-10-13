@@ -267,6 +267,8 @@ export const BAG_OPENING_SLOTS = 2;
 export const BAG_MULTI_STAMP_MIN_SLOT = 4;
 /** Floor of a bag folder's deadline after difficulty scaling and the fit-the-level clamp (s). */
 export const BAG_MIN_DEADLINE_S = 30;
+/** Seed of the Normal run `LEVELS` and `getLevel` show for a bag level (lobby, briefing, tools). */
+export const BAG_PREVIEW_SEED = 0;
 
 // --- S2-11 Pings (client picker) -----------------------------------------------------------
 

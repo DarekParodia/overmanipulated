@@ -55,6 +55,12 @@ export const folderSchema = z.object({
   warned: z.boolean(),
   /** Set on folders spawned by a level event. */
   tag: folderTagSchema.optional(),
+  /**
+   * The station the bag slot designated for this folder, copied from its schedule entry at
+   * spawn (S7-23). Guidance suggests it first among the stations that decide the story; absent
+   * on event folders and on levels with an authored schedule.
+   */
+  bagStation: stationKindSchema.optional(),
 });
 
 export const stationPhaseSchema = z.enum(['idle', 'working', 'minigame', 'lockout']);

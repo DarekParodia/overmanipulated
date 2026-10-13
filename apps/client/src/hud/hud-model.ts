@@ -3,6 +3,7 @@
 // Kept free of React so they are unit-tested directly.
 import {
   CREDIBILITY as CREDIBILITY_DELTAS,
+  countsAsProof,
   DEADLINE_WARNING_MS,
   expiryIsPenalized,
   type Folder,
@@ -10,6 +11,8 @@ import {
   type FolderReason,
   type NextFolder,
   type Priority,
+  type ProofStory,
+  requiredStampsOf,
   SCORE,
   STATION_KINDS,
   type StationKind,
@@ -25,6 +28,14 @@ export type StoryInfo = {
   type: StoryType;
   priority: Priority;
   truth: Truth;
+  /** Proofs a verdict must cite (S7-19); absent means 1. */
+  requiredStamps?: number;
+  /**
+   * The stamps and which of them justify, for the evidence badge; absent counts no proof. The
+   * stamp keeps its `text` so a `StoryInfo` still serves as a debrief story.
+   */
+  stamps?: readonly (ProofStory['stamps'][number] & { text: string })[];
+  justifyingStamps?: ProofStory['justifyingStamps'];
 };
 
 export type StoryLookup = (storyId: string) => StoryInfo | undefined;
@@ -62,6 +73,38 @@ export function nextFolderState(
     return { kind: 'none' };
   }
   return { kind: 'in', ms: Math.max(0, next.atMs - elapsedMs) };
+}
+
+/** Evidence badge of a multi-stamp folder card: `have` is null when hints are off. */
+export type EvidenceBadge = { have: number | null; need: number };
+
+/**
+ * The badge for a folder whose story needs N ≥ 2 proofs (null otherwise). With hints on it
+ * counts the distinct stamps on the folder that count as proof, capped at N ("1/2"); guidance
+ * already points at the stations that prove a verdict, so this reveals nothing new. With hints
+ * off it shows only N ("×2"), so it never tells which stamps decide.
+ */
+export function evidenceBadge(
+  folder: Pick<Folder, 'stamps'>,
+  story: StoryInfo | undefined,
+  hintsOn: boolean,
+): EvidenceBadge | null {
+  if (!story) {
+    return null;
+  }
+  const need = requiredStampsOf(story);
+  if (need < 2) {
+    return null;
+  }
+  if (!hintsOn) {
+    return { have: null, need };
+  }
+  const { stamps, justifyingStamps } = story;
+  const proofs =
+    stamps && justifyingStamps
+      ? [...new Set(folder.stamps)].filter((id) => countsAsProof({ stamps, justifyingStamps }, id))
+      : [];
+  return { have: Math.min(proofs.length, need), need };
 }
 
 /** `m:ss`, rounding up so "0:00" only shows when time is really out. */

@@ -3,14 +3,14 @@
 // broadcasts go through a `Hub`, so all of this is testable in-process.
 import {
   DEFAULT_LEVEL_ID,
-  generateEndlessLevel,
   getLevel,
   LEVELS,
   type Level,
   maxLevelScore,
+  prepareRun,
+  runSummary,
   STORIES,
   type Story,
-  storiesForEndless,
   storiesForLevel,
 } from '@redakcja/content';
 import {
@@ -20,6 +20,8 @@ import {
   COMMAND_QUEUE_MAX,
   conveyorBlocked,
   createGameState,
+  DEFAULT_DIFFICULTY,
+  type Difficulty,
   ENDLESS,
   ENDLESS_LEVEL_ID,
   type ErrorCode,
@@ -31,7 +33,6 @@ import {
   type JoinMessage,
   type LobbyAction,
   MAX_PLAYERS,
-  NORMAL_TUNING,
   nextScheduledSpawn,
   PLAYER_COLOR_COUNT,
   type PlayerCommand,
@@ -42,9 +43,11 @@ import {
   RECONNECT_GRACE_MS,
   type Role,
   type RoomPhase,
+  type RunSummary,
   removePlayer as removeSimPlayer,
   type ServerMessage,
   type SimContext,
+  simTuning,
   spawnPoint,
   step,
   TICK_MS,
@@ -79,8 +82,19 @@ type Room = {
   /** Insertion order is join order. */
   players: Map<string, RoomPlayer>;
   game: GameState;
+  /**
+   * The selected level as `getLevel` serves it (a bag level's Normal preview, the endless
+   * preview) in the lobby; from the briefing on, the level the dealt run plays.
+   */
   level: Level;
   stories: Readonly<Record<string, Story>>;
+  /** Picked by the host in the lobby; it persists across level changes and replays. */
+  difficulty: Difficulty;
+  /**
+   * The run dealt at the briefing (`prepareRun`), kept through play and results; null in the
+   * lobby. Its seed is drawn apart from the sim seed and never leaves the server.
+   */
+  run: { seed: number; summary: RunSummary } | null;
   map: TileMap;
   nextPlayerNumber: number;
   /** Set while `phase === 'briefing'`. */
@@ -122,12 +136,13 @@ export type RegistryOptions = {
   }) => number;
   /** Rooms alive at once; creating another is refused with `roomFull`. */
   maxRooms?: number;
-  /** Persists a finished endless run for the leaderboard (S4-11). */
+  /** Persists a finished endless run for the leaderboard (S4-11), with its difficulty (S7-23). */
   recordLeaderboardEntry?: (entry: {
     roomCode: string;
     players: string[];
     score: number;
     survivedS: number;
+    difficulty: Difficulty;
   }) => void;
 };
 
@@ -156,16 +171,38 @@ export function createRoomRegistry(options: RegistryOptions) {
     );
   }
 
-  /** Sets the room's level; an endless level is generated for this run with a fresh seed. */
+  /** A fresh seed for a run or a sim (31-bit, like every seed the content and sim take). */
+  function drawSeed(): number {
+    return Math.floor(random() * 0x7fffffff);
+  }
+
+  /**
+   * Sets the room's level as `getLevel` serves it (a bag level's Normal preview, the endless
+   * preview) and drops any dealt run; the briefing deals the real one (`prepareRoomRun`).
+   */
   function setLevel(room: Room, level: Level): void {
-    if (level.id === ENDLESS_LEVEL_ID) {
-      room.level = generateEndlessLevel(Math.floor(random() * 0x7fffffff), LEVELS, STORIES);
-      room.stories = storiesForEndless(room.level, STORIES);
-    } else {
-      room.level = level;
-      room.stories = storiesForLevel(level);
-    }
-    room.map = parseLayout(room.level.layout);
+    room.level = level;
+    room.stories = storiesForLevel(level);
+    room.map = parseLayout(level.layout);
+    room.run = null;
+  }
+
+  /**
+   * Deals the run the room is about to play (README §4): a new run seed, apart from the sim seed,
+   * on the room's difficulty, always from the selected level's base so every replay differs.
+   */
+  function prepareRoomRun(room: Room): void {
+    const seed = drawSeed();
+    const run = prepareRun(
+      requireLevel(room.level.id),
+      { seed, difficulty: room.difficulty },
+      LEVELS,
+      STORIES,
+    );
+    room.level = run.level;
+    room.stories = run.stories;
+    room.map = parseLayout(run.level.layout);
+    room.run = { seed, summary: runSummary(run) };
   }
 
   function broadcast(room: Room, message: ServerMessage): void {
@@ -203,6 +240,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         playerId,
         storyId: vote.storyId,
       })),
+      difficulty: room.difficulty,
+      run: room.run ? { ...room.run.summary } : null,
     });
   }
 
@@ -308,6 +347,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         game: createGameState({ map }),
         level,
         stories: storiesForLevel(level),
+        difficulty: DEFAULT_DIFFICULTY,
+        run: null,
         map,
         nextPlayerNumber: 1,
         briefing: null,
@@ -452,6 +493,19 @@ export function createRoomRegistry(options: RegistryOptions) {
       case 'setPaused':
         setPaused(room, action.paused);
         return;
+      case 'setDifficulty':
+        if (player.id !== room.hostId) {
+          rejectNotHost(player);
+          return;
+        }
+        if (room.phase !== 'lobby') {
+          return;
+        }
+        room.difficulty = action.difficulty;
+        // Like a level change: nobody stays ready for a difficulty they have not seen.
+        resetReady(room);
+        broadcastRoomState(room);
+        return;
       case 'backToLobby':
         if (player.id !== room.hostId) {
           rejectNotHost(player);
@@ -462,7 +516,9 @@ export function createRoomRegistry(options: RegistryOptions) {
         }
         room.phase = 'lobby';
         room.blunderVotes.clear();
-        // Drop the finished run; the next start builds a fresh game from the room's map.
+        // Drop the finished run; the lobby shows the selected level again and the next start
+        // deals a new run and builds a fresh game.
+        setLevel(room, requireLevel(room.level.id));
         room.game = createGameState({ map: room.map });
         for (const p of room.players.values()) {
           p.inputQueue = [];
@@ -517,13 +573,21 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
   }
 
-  /** Start (from the lobby or as a replay from results) opens the briefing first. */
+  /**
+   * Start (from the lobby or as a replay from results) opens the briefing first, which deals the
+   * run, so every attempt plays a new one.
+   */
   function beginBriefing(room: Room): void {
+    prepareRoomRun(room);
     room.phase = 'briefing';
     room.briefing = { endsAt: now() + briefingMs, skippedBy: new Set() };
     room.blunderVotes.clear();
     resetReady(room);
-    log.info('briefing started', { room: room.code, level: room.level.id });
+    log.info('briefing started', {
+      room: room.code,
+      level: room.level.id,
+      difficulty: room.difficulty,
+    });
     broadcastRoomState(room);
   }
 
@@ -576,11 +640,8 @@ export function createRoomRegistry(options: RegistryOptions) {
     room.phase = 'playing';
     room.briefing = null;
     room.paused = false;
-    if (room.level.id === ENDLESS_LEVEL_ID) {
-      // Every endless run gets its own schedule.
-      setLevel(room, room.level);
-    }
-    let game = createGameState({ map: room.map, seed: Math.floor(random() * 0x7fffffff) });
+    // The run (endless included) was dealt at the briefing; the sim seed is a separate draw.
+    let game = createGameState({ map: room.map, seed: drawSeed() });
     for (const p of room.players.values()) {
       game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
       p.inputQueue = [];
@@ -719,8 +780,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         map: room.map,
         level: room.level,
         stories: room.stories,
-        // Rooms play on Normal until the lobby can pick a difficulty (S7-23).
-        tuning: NORMAL_TUNING,
+        tuning: simTuning(room.difficulty),
       };
       const result = stepGame(room.game, inputs, commands, ctx);
       room.game = result.state;
@@ -772,11 +832,19 @@ export function createRoomRegistry(options: RegistryOptions) {
         players: [...room.players.values()].map((p) => p.nickname),
         score: room.game.score,
         survivedS,
+        difficulty: room.difficulty,
       });
     } catch (error) {
       // A failed write must not break the results screen.
       log.error('leaderboard entry not stored', { room: room.code, error: String(error) });
     }
+  }
+
+  /** The played run's best score (a level always passes the briefing, which deals the run). */
+  function runMaxScore(room: Room): number {
+    return (
+      room.run?.summary.maxScore ?? maxLevelScore(room.level, new Map(Object.entries(room.stories)))
+    );
   }
 
   function endLevel(room: Room): void {
@@ -792,14 +860,15 @@ export function createRoomRegistry(options: RegistryOptions) {
     broadcast(room, {
       type: 'levelEnd',
       levelId: room.level.id,
+      difficulty: room.difficulty,
       won: outcome.won,
       stars: outcome.stars,
       score: game.score,
       credibility: game.credibility,
       results: game.results.slice(-ENDLESS.maxResultsSent),
       lossReason: outcome.lossReason,
-      starThresholds: endless ? null : room.level.stars,
-      maxScore: endless ? null : maxLevelScore(room.level, new Map(Object.entries(room.stories))),
+      starThresholds: endless ? null : { ...room.level.stars },
+      maxScore: endless ? null : runMaxScore(room),
       ...(endless ? { survivedS } : {}),
     });
     broadcastRoomState(room);
@@ -824,6 +893,9 @@ export function createRoomRegistry(options: RegistryOptions) {
         phase: room.phase,
         levelId: room.level.id,
         paused: room.paused,
+        difficulty: room.difficulty,
+        /** The dealt run with its seed (the seed never goes on the wire). */
+        run: room.run ? { seed: room.run.seed, summary: { ...room.run.summary } } : null,
         game: room.game,
         briefing: room.briefing
           ? { endsAt: room.briefing.endsAt, skippedBy: [...room.briefing.skippedBy] }

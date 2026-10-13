@@ -5,6 +5,7 @@ import type {
   FolderBonuses,
   FolderOutcome,
   FolderReason,
+  LossReason,
   PingKind,
   Priority,
   Role,
@@ -12,6 +13,7 @@ import type {
   StoryType,
   Verdict,
 } from '@redakcja/shared';
+import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import { pluralPl } from './plural.ts';
 
@@ -355,6 +357,14 @@ export const pl = {
       floor: 'na podłodze',
     },
     untitled: 'Teczka bez opisu',
+    /**
+     * Evidence badge on a multi-stamp folder card (S7-19): "have/N" with hints on, "×N" without;
+     * these are the badge's accessible names.
+     */
+    evidenceHave: (have: number, need: number) => `Dowody: ${have} z ${need}`,
+    evidenceNeed: (need: number) => `Wymaga ${need} dowodów`,
+    evidenceShortHave: (have: number, need: number) => `${have}/${need}`,
+    evidenceShortNeed: (need: number) => `×${need}`,
     /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
       credibility: (delta: string) => `wiarygodność ${delta}`,
@@ -414,6 +424,14 @@ export const pl = {
     deadline: 'Termin',
     overdue: 'Po terminie',
     stepEvidence: 'Wybierz dowód',
+    /** Multi-stamp folders (S7-19): the step heading, its count chip and the status line. */
+    stepEvidenceMany: (n: number) => `Wybierz ${n} ${pluralPl(n, 'dowód', 'dowody', 'dowodów')}`,
+    evidenceCount: (k: number, n: number) => `${k}/${n}`,
+    evidenceStatus: (k: number, n: number) => `Wybrano ${k} z ${n} dowodów`,
+    /** Amber line when the folder holds fewer stamps than the story needs proofs. */
+    tooFewProofs: 'Za mało dowodów: połowa punktów',
+    /** A pick beyond N is blocked. */
+    deselectFirst: 'Najpierw odznacz jeden dowód',
     stepVerdict: 'Wybierz werdykt',
     pickStamp: 'Stuknij pieczątkę – to twój dowód',
     pickVerdict: 'Teraz werdykt!',
@@ -1029,9 +1047,52 @@ export const pl = {
   results: {
     wonHeadline: 'Wydanie gotowe!',
     lostHeadline: 'Wydanie przepadło',
-    wonLede: 'Gazeta idzie do druku.',
-    lostLede: 'Za dużo wpadek i spóźnień.',
+    /** Under the headline: why the level was won or lost (S7-06). */
+    lede: {
+      won: 'Gazeta idzie do druku.',
+      credibility: 'Wiarygodność spadła do zera.',
+      score: 'Wynik nie przekroczył zera.',
+    } satisfies Record<'won' | LossReason, string>,
     stars: (n: number) => `${n} z 3 gwiazdek`,
+    /** Captions under the three stars: what each one takes. */
+    starRule: {
+      one: 'wynik ponad 0',
+      from: (points: number) => `od\u00a0${points}\u00a0pkt`,
+    },
+    /** The progress line under the stars. */
+    toNext: (missing: number) => `brakuje ${missing}\u00a0pkt`,
+    toNextLabel: (stars: number, missing: number) =>
+      `Do ${stars} gwiazdek brakuje ${missing}\u00a0pkt`,
+    allStars: 'Komplet gwiazdek!',
+    starsNeedWin: 'Gwiazdki są tylko za wygraną',
+    thresholdsWhyOpen: 'Skąd te progi?',
+    thresholdsWhy: (max: number, two: number, three: number) =>
+      `Progi liczymy od najlepszego wyniku możliwego w tym wydaniu (${max}\u00a0pkt): dwie gwiazdki od ${two}%, trzy od ${three}%.`,
+    /** The 'Za co punkty' table: one row per outcome or bonus. */
+    totals: {
+      title: 'Za co punkty',
+      what: 'Za co',
+      count: 'Teczki',
+      points: 'Punkty',
+      credibility: 'Wiarygodność',
+      times: (n: number) => `×${n}`,
+      rows: {
+        correct: 'Dobre werdykty',
+        correction: 'Sprostowania',
+        speed: 'Premia za tempo',
+        proofs: 'Premia za dowody',
+        bossCall: 'Szef dzwonił',
+        weakProof: 'Słabe dowody',
+        wrong: 'Błędne werdykty',
+        expired: 'Przepadłe teczki',
+        unfinished: 'Nie zdążyliście',
+        other: 'Inne',
+      } satisfies Record<TotalsRowId, string>,
+      total: 'Razem',
+      note: (max: number) => `Pasek nie spada poniżej 0 i nie rośnie ponad ${max}.`,
+    },
+    /** Phones: the Kolegium's first page. */
+    summaryPage: 'Podsumowanie',
     score: 'Punkty',
     credibility: 'Wiarygodność',
     scoreDelta: (delta: string) => `${delta} pkt`,

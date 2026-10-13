@@ -5,7 +5,6 @@
 
 import type { Verdict } from '@redakcja/shared';
 import type { PointerEvent } from 'react';
-import { useRef } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { formatDelta } from '../hud/hud-model.ts';
 import { KeyCap } from '../stations/kit.tsx';
@@ -16,6 +15,7 @@ import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { VerdictStamp } from '../ui/VerdictStamp.tsx';
 import styles from './Debrief.module.css';
 import type { DebriefCard as Card, Voter } from './debrief-model.ts';
+import { useSwipe } from './use-swipe.ts';
 
 const TONE = {
   correct: styles.good,
@@ -39,9 +39,6 @@ const SECTIONS = [
   { key: 'tool', icon: 'stamp' },
   { key: 'realWorld', icon: 'globe' },
 ] as const satisfies readonly { key: keyof typeof pl.debrief.sections; icon: IconName }[];
-
-/** Horizontal swipe distance that turns a page on phones. */
-const SWIPE_PX = 56;
 
 function VerdictChip({ verdict }: { verdict: Verdict | null }) {
   if (verdict === null) {
@@ -81,26 +78,14 @@ export function DebriefCard({
   onSelect,
   onSwipe,
 }: DebriefCardProps) {
-  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const swipe = useSwipe(onSwipe);
   const headline = typeset(card.headline ?? pl.debrief.untitled);
   const titleId = `debrief-${card.folderId}`;
 
   const onPointerDown = (event: PointerEvent) => {
-    swipeStart.current = { x: event.clientX, y: event.clientY };
+    swipe.onPointerDown(event);
     if (!current) {
       onSelect();
-    }
-  };
-  const onPointerUp = (event: PointerEvent) => {
-    const start = swipeStart.current;
-    swipeStart.current = null;
-    if (!start || !onSwipe) {
-      return;
-    }
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    if (Math.abs(dx) > SWIPE_PX && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      onSwipe(dx < 0 ? 1 : -1);
     }
   };
 
@@ -110,10 +95,8 @@ export function DebriefCard({
       aria-labelledby={titleId}
       data-current={current || undefined}
       onPointerDown={onPointerDown}
-      onPointerUp={onPointerUp}
-      onPointerCancel={() => {
-        swipeStart.current = null;
-      }}
+      onPointerUp={swipe.onPointerUp}
+      onPointerCancel={swipe.onPointerCancel}
     >
       <header className={styles.head}>
         <span

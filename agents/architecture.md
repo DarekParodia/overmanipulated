@@ -58,6 +58,12 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   Max 4 players. A disconnected player's slot is held for 60 s for reconnection.
 - Fixed **20 Hz** tick loop per active room: drain queued inputs → `step` → broadcast snapshot and
   events. Empty rooms are destroyed.
+- **Run lifecycle** (Stage 7): the lobby holds the selected level as `getLevel` serves it and the
+  room's difficulty (host only, lobby only). Every briefing, replays included, deals the run with
+  `prepareRun` from a fresh **run seed** (never sent to clients) and the room's difficulty;
+  `roomState.run` carries its `runSummary`. The level start draws the sim seed separately, each
+  tick passes `simTuning(difficulty)`, and `levelEnd` reports the difficulty plus the run's stars
+  and `maxScore`. Back in the lobby the run is dropped.
 - Every incoming message is parsed with the Zod schema from `shared/protocol`; invalid messages are
   dropped and logged, never crash the room.
 - Exposed only behind Caddy on port 443 (`/ws` and `/api` paths); never on a public custom port.

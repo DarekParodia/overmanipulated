@@ -235,9 +235,9 @@ describe('ticks and snapshots', () => {
 
   it('announces the next scheduled folder in every snapshot, from the first one on', () => {
     const { guest } = startedRoom();
-    // The default level, l0-greybox, brings its first folder at 3 s and the second at 20 s.
+    // The default level, l0-greybox, deals its first folder at 3 s and the second at 21 s.
     const firstTwo = getLevel(DEFAULT_LEVEL_ID)?.schedule.slice(0, 2);
-    expect(firstTwo?.map((entry) => entry.atS)).toEqual([3, 20]);
+    expect(firstTwo?.map((entry) => entry.atS)).toEqual([3, 21]);
     registry.tick();
     expect(guest.all('snapshot')).toHaveLength(1);
     expect(guest.last('snapshot')).toMatchObject({
@@ -250,7 +250,7 @@ describe('ticks and snapshots', () => {
     }
     expect(guest.last('snapshot')?.folders).toHaveLength(1);
     expect(guest.last('snapshot')).toMatchObject({
-      nextFolder: { atMs: 20_000, sinceMs: 3000 },
+      nextFolder: { atMs: 21_000, sinceMs: 3000 },
       conveyorFull: false,
     });
   });

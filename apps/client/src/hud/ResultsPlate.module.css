@@ -1,8 +1,10 @@
 /*
  * Results panel: one white cartoon panel over the dimmed newsroom. A coloured ribbon with the
- * headline on top (green = won, red = lost, plus a ✓/✗ disc); desktop: stars and figures on the
- * left, the Kolegium list on the right (it scrolls on its own so the buttons always stay
- * visible). Phones: stars and figures move into the ribbon and the Kolegium shows one card.
+ * headline on top (green = won, red = lost, plus a ✓/✗ disc); desktop: the summary (stars,
+ * figures, the totals table; ResultsSummary.module.css) on the left, the Kolegium list on the
+ * right (both scroll on their own so the buttons always stay visible). Phones: stars and figures
+ * move into the ribbon, the summary becomes the Kolegium's first page and the Kolegium shows
+ * one page at a time.
  */
 .backdrop {
   position: absolute;
@@ -21,7 +23,7 @@
 
 .panel {
   display: grid;
-  grid-template-columns: minmax(14rem, 17rem) minmax(0, 1fr);
+  grid-template-columns: minmax(18rem, 24rem) minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "ribbon ribbon"
@@ -76,6 +78,12 @@
   background: var(--red);
 }
 
+.ribbonFigures {
+  flex: none;
+  width: 18rem;
+  margin-left: auto;
+}
+
 .ribbonMark {
   display: grid;
   place-items: center;
@@ -113,10 +121,13 @@
   grid-area: summary;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-4);
+  min-height: 0;
+  padding: var(--space-3) var(--space-4);
   border-right: var(--stroke) solid var(--surface-sunk);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .stars {
@@ -185,10 +196,14 @@
 
 .figures {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-3);
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
   width: 100%;
   margin: 0;
+}
+
+.endlessFigures {
+  grid-template-columns: 1fr;
 }
 
 .figure {
@@ -320,13 +335,24 @@
 }
 
 .pagePosition {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   min-width: 4.25rem;
   padding-top: 0.12em;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: var(--text-lg);
+  line-height: var(--leading-tight);
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+/* „Podsumowanie” over „1 z N” on the summary page. */
+.pageName {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
 }
 
 /* --- Phones (640×360 landscape and up): summary in the ribbon, one card per page ------------- */
@@ -363,9 +389,11 @@
 
   .summary {
     flex-direction: row;
+    align-items: center;
     gap: var(--space-3);
     padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
     border-right: none;
+    overflow: visible;
   }
 
   .won .summary {
@@ -480,10 +508,6 @@
   color: var(--text-on-dark);
 }
 
-.endless .summary {
-  justify-content: center;
-}
-
 .endless .figure {
   position: relative;
   justify-content: space-between;
@@ -507,6 +531,7 @@
 }
 
 .recordChip {
+  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -535,6 +560,7 @@
 
 @media (max-height: 500px), (max-width: 760px) {
   .endless .summary {
+    justify-content: center;
     background: var(--blue);
   }
 

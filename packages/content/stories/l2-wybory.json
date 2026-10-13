@@ -583,5 +583,122 @@
       "realWorld": "Przeróbki zdjęć przed wyborami są coraz łatwiejsze. Warto zawsze znaleźć najstarszą wersję obrazu."
     },
     "reviewed": false
+  },
+  {
+    "id": "l2-debata-w-liceum",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Kandydaci ściskają sobie dłonie po debacie w II LO",
+    "body": "Uczennica przysłała zdjęcie obojga kandydatów na szkolnej scenie. Pisze: „Debata skończyła się pół godziny temu”.",
+    "source": "Zdjęcie od czytelniczki",
+    "stamps": [
+      {
+        "id": "l2-debata-w-liceum-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 13:15, aula II LO w Nowych Brzegach.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-debata-w-liceum-archive",
+        "station": "archive",
+        "text": "Archiwum ma zdjęcia auli z akademii szkolnych, ale nie z dzisiejszej debaty.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-debata-w-liceum-source",
+        "station": "sourceRegistry",
+        "text": "Autorka pierwszy raz pisze do redakcji. Brak innych informacji o niej.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-debata-w-liceum-image"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie z debaty kandydatów w liceum.",
+      "technique": "Brak manipulacji. Nieznana autorka nie oznacza fałszywego zdjęcia.",
+      "tool": "Lupa obrazu: brak starszych kopii, a metadane zgadzają się z miejscem i godziną debaty.",
+      "realWorld": "W kampanii redakcje dostają wiele zdjęć od świadków. Gdy obraz jest nowy i zrobiony tam, gdzie mówi podpis, można go opublikować."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-plaza-w-kampanii",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Wierzchowski na leżaku w środku kampanii?",
+    "body": "Zdjęcie kandydata na plaży krąży z podpisem: „Dziś rano. Inni pracują, a on się opala”. Setki udostępnień.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l2-plaza-w-kampanii-image",
+        "station": "imageSearch",
+        "text": "Najstarsza kopia to wpis samego kandydata z urlopu w sierpniu 2019 r. Kadr jest identyczny.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-plaza-w-kampanii-archive",
+        "station": "archive",
+        "text": "Archiwum nie ma zdjęć kandydata z plaży ani z jego urlopów.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-plaza-w-kampanii-source",
+        "station": "sourceRegistry",
+        "text": "Autor posta to prawdziwy mieszkaniec, aktywny na grupie od lat.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-plaza-w-kampanii-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Fałsz: zdjęcie jest prawdziwe, ale sprzed kilku lat. Kandydat sam pokazał je po urlopie.",
+      "technique": "Stare zdjęcie, nowy podpis: autentyczny obraz z innego czasu udaje dzisiejsze wydarzenie.",
+      "tool": "Lupa obrazu: najstarsza kopia pochodzi z sierpnia 2019 r., z konta kandydata.",
+      "realWorld": "W kampaniach wracają stare zdjęcia polityków z wakacji, podpisane jako „dziś”. Wyszukiwanie obrazem pokazuje, kiedy zdjęcie pojawiło się pierwszy raz."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l2-wycinka-w-parku",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Szelągowska przy wycince drzew w parku Nadrzecznym",
+    "body": "Zdjęcie: kandydatka stoi obok ściętego pnia. Podpis: „Obiecuje zieleń, a sama tnie drzewa!”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l2-wycinka-w-parku-image",
+        "station": "imageSearch",
+        "text": "Pełny kadr z tej chwili ma obok tablicę: „Chore drzewo. W zamian 30 nowych”. Ktoś ją odciął.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l2-wycinka-w-parku-archive",
+        "station": "archive",
+        "text": "W archiwum brak materiałów o parku Nadrzecznym z ostatnich tygodni.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l2-wycinka-w-parku-source",
+        "station": "sourceRegistry",
+        "text": "Post wrzuciło anonimowe konto założone w tym miesiącu.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l2-wycinka-w-parku-image"],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie z obciętym kadrem. Drzewo było chore, a miasto posadzi w zamian 30 nowych.",
+      "technique": "Wyrwane z kontekstu: przycięty kadr zmienia sens prawdziwej sceny.",
+      "tool": "Lupa obrazu: pełna wersja zdjęcia pokazuje tablicę o nowych nasadzeniach, którą ktoś przyciął.",
+      "realWorld": "Przycięcie zdjęcia to najprostsza przeróbka. Zanim ocenisz scenę, poszukaj szerszego kadru lub innych ujęć z tej samej chwili."
+    },
+    "reviewed": false
   }
 ]

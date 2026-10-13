@@ -6,10 +6,14 @@
 // No I/O and no Math.random(): every random choice comes from the `Rng` passed in.
 import {
   BAG_FLEX_CHANCE,
+  BAG_MIN_DEADLINE_S,
   BAG_MULTI_STAMP_MIN_SLOT,
   BAG_OPENING_SLOTS,
+  createRng,
   DIFFICULTY,
   type Difficulty,
+  hashText,
+  multiStampExtraMs,
   type ProofStory,
   type Rng,
   requiredStampsOf,
@@ -18,24 +22,16 @@ import {
   STAR_THRESHOLD_STEP,
   type StarThresholds,
   type StationKind,
+  scaledDeadlineS,
 } from '@redakcja/shared';
-import { proofCount } from './checks.ts';
+import { maxLevelScore, proofCount } from './rules.ts';
+import type { Level, LevelBag, LevelFile, StarShares, Story } from './schema.ts';
 
 /** The story facts the bag reads; the content `Story` and the sim fixtures both fit it. */
 export type BagStory = ProofStory & Pick<SimStory, 'id' | 'priority' | 'requiredStamps'>;
 
-/** The slot timing of a level's bag on Normal (seconds); the level file's `bag` block fits it. */
-export type BagTiming = {
-  /** Level time of the first folder. */
-  readonly firstAtS: number;
-  /** Seconds between folders on Normal; `DIFFICULTY[d].spawnGapFactor` scales it. */
-  readonly gapS: number;
-  /** No folder arrives after this, on any difficulty. */
-  readonly lastSpawnS: number;
-};
-
-/** Star thresholds as shares of a run's maximum score (`STAR_SHARES` or a level's override). */
-export type StarShares = { readonly two: number; readonly three: number };
+/** The slot timing of a level's bag on Normal (seconds). */
+export type BagTiming = Pick<LevelBag, 'firstAtS' | 'gapS' | 'lastSpawnS'>;
 
 /** Fisher–Yates over a copy, drawing from `rng`. */
 function shuffled<T>(items: readonly T[], rng: Rng): T[] {
@@ -313,4 +309,78 @@ export function starThresholds(maxScore: number, shares: StarShares = STAR_SHARE
     Math.min(roundToStep(maxScore * shares.three), reachable),
   );
   return { two, three };
+}
+
+/** Salt of the story-matching RNG stream, so it is independent of the station sequence's. */
+const BAG_STORY_STREAM = hashText('bag.stories');
+
+/**
+ * A dealt folder's deadline (s): the bag's Normal time for the story's priority scaled by the
+ * difficulty (`scaledDeadlineS`), cut so that it and the multi-stamp extra time the sim adds at
+ * spawn still end by `durationS`, and never below BAG_MIN_DEADLINE_S.
+ */
+export function bagDeadlineS(
+  bag: Pick<LevelBag, 'deadlineS'>,
+  story: Pick<SimStory, 'priority' | 'requiredStamps'>,
+  atS: number,
+  durationS: number,
+  difficulty: Difficulty,
+): number {
+  const scaled = scaledDeadlineS(bag.deadlineS[story.priority], difficulty);
+  const fit = round1(durationS - atS - multiStampExtraMs(story) / 1000);
+  return Math.max(BAG_MIN_DEADLINE_S, Math.min(scaled, fit));
+}
+
+/**
+ * One run of a bag level, in the order README §4 fixes: slot times for the difficulty, the station
+ * sequence over the bag stations, distinct stories matched to the slots (a separate RNG stream),
+ * scaled and clamped deadlines, events with scaled deadlines (same times), and star thresholds
+ * from the run's maximum score with the level's `starShares`. Every schedule entry records its
+ * slot's station. Pure: the same level, stories, seed and difficulty give the same level. Throws
+ * when the level has no bag, or its pool names a story missing from `stories`.
+ */
+export function generateBagLevel(
+  level: LevelFile | Level,
+  stories: readonly Story[],
+  seed: number,
+  difficulty: Difficulty,
+): Level {
+  const { bag } = level;
+  if (!bag) {
+    throw new RangeError(`level "${level.id}" has no bag`);
+  }
+  const byId = new Map(stories.map((story) => [story.id, story]));
+  const pool = bag.pool.map((id) => {
+    const story = byId.get(id);
+    if (!story) {
+      throw new RangeError(`level "${level.id}" pools unknown story "${id}"`);
+    }
+    return story;
+  });
+  const times = bagSlotTimes(bag, difficulty);
+  const sequence = stationSequence(
+    bagStations(pool, level.stations),
+    times.length,
+    createRng(seed),
+  );
+  const dealt = assignStories(sequence, pool, level.stations, createRng(seed ^ BAG_STORY_STREAM));
+  const schedule: Level['schedule'] = times.flatMap((atS, slot) => {
+    const story = dealt[slot];
+    const station = sequence[slot];
+    if (!story || !station) {
+      return [];
+    }
+    const deadlineS = bagDeadlineS(bag, story, atS, level.durationS, difficulty);
+    return [{ atS, storyId: story.id, deadlineS, station }];
+  });
+  const events = level.events.map((event) =>
+    event.kind === 'outage'
+      ? event
+      : { ...event, deadlineS: scaledDeadlineS(event.deadlineS, difficulty) },
+  );
+  const stars = starThresholds(
+    maxLevelScore({ schedule, events }, byId),
+    bag.starShares ?? STAR_SHARES,
+  );
+  return { ...level, schedule, events, stars };
 }

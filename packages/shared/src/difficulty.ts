@@ -48,3 +48,12 @@ export function tunedLockoutMs(tuning: SimTuning): number {
 export function failLockoutMs(difficulty: Difficulty): number {
   return tunedLockoutMs(simTuning(difficulty));
 }
+
+/**
+ * A folder deadline (s) on this difficulty: `deadlineS × deadlineFactor`, rounded to whole
+ * seconds. Normal (factor 1) keeps the authored value exactly, fractions included.
+ */
+export function scaledDeadlineS(deadlineS: number, difficulty: Difficulty): number {
+  const factor: number = DIFFICULTY[difficulty].deadlineFactor;
+  return factor === 1 ? deadlineS : Math.round(deadlineS * factor);
+}

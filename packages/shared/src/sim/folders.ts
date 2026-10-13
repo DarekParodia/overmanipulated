@@ -1,6 +1,6 @@
 // Folders: spawning from the level schedule, pick up / put down, deadlines and expiry (S2-02);
 // the next scheduled folder and the full-conveyor flag for snapshots (S7-08); extra time for
-// multi-stamp folders (S7-18).
+// multi-stamp folders (S7-18); a dealt entry's slot station travels on the folder (S7-23).
 // Emits: folderSpawned, folderPickedUp, folderPutDown, deadlineWarning, folderExpired.
 // Expired folders are removed here; their score and credibility are applied in scoring.ts.
 import {
@@ -9,6 +9,7 @@ import {
   INTERACTION_REACH_TILES,
   MULTI_STAMP_EXTRA_DEADLINE_MS,
 } from '../constants.ts';
+import type { StationKind } from '../domain.ts';
 import type { Folder, FolderLocation, FolderTag, NextFolder } from '../entities.ts';
 import { requiredStampsOf, type SimSpawn, type SimStory } from './content.ts';
 import type { SimContext, SimFrame } from './frame.ts';
@@ -60,7 +61,8 @@ function checkDeadlines(state: GameState, frame: SimFrame): GameState {
  * Spawns every due schedule entry onto the first free conveyor tile. When the conveyor is full
  * the entry waits (and holds back later ones) until a tile frees up; it is never skipped.
  * Entries whose story is missing from the story book are skipped. Each folder's spawn key is
- * `s<scheduleIndex>`, so it is the same in every newsroom whatever their belts look like.
+ * `s<scheduleIndex>`, so it is the same in every newsroom whatever their belts look like. An
+ * entry the bag dealt carries its slot station, which the folder keeps as `bagStation`.
  */
 function spawnFolders(state: GameState, frame: SimFrame): GameState {
   const { schedule } = frame.ctx.level;
@@ -78,7 +80,12 @@ function spawnFolders(state: GameState, frame: SimFrame): GameState {
     if (!free) {
       break;
     }
-    next = spawnFolderAt(next, frame, free, { ...entry, spawnKey: `s${next.nextSpawnIndex}` });
+    next = spawnFolderAt(next, frame, free, {
+      spawnKey: `s${next.nextSpawnIndex}`,
+      storyId: entry.storyId,
+      deadlineS: entry.deadlineS,
+      ...(entry.station ? { bagStation: entry.station } : {}),
+    });
     next = { ...next, nextSpawnIndex: next.nextSpawnIndex + 1 };
   }
   return next;
@@ -107,7 +114,13 @@ export function spawnFolderAt(
   state: GameState,
   frame: SimFrame,
   tile: Fixture,
-  spec: { spawnKey: string; storyId: string; deadlineS: number; tag?: FolderTag },
+  spec: {
+    spawnKey: string;
+    storyId: string;
+    deadlineS: number;
+    tag?: FolderTag;
+    bagStation?: StationKind;
+  },
 ): GameState {
   const story = frame.ctx.stories[spec.storyId];
   const extraMs = story ? multiStampExtraMs(story) : 0;
@@ -121,6 +134,7 @@ export function spawnFolderAt(
     deadlineMs: state.elapsedMs + Math.round(spec.deadlineS * 1000) + extraMs,
     warned: false,
     ...(spec.tag ? { tag: spec.tag } : {}),
+    ...(spec.bagStation ? { bagStation: spec.bagStation } : {}),
   };
   frame.events.push({
     kind: 'folderSpawned',

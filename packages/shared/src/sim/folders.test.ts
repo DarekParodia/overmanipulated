@@ -355,6 +355,41 @@ describe('stepFolders: spawning', () => {
     // The skipped entry keeps its index: the folder is the schedule's second entry.
     expect(state.folders.f1?.spawnKey).toBe('s1');
   });
+
+  it("copies a dealt entry's slot station to the folder as bagStation (S7-23)", () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [
+        { atS: 1, storyId: 't-true', deadlineS: 30, station: 'archive' },
+        { atS: 1, storyId: 't-false', deadlineS: 30 },
+      ],
+    };
+    const { state } = runFolders(at(1000), [], testContext({ level }));
+    expect(state.folders.f1).toEqual({
+      id: 'f1',
+      spawnKey: 's0',
+      storyId: 't-true',
+      location: onFixture('conveyor-0'),
+      stamps: [],
+      spawnedAtMs: 1000,
+      deadlineMs: 31_000,
+      warned: false,
+      bagStation: 'archive',
+    });
+    // An authored entry has no slot station, so its folder carries none.
+    expect(state.folders.f2 && 'bagStation' in state.folders.f2).toBe(false);
+  });
+
+  it('gives level-event folders no bagStation', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [],
+      events: [{ kind: 'viral', atS: 1, storyId: 't-true', deadlineS: 60 }],
+    };
+    const { state } = runStep(at(1000 - TICK_MS), {}, [], testContext({ level }));
+    expect(state.folders.f1?.tag).toEqual({ kind: 'viral' });
+    expect(state.folders.f1 && 'bagStation' in state.folders.f1).toBe(false);
+  });
 });
 
 describe('stepFolders: multi-stamp folders (S7-18)', () => {

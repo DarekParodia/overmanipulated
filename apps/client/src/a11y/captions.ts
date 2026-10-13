@@ -111,6 +111,7 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'station.open': skip('own-action'),
   'minigame.success': skip('own-action'),
   'desk.justify': skip('own-action'),
+  'desk.unjustify': skip('own-action'),
   'ping.open': skip('own-action'),
   'ping.send': skip('own-action'),
   'sourceRegistry.circle': skip('own-action'),
@@ -130,6 +131,7 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'briefing.ready': skip('visual-elsewhere'),
   'debrief.star': skip('visual-elsewhere'),
   'debrief.mark': skip('visual-elsewhere'),
+  'debrief.row': skip('visual-elsewhere'),
   'debrief.vote': skip('visual-elsewhere'),
   // The distant ringing is room tone; the boss call (event.bossCall.start) is the real phone.
   'ambience.phone': skip('decorative'),

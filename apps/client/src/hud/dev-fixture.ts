@@ -48,6 +48,8 @@ const FIXTURE_NEXT_FOLDER: NextFolder = { atMs: 140_000, sinceMs: 120_000 };
 const FIXTURE_STARS = { two: 120, three: 190 };
 const FIXTURE_MAX_SCORE = 240;
 const URGENT_STORY = 'l0-dev-pilny-komunikat';
+/** A multi-stamp story (S7-19) so the folder card's evidence chip shows "1/2". */
+const MULTI_STORY = 'l0-dev-dwa-dowody';
 
 function fixtureFolders(playerId: string): Folder[] {
   const at = FIXTURE_ELAPSED_MS;
@@ -73,9 +75,8 @@ function fixtureFolders(playerId: string): Folder[] {
     folder('f-2', 'l0-zalany-rynek', { kind: 'carried', playerId }, 21_000, [
       'l0-zalany-rynek-image',
     ]),
-    folder('f-3', 'l0-nocny-autobus', { kind: 'fixture', fixtureId: 'archive-0' }, 48_000, [
-      'l0-nocny-autobus-source',
-      'l0-nocny-autobus-archive',
+    folder('f-3', MULTI_STORY, { kind: 'fixture', fixtureId: 'archive-0' }, 48_000, [
+      `${MULTI_STORY}-archive`,
     ]),
     folder('f-4', 'l0-zalany-rynek', { kind: 'fixture', fixtureId: 'desk-0' }, 75_000, [
       'l0-zalany-rynek-image',
@@ -110,12 +111,14 @@ function fixtureResults(): FolderResult[] {
     bonuses: { speed, multiStamp: 0, bossCall: 0 },
     missedStampIds: [],
   });
+  // The results design fixture (S7-05): its totals add up to 15 points.
   return [
     result('f-1', 'l0-zalany-rynek', 'correct', 'correctImportant', 'reject', 25, 5, 5),
-    result('f-2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 15, 0, 5),
+    result('f-2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 10, 0),
     result('f-3', URGENT_STORY, 'wrong', 'publishedFake', 'publish', -20, -25),
     result('f-4', 'l0-nocny-autobus', 'wrongJustification', 'weakProof', 'publish', 5, 0),
     result('f-5', 'l0-zalany-rynek', 'expired', 'expired', null, -5, -5),
+    result('f-6', 'l0-nocny-autobus', 'unfinished', 'unfinished', null, 0, 0),
   ];
 }
 
@@ -128,6 +131,18 @@ export function installHudDevFixture(): (() => void) | undefined {
     type: 'post',
     priority: 'urgent',
     truth: 'false',
+  });
+  registerHudStory(MULTI_STORY, {
+    headline: 'Dwa raporty o korkach na moście',
+    type: 'article',
+    priority: 'important',
+    truth: 'false',
+    requiredStamps: 2,
+    stamps: [
+      { id: `${MULTI_STORY}-archive`, station: 'archive', text: 'Raport z 2019 r.' },
+      { id: `${MULTI_STORY}-source`, station: 'sourceRegistry', text: 'Konto założone wczoraj' },
+    ],
+    justifyingStamps: [`${MULTI_STORY}-archive`, `${MULTI_STORY}-source`],
   });
   const original = useGame.getState().applySnapshot;
   let serverElapsed: number | null = null;
@@ -200,15 +215,18 @@ export function installHudDevFixture(): (() => void) | undefined {
     },
     end(won, stars) {
       const state = useGame.getState();
+      const results = fixtureResults();
       const message: LevelEndMessage = {
         type: 'levelEnd',
         levelId: 'l0-greybox',
+        difficulty: 'normal',
         won,
         stars,
-        score: state.score,
+        // The results' own sum, so the totals need no 'Inne' row.
+        score: results.reduce((sum, result) => sum + result.scoreDelta, 0),
         credibility: state.credibility,
-        results: fixtureResults(),
-        lossReason: won ? null : 'score',
+        results,
+        lossReason: won ? null : state.credibility <= 0 ? 'credibility' : 'score',
         starThresholds: FIXTURE_STARS,
         maxScore: FIXTURE_MAX_SCORE,
       };
