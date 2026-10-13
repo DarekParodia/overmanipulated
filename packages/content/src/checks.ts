@@ -15,10 +15,12 @@ import {
   parseLayout,
   requiredStampsOf,
   type StationKind,
+  type TileMap,
+  tileAt,
 } from '@redakcja/shared';
 import type { z } from 'zod';
 import { bagSlotTimes, bagStations, matchStories, pinnedCounts } from './bag.ts';
-import { ENDLESS_STATIONS, endlessDecks, endlessStoryPool } from './endless.ts';
+import { ENDLESS_LAYOUT, ENDLESS_STATIONS, endlessDecks, endlessStoryPool } from './endless.ts';
 import {
   levelNumberOf,
   levelStoryIds,
@@ -69,6 +71,12 @@ export function formatIssue(issue: Issue): string {
 
 /** Same-kind level events closer than this (seconds) are reported. */
 export const EVENT_MIN_GAP_S = 10;
+
+/**
+ * Station signs float above their fixture; two stations on one row closer than this (columns)
+ * draw overlapping signs on a 640×360 phone, so the layout is reported (a warning).
+ */
+export const STATION_SIGN_MIN_GAP_COLUMNS = 3;
 
 /** Validates all content. Returns every issue found; an empty list means the content is valid. */
 export function validateContent(
@@ -193,7 +201,102 @@ export function validateContent(
   checkEndlessDecks(parsedLevels, [...storiesById.values()], (path, severity, message) =>
     add(severity, ENDLESS_ISSUE_FILE, path, message),
   );
+  checkLayout(ENDLESS_LAYOUT, (path, severity, message) =>
+    add(severity, ENDLESS_ISSUE_FILE, path, message),
+  );
   return issues;
+}
+
+/**
+ * Layout rules the schema cannot express: station signs far enough apart to stay readable on a
+ * phone (a warning), and every fixture and spawn reachable on foot from spawn 1 (an error). A
+ * fixture is reachable when one of its 4 neighbours is a floor tile that a breadth-first walk over
+ * floor tiles from spawn 1 visits. Issues point at `layout[row]`. A layout that does not parse is
+ * skipped: the level schema already reports it.
+ */
+export function checkLayout(layout: readonly string[], report: Report): void {
+  let map: TileMap;
+  try {
+    map = parseLayout(layout);
+  } catch {
+    return;
+  }
+  checkStationSignGaps(map, report);
+  checkReachability(map, report);
+}
+
+function checkStationSignGaps(map: TileMap, report: Report): void {
+  const stations = map.fixtures.filter((fixture) => fixture.kind === 'station');
+  // Fixtures come in reading order, so the previous station on the same row is the nearest one
+  // to its left.
+  stations.forEach((station, i) => {
+    const previous = stations[i - 1];
+    if (!previous || previous.row !== station.row) {
+      return;
+    }
+    const gap = station.col - previous.col;
+    if (gap < STATION_SIGN_MIN_GAP_COLUMNS) {
+      report(
+        ['layout', station.row],
+        'warning',
+        `station signs overlap on phones: ${previous.id} and ${station.id} are ${gap} column${gap === 1 ? '' : 's'} apart; keep at least ${STATION_SIGN_MIN_GAP_COLUMNS}`,
+      );
+    }
+  });
+}
+
+const NEIGHBOURS = [
+  { dc: 1, dr: 0 },
+  { dc: -1, dr: 0 },
+  { dc: 0, dr: 1 },
+  { dc: 0, dr: -1 },
+] as const;
+
+function checkReachability(map: TileMap, report: Report): void {
+  const start = map.spawns[0];
+  if (!start) {
+    // The level schema reports missing spawns.
+    return;
+  }
+  const key = (col: number, row: number) => row * map.width + col;
+  const reached = new Set<number>();
+  const queue = [{ col: Math.floor(start.x), row: Math.floor(start.y) }];
+  reached.add(key(Math.floor(start.x), Math.floor(start.y)));
+  for (let next = queue.shift(); next; next = queue.shift()) {
+    for (const { dc, dr } of NEIGHBOURS) {
+      const col = next.col + dc;
+      const row = next.row + dr;
+      if (tileAt(map, col, row) === 'floor' && !reached.has(key(col, row))) {
+        reached.add(key(col, row));
+        queue.push({ col, row });
+      }
+    }
+  }
+  map.spawns.forEach((spawn, slot) => {
+    const col = Math.floor(spawn.x);
+    const row = Math.floor(spawn.y);
+    if (!reached.has(key(col, row))) {
+      report(
+        ['layout', row],
+        'error',
+        `spawn ${slot + 1} at column ${col} cannot be reached from spawn 1`,
+      );
+    }
+  });
+  for (const fixture of map.fixtures) {
+    const reachable = NEIGHBOURS.some(({ dc, dr }) => {
+      const col = fixture.col + dc;
+      const row = fixture.row + dr;
+      return tileAt(map, col, row) === 'floor' && reached.has(key(col, row));
+    });
+    if (!reachable) {
+      report(
+        ['layout', fixture.row],
+        'error',
+        `${fixture.id} at column ${fixture.col} cannot be reached from spawn 1`,
+      );
+    }
+  }
 }
 
 /** Where endless deck issues are filed: they come from all campaign levels, not one file. */
@@ -468,6 +571,7 @@ function checkLevel(
       );
     }
   }
+  checkLayout(level.layout, report);
   const eventsOk = checkEvents(level, storiesById, report);
   if (level.bag) {
     checkBag({ ...level, bag: level.bag }, storiesById, report);

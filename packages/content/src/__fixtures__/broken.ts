@@ -48,6 +48,11 @@ function story(content: Content, id: string): Story {
   return found;
 }
 
+/** Replaces whole layout rows, keyed by row index. */
+function setRows(content: Content, rows: Readonly<Record<number, string>>): void {
+  content.level.layout = content.level.layout.map((row, y) => rows[y] ?? row);
+}
+
 export type BrokenCase = {
   name: string;
   breakIt: (content: Content) => void;
@@ -508,6 +513,51 @@ export const BROKEN_CASES: readonly BrokenCase[] = [
       file: LEVEL_FILE,
       path: 'schedule[0].storyId',
       message: 'story "l0-zalany-rynek" needs 2 proofs; multi-stamp folders start at level 4',
+    },
+  },
+  {
+    name: 'two station signs closer than 3 columns (warning only)',
+    breakIt: (c) => {
+      setRows(c, { 1: '#CCCC...I.A.....R..#' });
+    },
+    expected: {
+      severity: 'warning',
+      file: LEVEL_FILE,
+      path: 'layout[1]',
+      message:
+        'station signs overlap on phones: imageSearch-0 and archive-0 are 2 columns apart; keep at least 3',
+    },
+  },
+  {
+    name: 'a table walled off from spawn 1',
+    breakIt: (c) => {
+      setRows(c, {
+        8: '#.=.....====.......#',
+        9: '#=T=.............T.#',
+        10: '#.=................#',
+      });
+    },
+    expected: {
+      severity: 'error',
+      file: LEVEL_FILE,
+      path: 'layout[9]',
+      message: 'table-2 at column 2 cannot be reached from spawn 1',
+    },
+  },
+  {
+    name: 'a spawn walled off from spawn 1',
+    breakIt: (c) => {
+      setRows(c, {
+        6: '#...............=..#',
+        7: '#..3....=DD=...=4=.#',
+        8: '#.......====....=..#',
+      });
+    },
+    expected: {
+      severity: 'error',
+      file: LEVEL_FILE,
+      path: 'layout[7]',
+      message: 'spawn 4 at column 16 cannot be reached from spawn 1',
     },
   },
 ];
