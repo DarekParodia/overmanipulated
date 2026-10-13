@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'bun:test';
+import { TICK_MS } from '../constants.ts';
 import type { Folder, FolderLocation } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
 import {
+  MULTI_STAMP_STORY,
   runStep,
   TEST_LEVEL,
   TEST_MAP,
+  TEST_STORIES,
   testContext,
   testFolder,
   testInput,
 } from './__fixtures__/greybox.ts';
-import type { SimLevel } from './content.ts';
-import { conveyorBlocked, nextScheduledSpawn, stepFolders } from './folders.ts';
+import type { SimLevel, SimStory } from './content.ts';
+import { conveyorBlocked, multiStampExtraMs, nextScheduledSpawn, stepFolders } from './folders.ts';
 import type { PlayerIntent, SimContext, SimFrame } from './frame.ts';
 import { addPlayer, carriedFolder, createGameState, type GameState } from './state.ts';
 import type { PlayerInput } from './step.ts';
@@ -351,6 +354,66 @@ describe('stepFolders: spawning', () => {
     ]);
     // The skipped entry keeps its index: the folder is the schedule's second entry.
     expect(state.folders.f1?.spawnKey).toBe('s1');
+  });
+});
+
+describe('stepFolders: multi-stamp folders (S7-18)', () => {
+  /** m2 with a third proof from the source registry: the desk must cite all three. */
+  const M3: SimStory = {
+    ...MULTI_STAMP_STORY,
+    id: 'm3',
+    stamps: [
+      { id: 'm3-image', station: 'imageSearch', relevance: 'decisive' },
+      { id: 'm3-archive', station: 'archive', relevance: 'decisive' },
+      { id: 'm3-source', station: 'sourceRegistry', relevance: 'decisive' },
+    ],
+    justifyingStamps: ['m3-image', 'm3-archive', 'm3-source'],
+    requiredStamps: 3,
+  };
+  const stories = { ...TEST_STORIES, m3: M3 };
+  const at1000 = { ...createGameState({ map: TEST_MAP }), elapsedMs: 1000 };
+
+  it('adds 20 s per proof beyond the first to the deadline', () => {
+    expect(multiStampExtraMs({})).toBe(0);
+    expect(multiStampExtraMs({ requiredStamps: 1 })).toBe(0);
+    expect(multiStampExtraMs(MULTI_STAMP_STORY)).toBe(20_000);
+    expect(multiStampExtraMs(M3)).toBe(40_000);
+  });
+
+  it('spawns N = 2 at 1000 ms with 60 s due at 81000 and N = 3 due at 101000', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [
+        { atS: 1, storyId: 'm2', deadlineS: 60 },
+        { atS: 1, storyId: 'm3', deadlineS: 60 },
+        { atS: 1, storyId: 't-true', deadlineS: 60 },
+      ],
+    };
+    const { state } = runFolders(at1000, [], testContext({ level, stories }));
+    expect(state.folders.f1).toMatchObject({
+      storyId: 'm2',
+      spawnedAtMs: 1000,
+      deadlineMs: 81_000,
+    });
+    expect(state.folders.f2).toMatchObject({ storyId: 'm3', deadlineMs: 101_000 });
+    // A classic folder keeps its schedule time.
+    expect(state.folders.f3).toMatchObject({ storyId: 't-true', deadlineMs: 61_000 });
+  });
+
+  it('gives a level-event folder the same extra time', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [],
+      events: [{ kind: 'viral', atS: 1, storyId: 'm2', deadlineS: 60 }],
+    };
+    const before = { ...at1000, elapsedMs: 1000 - TICK_MS };
+    const { state } = runStep(before, {}, [], testContext({ level, stories }));
+    expect(state.folders.f1).toMatchObject({
+      storyId: 'm2',
+      tag: { kind: 'viral' },
+      spawnedAtMs: 1000,
+      deadlineMs: 81_000,
+    });
   });
 });
 

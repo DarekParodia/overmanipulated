@@ -394,7 +394,8 @@ describe('evaluateVerdict — cited proof (Stage 7)', () => {
     });
     expect(evaluateVerdict(twoProofs, f, 'reject', ['s-image', 's-archive'], LATE)).toMatchObject({
       outcome: 'correct',
-      scoreDelta: 10,
+      scoreDelta: 20,
+      bonuses: { speed: 0, multiStamp: 10, bossCall: 0 },
     });
   });
 
@@ -416,6 +417,116 @@ describe('evaluateVerdict — cited proof (Stage 7)', () => {
       LATE,
     );
     expect(r).toMatchObject({ outcome: 'correct', reason: 'correctNormal', scoreDelta: 10 });
+  });
+});
+
+describe('evaluateVerdict — multi-stamp folders (S7-18)', () => {
+  const m2 = must(TEST_STORIES.m2);
+  /** m2 spawned at 1 s with 60 s plus 20 s for its second proof; both proofs collected. */
+  const m2Folder = (stamps: string[] = ['m2-image', 'm2-archive']): Folder =>
+    folder({ storyId: 'm2', stamps, spawnedAtMs: 1000, deadlineMs: 81_000 });
+  /** 61 s of 80 s left: the speed bonus is earned. */
+  const EARLY = 20_000;
+
+  it('pays 35 for m2 with both proofs cited early: 20 + speed 5 + multi-stamp 10', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-archive'], EARLY);
+    expect(r).toEqual({
+      outcome: 'correct',
+      reason: 'correctImportant',
+      scoreDelta: 35,
+      credibilityDelta: 5,
+      bonuses: { speed: 5, multiStamp: 10, bossCall: 0 },
+      missedStampIds: [],
+    });
+  });
+
+  it('calls one cited proof of two incomplete: half the base points, no bonuses', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image'], EARLY);
+    expect(r).toEqual({
+      outcome: 'wrongJustification',
+      reason: 'incompleteProof',
+      scoreDelta: 10,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    });
+  });
+
+  it('calls a non-justifying cite weak even next to a valid proof', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-source'], EARLY);
+    expect(r).toMatchObject({
+      outcome: 'wrongJustification',
+      reason: 'weakProof',
+      scoreDelta: 10,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+    });
+  });
+
+  it('names the uncollected proof when the folder holds only one', () => {
+    const r = evaluateVerdict(m2, m2Folder(['m2-image']), 'reject', ['m2-image'], EARLY);
+    expect(r).toMatchObject({ reason: 'incompleteProof', scoreDelta: 10 });
+    expect(r.missedStampIds).toEqual(['m2-archive']);
+  });
+
+  it('counts the same proof cited twice once', () => {
+    const r = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-image'], EARLY);
+    expect(r).toMatchObject({ reason: 'incompleteProof', scoreDelta: 10 });
+  });
+
+  it('pays the multi-stamp bonus without the speed bonus late, and never scales it', () => {
+    const late = evaluateVerdict(m2, m2Folder(), 'reject', ['m2-image', 'm2-archive'], 60_000);
+    expect(late).toMatchObject({ scoreDelta: 30, bonuses: { speed: 0, multiStamp: 10 } });
+    const expert = simTuning('expert');
+    const onExpert = evaluateVerdict(
+      m2,
+      m2Folder(),
+      'reject',
+      ['m2-image', 'm2-archive'],
+      EARLY,
+      expert,
+    );
+    expect(onExpert).toMatchObject({ scoreDelta: 35, bonuses: { speed: 5, multiStamp: 10 } });
+    // A wrong verdict pays no bonus, only the scaled penalty.
+    const wrong = evaluateVerdict(m2, m2Folder(), 'publish', ['m2-image'], EARLY, expert);
+    expect(wrong).toMatchObject({
+      outcome: 'wrong',
+      reason: 'publishedFake',
+      scoreDelta: -30,
+      credibilityDelta: -38,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+    });
+  });
+
+  it('records the bonus, the cites and the required count on the verdict result', () => {
+    const state = withOperator(deskState(m2Folder()));
+    const at = { ...state, elapsedMs: EARLY };
+    const command = testCommand('p1', {
+      kind: 'verdict',
+      folderId: 'f1',
+      verdict: 'reject',
+      justifyingStampIds: ['m2-image', 'm2-archive'],
+    });
+    const frame = frameFor(at, [command]);
+    const next = stepDesk(at, frame);
+    expect(next.score).toBe(35);
+    expect(next.credibility).toBe(100);
+    expect(next.results).toEqual([
+      {
+        folderId: 'f1',
+        spawnKey: 's1',
+        storyId: 'm2',
+        outcome: 'correct',
+        reason: 'correctImportant',
+        verdict: 'reject',
+        scoreDelta: 35,
+        credibilityDelta: 5,
+        justifyingStampIds: ['m2-image', 'm2-archive'],
+        requiredStamps: 2,
+        bonuses: { speed: 5, multiStamp: 10, bossCall: 0 },
+        missedStampIds: [],
+      },
+    ]);
   });
 });
 

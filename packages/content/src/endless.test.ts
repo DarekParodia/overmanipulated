@@ -130,6 +130,28 @@ describe('generateEndlessLevel', () => {
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
   });
 
+  it('draws a multi-stamp story only when the six stations give all its proofs', () => {
+    const original = STORIES.find((s) => s.id.startsWith('l1-') && s.justifyingStamps.length === 1);
+    if (!original) {
+      throw new Error('level 1 needs a story with one justifying stamp');
+    }
+    const poolWith = (variant: Story) =>
+      endlessStoryPool(
+        LEVELS,
+        STORIES.map((s) => (s.id === original.id ? variant : s)),
+      ).map((s) => s.id);
+    expect(poolWith(original)).toContain(original.id);
+    // Two proofs required, one available: never drawn.
+    expect(poolWith({ ...original, requiredStamps: 2 })).not.toContain(original.id);
+    const proven: Story = {
+      ...original,
+      stamps: original.stamps.map((stamp) => ({ ...stamp, relevance: 'decisive' as const })),
+      justifyingStamps: original.stamps.map((stamp) => stamp.id),
+      requiredStamps: 2,
+    };
+    expect(poolWith(proven)).toContain(original.id);
+  });
+
   it('getLevel serves a preview of the endless level', () => {
     expect(getLevel(ENDLESS_LEVEL_ID)?.title).toBe(generate(0).title);
   });

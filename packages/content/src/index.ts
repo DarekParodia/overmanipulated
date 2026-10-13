@@ -12,6 +12,7 @@ import {
   techniqueFileSchema,
 } from './schema.ts';
 
+export * from './bag.ts';
 export { maxLevelScore, maxStoryScore } from './checks.ts';
 export * from './endless.ts';
 export * from './schema.ts';

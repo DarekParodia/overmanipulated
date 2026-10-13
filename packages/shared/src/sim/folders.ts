@@ -1,14 +1,16 @@
 // Folders: spawning from the level schedule, pick up / put down, deadlines and expiry (S2-02);
-// the next scheduled folder and the full-conveyor flag for snapshots (S7-08).
+// the next scheduled folder and the full-conveyor flag for snapshots (S7-08); extra time for
+// multi-stamp folders (S7-18).
 // Emits: folderSpawned, folderPickedUp, folderPutDown, deadlineWarning, folderExpired.
 // Expired folders are removed here; their score and credibility are applied in scoring.ts.
 import {
   DEADLINE_WARNING_MS,
   FLOOR_DROP_DISTANCE_TILES,
   INTERACTION_REACH_TILES,
+  MULTI_STAMP_EXTRA_DEADLINE_MS,
 } from '../constants.ts';
 import type { Folder, FolderLocation, FolderTag, NextFolder } from '../entities.ts';
-import type { SimSpawn } from './content.ts';
+import { requiredStampsOf, type SimSpawn, type SimStory } from './content.ts';
 import type { SimContext, SimFrame } from './frame.ts';
 import {
   type Fixture,
@@ -88,9 +90,18 @@ export function freeConveyors(state: GameState, map: TileMap): Fixture[] {
 }
 
 /**
+ * Time a folder of this story gets on top of its schedule or event `deadlineS`: one
+ * `MULTI_STAMP_EXTRA_DEADLINE_MS` per proof beyond the first (0 for a classic folder).
+ */
+export function multiStampExtraMs(story: Pick<SimStory, 'requiredStamps'>): number {
+  return (requiredStampsOf(story) - 1) * MULTI_STAMP_EXTRA_DEADLINE_MS;
+}
+
+/**
  * Puts a new folder on a conveyor tile (the caller picked a free one) and emits `folderSpawned`.
  * Shared by the level schedule and by level events; `tag` marks event folders and `spawnKey`
- * names where the folder came from (`s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`).
+ * names where the folder came from (`s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`). The
+ * deadline is `deadlineS` from now plus the multi-stamp extra time of the story.
  */
 export function spawnFolderAt(
   state: GameState,
@@ -98,6 +109,8 @@ export function spawnFolderAt(
   tile: Fixture,
   spec: { spawnKey: string; storyId: string; deadlineS: number; tag?: FolderTag },
 ): GameState {
+  const story = frame.ctx.stories[spec.storyId];
+  const extraMs = story ? multiStampExtraMs(story) : 0;
   const folder: Folder = {
     id: `f${state.nextFolderNumber}`,
     spawnKey: spec.spawnKey,
@@ -105,7 +118,7 @@ export function spawnFolderAt(
     location: { kind: 'fixture', fixtureId: tile.id },
     stamps: [],
     spawnedAtMs: state.elapsedMs,
-    deadlineMs: state.elapsedMs + Math.round(spec.deadlineS * 1000),
+    deadlineMs: state.elapsedMs + Math.round(spec.deadlineS * 1000) + extraMs,
     warned: false,
     ...(spec.tag ? { tag: spec.tag } : {}),
   };

@@ -1,16 +1,18 @@
 // Music (S2-13, S5-08): a menu loop, and per level (1-6 and endless) two in-sync layers (calm +
 // pressure) with their own key, tempo and instrumentation. The mix follows the game's intensity
-// (music-intensity.ts) and dips under big stingers (duck.ts). Screens request a scene with
-// `requestMusic`; a small ticker cross-fades between scenes, slews the intensity and the tempo,
-// and applies the music bus volume from settings. Global mute and hidden-tab mute are handled by
-// `initAudio`. Nothing is fetched or started before the first user gesture (autoplay policy), and
-// a level's files are fetched only when that level starts (never in the first-load path).
+// (music-intensity.ts) and dips under big stingers and intro voice lines (duck.ts). Screens
+// request a scene with `requestMusic`; a small ticker cross-fades between scenes, slews the
+// intensity and the tempo, and applies the music bus volume from settings. Global mute and
+// hidden-tab mute are handled by `initAudio`. Nothing is fetched or started before the first user
+// gesture (autoplay policy), and a level's files are fetched only when that level starts (never in
+// the first-load path).
 import { Howl } from 'howler';
 import { useGame } from '../../net/game-store.ts';
 import { useApp } from '../../store/app.ts';
 import { useSettings } from '../../store/settings.ts';
-import { busVolume, installMasterLimiter } from './audio-manager.ts';
 import { musicDucker } from './duck.ts';
+import { installMasterLimiter } from './limiter.ts';
+import { busVolume } from './mix.ts';
 import {
   layerGains,
   MUSIC_TUNING,

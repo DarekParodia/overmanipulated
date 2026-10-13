@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'bun:test';
 import { existsSync, statSync } from 'node:fs';
 import { ENDLESS_LEVEL_ID } from '@redakcja/shared';
+import { loadSettings } from '../../store/settings.ts';
 import { AMBIENCE_TUNING } from './ambience.ts';
 import { createDucker, DUCK_TUNING, DUCKING_SOUNDS, soundDurationMs } from './duck.ts';
-import { BUS_TRIM, CHATTER, chatterLevel, type MixSettings, reducedAudio } from './mix.ts';
+import {
+  BUS_TRIM,
+  busVolume,
+  CHATTER,
+  chatterLevel,
+  type MixSettings,
+  reducedAudio,
+} from './mix.ts';
 import {
   CALM_DIP_AT_FULL,
   layerGains,
@@ -127,6 +135,36 @@ describe('music ducking', () => {
     expect(short.step(10, 1)).toBe(1);
   });
 
+  it('dips deeper under a voice line: the lowest active depth wins (0.3 beats 0.45)', () => {
+    expect(DUCK_TUNING.depth).toBe(0.45);
+    expect(DUCK_TUNING.voiceDepth).toBe(0.3);
+    const ducker = createDucker();
+    ducker.request(0, 3000);
+    ducker.request(0, 1000, DUCK_TUNING.voiceDepth);
+    expect(ducker.step(500, 10)).toBe(0.3);
+    // The voice line is over; the stinger still holds the music at its own depth.
+    expect(ducker.step(1500, 10)).toBe(0.45);
+    expect(ducker.step(3500, 10)).toBe(1);
+  });
+
+  it('keeps the voice dip when a stinger rings over it', () => {
+    const ducker = createDucker();
+    ducker.request(0, 2000, DUCK_TUNING.voiceDepth);
+    ducker.request(500, 2000);
+    expect(ducker.step(600, 10)).toBe(0.3);
+    expect(ducker.step(1800, 10)).toBe(0.3);
+    expect(ducker.step(2200, 10)).toBe(0.45);
+    expect(ducker.step(2600, 10)).toBe(1);
+  });
+
+  it('lets the music back up at once when a voice line is cut short', () => {
+    const ducker = createDucker();
+    ducker.request(0, 5000, DUCK_TUNING.voiceDepth);
+    expect(ducker.step(100, 10)).toBe(0.3);
+    ducker.release(DUCK_TUNING.voiceDepth);
+    expect(ducker.step(200, 10)).toBe(1);
+  });
+
   it('only names sounds that exist in the sprite', () => {
     for (const id of DUCKING_SOUNDS) {
       expect(id in sprite).toBe(true);
@@ -155,9 +193,30 @@ describe('chatter bed and bus defaults', () => {
   });
 
   it('has a trim for every bus and never boosts one', () => {
-    for (const bus of ['music', 'sfx', 'ui'] as const) {
+    for (const bus of ['music', 'sfx', 'ui', 'voice'] as const) {
       expect(BUS_TRIM[bus]).toBeGreaterThan(0);
       expect(BUS_TRIM[bus]).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('bus volume', () => {
+  const defaults = loadSettings(null);
+
+  it('multiplies master, the bus slider and the trim', () => {
+    expect(busVolume(defaults, 'music')).toBeCloseTo(0.48);
+    expect(busVolume(defaults, 'sfx')).toBeCloseTo(0.72);
+    expect(busVolume(defaults, 'ui')).toBeCloseTo(0.504);
+  });
+
+  it('drives the voice bus from the Lektor slider alone', () => {
+    expect(BUS_TRIM.voice).toBe(1);
+    expect(busVolume(defaults, 'voice')).toBeCloseTo(0.72);
+    const quietVoice = { ...defaults, masterVolume: 0.5, voiceVolume: 0.4 };
+    expect(busVolume(quietVoice, 'voice')).toBeCloseTo(0.2);
+    expect(
+      busVolume({ ...defaults, musicVolume: 0, sfxVolume: 0, uiVolume: 0 }, 'voice'),
+    ).toBeCloseTo(0.72);
+    expect(busVolume({ ...defaults, voiceVolume: 0 }, 'voice')).toBe(0);
   });
 });

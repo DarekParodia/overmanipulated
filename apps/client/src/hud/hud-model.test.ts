@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'bun:test';
-import { CREDIBILITY, DEADLINE_WARNING_MS, type Folder, SCORE } from '@redakcja/shared';
+import {
+  CREDIBILITY,
+  DEADLINE_WARNING_MS,
+  type Folder,
+  type FolderReason,
+  folderReasonSchema,
+  SCORE,
+} from '@redakcja/shared';
+import { pl } from '../strings/pl.ts';
 import {
   expiredToast,
   formatClock,
@@ -142,29 +150,52 @@ describe('toasts', () => {
   } as const;
 
   test('a published fake reads as such, in red', () => {
-    const slip = verdictToast({ ...base, verdict: 'publish', outcome: 'wrong' }, story, 0);
-    expect(slip.title).toBe('Fałszywka!');
+    const slip = verdictToast({ ...base, outcome: 'wrong', reason: 'publishedFake' }, story, 0);
+    expect(slip.title).toBe('Fałszywka w druku!');
     expect(slip.tone).toBe('bad');
     expect(slip.mark).toBe('reject');
     expect(slip.headline).toBe(story.headline);
   });
 
-  test('a rejected truth and a correct verdict', () => {
-    expect(verdictToast({ ...base, verdict: 'reject', outcome: 'wrong' }, story, 0).title).toBe(
-      'To była prawda!',
-    );
+  test('a wrong verdict is titled by what happened, not by the verdict', () => {
+    const wrong = (reason: FolderReason) =>
+      verdictToast({ ...base, outcome: 'wrong', reason }, story, 0).title;
+    expect(wrong('rejectedTrue')).toBe('To była prawda!');
+    // Rejecting a misleading story: it needed context, it was not true.
+    expect(wrong('rejectedContextStory')).toBe('Wystarczył kontekst');
+    expect(wrong('publishedWithoutContext')).toBe('Bez kontekstu!');
+    expect(wrong('contextOnTrue')).toBe('Kontekst niepotrzebny');
+  });
+
+  test('a correct verdict and a weak proof', () => {
     const good = verdictToast(
-      { ...base, verdict: 'reject', outcome: 'correct', scoreDelta: 30 },
+      { ...base, outcome: 'correct', reason: 'correctNormal', scoreDelta: 30 },
       undefined,
       1,
     );
     expect(good.title).toBe('Dobrze!');
     expect(good.tone).toBe('good');
+    expect(good.mark).toBe('publish');
     expect(good.headline).toBe('Teczka bez opisu');
+    const weak = verdictToast(
+      { ...base, outcome: 'wrongJustification', reason: 'incompleteProof', scoreDelta: 5 },
+      story,
+      2,
+    );
+    expect(weak.title).toBe('Za mało dowodów');
+    expect(weak.tone).toBe('caution');
+  });
+
+  test('toast, desk and Kolegium share one title per reason', () => {
+    for (const reason of folderReasonSchema.options) {
+      const slip = verdictToast({ ...base, outcome: 'wrong', reason }, story, 0);
+      expect(slip.title).toBe(pl.outcome.title[reason]);
+    }
   });
 
   test('expiry follows the scoring table, free for unverifiable non-urgent stories', () => {
     const penalized = expiredToast({ folderId: 'f', storyId: 's' }, story, 0);
+    expect(penalized.title).toBe('Teczka przepadła');
     expect(penalized.scoreDelta).toBe(SCORE.expired);
     expect(penalized.credibilityDelta).toBe(CREDIBILITY.expired);
     const free = expiredToast(
@@ -172,6 +203,7 @@ describe('toasts', () => {
       { ...story, truth: 'unverifiable' },
       1,
     );
+    expect(free.title).toBe(pl.outcome.title.expiredUnpenalized);
     expect(free.scoreDelta).toBeNull();
     expect(free.credibilityDelta).toBe(0);
   });
@@ -179,7 +211,7 @@ describe('toasts', () => {
   test('keeps at most three, newest first', () => {
     let list = pushToast(
       [],
-      verdictToast({ ...base, verdict: 'publish', outcome: 'wrong' }, story, 0),
+      verdictToast({ ...base, outcome: 'wrong', reason: 'publishedFake' }, story, 0),
       3,
     );
     for (let i = 1; i < 5; i++) {

@@ -1,5 +1,5 @@
-// Test fixtures for gameplay subsystems: the greybox level with a short schedule and one story
-// per truth value. Plain data, independent of the content package.
+// Test fixtures for gameplay subsystems: the greybox level with a short schedule, one story per
+// truth value and the multi-stamp story `m2`. Plain data, independent of the content package.
 import { TICK_MS } from '../../constants.ts';
 import { NORMAL_TUNING } from '../../difficulty.ts';
 import type { Folder } from '../../entities.ts';
@@ -33,6 +33,21 @@ function story(
   };
 }
 
+/**
+ * A multi-stamp story (S7-18): false and important, proven by the image search and the archive
+ * alike, and the desk must cite both (`requiredStamps` 2). No schedule entry uses it.
+ */
+export const MULTI_STAMP_STORY: SimStory = {
+  ...story('m2', 'false', 'important', 'reject'),
+  stamps: [
+    { id: 'm2-image', station: 'imageSearch', relevance: 'decisive' },
+    { id: 'm2-archive', station: 'archive', relevance: 'decisive' },
+    { id: 'm2-source', station: 'sourceRegistry', relevance: 'irrelevant' },
+  ],
+  justifyingStamps: ['m2-image', 'm2-archive'],
+  requiredStamps: 2,
+};
+
 export const TEST_STORIES: StoryBook = {
   't-true': story('t-true', 'true', 'normal', 'publish'),
   't-false': story('t-false', 'false', 'important', 'reject'),
@@ -40,6 +55,7 @@ export const TEST_STORIES: StoryBook = {
   't-satire': story('t-satire', 'satire', 'normal', 'publishWithContext'),
   't-unverifiable': story('t-unverifiable', 'unverifiable', 'normal', 'reject'),
   't-unverifiable-urgent': story('t-unverifiable-urgent', 'unverifiable', 'urgent', 'reject'),
+  m2: MULTI_STAMP_STORY,
 };
 
 export const TEST_LEVEL: SimLevel = {

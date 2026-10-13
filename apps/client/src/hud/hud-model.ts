@@ -1,11 +1,13 @@
 // Pure helpers behind the HUD: queue order, the next folder, clock formatting, folder location
-// labels and the verdict toast text. Kept free of React so they are unit-tested directly.
+// labels and the verdict toast text (titles by reason, shared with the desk and the Kolegium).
+// Kept free of React so they are unit-tested directly.
 import {
   CREDIBILITY as CREDIBILITY_DELTAS,
   DEADLINE_WARNING_MS,
   expiryIsPenalized,
   type Folder,
   type FolderOutcome,
+  type FolderReason,
   type NextFolder,
   type Priority,
   SCORE,
@@ -13,7 +15,6 @@ import {
   type StationKind,
   type StoryType,
   type Truth,
-  type Verdict,
 } from '@redakcja/shared';
 import { pl } from '../strings/pl.ts';
 import { formatNumber } from '../strings/typography.ts';
@@ -160,57 +161,43 @@ export type ToastSlip = {
   mark: 'publish' | 'reject' | 'expired';
 };
 
-function wrongTitle(verdict: Verdict): string {
-  switch (verdict) {
-    case 'publish':
-      return pl.hud.toast.fakePublished;
-    case 'reject':
-      return pl.hud.toast.truthRejected;
-    case 'publishWithContext':
-      return pl.hud.toast.wrong;
-  }
-}
+const TONE: Record<FolderOutcome, ToastTone> = {
+  correct: 'good',
+  wrongJustification: 'caution',
+  wrong: 'bad',
+  expired: 'bad',
+  unfinished: 'caution',
+};
 
+const MARK: Record<FolderOutcome, ToastSlip['mark']> = {
+  correct: 'publish',
+  wrongJustification: 'publish',
+  wrong: 'reject',
+  expired: 'expired',
+  unfinished: 'expired',
+};
+
+/** The toast for a verdict; its title is the folder result's title by reason (`pl.outcome`). */
 export function verdictToast(
   event: {
     folderId: string;
     storyId: string;
-    verdict: Verdict;
     outcome: FolderOutcome;
+    reason: FolderReason;
     scoreDelta: number;
     credibilityDelta: number;
   },
   story: StoryInfo | undefined,
   serial: number,
 ): ToastSlip {
-  const toneByOutcome: Record<FolderOutcome, ToastTone> = {
-    correct: 'good',
-    wrongJustification: 'caution',
-    wrong: 'bad',
-    expired: 'bad',
-    unfinished: 'caution',
-  };
-  const title =
-    event.outcome === 'correct'
-      ? pl.hud.toast.correct
-      : event.outcome === 'wrongJustification'
-        ? pl.hud.toast.wrongJustification
-        : event.outcome === 'expired' || event.outcome === 'unfinished'
-          ? pl.hud.toast.expired
-          : wrongTitle(event.verdict);
   return {
     id: `${event.folderId}:${serial}`,
-    title,
+    title: pl.outcome.title[event.reason],
     headline: story?.headline ?? pl.hud.untitled,
     scoreDelta: event.scoreDelta,
     credibilityDelta: event.credibilityDelta,
-    tone: toneByOutcome[event.outcome],
-    mark:
-      event.outcome === 'wrong'
-        ? 'reject'
-        : event.outcome === 'expired' || event.outcome === 'unfinished'
-          ? 'expired'
-          : 'publish',
+    tone: TONE[event.outcome],
+    mark: MARK[event.outcome],
   };
 }
 
@@ -221,9 +208,10 @@ export function expiredToast(
   serial: number,
 ): ToastSlip {
   const penalized = story ? expiryIsPenalized(story.truth, story.priority) : true;
+  const reason: FolderReason = penalized ? 'expired' : 'expiredUnpenalized';
   return {
     id: `${event.folderId}:${serial}`,
-    title: pl.hud.toast.expired,
+    title: pl.outcome.title[reason],
     headline: story?.headline ?? pl.hud.untitled,
     scoreDelta: penalized ? SCORE.expired : null,
     credibilityDelta: penalized ? CREDIBILITY_DELTAS.expired : 0,

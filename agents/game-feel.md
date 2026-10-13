@@ -29,7 +29,7 @@ polish stage at the end.
 | --- | --- |
 | `feedback.ts` | Event bus: `emitCue(cueId, context)` where context has position, player, intensity. Called from net event handlers and local input handlers. |
 | `cues.ts` | **The feedback catalogue**: data that maps each cue id to its layers (sound ids, particle preset, animation trigger, shake trauma, haptic pattern, UI effect). |
-| `audio/` | Howler manager: buses `music`, `sfx`, `ui`, `ambience`; audio sprites; pan by screen position; ducking (music dips under big stingers); mobile unlock; keyed loops (`loops.ts`, e.g. the typewriter loop per station). |
+| `audio/` | Howler manager: buses `music`, `sfx`, `ui`, `voice` (the newsroom ambience plays on `sfx`; `voice` carries only the intro voiceover, `voice.ts`); audio sprites; pan by screen position; ducking (music dips under big stingers, deeper under voice lines); mobile unlock; keyed loops (`loops.ts`, e.g. the typewriter loop per station). |
 | `particles/` | Pooled instanced particle system; emitter presets as data (count, lifetime, velocity, gravity, colour over life, size over life, texture atlas frame). One draw call per material. Global cap from the quality preset. |
 | `animation/` | Easing functions, tweens, springs (allocation-free), procedural character layer (bob, lean, squash & stretch), helpers for `AnimationMixer` clip cross-fades. |
 | `camera/` | Trauma-based camera shake (trauma² → offset/rotation, decays per second), small zoom punches. |
@@ -112,7 +112,8 @@ exposes `handleGameEvent`, `emitCue` and `useGame` for testing feedback by hand.
 
 - Menu track; per-level track with **intensity layers** (calm / pressure) cross-faded by remaining
   time, urgent folders and low credibility.
-- Stingers for win, lose, events; music ducks under them.
+- Stingers for win, lose, events; music ducks under them (to 45 %). Intro voice lines duck it
+  deeper (to 30 %); the lowest active dip wins. Voice lines are not cues: the intro subtitles them.
 - Loop points seamless; total music within the download budget (stream after first load).
 
 ## Animation

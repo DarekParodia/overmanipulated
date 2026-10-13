@@ -6,11 +6,13 @@ import {
   ENDLESS,
   ENDLESS_LEVEL_ID,
   type Rng,
+  requiredStampsOf,
   type SimLevelEvent,
   type StationKind,
   type StoryBook,
 } from '@redakcja/shared';
-import { levelNumberOf } from './checks.ts';
+import { bagDrawer } from './bag.ts';
+import { levelNumberOf, proofCount } from './checks.ts';
 import type { Level, Story } from './schema.ts';
 
 /** An endless level: a regular `Level` that the sim ends only at 0 credibility. */
@@ -49,12 +51,12 @@ export const ENDLESS_STATIONS: readonly StationKind[] = [
 /** Seed used for the level shown before a run starts (lobby card, briefing). */
 export const ENDLESS_PREVIEW_SEED = 0;
 
-/** A story all six stations can solve: some non-scanner stamp justifies the verdict. */
+/**
+ * A story the endless stations can solve: they give at least as many proofs (justifying stamps
+ * that are not hint-only) as the story requires, the rule `checkStoryFitsLevel` applies.
+ */
 function isSolvable(story: Story): boolean {
-  return story.justifyingStamps.some((id) => {
-    const stamp = story.stamps.find((s) => s.id === id);
-    return stamp !== undefined && stamp.station !== 'aiScanner';
-  });
+  return proofCount(story, ENDLESS_STATIONS) >= requiredStampsOf(story);
 }
 
 /** Campaign order: level number first, then id; stable for any set of content files. */
@@ -111,32 +113,6 @@ function endlessEventIntervalS(atS: number): number {
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
 const jitter = (rng: Rng) => 1 + (rng.next() * 2 - 1) * ENDLESS.intervalJitter;
-
-/** Shuffled rounds over the pool, never the same story twice in a row. */
-function storyDrawer(pool: readonly Story[], rng: Rng): () => Story {
-  let bag: Story[] = [];
-  let last: Story | undefined;
-  const refill = () => {
-    bag = [...pool];
-    for (let i = bag.length - 1; i > 0; i--) {
-      const j = rng.int(i + 1);
-      [bag[i], bag[j]] = [bag[j] as Story, bag[i] as Story];
-    }
-    // The bag is drawn from the end; keep the previous round's last story away from it.
-    const end = bag.length - 1;
-    if (bag.length > 1 && bag[end] === last) {
-      [bag[0], bag[end]] = [bag[end] as Story, bag[0] as Story];
-    }
-  };
-  return () => {
-    if (bag.length === 0) {
-      refill();
-    }
-    const story = bag.pop() as Story;
-    last = story;
-    return story;
-  };
-}
 
 const EVENT_KINDS = ['viral', 'bossCall', 'botRaid', 'outage', 'correction'] as const;
 
@@ -201,7 +177,7 @@ export function generateEndlessLevel(
     throw new Error('Endless mode needs at least one solvable story');
   }
   const rng = createRng(seed);
-  const draw = storyDrawer(pool, rng);
+  const draw = bagDrawer(pool, rng);
   const schedule: Level['schedule'][number][] = [];
   let atS: number = ENDLESS.firstSpawnS;
   while (atS < ENDLESS.scheduleLengthS) {

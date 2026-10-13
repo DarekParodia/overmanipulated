@@ -3,6 +3,8 @@
 // ids referenced by levels, solvability with the level's stations) live in checks.ts.
 import {
   correctVerdictFor,
+  countsAsProof,
+  MAX_REQUIRED_STAMPS,
   parseLayout,
   prioritySchema,
   type SimLevel,
@@ -75,6 +77,13 @@ export const storySchema = z
     media: mediaSchema.optional(),
     stamps: z.array(stampSchema).min(1).max(6),
     justifyingStamps: z.array(z.string()).min(1),
+    /**
+     * Distinct justifying stamps the desk must cite (multi-stamp folder, S7-18); 1 is a classic
+     * folder. Hint-only stamps (the AI scanner) never count toward it. Each proof beyond the
+     * first adds `MULTI_STAMP_EXTRA_DEADLINE_MS` at spawn and `SCORE.multiStampBonus` to a
+     * correct verdict.
+     */
+    requiredStamps: z.number().int().min(1).max(MAX_REQUIRED_STAMPS).default(1),
     /** Manipulation technique id (encyclopedia entry), kebab-case; `none` for true stories. */
     technique: z.string().regex(kebab),
     debrief: debriefSchema,
@@ -115,6 +124,17 @@ export const storySchema = z
         });
       }
     });
+    // No level can make up for proofs a multi-stamp story does not have; the level's stations
+    // are checked in checks.ts, and a classic story justified by the AI scanner alone gets the
+    // more specific errors there.
+    const proofs = new Set(story.justifyingStamps.filter((id) => countsAsProof(story, id))).size;
+    if (story.requiredStamps > 1 && story.requiredStamps > proofs) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['requiredStamps'],
+        message: `needs ${story.requiredStamps} proofs, but only ${proofs} justifying stamp(s) count as proof (hint-only stations never do)`,
+      });
+    }
   });
 
 export const spawnSchema = z.object({

@@ -268,6 +268,20 @@
   margin-top: 1px;
 }
 
+/* Status chip after a deciding proof ('nie sprawdzono'). */
+.proofStatus {
+  flex: none;
+  margin-left: auto;
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
 /* --- Vote ------------------------------------------------------------------------------------ */
 
 .voteRow {

@@ -10,7 +10,7 @@ import { typeset } from '../strings/typography.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './kit.module.css';
 
-/** The icon shown next to each station's name (overlay header, desk stamps, missed list). */
+/** The icon shown next to each station's name (overlay header, desk stamps, result chips). */
 export const STATION_ICON: Record<StationKind, IconName> = {
   imageSearch: 'imageSearch',
   archive: 'archive',
