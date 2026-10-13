@@ -82,6 +82,9 @@ describe('station help copy', () => {
       pl.minigames.dataLibrary.mismatch,
       pl.minigames.metadata.matches,
       pl.minigames.metadata.noData,
+      pl.minigames.transcript.notInRecord,
+      pl.minigames.transcript.same,
+      pl.minigames.transcript.changed,
     ]);
     const quoted = STATION_KINDS.flatMap((kind) =>
       playLines(kind).flatMap((line) => [...line.matchAll(/„([^”]+)”/g)].map((m) => m[1])),
@@ -110,9 +113,9 @@ describe('minigame key hints', () => {
 
   it('exist for every device, touch included, in every registered minigame', () => {
     const registered = STATION_KINDS.filter((kind) => minigames[kind] !== undefined);
-    // The six Stage 2–4 minigames and Metadane (S7-52) at least; new stations bring their own
-    // hints when they register.
-    expect(registered.length).toBeGreaterThanOrEqual(7);
+    // The six Stage 2–4 minigames, Metadane (S7-52) and Stenogram (S7-53) at least; new stations
+    // bring their own hints when they register.
+    expect(registered.length).toBeGreaterThanOrEqual(8);
     for (const kind of registered) {
       for (const device of DEVICES) {
         const hints = strings[kind]?.keys[device] ?? [];
@@ -142,6 +145,10 @@ describe('minigame key hints', () => {
     expect(strings.metadata?.keys.touch.map((hint) => hint.keys[0])).toEqual([
       'Stuknij',
       pl.minigames.metadata.matches,
+    ]);
+    expect(strings.transcript?.keys.touch.map((hint) => hint.keys[0])).toEqual([
+      'Stuknij',
+      pl.minigames.transcript.notInRecord,
     ]);
   });
 });

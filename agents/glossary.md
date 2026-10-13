@@ -127,7 +127,7 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`):
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -136,6 +136,11 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
 | Sprzeczność | `contradiction` (`MetadataOutcome`) | Exactly one file field contradicts the description |
 | Zgadza się | `consistent` (`MetadataOutcome`; answer `matches`) | No field contradicts the description |
 | Dane usunięte (Brak danych) | `stripped` (`MetadataOutcome`; answer `noData`) | A social site stripped the file data; missing data proves nothing. An irrelevant Metadane stamp always means this |
+| Cytat w teczce / Pełny zapis | `TranscriptPuzzle.clip` / `TranscriptPuzzle.lines` | Stenogram: the quote in the folder / the full record of what was said (`TRANSCRIPT_LINES` numbered lines, with a setting chip) |
+| Skrót (Sens ten sam) | `fair` (`TranscriptVariant`; judgement `same`) | The clip leaves out only filler; the meaning holds |
+| Wycięty cytat (Sens zmieniony) | `cut` (`TranscriptVariant`; judgement `changed`) | The left-out words were the point; the cut flips the meaning. The cut words are `cutWords(line, clip)` |
+| Nie ma w zapisie | `absent` (`TranscriptVariant`; action `notInTranscript`) | Nobody said the clip; a decoy line shares its words but says something else |
+| Szukanie / Ocena | `Phase`: `find` / `judge` | Stenogram's two phases: find the clip's line, then judge the cut |
 
 ## Roles (`RoleId`)
 
