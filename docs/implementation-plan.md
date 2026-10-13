@@ -444,6 +444,172 @@ feedback on desktop and phones; first playtest held.
 
 ---
 
+## Stage 7 — Playtest feedback round
+
+Goal: act on the first playtest log. Clearer verdict feedback and end-of-level explanations,
+folders spread evenly over stations (station bag), difficulty levels, multi-stamp folders,
+class abilities, four new stations, server config with optional ads, room browser, team versus
+with spectators, an animated intro with a Polish voiceover, station help and UI expansion.
+
+The design (user decisions, architecture, protocol ledger, every task's scope and "done when")
+lives in [`design/stage7/`](design/stage7/README.md). Milestones M1–M7 each end with a green,
+deployable build. `PROTOCOL_VERSION` bumps at most once per milestone that changes the WebSocket
+wire ([`design/stage7/protocol.md`](design/stage7/protocol.md)). Each task ticks its own row
+here in its own commit.
+
+User decisions from the feedback Q&A (2026-10-13), binding for this stage:
+
+1. Selected l4–l6 and endless stories need 2–3 distinct justifying stamps, all cited at the desk;
+   +20 s per extra stamp and a score bonus.
+2. "Not enough tables" means queues at one station; fixed by the station bag.
+3. The station bag ("Tetris") applies to the campaign and endless: every attempt draws folders
+   from the level's story pool so every station decides equally many folders; star thresholds
+   follow the generated run.
+4. Kartoteka źródeł keeps the same card after a failure, without an answer reveal.
+5. Classes get active abilities (R / RB / 4th touch button): Ekspertyza, Telefon z terenu,
+   +20 s on cooldown, plus new classes Wszechstronny and Ratownik.
+6. Four new stations (Mapa, Stenogram, Inne media, Metadane): l5 and l6 get two each, endless
+   all ten.
+7. An in-engine animated intro before training with an offline-generated Polish voiceover.
+8. Versus with separate identical newsrooms (up to 4v4) and spectators (split view, follow,
+   feed, live stats, also in co-op).
+9. Difficulty Łatwy / Normalny / Trudny / Ekspert; progress and endless leaderboard per
+   difficulty.
+10. Room browser with private-by-default rooms; host kick.
+11. AdSense configured in a server `config.json`, off by default, never during gameplay, with
+    Google's certified CMP and non-personalised ads.
+12. A server-side `config.json` for global settings.
+13. In-game menu, lobby management, "O grze" screen and a player profile.
+
+### M1 — Quick wins
+
+- [x] **S7-01 — Stage 7 plan scaffold, protocol ledger and shared naming decisions.** *Depends on:* —. [Details](design/stage7/tasks.md#s7-01)
+- [ ] **S7-02 — Real client IP behind the external TLS proxy.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-02)
+- [ ] **S7-03 — Folder result and verdict contract v3 (reasons, bonuses, unfinished, loss reason, cite array, hint-only rule, Zabrakło data fix).** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-03)
+- [ ] **S7-04 — Desk result screen and one outcome vocabulary.** *Depends on:* S7-03. [Details](design/stage7/tasks.md#s7-04)
+- [ ] **S7-05 — Results model: totals, star progress, loss reason, per-folder cards, reveal plan.** *Depends on:* S7-03. [Details](design/stage7/tasks.md#s7-05)
+- [ ] **S7-06 — Results summary: loss lede, star captions, points to next star, thresholds explainer, totals table, phone page 0.** *Depends on:* S7-05. [Details](design/stage7/tasks.md#s7-06)
+- [ ] **S7-07 — Kolegium per folder: reason line, credibility chip, deciding proof, unfinished folders.** *Depends on:* S7-04, S7-05. [Details](design/stage7/tasks.md#s7-07)
+- [ ] **S7-08 — Next-folder timing and conveyor-full flag in snapshots.** *Depends on:* S7-03. [Details](design/stage7/tasks.md#s7-08)
+- [ ] **S7-09 — Next-folder UI: ghost card, 'Taśma pełna', conveyor sign ring, guidance hint.** *Depends on:* S7-08. [Details](design/stage7/tasks.md#s7-09)
+- [ ] **S7-10 — In-game menu button and sheet (with solo pause) replacing tool buttons and room chip.** *Depends on:* S7-01, S7-03. [Details](design/stage7/tasks.md#s7-10)
+- [ ] **S7-11 — One-row phone HUD pill and measured HUD band.** *Depends on:* S7-10, S7-09. [Details](design/stage7/tasks.md#s7-11)
+- [ ] **S7-12 — HUD-aware follow camera and 640x360 Playwright project.** *Depends on:* S7-11. [Details](design/stage7/tasks.md#s7-12)
+- [ ] **S7-13 — Folder spawnKey, per-folder minigame seeds and stable Kartoteka card (sim).** *Depends on:* S7-03. [Details](design/stage7/tasks.md#s7-13)
+- [ ] **S7-14 — Kartoteka client: same card on retry, no reveal, circled fields kept, time resumes after cancel.** *Depends on:* S7-13. [Details](design/stage7/tasks.md#s7-14)
+- [ ] **S7-15 — Touch key hints and station help copy for the six stations.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-15)
+
+### M2 — Bag, difficulty, multi-stamp
+
+- [ ] **S7-16 — Difficulty vocabulary, Stage-7 balance constants, pure difficulty helpers.** *Depends on:* S7-03. [Details](design/stage7/tasks.md#s7-16)
+- [ ] **S7-17 — Sim tuning (work, lockout, penalties) and lockout on the wire (protocol v4).** *Depends on:* S7-16. [Details](design/stage7/tasks.md#s7-17)
+- [ ] **S7-18 — Multi-stamp folders: content field, validation, bonus, spawn extra time.** *Depends on:* S7-16, S7-03. [Details](design/stage7/tasks.md#s7-18)
+- [ ] **S7-19 — Desk multi-select, folder-card evidence badge, multi-stamp guidance.** *Depends on:* S7-18, S7-04. [Details](design/stage7/tasks.md#s7-19)
+- [ ] **S7-20 — Station bag core.** *Depends on:* S7-18. [Details](design/stage7/tasks.md#s7-20)
+- [ ] **S7-21 — Level file schema split, generateBagLevel, prepareRun and pool validation.** *Depends on:* S7-20. [Details](design/stage7/tasks.md#s7-21)
+- [ ] **S7-22 — Endless on the station bag with difficulty and separate RNG streams.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-22)
+- [ ] **S7-23 — Server run lifecycle, difficulty and bag station on the wire.** *Depends on:* S7-21, S7-17. [Details](design/stage7/tasks.md#s7-23)
+- [ ] **S7-24 — Client difficulty rules: minigame time, mistakes, reveal, hints, bag-station guidance.** *Depends on:* S7-23, S7-14, S7-19. [Details](design/stage7/tasks.md#s7-24)
+- [ ] **S7-25 — Lobby difficulty picker, run folder count and thresholds in the briefing.** *Depends on:* S7-23. [Details](design/stage7/tasks.md#s7-25)
+- [ ] **S7-26 — Progress and endless leaderboard per difficulty (server and client).** *Depends on:* S7-23. [Details](design/stage7/tasks.md#s7-26)
+- [ ] **S7-27 — Content l0 Makieta: 7 new stories and conversion to the bag.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-27)
+- [ ] **S7-28 — Content l1 Burza: 5 imageSearch-only stories and conversion to the bag.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-28)
+- [ ] **S7-29 — Content l2 Wybory: 3 imageSearch-only stories and conversion to the bag.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-29)
+- [ ] **S7-30 — Content l3 Afera part 1: 6 stories (imageSearch 4, sourceRegistry 2).** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-30)
+- [ ] **S7-31 — Content l3 Afera part 2: 4 archive-only stories and conversion to the bag.** *Depends on:* S7-30. [Details](design/stage7/tasks.md#s7-31)
+- [ ] **S7-32 — Content l4 Zdrowie part 1: 5 stories (archive 4, phone 1).** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-32)
+- [ ] **S7-33 — Content l4 Zdrowie part 2: 4 stories, decisive-stamp cleanup, multi-stamp picks, conversion to the bag.** *Depends on:* S7-32, S7-18. [Details](design/stage7/tasks.md#s7-33)
+- [ ] **S7-34 — Balance harness: difficulty, bag runs, multi-stamp bot, retry model, station load.** *Depends on:* S7-21, S7-22, S7-18, S7-13, S7-17. [Details](design/stage7/tasks.md#s7-34)
+- [ ] **S7-35 — M2 balance pass and documentation.** *Depends on:* S7-34, S7-27, S7-28, S7-29, S7-31, S7-33, S7-19, S7-24, S7-25, S7-26. [Details](design/stage7/tasks.md#s7-35)
+
+### M3 — Roles and abilities
+
+- [ ] **S7-36 — Ability contracts, crew state, role perks and station families (protocol v5).** *Depends on:* S7-17, S7-23. [Details](design/stage7/tasks.md#s7-36)
+- [ ] **S7-37 — stepAbilities: Przedłużenie, Koło ratunkowe, Telefon z terenu; remove the old extension.** *Depends on:* S7-36. [Details](design/stage7/tasks.md#s7-37)
+- [ ] **S7-38 — Sim: Ekspertyza, Druga szansa, Podaj teczkę.** *Depends on:* S7-37, S7-13. [Details](design/stage7/tasks.md#s7-38)
+- [ ] **S7-39 — Ability input: R / RB / touch press, nav intent, runtime send, controls help.** *Depends on:* S7-36, S7-10. [Details](design/stage7/tasks.md#s7-39)
+- [ ] **S7-40 — HUD ability chip, touch ability button, folder-card marks, design-rules amendment.** *Depends on:* S7-38, S7-39, S7-11. [Details](design/stage7/tasks.md#s7-40)
+- [ ] **S7-41 — Overlays: Ekspertyza header action, StationHost round nonce, Druga szansa hint, desk intent.** *Depends on:* S7-38, S7-40. [Details](design/stage7/tasks.md#s7-41)
+- [ ] **S7-42 — Ability world feedback, clips, sounds and final cue catalogue.** *Depends on:* S7-38, S7-40. [Details](design/stage7/tasks.md#s7-42)
+- [ ] **S7-43 — New roles Wszechstronny (generalist) and Ratownik (rescuer).** *Depends on:* S7-38. [Details](design/stage7/tasks.md#s7-43)
+- [ ] **S7-44 — Lobby role picker for 6 roles + Bez roli with detail panel.** *Depends on:* S7-43, S7-25. [Details](design/stage7/tasks.md#s7-44)
+- [ ] **S7-45 — Ability guidance hints and tutorial ability step.** *Depends on:* S7-40, S7-43, S7-24. [Details](design/stage7/tasks.md#s7-45)
+- [ ] **S7-46 — Balance bots with abilities, cooldown tuning, contest role cards.** *Depends on:* S7-38, S7-43, S7-34, S7-35. [Details](design/stage7/tasks.md#s7-46)
+- [ ] **S7-47 — Roles and abilities: docs and e2e.** *Depends on:* S7-44, S7-45, S7-46. [Details](design/stage7/tasks.md#s7-47)
+
+### M4 — New stations
+
+- [ ] **S7-48 — Station kinds contract and every compile-enforced map (protocol v6).** *Depends on:* S7-36, S7-15, S7-21. [Details](design/stage7/tasks.md#s7-48)
+- [ ] **S7-49 — Fit the sun light and shadow box to the room.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-49)
+- [ ] **S7-50 — Layout validation: station sign spacing and reachability.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-50)
+- [ ] **S7-51 — 3D models for Mapa, Stenogram, Inne media, Metadane.** *Depends on:* S7-48. [Details](design/stage7/tasks.md#s7-51)
+- [ ] **S7-52 — Minigame evidence helpers and the Metadane minigame.** *Depends on:* S7-48, S7-24. [Details](design/stage7/tasks.md#s7-52)
+- [ ] **S7-53 — Stenogram (transcript) minigame.** *Depends on:* S7-52. [Details](design/stage7/tasks.md#s7-53)
+- [ ] **S7-54 — Inne media (crossCheck) minigame.** *Depends on:* S7-52. [Details](design/stage7/tasks.md#s7-54)
+- [ ] **S7-55 — Mapa (geolocation) minigame with landmark glyphs.** *Depends on:* S7-52. [Details](design/stage7/tasks.md#s7-55)
+- [ ] **S7-56 — Complete minigame registry, minigame e2e, bundle check, contest shots.** *Depends on:* S7-53, S7-54, S7-55. [Details](design/stage7/tasks.md#s7-56)
+- [ ] **S7-57 — l5 Głęboka podróbka: 24x14 room with Stenogram and Metadane, plus stamps.** *Depends on:* S7-51, S7-53, S7-50. [Details](design/stage7/tasks.md#s7-57)
+- [ ] **S7-58 — l6 Atak: 24x14 room with Mapa and Inne media, plus stamps and demotions.** *Depends on:* S7-51, S7-54, S7-55, S7-50. [Details](design/stage7/tasks.md#s7-58)
+- [ ] **S7-59 — l5 new stories for Stenogram, Metadane, archive and sourceRegistry.** *Depends on:* S7-57. [Details](design/stage7/tasks.md#s7-59)
+- [ ] **S7-60 — l5 conversion to the bag with multi-stamp picks.** *Depends on:* S7-59, S7-18. [Details](design/stage7/tasks.md#s7-60)
+- [ ] **S7-61 — l6 new stories for Mapa and Inne media.** *Depends on:* S7-58. [Details](design/stage7/tasks.md#s7-61)
+- [ ] **S7-62 — l6 new stories for imageSearch and archive.** *Depends on:* S7-61. [Details](design/stage7/tasks.md#s7-62)
+- [ ] **S7-63 — l6 phone and dataLibrary stories, multi-stamp picks, conversion to the bag.** *Depends on:* S7-62, S7-18. [Details](design/stage7/tasks.md#s7-63)
+- [ ] **S7-64 — Endless mode with all 10 stations.** *Depends on:* S7-56, S7-22, S7-60, S7-63, S7-50. [Details](design/stage7/tasks.md#s7-64)
+- [ ] **S7-65 — Technique cards for the new stations.** *Depends on:* S7-57, S7-58. [Details](design/stage7/tasks.md#s7-65)
+- [ ] **S7-66 — M4 balance, performance and contest pass.** *Depends on:* S7-60, S7-63, S7-64, S7-49, S7-46. [Details](design/stage7/tasks.md#s7-66)
+
+### M5 — Config, ads, shell
+
+- [ ] **S7-67 — Shared public-config contract, ads legal gate and CSP nonce placeholder.** *Depends on:* S7-16. [Details](design/stage7/tasks.md#s7-67)
+- [ ] **S7-68 — config.json loader with hot reload, signOff gate and registry settings().** *Depends on:* S7-67, S7-23. [Details](design/stage7/tasks.md#s7-68)
+- [ ] **S7-69 — GET /api/config and the client public-config store.** *Depends on:* S7-68. [Details](design/stage7/tasks.md#s7-69)
+- [ ] **S7-70 — Server-rendered HTML shell with config-driven CSP and ads.txt.** *Depends on:* S7-69. [Details](design/stage7/tasks.md#s7-70)
+- [ ] **S7-71 — Deploy wiring: Dockerfile, Caddyfile routing, compose, smoke test.** *Depends on:* S7-70, S7-02. [Details](design/stage7/tasks.md#s7-71)
+- [ ] **S7-72 — MOTD banner in the main menu.** *Depends on:* S7-69. [Details](design/stage7/tasks.md#s7-72)
+- [ ] **S7-73 — AdSense client core: lazy loader (limited mode), AdSlot, pause guard.** *Depends on:* S7-69, S7-70. [Details](design/stage7/tasks.md#s7-73)
+- [ ] **S7-74 — Ad placements, menu footer with consent link, ad e2e guards.** *Depends on:* S7-73. [Details](design/stage7/tasks.md#s7-74)
+- [ ] **S7-75 — Shared markdown-lite parser, /prywatnosc page and privacy note rewrite.** *Depends on:* S7-70, S7-74. [Details](design/stage7/tasks.md#s7-75)
+- [ ] **S7-76 — Docs for config, ads and deploy.** *Depends on:* S7-68, S7-71, S7-74, S7-75. [Details](design/stage7/tasks.md#s7-76)
+
+### M6 — Rooms, versus, spectators
+
+- [ ] **S7-77 — Shared wire contracts for rooms, versus and spectators (protocol v7).** *Depends on:* S7-68, S7-36. [Details](design/stage7/tasks.md#s7-77)
+- [ ] **S7-78 — Pure versus, match-stats, embargo, name-filter and room-list rules in shared.** *Depends on:* S7-77. [Details](design/stage7/tasks.md#s7-78)
+- [ ] **S7-79 — Registry refactor: members, team runs, topics, lockstep tick (co-op unchanged).** *Depends on:* S7-77. [Details](design/stage7/tasks.md#s7-79)
+- [ ] **S7-80 — Versus rules on the server.** *Depends on:* S7-78, S7-79, S7-13. [Details](design/stage7/tasks.md#s7-80)
+- [ ] **S7-81 — Spectators on the server, with the versus embargo and the Widownia toggle.** *Depends on:* S7-78, S7-79. [Details](design/stage7/tasks.md#s7-81)
+- [ ] **S7-82 — Lobby administration on the server: visibility, name, kick with cooldown, host transfer.** *Depends on:* S7-79, S7-78. [Details](design/stage7/tasks.md#s7-82)
+- [ ] **S7-83 — GET /api/rooms room-list API (cached, class-sized limit).** *Depends on:* S7-02, S7-78, S7-82. [Details](design/stage7/tasks.md#s7-83)
+- [ ] **S7-84 — Client session and stores for modes, spectators and kicks.** *Depends on:* S7-77. [Details](design/stage7/tasks.md#s7-84)
+- [ ] **S7-85 — GameView refactor of the client scene (no behaviour change).** *Depends on:* S7-12, S7-42, S7-51. [Details](design/stage7/tasks.md#s7-85)
+- [ ] **S7-86 — Lobby UI: mode, teams, spectators (Widownia), visibility, room name.** *Depends on:* S7-84, S7-80, S7-81, S7-82, S7-44. [Details](design/stage7/tasks.md#s7-86)
+- [ ] **S7-87 — Host manage sheet and level details for guests.** *Depends on:* S7-86, S7-15, S7-25. [Details](design/stage7/tasks.md#s7-87)
+- [ ] **S7-88 — Room browser UI.** *Depends on:* S7-83, S7-84, S7-69. [Details](design/stage7/tasks.md#s7-88)
+- [ ] **S7-89 — Versus HUD rival chip and versus results for players.** *Depends on:* S7-80, S7-84, S7-06, S7-07. [Details](design/stage7/tasks.md#s7-89)
+- [ ] **S7-90 — Spectate screen I: views, split layout, scoreboard.** *Depends on:* S7-81, S7-84, S7-85. [Details](design/stage7/tasks.md#s7-90)
+- [ ] **S7-91 — Spectate screen II: follow, feed, stats, spectator results, ad slot.** *Depends on:* S7-90, S7-89, S7-74. [Details](design/stage7/tasks.md#s7-91)
+- [ ] **S7-92 — Performance checks for versus and spectating.** *Depends on:* S7-80, S7-91. [Details](design/stage7/tasks.md#s7-92)
+- [ ] **S7-93 — Docs, rules and privacy for rooms, versus and spectators.** *Depends on:* S7-80, S7-81, S7-83, S7-91, S7-75. [Details](design/stage7/tasks.md#s7-93)
+
+### M7 — Intro, help, about, profile
+
+- [ ] **S7-94 — Shared control drawings and StationHelpCard.** *Depends on:* S7-15, S7-48. [Details](design/stage7/tasks.md#s7-94)
+- [ ] **S7-95 — First-use station help with paused client timer and '?' in the overlay header.** *Depends on:* S7-94, S7-24. [Details](design/stage7/tasks.md#s7-95)
+- [ ] **S7-96 — 'Jak grać' dialog shell, bundle 'extras' category, entry points.** *Depends on:* S7-74. [Details](design/stage7/tasks.md#s7-96)
+- [ ] **S7-97 — Stanowiska tab, practice round ('Wypróbuj'), briefing chips, in-game help row.** *Depends on:* S7-96, S7-95, S7-10. [Details](design/stage7/tasks.md#s7-97)
+- [ ] **S7-98 — Voice audio bus, voice loader, voice volume, deeper ducking.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-98)
+- [ ] **S7-99 — Intro script, timeline model and line export.** *Depends on:* S7-43, S7-19. [Details](design/stage7/tasks.md#s7-99)
+- [ ] **S7-100 — Offline Polish TTS voiceover with a licence audit, and licence notes.** *Depends on:* S7-99. [Details](design/stage7/tasks.md#s7-100)
+- [ ] **S7-101 — IntroPlayer (in-engine): stage, subtitles, controls, scenes 1–6.** *Depends on:* S7-96, S7-98, S7-99, S7-85. [Details](design/stage7/tasks.md#s7-101)
+- [ ] **S7-102 — IntroPlayer scenes 7–11, lobby autoplay, intro flag, replay, e2e.** *Depends on:* S7-101, S7-69. [Details](design/stage7/tasks.md#s7-102)
+- [ ] **S7-103 — 'O grze' dialog: authors, licences, credits, libraries, version.** *Depends on:* S7-96, S7-75. [Details](design/stage7/tasks.md#s7-103)
+- [ ] **S7-104 — Player profile: local stats, tracking, profile dialog.** *Depends on:* S7-96, S7-78. [Details](design/stage7/tasks.md#s7-104)
+- [ ] **S7-105 — Look over the wire: preferred colour and accessory (protocol v8).** *Depends on:* S7-104, S7-79, S7-86. [Details](design/stage7/tasks.md#s7-105)
+- [ ] **S7-106 — Stage 7 close-out: docs consistency and contest refresh.** *Depends on:* S7-95, S7-97, S7-100, S7-102, S7-103, S7-105. [Details](design/stage7/tasks.md#s7-106)
+
+---
+
 ## Backlog (not scheduled)
 
 - Solo / 2-player mode with a helper bot (if the jury needs to play alone).
@@ -500,6 +666,11 @@ feedback on desktop and phones; first playtest held.
 | 2026-10-09 | Event rules: `viral` is pressure only (shares = start × growth^age); `bossCall` pays a bonus only for a correct publish of a true story within the window and costs nothing when ignored; `botRaid` resolves all siblings from one verdict and counts expiry once; `correction` costs credibility at the start and filing it recovers half; `outage` blocks one station for its duration | Matches the design doc, with numbers in `EVENTS` in constants.ts |
 | 2026-10-09 | Endless mode is level id `endless`, generated at runtime; it ends only at credibility 0; leaderboard entries are `{roomCode, players, score, survivedS}` | Keeps content files out of it and the wire format fixed before the server and client units start |
 | 2026-10-07 | S3-05 assets are built procedurally in code (flat-shaded primitives, hierarchical rigs animated with `AnimationMixer` clips) instead of Kenney packs | The build environment cannot download asset packs; procedural models keep the cartoon style consistent and the bundle small. Kenney/artist assets can replace them in S5-01 |
+| 2026-10-13 | Stage 7 protocol ledger: `PROTOCOL_VERSION` bumps at most once per milestone that changes the WebSocket wire (M1 v3 … M7 v8); REST, HTML and config changes never bump | A milestone is one deploy unit; classrooms reload once per deploy instead of once per task |
+| 2026-10-13 | Stage 7 ids: new stations `geolocation` (G), `transcript` (Q), `crossCheck` (X), `metadata` (E); new roles `generalist`, `rescuer`; abilities `expertise`, `fieldCall`, `extendDeadline`, `secondChance`, `passFolder` + passive `rescue`; station families (image / documents / sources) gate Ekspertyza only; role passives stay explicit station lists | One naming set for every Stage 7 task; keeps today's role passives unchanged |
+| 2026-10-13 | A station *decides* a story when the story has a justifying, non-hint stamp from it (`decidingStations`); aiScanner is hint-only and its stamp never counts toward the proof count | One rule for the bag, validation, pinned counts and guidance; matches the design doc ("AI is only a hint") |
+| 2026-10-13 | `folder.spawnKey` (`s<scheduleIndex>` / `e<eventIndex>.<wave>`) is the folder identity across versus teams; minigame seeds, rival matching and the spectator embargo key on it | Folder ids diverge between teams when belts fill differently |
+| 2026-10-13 | Run generation order: run seed → slot times → station sequence (bag) → story matching → deadlines × difficulty → star thresholds; at spawn + (N−1) × 20 s; tuning every tick; abilities at runtime. The run seed is separate from the sim seed | Deterministic, composable transforms; both versus teams share one run |
 
 ---
 

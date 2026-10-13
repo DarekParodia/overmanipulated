@@ -1,0 +1,76 @@
+# Stage 7 — risks and resolved conflicts
+
+## Risks
+
+- Content volume. About 55 new stories (about 276 stamp texts), 74 new stamps on existing l5/l6 stories and about 17 retargets or demotions, all reviewed:false. Supervisor review is the bottleneck. checkBag counts pinned stories exactly, so late edits can turn validate:content red. Mitigation: each content task's done-when is the checkBag output, not a hand count.
+- Protocol bumps. Six bumps across seven deploys mean classrooms reload six times. Client and server images must always be deployed together, or protocolMismatch locks players out.
+- Shared-file churn. protocol.ts, constants.ts, registry.ts, desk.ts, stations.ts, StationOverlay, Hud, Lobby, MainMenu, ResultsPlate and pl.ts change in almost every milestone. The M6 registry refactor (S7-79) must carry the run lifecycle, crew state, solo pause and spawnKey without changing co-op behaviour.
+- Seed derivation and the AI-not-proof rule change behaviour once in M1/M2. Every puzzle for a given seed changes, seed-literal tests and balance baselines are rewritten, and stories justified by AI + one other station now need the other stamp for full points. Bot and players may score lower on l5 until the balance pass.
+- Randomised campaign. Generated runs lose hand-curated pacing; the true share and star thresholds vary per run. This is mitigated by the results explainer, lobby details and briefing thresholds, but players may still see it as unfair.
+- Difficulty numbers are guesses until S7-35. Ekspert stacks a 15 s minigame limit, −1 mistake, ×2 lockout, ×1.5 penalties and more folders. Multi-stamp folders during outages (l4, l6) can stall.
+- Ability balance. Per-player cooldowns stack with duplicate roles. Bots cannot model Podaj teczkę, so playtests must validate Ratownik.
+- TTS voice. The licence audit may find no open Polish neural voice whose whole chain is open. The fallbacks (a robotic open engine, or a volunteer CC0 recording) cost quality or time. The model host is blocked from the cloud sandbox, so S7-100 runs on a developer machine.
+- AdSense. Limited-ads flags and Google's CMP behaviour for minors must be verified against current Google documentation at S7-76. AdSense needs the root domain drkp.dev and an ads.txt there. Even limited ads to minors may need legal review, which the signOff gate enforces but cannot replace. Vite html.cspNonce under 'strict-dynamic' is not covered by e2e (vite preview has no CSP), so a manual production-like run is mandatory. Auto ads or overlays switched on in the AdSense UI could cover gameplay.
+- Shell dependency. The HTML page now depends on the Bun server; mismatched web and server images reference missing asset hashes. The static fallback helps only while the server is down.
+- Versus and spectator cost. Split screen needs two WebGL contexts (desktop only); each versus room roughly doubles server CPU; a full 8+8 room needs about 1 MB/s egress. S7-92 benchmarks the server tick.
+- Versus information leaks. The spectator embargo hides verdicts per spawnKey, but the live rival score total (a user decision) still moves when the rival scores, and the client bundle contains story answers for anyone who reads the JS. Both are accepted for a classroom game and logged. Minigame results stay client-reported; the minimum-solve check stops only crude cheats.
+- Safety in public rooms. Strangers can join or watch only when the operator enables the room browser and the host makes the room public and enables Widownia. The kick cooldown keyed by a localStorage clientId is bypassable with a private window; the name blocklist is small and can be evaded. Nicknames shown inside a room are not filtered.
+- Bigger maps. 24x14 rooms drop to follow mode on laptops with browser chrome; phones scroll more, and front-row stations sit near the touch controls. The framing tests are re-run for the new layouts in S7-57/58/64.
+- Snapshot size grows by about 0.5 KB per tick at 20 Hz (crew, scoreboard, team, nextFolder, spawnKey, bagStation).
+- Endless repetition. The decks for the four new stations stay small (≥ 4), so endless repeats those stories more often.
+- Client IP. Per-IP limits rely on TRUSTED_PROXIES matching the real TLS proxy topology; if it does not, the limits stay effectively global. The room list limit is generous (600/min) because classes share one IP.
+- Input ordering. Esc serves the tutorial skip, overlay back and the in-game menu, and H, Select, R and RB must not collide with minigame keys (Q and Tab are 'alt'). Exact capture rules are needed.
+- Minigame limits (time, mistakes, reveal, the Kartoteka resume) are enforced on the client only. This is accepted for co-op; versus adds only the minimum-solve-time sanity check.
+- Bundle growth. Four minigames, abilities, versus and the spectate screen all land in the game chunk under gameMax 1.6 MB gzip. S7-56, S7-66 and S7-90 record the figure; lazy per-kind minigames are the fallback.
+- Solo pause interacts with reconnect grace and spectator joins (a join clears it). The registry tests must cover pause during disconnect and pause at level end.
+
+## Cross-cluster conflicts resolved
+
+- StationKind ids: cluster C's geolocation/transcript/crossCheck/metadata (G/Q/X/E) are used everywhere. The placeholders map/otherMedia are dropped.
+- Station families come from B's table, but they gate Ekspertyza only. Passives keep explicit station lists (ROLE_PERKS.fasterAt) identical to today's ROLE_STATIONS, plus same-nature new stations in M4. This avoids giving the reporter −40 % at sourceRegistry, the busiest station. ROLE_STATIONS and ROLE_WORK_TIME_FACTOR are folded into ROLE_PERKS in M3.
+- PROTOCOL_VERSION: one bump per milestone (v3 M1, v4 M2, v5 M3, v6 M4, none in M5, v7 M6, v8 M7) instead of a single Stage-7 bump, because each milestone deploys separately.
+- FolderResult shape: A's bonuses and justifyingStampIds plus spawnKey. F's breakdown and citedStampIds are dropped; base points = scoreDelta − Σ bonuses. A's 14 reasons; 'tooFewProofs' is the incompleteProof line.
+- The verdict command array moves into M1 with the result contract, so the desk wire changes once.
+- Next-folder snapshot field: F's nextFolder {atMs, sinceMs} | null plus conveyorFull, computed from the fixed schedule in M1.
+- Cross-team folder identity (critique): folderId (f<n>) diverges between versus teams once belts or raid waves differ (events.ts takes min(count, free tiles)). A stable spawnKey (s<scheduleIndex> / e<eventIndex>.<wave>) is added in M1. Minigame seeds, rivalResults, the 'Wy/Rywale' chips and the spectator embargo are all keyed on it.
+- Versus levelEnd: D's per-team levelEnd with team, stats and versus {winnerTeam, reason, teams, rivalResults keyed by spawnKey}.
+- Ability events: B's 'ability' (with stages) and 'folderRescued'. The stats counter counts 'ability' stage 'done'.
+- Ability cooldowns: all start at 60 000 ms (user decision), changed only on S7-46 bot data with a Decision log row.
+- minigameFailed.lockoutMs moves to M2, because difficulty scales the lockout.
+- Kartoteka stable card: minigameSeedFor(seed, spawnKey, kind, attempt) with no attempt advance at sourceRegistry. The cancel loophole the critique found is closed by resuming the remaining time after a cancel (client-side, like all minigame limits).
+- StationHost round nonce stays in M3. It is only needed when Druga szansa keeps the operator on a repeated seed.
+- Run generation: prepareRun at beginBriefing, once per room, with a server run seed separate from the sim seed. The endless regeneration in setLevel/startLevel is removed.
+- Deciding station (critique): one rule everywhere. A station decides a story when the story has a justifying, non-hint stamp from it. bag, matchStories, checkBag coverage, pinned counts, solvability and guidance all use it. Decisive-but-not-justifying stamps get a validation warning and are cleaned up in l4 (S7-33) and l6 (S7-58).
+- Bag station guidance: each resolved schedule entry records its slot station. It reaches the client as folder.bagStation (v4), and next-step suggests it first among the justifying stations, so flex stories do not drift back to the busiest station.
+- Hint-only stamps never count as proof. Citing only an AI scanner stamp gives incompleteProof ('Skaner AI to tylko wskazówka'); requiredStamps counts justifying non-hint stamps. As a result l5's second multi-stamp story is burmistrz-na-jachcie (SR+E), not nagranie-podatek (phone+AI).
+- Reveal flag name: revealOnFail. Kartoteka never reveals the answer.
+- Desk result on Ekspert: unchanged. Decision 9 bans answer reveals in minigames and 'co dalej' hints; the desk result is a debrief of a closed folder, and decision 14 promises the deciding station. The earlier 'expert hides decidedBy' rule is dropped.
+- Feature flags: E's RegistryOptions.settings(). Defaults per the critique: roomBrowser false (operator opt-in); versus, spectators and intro true. Enforcement is folded into S7-80/81/82/83/102.
+- The featureDisabled error code is added once, in M6, so M5 needs no WebSocket bump.
+- Client IP: D01 and E04 merged into S7-02 (M1).
+- Lobby level details: D12 and F20 merged into S7-87. They show run thresholds when known, otherwise shares.
+- Ability HUD slot: B's chip (S7-40). design-rules §1.3/§5 amended in sequence by S7-09, S7-10, S7-40 and S7-89; §1.2 by S7-95.
+- Station purpose text has one source, pl.stationHelp[kind], created in M1 and forced complete by satisfies.
+- Markdown-lite: one parser in packages/shared. The server privacy page uses it, and O grze uses it on CREDITS fetched at runtime from /assets/CREDITS.md (not ?raw from public/).
+- Player stats: D's match-stats.ts is the only accumulator; the profile reuses it.
+- Unfinished folders: the single vocabulary pl.outcome. The sweep counts one result per botRaid wave, matching expiry's countedRaids.
+- Content targets: checkBag decides, using the pinned target ⌈Normal slots / bag stations⌉ (4 on l0, 8 on l1, 5 on l2, 4 on l3/l4, 3 on l5/l6). Counts are re-derived from the data: l5 needs 8 new stories and l6 needs 13 with explicit demotions; l6-apel-mieszkancow stays archive + phone.
+- l5 and l6 keep authored schedules in M2/M3 and switch to the bag in M4. Endless uses 6 stations in M2 and 10 in M4.
+- Join rules: the room browser offers 'Dołącz' only in the lobby phase (user decision 10). Co-op join by code mid-game is kept as an existing feature (Decision log). A versus player joining mid-match gets matchInProgress. Spectators may join in any phase only where Widownia is enabled.
+- Pause: user decision 13's 'pause sheet' is honoured for solo co-op (the server stops stepping the room). Rooms with 2+ people get a non-pausing menu with 'Gra trwa dalej' (Decision log).
+- Managing editor '+20 s to any folder': the target is auto-picked (least time left) and previewed on the folder card and role chip, because one button cannot pick a folder (Decision log, S7-37).
+- Spectator layout: split screen on desktop. Phones get a single view with a one-tap team switch and both scores always visible (Decision log, S7-90).
+- Ads never show on phones (Decision log, S7-74). Ads are limited-mode only while the audience is minors, and need a recorded signOff in config before they can be enabled (S7-67/68/76).
+- Spectator safety: the Widownia toggle (default off; on for a room created by a spectator host); in-game 'Widz dołączył' toast; versus embargo; kick cooldown by a localStorage clientId (IP is unusable in classes); a blocklist name filter for room names and listed host nicknames.
+- Room list load: 2 s server cache, a class-sized per-IP limit of 600/min in limits.ts, and an 8 s client poll with backoff that pauses while the tab is hidden.
+- TTS voice: a licence audit of the whole fine-tune chain is a blocking first step. The voice-sprite schema accepts only open licences; otherwise a CC0 human recording is used. The earlier 'replace before ads' compromise is dropped.
+- In-engine intro: the gameplay scenes run the shared sim locally with scripted inputs, rendered through a GameView. It depends on S7-85; there is no video.
+- Speed bonus: B's base deadline (deadlineMs − extendedMs), with multi-stamp extra time counted as base.
+- Difficulty and abilities: cooldowns are not scaled. Ekspert hides ability hints but keeps the chip.
+- l0 Makieta also uses the bag (tutorial.ts is story-agnostic).
+- MenuFooter is created in M5 and extended in M7.
+- The results explainer 'Skąd te progi?' ships in M1 and becomes exactly the STAR_SHARES rule in M2.
+- Privacy note: every task introducing data or a third party updates it in the same commit (S7-26, S7-72, S7-75, S7-82, S7-93, S7-95, S7-102, S7-104).
+- Task status: each task ticks its own row in its own commit (AGENTS.md rule 8); S7-106 only verifies.
+- Duplicate copy of the busiest station: only if the station-load table in S7-35/S7-66 still shows domination after the bag.
+- SimContext: tuning required (A), absent optional (B), minSolveMs optional (versus only). Order: stepAbilities first, stepScoring last.
