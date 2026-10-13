@@ -97,6 +97,7 @@ function fixtureResults(): FolderResult[] {
     scoreDelta: number,
     credibilityDelta: number,
     speed = 0,
+    missedStampIds: string[] = [],
   ): FolderResult => ({
     folderId,
     spawnKey: `s${Number(folderId.slice(2)) - 1}`,
@@ -109,16 +110,21 @@ function fixtureResults(): FolderResult[] {
     justifyingStampIds: verdict === null ? [] : [`${storyId}-image`],
     requiredStamps: 1,
     bonuses: { speed, multiStamp: 0, bossCall: 0 },
-    missedStampIds: [],
+    missedStampIds,
   });
-  // The results design fixture (S7-05): its totals add up to 15 points.
+  // The results design fixture (S7-05): its totals add up to 15 points. The missed stamps give
+  // the Kolegium's proof section every status (S7-07).
   return [
     result('f-1', 'l0-zalany-rynek', 'correct', 'correctImportant', 'reject', 25, 5, 5),
     result('f-2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 10, 0),
     result('f-3', URGENT_STORY, 'wrong', 'publishedFake', 'publish', -20, -25),
     result('f-4', 'l0-nocny-autobus', 'wrongJustification', 'weakProof', 'publish', 5, 0),
-    result('f-5', 'l0-zalany-rynek', 'expired', 'expired', null, -5, -5),
-    result('f-6', 'l0-nocny-autobus', 'unfinished', 'unfinished', null, 0, 0),
+    result('f-5', 'l0-zalany-rynek', 'expired', 'expired', null, -5, -5, 0, [
+      'l0-zalany-rynek-archive',
+    ]),
+    result('f-6', 'l0-nocny-autobus', 'unfinished', 'unfinished', null, 0, 0, 0, [
+      'l0-nocny-autobus-source',
+    ]),
   ];
 }
 

@@ -671,7 +671,8 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
                 : s.correctVerdict,
           scoreDelta: outcomes[i] === 'correct' ? 20 : outcomes[i] === 'wrong' ? -20 : -5,
           credibilityDelta: outcomes[i] === 'correct' ? 5 : outcomes[i] === 'wrong' ? -25 : -5,
-          missedStampIds: outcomes[i] === 'wrong' ? s.justifyingStamps : [],
+          // The cited stamp was in the folder; the other deciding proofs never were.
+          missedStampIds: outcomes[i] === 'wrong' ? s.justifyingStamps.slice(1) : [],
         })),
       },
     );
@@ -682,8 +683,9 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
     await take(six.page, S.kolegium, 900);
   });
   await attempt(S.kolegiumMissed, async () => {
+    // Page 0 is the summary on phones (S7-06); the wrong verdict is the third card.
     const next = six.page.getByRole('button', { name: pl.debrief.next });
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 3; i++) {
       await next.click({ timeout: 3000 });
       await six.page.waitForTimeout(250);
     }

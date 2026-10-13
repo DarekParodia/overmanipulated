@@ -1,11 +1,15 @@
-// One story on the Kolegium: the outcome mark (slams on during the reveal), the headline, the
-// result title by reason (the same `pl.outcome` title as the toast and the desk), what the team
-// decided next to the right verdict, the debrief in four short titled chunks, the deciding proof
-// nobody checked, and the blunder-of-the-day vote with a dot per voter.
+// One folder on the Kolegium (one story in endless): the outcome mark (slams on during the
+// reveal; an hourglass for a folder still in play at the end), the headline, the result title by
+// reason (the same `pl.outcome` title as the toast and the desk) with the points and credibility
+// chips and '×N' for a grouped story, the one-line reason with its bonuses, what the team decided
+// next to the right verdict, the debrief in four short titled chunks, the deciding proof and
+// where it was (only when the folder did not end well), and the blunder-of-the-day vote with a
+// dot per voter (votes are per story).
 
 import type { Verdict } from '@redakcja/shared';
 import type { PointerEvent } from 'react';
 import { emitCue } from '../fx/feedback.ts';
+import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { formatDelta } from '../hud/hud-model.ts';
 import { KeyCap } from '../stations/kit.tsx';
 import { pl } from '../strings/pl.ts';
@@ -13,8 +17,10 @@ import { typeset } from '../strings/typography.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { VerdictStamp } from '../ui/VerdictStamp.tsx';
+import { cardWhy } from './card-why.ts';
 import styles from './Debrief.module.css';
-import type { DebriefCard as Card, Voter } from './debrief-model.ts';
+import type { ProofStatus, Voter } from './debrief-model.ts';
+import type { KolegiumCard as Card } from './results-model.ts';
 import { useSwipe } from './use-swipe.ts';
 
 const TONE = {
@@ -30,8 +36,14 @@ const MARK = {
   wrongJustification: 'publish',
   wrong: 'reject',
   expired: 'expired',
-  unfinished: 'expired',
+  unfinished: 'hourglass',
 } as const satisfies Record<Card['outcome'], IconName>;
+
+const PROOF_TONE = {
+  cited: styles.proofCited,
+  collected: styles.proofCollected,
+  missing: styles.proofMissing,
+} as const satisfies Record<ProofStatus, string | undefined>;
 
 const SECTIONS = [
   { key: 'what', icon: 'folder' },
@@ -93,6 +105,10 @@ export function DebriefCard({
     <article
       className={`${styles.card} ${TONE[card.outcome]} ${current ? styles.current : ''} ${instant ? styles.instant : ''}`}
       aria-labelledby={titleId}
+      data-testid="kolegium-card"
+      data-outcome={card.outcome}
+      data-count={card.count}
+      data-points={card.scoreDelta}
       data-current={current || undefined}
       onPointerDown={onPointerDown}
       onPointerUp={swipe.onPointerUp}
@@ -112,9 +128,37 @@ export function DebriefCard({
           </h3>
           <p className={styles.outcome}>
             <span>{typeset(pl.outcome.title[card.reason])}</span>
-            <span className={styles.points}>
+            {card.count > 1 && (
+              <span
+                className={`${styles.chip} ${styles.repeats}`}
+                role="img"
+                aria-label={pl.debrief.repeatsLabel(card.count)}
+                data-testid="kolegium-repeats"
+              >
+                {pl.debrief.repeats(card.count)}
+              </span>
+            )}
+            <span className={`${styles.chip} ${styles.points}`}>
+              <HudGlyph name="star" size={18} fill="var(--yellow)" />
               {pl.results.scoreDelta(formatDelta(card.scoreDelta))}
             </span>
+            {card.credibilityDelta !== 0 && (
+              <span
+                className={`${styles.chip} ${card.credibilityDelta > 0 ? styles.credUp : styles.credDown}`}
+                data-testid="kolegium-credibility"
+              >
+                <HudGlyph
+                  name={card.credibilityDelta > 0 ? 'shield' : 'shieldCracked'}
+                  size={18}
+                  fill={card.credibilityDelta > 0 ? 'var(--green)' : 'var(--red)'}
+                  label={pl.results.credibility}
+                />
+                {formatDelta(card.credibilityDelta)}
+              </span>
+            )}
+          </p>
+          <p className={styles.why} data-testid="kolegium-why">
+            {typeset(cardWhy(card))}
           </p>
         </div>
         <div className={styles.voteRow}>
@@ -186,18 +230,20 @@ export function DebriefCard({
         </div>
       )}
 
-      {card.missedStamps.length > 0 && (
-        <section className={styles.missed}>
+      {card.proof && card.proof.length > 0 && (
+        <section className={styles.missed} data-testid="kolegium-proof">
           <h4 className={styles.sectionTitle}>
             <Icon name="stamp" size={22} />
             {pl.debrief.proofTitle}
           </h4>
           <ul className={styles.missedList}>
-            {card.missedStamps.map((stamp) => (
-              <li key={stamp.id} className={styles.missedItem}>
+            {card.proof.map((stamp) => (
+              <li key={stamp.id} className={styles.missedItem} data-status={stamp.status}>
                 <Icon name={stamp.station} size={22} label={pl.vocab.stations[stamp.station]} />
                 <span>{typeset(stamp.text)}</span>
-                <span className={styles.proofStatus}>{pl.debrief.proofMissing}</span>
+                <span className={`${styles.proofStatus} ${PROOF_TONE[stamp.status]}`}>
+                  {pl.debrief.proofStatus[stamp.status]}
+                </span>
               </li>
             ))}
           </ul>
