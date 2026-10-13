@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import {
+  type Folder,
   GREYBOX_MAP,
   type PlayerCommand,
   type PlayerInput,
@@ -245,9 +246,21 @@ function soloRoom(role: Role | null): RoomStateMessage {
   };
 }
 
-describe('role ability press (S7-39)', () => {
+describe('role ability press (S7-39, gated by the shared preview in S7-40)', () => {
+  /** A folder on the conveyor, so Przedłużenie has a target. */
+  const folder: Folder = {
+    id: 'f1',
+    spawnKey: 's0',
+    storyId: 'l0-zalany-rynek',
+    location: { kind: 'fixture', fixtureId: 'conveyor-0' },
+    stamps: [],
+    spawnedAtMs: 0,
+    deadlineMs: 60_000,
+    warned: false,
+  };
+
   /** Runs one input tick after a touch press; returns what was sent and which cues played. */
-  function pressOnce(role: Role | null, abilityReadyAtMs: number) {
+  function pressOnce(role: Role | null, abilityReadyAtMs: number, folders: Folder[] = [folder]) {
     const commands: PlayerCommand[] = [];
     const cues: string[] = [];
     const stop = feedback.onCue((id) => cues.push(id));
@@ -259,6 +272,7 @@ describe('role ability press (S7-39)', () => {
     );
     const state = {
       ...snapshot(200, 1),
+      folders,
       crew: [{ id: 'p1', abilityReadyAtMs, abilityArmed: false, fieldCall: null, rescuesLeft: 0 }],
     };
     runtime.onSnapshot(state, 500);
@@ -284,5 +298,12 @@ describe('role ability press (S7-39)', () => {
   it('plays the denied cue and sends nothing while cooling or without a role', () => {
     expect(pressOnce('reporter', 10_050)).toEqual({ commands: [], cues: ['ability.denied'] });
     expect(pressOnce(null, 0)).toEqual({ commands: [], cues: ['ability.denied'] });
+  });
+
+  it('keeps a blocked press on the client: Przedłużenie with no folder in play', () => {
+    expect(pressOnce('managingEditor', 0, [])).toEqual({
+      commands: [],
+      cues: ['ability.denied'],
+    });
   });
 });

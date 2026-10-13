@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'bun:test';
 import { TECHNIQUES } from '@redakcja/content';
 import {
+  ABILITIES,
   LEVEL_EVENT_KINDS,
   PING_KINDS,
   ROLES,
@@ -10,6 +11,7 @@ import {
   storyTypeSchema,
   VERDICTS,
 } from '@redakcja/shared';
+import { ABILITY_ICON, RESCUE_ICON } from '../../abilities/ability-icons.ts';
 import { cardIcon } from '../../encyclopedia/card-icons.ts';
 import { EVENT_ICON } from '../../events/event-model.ts';
 import { PING_ICON } from '../../pings/PingPicker.tsx';
@@ -42,6 +44,13 @@ describe('icon coverage', () => {
 
   it('draws every role', () => {
     for (const role of ROLES) expect(ROLE_ICON_NAMES).toContain(role);
+  });
+
+  it('gives every ability and the rescue badge an icon from the set (S7-40)', () => {
+    expect(Object.keys(ABILITY_ICON).sort()).toEqual([...ABILITIES].sort());
+    for (const ability of ABILITIES) expect(known.has(ABILITY_ICON[ability])).toBe(true);
+    expect(known.has(RESCUE_ICON)).toBe(true);
+    for (const name of ['retry', 'pass', 'lifebuoy']) expect(known.has(name)).toBe(true);
   });
 
   it('gives every technique card an icon from the set', () => {

@@ -29,7 +29,14 @@ export const storyTypeSchema = z.enum([
   'statistic',
   'article',
 ]);
-export const roleSchema = z.enum(['photoEditor', 'archivist', 'reporter', 'managingEditor']);
+export const roleSchema = z.enum([
+  'photoEditor',
+  'archivist',
+  'reporter',
+  'managingEditor',
+  'generalist',
+  'rescuer',
+]);
 /** A role's active ability (Stage 7, M3); each role has exactly one (`ROLE_PERKS`). */
 export const abilitySchema = z.enum([
   'expertise',

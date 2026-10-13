@@ -82,6 +82,11 @@ const PAD_FACE: Readonly<Record<number, string>> = {
   [PAD.rb]: 'RB',
 };
 
+/** The role ability's key cap for a device with keys (the HUD chip, S7-40). */
+export function abilityKeyCap(device: 'keyboard' | 'gamepad'): string {
+  return device === 'gamepad' ? (PAD_FACE[PAD.rb] ?? '') : keyLabel(KEY_BINDINGS.ability[0]);
+}
+
 type Direction = 'up' | 'left' | 'down' | 'right';
 const DIRECTIONS: readonly Direction[] = ['up', 'left', 'down', 'right'];
 

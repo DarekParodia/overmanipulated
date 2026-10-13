@@ -26,7 +26,8 @@ game may require a specific device.
 | Pick up / put down | E | A / Cross | "Podnieś" button |
 | Work at station (hold) | Space | X / Square (hold) | "Pracuj" button (hold) |
 | Ping | Q (+ number or wheel) | Y / Triangle (+ stick) | "Sygnał" button → radial menu |
-| Role ability (one press; a press that cannot do anything gives a short "denied" cue) | R | RB / R1 (button 5) | 4th button (role icon) in the empty cell above "Pracuj" |
+| Role ability (one press; a press that cannot do anything gives a short "denied" cue) | R | RB / R1 (button 5) | 4th button (ability icon and cooldown ring, only with a role) in the empty cell above "Pracuj" |
+| Role ability inside a station or desk overlay (Ekspertyza in a covered minigame: header button; any other ability as in the world) | R | RB | Ekspertyza: icon-only 48 px button in the overlay header (the 4th button is under the overlay) |
 | Minigames, desk, menus | Keys / mouse | D-pad + buttons | Tap, drag, swipe |
 | In-game menu (pauses a solo level) | Esc (when nothing else owns the input and the tutorial card is not up) | Start (button 9) | Menu button top-right |
 

@@ -1,5 +1,6 @@
 // S7-39: the role ability press. R (and RB on a pad) in a running level sends one target-free
-// `useAbility` command; without a role the press stays on the client. The server has no test
+// `useAbility` command; without a role (or, since S7-40, whenever the shared preview says the
+// press does nothing) the press stays on the client. The server has no test
 // hook for commands, so the spec reads the client's own WebSocket frames.
 import {
   type Browser,
@@ -82,7 +83,8 @@ async function openSolo(
 
 test('R sends useAbility for a player with a role', async ({ browser }, testInfo) => {
   const options = testInfo.project.name === 'desktop' ? DESKTOP : PHONE;
-  const { page, presses } = await openSolo(browser, options, 'Redaktor prowadzący');
+  // Ekspertyza on l0 (which has an Archiwum) arms, then disarms: both presses reach the server.
+  const { page, presses } = await openSolo(browser, options, 'Archiwista');
   await page.keyboard.press('KeyR');
   await expect.poll(presses).toBe(1);
   // One press is one command, however long the key is held.

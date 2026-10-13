@@ -5,8 +5,11 @@
 // card hops (not with reduced motion). Deadline warnings already shake the card (CSS), and an
 // expired folder leaves the queue with the next snapshot, so neither needs a motion here.
 import { useMemo, useRef } from 'react';
+import { abilityChipModel, abilityTargetFolder } from '../abilities/ability-model.ts';
+import { useLocalAbility } from '../abilities/use-ability.ts';
 import { raidSizes, tagBadge } from '../events/event-model.ts';
 import { useGame } from '../net/game-store.ts';
+import { runtime } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
@@ -30,6 +33,16 @@ export function FolderQueue() {
   // Before the first snapshot nothing is known about the schedule yet.
   const started = useGame((s) => s.tick > 0);
   const players = useApp((s) => s.room?.players);
+  const crew = useGame((s) => s.crew);
+  // S7-40: the card a ready press would act on, and the folders a Ratownik's rescue covers.
+  const local = useLocalAbility(runtime);
+  const abilityTarget = abilityTargetFolder(
+    abilityChipModel(local.preview, local.ability, local.elapsedMs),
+  );
+  const rescuers = useMemo(
+    () => new Set(crew.filter((m) => m.rescuesLeft > 0).map((m) => m.id)),
+    [crew],
+  );
   const { elapsedMs } = useLevelClock();
   const queue = useMemo(() => sortQueue(folders), [folders]);
   const raids = useMemo(() => raidSizes(folders), [folders]);
@@ -74,6 +87,8 @@ export function FolderQueue() {
               where={locationLabel(folder, nicknameOf)}
               whereKind={locationKind(folder)}
               tag={tagBadge(folder, elapsedMs, (raidId) => raids.get(raidId) ?? 1)}
+              abilityTarget={folder.id === abilityTarget}
+              rescue={folder.location.kind === 'carried' && rescuers.has(folder.location.playerId)}
             />
           ))}
           {view.ghost !== null && <GhostCard next={next} wide={queue.length === 0} />}

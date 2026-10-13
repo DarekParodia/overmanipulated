@@ -33,6 +33,11 @@
   text-align: center;
 }
 
+/* Message of the day: the card's column width, between the logo and the card. */
+.motd {
+  width: min(100%, 30rem);
+}
+
 .card {
   width: min(100%, 30rem);
   display: grid;
@@ -103,6 +108,14 @@
   .card {
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
+  }
+  /* Across both columns above them (wide lines keep the message short), and below the corner
+     buttons, which sit top-left here. */
+  .motd {
+    order: -1;
+    grid-column: 1 / -1;
+    width: min(100%, 40rem);
+    margin-top: calc(var(--touch-target) + var(--space-2));
   }
   /* Icon only: the corner must not reach over the panel column. */
   .cornerLabel {

@@ -1,6 +1,13 @@
 // Balance and engine constants shared by client and server.
 // Change values here, never inline (AGENTS.md rule 6).
-import type { Ability, Difficulty, Role, StationFamily, StationKind } from './domain.ts';
+import {
+  type Ability,
+  type Difficulty,
+  type Role,
+  STATION_KINDS,
+  type StationFamily,
+  type StationKind,
+} from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
 export const PROTOCOL_VERSION = 6;
@@ -181,6 +188,22 @@ export const ROLE_PERKS = {
     expertiseFamily: null,
     skipsPhoneQueue: false,
     rescuesPerLevel: 0,
+  },
+  generalist: {
+    fasterAt: STATION_KINDS,
+    workFactor: 0.8,
+    ability: 'secondChance',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  rescuer: {
+    fasterAt: [],
+    workFactor: 1,
+    ability: 'passFolder',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 1,
   },
 } as const satisfies Record<Role, RolePerk>;
 
@@ -532,6 +555,11 @@ export const CROSS_CHECK_MAX_MISTAKES = 1;
 export const CROSS_CHECK_CARDS = 5;
 /** Independent confirmations needed for „Potwierdzają”. */
 export const CROSS_CHECK_CONFIRMATIONS = 2;
+/**
+ * Without a crossCheck stamp: chance that independent media already cover a true story
+ * (confirm it) or an untrue one (deny it); otherwise nobody has checked it yet.
+ */
+export const CROSS_CHECK_COVERAGE_CHANCE = 0.5;
 
 // --- Stage 7: Metadane (metadata) minigame (S7-48, played from S7-52) -------------------------
 

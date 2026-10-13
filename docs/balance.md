@@ -44,7 +44,8 @@ about ±10 points between seed sets; treat single-digit differences as noise.
 
 ### Bot models (`tools/balance/models.ts`, all assumptions)
 
-Roles by crew size: 2 = photo editor, archivist; 3 = + reporter; 4 = + managing editor.
+Roles by crew size: 1 = Wszechstronny (generalist, S7-43); 2 = photo editor, archivist; 3 = +
+reporter; 4 = + managing editor.
 
 | Parameter | rookie | average | expert |
 | --- | --- | --- | --- |
