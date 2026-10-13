@@ -81,6 +81,8 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Kampania | `campaign` | |
 | Tryb nieskończony | `endlessMode` | |
 | Pokój, kod pokoju | `room`, `roomCode` | |
+| Menu gry | `gameMenu` (`hud/GameMenu.tsx`, `GameMenuButton.tsx`, `useGameMenu`, `pl.gameMenu`) | The in-game menu: one top-right button (Esc, Start) opening a sheet with „Wróć do gry”, settings, fullscreen, room code and „Wyjdź z redakcji” (two presses within `LEAVE_CONFIRM_MS`). Replaces the tool buttons and the room chip |
+| Pauza | `paused` (snapshot, `GameStore.paused`), lobby action `setPaused` | A solo player's open menu holds the level: the registry skips stepping the room. Only while playing with exactly one connected player; anyone joining or reconnecting clears it. With teammates the menu shows „Gra trwa dalej” and nothing pauses |
 | Gospodarz | `host` | |
 | Pseudonim | `nickname` | |
 | Gotowość | `ready` | |

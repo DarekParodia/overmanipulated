@@ -1,6 +1,6 @@
 // Latest authoritative gameplay state besides player positions (those go through the snapshot
 // buffer and prediction): folders, stations, desks, score, credibility, level timer, the next
-// scheduled folder and the level result. Updated on every snapshot; UI subscribes with selectors.
+// scheduled folder, the pause flag and the level result. Updated on every snapshot; UI subscribes with selectors.
 import type {
   CrewSnapshot,
   Desk,
@@ -29,6 +29,8 @@ export type GameStore = {
   nextFolder: NextFolder | null;
   /** A scheduled folder is due but waits for a free conveyor tile. */
   conveyorFull: boolean;
+  /** The solo player's in-game menu holds the level still (S7-10). */
+  paused: boolean;
   /** Set when the level ends; cleared when a new level starts. */
   levelEnd: LevelEndMessage | null;
   applySnapshot(snapshot: SnapshotMessage): void;
@@ -49,6 +51,7 @@ const EMPTY = {
   crew: [],
   nextFolder: null,
   conveyorFull: false,
+  paused: false,
   levelEnd: null,
 } satisfies Partial<GameStore>;
 
@@ -75,6 +78,7 @@ export const useGame = create<GameStore>((set, get) => ({
       crew: snapshot.crew,
       nextFolder: stableNextFolder(get().nextFolder, snapshot.nextFolder),
       conveyorFull: snapshot.conveyorFull,
+      paused: snapshot.paused,
     });
   },
   setLevelEnd(message) {

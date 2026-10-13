@@ -135,6 +135,15 @@ export const cues = {
     shake: 0.25,
     haptic: 'thud',
   },
+  /**
+   * The solo player's in-game menu holds the level still (`paused` rising edge, fx/
+   * gameplay-feedback.ts); the menu sheet shows the „Pauza” chip and the sheet slides in.
+   */
+  'game.paused': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
+  },
   'stamp.applied': {
     severity: 2,
     sound: { ids: ['stamp'], bus: 'sfx', rateJitter: 0.05 },

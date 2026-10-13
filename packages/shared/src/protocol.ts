@@ -94,6 +94,11 @@ export const lobbyActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('voteBlunder'), storyId: entityId }),
   /** Host only, lobby only; resets every player's ready flag like `selectLevel` (S7-23). */
   z.object({ kind: z.literal('setDifficulty'), difficulty: difficultySchema }),
+  /**
+   * In-game menu (S7-10): pause or resume. Pausing is accepted only while playing a co-op room
+   * with exactly one connected player and no spectators; anyone joining clears it.
+   */
+  z.object({ kind: z.literal('setPaused'), paused: z.boolean() }),
 ]);
 
 export const lobbyMessageSchema = z.object({
@@ -254,6 +259,8 @@ export const snapshotMessageSchema = z.object({
   conveyorFull: z.boolean(),
   /** Every player's ability state, in join order (S7-36). */
   crew: z.array(crewSnapshotSchema).max(MAX_PLAYERS),
+  /** A solo player has the in-game menu open: the room is not stepped (S7-10). */
+  paused: z.boolean(),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [

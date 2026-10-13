@@ -1,7 +1,7 @@
 // UI navigation while an overlay (station minigame, desk sheet, ping picker) owns the input.
 // Keyboard and gamepad are translated into a small set of intents; touch and mouse use the
 // overlay's own buttons. While captured, the world gets neutral input (no movement, no actions).
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useApp } from '../store/app.ts';
 import { PAD, radialDeadzone } from './gamepad.ts';
 import { firstGamepad } from './gamepad-access.ts';
@@ -42,8 +42,28 @@ let captureCount = 0;
 let pollHandle: number | null = null;
 const padPrevious = new Set<NavIntent>();
 
+const captureListeners = new Set<() => void>();
+
 export function isInputCaptured(): boolean {
   return captureCount > 0;
+}
+
+function notifyCapture(): void {
+  for (const listener of captureListeners) {
+    listener();
+  }
+}
+
+function subscribeCapture(listener: () => void): () => void {
+  captureListeners.add(listener);
+  return () => {
+    captureListeners.delete(listener);
+  };
+}
+
+/** Re-renders when something takes or gives back the input (e.g. the menu button, S7-10). */
+export function useInputCaptured(): boolean {
+  return useSyncExternalStore(subscribeCapture, isInputCaptured, () => false);
 }
 
 function dispatch(intent: NavIntent): void {
@@ -122,6 +142,9 @@ export function captureInput(): () => void {
     }
     pollHandle ??= requestAnimationFrame(poll);
   }
+  if (captureCount === 1) {
+    notifyCapture();
+  }
   let released = false;
   return () => {
     if (released) {
@@ -133,6 +156,9 @@ export function captureInput(): () => void {
       cancelAnimationFrame(pollHandle);
       pollHandle = null;
       padPrevious.clear();
+    }
+    if (captureCount === 0) {
+      notifyCapture();
     }
   };
 }

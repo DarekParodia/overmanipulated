@@ -14,6 +14,7 @@ const EMPTY_LEVEL = {
   nextFolder: { atMs: 3000, sinceMs: 0 },
   conveyorFull: false,
   crew: [],
+  paused: false,
 };
 
 describe('protocol version', () => {
@@ -100,6 +101,15 @@ describe('client messages', () => {
     expect(set('expert')).toBe(true);
     expect(set('insane')).toBe(false);
     expect(set(undefined)).toBe(false);
+  });
+
+  it('accepts the in-game menu pause with a boolean only', () => {
+    const pause = (paused: unknown) =>
+      parseClientMessage({ type: 'lobby', action: { kind: 'setPaused', paused } }).ok;
+    expect(pause(true)).toBe(true);
+    expect(pause(false)).toBe(true);
+    expect(pause('yes')).toBe(false);
+    expect(parseClientMessage({ type: 'lobby', action: { kind: 'setPaused' } }).ok).toBe(false);
   });
 
   it('accepts a verdict citing one to three stamps, and nothing else', () => {
@@ -469,6 +479,14 @@ describe('server messages', () => {
     expect(parseServerMessage(withoutNext).ok).toBe(false);
     const { conveyorFull: _full, ...withoutFull } = snapshot;
     expect(parseServerMessage(withoutFull).ok).toBe(false);
+  });
+
+  it('says in every snapshot whether the room is paused', () => {
+    const snapshot = { type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL };
+    expect(parseServerMessage({ ...snapshot, paused: true }).ok).toBe(true);
+    expect(parseServerMessage({ ...snapshot, paused: 1 }).ok).toBe(false);
+    const { paused: _paused, ...withoutPaused } = snapshot;
+    expect(parseServerMessage(withoutPaused).ok).toBe(false);
   });
 
   it('rejects a snapshot with more than four players', () => {

@@ -10,7 +10,7 @@ import { type Cue, type CueId, cueIds, cues } from './cues.ts';
 import { TICK_FAST_MS, TICK_SLOW_MS, tickIntervalMs, urgentTimeLeft } from './deadline-ticker.ts';
 import { cueForEvent, type GameplayEvent, wrongVerdictCue } from './event-cues.ts';
 import { createFeedback, resolveCue } from './feedback.ts';
-import { beltJustFilled, crossedLastSeconds } from './gameplay-feedback.ts';
+import { beltJustFilled, crossedLastSeconds, justPaused } from './gameplay-feedback.ts';
 import { createPool, scaleAt, spawn, stepPool } from './particles/pool.ts';
 import { particleCapacity, particlePresets } from './particles/presets.ts';
 import { createHitStop, HIT_STOP_SCALE, timeScaleAt, triggerHitStop } from './time-scale.ts';
@@ -570,6 +570,23 @@ describe('full belt', () => {
     expect(cues['folder.beltFull']).toEqual({
       severity: 1,
       sound: { ids: ['hmm'], bus: 'ui', volume: 0.6 },
+      haptic: 'tick',
+    });
+  });
+});
+
+describe('solo pause (S7-10)', () => {
+  it('sounds once, when the server starts holding the level', () => {
+    expect(justPaused(false, true)).toBe(true);
+    expect(justPaused(true, true)).toBe(false);
+    expect(justPaused(true, false)).toBe(false);
+    expect(justPaused(false, false)).toBe(false);
+  });
+
+  it('is a soft ui-bus slide with a light tick', () => {
+    expect(cues['game.paused']).toEqual({
+      severity: 1,
+      sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
       haptic: 'tick',
     });
   });

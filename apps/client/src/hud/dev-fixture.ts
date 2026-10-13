@@ -190,6 +190,7 @@ export function installHudDevFixture(): (() => void) | undefined {
         nextFolder: FIXTURE_NEXT_FOLDER,
         conveyorFull: false,
         crew: [fixtureCrewMember(useApp.getState().playerId ?? 'p-dev')],
+        paused: false,
         levelEnd: null,
       });
     },

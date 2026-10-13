@@ -335,6 +335,14 @@ export function voteBlunder(storyId: string): void {
   lobby({ kind: 'voteBlunder', storyId });
 }
 
+/**
+ * In-game menu (S7-10): asks the server to hold the level still while a solo player has the menu
+ * open, or to resume it. The server refuses a pause whenever someone else is connected.
+ */
+export function setPaused(paused: boolean): void {
+  lobby({ kind: 'setPaused', paused });
+}
+
 /** Sends a player decision (minigame result, verdict, ping, …); applied on the next tick. */
 export function sendCommand(command: PlayerCommand): void {
   send({ type: 'command', command });

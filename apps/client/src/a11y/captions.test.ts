@@ -78,6 +78,10 @@ describe('caption table', () => {
     });
   });
 
+  it('leaves the pause to the menu sheet, which says „Pauza” (S7-10)', () => {
+    expect(captionTable['game.paused']).toEqual({ skip: 'visual-elsewhere' });
+  });
+
   it('keeps muted-by-design decorative cues out of the stack', () => {
     expect(captionFor('ambience.phone', false)).toBeNull();
     expect(captionFor('player.step', false)).toBeNull();

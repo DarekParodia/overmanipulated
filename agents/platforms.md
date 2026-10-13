@@ -27,6 +27,7 @@ game may require a specific device.
 | Work at station (hold) | Space | X / Square (hold) | "Pracuj" button (hold) |
 | Ping | Q (+ number or wheel) | Y / Triangle (+ stick) | "Sygnał" button → radial menu |
 | Minigames, desk, menus | Keys / mouse | D-pad + buttons | Tap, drag, swipe |
+| In-game menu (pauses a solo level) | Esc (when nothing else owns the input and the tutorial card is not up) | Start (button 9) | Menu button top-right |
 
 - The **last used device** decides which prompts are shown (key caps, pad glyphs or touch icons).
   Minigame key hints exist for all three devices; on touch the chip names the gesture
