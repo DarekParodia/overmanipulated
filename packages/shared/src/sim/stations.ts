@@ -4,18 +4,14 @@
 // Consumes commands: minigameResult, cancel (when operating a station).
 // Work time and lockout length follow the difficulty (`ctx.tuning`, Stage 7).
 // Minigame seeds are derived per folder spawn key, station kind and attempt (S7-13).
-import {
-  MINIGAME_STABLE_SEED_STATIONS,
-  ROLE_STATIONS,
-  ROLE_WORK_TIME_FACTOR,
-  STATION_WORK_MS,
-} from '../constants.ts';
+import { MINIGAME_STABLE_SEED_STATIONS, STATION_WORK_MS } from '../constants.ts';
 import { type SimTuning, tunedLockoutMs } from '../difficulty.ts';
 import type { StationKind } from '../domain.ts';
 import type { Folder, Station } from '../entities.ts';
 import type { QueuedCommand, SimFrame } from './frame.ts';
 import { findInteractionTarget } from './map.ts';
 import { minigameSeedFor } from './rng.ts';
+import { roleWorkFactor } from './roles.ts';
 import { folderOnFixture, type GameState } from './state.ts';
 
 /** Key of `GameState.minigameAttempts` for the minigame of `kind` on one folder. */
@@ -84,8 +80,8 @@ function stampFor(frame: SimFrame, folder: Folder, kind: StationKind): string | 
 }
 
 /**
- * Work time at a station of `kind` for a player: the role bonus and the difficulty's work-time
- * factor applied, rounded to whole milliseconds.
+ * Work time at a station of `kind` for a player: the role bonus (`roleWorkFactor`, from
+ * ROLE_PERKS) and the difficulty's work-time factor applied, rounded to whole milliseconds.
  */
 export function workDurationMs(
   state: GameState,
@@ -94,9 +90,7 @@ export function workDurationMs(
   tuning: SimTuning,
 ): number {
   const role = state.crew[playerId]?.role ?? null;
-  const roleStations: readonly StationKind[] = role ? ROLE_STATIONS[role] : [];
-  const factor = roleStations.includes(kind) ? ROLE_WORK_TIME_FACTOR : 1;
-  return Math.round(STATION_WORK_MS[kind] * factor * tuning.workTimeFactor);
+  return Math.round(STATION_WORK_MS[kind] * roleWorkFactor(role, kind) * tuning.workTimeFactor);
 }
 
 /** The first command from the operator that concerns this station, if any. */
@@ -278,6 +272,7 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
               playerId: operatorId,
               folderId: folder.id,
               stampId,
+              via: 'minigame',
             });
           }
           next = idleStation(station);

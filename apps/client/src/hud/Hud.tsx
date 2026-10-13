@@ -1,6 +1,6 @@
 // Gameplay HUD (design-rules §5): one compact pill top-left with the level timer, points and
 // credibility; the folder queue top-centre; verdict toasts under it; the results panel at the
-// end of a level. Room code and ping live in a small chip under the screen tools (RoomChip).
+// end of a level. Room code and ping live in the in-game menu sheet (GameMenu, S7-10).
 import { useEffect } from 'react';
 import { EventBanners } from '../events/EventBanners.tsx';
 import { useGame } from '../net/game-store.ts';

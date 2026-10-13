@@ -4,8 +4,10 @@ import {
   centeredIndex,
   createArchivePuzzle,
   evaluateStop,
+  initialPulls,
   isCoasting,
   nudge,
+  pullCard,
   releaseVelocity,
   SCROLL,
   type ScrollState,
@@ -61,6 +63,34 @@ describe('archive puzzle', () => {
     expect(evaluateStop(p, p.targetIndex, new Set())).toBe('found');
     expect(evaluateStop(p, laterMention, new Set())).toBe('wrong');
     expect(evaluateStop(p, laterMention, new Set([laterMention]))).toBe('repeat');
+  });
+
+  test('two wrong cards close the drawer on Normalny; a repeat costs nothing', () => {
+    const p = createArchivePuzzle(3, TOPICS);
+    const [a = -1, b = -1] = p.cards.flatMap((_, i) => (i === p.targetIndex ? [] : [i]));
+    const start = initialPulls();
+    expect(start.maxMistakes).toBe(2);
+    const first = pullCard(p, start, a);
+    expect(first.outcome).toBe('wrong');
+    expect(first.state.rejected.size).toBe(1);
+    const repeat = pullCard(p, first.state, a);
+    expect(repeat.outcome).toBe('repeat');
+    expect(repeat.state).toBe(first.state);
+    expect(pullCard(p, first.state, b).outcome).toBe('closed');
+    expect(pullCard(p, first.state, p.targetIndex).outcome).toBe('found');
+  });
+
+  test('one wrong card closes the drawer on Ekspert, three on Łatwy (S7-24)', () => {
+    const p = createArchivePuzzle(3, TOPICS);
+    const [a = -1, b = -1, c = -1] = p.cards.flatMap((_, i) => (i === p.targetIndex ? [] : [i]));
+    const expert = initialPulls('expert');
+    expect(expert.maxMistakes).toBe(1);
+    expect(pullCard(p, expert, a).outcome).toBe('closed');
+    const easy = initialPulls('easy');
+    expect(easy.maxMistakes).toBe(3);
+    const second = pullCard(p, pullCard(p, easy, a).state, b);
+    expect(second.outcome).toBe('wrong');
+    expect(pullCard(p, second.state, c).outcome).toBe('closed');
   });
 
   test('rejects too few topics', () => {

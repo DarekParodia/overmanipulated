@@ -1,5 +1,7 @@
-// Lobby and level lifecycle: ready gate, ready resets, roles, results phase and replay.
+// Lobby and level lifecycle: ready gate, ready resets, roles, difficulty and the dealt run,
+// results phase and replay.
 import { beforeEach, describe, expect, it } from 'bun:test';
+import { prepareLevelRun, runSummary } from '@redakcja/content';
 import {
   BRIEFING_DURATION_MS,
   type FolderResult,
@@ -7,6 +9,8 @@ import {
   type LobbyAction,
   PROTOCOL_VERSION,
   RECONNECT_GRACE_MS,
+  type SimTuning,
+  simTuning,
   step,
 } from '@redakcja/shared';
 import { createFakeHub, type FakeConnection } from '../__fixtures__/fake-transport.ts';
@@ -36,33 +40,36 @@ let registry: RoomRegistry;
 let endNextTick = false;
 /** How the injected step ends the level. */
 let endOutcome: LevelOutcome = WON;
+/** The tuning the registry handed to the last simulation step. */
+let lastTuning: SimTuning | null = null;
+
+/** The injected step: the real one, ending the level on demand. */
+const testStep: typeof step = (state, inputs, commands, ctx) => {
+  lastTuning = ctx.tuning;
+  const result = step(state, inputs, commands, ctx);
+  if (!endNextTick) {
+    return result;
+  }
+  endNextTick = false;
+  return {
+    ...result,
+    state: {
+      ...result.state,
+      score: 340,
+      credibility: 72,
+      results: [RESULT],
+      ended: endOutcome,
+    },
+  };
+};
 
 beforeEach(() => {
   time = 0;
   endNextTick = false;
   endOutcome = WON;
+  lastTuning = null;
   fake = createFakeHub();
-  registry = createRoomRegistry({
-    hub: fake.hub,
-    now: () => time,
-    step: (state, inputs, commands, ctx) => {
-      const result = step(state, inputs, commands, ctx);
-      if (!endNextTick) {
-        return result;
-      }
-      endNextTick = false;
-      return {
-        ...result,
-        state: {
-          ...result.state,
-          score: 340,
-          credibility: 72,
-          results: [RESULT],
-          ended: endOutcome,
-        },
-      };
-    },
-  });
+  registry = createRoomRegistry({ hub: fake.hub, now: () => time, step: testStep });
 });
 
 function join(nickname: string, roomCode?: string, reconnectToken?: string): FakeConnection {
@@ -321,20 +328,26 @@ describe('roles', () => {
 
 describe('results and back to lobby', () => {
   it('sends levelEnd and moves the room to results when the level ends', () => {
-    const { host, b, c } = threePlayerRoom();
+    const { host, b, c, code } = threePlayerRoom();
     playToResults(host, b, c);
+    // l0 deals from a bag, so the thresholds and best score are the dealt run's (S7-23).
+    const run = registry.inspect(code)?.run?.summary;
+    if (!run?.stars) {
+      throw new Error('a campaign run has star thresholds');
+    }
     for (const connection of [host, b, c]) {
       expect(connection.last('levelEnd')).toEqual({
         type: 'levelEnd',
         levelId: 'l0-greybox',
+        difficulty: 'normal',
         won: true,
         stars: 2,
         score: 340,
         credibility: 72,
         results: [RESULT],
         lossReason: null,
-        starThresholds: { two: 120, three: 190 },
-        maxScore: 240,
+        starThresholds: run.stars,
+        maxScore: run.maxScore,
       });
       expect(connection.last('roomState')?.phase).toBe('results');
     }
@@ -352,6 +365,7 @@ describe('results and back to lobby', () => {
     playToResults(host);
     expect(host.last('levelEnd')).toMatchObject({
       levelId: 'l5-deepfake',
+      difficulty: 'normal',
       won: false,
       stars: 0,
       lossReason: 'credibility',
@@ -434,5 +448,189 @@ describe('results and back to lobby', () => {
     expect(b.last('roomState')?.hostId).toBe(welcomeOf(b).playerId);
     lobby(b, { kind: 'backToLobby' });
     expect(c.last('roomState')?.phase).toBe('lobby');
+  });
+});
+
+describe('difficulty and the dealt run (S7-23)', () => {
+  /** Random draws in order: four for the room code, then each run seed and sim seed. */
+  let draws: number[] = [];
+  const seedOf = (draw: number) => Math.floor(draw * 0x7fffffff);
+
+  beforeEach(() => {
+    draws = [0.1, 0.2, 0.3, 0.4, 0.25, 0.5, 0.75, 0.6];
+    registry = createRoomRegistry({
+      hub: fake.hub,
+      now: () => time,
+      step: testStep,
+      random: () => draws.shift() ?? 0.9,
+    });
+  });
+
+  /** What `prepareRun` deals for this level, seed and difficulty over the bundled content. */
+  function expectedRun(levelId: string, seed: number, difficulty: 'normal' | 'hard') {
+    const run = prepareLevelRun(levelId, { seed, difficulty });
+    if (!run) {
+      throw new Error(`no level ${levelId}`);
+    }
+    return run;
+  }
+
+  /** Selects l1 on Trudny and opens the briefing (solo host). */
+  function briefHardL1(host: FakeConnection): void {
+    lobby(host, { kind: 'selectLevel', levelId: 'l1-burza' });
+    lobby(host, { kind: 'setDifficulty', difficulty: 'hard' });
+    lobby(host, { kind: 'start' });
+    expect(phaseOf(host)).toBe('briefing');
+  }
+
+  it('starts every room on Normal with no run', () => {
+    const host = join('Ala');
+    expect(host.last('roomState')).toMatchObject({ difficulty: 'normal', run: null });
+    expect(registry.inspect(welcomeOf(host).roomCode)).toMatchObject({
+      difficulty: 'normal',
+      run: null,
+    });
+  });
+
+  it("lets the host set 'hard': broadcast to everyone, and every ready resets", () => {
+    const { host, b, c, code } = threePlayerRoom();
+    ready(b);
+    ready(c);
+    lobby(host, { kind: 'setDifficulty', difficulty: 'hard' });
+    for (const connection of [host, b, c]) {
+      expect(connection.last('roomState')).toMatchObject({ difficulty: 'hard', run: null });
+    }
+    expect(readyFlags(host)).toEqual([false, false, false]);
+    expect(registry.inspect(code)?.difficulty).toBe('hard');
+    // The difficulty stays when the host picks another level.
+    lobby(host, { kind: 'selectLevel', levelId: 'l2-wybory' });
+    expect(b.last('roomState')).toMatchObject({ levelId: 'l2-wybory', difficulty: 'hard' });
+  });
+
+  it('answers a guest with notHost and changes nothing', () => {
+    const { host, b, c, code } = threePlayerRoom();
+    ready(c);
+    lobby(b, { kind: 'setDifficulty', difficulty: 'expert' });
+    expect(b.last('error')?.code).toBe('notHost');
+    expect(registry.inspect(code)?.difficulty).toBe('normal');
+    expect(readyFlags(host)).toEqual([false, false, true]);
+  });
+
+  it('is ignored in the briefing, while playing and on the results screen', () => {
+    const host = join('Ala');
+    const code = welcomeOf(host).roomCode;
+    const tryHard = () => {
+      const before = host.all('roomState').length;
+      lobby(host, { kind: 'setDifficulty', difficulty: 'hard' });
+      expect(host.all('roomState')).toHaveLength(before);
+      expect(registry.inspect(code)?.difficulty).toBe('normal');
+    };
+    lobby(host, { kind: 'start' });
+    expect(phaseOf(host)).toBe('briefing');
+    tryHard();
+    time += BRIEFING_DURATION_MS;
+    registry.tick();
+    expect(phaseOf(host)).toBe('playing');
+    tryHard();
+    endNextTick = true;
+    registry.tick();
+    expect(phaseOf(host)).toBe('results');
+    tryHard();
+    expect(host.last('error')).toBeUndefined();
+  });
+
+  it('deals the run at the briefing: roomState.run equals runSummary(prepareRun(...))', () => {
+    const host = join('Ala');
+    const code = welcomeOf(host).roomCode;
+    briefHardL1(host);
+    const summary = runSummary(expectedRun('l1-burza', 536_870_911, 'hard'));
+    expect(seedOf(0.25)).toBe(536_870_911);
+    expect(registry.inspect(code)?.run).toEqual({ seed: 536_870_911, summary });
+    expect(host.last('roomState')?.run).toEqual(summary);
+    // Trudny deals 16 slots on l1 (the bag's timing, whatever the pool holds).
+    expect(summary.folders).toBe(16);
+    // The run seed stays on the server: it would spoil the folder sequence.
+    expect(JSON.stringify(host.last('roomState'))).not.toContain('536870911');
+
+    time += BRIEFING_DURATION_MS;
+    registry.tick();
+    expect(phaseOf(host)).toBe('playing');
+    // The sim seed is its own draw, after the run seed.
+    expect(registry.inspect(code)?.game.seed).toBe(seedOf(0.5));
+    expect(host.last('roomState')?.run).toEqual(summary);
+    registry.tick();
+    expect(lastTuning).toEqual(simTuning('hard'));
+    expect(lastTuning).toEqual({ workTimeFactor: 1.15, lockoutFactor: 1.5, penaltyFactor: 1.25 });
+  });
+
+  it('gives a spawned folder the bagStation of its schedule entry', () => {
+    const host = join('Ala');
+    briefHardL1(host);
+    time += BRIEFING_DURATION_MS;
+    registry.tick();
+    const entry = expectedRun('l1-burza', 536_870_911, 'hard').level.schedule[0];
+    expect(entry?.station).toBeDefined();
+    for (let i = 0; i < 200 && (host.last('snapshot')?.folders.length ?? 0) === 0; i++) {
+      registry.tick();
+    }
+    const [folder] = host.last('snapshot')?.folders ?? [];
+    expect(folder).toMatchObject({
+      spawnKey: 's0',
+      storyId: entry?.storyId,
+      bagStation: entry?.station,
+      spawnedAtMs: (entry?.atS ?? Number.NaN) * 1000,
+    });
+  });
+
+  it('ends with the difficulty and the thresholds and best score of the run', () => {
+    const host = join('Ala');
+    briefHardL1(host);
+    const summary = runSummary(expectedRun('l1-burza', 536_870_911, 'hard'));
+    time += BRIEFING_DURATION_MS;
+    registry.tick();
+    endOutcome = { won: false, stars: 0, lossReason: 'credibility' };
+    endNextTick = true;
+    registry.tick();
+    expect(host.last('levelEnd')).toMatchObject({
+      levelId: 'l1-burza',
+      difficulty: 'hard',
+      lossReason: 'credibility',
+      starThresholds: summary.stars,
+      maxScore: summary.maxScore,
+    });
+    // The results screen still shows the run that was played.
+    expect(host.last('roomState')).toMatchObject({ phase: 'results', run: summary });
+  });
+
+  it('draws a new run seed for a replay and drops the run back in the lobby', () => {
+    const host = join('Ala');
+    const code = welcomeOf(host).roomCode;
+    briefHardL1(host);
+    time += BRIEFING_DURATION_MS;
+    registry.tick();
+    endNextTick = true;
+    registry.tick();
+    expect(phaseOf(host)).toBe('results');
+
+    // Replay straight from the results screen: a new briefing deals a new run.
+    lobby(host, { kind: 'start' });
+    expect(phaseOf(host)).toBe('briefing');
+    const replay = registry.inspect(code)?.run;
+    expect(replay?.seed).toBe(seedOf(0.75));
+    expect(replay?.seed).not.toBe(536_870_911);
+    expect(replay?.summary).toEqual(runSummary(expectedRun('l1-burza', seedOf(0.75), 'hard')));
+
+    time += BRIEFING_DURATION_MS;
+    registry.tick();
+    endNextTick = true;
+    registry.tick();
+    lobby(host, { kind: 'backToLobby' });
+    expect(host.last('roomState')).toMatchObject({
+      phase: 'lobby',
+      levelId: 'l1-burza',
+      difficulty: 'hard',
+      run: null,
+    });
+    expect(registry.inspect(code)?.run).toBeNull();
   });
 });

@@ -642,6 +642,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
           levelEnd: {
             type: 'levelEnd',
             levelId: 'l1-burza',
+            difficulty: 'normal',
             won: true,
             stars: 2,
             // Two stars on l1 need 205 (starThresholds below).
@@ -724,6 +725,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
         levelEnd: {
           type: 'levelEnd',
           levelId: 'endless',
+          difficulty: 'normal',
           won: false,
           stars: 0,
           score: 640,

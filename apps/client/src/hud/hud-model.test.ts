@@ -7,6 +7,7 @@ import {
   folderReasonSchema,
   SCORE,
 } from '@redakcja/shared';
+import { effectiveHints } from '../guidance/store.ts';
 import { pl } from '../strings/pl.ts';
 import {
   evidenceBadge,
@@ -209,6 +210,24 @@ describe('toasts', () => {
     expect(free.credibilityDelta).toBe(0);
   });
 
+  test("expiry deltas scale with the room's penalty factor, like the sim (S7-24)", () => {
+    const at = (factor: number) => expiredToast({ folderId: 'f', storyId: 's' }, story, 0, factor);
+    expect(at(0.5).scoreDelta).toBe(-3);
+    expect(at(0.5).credibilityDelta).toBe(-3);
+    expect(at(1).scoreDelta).toBe(-5);
+    expect(at(1.25).scoreDelta).toBe(-6);
+    expect(at(1.5).scoreDelta).toBe(-8);
+    expect(at(1.5).credibilityDelta).toBe(-8);
+    const free = expiredToast(
+      { folderId: 'f', storyId: 's' },
+      { ...story, truth: 'unverifiable' },
+      1,
+      1.5,
+    );
+    expect(free.scoreDelta).toBeNull();
+    expect(free.credibilityDelta).toBe(0);
+  });
+
   test('keeps at most three, newest first', () => {
     let list = pushToast(
       [],
@@ -282,6 +301,19 @@ describe('evidence badge', () => {
     expect(evidenceBadge(stamped([]), { ...multi, requiredStamps: 3 }, false)).toEqual({
       have: null,
       need: 3,
+    });
+  });
+
+  test('Ekspert: the effective hints are off, so the chip shows ×2 (S7-24)', () => {
+    const folderWithOne = stamped(['m-archive']);
+    expect(evidenceBadge(folderWithOne, multi, effectiveHints(true, 'expert'))).toEqual({
+      have: null,
+      need: 2,
+    });
+    expect(pl.hud.evidenceShortNeed(2)).toBe('×2');
+    expect(evidenceBadge(folderWithOne, multi, effectiveHints(true, 'hard'))).toEqual({
+      have: 1,
+      need: 2,
     });
   });
 

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'bun:test';
 import {
   MINIGAME_FAIL_LOCKOUT_MS,
   MINIGAME_STABLE_SEED_STATIONS,
-  ROLE_WORK_TIME_FACTOR,
   STATION_WORK_MS,
   TICK_MS,
 } from '../constants.ts';
@@ -206,10 +205,7 @@ describe('stepStations: progress and duration', () => {
 
   it('applies the photo editor’s bonus at image search', () => {
     const { state } = tick(setup([{ id: 'a', spot: 'imageSearch', role: 'photoEditor' }]), ['a']);
-    expect(state.stations['imageSearch-0']?.durationMs).toBe(
-      STATION_WORK_MS.imageSearch * ROLE_WORK_TIME_FACTOR,
-    );
-    expect(ROLE_WORK_TIME_FACTOR).toBe(0.6);
+    expect(state.stations['imageSearch-0']?.durationMs).toBe(2400);
   });
 
   it('applies the archivist’s bonus at the archive only', () => {
@@ -217,7 +213,7 @@ describe('stepStations: progress and duration', () => {
       setup([{ id: 'a', spot: 'archive', role: 'archivist' }], [makeFolder('f1', 'archive-0')]),
       ['a'],
     ).state.stations['archive-0'];
-    expect(archive?.durationMs).toBe(STATION_WORK_MS.archive * ROLE_WORK_TIME_FACTOR);
+    expect(archive?.durationMs).toBe(3000);
 
     const image = tick(setup([{ id: 'a', spot: 'imageSearch', role: 'archivist' }]), ['a']).state
       .stations['imageSearch-0'];
@@ -391,6 +387,7 @@ describe('stepStations: minigame', () => {
         playerId: 'a',
         folderId: 'f1',
         stampId: 't-true-image',
+        via: 'minigame',
       },
     ]);
     expect(result.state.stations['imageSearch-0']).toMatchObject({
@@ -554,9 +551,7 @@ describe('stations scenario via step', () => {
     }
     const started = events.find((e) => e.kind === 'minigameStarted');
     expect(started).toMatchObject({ stationId: 'imageSearch-0', playerId: 'a', folderId: 'f1' });
-    expect(state.stations['imageSearch-0']?.durationMs).toBe(
-      STATION_WORK_MS.imageSearch * ROLE_WORK_TIME_FACTOR,
-    );
+    expect(state.stations['imageSearch-0']?.durationMs).toBe(2400);
 
     const result = runStep(state, { a: [testInput(seq++)] }, [
       testCommand('a', { kind: 'minigameResult', stationId: 'imageSearch-0', success: true }),
@@ -568,6 +563,7 @@ describe('stations scenario via step', () => {
         playerId: 'a',
         folderId: 'f1',
         stampId: 't-true-image',
+        via: 'minigame',
       },
     ]);
     expect(result.state.folders.f1?.stamps).toEqual(['t-true-image']);

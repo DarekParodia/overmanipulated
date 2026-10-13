@@ -2,6 +2,7 @@
 // believable mid-level state and plays verdict events, so the HUD and the results page can be
 // reviewed before the gameplay units spawn real folders. Never installed in production builds.
 import type {
+  CrewSnapshot,
   Folder,
   FolderResult,
   GameEvent,
@@ -33,6 +34,8 @@ export type HudDevApi = {
     timeLeftMs?: number;
     nextFolder?: NextFolder | null;
     conveyorFull?: boolean;
+    /** Ability state per player (S7-36), e.g. a cooling or armed ability for the HUD chip. */
+    crew?: readonly CrewSnapshot[];
   }): void;
   verdict(patch?: Partial<VerdictEvent>): void;
   expire(storyId?: string): void;
@@ -50,6 +53,17 @@ const FIXTURE_MAX_SCORE = 240;
 const URGENT_STORY = 'l0-dev-pilny-komunikat';
 /** A multi-stamp story (S7-19) so the folder card's evidence chip shows "1/2". */
 const MULTI_STORY = 'l0-dev-dwa-dowody';
+
+/** The local player with a ready ability, no call and no rescues (S7-36). */
+function fixtureCrewMember(playerId: string): CrewSnapshot {
+  return {
+    id: playerId,
+    abilityReadyAtMs: 0,
+    abilityArmed: false,
+    fieldCall: null,
+    rescuesLeft: 0,
+  };
+}
 
 function fixtureFolders(playerId: string): Folder[] {
   const at = FIXTURE_ELAPSED_MS;
@@ -181,6 +195,8 @@ export function installHudDevFixture(): (() => void) | undefined {
         folders: fixtureFolders(useApp.getState().playerId ?? 'p-dev').slice(0, options.folders),
         nextFolder: FIXTURE_NEXT_FOLDER,
         conveyorFull: false,
+        crew: [fixtureCrewMember(useApp.getState().playerId ?? 'p-dev')],
+        paused: false,
         levelEnd: null,
       });
     },
@@ -224,6 +240,7 @@ export function installHudDevFixture(): (() => void) | undefined {
       const message: LevelEndMessage = {
         type: 'levelEnd',
         levelId: 'l0-greybox',
+        difficulty: 'normal',
         won,
         stars,
         // The results' own sum, so the totals need no 'Inne' row.

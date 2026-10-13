@@ -183,7 +183,35 @@ function contextFor(event: GameplayEvent): CueContext {
         ...at(folderPosition(event.byFolderId) ?? fallbackPosition()),
         folderId: event.byFolderId,
       };
+    case 'ability':
+      return abilityContext(event);
+    case 'folderRescued':
+      return {
+        ...aboutPlayer(event.playerId),
+        ...at(folderPosition(event.folderId) ?? playerPosition(event.playerId)),
+        folderId: event.folderId,
+      };
   }
+}
+
+/**
+ * Where an ability lands: at its station (Ekspertyza, Druga szansa), at the player for a
+ * Telefon z terenu call, else at its folder; the player's own position when nothing else is
+ * known.
+ */
+function abilityContext(event: Extract<GameplayEvent, { kind: 'ability' }>): CueContext {
+  const position =
+    (event.stationId ? fixturePosition(event.stationId) : undefined) ??
+    (event.ability !== 'fieldCall' && event.folderId
+      ? folderPosition(event.folderId)
+      : undefined) ??
+    playerPosition(event.playerId);
+  return {
+    ...aboutPlayer(event.playerId),
+    ...at(position),
+    ...(event.folderId ? { folderId: event.folderId } : {}),
+    ...(event.stationId ? { fixtureId: event.stationId } : {}),
+  };
 }
 
 /** Feedback for each gameplay event. */

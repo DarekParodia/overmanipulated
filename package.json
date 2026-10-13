@@ -22,6 +22,8 @@
     "perf:budget": "bun run build && bun tools/perf/check-bundle.ts",
     "test:e2e": "playwright test",
     "smoke": "bun tools/smoke/smoke.ts",
+    "config:check": "bun tools/deploy/config-check.ts",
+    "config:schema": "bun tools/deploy/config-schema.ts",
     "review:export": "bun tools/content/review-export.ts",
     "review:apply": "bun tools/content/review-apply.ts",
     "contest:build": "bun tools/contest/build.ts",

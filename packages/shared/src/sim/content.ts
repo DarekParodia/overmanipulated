@@ -64,6 +64,8 @@ export type SimSpawn = {
   storyId: string;
   /** Time the team has for this folder, in seconds. */
   deadlineS: number;
+  /** The bag slot's station (dealt levels only); the folder carries it as `bagStation`. */
+  station?: StationKind | undefined;
 };
 
 /** A scheduled level event. Every kind except `outage` spawns folders from `storyId`. */

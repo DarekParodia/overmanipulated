@@ -1,6 +1,11 @@
 // Guidance state: whether "what next" hints are on (a player setting, persisted; on by default)
 // and the current next step, published by the driver for the hint bubble and scene markers.
+// What the game shows follows the effective hints (S7-24): the setting AND the room's difficulty
+// (`DIFFICULTY[d].hints`), so Ekspert plays without the bubble, the scene markers and the
+// folder-card proof count, whatever the setting says. The first-game tutorial is unaffected.
+import { DIFFICULTY, type Difficulty } from '@redakcja/shared';
 import { create } from 'zustand';
+import { useApp } from '../store/app.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
 import { type NextStep, sameStep } from './next-step.ts';
 
@@ -26,3 +31,20 @@ export const useGuidance = create<GuidanceStore>((set, get) => ({
     }
   },
 }));
+
+/** Hints are shown when the player wants them and the difficulty allows them. */
+export function effectiveHints(hintsEnabled: boolean, difficulty: Difficulty): boolean {
+  return hintsEnabled && DIFFICULTY[difficulty].hints;
+}
+
+/** The effective hints flag, reactive to the setting and the room's difficulty. */
+export function useEffectiveHints(): boolean {
+  const enabled = useGuidance((s) => s.hintsEnabled);
+  const difficulty = useApp((s) => s.difficulty);
+  return effectiveHints(enabled, difficulty);
+}
+
+/** The effective hints flag right now, for per-frame readers outside React renders. */
+export function effectiveHintsNow(): boolean {
+  return effectiveHints(useGuidance.getState().hintsEnabled, useApp.getState().difficulty);
+}

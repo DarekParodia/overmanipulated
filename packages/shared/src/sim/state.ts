@@ -1,7 +1,14 @@
 // Serialisable game state of one room. Only the simulation functions in this folder change it.
-import { CREDIBILITY_START } from '../constants.ts';
+import { ABILITY_FIRST_READY_MS, CREDIBILITY_START, ROLE_PERKS } from '../constants.ts';
 import type { Role } from '../domain.ts';
-import type { Desk, Folder, FolderResult, LevelOutcome, Station } from '../entities.ts';
+import type {
+  AbilityState,
+  Desk,
+  Folder,
+  FolderResult,
+  LevelOutcome,
+  Station,
+} from '../entities.ts';
 import type { TileMap, Vec2 } from './map.ts';
 
 export type PlayerState = {
@@ -14,14 +21,17 @@ export type PlayerState = {
   lastInputSeq: number;
 };
 
-/** Per-player gameplay data that is not part of movement prediction. */
+/**
+ * Per-player gameplay data that is not part of movement prediction. The ability fields
+ * (`AbilityState`, S7-36) also travel in `snapshot.crew`.
+ */
 export type CrewMember = {
   role: Role | null;
   /** Whether the work button is held, as of the last input received. */
   workHeld: boolean;
   /** Level time of the last ping (for the cooldown); -Infinity before the first. */
   lastPingMs: number;
-};
+} & AbilityState;
 
 /** A running folder-based level event (outages live on the station and need no entry). */
 export type ActiveEvent = {
@@ -149,7 +159,15 @@ export function addPlayer(
     players: { ...state.players, [id]: player },
     crew: {
       ...state.crew,
-      [id]: { role, workHeld: false, lastPingMs: Number.NEGATIVE_INFINITY },
+      [id]: {
+        role,
+        workHeld: false,
+        lastPingMs: Number.NEGATIVE_INFINITY,
+        abilityReadyAtMs: state.elapsedMs + ABILITY_FIRST_READY_MS,
+        abilityArmed: false,
+        fieldCall: null,
+        rescuesLeft: role ? ROLE_PERKS[role].rescuesPerLevel : 0,
+      },
     },
   };
 }

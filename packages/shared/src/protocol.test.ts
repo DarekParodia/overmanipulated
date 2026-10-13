@@ -13,11 +13,13 @@ const EMPTY_LEVEL = {
   deadlineExtensionUsed: false,
   nextFolder: { atMs: 3000, sinceMs: 0 },
   conveyorFull: false,
+  crew: [],
+  paused: false,
 };
 
 describe('protocol version', () => {
-  it('is 4 for the Stage 7 M2 wire (difficulty-scaled lockout, difficulty and run)', () => {
-    expect(PROTOCOL_VERSION).toBe(4);
+  it('is 5 for the Stage 7 M3 wire (abilities, crew state, stamp source)', () => {
+    expect(PROTOCOL_VERSION).toBe(5);
   });
 });
 
@@ -90,6 +92,26 @@ describe('client messages', () => {
     expect(parseClientMessage({ type: 'heartbeat', clientTime: 123.4 }).ok).toBe(true);
   });
 
+  it('accepts setDifficulty with the four difficulties only (S7-23)', () => {
+    const set = (difficulty: unknown) =>
+      parseClientMessage({ type: 'lobby', action: { kind: 'setDifficulty', difficulty } }).ok;
+    expect(set('easy')).toBe(true);
+    expect(set('normal')).toBe(true);
+    expect(set('hard')).toBe(true);
+    expect(set('expert')).toBe(true);
+    expect(set('insane')).toBe(false);
+    expect(set(undefined)).toBe(false);
+  });
+
+  it('accepts the in-game menu pause with a boolean only', () => {
+    const pause = (paused: unknown) =>
+      parseClientMessage({ type: 'lobby', action: { kind: 'setPaused', paused } }).ok;
+    expect(pause(true)).toBe(true);
+    expect(pause(false)).toBe(true);
+    expect(pause('yes')).toBe(false);
+    expect(parseClientMessage({ type: 'lobby', action: { kind: 'setPaused' } }).ok).toBe(false);
+  });
+
   it('accepts a verdict citing one to three stamps, and nothing else', () => {
     const verdict = (justifyingStampIds: unknown) =>
       parseClientMessage({
@@ -116,6 +138,12 @@ describe('client messages', () => {
     ).toBe(false);
   });
 
+  it('accepts a target-free useAbility press (S7-36)', () => {
+    const command = (command: unknown) => parseClientMessage({ type: 'command', command }).ok;
+    expect(command({ kind: 'useAbility' })).toBe(true);
+    expect(command({ kind: 'useAbilities' })).toBe(false);
+  });
+
   it('rejects unknown types and malformed JSON', () => {
     expect(parseClientMessage({ type: 'cheat' }).ok).toBe(false);
     expect(parseClientMessage('{not json').ok).toBe(false);
@@ -140,6 +168,8 @@ describe('server messages', () => {
         levelId: 'l0-greybox',
         briefing: null,
         blunderVotes: [],
+        difficulty: 'normal',
+        run: null,
         players: [
           {
             id: 'p1',
@@ -172,6 +202,7 @@ describe('server messages', () => {
       {
         type: 'levelEnd',
         levelId: 'l0-greybox',
+        difficulty: 'normal',
         won: true,
         stars: 2,
         score: 40,
@@ -259,10 +290,102 @@ describe('server messages', () => {
     expect(parse({ ...failed, lockoutMs: 1500.5 })).toBe(false);
   });
 
+  it('carries every player’s ability state in the snapshot (S7-36)', () => {
+    const member = {
+      id: 'p1',
+      abilityReadyAtMs: 63_000,
+      abilityArmed: false,
+      fieldCall: { folderId: 'f2', endsAtMs: 9000 },
+      rescuesLeft: 1,
+    };
+    const parse = (crew: unknown) =>
+      parseServerMessage({ type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL, crew }).ok;
+    expect(parse([member])).toBe(true);
+    expect(
+      parse([{ ...member, id: 'p2', abilityArmed: true, fieldCall: null, rescuesLeft: 0 }]),
+    ).toBe(true);
+    expect(parse(Array.from({ length: 5 }, () => member))).toBe(false);
+    expect(parse([{ ...member, rescuesLeft: -1 }])).toBe(false);
+    expect(parse([{ ...member, fieldCall: { folderId: 'f2' } }])).toBe(false);
+    const { abilityArmed: _armed, ...withoutArmed } = member;
+    expect(parse([withoutArmed])).toBe(false);
+    const { crew: _crew, ...withoutCrew } = EMPTY_LEVEL;
+    expect(parseServerMessage({ type: 'snapshot', tick: 1, players: [], ...withoutCrew }).ok).toBe(
+      false,
+    );
+  });
+
+  it('carries ability stages and rescued folders as events (S7-36)', () => {
+    const parse = (event: unknown) => parseServerMessage({ type: 'event', tick: 7, event }).ok;
+    const ability = { kind: 'ability', playerId: 'p1', ability: 'extendDeadline', stage: 'done' };
+    expect(parse({ ...ability, folderId: 'f1', addedMs: 20_000 })).toBe(true);
+    for (const stage of ['armed', 'disarmed', 'started', 'done', 'cancelled']) {
+      expect(parse({ ...ability, ability: 'expertise', stage })).toBe(true);
+    }
+    expect(parse({ ...ability, ability: 'fieldCall', stage: 'cancelled', reason: 'dropped' })).toBe(
+      true,
+    );
+    expect(parse({ ...ability, ability: 'passFolder', folderId: 'f1', targetPlayerId: 'p2' })).toBe(
+      true,
+    );
+    expect(parse({ ...ability, ability: 'secondChance', stationId: 'archive-0' })).toBe(true);
+    expect(parse({ ...ability, ability: 'teleport' })).toBe(false);
+    expect(parse({ ...ability, stage: 'charging' })).toBe(false);
+    expect(parse({ ...ability, reason: 'bored' })).toBe(false);
+
+    const rescued = {
+      kind: 'folderRescued',
+      playerId: 'p3',
+      folderId: 'f4',
+      addedMs: 20_000,
+      folderIds: ['f4', 'f5'],
+    };
+    expect(parse(rescued)).toBe(true);
+    expect(parse({ ...rescued, folderIds: [] })).toBe(false);
+    expect(parse({ ...rescued, folderIds: Array.from({ length: 9 }, (_, i) => `f${i}`) })).toBe(
+      false,
+    );
+  });
+
+  it('says what earned a stamp (S7-36)', () => {
+    const stamp = {
+      kind: 'stampApplied',
+      stationId: 'phone-0',
+      playerId: 'p1',
+      folderId: 'f1',
+      stampId: 'l3-story-phone',
+    };
+    const parse = (event: unknown) => parseServerMessage({ type: 'event', tick: 7, event }).ok;
+    expect(parse({ ...stamp, via: 'minigame' })).toBe(true);
+    expect(parse({ ...stamp, via: 'expertise' })).toBe(true);
+    expect(parse({ ...stamp, via: 'fieldCall' })).toBe(true);
+    expect(parse({ ...stamp, via: 'magic' })).toBe(false);
+    expect(parse(stamp)).toBe(false);
+  });
+
+  it('lets a folder carry the time abilities added to it (S7-36)', () => {
+    const folder = {
+      id: 'f1',
+      spawnKey: 's0',
+      storyId: 'l1-story',
+      location: { kind: 'carried', playerId: 'p1' },
+      stamps: [],
+      spawnedAtMs: 0,
+      deadlineMs: 80_000,
+      warned: false,
+    };
+    const parse = (f: unknown) =>
+      parseServerMessage({ type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL, folders: [f] })
+        .ok;
+    expect(parse({ ...folder, extendedMs: 20_000 })).toBe(true);
+    expect(parse({ ...folder, extendedMs: -1 })).toBe(false);
+  });
+
   it('accepts an endless levelEnd with an unfinished folder and no thresholds', () => {
     const end = {
       type: 'levelEnd',
       levelId: 'endless',
+      difficulty: 'hard',
       won: false,
       stars: 0,
       score: 120,
@@ -292,6 +415,57 @@ describe('server messages', () => {
     expect(parseServerMessage({ ...end, lossReason: 'time' }).ok).toBe(false);
     const { lossReason: _dropped, ...withoutReason } = end;
     expect(parseServerMessage(withoutReason).ok).toBe(false);
+    const { difficulty: _difficulty, ...withoutDifficulty } = end;
+    expect(parseServerMessage(withoutDifficulty).ok).toBe(false);
+  });
+
+  it("carries the room's difficulty and the dealt run in roomState (S7-23)", () => {
+    const room = {
+      type: 'roomState',
+      roomCode: 'KLMN',
+      hostId: 'p1',
+      phase: 'briefing',
+      levelId: 'l1-burza',
+      players: [],
+      briefing: { endsInMs: 8000, skippedBy: [] },
+      blunderVotes: [],
+      difficulty: 'expert',
+      run: { folders: 16, maxScore: 410, stars: { two: 225, three: 330 } },
+    };
+    const parse = (message: unknown) => parseServerMessage(message).ok;
+    expect(parse(room)).toBe(true);
+    expect(parse({ ...room, run: { folders: 40, maxScore: 1200, stars: null } })).toBe(true);
+    expect(parse({ ...room, phase: 'lobby', briefing: null, run: null })).toBe(true);
+    expect(parse({ ...room, difficulty: 'insane' })).toBe(false);
+    expect(parse({ ...room, run: { folders: -1, maxScore: 410, stars: null } })).toBe(false);
+    const { difficulty: _difficulty, ...withoutDifficulty } = room;
+    expect(parse(withoutDifficulty)).toBe(false);
+    const { run: _run, ...withoutRun } = room;
+    expect(parse(withoutRun)).toBe(false);
+  });
+
+  it("lets a folder carry its bag slot's station, optionally (S7-23)", () => {
+    const folder = {
+      id: 'f1',
+      spawnKey: 's0',
+      storyId: 'l1-story',
+      location: { kind: 'fixture', fixtureId: 'conveyor-0' },
+      stamps: [],
+      spawnedAtMs: 0,
+      deadlineMs: 60_000,
+      warned: false,
+    };
+    const parse = (f: unknown) =>
+      parseServerMessage({
+        type: 'snapshot',
+        tick: 1,
+        players: [],
+        ...EMPTY_LEVEL,
+        folders: [f],
+      }).ok;
+    expect(parse(folder)).toBe(true);
+    expect(parse({ ...folder, bagStation: 'imageSearch' })).toBe(true);
+    expect(parse({ ...folder, bagStation: 'map' })).toBe(false);
   });
 
   it('carries the next scheduled folder and the conveyor-full flag in every snapshot', () => {
@@ -305,6 +479,14 @@ describe('server messages', () => {
     expect(parseServerMessage(withoutNext).ok).toBe(false);
     const { conveyorFull: _full, ...withoutFull } = snapshot;
     expect(parseServerMessage(withoutFull).ok).toBe(false);
+  });
+
+  it('says in every snapshot whether the room is paused', () => {
+    const snapshot = { type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL };
+    expect(parseServerMessage({ ...snapshot, paused: true }).ok).toBe(true);
+    expect(parseServerMessage({ ...snapshot, paused: 1 }).ok).toBe(false);
+    const { paused: _paused, ...withoutPaused } = snapshot;
+    expect(parseServerMessage(withoutPaused).ok).toBe(false);
   });
 
   it('rejects a snapshot with more than four players', () => {
@@ -327,6 +509,10 @@ describe('server messages', () => {
         hostId: 'p1',
         phase: 'lobby',
         levelId: 'l0-greybox',
+        briefing: null,
+        blunderVotes: [],
+        difficulty: 'normal',
+        run: null,
         players: [
           {
             id: 'p1',

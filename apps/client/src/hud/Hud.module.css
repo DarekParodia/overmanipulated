@@ -1,14 +1,15 @@
 /*
  * HUD layer. Layout variables are shared with the queue and toast modules: the pill sits in the
- * top-left corner, the round screen tools (GameScreen) in the top-right, the queue between them.
+ * top-left corner, the round menu button (hud/GameMenuButton) in the top-right, the queue between
+ * them.
  */
 .hud {
   --hud-top: max(var(--space-3), env(safe-area-inset-top));
   --hud-left: max(var(--space-3), env(safe-area-inset-left));
   --hud-right: max(var(--space-3), env(safe-area-inset-right));
   --hud-pill-w: 21rem;
-  /* Three 3.5 rem round tools and their gaps (GameScreen .tools). */
-  --hud-tools-w: calc(3 * 3.5rem + 2 * var(--space-2));
+  /* The one 3.5 rem round menu button (GameMenu.module.css .anchor). */
+  --hud-tools-w: 3.5rem;
   --hud-card-w: 7.5rem;
   --hud-queue-h: 7rem;
 
@@ -322,7 +323,7 @@
     --hud-left: max(var(--space-2), env(safe-area-inset-left));
     --hud-right: max(var(--space-2), env(safe-area-inset-right));
     --hud-pill-w: 8.5rem;
-    --hud-tools-w: calc(3 * 3rem + 2 * var(--space-2));
+    --hud-tools-w: 3rem;
     /* Low cards on their side (FolderQueue.module.css) so they hide less of the station signs. */
     --hud-card-w: auto;
     --hud-queue-h: 3.25rem;
@@ -352,51 +353,4 @@
     left: calc(100% + var(--space-2) + var(--space-3));
     font-size: var(--text-md);
   }
-}
-
-/* --- Room chip (rendered under the screen tools by GameScreen) ------------------------------ */
-
-.roomChip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 2px var(--space-3);
-  background: var(--surface);
-  border: var(--outline-border);
-  border-radius: var(--radius-pill);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--text-sm);
-  line-height: 1.5;
-  color: var(--text-soft);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.roomCode {
-  color: var(--text);
-}
-
-.roomStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.roomDot {
-  width: 0.625rem;
-  height: 0.625rem;
-  border: 2px solid var(--outline);
-  border-radius: 50%;
-  background: var(--green);
-}
-
-.roomChipOff .roomDot {
-  background: var(--red);
-}
-
-.roomChipOff .roomStatus {
-  color: var(--red-dark);
 }

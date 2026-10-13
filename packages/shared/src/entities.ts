@@ -55,6 +55,17 @@ export const folderSchema = z.object({
   warned: z.boolean(),
   /** Set on folders spawned by a level event. */
   tag: folderTagSchema.optional(),
+  /**
+   * The station the bag slot designated for this folder, copied from its schedule entry at
+   * spawn (S7-23). Guidance suggests it first among the stations that decide the story; absent
+   * on event folders and on levels with an authored schedule.
+   */
+  bagStation: stationKindSchema.optional(),
+  /**
+   * Time Przedłużenie and Koło ratunkowe added to `deadlineMs` (S7-36); absent until the first
+   * extension. The speed bonus is measured against `deadlineMs − extendedMs`.
+   */
+  extendedMs: z.number().finite().nonnegative().optional(),
 });
 
 export const stationPhaseSchema = z.enum(['idle', 'working', 'minigame', 'lockout']);
@@ -164,6 +175,21 @@ export const nextFolderSchema = z.object({
   sinceMs: finite.nonnegative(),
 });
 
+/** Telefon z terenu in progress: the carried folder gets its phone stamp at `endsAtMs`. */
+export const fieldCallSchema = z.object({ folderId: id, endsAtMs: finite });
+
+/** One player's ability state (S7-36); lives on the crew member and travels in `snapshot.crew`. */
+export const abilityStateSchema = z.object({
+  /** Level time when the role's ability can be used again; ready when `<= elapsedMs`. */
+  abilityReadyAtMs: finite,
+  /** Ekspertyza and Druga szansa wait armed for their trigger. */
+  abilityArmed: z.boolean(),
+  /** Telefon z terenu in progress, or null. */
+  fieldCall: fieldCallSchema.nullable(),
+  /** Koło ratunkowe: rescues left this level (0 for roles without the perk). */
+  rescuesLeft: z.number().int().nonnegative(),
+});
+
 export const levelOutcomeSchema = z.object({
   won: z.boolean(),
   stars: z.number().int().min(0).max(3),
@@ -185,6 +211,8 @@ export type FolderResult = z.infer<typeof folderResultSchema>;
 export type LossReason = z.infer<typeof lossReasonSchema>;
 export type LevelOutcome = z.infer<typeof levelOutcomeSchema>;
 export type NextFolder = z.infer<typeof nextFolderSchema>;
+export type FieldCall = z.infer<typeof fieldCallSchema>;
+export type AbilityState = z.infer<typeof abilityStateSchema>;
 
 /** A result without any bonus points (frozen: results share it). */
 export const NO_BONUSES: Readonly<FolderBonuses> = Object.freeze({

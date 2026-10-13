@@ -3,7 +3,15 @@
 // on several cards and only the earliest mention counts, like finding the first archived copy
 // of a photo or quote. The scroll model is a 1D position in card units with momentum and a
 // snap to the nearest card once the drawer slows down.
-import { ARCHIVE_CARD_COUNT, ARCHIVE_TOPIC_MENTIONS, createRng } from '@redakcja/shared';
+import {
+  ARCHIVE_CARD_COUNT,
+  ARCHIVE_MAX_MISTAKES,
+  ARCHIVE_TOPIC_MENTIONS,
+  createRng,
+  DEFAULT_DIFFICULTY,
+  type Difficulty,
+  mistakeLimit,
+} from '@redakcja/shared';
 
 export type ArchiveCard = {
   /** Calendar date of the edition (UTC components). */
@@ -113,6 +121,38 @@ export function evaluateStop(
     return 'found';
   }
   return rejected.has(index) ? 'repeat' : 'wrong';
+}
+
+/** The wrong cards pulled so far and how many close the drawer on this difficulty (S7-24). */
+export type PullState = {
+  rejected: ReadonlySet<number>;
+  maxMistakes: number;
+};
+
+export type PullOutcome = StopOutcome | 'closed';
+
+export function initialPulls(difficulty: Difficulty = DEFAULT_DIFFICULTY): PullState {
+  return { rejected: new Set(), maxMistakes: mistakeLimit(ARCHIVE_MAX_MISTAKES, difficulty) };
+}
+
+/**
+ * Pulls card `index`: the first mention is `found`, a card pulled before is a `repeat` (no
+ * penalty), any other card is `wrong`, and the wrong card that reaches the limit is `closed`.
+ */
+export function pullCard(
+  puzzle: ArchivePuzzle,
+  state: PullState,
+  index: number,
+): { state: PullState; outcome: PullOutcome } {
+  const outcome = evaluateStop(puzzle, index, state.rejected);
+  if (outcome !== 'wrong') {
+    return { state, outcome };
+  }
+  const rejected = new Set(state.rejected).add(index);
+  return {
+    state: { ...state, rejected },
+    outcome: rejected.size >= state.maxMistakes ? 'closed' : 'wrong',
+  };
 }
 
 // --- Scroll physics -------------------------------------------------------------------------
