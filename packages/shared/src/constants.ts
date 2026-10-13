@@ -532,6 +532,11 @@ export const CROSS_CHECK_MAX_MISTAKES = 1;
 export const CROSS_CHECK_CARDS = 5;
 /** Independent confirmations needed for „Potwierdzają”. */
 export const CROSS_CHECK_CONFIRMATIONS = 2;
+/**
+ * Without a crossCheck stamp: chance that independent media already cover a true story
+ * (confirm it) or an untrue one (deny it); otherwise nobody has checked it yet.
+ */
+export const CROSS_CHECK_COVERAGE_CHANCE = 0.5;
 
 // --- Stage 7: Metadane (metadata) minigame (S7-48, played from S7-52) -------------------------
 

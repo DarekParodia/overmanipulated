@@ -127,7 +127,7 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `crossCheck.logic.ts`):
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -136,6 +136,10 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
 | Sprzeczność | `contradiction` (`MetadataOutcome`) | Exactly one file field contradicts the description |
 | Zgadza się | `consistent` (`MetadataOutcome`; answer `matches`) | No field contradicts the description |
 | Dane usunięte (Brak danych) | `stripped` (`MetadataOutcome`; answer `noData`) | A social site stripped the file data; missing data proves nothing. An irrelevant Metadane stamp always means this |
+| Relacja (agencja, redakcja, satyra, anonim, portal-klon) | `CoverageCard` (`OutletKind`: `agency`, `newsroom`, `satire`, `anonymous`, `junk`) | Inne media: what another outlet says about the folder's claim, with its stance (`confirms`, `denies`, `echoes`) and source line |
+| Kopia (pisze to samo, za: …) | `echoes` (`Stance`) | Repeats someone else's post: looks exactly like a confirmation, counts for nothing; gets the „kopia” stamp after the round |
+| Niezależne źródło | `isIndependent(card)` | An agency or newsroom card with its own reporter (not an echo). Only these count |
+| Potwierdzają / Zaprzeczają / Za mało źródeł | `confirmed` / `denied` / `unconfirmed` (`Conclusion`, `conclude(cards)`) | Any independent denial → denied; ≥ `CROSS_CHECK_CONFIRMATIONS` (2) independent confirmations → confirmed; else unconfirmed |
 
 ## Roles (`RoleId`)
 
