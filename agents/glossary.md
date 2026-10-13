@@ -127,7 +127,7 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `geolocation.logic.ts`):
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -136,6 +136,8 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
 | Sprzeczność | `contradiction` (`MetadataOutcome`) | Exactly one file field contradicts the description |
 | Zgadza się | `consistent` (`MetadataOutcome`; answer `matches`) | No field contradicts the description |
 | Dane usunięte (Brak danych) | `stripped` (`MetadataOutcome`; answer `noData`) | A social site stripped the file data; missing data proves nothing. An irrelevant Metadane stamp always means this |
+| Podpis / Dzielnica / Obiekt | `GeoPuzzle.claimed` / `MapTile` (`district`) / `Landmark` | Mapa: the district the photo's caption names / one of the 12 districts of the town map (`GEOLOCATION_MAP`, 4×3), each with a unique pair of landmarks / one of the ten landmark glyphs (`LANDMARKS`, `landmarks.tsx`), told apart by shape alone |
+| Zgodne miejsce / Inna dzielnica / Inne miasto (Nie ma na mapie) | `match` / `otherDistrict` / `otherTown` (`GeoOutcome`; answer `NOT_HERE` for `otherTown`) | Mapa: the photo is from the captioned district / from another district on the map / from off the map; an off-map photo shares one landmark with a district (a decoy) |
 
 ## Roles (`RoleId`)
 
