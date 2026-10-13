@@ -7,6 +7,8 @@
   technique encyclopedia. Never put Polish words in identifiers — use [`glossary.md`](glossary.md).
 - UI strings live in one module (`apps/client/src/strings/pl.ts`) keyed by English ids, so they
   can be reviewed by the content supervisor in one place and translated later.
+  The one exception is the operator's message of the day (`config.json` `motd`, S7-72): runtime
+  Polish text, capped at `MOTD_MAX_CHARS` and run through `typeset()`.
 
 ## TypeScript
 

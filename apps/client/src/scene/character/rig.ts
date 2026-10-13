@@ -142,7 +142,10 @@ function ringYZ(radius: number, tube: number): BufferGeometry {
   return new TorusGeometry(radius, tube, 5, 14).rotateY(Math.PI / 2).rotateZ(EYE_ELEVATION);
 }
 
-/** Role accessories (glossary: photo editor, archivist, reporter, managing editor). */
+/**
+ * Role accessories (glossary: photo editor, archivist, reporter, managing editor, generalist,
+ * rescuer). Each one has its own vertex count, so every role keeps a distinct silhouette.
+ */
 function accessoryParts(role: Role | null): Part[] {
   switch (role) {
     case 'photoEditor': {
@@ -213,6 +216,34 @@ function accessoryParts(role: Role | null): Part[] {
         ),
         part('head', sphere(0.045, 6, 4), colors.outline, [0, HEAD_Y + HEAD_R + 0.03, 0], 0),
       ];
+    case 'generalist': {
+      // Tool belt round the waist with three pouches (two at the front sides, one at the back).
+      const belt = scaled(new TorusGeometry(0.27, 0.03, 4, 16).rotateX(Math.PI / 2), 1, 0.8, 1);
+      return [
+        part('torso', belt, colors.furniture, [0, 0.12, 0], OUTLINE_SMALL),
+        part('torso', box(0.08, 0.09, 0.06), colors.furnitureTop, [0.2, 0.08, 0.2], 0.02),
+        part('torso', box(0.08, 0.09, 0.06), colors.furnitureTop, [0.2, 0.08, -0.2], 0.02),
+        part('torso', box(0.06, 0.09, 0.08), colors.furnitureTop, [-0.29, 0.08, 0], 0.02),
+      ];
+    }
+    case 'rescuer': {
+      // Lifebuoy slung across the back, two white bands, a whistle on a lanyard at the chest.
+      const buoy = new TorusGeometry(0.15, 0.05, 6, 14).rotateY(Math.PI / 2).rotateX(0.4);
+      const lanyard = new TorusGeometry(0.25, 0.012, 4, 14).rotateX(Math.PI / 2).rotateZ(-0.45);
+      return [
+        part('torso', buoy, colors.red, [-0.33, 0.24, 0.04], OUTLINE_SMALL),
+        part('torso', box(0.12, 0.05, 0.05), colors.surface, [-0.33, 0.39, 0.1], 0),
+        part('torso', box(0.12, 0.05, 0.05), colors.surface, [-0.33, 0.1, -0.02], 0),
+        part('torso', lanyard, colors.outline, [0.02, 0.4, 0], 0),
+        part(
+          'torso',
+          new CylinderGeometry(0.02, 0.025, 0.07, 6).rotateZ(Math.PI / 2),
+          colors.textSoft,
+          [0.29, 0.29, 0],
+          0.015,
+        ),
+      ];
+    }
     default:
       return [];
   }
