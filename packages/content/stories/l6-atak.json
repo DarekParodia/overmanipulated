@@ -1047,6 +1047,420 @@
     "reviewed": false
   },
   {
+    "id": "l6-most-zamkniety",
+    "type": "photo",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Most Portowy zamknięty! Linia 12 nie dojedzie do lokali",
+    "body": "Zdjęcie barierek i znaku „Objazd” z podpisem: „Most Portowy zamknięty do poniedziałku. Do lokali za rzeką nie dojedziesz”.",
+    "source": "Wpis w grupie „Sąsiedzi znad rzeki”",
+    "stamps": [
+      {
+        "id": "l6-most-zamkniety-image",
+        "station": "imageSearch",
+        "text": "Lupa: brak starszych kopii zdjęcia w sieci, kadr jest świeży.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-most-zamkniety-archive",
+        "station": "archive",
+        "text": "Archiwum: tylko zdjęcia z otwarcia mostu w 1998 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-source",
+        "station": "sourceRegistry",
+        "text": "Autorka wpisu to prawdziwa mieszkanka, konto prowadzi od lat.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-most-zamkniety-phone",
+        "station": "phone",
+        "text": "Zarząd Dróg nie odbiera, dyżur ruszy w poniedziałek.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 91%, nie jest generowane.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o ruchu na moście.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-map",
+        "station": "geolocation",
+        "text": "Punkty orientacyjne nie pasują do Mostu Portowego. Zdjęcie zrobiono gdzie indziej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-most-zamkniety-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, temat krąży tylko w grupach.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-most-zamkniety-map"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie zamkniętego mostu, ale z innego miejsca. Podpis przeniósł je do Nowych Brzegów, żeby zniechęcić do głosowania.",
+      "technique": "Zdjęcie z innego miejsca: autentyczny kadr dostaje fałszywe miejsce. Lupa nie znajdzie starszych kopii, bo zdjęcie jest nowe.",
+      "tool": "Mapa: punkty orientacyjne na zdjęciu nie pasują do Mostu Portowego.",
+      "realWorld": "Przed głosowaniem krążą fałszywe wieści o utrudnieniach w dojeździe do lokali. Zniechęcanie do głosowania to znany sposób wpływania na frekwencję."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-kolejka-do-lokalu",
+    "type": "photo",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Kolejka przed lokalem nr 7 przy Bulwarze Rybackim",
+    "body": "Czytelniczka przysyła zdjęcie: „Lokal nr 7 przy Bulwarze Rybackim, czekamy pół godziny”. W komentarzach: „To ustawka, nikt tam nie stoi”.",
+    "source": "Zdjęcie od czytelniczki",
+    "stamps": [
+      {
+        "id": "l6-kolejka-do-lokalu-image",
+        "station": "imageSearch",
+        "text": "Lupa: brak wcześniejszych kopii zdjęcia w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-archive",
+        "station": "archive",
+        "text": "Archiwum: przy poprzednim głosowaniu lokal nr 7 działał w innym budynku.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-source",
+        "station": "sourceRegistry",
+        "text": "Konto czytelniczki założone wczoraj, bez innych wpisów.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-phone",
+        "station": "phone",
+        "text": "Komisja nr 7 nie odbiera, wszyscy obsługują wyborców.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 88%.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: frekwencję z lokali podają dopiero o 17:00.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-map",
+        "station": "geolocation",
+        "text": "Punkty orientacyjne pasują do podpisu. Zdjęcie zrobiono przy lokalu nr 7.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, to świeże zgłoszenie.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-kolejka-do-lokalu-map"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie kolejki od czytelniczki. Komentarze o „ustawce” nie miały podstaw.",
+      "technique": "Brak manipulacji. Nowe konto i stary adres lokalu w archiwum wyglądały podejrzanie, ale nie podważały zdjęcia.",
+      "tool": "Mapa: budynki i punkty orientacyjne na zdjęciu zgadzają się z miejscem z podpisu.",
+      "realWorld": "Redakcje sprawdzają zdjęcia od czytelników, porównując widoczne budynki z mapą i zdjęciami ulic. Tak samo potwierdza się prawdziwe zgłoszenia."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-pusta-dwunastka",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "„Dwunastka wozi powietrze” – zdjęcie z przystanku Rynek",
+    "body": "Zdjęcie pustego autobusu linii 12 z podpisem: „Przystanek Rynek, 8 rano, w środku nikogo. Po co nam ta linia?”.",
+    "source": "Profil „Stop drogim autobusom”",
+    "stamps": [
+      {
+        "id": "l6-pusta-dwunastka-image",
+        "station": "imageSearch",
+        "text": "Lupa: brak starszych kopii zdjęcia w sieci.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-pusta-dwunastka-archive",
+        "station": "archive",
+        "text": "Archiwum: linia 12 jeździ przez Rynek od 1995 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-source",
+        "station": "sourceRegistry",
+        "text": "Profil zwolenników likwidacji linii, aktywny od roku.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-phone",
+        "station": "phone",
+        "text": "Zarząd Transportu nie komentuje zdjęć z sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 93%, nie jest generowane.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: liczenie pasażerów linii 12 dopiero w przyszłym miesiącu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-map",
+        "station": "geolocation",
+        "text": "Punkty orientacyjne nie pasują do przystanku Rynek. Zdjęcie zrobiono gdzie indziej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-pusta-dwunastka-media",
+        "station": "crossCheck",
+        "text": "Trzy portale to powtarzają – same kopie wpisu.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l6-pusta-dwunastka-map"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie pustego autobusu, ale nie z przystanku Rynek. Podpis miał dowieść, że linia 12 jest niepotrzebna.",
+      "technique": "Zdjęcie z innego miejsca: autentyczny kadr dostaje fałszywe miejsce i porę, żeby pasował do tezy.",
+      "tool": "Mapa: punkty orientacyjne w tle nie pasują do przystanku Rynek.",
+      "realWorld": "W sporach o komunikację krążą zdjęcia „pustych autobusów” z pętli lub zajezdni. Miejsce zdjęcia sprawdza się na mapie i zdjęciach ulic."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-agencja-dementuje",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Brakuje kart! Lokale zamkną o 15:00, głosujcie rano",
+    "body": "Wpis: „Znajomy z komisji mówi, że kart starczy tylko do 15:00. Potem koniec głosowania. Przekażcie dalej!”.",
+    "source": "Wpis na prywatnym profilu",
+    "stamps": [
+      {
+        "id": "l6-agencja-dementuje-image",
+        "station": "imageSearch",
+        "text": "Wpis nie zawiera zdjęć.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-archive",
+        "station": "archive",
+        "text": "Archiwum: w 2019 r. w jednym lokalu na godzinę zabrakło kart.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-agencja-dementuje-source",
+        "station": "sourceRegistry",
+        "text": "Konto prawdziwe, autor to znany działacz osiedlowy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-agencja-dementuje-phone",
+        "station": "phone",
+        "text": "Miejska komisja: linia zajęta, oddzwonią po 16:00.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (80%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o liczbie kart w lokalach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-map",
+        "station": "geolocation",
+        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-media",
+        "station": "crossCheck",
+        "text": "Agencja Nadrzecze i Radio Nadrzecze dementują: kart wystarczy, lokale działają do 21:00.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-agencja-dementuje-media"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Fałszywy alarm o braku kart, który miał skrócić głosowanie. Niezależne media szybko go zdementowały.",
+      "technique": "Plotka bez źródła: „znajomy z komisji” i prośba o przekazanie dalej zastępują dowód. Pilny ton ma wyprzedzić sprawdzenie.",
+      "tool": "Inne media: agencja i radio niezależnie od siebie dementują plotkę.",
+      "realWorld": "W dniu głosowania krążą fałszywe wieści o godzinach pracy lokali. Agencje informacyjne i lokalne media szybko je prostują."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-relacja-z-debaty",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Na debacie o linii 12 obie strony poparły nocne kursy",
+    "body": "Portal „Głos Błoni” relacjonuje czwartkową debatę: zwolennicy i przeciwnicy likwidacji linii 12 zgodzili się, że miastu brakuje nocnych autobusów.",
+    "source": "Portal „Głos Błoni”",
+    "stamps": [
+      {
+        "id": "l6-relacja-z-debaty-image",
+        "station": "imageSearch",
+        "text": "Lupa: zdjęcie z sali bez starszych kopii w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-archive",
+        "station": "archive",
+        "text": "Archiwum: brak nagrania debaty, nikt go jeszcze nie przesłał.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-source",
+        "station": "sourceRegistry",
+        "text": "Portal działa od miesiąca, nie ma stopki redakcyjnej.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-relacja-z-debaty-phone",
+        "station": "phone",
+        "text": "Organizatorzy debaty nie odbierają w niedzielę.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: 62% szans, że tekst napisała maszyna. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-relacja-z-debaty-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o nocnych kursach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-map",
+        "station": "geolocation",
+        "text": "Zdjęcie z sali, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-media",
+        "station": "crossCheck",
+        "text": "Kurier Nowobrzeski i TV Brzegi, każdy z własnym reporterem, opisują debatę tak samo.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-relacja-z-debaty-media"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa relacja z debaty w nowym, mało znanym portalu.",
+      "technique": "Brak manipulacji. Nowy portal i niepewny wynik skanera AI nie przesądzają o fałszu.",
+      "tool": "Inne media: dwie redakcje z własnymi reporterami piszą o debacie to samo.",
+      "realWorld": "Gdy źródło jest nowe lub mało znane, sprawdza się, co piszą o tym niezależne redakcje. To czytanie w poprzek, jedna z metod SIFT."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-awaria-w-lokalu",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "W lokalu nr 4 zgasło światło, głosowanie przy latarkach",
+    "body": "Wpis z forum osiedla: „Awaria prądu w lokalu nr 4. Komisja świeci latarkami, ale głosujemy dalej”.",
+    "source": "Wpis na forum osiedla",
+    "stamps": [
+      {
+        "id": "l6-awaria-w-lokalu-image",
+        "station": "imageSearch",
+        "text": "Wpis nie zawiera zdjęć.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych awarii w tym lokalu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-source",
+        "station": "sourceRegistry",
+        "text": "Konto anonimowe, bez historii wpisów.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-phone",
+        "station": "phone",
+        "text": "Komisja nr 4 nie odbiera, telefon w biurze nie działa bez prądu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (77%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o przebiegu głosowania w tym lokalu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-map",
+        "station": "geolocation",
+        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-media",
+        "station": "crossCheck",
+        "text": "Agencja Fala i Radio Nadrzecze potwierdzają awarię. Głosowanie trwa.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-awaria-w-lokalu-media"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa wiadomość o awarii prądu w lokalu, choć podał ją anonim.",
+      "technique": "Brak manipulacji. Anonimowe źródło nie przesądza o fałszu, gdy fakt potwierdzają niezależne media.",
+      "tool": "Inne media: agencja i radio niezależnie od siebie potwierdzają awarię.",
+      "realWorld": "Pierwsze wieści o zdarzeniach często przychodzą od anonimowych świadków. Redakcja publikuje je, gdy potwierdzą je niezależne źródła."
+    },
+    "reviewed": false
+  },
+  {
     "id": "l6-nalot-zostaje12",
     "type": "post",
     "priority": "important",
