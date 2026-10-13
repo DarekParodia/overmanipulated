@@ -87,7 +87,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `event.correction.start` | `levelEvent` correction start | banner; siren with sweeping beam over the folder, yellow dot trail to the nearest desk | siren (`evcorrection`) | red/yellow alert dots | medium shake, buzz | ●●● |
 | `event.raidResolved` | `raidResolved` | banner "Nalot odparty!" | rising arpeggio (`evclear`) | confetti + glitch squares | small shake, thud | ●●● |
 | `event.end` | other `levelEvent` end | none | paper slap | dust | — | ● |
-| `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
+| `ui.click` / `ui.hover` / `ui.back` | menus; `ui.click` also when the host picks a difficulty (the chip turns blue) and, for guests, when the host changes it (their „Poziom: …” chip pops, S7-25) | button press | click / tick | — | light tick (mobile) | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |
 | `sourceRegistry.file` | card filed correctly | „Sprawdzone” stamp slams on the card | stamp thud | — | thud | ● |

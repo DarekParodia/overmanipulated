@@ -139,6 +139,8 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | --- | --- | --- |
 | Poziom trudności | `difficulty` | Set per room (default `DEFAULT_DIFFICULTY`) by the host in the lobby (`setDifficulty`, resets ready); picks one `DIFFICULTY` preset; on `roomState` and `levelEnd` |
 | Łatwy / Normalny / Trudny / Ekspert | `easy` / `normal` / `hard` / `expert` | `DIFFICULTIES`, easiest first; every Normal factor is 1 |
+| Wybór poziomu trudności | `DifficultyPicker` | The host's four chips in the lobby (S7-25); guests see the read-only „Poziom: …” chip on the level card |
+| To wydanie (briefing) | `briefingRun` (`BriefingRun`) | The briefing's run line: dealt folders, the two- and three-star thresholds and the share rule (thresholds as whole percent of the run's `maxScore`) |
 | Ustawienia poziomu trudności | `DifficultyPreset` | Factors for deadlines, spawn gap, work time, lockout, penalties and minigame time; extra mistakes; hints; answer reveal |
 | Strojenie symulacji | `SimTuning` (`simTuning`, `NORMAL_TUNING`) | The preset part the simulation applies: work time, lockout, penalties |
 | Limit pomyłek | `mistakeLimit` | Mistakes a minigame allows on a difficulty; never below `MINIGAME_MIN_MISTAKES` |

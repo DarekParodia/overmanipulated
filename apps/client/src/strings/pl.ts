@@ -1,6 +1,7 @@
 // All player-facing Polish text. Keys are English; wording follows agents/design-rules.md §9:
 // a gruff, warm editor-in-chief — short, concrete, newsroom vocabulary, no marketing voice.
 import type {
+  Difficulty,
   ErrorCode,
   FolderBonuses,
   FolderOutcome,
@@ -309,6 +310,24 @@ export const pl = {
     startOffline: 'Brak połączenia z serwerem.',
     startWaiting: (names: readonly string[]) => `Czekamy na: ${names.join(', ')}.`,
     allReady: 'Wszyscy gotowi!',
+  },
+  /** Difficulty picker in the lobby and its chips (S7-25). */
+  difficulty: {
+    label: 'Poziom trudności',
+    names: {
+      easy: 'Łatwy',
+      normal: 'Normalny',
+      hard: 'Trudny',
+      expert: 'Ekspert',
+    } satisfies Record<Difficulty, string>,
+    blurbs: {
+      easy: 'Więcej czasu, łagodniejsze kary',
+      normal: 'Tak, jak zaprojektowaliśmy',
+      hard: 'Mniej czasu, więcej teczek',
+      expert: 'Bez podpowiedzi i bez litości',
+    } satisfies Record<Difficulty, string>,
+    /** The read-only chip guests see next to the level. */
+    chip: (name: string) => `Poziom: ${name}`,
   },
   /** In-game HUD and level-end plate (S2-09). */
   hud: {
@@ -1168,6 +1187,14 @@ export const pl = {
     playerReady: (nickname: string) => `${nickname}: gotowy`,
     playerWaiting: (nickname: string) => `${nickname}: czyta`,
     skipIntro: 'Pomiń animację',
+    /** The dealt run (S7-25): its folders, star thresholds and the rule behind them. */
+    runTitle: 'To wydanie:',
+    starsFrom: (stars: number, points: number) => `${stars} gwiazdki od ${points}\u00a0pkt`,
+    /** A threshold chip: „od” (dropped on phones, the label keeps it) and the points. */
+    from: 'od',
+    points: (points: number) => `${points}\u00a0pkt`,
+    shareRule: (two: number, three: number, max: number) =>
+      `Progi: ${two}\u00a0% i ${three}\u00a0% z\u00a0${max}\u00a0pkt możliwych`,
   },
   /** Campaign map in the lobby (S3-04). */
   campaign: {

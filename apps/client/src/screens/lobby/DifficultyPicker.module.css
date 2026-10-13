@@ -1,0 +1,116 @@
+/* One row: label, the four chips, the chosen difficulty's blurb (design-rules §5). */
+.picker {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+
+.label svg {
+  flex: none;
+  margin-top: -0.1em;
+}
+
+.chips {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Secondary chips: white with an outline and a pop shadow; the chosen one turns blue. */
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--touch-target);
+  padding: 0.15em var(--space-4) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.picker:not(:disabled) .chip:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.chip:has(.native:focus-visible) {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.chosen {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.chosen svg {
+  flex: none;
+  stroke-width: 3;
+  margin-top: -0.15em;
+}
+
+.picker:disabled .chip {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.blurb {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* Short landscape phones: label and chips stay one row; the blurb is the first thing to go. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .picker {
+    flex-wrap: nowrap;
+    gap: var(--space-3);
+  }
+  .label {
+    font-size: var(--text-md);
+  }
+  .chips {
+    gap: var(--space-1);
+  }
+  .chip {
+    padding: 0.15em var(--space-3) 0;
+    font-size: var(--text-sm);
+  }
+  .blurb {
+    display: none;
+  }
+}

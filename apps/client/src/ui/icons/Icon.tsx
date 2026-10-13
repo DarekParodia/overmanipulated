@@ -270,6 +270,12 @@ const icons = {
     { d: 'M12 6.5c2-1.5 5-2 8.5-1.5v13.5c-3.5-.5-6.5 0-8.5 1.5Z', fill: 'tint' },
     { d: 'M12 6.5V20M6.5 9c1.5-.2 3-.1 4 .4M17.5 9c-1.5-.2-3-.1-4 .4' },
   ],
+  // --- S7-25 difficulty --------------------------------------------------------------------
+  /** A dial with its needle: the room's difficulty (lobby picker and chips). */
+  gauge: [
+    { d: 'M3.5 17a8.5 8.5 0 0 1 17 0Z', fill: 'tint' },
+    { d: 'M12 17l4-5.5M6.5 13.5l1 .6M12 10.5V12M17.5 13.5l-1 .6' },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;
