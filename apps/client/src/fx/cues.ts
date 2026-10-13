@@ -540,6 +540,48 @@ export const cues = {
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
     haptic: 'error',
   },
+  // S7-53 Stenogram minigame: the clip's line found in the record (the highlighter sweeps it),
+  // the round solved (the right judgement or „Nie ma w zapisie”), or a wrong pick struck
+  // through. DOM overlay only, so no particles.
+  'transcript.find': {
+    severity: 1,
+    sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
+  'transcript.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'transcript.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
+  // S7-55 Mapa minigame: the district (or „Nie ma na mapie”) found and pinned, or a wrong pick
+  // struck through with a red pencil line. DOM overlay only, so no particles.
+  'geolocation.found': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'geolocation.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
+  // S7-54 Inne media minigame: the right answer (copies then get a „kopia” stamp), or a wrong
+  // answer struck through (one wrong answer fails). DOM overlay only, so no particles.
+  'crossCheck.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'crossCheck.wrong': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
   // S4-11 endless mode: the tempo steps up each minute; the run ends friendly, not as a failure.
   'endless.tempo': {
     severity: 2,

@@ -1,7 +1,14 @@
 // Role picker: big chunky cards, each with the role's icon, its name and one short bonus line.
 // The chosen card lifts up with a blue ring and a ✓ badge. Native radios keep keyboard (arrows),
 // gamepad focus and screen-reader behaviour.
-import { ROLE_PERKS, ROLES, type Role } from '@redakcja/shared';
+import {
+  RESCUE_ADD_MS,
+  ROLE_PERKS,
+  ROLES,
+  type Role,
+  type RolePerk,
+  STATION_KINDS,
+} from '@redakcja/shared';
 import { useId } from 'react';
 import { emitCue } from '../../fx/feedback.ts';
 import { pl } from '../../strings/pl.ts';
@@ -13,13 +20,22 @@ type Option = { value: RoleIconName; name: string; bonus: string };
 
 /** The bonus line, derived from the balance constants so the card never contradicts the sim. */
 function roleBonus(role: Role): string {
-  const special: Partial<Record<Role, string>> = pl.lobbyRoles.specialBonuses;
-  return (
-    special[role] ??
-    pl.lobbyRoles.fasterAt(
-      ROLE_PERKS[role].fasterAt.map((station) => pl.guidance.stationShort[station]),
-      Math.round((1 - ROLE_PERKS[role].workFactor) * 100),
-    )
+  const specials: Partial<Record<Role, string>> = pl.lobbyRoles.specialBonuses;
+  const special = specials[role];
+  if (special) {
+    return special;
+  }
+  const perk: RolePerk = ROLE_PERKS[role];
+  const percent = Math.round((1 - perk.workFactor) * 100);
+  if (perk.rescuesPerLevel > 0) {
+    return pl.lobbyRoles.rescuePassive(RESCUE_ADD_MS / 1000);
+  }
+  if (perk.fasterAt.length === STATION_KINDS.length) {
+    return pl.lobbyRoles.everywhereFaster(percent);
+  }
+  return pl.lobbyRoles.fasterAt(
+    perk.fasterAt.map((station) => pl.guidance.stationShort[station]),
+    percent,
   );
 }
 
