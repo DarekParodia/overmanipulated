@@ -8,6 +8,7 @@
 import { getStory } from '@redakcja/content';
 import { ENDLESS_LEVEL_ID, type LevelEndMessage } from '@redakcja/shared';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
+import { AdSlot } from '../ads/AdSlot.tsx';
 import { Kolegium, useBlunderVotes } from '../debrief/Kolegium.tsx';
 import {
   kolegiumCards,
@@ -444,6 +445,8 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
           )}
         </footer>
       </article>
+      {/* Side rail beside the panel from 1780 px wide; none on laptops or phones (S7-74). */}
+      <AdSlot placement="results" />
     </div>
   );
 }

@@ -44,6 +44,18 @@
         "station": "dataLibrary",
         "text": "Lista lokali w zestawieniu ma 23 pozycje zamiast 24. To literówka w tabeli.",
         "relevance": "misleading"
+      },
+      {
+        "id": "l6-godziny-lokali-map",
+        "station": "geolocation",
+        "text": "Post bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-godziny-lokali-media",
+        "station": "crossCheck",
+        "text": "Inne media jeszcze nie piszą o godzinach – to rutynowy komunikat.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l6-godziny-lokali-source"],
@@ -101,17 +113,30 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak zestawień dotyczących terminu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-map",
+        "station": "geolocation",
+        "text": "Grafika bez zdjęcia miejsca, mapa nic tu nie wniesie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-media",
+        "station": "crossCheck",
+        "text": "Agencja Nadrzecze i Radio Nadrzecze: komisja dementuje, głosowanie w niedzielę.",
+        "relevance": "decisive"
       }
     ],
     "justifyingStamps": [
       "l6-referendum-w-poniedzialek-archive",
-      "l6-referendum-w-poniedzialek-source"
+      "l6-referendum-w-poniedzialek-source",
+      "l6-referendum-w-poniedzialek-media"
     ],
     "technique": "podszywanie-sie-pod-instytucje",
     "debrief": {
       "what": "Fałszywy komunikat o zmianie terminu referendum, rozsyłany z konta udającego komisję.",
       "technique": "Podszywanie się pod instytucję, by zniechęcić do głosowania: pilność i autorytet mają wyłączyć sprawdzanie.",
-      "tool": "Kartoteka źródeł: nowe konto bez weryfikacji. Archiwum: brak uchwały o zmianie terminu.",
+      "tool": "Kartoteka źródeł: nowe konto bez weryfikacji. Archiwum: brak uchwały o zmianie terminu. Inne media: agencja i radio podają dementi komisji.",
       "realWorld": "Przed wyborami w wielu krajach krążą fałszywe komunikaty o zmianie daty lub miejsca głosowania. Najlepszym antidotum jest oficjalna strona komisji."
     },
     "reviewed": false
@@ -161,6 +186,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie pasażerów linii 12 w tym tygodniu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-apel-mieszkancow-map",
+        "station": "geolocation",
+        "text": "Zdjęcie autobusu to kadr z reklamy, nie pokazuje miejsca z apelu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-apel-mieszkancow-media",
+        "station": "crossCheck",
+        "text": "Trzy portale cytują apel, ale wszystkie kopiują ten sam wpis.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-apel-mieszkancow-archive", "l6-apel-mieszkancow-phone"],
@@ -218,6 +255,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: próba losowa, wyniki zgodne z metodologią, różnica mieści się w błędzie.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-sondaz-pracowni-map",
+        "station": "geolocation",
+        "text": "Raport ma tylko wykresy, mapa nic tu nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sondaz-pracowni-media",
+        "station": "crossCheck",
+        "text": "Dwie redakcje opisują sondaż, ale tylko przepisują komunikat pracowni.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l6-sondaz-pracowni-source", "l6-sondaz-pracowni-data"],
@@ -275,6 +324,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: grupa ma 410 członków, zapisanych po jednym wpisie krytykującym urząd.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-sonda-w-grupie-map",
+        "station": "geolocation",
+        "text": "Zrzut ankiety bez zdjęcia miejsca, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sonda-w-grupie-media",
+        "station": "crossCheck",
+        "text": "Dwa portale piszą o „78% przeciw”, powołując się tylko na tę ankietę.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-sonda-w-grupie-data"],
@@ -331,6 +392,18 @@
         "id": "l6-tlum-przed-ratuszem-data",
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie uczestników zgromadzeń.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-map",
+        "station": "geolocation",
+        "text": "Kamienice w tle stoją w centrum, niedaleko ratusza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, za wcześnie na relacje.",
         "relevance": "irrelevant"
       }
     ],
@@ -389,14 +462,30 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak zestawień o ruchu w niedzielę.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-map",
+        "station": "geolocation",
+        "text": "Grafika z rozkładem, bez zdjęcia miejsca do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-media",
+        "station": "crossCheck",
+        "text": "Radio Nadrzecze i Agencja Fala potwierdzają darmowe przejazdy w niedzielę.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l6-autobusy-w-niedziele-source", "l6-autobusy-w-niedziele-phone"],
+    "justifyingStamps": [
+      "l6-autobusy-w-niedziele-source",
+      "l6-autobusy-w-niedziele-phone",
+      "l6-autobusy-w-niedziele-media"
+    ],
     "technique": "none",
     "debrief": {
       "what": "Prawdziwa informacja o darmowej komunikacji w dniu referendum.",
       "technique": "Brak manipulacji. Zwykła informacja usługowa od właściwej instytucji.",
-      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie dyspozytora.",
+      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie dyspozytora. Inne media: radio i agencja piszą to samo.",
       "realWorld": "Miasta organizują dodatkowe lub darmowe przejazdy przy głosowaniach. Ogłasza je zazwyczaj operator transportu."
     },
     "reviewed": false
@@ -432,8 +521,8 @@
       {
         "id": "l6-nagranie-zastepcy-phone",
         "station": "phone",
-        "text": "Rzecznik ratusza: „Nagranie jest zmontowane, takiej rozmowy nie było”.",
-        "relevance": "decisive"
+        "text": "Rzecznik ratusza: „Głos brzmi jak zastępcy, ale nie wiemy, skąd to nagranie”.",
+        "relevance": "misleading"
       },
       {
         "id": "l6-nagranie-zastepcy-scanner",
@@ -446,14 +535,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o wypowiedziach urzędników.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-map",
+        "station": "geolocation",
+        "text": "Samo nagranie dźwiękowe, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-media",
+        "station": "crossCheck",
+        "text": "Dwa portale już publikują nagranie, żaden nie sprawdził jego źródła.",
+        "relevance": "misleading"
       }
     ],
-    "justifyingStamps": ["l6-nagranie-zastepcy-archive", "l6-nagranie-zastepcy-phone"],
+    "justifyingStamps": ["l6-nagranie-zastepcy-archive"],
     "technique": "zmanipulowane-nagranie",
     "debrief": {
       "what": "Zmontowane nagranie: zdania wycięto z dawnych wystąpień i ułożono w fałszywą wypowiedź.",
       "technique": "Zmanipulowane nagranie: prawdziwy głos składa się w nowe, nigdy niewypowiedziane zdania.",
-      "tool": "Archiwum pokazuje źródło fragmentów. Skaner AI wskazał podejrzenie, ale sam niczego nie dowodzi.",
+      "tool": "Archiwum pokazuje, z jakich dawnych wystąpień wycięto zdania. Rzecznik przez telefon i skaner AI niczego nie rozstrzygają.",
       "realWorld": "Przed głosowaniami pojawiają się „przecieki” z nagrań. Montaż i sztuczne głosy zdarzają się coraz częściej, dlatego szukaj oryginału."
     },
     "reviewed": false
@@ -503,6 +604,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o lotach autobusów.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-satyra-linia-12-map",
+        "station": "geolocation",
+        "text": "Fotomontaż z rakietą nie pokazuje prawdziwego miejsca.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-satyra-linia-12-media",
+        "station": "crossCheck",
+        "text": "Dwa portale przedrukowały tekst jako wiadomość, bez słowa o satyrze.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-satyra-linia-12-source"],
@@ -560,14 +673,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o przebiegu głosowania w tym lokalu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-anonimowa-komisja-map",
+        "station": "geolocation",
+        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-anonimowa-komisja-media",
+        "station": "crossCheck",
+        "text": "Żadna redakcja ani agencja nie potwierdza zgłoszenia. Pisze o nim tylko forum.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l6-anonimowa-komisja-source"],
+    "justifyingStamps": ["l6-anonimowa-komisja-source", "l6-anonimowa-komisja-media"],
     "technique": "niepotwierdzona-plotka",
     "debrief": {
       "what": "Anonimowa plotka o nieprawidłowościach, której nie da się potwierdzić ani obalić.",
       "technique": "Niepotwierdzona plotka: opowieść z drugiej ręki, bez świadków i dowodów. Pilność ma skłonić do udostępnienia bez sprawdzania.",
-      "tool": "Kartoteka źródeł: konto bez historii, brak możliwości kontaktu z autorem.",
+      "tool": "Kartoteka źródeł: konto bez historii, brak kontaktu z autorem. Inne media: nikt niezależny nie potwierdza zgłoszenia.",
       "realWorld": "Przy głosowaniach krążą plotki o nieprawidłowościach, które podważają zaufanie. Pilny temat bez dowodów lepiej odrzucić."
     },
     "reviewed": false
@@ -591,8 +716,8 @@
       {
         "id": "l6-frekwencja-w-poludnie-archive",
         "station": "archive",
-        "text": "Archiwum: poprzednia frekwencja w południe wyniosła 17,9%, tak jak w komunikacie.",
-        "relevance": "decisive"
+        "text": "Archiwum: poprzednia frekwencja w południe to 17,9%. To tło, nie dzisiejszy wynik.",
+        "relevance": "irrelevant"
       },
       {
         "id": "l6-frekwencja-w-poludnie-source",
@@ -615,16 +740,28 @@
       {
         "id": "l6-frekwencja-w-poludnie-data",
         "station": "dataLibrary",
-        "text": "Biblioteka danych: suma głosów ze wszystkich lokali daje 21,4%.",
-        "relevance": "decisive"
+        "text": "Biblioteka danych: zestawienie z 12 lokali daje 19,8%. Reszta jeszcze nie spłynęła.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-map",
+        "station": "geolocation",
+        "text": "Komunikat bez zdjęć, mapa nic tu nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-media",
+        "station": "crossCheck",
+        "text": "Inne media czekają na dane komisji, nikt ich jeszcze nie podał.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l6-frekwencja-w-poludnie-source", "l6-frekwencja-w-poludnie-data"],
+    "justifyingStamps": ["l6-frekwencja-w-poludnie-source"],
     "technique": "none",
     "debrief": {
-      "what": "Prawdziwe dane o frekwencji z oficjalnego źródła, zgodne z archiwum i sumą z lokali.",
+      "what": "Prawdziwe dane o frekwencji z oficjalnego źródła: zweryfikowanego konta komisji.",
       "technique": "Brak manipulacji. Do prawdziwych danych porównanie z poprzednim głosowaniem dodaje kontekst.",
-      "tool": "Biblioteka danych: sumowanie wyników z lokali. Kartoteka źródeł: zweryfikowany nadawca.",
+      "tool": "Kartoteka źródeł: zweryfikowane konto komisji, dane zgodne ze stroną urzędu. Niepełne zestawienie z części lokali mogło zmylić.",
       "realWorld": "Komisje podają frekwencję w ciągu dnia. Sprawdź, czy liczby pochodzą z komisji i czy porównanie jest uczciwe."
     },
     "reviewed": false
@@ -674,14 +811,30 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: 83% wpisów z hasztagiem pochodzi z 220 kont, które piszą w tych samych minutach.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-map",
+        "station": "geolocation",
+        "text": "Zrzut ekranu bez miejsca, mapa nic tu nie wniesie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-media",
+        "station": "crossCheck",
+        "text": "Dwie niezależne redakcje opisały, że trend nakręciły nowe konta, a nie mieszkańcy.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l6-hashtag-12-to-koniec-archive", "l6-hashtag-12-to-koniec-data"],
+    "justifyingStamps": [
+      "l6-hashtag-12-to-koniec-archive",
+      "l6-hashtag-12-to-koniec-data",
+      "l6-hashtag-12-to-koniec-media"
+    ],
     "technique": "sztuczny-hashtag",
     "debrief": {
       "what": "Hasztag sztucznie wypromowany przez niewielką grupę kont, a nie wyraz opinii miasta.",
       "technique": "Sztuczny hasztag: kilka kont wielokrotnie publikuje to samo, by trafić do „popularnych tematów” i wywołać wrażenie masowego poparcia.",
-      "tool": "Biblioteka danych: analiza kont i godzin wpisów. Archiwum: czas pojawienia się hasztagu.",
+      "tool": "Biblioteka danych: analiza kont i godzin wpisów. Archiwum: czas pojawienia się hasztagu. Inne media: niezależne redakcje opisały sztuczny trend.",
       "realWorld": "Popularność tematów w sieci łatwo sfałszować. Warto sprawdzić, ilu różnych ludzi naprawdę go używa."
     },
     "reviewed": false
@@ -717,8 +870,8 @@
       {
         "id": "l6-wyrwany-cytat-radnej-phone",
         "station": "phone",
-        "text": "Radna: „Chcę nowej trasy 12A przez osiedle seniorów, nie likwidacji obsługi”.",
-        "relevance": "decisive"
+        "text": "Asystent radnej: „Tak, radna mówiła na sesji o likwidacji 12”. Bez szczegółów.",
+        "relevance": "misleading"
       },
       {
         "id": "l6-wyrwany-cytat-radnej-scanner",
@@ -731,14 +884,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o trasie 12A.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-map",
+        "station": "geolocation",
+        "text": "Cytat bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-media",
+        "station": "crossCheck",
+        "text": "Trzy portale powtarzają ucięty cytat, wszystkie za tym samym postem.",
+        "relevance": "misleading"
       }
     ],
-    "justifyingStamps": ["l6-wyrwany-cytat-radnej-archive", "l6-wyrwany-cytat-radnej-phone"],
+    "justifyingStamps": ["l6-wyrwany-cytat-radnej-archive"],
     "technique": "wyrwany-z-kontekstu",
     "debrief": {
       "what": "Prawdziwy cytat bez końcówki zdania. Pełna wypowiedź radnej mówiła o zmianie trasy, a nie o odebraniu seniorom autobusu.",
       "technique": "Wyrwanie z kontekstu: ucięte słowa są prawdziwe, ale zmieniają sens wypowiedzi.",
-      "tool": "Archiwum: pełna wersja zdania z sesji. Telefon: wyjaśnienie radnej.",
+      "tool": "Archiwum: pełna wersja zdania z sesji. Telefon do biura radnej potwierdził tylko ucięty fragment.",
       "realWorld": "Wypowiedzi polityków w kampaniach są często skracane tak, by wywołać oburzenie. Zawsze szukaj całej wypowiedzi."
     },
     "reviewed": false
@@ -768,8 +933,8 @@
       {
         "id": "l6-dowoz-seniorow-source",
         "station": "sourceRegistry",
-        "text": "Profil zweryfikowany, ten sam komunikat jest na stronie ośrodka.",
-        "relevance": "decisive"
+        "text": "Profil ośrodka bez znaczka weryfikacji, założony w tym roku.",
+        "relevance": "misleading"
       },
       {
         "id": "l6-dowoz-seniorow-phone",
@@ -788,14 +953,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie zapisanych.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-dowoz-seniorow-map",
+        "station": "geolocation",
+        "text": "Zdjęcie mikrobusu jest poglądowe, nie pokazuje miejsca z komunikatu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-dowoz-seniorow-media",
+        "station": "crossCheck",
+        "text": "Inne media jeszcze nie pisały o dowozie.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l6-dowoz-seniorow-source", "l6-dowoz-seniorow-phone"],
+    "justifyingStamps": ["l6-dowoz-seniorow-phone"],
     "technique": "none",
     "debrief": {
       "what": "Prawdziwa informacja o usłudze dla osób, które trudniej dojadą do lokalu.",
       "technique": "Brak manipulacji. Zwykły komunikat usługowy od właściwej instytucji.",
-      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie ośrodka.",
+      "tool": "Telefon: ośrodek potwierdza numer zapisów, godziny i trasy. Nowy profil bez znaczka weryfikacji niczego nie przesądza.",
       "realWorld": "Gminy organizują dowóz do lokali dla seniorów. Prawdziwy komunikat ma dane kontaktowe, które można sprawdzić."
     },
     "reviewed": false
@@ -845,14 +1022,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie kart w lokalu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-fotka-urny-map",
+        "station": "geolocation",
+        "text": "Budynek za oknem nie pasuje do lokalu nr 9. Zdjęcie zrobiono gdzie indziej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-fotka-urny-media",
+        "station": "crossCheck",
+        "text": "Inne media milczą, temat krąży tylko w grupach.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l6-fotka-urny-image", "l6-fotka-urny-source"],
+    "justifyingStamps": ["l6-fotka-urny-image", "l6-fotka-urny-source", "l6-fotka-urny-map"],
     "technique": "koordynowane-dzialania",
     "debrief": {
       "what": "Stare zdjęcie szkolnej urny zostało podane jako dowód oszustwa. Wpis rozesłała zgrana grupa kont.",
       "technique": "Skoordynowane nieautentyczne działania: wiele kont działa razem, by wyglądać jak niezależni mieszkańcy. Zdjęcie jest prawdziwe, kontekst nie.",
-      "tool": "Lupa obrazu znalazła źródło zdjęcia. Kartoteka źródeł pokazała, że konta działały razem.",
+      "tool": "Lupa obrazu znalazła źródło zdjęcia, a Mapa pokazała, że zrobiono je gdzie indziej. Kartoteka źródeł: konta działały razem.",
       "realWorld": "Fałszywe oskarżenia o oszustwa wyborcze zwykle opierają się na starych lub wyrwanych z kontekstu zdjęciach, a rozsyła je zgrana grupa kont."
     },
     "reviewed": false
@@ -902,6 +1091,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: konta wskazują to samo miasto, ale jest ich za mało na wnioski.",
         "relevance": "misleading"
+      },
+      {
+        "id": "l6-nalot-zostaje12-map",
+        "station": "geolocation",
+        "text": "Wpisy bez zdjęć miejsc, mapa nic tu nie da.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-zostaje12-media",
+        "station": "crossCheck",
+        "text": "Inne media nie piszą o tych wpisach, to tylko komentarze.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l6-nalot-zostaje12-archive", "l6-nalot-zostaje12-source"],
@@ -959,6 +1160,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: kilka kont publikuje z tego samego adresu sieciowego.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-nalot-hashtag-map",
+        "station": "geolocation",
+        "text": "Wpisy bez zdjęć miejsc, mapa nic tu nie da.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-hashtag-media",
+        "station": "crossCheck",
+        "text": "Inne media nie relacjonują tych wpisów, to tylko komentarze.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": [
@@ -1020,6 +1233,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak zestawień o liczbie zgłoszeń do akcji.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-apel-map",
+        "station": "geolocation",
+        "text": "Apel bez zdjęć miejsc, mapa nic tu nie wniesie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-apel-media",
+        "station": "crossCheck",
+        "text": "Inne portale wciąż cytują apel jako oddolny, za naszą publikacją.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-sprostowanie-apel-archive", "l6-sprostowanie-apel-source"],
@@ -1076,6 +1301,18 @@
         "id": "l6-sprostowanie-tlum-data",
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie uczestników.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-map",
+        "station": "geolocation",
+        "text": "Zdjęcie rzeczywiście zrobiono na placu przed ratuszem.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-media",
+        "station": "crossCheck",
+        "text": "Inne media nie wracały do tamtego wiecu.",
         "relevance": "irrelevant"
       }
     ],
@@ -1134,6 +1371,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: liczba 2000 to wszystkie wiersze tabeli, a nie błędne wpisy.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-map",
+        "station": "geolocation",
+        "text": "Załącznik to tabela, mapa nic tu nie da.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-media",
+        "station": "crossCheck",
+        "text": "„Wszyscy już o tym piszą”: trzy portale przepisały komunikat komitetu.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": [

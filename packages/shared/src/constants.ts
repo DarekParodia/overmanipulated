@@ -311,7 +311,7 @@ export type DifficultyPreset = {
   readonly revealOnFail: boolean;
 };
 
-/** Difficulty presets; provisional until the balance-bot pass (S7-35) retunes them. */
+/** Difficulty presets, checked by the balance pass (S7-35, docs/balance.md "Difficulties"). */
 export const DIFFICULTY = {
   easy: {
     deadlineFactor: 1.3,
@@ -514,7 +514,7 @@ export const ENDLESS = {
   firstSpawnS: 4,
   startIntervalS: 18,
   minIntervalS: 7,
-  intervalFactorPerMinute: 0.9,
+  intervalFactorPerMinute: 0.88,
   /** Each interval is randomised by up to this fraction either way. */
   intervalJitter: 0.15,
   startDeadlineS: 80,

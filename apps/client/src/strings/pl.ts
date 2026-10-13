@@ -73,6 +73,8 @@ export const pl = {
     /** Message of the day (S7-72): the banner's name and its close button. */
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
+    /** Footer link (S7-74): reopens Google's ad consent message. */
+    adConsent: 'Zgody reklamowe',
   },
   /** Ads (S7-73): the frame's label, also its name for screen readers. */
   ads: {
@@ -356,12 +358,15 @@ export const pl = {
     passesTitle: 'Wybierz rolę',
     noRole: 'Bez roli',
     noRoleBonus: 'Bez premii',
-    /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor), short station names. */
-    fasterAt: (stations: readonly string[], percent: number) => `${listPl(stations)} +${percent}%`,
-    /** Speed bonus line of a role that is faster at every station (Wszechstronny). */
-    everywhereFaster: (percent: number) => `Wszędzie +${percent}%`,
-    /** Bonus line of a role with Koło ratunkowe (Ratownik), from RESCUE_ADD_MS. */
-    rescuePassive: (seconds: number) => `Raz ratuje teczkę (+${seconds}\u00a0s)`,
+    noRoleAbility: 'Bez zdolności',
+    /** Lobby detail panel (S7-44): the passive's speed bonus; station chips follow it. */
+    fasterPassive: (percent: number) => `Praca o\u00a0${percent}% szybciej`,
+    /** The passive of a role that is faster at every station (Wszechstronny). */
+    everywhereFaster: (percent: number) => `Wszędzie praca o\u00a0${percent}% szybciej`,
+    /** The reporter's second passive rule (`ROLE_PERKS.skipsPhoneQueue`). */
+    phoneQueue: 'Telefon bez kolejki',
+    /** Koło ratunkowe (Ratownik), from RESCUE_ADD_MS. */
+    rescuePassive: (seconds: number) => `Raz ratuje teczkę w\u00a0ręce (+${seconds}\u00a0s)`,
     /** What each role's ability does, in a few words (lobby detail panel, tutorial; S7-44/45). */
     abilityWhat: {
       photoEditor: 'zadanie przy obrazie od razu',
@@ -371,12 +376,21 @@ export const pl = {
       generalist: 'po pudle od razu jeszcze raz',
       rescuer: 'rzut do najbliższej wolnej osoby',
     } satisfies Record<Role, string>,
-    /** Roles whose bonus is not (only) speed get their own line. */
-    specialBonuses: {
-      reporter: 'Telefon bez kolejki',
-      managingEditor: 'Raz przedłuża termin',
-    } satisfies Partial<Record<Role, string>>,
-    noEditorNote: 'Bez redaktora przy stole decyduje każdy.',
+    /** The ability line: its name and what it does. */
+    abilityLine: (name: string, what: string) => `${name} – ${what}`,
+    /** The ability's cooldown in the detail panel. */
+    cooldown: (seconds: number) => `co ${seconds}\u00a0s`,
+    /** The key cap of the ability on touch (the fourth thumb button). */
+    touchKey: 'Przycisk',
+    /** Headings of the detail panel's two lines (screen readers and the compact layout). */
+    passiveLabel: 'Premia',
+    abilityLabel: 'Zdolność',
+    /** Notes under the detail panel when the shown role's perk does nothing on the chosen level. */
+    passiveNotHere: 'Ta premia nie działa na tym poziomie.',
+    abilityNotHere: 'Ta zdolność nie działa na tym poziomie.',
+    /** Screen-reader line of a role pass: which teammates chose it (the dots on the pass). */
+    pickedBy: (names: readonly string[]) =>
+      `${names.length === 1 ? 'Tę rolę ma' : 'Tę rolę mają'}: ${listPl(names)}`,
     ready: 'Gotowy',
     readyDone: 'Gotowy!',
     readyHint: 'Zaznacz, gdy możesz grać.',

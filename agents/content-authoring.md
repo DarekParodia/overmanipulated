@@ -82,6 +82,11 @@ has no `stars`). Event stories always stay in `events`, never in the pool.
   and multi-stamp stories come from slot `BAG_MULTI_STAMP_MIN_SLOT` on, whenever the pool allows.
 - **Coverage.** The pool must give every slot a distinct story on every difficulty, for every
   way the last partial round can fall; the validator names the station that runs short.
+- **Balance after a pool or timing change.** Changing `gapS`, `lastSpawnS`, `deadlineS` or
+  `starShares` changes every difficulty's folder count and thresholds: re-run `bun run balance`
+  for that level on all four difficulties (`--levels <id> --difficulty easy,normal,hard,expert
+  --crew-sizes 3` is a quick pass) and keep the intent checks in `docs/balance.md` green. Keep
+  `lastSpawnS` + the longest `deadlineS` within `durationS`, so no Normal folder is cut short.
 - **Endless** deals the same way from every campaign level's stories (schedule or pool, the
   greybox left out): shuffled rounds over the endless stations that decide a story, and each slot
   draws from its station's *deck* (the stories that station decides; a flex story sits in several

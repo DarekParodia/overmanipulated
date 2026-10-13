@@ -38,6 +38,15 @@ export const MATRIX_CREWS: readonly (readonly ProfileId[])[] = [
   ['expert', 'expert'],
 ];
 
+/** The matrix crews whose size is one of `sizes` (a quicker pass, e.g. crews of three only). */
+export function crewsOfSizes(sizes: readonly number[]): (readonly ProfileId[])[] {
+  const crews = MATRIX_CREWS.filter((crew) => sizes.includes(crew.length));
+  if (crews.length === 0) {
+    throw new RangeError(`No matrix crew has a size in ${sizes.join(', ')}`);
+  }
+  return crews;
+}
+
 /** The default matrix: every campaign level and endless, by difficulty, skill and crew size. */
 export function buildMatrix(options: {
   levels: readonly string[];

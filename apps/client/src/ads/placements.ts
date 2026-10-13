@@ -27,9 +27,12 @@ export const AD_PLACEMENTS: Record<AdPlacement, AdPlacementLayout> = {
     query: '(min-width: 800px) and (min-height: 600px)',
     size: { width: 728, height: 90 },
   },
-  /** Side rail beside the 68rem results panel. */
+  /**
+   * Side rail beside the 68rem results panel, anchored bottom-right; 900 px tall keeps it 150 px
+   * below the HUD's menu button (S7-74).
+   */
   results: {
-    query: '(min-width: 1780px) and (min-height: 700px)',
+    query: '(min-width: 1780px) and (min-height: 900px)',
     size: { width: 160, height: 600 },
   },
   /** Spectator view; the spectator screen places it (S7-91). */

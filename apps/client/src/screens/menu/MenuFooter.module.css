@@ -1,0 +1,8 @@
+/* Main-menu footer (S7-74): minor text links in one centred row under the card. Ghost buttons
+   only (never yellow, the menu keeps one main action); each keeps the 48 px touch target. */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2) var(--space-4);
+}
