@@ -3,7 +3,9 @@
 // verdict). It sees only the game state, never the sim's RNG. Skill is a SkillProfile; the
 // models are assumptions, see models.ts and docs/balance.md.
 import {
-  canExtendDeadline,
+  abilityEnvOf,
+  abilityOf,
+  abilityPreview,
   carriedFolder,
   countsAsProof,
   createRng,
@@ -98,7 +100,7 @@ export class Bot {
   private readonly memory = new Map<string, Memory>();
   private readonly wanted = new Map<string, boolean>();
   private readonly rng: Rng;
-  private readonly extensionUser: boolean;
+  private readonly abilityUser: boolean;
 
   constructor(
     readonly playerId: string,
@@ -107,7 +109,7 @@ export class Bot {
     seed: number,
   ) {
     this.rng = createRng(seed);
-    this.extensionUser = this.rng.next() < profile.usesExtension;
+    this.abilityUser = this.rng.next() < profile.usesAbility;
   }
 
   /** The next input and commands, given the state after the previous tick. */
@@ -117,7 +119,7 @@ export class Bot {
     if (this.folderId !== null && !(this.folderId in state.folders)) {
       this.reset(now);
     }
-    this.maybeExtend(state, out);
+    this.maybeUseAbility(state, ctx, out);
     this.stepPhase(state, ctx, out);
     return out;
   }
@@ -578,24 +580,25 @@ export class Bot {
     this.resultSuccess = success;
   }
 
-  /** The managing editor (or anyone allowed) saves a worked folder that is about to expire. */
-  private maybeExtend(state: GameState, out: BotOutput): void {
-    if (
-      !this.extensionUser ||
-      state.deadlineExtensionUsed ||
-      !canExtendDeadline(state, this.playerId)
-    ) {
+  /**
+   * Presses the role ability when the shared preview says it acts now, as a client would. Only
+   * Przedłużenie has a policy so far: the managing editor saves a claimed folder that is about to
+   * expire when the preview targets it (S7-46 adds the other abilities).
+   */
+  private maybeUseAbility(state: GameState, ctx: SimContext, out: BotOutput): void {
+    const ability = abilityOf(state.crew[this.playerId]?.role ?? null);
+    if (!this.abilityUser || ability !== 'extendDeadline') {
       return;
     }
-    for (const folder of Object.values(state.folders)) {
-      if (
-        this.team.claims.has(folder.id) &&
-        folder.deadlineMs - state.elapsedMs < EMERGENCY_MS &&
-        folder.deadlineMs - state.elapsedMs > 0
-      ) {
-        out.commands.push({ kind: 'extendDeadline', folderId: folder.id });
-        return;
-      }
+    const preview = abilityPreview(state, this.playerId, abilityEnvOf(ctx));
+    const folder =
+      preview.kind === 'now' && preview.folderId ? state.folders[preview.folderId] : undefined;
+    if (
+      folder &&
+      this.team.claims.has(folder.id) &&
+      folder.deadlineMs - state.elapsedMs < EMERGENCY_MS
+    ) {
+      out.commands.push({ kind: 'useAbility' });
     }
   }
 

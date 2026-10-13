@@ -43,7 +43,7 @@ Roles by crew size: 2 = photo editor, archivist; 3 = + reporter; 4 = + managing 
 | Stations tried per folder | 3 | 4 | 6 |
 | Obeys a boss call unchecked | 40% | 10% | 0 |
 | Files a correction at once | 50% | 90% | 100% |
-| Uses the deadline extension | never | 50% | always |
+| Uses the role ability (`usesAbility`; so far Przedłużenie on a claimed folder under 5 s left) | never | 50% | always |
 
 Teamwork: an idle bot claims the next folder on the conveyor (rookies first come first served,
 others by deadline and priority), then carries it through the stations it chooses and to a free

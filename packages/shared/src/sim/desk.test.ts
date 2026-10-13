@@ -14,7 +14,7 @@ import {
   testInput,
 } from './__fixtures__/greybox.ts';
 import { countsAsProof, type SimStory } from './content.ts';
-import { canExtendDeadline, evaluateVerdict, stepDesk } from './desk.ts';
+import { evaluateVerdict, stepDesk } from './desk.ts';
 import type { QueuedCommand, SimFrame } from './frame.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
 
@@ -703,52 +703,6 @@ describe('stepDesk — verdicts', () => {
     const wrongFolder = frameFor(own, [verdict('publish', 't-true-image', 'f9')]);
     expect(stepDesk(own, wrongFolder).folders.f1).toBeDefined();
     expect(kinds(wrongFolder.events)).toEqual([]);
-  });
-});
-
-describe('stepDesk — deadline extension', () => {
-  const extend = (playerId: string, folderId = 'f1') =>
-    testCommand(playerId, { kind: 'extendDeadline', folderId });
-
-  function withRoles(state: GameState, roles: Record<string, 'managingEditor' | 'archivist'>) {
-    const crew = { ...state.crew };
-    for (const [id, role] of Object.entries(roles)) {
-      crew[id] = { ...must(crew[id]), role };
-    }
-    return { ...state, crew };
-  }
-
-  it('extends a folder deadline by 20 s once per level for the managing editor', () => {
-    const state = withRoles(deskState(folder({ warned: true }), 4), { p2: 'managingEditor' });
-    const frame = frameFor(state, [extend('p2')]);
-    const next = stepDesk(state, frame);
-    expect(next.folders.f1?.deadlineMs).toBe(80_000);
-    expect(next.folders.f1?.warned).toBe(false);
-    expect(next.deadlineExtensionUsed).toBe(true);
-    expect(frame.events).toEqual([{ kind: 'deadlineExtended', folderId: 'f1', playerId: 'p2' }]);
-    const again = frameFor(next, [extend('p2')]);
-    expect(stepDesk(next, again).folders.f1?.deadlineMs).toBe(80_000);
-    expect(again.events).toEqual([]);
-  });
-
-  it('refuses other players when someone is managing editor', () => {
-    const state = withRoles(deskState(folder(), 3), { p2: 'managingEditor' });
-    const frame = frameFor(state, [extend('p1')]);
-    expect(stepDesk(state, frame).deadlineExtensionUsed).toBe(false);
-  });
-
-  it('lets anyone extend with three players and no managing editor, but not with four', () => {
-    const three = deskState(folder(), 3);
-    expect(canExtendDeadline(three, 'p3')).toBe(true);
-    expect(stepDesk(three, frameFor(three, [extend('p3')])).deadlineExtensionUsed).toBe(true);
-    const four = deskState(folder(), 4);
-    expect(canExtendDeadline(four, 'p3')).toBe(false);
-  });
-
-  it('requires an existing folder', () => {
-    const state = withRoles(deskState(), { p1: 'managingEditor' });
-    const frame = frameFor(state, [extend('p1', 'f9')]);
-    expect(stepDesk(state, frame).deadlineExtensionUsed).toBe(false);
   });
 });
 

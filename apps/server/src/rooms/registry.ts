@@ -816,7 +816,6 @@ export function createRoomRegistry(options: RegistryOptions) {
       folders: Object.values(game.folders),
       stations: Object.values(game.stations),
       desks: Object.values(game.desks),
-      deadlineExtensionUsed: game.deadlineExtensionUsed,
       nextFolder: nextScheduledSpawn(game, schedule),
       conveyorFull: conveyorBlocked(game, schedule),
       crew: crewSnapshot(game),

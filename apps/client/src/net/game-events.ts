@@ -103,6 +103,19 @@ function levelEventContext(event: Extract<GameplayEvent, { kind: 'levelEvent' }>
   };
 }
 
+/** Context for an event at a station the player operates (minigame round and its stamp). */
+function stationContext(
+  event: Extract<GameplayEvent, { kind: 'minigameStarted' | 'minigameFailed' | 'stampApplied' }>,
+): CueContext {
+  return {
+    ...aboutPlayer(event.playerId),
+    ...at(fixturePosition(event.stationId)),
+    fixtureId: event.stationId,
+    folderId: event.folderId,
+    loopKey: event.stationId,
+  };
+}
+
 /** Where and about whom each event happens. */
 function contextFor(event: GameplayEvent): CueContext {
   switch (event.kind) {
@@ -128,12 +141,6 @@ function contextFor(event: GameplayEvent): CueContext {
     case 'deadlineWarning':
     case 'folderExpired':
       return { ...at(folderPosition(event.folderId)), folderId: event.folderId };
-    case 'deadlineExtended':
-      return {
-        ...aboutPlayer(event.playerId),
-        ...at(folderPosition(event.folderId)),
-        folderId: event.folderId,
-      };
     case 'workStarted':
     case 'workCancelled':
       return {
@@ -142,16 +149,19 @@ function contextFor(event: GameplayEvent): CueContext {
         fixtureId: event.stationId,
         loopKey: event.stationId,
       };
+    case 'stampApplied':
+      if (event.via === 'fieldCall') {
+        // Telefon z terenu stamps the folder in the reporter's hands, not at the phone station.
+        return {
+          ...aboutPlayer(event.playerId),
+          ...at(playerPosition(event.playerId)),
+          folderId: event.folderId,
+        };
+      }
+      return stationContext(event);
     case 'minigameStarted':
     case 'minigameFailed':
-    case 'stampApplied':
-      return {
-        ...aboutPlayer(event.playerId),
-        ...at(fixturePosition(event.stationId)),
-        fixtureId: event.stationId,
-        folderId: event.folderId,
-        loopKey: event.stationId,
-      };
+      return stationContext(event);
     case 'deskOpened':
       return {
         ...aboutPlayer(event.playerId),

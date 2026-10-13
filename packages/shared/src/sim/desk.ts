@@ -1,10 +1,9 @@
 // Editorial desk: opening the verdict sheet, verdict evaluation and justification (S2-07).
 // Emits: deskOpened, deskClosed, verdictResult (with score/credibility deltas applied here).
 // Level-event folders (S4-05..S4-09): correction filing, bossCall bonus, botRaid resolution.
-// Consumes commands: verdict, cancel (when operating a desk), extendDeadline.
+// Consumes commands: verdict, cancel (when operating a desk).
 import {
   CREDIBILITY,
-  DEADLINE_EXTENSION_MS,
   EVENTS,
   SCORE,
   SPEED_BONUS_REMAINING_FRACTION,
@@ -116,7 +115,8 @@ export function uniqueCites(citedStampIds: readonly string[]): string[] {
  * 2. Any cite that is not valid proof → `wrongJustification` / `weakProof`, half points.
  * 3. Fewer countable proofs than required → `wrongJustification` / `incompleteProof`, half
  *    points (citing only the AI scanner lands here).
- * 4. Otherwise `correct`, with the speed bonus and the multi-stamp bonus
+ * 4. Otherwise `correct`, with the speed bonus (measured against the deadline without the time
+ *    abilities added, `deadlineMs − extendedMs`) and the multi-stamp bonus
  *    (`(N − 1) × SCORE.multiStampBonus`, never scaled by the difficulty); nothing is reported
  *    missed.
  */
@@ -157,8 +157,10 @@ export function evaluateVerdict(
       missedStampIds,
     };
   }
-  const totalMs = folder.deadlineMs - folder.spawnedAtMs;
-  const fast = folder.deadlineMs - nowMs > totalMs * SPEED_BONUS_REMAINING_FRACTION;
+  // Time added by Przedłużenie or Koło ratunkowe does not count toward the speed bonus.
+  const baseDeadlineMs = folder.deadlineMs - (folder.extendedMs ?? 0);
+  const totalMs = baseDeadlineMs - folder.spawnedAtMs;
+  const fast = baseDeadlineMs - nowMs > totalMs * SPEED_BONUS_REMAINING_FRACTION;
   const speed = fast ? SCORE.speedBonus : 0;
   const multiStamp = (required - 1) * SCORE.multiStampBonus;
   return {
@@ -229,22 +231,6 @@ function resolveRaid(state: GameState, frame: SimFrame, folder: Folder): GameSta
     folderIds: siblings,
   });
   return endActiveEvent({ ...state, folders }, frame, raid);
-}
-
-/**
- * Whether a player may use the managing editor's deadline extension: the managing editor, or,
- * when nobody took that role and at most three play, anyone (design doc: with three players the
- * person at the desk takes the role; simplified to any player).
- */
-export function canExtendDeadline(state: GameState, playerId: string): boolean {
-  if (state.crew[playerId]?.role === 'managingEditor') {
-    return true;
-  }
-  return (
-    playerId in state.crew &&
-    !Object.values(state.crew).some((member) => member.role === 'managingEditor') &&
-    Object.keys(state.players).length <= 3
-  );
 }
 
 function deskOf(desks: Record<string, Desk>, playerId: string): Desk | undefined {
@@ -318,26 +304,6 @@ export function stepDesk(state: GameState, frame: SimFrame): GameState {
         });
         next = resolveRaid(next, frame, folder);
         close(desk.id, playerId);
-        break;
-      }
-      case 'extendDeadline': {
-        const folder = next.folders[command.folderId];
-        if (next.deadlineExtensionUsed || !folder || !canExtendDeadline(next, playerId)) {
-          break;
-        }
-        next = {
-          ...next,
-          deadlineExtensionUsed: true,
-          folders: {
-            ...next.folders,
-            [folder.id]: {
-              ...folder,
-              deadlineMs: folder.deadlineMs + DEADLINE_EXTENSION_MS,
-              warned: false,
-            },
-          },
-        };
-        frame.events.push({ kind: 'deadlineExtended', folderId: folder.id, playerId });
         break;
       }
       default:

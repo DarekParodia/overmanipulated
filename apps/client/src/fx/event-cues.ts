@@ -120,8 +120,6 @@ export function cueForEvent(
       return 'folder.deadlineWarning';
     case 'folderExpired':
       return 'folder.expired';
-    case 'deadlineExtended':
-      return 'folder.deadlineExtended';
     case 'workStarted':
       return 'station.workStart';
     case 'workCancelled':

@@ -24,7 +24,6 @@ function snapshot(tick: number, x: number): SnapshotMessage {
     folders: [],
     stations: [],
     desks: [],
-    deadlineExtensionUsed: false,
     nextFolder: { atMs: 3000, sinceMs: 0 },
     conveyorFull: false,
     crew: [{ id: 'p1', abilityReadyAtMs: 0, abilityArmed: false, fieldCall: null, rescuesLeft: 0 }],

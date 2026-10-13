@@ -21,8 +21,6 @@ export type GameStore = {
   folders: readonly Folder[];
   stations: readonly Station[];
   desks: readonly Desk[];
-  /** The level's one deadline extension has been used. */
-  deadlineExtensionUsed: boolean;
   /** Every player's ability state (cooldown, armed, field call, rescues), in join order. */
   crew: readonly CrewSnapshot[];
   /** Level times of the next scheduled folder and the previous one; null when none is left. */
@@ -47,7 +45,6 @@ const EMPTY = {
   folders: [],
   stations: [],
   desks: [],
-  deadlineExtensionUsed: false,
   crew: [],
   nextFolder: null,
   conveyorFull: false,
@@ -74,7 +71,6 @@ export const useGame = create<GameStore>((set, get) => ({
       folders: snapshot.folders,
       stations: snapshot.stations,
       desks: snapshot.desks,
-      deadlineExtensionUsed: snapshot.deadlineExtensionUsed,
       crew: snapshot.crew,
       nextFolder: stableNextFolder(get().nextFolder, snapshot.nextFolder),
       conveyorFull: snapshot.conveyorFull,

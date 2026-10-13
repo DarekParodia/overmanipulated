@@ -131,8 +131,6 @@ export const playerCommandSchema = z.discriminatedUnion('kind', [
   /** Close the station minigame or desk sheet without a result. */
   z.object({ kind: z.literal('cancel') }),
   z.object({ kind: z.literal('ping'), ping: pingKindSchema }),
-  /** Managing editor: extend one folder's deadline, once per level (removed by S7-37). */
-  z.object({ kind: z.literal('extendDeadline'), folderId: entityId }),
   /**
    * Press of the role ability (R / RB / the fourth touch button). It carries no target: the
    * server resolves it with the shared ability preview, which the HUD shows too (S7-36).
@@ -251,8 +249,6 @@ export const snapshotMessageSchema = z.object({
   folders: z.array(folderSchema).max(64),
   stations: z.array(stationSchema).max(32),
   desks: z.array(deskSchema).max(8),
-  /** The managing editor's one deadline extension per level has been used. */
-  deadlineExtensionUsed: z.boolean(),
   /** The next scheduled folder; null once the schedule is used up. Event folders never show. */
   nextFolder: nextFolderSchema.nullable(),
   /** A scheduled folder is due but waits, because every conveyor tile holds a folder. */
@@ -291,7 +287,6 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     /** Stamps the folder had collected when it expired. */
     stamps: z.array(entityId).max(16),
   }),
-  z.object({ kind: z.literal('deadlineExtended'), folderId: entityId, playerId: playerIdSchema }),
   z.object({ kind: z.literal('workStarted'), stationId: entityId, playerId: playerIdSchema }),
   z.object({ kind: z.literal('workCancelled'), stationId: entityId, playerId: playerIdSchema }),
   z.object({
