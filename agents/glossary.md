@@ -84,6 +84,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Tryb nieskończony | `endlessMode` | |
 | Pokój, kod pokoju | `room`, `roomCode` | |
 | Pas HUD | `hudBand` (`hud/hud-band.ts`: `bandBottom`, `useHudBand`, `useHudBandMeasure`; CSS `--hud-band`, `--hud-pill-right`) | How far down the top-of-screen HUD reaches: the lowest edge of the elements marked `data-hud-band` (pill, folder queue, menu button, endless tempo chip) that start in the upper half of the screen, capped at `HUD_BAND_MAX_SHARE` of its height. Captions, event banners and verdict toasts start under it; the follow camera frames the room below it (S7-12) |
+| Kadr kamery (cała redakcja / za graczem) | `framing` (`scene/camera-framing.ts`: `computeFraming`, `placeCamera`; fit mode / follow mode) | How the angled camera frames the room: the whole room when its tiles would be at least `MIN_TILE_PX` (40 px), otherwise it follows the local player, clamped to the room and framed under the HUD band with a view offset of half the band (S7-12) |
 | Menu gry | `gameMenu` (`hud/GameMenu.tsx`, `GameMenuButton.tsx`, `useGameMenu`, `pl.gameMenu`) | The in-game menu: one top-right button (Esc, Start) opening a sheet with „Wróć do gry”, settings, fullscreen, room code and „Wyjdź z redakcji” (two presses within `LEAVE_CONFIRM_MS`). Replaces the tool buttons and the room chip |
 | Pauza | `paused` (snapshot, `GameStore.paused`), lobby action `setPaused` | A solo player's open menu holds the level: the registry skips stepping the room. Only while playing with exactly one connected player; anyone joining or reconnecting clears it. With teammates the menu shows „Gra trwa dalej” and nothing pauses |
 | Gospodarz | `host` | |
@@ -170,7 +171,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Podgląd zdolności | ability preview (`abilityPreview`, `AbilityPreview`, `AbilityView`, `AbilityEnv`) | What a press would do now (`none`, `calling`, `armed`, `cooling`, `blocked`, `arm`, `now` with its target); one function for the sim, the HUD and the bots |
 | Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |
 | Stan zdolności załogi | crew ability state (`AbilityState`, `snapshot.crew`, `crewSnapshot`) | `abilityReadyAtMs`, `abilityArmed`, `fieldCall`, `rescuesLeft` per player |
-| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue (no role, cooling) |
+| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue when the shared preview says it does nothing (no role, cooling, blocked, a call running) |
+| Żeton zdolności | ability chip (`AbilityChip`, `abilityChipModel`, `data-testid="hud-ability"`) | Bottom-left HUD chip on keyboard and gamepad: ring, key cap, one-word name, status (`ready`, `armed`, `calling`, `cooling`, `blocked`) |
+| Przycisk zdolności | ability button (`AbilityButton`, grid area `ability`, `data-testid="touch-ability"`) | The 4th thumb button on touch; same ring and states as the chip, shown only with a role |
+| Cel zdolności | ability target (`AbilityTarget`, `abilityTargetFolder`, `abilityTargetName`, `data-ability-target`) | What a ready press would act on: the folder card gets a dashed blue outline, a teammate or station is named on the chip |
+| Pierścień postępu | progress ring (`ui/ProgressRing`, `RingTone`) | The round fill shared by the work prompt and the ability chip / button |
 | Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
 
 ## Station families (`StationFamily`, Stage 7)
@@ -258,6 +263,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Domena / host | `normalizeHost`, `hostAllowed`, `hostnameSchema` | Bare lower-case host without port; ad domains match exactly, never a parent or wildcard |
 | Znacznik nonce CSP | `CSP_NONCE_PLACEHOLDER` | Placeholder Vite writes into the built `index.html`; the HTML shell swaps in a per-request nonce |
 | Powłoka HTML | HTML shell (`renderShell`, `createShellRoutes`, `ShellAssets`) | The built `index.html` the game server renders per request (`apps/server/src/shell/`): nonce, embedded public config, verification meta tag, per-host CSP |
+| Strona zapasowa | static fallback (Caddyfile `handle_errors 502 503 504`) | The static `index.html` of the web image that Caddy serves while the game server is down: menu without the embedded config, base CSP, `no-store`; never for `/ads.txt` or the API |
 | Tryb CSP (bazowy / reklamowy) | `CspMode` (`base` / `ads`) | `base`: the strict same-origin policy, identical to the Caddyfile's; `ads`: nonce + `'strict-dynamic'` in script-src and `Referrer-Policy: strict-origin-when-cross-origin`, only on hosts where ads run |
 | Konfiguracja serwera | `serverConfig` (`serverConfigSchema`, `ServerConfig`, `config/config.json`) | Operator's product settings in `apps/server/src/config.ts`: `site`, `features`, `motd`, `rooms`, `ads`, `csp`. Strict (unknown keys refused); an invalid file stops the start and never replaces a running config |
 | Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |

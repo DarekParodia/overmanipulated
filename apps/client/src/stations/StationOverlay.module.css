@@ -31,61 +31,9 @@
   white-space: nowrap;
 }
 
-/* Big progress ring with the station icon in the middle. */
+/* The work prompt's big progress ring (ui/ProgressRing) with the station icon. */
 .ring {
-  position: relative;
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 4.5rem;
-  height: 4.5rem;
-}
-
-.ring > svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.ringTrack,
-.ringFill {
-  fill: none;
-  stroke-width: 9;
-}
-
-.ringTrack {
-  stroke: var(--surface-sunk);
-}
-
-.ringFill {
-  stroke: var(--green);
-  stroke-linecap: round;
-  transition: stroke-dashoffset 80ms linear;
-}
-
-/* The outline around the ring, drawn over the track for the cartoon edge. */
-.ring::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: var(--stroke) solid var(--outline);
-  border-radius: var(--radius-pill);
-}
-
-.ring::after {
-  content: "";
-  position: absolute;
-  inset: calc(9 / 64 * 100% + 1px);
-  border: var(--stroke) solid var(--outline);
-  border-radius: var(--radius-pill);
-}
-
-.ringIcon {
-  position: relative;
-  display: grid;
-  place-items: center;
+  --ring-size: 4.5rem;
 }
 
 .failed {
@@ -123,8 +71,7 @@
   }
 
   .ring {
-    width: 3.5rem;
-    height: 3.5rem;
+    --ring-size: 3.5rem;
   }
 
   .plateText {

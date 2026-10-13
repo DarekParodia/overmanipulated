@@ -1,6 +1,8 @@
 // All player-facing Polish text. Keys are English; wording follows agents/design-rules.md §9:
 // a gruff, warm editor-in-chief — short, concrete, newsroom vocabulary, no marketing voice.
 import type {
+  Ability,
+  AbilityBlockReason,
   Difficulty,
   ErrorCode,
   FolderBonuses,
@@ -14,6 +16,7 @@ import type {
   StoryType,
   Verdict,
 } from '@redakcja/shared';
+import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { InputDevice as Device } from '../store/app.ts';
@@ -116,6 +119,14 @@ export const pl = {
     joystick: 'Ruch',
     /** The fourth thumb button before it shows the role's own ability (S7-39). */
     abilityGeneric: 'Zdolność',
+    /** The fourth thumb button's one-word label per ability (S7-40). */
+    ability: {
+      expertise: 'Ekspert',
+      fieldCall: 'Dzwoń',
+      extendDeadline: `+${ABILITY.extendDeadline.addMs / 1000}\u00a0s`,
+      secondChance: 'Szansa',
+      passFolder: 'Podaj',
+    } satisfies Record<Ability, string>,
   },
   connection: {
     connecting: 'Łączenie…',
@@ -291,6 +302,14 @@ export const pl = {
       reporter: 'Reporter',
       managingEditor: 'Redaktor prowadzący',
     } satisfies Record<Role, string>,
+    /** Role abilities (S7-36, glossary): the HUD chip's accessible name and the help texts. */
+    abilities: {
+      expertise: 'Ekspertyza',
+      fieldCall: 'Telefon z terenu',
+      extendDeadline: 'Przedłużenie',
+      secondChance: 'Druga szansa',
+      passFolder: 'Podaj teczkę',
+    } satisfies Record<Ability, string>,
     pings: {
       needArchive: 'Potrzebuję Archiwum!',
       fake: 'Fałszywka!',
@@ -397,6 +416,40 @@ export const pl = {
     evidenceNeed: (need: number) => `Wymaga ${need} dowodów`,
     evidenceShortHave: (have: number, need: number) => `${have}/${need}`,
     evidenceShortNeed: (need: number) => `×${need}`,
+    /**
+     * The role ability chip (keyboard and gamepad) and the touch button (S7-40): a status of at
+     * most two words under the ability's short name.
+     */
+    ability: {
+      ready: 'Gotowa',
+      armed: 'Uzbrojona',
+      calling: 'Dzwonię…',
+      /** Cooling down; the ring shows the seconds left. */
+      cooling: 'Odnowienie',
+      blocked: {
+        noStation: 'Nie tutaj',
+        noFolder: 'Weź teczkę',
+        noStamp: 'Bez Telefonu',
+        noPhone: 'Brak Telefonu',
+        noTarget: 'Nikt wolny',
+        noFolders: 'Brak teczek',
+        busy: 'Zajęty',
+      } satisfies Record<AbilityBlockReason, string>,
+      /** Accessible name of the chip and the button: ability name and its status. */
+      label: (name: string, status: string) => `${name}: ${status}`,
+      /** The same while the ring counts down (cooling, a field call). */
+      labelSeconds: (name: string, status: string, s: number) => `${name}: ${status}, ${s}\u00a0s`,
+      /** Koło ratunkowe's badge next to the chip or the button. */
+      rescueReady: 'Koło ratunkowe gotowe',
+      rescueUsed: 'Koło ratunkowe zużyte',
+      /** The folder card's mark after Przedłużenie or Koło ratunkowe (seconds added). */
+      extended: (s: number) => `+${s}`,
+      extendedLabel: (s: number) => `Przedłużona o\u00a0${s}\u00a0s`,
+      /** The folder card the local player's ready ability press would act on. */
+      targetLabel: 'Cel twojej zdolności',
+      /** The folder card carried by a Ratownik with the rescue left. */
+      rescueLabel: 'Chroni ją koło ratunkowe',
+    },
     /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
       credibility: (delta: string) => `wiarygodność ${delta}`,
@@ -1770,6 +1823,7 @@ export const pl = {
       secondChance: 'Druga szansa',
       folderPassed: 'Teczka podana',
       rescued: 'Teczka uratowana!',
+      abilityReady: 'Zdolność gotowa',
     },
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---

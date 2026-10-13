@@ -62,7 +62,12 @@ export type AnimationTrigger =
   | 'tempoUp'
   // S4-05 level events.
   /** A level event starts or ends (banner / badges listen via the game event feed). */
-  | 'eventAnnounce';
+  | 'eventAnnounce'
+  // S7-40 role abilities (HUD chip and touch button).
+  /** The local ability came off its cooldown: the chip / button bumps once. */
+  | 'abilityReady'
+  /** A local press that cannot do anything: the chip / button shakes (none with reduced motion). */
+  | 'abilityDenied';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -664,13 +669,25 @@ export const cues = {
     particles: { preset: 'dust', count: 2 },
   },
   /**
-   * A local ability press with nothing to do: no role, or the ability is still cooling (S7-39).
-   * Only the presser hears it; the HUD chip shake (`abilityDenied`) arrives with S7-40.
+   * A local ability press with nothing to do: no role, cooling, blocked or a call running
+   * (S7-39, read from the shared preview since S7-40). Only the presser hears it; the chip or
+   * the touch button shakes.
    */
   'ability.denied': {
     severity: 1,
     sound: { ids: ['back'], bus: 'ui' },
     haptic: 'tick',
+    animation: 'abilityDenied',
+  },
+  /**
+   * The local ability is ready again (client-derived from the crew cooldown, S7-40): a soft
+   * tick and a bump of the chip or the button. `tick` stands in until S7-42 adds `abready`.
+   */
+  'ability.ready': {
+    severity: 1,
+    sound: { ids: ['tick'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
+    animation: 'abilityReady',
   },
   /** Ekspertyza solved the station's task: the stamp lands without a minigame. */
   'ability.expertise': {

@@ -1,48 +1,57 @@
 # Deployment
 
-> **Topology change (merged from the `caddy` branch):** Caddy no longer terminates TLS. It serves
-> plain HTTP on container port 80, published as host port **8080**, and an external reverse proxy
-> terminates TLS on 443 and forwards to `host:8080` (it must pass WebSocket upgrades and the
-> original `Host` header). The `DOMAIN` variable and Caddy's certificate volumes are gone; port
-> 8080 should be firewalled so only that proxy can reach it. Sections below that mention Caddy
-> obtaining certificates describe the earlier layout.
-
-
-The game runs as two containers behind one public port:
+TLS is terminated by an external reverse proxy on the host (or another machine), which forwards to
+host port **8080**. It must pass WebSocket upgrades and the original `Host` header; firewall 8080
+so only that proxy can reach it. Behind it the game runs as two containers built from one image
+build:
 
 ```
-browser ──https/wss :443──▶ web (Caddy: TLS, static client, security headers, reverse proxy)
-                                   │  /ws, /api/*, /health
-                                   ▼
-                             server (Bun + Hono, rooms in memory, SQLite on a volume)
+browser ──https/wss :443──▶ external TLS proxy ──http :8080──▶ web (Caddy, plain HTTP on :80)
+                                                                 │ /assets/*, manifest, icons: static
+                                                                 │ everything else
+                                                                 ▼
+                     server (Bun + Hono: /ws, /api/*, /health, the HTML shell, /ads.txt,
+                             /prywatnosc; rooms in memory, SQLite on a volume, config.json mounted)
 ```
 
 Everything goes over **443** (school networks often block other ports, and `wss://` needs TLS):
-the page, the assets, `/api/*`, `/health` and the game WebSocket `/ws` all share one origin.
-Port 80 only redirects to HTTPS and answers the ACME challenge; 443/udp carries HTTP/3 and is
-optional (browsers fall back to TCP). The game server is never exposed directly.
+the page, the assets, `/api/*`, `/health` and the game WebSocket `/ws` all share one origin. The
+game server is never exposed directly.
+
+**Who serves what.** Caddy serves the build output that never changes per request (`/assets/*`,
+`manifest.webmanifest`, icons). Every other path goes to the game server: `/`, SPA paths and
+`/index.html` get the HTML shell rendered per request (fresh CSP nonce, the embedded public
+config, the CSP and `Referrer-Policy` chosen from `config.json` and the request host), and
+`/ads.txt` and `/prywatnosc` are rendered from the config and `docs/privacy.pl.md`. The server
+image therefore carries `index.html` from the same client build as the web image: always build
+and deploy both services together. While the game server is down or restarting (502/503/504),
+Caddy serves the static `index.html` of its own build instead, so the menu still loads and says
+"Serwer gry nie odpowiada" (never for `/ads.txt` or the API). Verified locally: with the server
+stopped, `/` answered 503 with the menu, and the browser console showed no CSP violation.
 
 ## Requirements
 
 - A Linux VPS with Docker Engine and the compose plugin. 1 vCPU / 1 GB RAM is plenty: measured
   idle usage is about 30 MB (server) + 15 MB (Caddy), and the compose file caps them at 384 MB
   and 128 MB.
-- A domain whose A/AAAA record points at the VPS (for automatic Let's Encrypt certificates).
-- Ports 80/tcp, 443/tcp and 443/udp open in the firewall (`ufw allow 80,443/tcp && ufw allow 443/udp`).
+- An external TLS reverse proxy for the public domain that forwards to port 8080 (WebSocket
+  upgrades and the original `Host` header included). Port 8080 is reachable only from it.
 
 ## First deploy
 
 ```sh
 git clone <repo> redakcja && cd redakcja
-cp .env.example .env          # set DOMAIN=gra.example.pl
+cp .env.example .env          # optional: LOG_LEVEL, TRUSTED_PROXIES
+cp config/config.example.json config/config.json && chmod 644 config/config.json   # optional
 docker compose up -d --build
 docker compose ps             # server and web should both be "healthy"
 bun run smoke -- https://gra.example.pl     # from any machine with Bun, see "Smoke test"
 ```
 
-Without a `DOMAIN`, Caddy serves `https://localhost` with its own local CA, which is handy for
-trying the production stack on a laptop (`docker compose up --build`, then accept the
-certificate warning or run the smoke test with `--insecure`).
+Without the external proxy the stack answers on `http://localhost:8080`, which is handy for
+trying it on a laptop (`docker compose up --build`, then
+`bun run smoke -- http://localhost:8080 --strict`). Without `config/config.json` the server runs
+with the defaults (ads off, room browser off).
 
 ## Updating
 
@@ -60,9 +69,12 @@ build are gone, so such a tab shows the load error; reloading fixes it.
 
 | Variable | Where | Default | Meaning |
 | --- | --- | --- | --- |
-| `DOMAIN` | `.env` → web | `localhost` | Public host name for TLS |
 | `LOG_LEVEL` | `.env` → server | `info` | `silent` disables server logs |
 | `TRUSTED_PROXIES` | `.env` → web | `private_ranges` | Addresses of the external TLS proxy whose `X-Forwarded-For` Caddy believes (IPs or CIDR ranges, space-separated). Set it to the proxy's `IP/32` when the proxy runs on another machine; see "Client address" |
+| `CONFIG_PATH` | server | `/app/config/config.json` (compose) | Operator config: features, message of the day, rooms, ads, CSP extras. Compose mounts `./config` read-only at `/app/config`; a missing file means the defaults. Saving the file reloads it (or `docker compose kill -s SIGHUP server`); check it first with `bun run config:check -- config/config.json` |
+| `ADS_ENABLED` | `.env` → server | unset | Kill switch: `false` turns ads off whatever `config.json` says, also across reloads; `true` still needs `ads.signOff`. Unset: `config.json` decides. Takes effect on `docker compose up -d server` |
+| `SHELL_HTML_PATH` | server | `apps/client/dist/index.html` | Built page the HTML shell is rendered from; the image copies it from the client build. Absent: the shell paths 404 (dev, where Vite serves the page) |
+| `PRIVACY_MD_PATH` | server | `docs/privacy.pl.md` | Privacy note rendered at `/prywatnosc` |
 | `PORT` | server | `3000` | Internal HTTP/WS port (set by compose) |
 | `DATABASE_PATH` | server | `/data/redakcja.sqlite` | SQLite file (set by compose) |
 | `BRIEFING_MS` | server | `18000` | Briefing length before a level auto-starts (tests shorten it) |
@@ -79,17 +91,20 @@ Retention (90 days) and the limits below are constants in the code, not environm
 | WebSocket upgrade | `reverse_proxy` passes `Upgrade` through; no read timeout on a proxied socket. The client sends a heartbeat every 2 s and Bun answers protocol pings, so NATs and proxies never see an idle connection. `stream_close_delay 5m` keeps sockets alive across a Caddy config reload. Verified: a socket that sent nothing for 150 s through Caddy (beyond Bun's 120 s idle timeout) was still open and answered a heartbeat | `bun run smoke` (heartbeat round trip) |
 | Compression | zstd and gzip on the fly; Brotli files are pre-built at image build time (`tools/deploy/precompress.ts`) and served by `precompressed br` | `curl -sI -H 'Accept-Encoding: br' https://<domain>/assets/<index>.js` |
 | Cache: hashed assets | `/assets/<name>-<8 hash chars>.(js\|css\|woff2)` → `public, max-age=31536000, immutable`. Only when the file exists: a missing hashed file is a plain 404, never `index.html` cached for a year | `curl -sI` the script |
-| Cache: everything else | `index.html`, manifest, icons and the un-hashed audio in `/assets/audio` → `no-cache` (revalidate by ETag) | `curl -sI https://<domain>/` |
+| Cache: static files | manifest, icons and the un-hashed audio in `/assets/audio` → `no-cache` (revalidate by ETag). The manifest is sent as `application/manifest+json` (Caddy knows no type for it). `index.html.br` from the precompress step stays unused: the page comes from the game server | `curl -sI https://<domain>/manifest.webmanifest` |
+| Pages | `/`, SPA paths, `/index.html`, `/ads.txt`, `/prywatnosc` → game server (it sets `Cache-Control`: `no-store` on the shell, `public, max-age=300` on `/ads.txt`). Unknown file-like paths (`/foo.js`) get a plain 404, never HTML | `bun run smoke -- <url>` |
+| Server down | `handle_errors 502 503 504`: the static `index.html` of the same build, `no-store`, with the security headers; not for `/ads.txt`, `/api`, `/ws`, `/health` | Stop the server, open the site |
 | Cache: API | `/api/*`, `/health`, `/ws` → `no-store` | |
-| Security headers | `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` plus CSP `frame-ancestors 'none'`, `Permissions-Policy` (no camera, microphone, geolocation), `Cross-Origin-Opener-Policy`, no `Server` header | `bun run smoke -- <url> --strict` |
-| CSP | `default-src 'self'`; `script-src 'self'`; `style-src 'self' 'unsafe-inline'` (React inline style attributes); `img-src 'self' data: blob:`; `font-src 'self'`; `media-src 'self' blob: data:`; `connect-src 'self' wss://<host>` (the explicit `wss://` entry is for older Safari that does not match `'self'` against WebSocket URLs); `object-src 'none'`. Verified with a real Chromium session (menu, lobby, briefing, playing level, audio, WebGL) against this exact policy: no violations | Browser console |
+| Security headers | `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` plus CSP `frame-ancestors 'none'`, `Permissions-Policy` (no camera, microphone, geolocation), no `Server` header, on every response (`security_headers` snippet, also on the fallback page). `Content-Security-Policy`, `Referrer-Policy: no-referrer` and `Cross-Origin-Opener-Policy` are **defaults** (`?Header`): the game server sets its own on the pages it renders and those win | `bun run smoke -- <url> --strict` |
+| CSP (base) | Hosts without ads, and every static file: `default-src 'self'`; `script-src 'self'`; `style-src 'self' 'unsafe-inline'` (React inline style attributes); `img-src 'self' data: blob:`; `font-src 'self'`; `media-src 'self' blob: data:`; `connect-src 'self' wss:` (the explicit `wss:` entry is for older Safari that does not match `'self'` against WebSocket URLs); `object-src 'none'`. The game server's base policy is the same string byte for byte (`tools/deploy/caddyfile.test.ts`); on `ads.domains` hosts with ads on it sends the nonce policy instead (`'nonce-…' 'strict-dynamic'`) and `Referrer-Policy: strict-origin-when-cross-origin`. Verified with a real Chromium session (menu, lobby, briefing, playing level, audio, WebGL) against this exact policy: no violations | Browser console |
 | Request size | `/ws`, `/api/*` request bodies capped at 8 KB | |
 | Upstream health | Caddy probes `/health` every 5 s and stops routing to an unhealthy server (503) until it recovers | |
 | Client address | `trusted_proxies` (from `TRUSTED_PROXIES`) with `trusted_proxies_strict`; `header_up X-Real-IP {client_ip}` on every proxied request | See "Client address" |
 | Access logs | Off on purpose: no IP addresses are written. Errors still go to the container log | See "Debugging with access logs" |
 
-If you add an external origin (analytics, CDN, fonts) the CSP must be extended in the
-`Caddyfile`; the game itself loads nothing from other hosts.
+If you add an external origin (analytics, CDN, fonts) to the page, extend the CSP with
+`csp.extra` in `config.json` (hot reload) and, for static files, in the `Caddyfile`; the game
+itself loads nothing from other hosts.
 
 ### Abuse limits in the game server
 
@@ -160,8 +175,8 @@ docker compose up -d server
 
   Both commands were exercised against a real stack (seed, back up, wipe the volume, restore,
   read the data back).
-- Certificates live in volumes `caddy-data` / `caddy-config`. Keep them so Caddy does not
-  re-issue certificates on every deploy (Let's Encrypt rate limits).
+- `config/config.json` lives next to `docker-compose.yml`, outside the images and volumes: back
+  it up with the deployment files.
 - Never run `docker compose down -v` in production: it deletes the volumes.
 
 ## Operations
@@ -191,26 +206,40 @@ bun run smoke -- https://gra.example.pl --strict   # security-header warnings be
 ```
 
 It uses only the public URL, like a school network would: `/api/health`, `/health`, the leaderboard
-endpoint, the HTML page and every script/stylesheet it links (cache header, compression,
-security headers), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
+endpoint, `/api/config`, the HTML page and every script/stylesheet it links (cache header,
+compression, security headers), the HTML shell (the embedded config parses and agrees with
+`/api/config`; the CSP mode matches it: ads on needs `'strict-dynamic'` with a `'nonce-…'` equal to
+the module script's nonce, ads off needs `script-src 'self'` without `'unsafe-eval'`; a second
+request gets a different nonce), `/ads.txt` (404 or `text/plain`, never HTML), `/prywatnosc` and
+the manifest (static, `no-cache`), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
 create room, second socket joins by code, ready, start, skip the briefing, receive live
 snapshots that acknowledge the input. It prints PASS/WARN/FAIL per step and exits 1 on any
-failure. The script is covered by `tools/smoke/smoke.test.ts` (runs against a local server).
+failure. A static fallback page instead of the server-rendered shell is a warning ("static
+fallback?"): the game server is down or the catch-all does not reach it. The script is covered
+by `tools/smoke/smoke.test.ts`, which runs it against a local server with ads off and with ads on
+for `localhost`.
 
 ## Local production-like test
 
-With Docker: `docker compose up -d --build` and `bun run smoke -- https://localhost --insecure`.
+With Docker: `docker compose up -d --build` and
+`bun run smoke -- http://localhost:8080 --strict`; then `docker compose stop server` and open
+`http://localhost:8080`: the menu loads and reports the server as unreachable.
 
-Without Docker (needs the `caddy` binary):
+Without Docker (needs the `caddy` binary, 2.8 or newer):
 
 ```sh
 bun run build && bun tools/deploy/precompress.ts apps/client/dist
-PORT=3000 DATABASE_PATH=:memory: bun apps/server/src/index.ts &
-sed -e 's|{$DOMAIN:localhost}|localhost:8443|' -e 's|server:3000|localhost:3000|' \
-    -e "s|root \* /srv|root * $PWD/apps/client/dist|" Caddyfile > /tmp/Caddyfile.local
+PORT=3000 DATABASE_PATH=:memory: bun apps/server/src/index.ts &   # renders the built index.html
+sed -e 's|server:3000|localhost:3000|' -e "s|root \* /srv|root * $PWD/apps/client/dist|" \
+    -e 's|^:80 {|:8080 {|' Caddyfile > /tmp/Caddyfile.local
 caddy run --config /tmp/Caddyfile.local --adapter caddyfile
-bun run smoke -- https://localhost:8443 --insecure
+bun run smoke -- http://localhost:8080 --strict
 ```
+
+To try ads mode, put `ads` with `enabled: true`, a `client`, one slot, `domains: ["localhost"]`
+and a `signOff` into `config/config.json`; the running server reloads it and the smoke test
+must report "ads mode: nonce policy matches the page". Caddy 2.10 answers precompressed files
+with a whole-file `206`; browsers and the smoke test treat it as a full response.
 
 ## School network notes
 

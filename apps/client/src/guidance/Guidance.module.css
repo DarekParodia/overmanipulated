@@ -25,6 +25,12 @@
   padding-right: max(11rem, env(safe-area-inset-right));
 }
 
+/* Keyboard and gamepad with a role: the ability chip sits bottom-left (S7-40). Both sides keep
+   its width free so the dock stays centred and never covers it. */
+.chipClear {
+  padding-inline: calc(var(--ability-chip-w, 16rem) + 2 * var(--space-4));
+}
+
 @keyframes pop {
   0% {
     transform: scale(0.8);

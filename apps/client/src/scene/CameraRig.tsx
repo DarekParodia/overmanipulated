@@ -1,5 +1,6 @@
 // Angled top-down camera. Fits the whole newsroom when tiles would be big enough; on small
-// screens it follows the local player at a readable zoom, clamped to the room. Applies shake.
+// screens it follows the local player at a readable zoom, clamped to the room and framed under
+// the HUD band (scene/camera-framing.ts). Applies shake and the hit punch.
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { type PerspectiveCamera, Vector3 } from 'three';
@@ -7,19 +8,12 @@ import { addPunch, createPunch, stepPunch } from '../fx/camera/punch.ts';
 import { addTrauma, createShake, stepShake } from '../fx/camera/shake.ts';
 import { feedback } from '../fx/feedback.ts';
 import { fxTimeScale } from '../fx/time-scale.ts';
+import { useHudBand } from '../hud/hud-band.ts';
 import { runtime } from '../net/session.ts';
+import { computeFraming, placeCamera, setUpLens } from './camera-framing.ts';
 import { renderState } from './render-state.ts';
 
-/** Smallest acceptable on-screen tile size in CSS px before switching to follow mode. */
-const MIN_TILE_PX = 40;
-const FOV = 32;
-/** Camera elevation angle above the floor. */
-export const ELEVATION = (58 * Math.PI) / 180;
 const FOLLOW_SMOOTHING = 6;
-/** In follow mode the view may extend this far past the room so HUD plates don't hide players. */
-const FOLLOW_EDGE_MARGIN = 1.5;
-/** At the back the view may extend further: the signs over the back row and the HUD sit there. */
-const FOLLOW_BACK_MARGIN = 3.5;
 
 export function CameraRig() {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
@@ -30,10 +24,9 @@ export function CameraRig() {
   const tmp = useMemo(() => new Vector3(), []);
 
   useEffect(() => {
-    camera.fov = FOV;
-    camera.near = 0.5;
-    camera.far = 200;
-    camera.updateProjectionMatrix();
+    setUpLens(camera);
+    // Leave no offset behind for whatever renders with this camera next.
+    return () => camera.clearViewOffset();
   }, [camera]);
 
   useEffect(
@@ -52,50 +45,26 @@ export function CameraRig() {
   );
 
   useFrame((_, delta) => {
-    const { width, height } = runtime.map;
-    // Visible floor needed to show the whole room with a margin, in tiles.
-    const fitWidth = width + 1.5;
-    // Extra room at the top for the signs over the back row and the HUD above them.
-    const fitDepth = height + 5;
-    const aspect = size.width / Math.max(1, size.height);
-    const tilePxIfFit = Math.min(
-      size.width / fitWidth,
-      size.height / (fitDepth * Math.sin(ELEVATION)),
-    );
-    const follow = tilePxIfFit < MIN_TILE_PX && renderState.local !== null;
-
-    let visibleDepth: number;
-    const target = tmp;
-    if (follow && renderState.local) {
-      visibleDepth = size.height / MIN_TILE_PX / Math.sin(ELEVATION);
-      const visibleWidth = size.width / MIN_TILE_PX;
-      const m = FOLLOW_EDGE_MARGIN;
-      const halfW = Math.min(visibleWidth / 2, width / 2 + m);
-      const halfD = Math.min(visibleDepth / 2, height / 2 + m);
-      target.set(
-        Math.min(width + m - halfW, Math.max(halfW - m, renderState.local.x)),
-        0,
-        Math.min(height + m - halfD, Math.max(halfD - FOLLOW_BACK_MARGIN, renderState.local.y)),
-      );
-    } else {
-      visibleDepth = Math.max(fitDepth, fitWidth / aspect / Math.sin(ELEVATION));
-      target.set(width / 2, 0, height / 2 - 0.9);
-    }
+    const framing = computeFraming({
+      width: size.width,
+      height: size.height,
+      mapW: runtime.map.width,
+      mapH: runtime.map.height,
+      local: renderState.local,
+      topInsetPx: useHudBand.getState().px,
+    });
     const k = 1 - Math.exp(-FOLLOW_SMOOTHING * delta);
-    focus.current.lerp(target, k);
-
-    const vertical = visibleDepth * Math.sin(ELEVATION);
+    focus.current.lerp(tmp.set(framing.target.x, 0, framing.target.z), k);
     // Hit-stop freezes the shake and the punch recovery too, so a slam holds for a beat.
     const fxDelta = delta * fxTimeScale();
-    const distance = (vertical / 2 / Math.tan((FOV * Math.PI) / 360)) * stepPunch(punch, fxDelta);
-    const offset = stepShake(shake, fxDelta);
-    camera.position.set(
-      focus.current.x + offset.x,
-      Math.sin(ELEVATION) * distance,
-      focus.current.z + Math.cos(ELEVATION) * distance + offset.y,
+    placeCamera(
+      camera,
+      focus.current,
+      framing,
+      size,
+      stepPunch(punch, fxDelta),
+      stepShake(shake, fxDelta),
     );
-    camera.lookAt(focus.current.x + offset.x, 0, focus.current.z + offset.y);
-    camera.rotation.z += offset.roll;
   });
 
   return null;
