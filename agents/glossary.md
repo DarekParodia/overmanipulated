@@ -83,6 +83,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Kampania | `campaign` | |
 | Tryb nieskończony | `endlessMode` | |
 | Pokój, kod pokoju | `room`, `roomCode` | |
+| Pas HUD | `hudBand` (`hud/hud-band.ts`: `bandBottom`, `useHudBand`, `useHudBandMeasure`; CSS `--hud-band`, `--hud-pill-right`) | How far down the top-of-screen HUD reaches: the lowest edge of the elements marked `data-hud-band` (pill, folder queue, menu button, endless tempo chip) that start in the upper half of the screen, capped at `HUD_BAND_MAX_SHARE` of its height. Captions, event banners and verdict toasts start under it; the follow camera frames the room below it (S7-12) |
 | Menu gry | `gameMenu` (`hud/GameMenu.tsx`, `GameMenuButton.tsx`, `useGameMenu`, `pl.gameMenu`) | The in-game menu: one top-right button (Esc, Start) opening a sheet with „Wróć do gry”, settings, fullscreen, room code and „Wyjdź z redakcji” (two presses within `LEAVE_CONFIRM_MS`). Replaces the tool buttons and the room chip |
 | Pauza | `paused` (snapshot, `GameStore.paused`), lobby action `setPaused` | A solo player's open menu holds the level: the registry skips stepping the room. Only while playing with exactly one connected player; anyone joining or reconnecting clears it. With teammates the menu shows „Gra trwa dalej” and nothing pauses |
 | Gospodarz | `host` | |
@@ -145,11 +146,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Zdolność (roli) | ability (`abilitySchema`, `ABILITY`, `abilityOf`) | A role's active power, sent as the target-free `useAbility` command; the server resolves the target |
 | Odnowienie | cooldown (`ABILITY[a].cooldownMs`, `abilityReadyAtMs`) | Time until the ability is ready again; starts when the effect happens, not when armed |
 | Uzbrojona | armed (`abilityArmed`, stage `armed`) | Ekspertyza and Druga szansa wait for their trigger; a second press disarms |
-| Ekspertyza | `expertise` | The next minigame at a station of the role's family is solved at once |
+| Ekspertyza | `expertise` (`expertiseCovers`) | Solves the running minigame at a station of the role's family at once; armed, it stamps when the next covered hold ends instead of opening the minigame. Stamps with `via: 'expertise'` |
 | Telefon z terenu | `fieldCall` (`FieldCall`) | The carried folder gets its phone stamp after a call while walking |
 | Przedłużenie | `extendDeadline` (`pickExtendTarget`, `extendFolders`) | +20 s for an auto-picked folder: the carried one, else the one on the operated desk, else the most urgent; a botRaid wave moves together. Recorded in `extendedMs`; the speed bonus ignores the added time |
-| Druga szansa | `secondChance` | A failed minigame reopens without the lockout |
-| Podaj teczkę | `passFolder` | The carried folder goes to the nearest free teammate |
+| Druga szansa | `secondChance` | At a locked station (faced, or nearest within 2.5 tiles) the minigame reopens at once for the presser; armed, the next failed minigame reopens for the same operator. No lockout and no re-hold |
+| Podaj teczkę | `passFolder` (`pickPassTarget`) | The carried folder goes at once to the nearest free teammate within 6 tiles: connected (not in `SimContext.absent`), empty-handed, at no station or desk; ties by join order |
 | Koło ratunkowe | `rescue` (passive; `rescuesLeft`, `RESCUE_ADD_MS`, `folderRescued`) | A folder that reaches its deadline in the rescuer's hands gets +20 s, once per level |
 | Podgląd zdolności | ability preview (`abilityPreview`, `AbilityPreview`, `AbilityView`, `AbilityEnv`) | What a press would do now (`none`, `calling`, `armed`, `cooling`, `blocked`, `arm`, `now` with its target); one function for the sim, the HUD and the bots |
 | Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |

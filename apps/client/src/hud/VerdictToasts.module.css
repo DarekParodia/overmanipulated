@@ -1,10 +1,12 @@
 /*
- * Verdict toasts: chunky pills under the folder queue, centred between the joystick half and
- * the action buttons on phones. The coloured disc carries the outcome icon (✓, ✗, hourglass).
+ * Verdict toasts: chunky pills under the measured HUD band (`--hud-band`, hud/hud-band.ts; the
+ * fallback is the queue height, used only before the first measurement), centred between the
+ * joystick half and the action buttons on phones. The coloured disc carries the outcome icon
+ * (✓, ✗, hourglass).
  */
 .toasts {
   position: absolute;
-  top: calc(var(--hud-top) + var(--hud-queue-h) + var(--space-3));
+  top: calc(var(--hud-band, var(--hud-top) + var(--hud-queue-h)) + var(--space-3));
   left: 50%;
   display: flex;
   flex-direction: column;
@@ -125,7 +127,7 @@
 
 @media (max-height: 500px), (max-width: 760px) {
   .toasts {
-    top: calc(var(--hud-top) + var(--hud-queue-h) + var(--space-2));
+    top: calc(var(--hud-band, var(--hud-top) + var(--hud-queue-h)) + var(--space-2));
     gap: var(--space-1);
   }
 

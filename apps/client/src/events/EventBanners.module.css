@@ -1,12 +1,14 @@
 /*
- * Event banners: chunky cards in the top-right corner under the menu button (hud/GameMenuButton),
+ * Event banners: chunky cards in the top-right corner under the measured HUD band (`--hud-band`,
+ * hud/hud-band.ts: the menu button, the folder queue and the pill; the fallback is the old
+ * offset under the menu button, used only before the first measurement),
  * clear of the HUD numbers (top-left), the folder queue and verdict toasts (top-centre), the
  * hint bubble (bottom-centre) and the touch controls (bottom corners). The coloured disc
  * carries the event icon; the card slides in from the right.
  */
 .banners {
   position: absolute;
-  top: calc(var(--hud-top) + var(--event-tools-h, 6.25rem));
+  top: calc(var(--hud-band, var(--hud-top) + var(--event-tools-h, 6.25rem)) + var(--space-2));
   right: var(--hud-right);
   display: flex;
   flex-direction: column;
@@ -116,6 +118,7 @@
 @media (max-height: 500px), (max-width: 760px) {
   .banners {
     --event-tools-h: 5.5rem;
+    top: calc(var(--hud-band, var(--hud-top) + var(--event-tools-h)) + var(--space-1));
     gap: var(--space-1);
     max-width: calc(50% - var(--hud-right) - var(--space-2));
   }

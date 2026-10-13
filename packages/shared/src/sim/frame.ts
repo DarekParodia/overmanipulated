@@ -16,6 +16,11 @@ export type SimContext = {
    * server derives it every tick, `NORMAL_TUNING` plays the authored values unchanged.
    */
   tuning: SimTuning;
+  /**
+   * Players whose connection dropped (set by the server only while someone is away); Podaj
+   * teczkę never passes a folder to them.
+   */
+  absent?: ReadonlySet<string>;
 };
 
 /** One player's intent this tick, condensed from the inputs applied this tick. */

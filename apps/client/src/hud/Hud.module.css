@@ -1,7 +1,7 @@
 /*
  * HUD layer. Layout variables are shared with the queue and toast modules: the pill sits in the
  * top-left corner, the round menu button (hud/GameMenuButton) in the top-right, the queue between
- * them.
+ * them. How far down they reach is measured (hud/hud-band.ts) into `--hud-band`.
  */
 .hud {
   --hud-top: max(var(--space-3), env(safe-area-inset-top));
@@ -92,6 +92,11 @@
 .tempo svg {
   flex: none;
   margin-top: -0.15em;
+}
+
+/* „Tempo ×N” in words; phones show only „×N” next to the icon (one-row pill). */
+.tempoShort {
+  display: none;
 }
 
 .lastSeconds {
@@ -275,7 +280,8 @@
   color: var(--red-dark);
 }
 
-/* --- Phones and narrow windows: the pill stacks (timer, then points, then credibility) ----- */
+/* --- Narrow windows (761–1100 px): the pill stacks (timer, then points, then credibility) -- */
+/* Phones match this block too; the one-row phone block below overrides it. */
 
 @media (max-height: 500px), (max-width: 1100px) {
   .hud {
@@ -317,19 +323,36 @@
   }
 }
 
+/*
+ * --- Phones (S7-11): one low row, [clock m:ss] │ [star points] │ [shield value], with the
+ * credibility bar as a thin strip under the shield and its number. The numbers stay 30 px and
+ * the icons 22 px; endless mode puts „Tempo ×N” inline, so its pill is wider.
+ */
+
 @media (max-height: 500px), (max-width: 760px) {
   .hud {
     --hud-top: max(var(--space-2), env(safe-area-inset-top));
     --hud-left: max(var(--space-2), env(safe-area-inset-left));
     --hud-right: max(var(--space-2), env(safe-area-inset-right));
-    --hud-pill-w: 8.5rem;
+    --hud-pill-w: 19.5rem;
     --hud-tools-w: 3rem;
     /* Low cards on their side (FolderQueue.module.css) so they hide less of the station signs. */
     --hud-card-w: auto;
     --hud-queue-h: 3.25rem;
   }
 
+  .endless {
+    --hud-pill-w: 22.5rem;
+  }
+
+  /* The reserved width fits the usual numbers; a long score or clock widens the pill instead of
+     clipping it, and the queue moves along (`--hud-pill-right`, hud/hud-band.ts). */
   .pill {
+    width: max-content;
+    min-width: var(--hud-pill-w);
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
     padding: var(--space-1) var(--space-2);
     border-width: var(--stroke);
     border-radius: var(--radius-md);
@@ -341,16 +364,79 @@
     height: 22px;
   }
 
+  .timer {
+    flex: none;
+  }
+
+  /* Points and credibility side by side, each cell after a thin divider. */
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0 0 0 var(--space-2);
+    border-top: none;
+    border-left: var(--stroke) solid var(--surface-sunk);
+  }
+
   .score {
+    flex: none;
     gap: var(--space-1);
+    padding-right: var(--space-2);
+    border-right: var(--stroke) solid var(--surface-sunk);
+  }
+
+  .gauge {
+    flex: 1;
+    min-width: 0;
+    column-gap: var(--space-1);
+    row-gap: 2px;
   }
 
   .track {
-    height: 0.75rem;
+    height: 0.375rem;
+    border-width: 2px;
   }
 
-  .scorePop {
-    left: calc(100% + var(--space-2) + var(--space-3));
+  /* Endless: the tempo chip sits in the row, right after the clock, as an icon and „×N”. */
+  .tempo {
+    position: static;
+    margin-left: var(--space-1);
+    padding: 0.15em var(--space-2) 0;
+    box-shadow: var(--pop-pressed);
     font-size: var(--text-md);
+  }
+
+  .tempoLong {
+    display: none;
+  }
+
+  .tempoShort {
+    display: inline;
+  }
+
+  /* No room beside the points in one row: the "+N" chip drops just under the points instead. */
+  .scorePop {
+    top: calc(100% + var(--space-2));
+    left: 0;
+    font-size: var(--text-md);
+    animation-name: score-drop;
+  }
+}
+
+@keyframes score-drop {
+  0% {
+    transform: translateY(-0.5rem) scale(0.6);
+  }
+  18% {
+    transform: translateY(0) scale(1.12);
+  }
+  30% {
+    transform: translateY(0) scale(1);
+  }
+  80% {
+    transform: translateY(0.5rem) scale(1);
+  }
+  100% {
+    transform: translateY(0.75rem) scale(0);
   }
 }

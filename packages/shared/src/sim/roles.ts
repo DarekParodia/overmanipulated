@@ -1,6 +1,6 @@
 // Role perks (S7-36): the passive work bonus, the active ability and the crew's ability state as
 // the snapshot carries it. Pure lookups over ROLE_PERKS and STATION_FAMILY in constants.ts.
-import { ROLE_PERKS, STATION_FAMILY } from '../constants.ts';
+import { ABILITY, ROLE_PERKS, STATION_FAMILY } from '../constants.ts';
 import {
   type Ability,
   type Role,
@@ -9,7 +9,7 @@ import {
   type StationKind,
 } from '../domain.ts';
 import type { CrewSnapshot } from '../protocol.ts';
-import type { GameState } from './state.ts';
+import type { CrewMember, GameState } from './state.ts';
 
 /** The role's active ability; null without a role. */
 export function abilityOf(role: Role | null): Ability | null {
@@ -43,6 +43,30 @@ export function expertiseCovers(role: Role | null, kind: StationKind): boolean {
 /** The station kinds of a family, in `STATION_KINDS` order (lobby, cards, the Ekspertyza HUD). */
 export function familyStations(family: StationFamily): StationKind[] {
   return STATION_KINDS.filter((kind) => STATION_FAMILY[kind] === family);
+}
+
+/**
+ * The ability's effect happened: the member is disarmed and the cooldown starts at `elapsedMs`.
+ * Returns the same crew when the player has no crew member.
+ */
+export function spendAbility(
+  crew: Record<string, CrewMember>,
+  playerId: string,
+  ability: Ability,
+  elapsedMs: number,
+): Record<string, CrewMember> {
+  const member = crew[playerId];
+  if (!member) {
+    return crew;
+  }
+  return {
+    ...crew,
+    [playerId]: {
+      ...member,
+      abilityArmed: false,
+      abilityReadyAtMs: elapsedMs + ABILITY[ability].cooldownMs,
+    },
+  };
 }
 
 /** Every player's ability state for the snapshot, in join order. */

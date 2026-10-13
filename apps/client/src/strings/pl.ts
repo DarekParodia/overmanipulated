@@ -1409,6 +1409,8 @@ export const pl = {
         : `Tryb bez końca${best ? `, najlepszy wynik ${best}` : ''}`,
     timer: 'Czas gry',
     tempo: (n: number) => `Tempo ×${n}`,
+    /** The same chip inside the one-row phone pill (S7-11): the icon carries „tempo”. */
+    tempoShort: (n: number) => `×${n}`,
     tempoLabel: (n: number) => `Tempo: ${n} razy szybciej`,
     headline: (score: string) => `Redakcja upadła – wynik: ${score}`,
     lede: 'Spróbujcie jeszcze raz!',
