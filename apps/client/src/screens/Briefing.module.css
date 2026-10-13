@@ -65,7 +65,8 @@
   grid-template-areas:
     "kicker ring"
     "title ring"
-    "topic topic";
+    "topic topic"
+    "run run";
   align-items: center;
   column-gap: var(--space-4);
   padding-bottom: var(--space-3);
@@ -74,6 +75,9 @@
 
 .kicker {
   grid-area: kicker;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .levelChip {
@@ -88,6 +92,24 @@
   font-family: var(--font-display);
   font-size: var(--text-md);
   font-weight: 800;
+}
+
+/* The room's difficulty next to the level chip: secondary, white. */
+.difficultyChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.2em var(--space-3) 0.05em;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.difficultyChip svg {
+  margin-top: -0.15em;
 }
 
 .title {
@@ -220,6 +242,27 @@
   margin-top: -0.1em;
 }
 
+/* The dealt run under the topic, above the masthead rule (phones: beside the title). */
+.run {
+  grid-area: run;
+  margin-top: var(--space-2);
+}
+
+/* The run line's stars: yellow like the results' stars. */
+.stars {
+  display: inline-flex;
+  --icon-fill: var(--yellow);
+}
+
+/* The share rule under the run chips, on its own line (phones: after them, same line). */
+.rule {
+  flex-basis: 100%;
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-soft);
+  line-height: var(--leading-snug);
+}
+
 /* Ready dots on the left, the one main action on the right. */
 .foot {
   display: flex;
@@ -304,20 +347,62 @@
   font-weight: 800;
 }
 
-/* Short landscape phones: everything on one screen, no scrolling. */
+/* Short landscape phones: one screen. A long briefing (topic, three points, new stations and the
+   run line) can outgrow 360 px, so the card scrolls inside the page and the ready row sticks to
+   its bottom edge: „Gotowy!” never leaves the screen. */
 @media (max-height: 520px) and (orientation: landscape) {
   .page {
+    height: 100%;
+    grid-template-rows: minmax(0, 1fr);
     padding-top: max(var(--space-2), env(safe-area-inset-top));
     padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
   }
   .card {
-    gap: var(--space-2);
+    max-height: 100%;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    gap: var(--space-1);
     padding: var(--space-3) var(--space-5);
   }
-  .head {
-    padding-bottom: var(--space-2);
+  /* The run line is one row under the topic: the two thresholds and the rule beside them; the
+     folder count stays on the lobby's level card. */
+  .run {
+    margin-top: var(--space-1);
+    gap: var(--space-1) var(--space-2);
   }
-  .levelChip {
+  .runTitle,
+  .runFolders,
+  .from {
+    display: none;
+  }
+  .run .chips {
+    gap: var(--space-1);
+  }
+  .run .chip {
+    gap: var(--space-1);
+    padding: 0.1em var(--space-2) 0;
+  }
+  .run .chip svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  .rule {
+    flex-basis: auto;
+  }
+  .foot {
+    position: sticky;
+    bottom: calc(-1 * var(--space-3));
+    z-index: 1;
+    margin-bottom: calc(-1 * var(--space-3));
+    padding-block: var(--space-2) var(--space-3);
+    background: var(--surface);
+  }
+  .head {
+    padding-bottom: var(--space-1);
+  }
+  .levelChip,
+  .difficultyChip,
+  .rule {
     font-size: var(--text-sm);
   }
   .title {

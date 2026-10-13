@@ -23,6 +23,8 @@ function result(
   scoreDelta: number,
   credibilityDelta: number,
   speed = 0,
+  cited: string[] = [],
+  missed: string[] = [],
 ) {
   return {
     folderId,
@@ -33,10 +35,10 @@ function result(
     verdict,
     scoreDelta,
     credibilityDelta,
-    justifyingStampIds: [],
+    justifyingStampIds: cited,
     requiredStamps: 1,
     bonuses: { speed, multiStamp: 0, bossCall: 0 },
-    missedStampIds: [],
+    missedStampIds: missed,
   };
 }
 
@@ -51,7 +53,18 @@ const LEVEL_END = {
   results: [
     result('f1', 'l0-zalany-rynek', 'correct', 'correctImportant', 'reject', 25, 5, 5),
     result('f2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 10, 0),
-    result('f3', 'l0-zalany-rynek', 'wrong', 'publishedFake', 'publish', -20, -25),
+    result(
+      'f3',
+      'l0-zalany-rynek',
+      'wrong',
+      'publishedFake',
+      'publish',
+      -20,
+      -25,
+      0,
+      ['l0-zalany-rynek-image'],
+      ['l0-zalany-rynek-archive'],
+    ),
     result('f4', 'l0-nocny-autobus', 'wrongJustification', 'weakProof', 'publish', 5, 0),
     result('f5', 'l0-zalany-rynek', 'expired', 'expired', null, -5, -5),
     result('f6', 'l0-nocny-autobus', 'unfinished', 'unfinished', null, 0, 0),
@@ -234,6 +247,117 @@ test('endless results show the totals without stars', async ({ browser }, testIn
   await expect(page.getByTestId('endless-survived')).toBeVisible();
   await page.screenshot({
     path: testInfo.outputPath('results-endless.png'),
+    scale: 'css',
+    style: HIDE_PERF,
+  });
+});
+
+// S7-07: one Kolegium card per folder, so the card points add up to the score; each card says
+// why it paid what it paid, the deciding proof shows only on folders that did not end well, and
+// the folder still in play at the end comes last with the hourglass.
+test('the Kolegium explains every folder', async ({ browser }, testInfo) => {
+  // Pages through six cards on phones, each with its reveal.
+  test.slow();
+  const phone = testInfo.project.name !== 'desktop';
+  const player = await open(browser, phone ? SMALL_PHONE : DESKTOP, true);
+  const page = await showResults(player);
+  const cards = page.getByTestId('kolegium-card');
+  if (phone) {
+    // One card per page after the summary: page through all six and read each one.
+    const seen: { outcome: string | null; points: number; proof: number }[] = [];
+    for (let i = 0; i < 6; i++) {
+      await page.getByRole('button', { name: 'Następna teczka' }).click();
+      await expect(page.getByText(new RegExp(`^${i + 2} z 7$`))).toBeVisible();
+      const card = cards.first();
+      await expect(card).toBeVisible();
+      seen.push({
+        outcome: await card.getAttribute('data-outcome'),
+        points: Number(await card.getAttribute('data-points')),
+        proof: await card.getByTestId('kolegium-proof').count(),
+      });
+      if (i === 2) {
+        await page.screenshot({
+          path: testInfo.outputPath('kolegium-proof.png'),
+          scale: 'css',
+          style: HIDE_PERF,
+        });
+      }
+    }
+    expect(seen.map((card) => card.outcome)).toEqual([
+      'correct',
+      'correct',
+      'wrong',
+      'wrongJustification',
+      'expired',
+      'unfinished',
+    ]);
+    expect(seen.reduce((sum, card) => sum + card.points, 0)).toBe(15);
+    expect(seen.map((card) => card.proof)).toEqual([0, 0, 1, 1, 1, 1]);
+    await expect(cards.first().getByRole('img', { name: 'Nie zdążyliście' })).toBeVisible();
+    return;
+  }
+  await expect(cards).toHaveCount(6);
+  const points = await cards.evaluateAll((nodes) =>
+    nodes.map((node) => Number(node.getAttribute('data-points'))),
+  );
+  expect(points.reduce((sum, value) => sum + value, 0)).toBe(15);
+  const first = cards.nth(0);
+  await expect(first.getByTestId('kolegium-why')).toHaveText(
+    /^Ważna teczka, trafny werdykt: \+20\spkt · tempo \+5$/,
+  );
+  await expect(first.getByTestId('kolegium-credibility')).toContainText('+5');
+  // The proof section is hidden on correct folders.
+  await expect(cards.nth(0).getByTestId('kolegium-proof')).toHaveCount(0);
+  await expect(cards.nth(1).getByTestId('kolegium-proof')).toHaveCount(0);
+  const wrong = cards.nth(2);
+  await expect(wrong).toHaveAttribute('data-outcome', 'wrong');
+  const proof = wrong.getByTestId('kolegium-proof');
+  await expect(proof).toContainText('Dowód, który rozstrzygał');
+  await expect(proof.locator('li[data-status="cited"]')).toContainText('wskazany');
+  await expect(proof.locator('li[data-status="missing"]')).toContainText('nie sprawdzono');
+  await expect(wrong.getByTestId('kolegium-credibility')).toContainText('−25');
+  const last = cards.nth(5);
+  await expect(last).toHaveAttribute('data-outcome', 'unfinished');
+  await expect(last.getByRole('img', { name: 'Nie zdążyliście' })).toBeAttached();
+  await expect(last.getByTestId('kolegium-why')).toHaveText(
+    /^Teczka została na koniec wydania: 0\spkt$/,
+  );
+  await wrong.scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: testInfo.outputPath('kolegium-proof.png'),
+    scale: 'css',
+    style: HIDE_PERF,
+  });
+});
+
+// Endless groups the Kolegium per story with „×N” so long runs stay short.
+test('endless groups the Kolegium per story', async ({ browser }, testInfo) => {
+  const phone = testInfo.project.name !== 'desktop';
+  const player = await open(browser, phone ? SMALL_PHONE : DESKTOP, true);
+  const page = await showResults(player, {
+    ...LEVEL_END,
+    levelId: 'endless',
+    won: false,
+    stars: 0,
+    credibility: 0,
+    lossReason: 'credibility',
+    starThresholds: null,
+    maxScore: null,
+    survivedS: 200,
+  });
+  const cards = page.getByTestId('kolegium-card');
+  if (phone) {
+    await expect(page.getByText(/^1 z 3$/)).toBeVisible();
+    await page.getByRole('button', { name: 'Następna teczka' }).click();
+  } else {
+    await expect(cards).toHaveCount(2);
+  }
+  const first = cards.first();
+  await expect(first).toHaveAttribute('data-count', '3');
+  await expect(first.getByTestId('kolegium-repeats')).toHaveText('×3');
+  await expect(first.getByTestId('kolegium-why')).toContainText('Dobrze ×1 · Błędny werdykt ×1');
+  await page.screenshot({
+    path: testInfo.outputPath('kolegium-endless.png'),
     scale: 'css',
     style: HIDE_PERF,
   });

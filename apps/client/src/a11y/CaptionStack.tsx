@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
+import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './CaptionStack.module.css';
@@ -81,7 +82,7 @@ export function CaptionStack() {
               <span className={styles.mark}>
                 <Icon name={chip.icon} size={22} />
               </span>
-              <span className={styles.text}>{chip.text}</span>
+              <span className={styles.text}>{typeset(chip.text)}</span>
             </li>
           ))}
         </ul>

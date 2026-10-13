@@ -53,6 +53,23 @@
   margin-top: -0.1em;
 }
 
+/* The guests' difficulty chip pops when the host changes it (motion tokens honour reduced motion). */
+.difficultyChip {
+  animation: difficulty-pop var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes difficulty-pop {
+  0% {
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .hostOnly {
   grid-area: hostOnly;
   font-size: var(--text-sm);

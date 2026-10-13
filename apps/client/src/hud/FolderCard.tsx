@@ -2,10 +2,11 @@
 // for the priority (shape, not only colour), a big countdown and a small badge for where the
 // folder is. No headline: the card is read in a glance. Under ten seconds the card turns red
 // and shakes (no shake with reduced motion; nothing blinks). A multi-stamp folder also gets an
-// evidence chip centred on its top edge (S7-19): proofs collected out of N, or only "×N".
+// evidence chip centred on its top edge (S7-19): proofs collected out of N with hints on, or
+// only "×N" with them off or on Ekspert (the effective hints, S7-24).
 import type { Folder } from '@redakcja/shared';
 import type { TagBadge } from '../events/event-model.ts';
-import { useGuidance } from '../guidance/store.ts';
+import { useEffectiveHints } from '../guidance/store.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './FolderQueue.module.css';
@@ -50,9 +51,8 @@ export function FolderCard({
   const left = folderTimeLeftMs(folder, elapsedMs);
   const warn = isDeadlineWarning(folder, elapsedMs);
   const badge = BADGE[whereKind];
-  // The plain hints setting for now; S7-24 switches this to the effective-hints selector
-  // (the setting AND `DIFFICULTY[room difficulty].hints`, so Ekspert shows only "×N").
-  const hintsOn = useGuidance((s) => s.hintsEnabled);
+  // The setting AND `DIFFICULTY[room difficulty].hints`, so Ekspert shows only "×N".
+  const hintsOn = useEffectiveHints();
   const evidence = evidenceBadge(folder, story, hintsOn);
 
   return (

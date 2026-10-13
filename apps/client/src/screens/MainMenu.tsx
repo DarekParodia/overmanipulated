@@ -7,6 +7,7 @@ import { requestMusic } from '../fx/audio/music.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
+import { usePublicConfig } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Field } from '../ui/Field.tsx';
@@ -30,6 +31,8 @@ export function MainMenu() {
   useEffect(() => requestMusic('menu'), []);
   useEffect(() => {
     void fetchHealth().then((h) => setHealth(h.status));
+    // Back in the menu: pick up MOTD and flag changes without a reload (throttled to 60 s).
+    void usePublicConfig.getState().refresh();
   }, []);
 
   function validNickname(): string | null {

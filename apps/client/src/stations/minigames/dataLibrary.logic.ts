@@ -11,7 +11,10 @@ import {
   DATA_LIBRARY_MAX_MISTAKES,
   DATA_LIBRARY_ROWS,
   DATA_LIBRARY_YEARS,
+  DEFAULT_DIFFICULTY,
+  type Difficulty,
   hashText,
+  mistakeLimit,
   type Rng,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
@@ -254,6 +257,8 @@ export type GameState = {
   struck: boolean[][];
   mismatchStruck: boolean;
   mistakes: number;
+  /** Mistakes that fail the round on this difficulty (`mistakeLimit`, S7-24). */
+  maxMistakes: number;
   outcome: Outcome;
   /** What the player chose last: a cell, or the mismatch button. */
   picked: Cursor | null;
@@ -268,13 +273,17 @@ export type Action =
 /** What just happened, for feedback cues. */
 export type Effect = 'move' | 'right' | 'mistake' | 'failed' | 'blocked';
 
-export function initialState(puzzle: Puzzle): GameState {
+export function initialState(
+  puzzle: Puzzle,
+  difficulty: Difficulty = DEFAULT_DIFFICULTY,
+): GameState {
   return {
     puzzle,
     cursor: { row: 0, col: 0 },
     struck: puzzle.table.values.map((r) => r.map(() => false)),
     mismatchStruck: false,
     mistakes: 0,
+    maxMistakes: mistakeLimit(DATA_LIBRARY_MAX_MISTAKES, difficulty),
     outcome: 'playing',
     picked: null,
   };
@@ -282,7 +291,7 @@ export function initialState(puzzle: Puzzle): GameState {
 
 function wrong(state: GameState, patch: Partial<GameState>): [GameState, Effect] {
   const mistakes = state.mistakes + 1;
-  const failed = mistakes >= DATA_LIBRARY_MAX_MISTAKES;
+  const failed = mistakes >= state.maxMistakes;
   return [
     { ...state, ...patch, mistakes, outcome: failed ? 'failure' : 'playing' },
     failed ? 'failed' : 'mistake',

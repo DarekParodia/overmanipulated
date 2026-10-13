@@ -8,7 +8,8 @@ export const TICK_FAST_MS = 220;
 
 /**
  * Time left on the most urgent warned folder, or null when nothing needs ticking. A folder whose
- * deadline was extended past the warning window stops ticking even though `warned` stays set.
+ * deadline moved past the warning window stops ticking even while a stale snapshot still has
+ * `warned` set (Przedłużenie and Koło ratunkowe clear it, S7-37).
  */
 export function urgentTimeLeft(folders: readonly Folder[], elapsedMs: number): number | null {
   let best: number | null = null;

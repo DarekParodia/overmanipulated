@@ -9,8 +9,15 @@ import {
   type LevelEndMessage,
   type LossReason,
   type StarThresholds,
+  type StationKind,
 } from '@redakcja/shared';
-import type { DebriefCard, DebriefStoryLookup } from './debrief-model.ts';
+import type {
+  DebriefCard,
+  DebriefStory,
+  DebriefStoryLookup,
+  ProofRow,
+  ProofStatus,
+} from './debrief-model.ts';
 
 // --- Totals ('Za co punkty') ----------------------------------------------------------------
 
@@ -186,12 +193,27 @@ export function lossReasonOf(end: LossReasonInput): LossReason | null {
 export type KolegiumCard = DebriefCard & {
   credibilityDelta: number;
   bonuses: FolderResult['bonuses'];
+  /** Proofs the story required (`requiredStamps`) and the countable ones the desk cited. */
+  requiredStamps: number;
+  citedProofs: number;
+  /** Stations of the hint-only stamps (the AI scanner) cited without any proof; else []. */
+  hintStations: StationKind[];
   /** Folders on the card: 1 per folder, more for a story grouped in endless. */
   count: number;
+  /** Folders on the card per outcome; with `count` 1 only the card's own outcome. */
+  tally: Record<FolderOutcome, number>;
 };
 
 /** `folder`: one card per folder (campaign, versus); `story`: one per story (endless). */
 export type KolegiumMode = 'folder' | 'story';
+
+const NO_TALLY: Readonly<Record<FolderOutcome, number>> = {
+  correct: 0,
+  wrongJustification: 0,
+  wrong: 0,
+  expired: 0,
+  unfinished: 0,
+};
 
 /** Folder ids are `f<n>` in spawn order; anything else sorts after them, in list order. */
 function arrivalNumber(folderId: string): number {
@@ -199,9 +221,67 @@ function arrivalNumber(folderId: string): number {
   return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
 }
 
-function cardOf(result: FolderResult, lookup: DebriefStoryLookup): KolegiumCard {
+/**
+ * 'Dowód, który rozstrzygał' for a folder that did not end `correct`: each justifying, non-hint
+ * stamp in the story's order, cited at the desk ('wskazany'), only in the folder ('w teczce') or
+ * never collected ('nie sprawdzono'). A stamp from a station missing on the level could not be
+ * collected, so it is left out. Null for a correct folder.
+ */
+function proofRows(
+  result: FolderResult,
+  story: DebriefStory | undefined,
+  levelStations: readonly StationKind[],
+): ProofRow[] | null {
+  if (result.outcome === 'correct') {
+    return null;
+  }
+  const justifying = story?.justifyingStamps ?? [
+    ...result.justifyingStampIds,
+    ...result.missedStampIds,
+  ];
+  return (story?.stamps ?? []).flatMap((stamp): ProofRow[] => {
+    if (!justifying.includes(stamp.id) || isHintOnly(stamp.station)) {
+      return [];
+    }
+    const status: ProofStatus = result.missedStampIds.includes(stamp.id)
+      ? 'missing'
+      : result.justifyingStampIds.includes(stamp.id)
+        ? 'cited'
+        : 'collected';
+    if (
+      status === 'missing' &&
+      levelStations.length > 0 &&
+      !levelStations.includes(stamp.station)
+    ) {
+      return [];
+    }
+    return [{ id: stamp.id, station: stamp.station, text: stamp.text, status }];
+  });
+}
+
+function cardOf(
+  result: FolderResult,
+  lookup: DebriefStoryLookup,
+  levelStations: readonly StationKind[],
+): KolegiumCard {
   const story = lookup(result.storyId);
   const stamps = story?.stamps ?? [];
+  const stationOf = (id: string) => stamps.find((s) => s.id === id)?.station;
+  const cited = [...new Set(result.justifyingStampIds)];
+  const hints = [
+    ...new Set(
+      cited.flatMap((id) => {
+        const station = stationOf(id);
+        return station !== undefined && isHintOnly(station) ? [station] : [];
+      }),
+    ),
+  ];
+  const citedProofs = cited.filter((id) => {
+    const station = stationOf(id);
+    const justifies = story?.justifyingStamps?.includes(id) ?? true;
+    const inFolder = !result.missedStampIds.includes(id);
+    return station !== undefined && justifies && inFolder && !isHintOnly(station);
+  }).length;
   return {
     storyId: result.storyId,
     folderId: result.folderId,
@@ -213,51 +293,62 @@ function cardOf(result: FolderResult, lookup: DebriefStoryLookup): KolegiumCard 
     scoreDelta: result.scoreDelta,
     credibilityDelta: result.credibilityDelta,
     bonuses: { ...result.bonuses },
+    requiredStamps: result.requiredStamps,
+    citedProofs,
+    hintStations: citedProofs === 0 ? hints : [],
     count: 1,
+    tally: { ...NO_TALLY, [result.outcome]: 1 },
     debrief: story?.debrief ?? null,
-    missedStamps: result.missedStampIds.flatMap((id) => {
-      const stamp = stamps.find((s) => s.id === id);
-      return stamp && !isHintOnly(stamp.station)
-        ? [{ id: stamp.id, station: stamp.station, text: stamp.text }]
-        : [];
-    }),
+    proof: proofRows(result, story, levelStations),
   };
 }
 
 /**
- * The Kolegium cards in the order the folders arrived (results come in resolution order). Per
- * folder, the card points add up to the level's score. Per story, a story that came again adds
- * its points, credibility and bonuses to the story's card (`count`); the card keeps the first
- * folder's outcome, reason, verdict and missed proof, so the list stays short in long runs.
+ * The Kolegium cards in the order the folders arrived (results come in resolution order), with
+ * the folders still in play at the end (`unfinished`) last. Per folder, the card points add up
+ * to the level's score. Per story, a story that came again adds its points, credibility, bonuses
+ * and outcome to the story's card (`count`, `tally`); the card keeps the first folder's outcome,
+ * reason and verdict, and the deciding proof of the first folder that needed it, so the list
+ * stays short in long runs. `levelStations` (the level's station kinds; empty: unknown) leaves
+ * proof from stations the level does not have out of the proof section.
  */
 export function kolegiumCards(
   results: readonly FolderResult[],
   lookup: DebriefStoryLookup,
   mode: KolegiumMode,
+  levelStations: readonly StationKind[] = [],
 ): KolegiumCard[] {
+  const last = (result: FolderResult) => (result.outcome === 'unfinished' ? 1 : 0);
   const ordered = results
     .map((result, index) => ({ result, index }))
     .sort(
       (a, b) =>
-        arrivalNumber(a.result.folderId) - arrivalNumber(b.result.folderId) || a.index - b.index,
+        last(a.result) - last(b.result) ||
+        arrivalNumber(a.result.folderId) - arrivalNumber(b.result.folderId) ||
+        a.index - b.index,
     );
   if (mode === 'folder') {
-    return ordered.map(({ result }) => cardOf(result, lookup));
+    return ordered.map(({ result }) => cardOf(result, lookup, levelStations));
   }
   const byStory = new Map<string, KolegiumCard>();
   for (const { result } of ordered) {
     const card = byStory.get(result.storyId);
     if (!card) {
-      byStory.set(result.storyId, cardOf(result, lookup));
+      byStory.set(result.storyId, cardOf(result, lookup, levelStations));
       continue;
     }
     card.count += 1;
+    card.tally[result.outcome] += 1;
     card.scoreDelta += result.scoreDelta;
     card.credibilityDelta += result.credibilityDelta;
     card.bonuses.speed += result.bonuses.speed;
     card.bonuses.multiStamp += result.bonuses.multiStamp;
     card.bonuses.bossCall += result.bonuses.bossCall;
+    if (card.proof === null) {
+      card.proof = proofRows(result, lookup(result.storyId), levelStations);
+    }
   }
+  // Insertion order: a story first met among the unfinished folders stays with them, last.
   return [...byStory.values()];
 }
 

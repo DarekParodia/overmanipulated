@@ -1,9 +1,9 @@
 // Balance and engine constants shared by client and server.
 // Change values here, never inline (AGENTS.md rule 6).
-import type { Difficulty, Role, StationKind } from './domain.ts';
+import type { Ability, Difficulty, Role, StationFamily, StationKind } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 6;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -99,8 +99,6 @@ export const MULTI_STAMP_FIRST_LEVEL = 4;
 export const INTERACTION_REACH_TILES = 1.1;
 /** A folder enters the "deadline warning" state with this much time left. */
 export const DEADLINE_WARNING_MS = 10_000;
-/** Managing editor: one deadline extension per level, by this much. */
-export const DEADLINE_EXTENSION_MS = 20_000;
 
 /** Hold-to-work time at each station before its minigame opens (design doc: 3–8 s). */
 export const STATION_WORK_MS = {
@@ -110,16 +108,102 @@ export const STATION_WORK_MS = {
   phone: 6000,
   aiScanner: 3000,
   dataLibrary: 5000,
+  geolocation: 4000,
+  transcript: 5000,
+  crossCheck: 4000,
+  metadata: 4000,
 } as const satisfies Record<StationKind, number>;
 
-/** Role bonus: work time multiplier at the role's stations ("40% faster"). */
-export const ROLE_WORK_TIME_FACTOR = 0.6;
-export const ROLE_STATIONS = {
-  photoEditor: ['imageSearch', 'aiScanner'],
-  archivist: ['archive'],
-  reporter: ['phone'],
-  managingEditor: [],
-} as const satisfies Record<Role, readonly StationKind[]>;
+// --- Stage 7: roles, station families, abilities (S7-36) --------------------------------------
+
+/**
+ * The family of every station kind. In Stage 7 families only gate Ekspertyza (a photo editor's
+ * covers the image stations, an archivist's the documents); role passives keep explicit lists.
+ */
+export const STATION_FAMILY = {
+  imageSearch: 'image',
+  aiScanner: 'image',
+  geolocation: 'image',
+  metadata: 'image',
+  archive: 'documents',
+  dataLibrary: 'documents',
+  transcript: 'documents',
+  sourceRegistry: 'sources',
+  phone: 'sources',
+  crossCheck: 'sources',
+} as const satisfies Record<StationKind, StationFamily>;
+
+/** What a role brings: its passive work bonus, its active ability and its special rules. */
+export type RolePerk = {
+  /** Stations where the role's hold-to-work time is multiplied by `workFactor` (the passive). */
+  fasterAt: readonly StationKind[];
+  /** Work-time multiplier at `fasterAt` stations ("40% faster" is 0.6); 1 elsewhere. */
+  workFactor: number;
+  /** The role's active ability (R / RB / the fourth touch button). */
+  ability: Ability;
+  /** The station family the role's Ekspertyza covers; null for roles without Ekspertyza. */
+  expertiseFamily: StationFamily | null;
+  /** The phone minigame starts without the queue (client-side, design doc). */
+  skipsPhoneQueue: boolean;
+  /** Koło ratunkowe: deadline rescues of a carried folder per level (0 without the perk). */
+  rescuesPerLevel: number;
+};
+
+export const ROLE_PERKS = {
+  photoEditor: {
+    fasterAt: ['imageSearch', 'aiScanner', 'geolocation', 'metadata'],
+    workFactor: 0.6,
+    ability: 'expertise',
+    expertiseFamily: 'image',
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  archivist: {
+    fasterAt: ['archive', 'transcript'],
+    workFactor: 0.6,
+    ability: 'expertise',
+    expertiseFamily: 'documents',
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  reporter: {
+    fasterAt: ['phone', 'crossCheck'],
+    workFactor: 0.6,
+    ability: 'fieldCall',
+    expertiseFamily: null,
+    skipsPhoneQueue: true,
+    rescuesPerLevel: 0,
+  },
+  managingEditor: {
+    fasterAt: [],
+    workFactor: 1,
+    ability: 'extendDeadline',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+} as const satisfies Record<Role, RolePerk>;
+
+/**
+ * Ability tuning. Every cooldown starts at 60 s and is retuned only from bot data (S7-46); the
+ * cooldown starts when the effect happens, not when an ability is armed.
+ * - fieldCall.callMs: how long Telefon z terenu dials before the phone stamp lands;
+ * - extendDeadline.addMs: time Przedłużenie adds to a folder (a botRaid wave moves together);
+ * - secondChance.rangeTiles: how far a locked station may be for an immediate Druga szansa;
+ * - passFolder.rangeTiles: how far Podaj teczkę reaches a free teammate.
+ */
+export const ABILITY = {
+  expertise: { cooldownMs: 60_000 },
+  fieldCall: { cooldownMs: 60_000, callMs: 6000 },
+  extendDeadline: { cooldownMs: 60_000, addMs: 20_000 },
+  secondChance: { cooldownMs: 60_000, rangeTiles: 2.5 },
+  passFolder: { cooldownMs: 60_000, rangeTiles: 6 },
+} as const satisfies Record<Ability, { cooldownMs: number } & Record<string, number>>;
+
+/** Koło ratunkowe: time added to a folder that reaches its deadline in a Ratownik's hands. */
+export const RESCUE_ADD_MS = 20_000;
+/** Abilities are first ready this long after the level (or a mid-game join) starts. */
+export const ABILITY_FIRST_READY_MS = 0;
 
 /** A failed minigame blocks the station for this long ("failure costs time"). */
 export const MINIGAME_FAIL_LOCKOUT_MS = 3000;
@@ -422,6 +506,44 @@ export const DATA_LIBRARY_ROWS = 3;
 export const DATA_LIBRARY_YEARS = 3;
 /** Chance that the claimed figure is altered, for a folder without a data-library stamp. */
 export const DATA_LIBRARY_ALTERED_CHANCE = 0.6;
+
+// --- Stage 7: Mapa (geolocation) minigame (S7-48, played from S7-55) --------------------------
+
+export const GEOLOCATION_MAX_MISTAKES = 2;
+/** The town map: 12 district tiles. */
+export const GEOLOCATION_MAP = { columns: 4, rows: 3 } as const;
+/** Without a geolocation stamp: chance the photo is not from the captioned place. */
+export const GEOLOCATION_PROBLEM_CHANCE = 0.5;
+/** A photo not from the captioned place comes from another district (else another town). */
+export const GEOLOCATION_OTHER_DISTRICT_SHARE = 0.5;
+
+// --- Stage 7: Stenogram (transcript) minigame (S7-48, played from S7-53) ----------------------
+
+export const TRANSCRIPT_MAX_MISTAKES = 2;
+/** Lines of the full record; fits 640x360 as a 2x2 grid of lines at least 48 px tall. */
+export const TRANSCRIPT_LINES = 4;
+/** Without a transcript stamp: chance the clip is cut or absent. */
+export const TRANSCRIPT_PROBLEM_CHANCE = 0.5;
+
+// --- Stage 7: Inne media (crossCheck) minigame (S7-48, played from S7-54) ---------------------
+
+/** Three answers; like aiScanner and phone, one wrong pick fails. */
+export const CROSS_CHECK_MAX_MISTAKES = 1;
+export const CROSS_CHECK_CARDS = 5;
+/** Independent confirmations needed for „Potwierdzają”. */
+export const CROSS_CHECK_CONFIRMATIONS = 2;
+
+// --- Stage 7: Metadane (metadata) minigame (S7-48, played from S7-52) -------------------------
+
+export const METADATA_MAX_MISTAKES = 2;
+/** File fields compared with the claim: taken, device, software, place. */
+export const METADATA_FIELDS = 4;
+/** Without a metadata stamp: weights of the three puzzle outcomes. */
+export const METADATA_NO_STAMP_WEIGHTS = {
+  consistent: 0.4,
+  contradiction: 0.4,
+  stripped: 0.2,
+} as const;
 
 // --- S4-05..S4-09: level event presentation (client) -----------------------------------------
 

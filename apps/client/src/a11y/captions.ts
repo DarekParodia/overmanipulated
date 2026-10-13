@@ -84,7 +84,6 @@ export const captionTable: Record<CueId, CaptionEntry> = {
     group: 'deadline',
     ttlMs: 1600,
   }),
-  'folder.deadlineExtended': chip('hourglass', t.moreTime, 'good'),
   'folder.beltFull': chip('conveyor', t.beltFull, 'warn'),
   'folder.expired': chip('expired', t.folderLost, 'danger'),
   'station.workStart': skip('own-action'),
@@ -159,6 +158,18 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'event.end': skip('decorative'),
   'event.raidResolved': chip('check', t.raidResolved, 'good'),
   'event.outage.spark': skip('decorative'),
+  // S7-36 abilities. Arming is the player's own press; teammates see the armed badge (S7-42).
+  'ability.armed': chip('bolt', t.abilityArmed, 'info', { scope: 'local' }),
+  'ability.disarmed': skip('own-action'),
+  'ability.denied': skip('own-action'),
+  'ability.expertise': chip('bolt', t.expertise, 'good'),
+  'ability.call.start': chip('phone', t.callStarted, 'info'),
+  'ability.call.done': chip('phone', t.callStamp, 'good'),
+  'ability.call.dropped': chip('phone', t.callDropped, 'warn', { scope: 'local' }),
+  'ability.extendDeadline': chip('hourglass', t.moreTime, 'good'),
+  'ability.secondChance': chip('bolt', t.secondChance, 'good'),
+  'ability.pass': chip('folder', t.folderPassed, 'info'),
+  'role.rescue': chip('hourglass', t.rescued, 'good'),
 };
 
 /** The chip a cue shows for the given context, or null when it shows none. */

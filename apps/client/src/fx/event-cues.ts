@@ -73,6 +73,37 @@ export function levelEventCue(event: LevelEventMessage): CueId {
   }
 }
 
+type AbilityEvent = Extract<GameplayEvent, { kind: 'ability' }>;
+
+/**
+ * Cue of a role ability's stage (S7-36): arming and disarming are shared, Telefon z terenu has a
+ * cue per stage, every other ability is heard when its effect lands.
+ */
+export function abilityCue(event: AbilityEvent): CueId {
+  if (event.stage === 'armed') {
+    return 'ability.armed';
+  }
+  if (event.stage === 'disarmed') {
+    return 'ability.disarmed';
+  }
+  switch (event.ability) {
+    case 'fieldCall':
+      return event.stage === 'started'
+        ? 'ability.call.start'
+        : event.stage === 'cancelled'
+          ? 'ability.call.dropped'
+          : 'ability.call.done';
+    case 'expertise':
+      return 'ability.expertise';
+    case 'extendDeadline':
+      return 'ability.extendDeadline';
+    case 'secondChance':
+      return 'ability.secondChance';
+    case 'passFolder':
+      return 'ability.pass';
+  }
+}
+
 /** The cue for a gameplay event. `truthOf` looks up a story's truth (for wrong verdicts). */
 export function cueForEvent(
   event: GameplayEvent,
@@ -89,8 +120,6 @@ export function cueForEvent(
       return 'folder.deadlineWarning';
     case 'folderExpired':
       return 'folder.expired';
-    case 'deadlineExtended':
-      return 'folder.deadlineExtended';
     case 'workStarted':
       return 'station.workStart';
     case 'workCancelled':
@@ -111,6 +140,10 @@ export function cueForEvent(
       return levelEventCue(event);
     case 'raidResolved':
       return 'event.raidResolved';
+    case 'ability':
+      return abilityCue(event);
+    case 'folderRescued':
+      return 'role.rescue';
     case 'ping':
       switch (event.ping) {
         case 'needArchive':

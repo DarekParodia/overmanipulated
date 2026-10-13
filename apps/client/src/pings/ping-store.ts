@@ -103,6 +103,9 @@ export function pickerNav(selected: number, intent: NavIntent): NavOutcome {
       return { kind: 'close' };
     case 'alt':
       return { kind: 'again' };
+    case 'ability':
+      // The picker has no use for the role ability; the press is simply swallowed.
+      return { kind: 'none' };
   }
 }
 

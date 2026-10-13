@@ -220,6 +220,14 @@
   outline-offset: 0;
 }
 
+/* After a failure (when the difficulty allows it): the right result, dashed. */
+.revealed {
+  border-style: dashed;
+  border-color: var(--green-dark);
+  outline: 3px solid var(--green);
+  outline-offset: 0;
+}
+
 .badge {
   position: absolute;
   top: -0.6rem;

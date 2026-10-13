@@ -60,7 +60,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `station.workStart` / `station.workCancel` | `workStarted` / `workCancelled` | `workStart` / `workStop` pose | key clack, then typewriter loop (`keys`, per station) until cancel / minigame / stamp; stops if the station snapshot stops working | ink puff in player colour / dust; progress ring (station unit) | — | ● |
 | `station.denied` | station busy or wrong item | head shake | "nope" blip | red outline pulse | — | ● |
 | `minigame.start` / `minigame.fail` | `minigameStarted` / `minigameFailed` | `workStop` / `wobble` | paper whoosh / fail blips | paper flutter / smoke wisp | — / light tick | ● |
-| `stamp.applied` | `stampApplied` | `stampSlam` + 60 ms hit-stop (`fx/time-scale.ts`) | heavy thud | paper bits + ink splat | small shake, thud | ●● |
+| `stamp.applied` | `stampApplied` (at the station; at the reporter for `via: 'fieldCall'`) | `stampSlam` + 60 ms hit-stop (`fx/time-scale.ts`) | heavy thud | paper bits + ink splat | small shake, thud | ●● |
 | `desk.open` / `desk.close` | `deskOpened` / `deskClosed` | `deskOpen` / `deskClose` | drawer knock / soft back | dust | — | ● |
 | `verdict.correct` | correct verdict | `cheer`, `scorePop` (value = score delta) | rising chime | confetti in verdict colour (blue / red / ochre) | light tick | ●● |
 | `verdict.contextCorrect` | correct "publish with context" | `cheer`, `scorePop` | fanfare | bigger ochre burst + paper bits | small shake, thud | ●●● |
@@ -69,7 +69,6 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `verdict.truthRejected` | publishable story rejected | `shrug`, `credibilityCrack`, `scorePop` | low sting | grey ash | medium shake, thud | ●● |
 | `verdict.wrong` | needless context on a true story | `shrug`, `scorePop` | low sting (quieter) | grey ash | small shake | ●● |
 | `folder.deadlineWarning` / `folder.deadlineTick` | `deadlineWarning`; ticker while any warned folder is in play (`fx/deadline-ticker.ts`, 800 → 220 ms) | `tremble` | warning ticks, then clock ticks speeding up; stops on resolve or extension | paper flutter; timer turns red (HUD; no blinking in no-flash) | light tick | ● → ●● |
-| `folder.deadlineExtended` | `deadlineExtended` | `hop` | soft bell | paper flutter | — | ● |
 | `folder.beltFull` | `conveyorFull` rising edge (`fx/gameplay-feedback.ts`): a scheduled folder is due but every conveyor tile holds one | — (state-driven: the queue's ghost card band and the conveyor sign ring turn orange, the sign says „Pełna”) | unsure two-note dip (`hmm`, ui bus, 0.6) | — | light tick | ● |
 | `folder.expired` | `folderExpired` | `crumple` | buzzer | grey ash | small shake, thud | ●● |
 | `minigame.success` / `fail` | minigame result | card flip / wobble | success ding / fail buzz | sparkle / smoke wisp | — | ● |
@@ -87,7 +86,15 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `event.correction.start` | `levelEvent` correction start | banner; siren with sweeping beam over the folder, yellow dot trail to the nearest desk | siren (`evcorrection`) | red/yellow alert dots | medium shake, buzz | ●●● |
 | `event.raidResolved` | `raidResolved` | banner "Nalot odparty!" | rising arpeggio (`evclear`) | confetti + glitch squares | small shake, thud | ●●● |
 | `event.end` | other `levelEvent` end | none | paper slap | dust | — | ● |
-| `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
+| `ability.armed` / `ability.disarmed` | `ability` stage `armed` / `disarmed` (Ekspertyza, Druga szansa waiting for their trigger; S7-36) | — (armed badge lands in S7-42) | placeholder `copy` / soft back (`abpower` in S7-42) | ink puff in player colour / dust | light tick / — | ● |
+| `ability.denied` | local press of R / RB / the ability button with no role or while cooling (client-only, nothing is sent; S7-39) | — (`abilityDenied` chip shake lands in S7-40, none under reduced motion) | soft back (`back`, ui bus) | — | light tick | ● |
+| `ability.expertise` | `ability` expertise `done`: the stamp lands without the minigame | — (`stamp.applied` slams it when the sim emits one) | rising chime (placeholder) | star burst + ink puff | success buzz | ●● |
+| `ability.call.start` / `.done` / `.dropped` | `ability` fieldCall `started` / `done` / `cancelled` (Telefon z terenu) | — / — / `wobble` (call bubble in S7-42) | phone bell `ping3` / quieter `ping3` / fail blips | ink puff / paper bits / smoke wisp | light tick / — / — | ● |
+| `ability.extendDeadline` | `ability` extendDeadline `done` (Przedłużenie: +20 s to the auto-picked folder and its raid wave; S7-37) | `hop`, `cardHop` | counter bell (`arrive`) | paper flutter ×6 | success buzz | ● |
+| `ability.secondChance` | `ability` secondChance `done` (Druga szansa: lockout gone, minigame reopens) | — | power-up (`evback`, quiet) | sparks ×6 | light tick | ● |
+| `ability.pass` | `ability` passFolder `done` (Podaj teczkę; the 450 ms arc lands in S7-42) | `hop` | paper rustle | paper flutter ×3 | light tick | ● |
+| `role.rescue` | `folderRescued` (Koło ratunkowe: a folder at its deadline in a Ratownik's hands gets +20 s) | `hop`, `cardHop` | rising arpeggio (`evclear`) | star burst | small shake, success buzz | ●● |
+| `ui.click` / `ui.hover` / `ui.back` | menus; `ui.click` also when the host picks a difficulty (the chip turns blue) and, for guests, when the host changes it (their „Poziom: …” chip pops, S7-25) | button press | click / tick | — | light tick (mobile) | ● |
 | `game.paused` | `paused` rising edge (`fx/gameplay-feedback.ts`): a solo player opened the in-game menu and the server holds the level (S7-10) | the menu sheet slides in (scale-pop on desktop, slide from the right on phones; none under reduced motion) with the „Pauza” chip; the level clock stops; deadline ticks and work loops stop | soft paper slide (`slide`, ui bus, 0.6) | — (DOM sheet; caption skipped: the chip says it) | light tick | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |
@@ -96,7 +103,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `imageSearch.fragment` | next fragment in the loupe | loupe label changes | soft tick | — | — | ● |
 | `imageSearch.match` / `imageSearch.miss` | image search pick | stamp on the printout / red pencil strike | stamp / back | — | tick / thud | ● |
 | `ambience.phone` / `printer` / `fax` / `typing` | random, quiet, never two at once (`fx/audio/ambience.ts`); skipped while a station or desk overlay is open | idle scene props (fans, clock, glowing monitors, paper stacks) live in `scene/Ambience.tsx` | distant phone / printer / fax / typing on the `sfx` bus, room tone ducks under overlays | dust motes (high preset) | — | ● |
-| `folder.deadlineExtended` HUD | `cardHop` | the folder's queue card hops | — | — | — | ● |
+| `ability.extendDeadline` / `role.rescue` HUD | `cardHop` | the extended folder's queue card hops | — | — | — | ● |
 | `briefing.intro` / `briefing.land` / `briefing.ready` | briefing card appears / lands on the desk / "Gotowy!" pressed | newspaper spins and drops in, squashes on landing (fade under reduced motion; tap skips) | paper slide / paper slap / stamp | — | — / thud / tick | ● → ●● |
 | `debrief.star` / `debrief.mark` | results reveal: each earned star, then each Kolegium card's outcome mark (skippable by any tap/key; off with reduced motion) | star pop / mark slams on like a stamp | chime / stamp thud | — (DOM) | tick | ●● / ● |
 | `debrief.row` | results reveal: each row of the „Za co punkty” totals table, after the stars and the progress line (skippable by any tap/key; off with reduced motion) | row slides in, its points count up from 0 (`useRolledNumber`) | soft tick (`tick`, ui bus) | — (DOM) | tick | ● |

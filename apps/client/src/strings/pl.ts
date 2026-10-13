@@ -1,6 +1,7 @@
 // All player-facing Polish text. Keys are English; wording follows agents/design-rules.md §9:
 // a gruff, warm editor-in-chief — short, concrete, newsroom vocabulary, no marketing voice.
 import type {
+  Difficulty,
   ErrorCode,
   FolderBonuses,
   FolderOutcome,
@@ -13,9 +14,10 @@ import type {
   StoryType,
   Verdict,
 } from '@redakcja/shared';
+import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { InputDevice as Device } from '../store/app.ts';
-import { pluralPl } from './plural.ts';
+import { listPl, pluralPl } from './plural.ts';
 
 /**
  * Key-cap hints shown under a minigame, per input device. On touch the cap names the gesture
@@ -112,6 +114,8 @@ export const pl = {
     work: 'Pracuj',
     ping: 'Sygnał',
     joystick: 'Ruch',
+    /** The fourth thumb button before it shows the role's own ability (S7-39). */
+    abilityGeneric: 'Zdolność',
   },
   connection: {
     connecting: 'Łączenie…',
@@ -194,6 +198,7 @@ export const pl = {
       interact: 'Podnieś / odłóż',
       work: 'Pracuj (trzymaj)',
       ping: 'Sygnał',
+      ability: 'Zdolność roli',
     },
     keySpace: 'Spacja',
     padStick: 'Lewa gałka',
@@ -273,6 +278,10 @@ export const pl = {
       phone: 'Telefon',
       aiScanner: 'Skaner AI',
       dataLibrary: 'Biblioteka danych',
+      geolocation: 'Mapa',
+      transcript: 'Stenogram',
+      crossCheck: 'Inne media',
+      metadata: 'Metadane',
     } satisfies Record<StationKind, string>,
     roles: {
       photoEditor: 'Fotoedytor',
@@ -293,6 +302,10 @@ export const pl = {
       phone: 'Telefon',
       aiScanner: 'Skaner',
       dataLibrary: 'Dane',
+      geolocation: 'Mapa',
+      transcript: 'Stenogram',
+      crossCheck: 'Media',
+      metadata: 'Metadane',
       conveyor: 'Wejście',
       desk: 'Stół',
     } satisfies Record<StationKind | 'conveyor' | 'desk', string>,
@@ -302,9 +315,8 @@ export const pl = {
     passesTitle: 'Wybierz rolę',
     noRole: 'Bez roli',
     noRoleBonus: 'Bez premii',
-    /** Speed bonus line built from ROLE_STATIONS and ROLE_WORK_TIME_FACTOR. */
-    fasterAt: (stations: readonly string[], percent: number) =>
-      `${stations.join(' i ')} +${percent}%`,
+    /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor), short station names. */
+    fasterAt: (stations: readonly string[], percent: number) => `${listPl(stations)} +${percent}%`,
     /** Roles whose bonus is not (only) speed get their own line. */
     specialBonuses: {
       reporter: 'Telefon bez kolejki',
@@ -325,6 +337,24 @@ export const pl = {
     startOffline: 'Brak połączenia z serwerem.',
     startWaiting: (names: readonly string[]) => `Czekamy na: ${names.join(', ')}.`,
     allReady: 'Wszyscy gotowi!',
+  },
+  /** Difficulty picker in the lobby and its chips (S7-25). */
+  difficulty: {
+    label: 'Poziom trudności',
+    names: {
+      easy: 'Łatwy',
+      normal: 'Normalny',
+      hard: 'Trudny',
+      expert: 'Ekspert',
+    } satisfies Record<Difficulty, string>,
+    blurbs: {
+      easy: 'Więcej czasu, łagodniejsze kary',
+      normal: 'Tak, jak zaprojektowaliśmy',
+      hard: 'Mniej czasu, więcej teczek',
+      expert: 'Bez podpowiedzi i bez litości',
+    } satisfies Record<Difficulty, string>,
+    /** The read-only chip guests see next to the level. */
+    chip: (name: string) => `Poziom: ${name}`,
   },
   /** In-game HUD and level-end plate (S2-09). */
   hud: {
@@ -400,6 +430,41 @@ export const pl = {
       expired: 'Przepadła',
       unfinished: 'Nie zdążyliście',
     } satisfies Record<FolderOutcome, string>,
+    /**
+     * The Kolegium's one-line reason under a card's title (S7-07); the debrief may be longer
+     * than 8 words. `base` is the points without bonuses, already signed by `formatDelta`.
+     */
+    why: {
+      correctNormal: (base: string) => `Trafny werdykt: ${base} pkt`,
+      correctImportant: (base: string) => `Ważna teczka, trafny werdykt: ${base} pkt`,
+      correctWithContext: (base: string) => `Kontekst w punkt: ${base} pkt`,
+      correctionFiled: (base: string) =>
+        `Sprostowanie opublikowane: ${base} pkt i odzyskana wiarygodność`,
+      weakProof: () => 'Werdykt dobry, ale wskazany dowód nic nie rozstrzygał: połowa punktów',
+      incompleteProof: () => 'Werdykt dobry, ale za mało dowodów: połowa punktów',
+      publishedFake: () => 'Fałszywka trafiła do druku: najwyższa kara',
+      rejectedTrue: () => 'Odrzuciliście prawdziwą wiadomość',
+      contextOnTrue: () => 'Prawdziwa wiadomość nie potrzebowała kontekstu',
+      publishedWithoutContext: () => 'Ta wiadomość wymagała kontekstu, a poszła bez niego',
+      rejectedContextStory: () => 'Wystarczyło opublikować z kontekstem',
+      expired: () => 'Termin minął: kara za spóźnienie',
+      expiredUnpenalized: () => 'Termin minął bez kary: niepilna, niepotwierdzalna teczka',
+      unfinished: () => 'Teczka została na koniec wydania: 0 pkt',
+    } satisfies Record<FolderReason, (base: string) => string>,
+    /** `incompleteProof` with the counts: fewer proofs cited than the story required. */
+    whyTooFew: (have: number, need: number) =>
+      `Za mało dowodów (${have} z ${need}): połowa punktów`,
+    /** `incompleteProof` citing only hint-only stamps: „Skaner AI to tylko wskazówka…”. */
+    whyHintOnly: (stations: readonly string[]) =>
+      `${stations.join(' i ')} to tylko wskazówka: połowa punktów`,
+    /** A story grouped in endless: its folders per outcome, e.g. „Dobrze ×2”. */
+    whyGroup: (group: string, n: number) => `${group} ×${n}`,
+    /** Bonus suffixes after the reason, joined with „ · ”. */
+    bonus: {
+      speed: (n: string) => `tempo ${n}`,
+      multiStamp: (n: string) => `dowody ${n}`,
+      bossCall: (n: string) => `szef ${n}`,
+    } satisfies Record<keyof FolderBonuses, (n: string) => string>,
   },
   /** Station overlay and work progress (S2-03). */
   station: {
@@ -469,11 +534,6 @@ export const pl = {
       } satisfies Record<keyof FolderBonuses, string>,
     },
     unknownStory: 'Nieznana teczka.',
-    /** The managing editor's one deadline extension per level. */
-    extend: 'Przedłuż termin',
-    extendAmount: (s: number) => `+${s}\u00a0s`,
-    extendLabel: (s: number) => `Przedłuż termin o\u00a0${s}\u00a0s`,
-    extended: (s: number) => `Termin +${s}\u00a0s!`,
   },
   minigames: {
     /** Shared by every minigame. */
@@ -989,6 +1049,100 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
+      // Stage 7 stations (S7-48): provisional copy; each minigame task (S7-52..S7-55) settles the
+      // steps against its final controls and button labels.
+      geolocation: {
+        purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
+        proves: 'Zdjęcie jest z innego miejsca niż podpis',
+        steps: {
+          keyboard: [
+            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Strzałki wybierają dzielnicę, spacja ją wskazuje',
+            'Q, gdy takiego miejsca nie ma na mapie',
+          ],
+          gamepad: [
+            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Krzyżak wybiera dzielnicę, A ją wskazuje',
+            'Y, gdy takiego miejsca nie ma na mapie',
+          ],
+          touch: [
+            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Stuknij dzielnicę, w której oba stoją',
+            'Nie ma ich na mapie? Stuknij przycisk',
+          ],
+        },
+        realWorld:
+          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic.',
+      },
+      transcript: {
+        purpose: 'Czy wycięty cytat znaczy to samo co całość?',
+        proves: 'Cytat jest wycięty z kontekstu albo zmyślony',
+        steps: {
+          keyboard: [
+            'Strzałki wybierają linię, spacja potwierdza',
+            'Q, gdy cytatu nie ma w zapisie',
+            'Potem oceń, czy cięcie zmienia sens',
+          ],
+          gamepad: [
+            'Krzyżak wybiera linię, A potwierdza',
+            'Y, gdy cytatu nie ma w zapisie',
+            'Potem oceń, czy cięcie zmienia sens',
+          ],
+          touch: [
+            'Stuknij linię, z której pochodzi cytat',
+            'Nie ma go w zapisie? Stuknij przycisk',
+            'Potem oceń, czy cięcie zmienia sens',
+          ],
+        },
+        realWorld:
+          'Tak sprawdza się cytaty: w pełnych stenogramach i nagraniach, a nie we fragmentach wyciętych z całości.',
+      },
+      crossCheck: {
+        purpose: 'Co podają niezależne redakcje i agencje?',
+        proves: 'Niezależne media potwierdzają albo zaprzeczają',
+        steps: {
+          keyboard: [
+            'Licz tylko media z własnym źródłem',
+            'Kopia cudzego wpisu niczego nie potwierdza',
+            '← i → wybierają odpowiedź, spacja potwierdza',
+          ],
+          gamepad: [
+            'Licz tylko media z własnym źródłem',
+            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Krzyżak wybiera odpowiedź, A potwierdza',
+          ],
+          touch: [
+            'Licz tylko media z własnym źródłem',
+            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Stuknij swoją odpowiedź',
+          ],
+        },
+        realWorld:
+          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje.',
+      },
+      metadata: {
+        purpose: 'Kiedy, czym i gdzie powstał plik?',
+        proves: 'Dane pliku pasują do opisu albo mu przeczą',
+        steps: {
+          keyboard: [
+            'Porównaj dane pliku z opisem w teczce',
+            'Strzałki wybierają pole, spacja wskazuje sprzeczność',
+            'Q, gdy wszystko się zgadza',
+          ],
+          gamepad: [
+            'Porównaj dane pliku z opisem w teczce',
+            'Krzyżak wybiera pole, A wskazuje sprzeczność',
+            'Y, gdy wszystko się zgadza',
+          ],
+          touch: [
+            'Porównaj dane pliku z opisem w teczce',
+            'Stuknij pole, które przeczy opisowi',
+            'Brak danych niczego nie dowodzi',
+          ],
+        },
+        realWorld:
+          'Tak czyta się metadane pliku (EXIF): datę, urządzenie i miejsce zdjęcia. Serwisy społecznościowe często je usuwają.',
+      },
     } satisfies Record<StationKind, StationHelp>,
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
@@ -1118,6 +1272,10 @@ export const pl = {
       phone: 'Telefon',
       aiScanner: 'Skaner',
       dataLibrary: 'Dane',
+      geolocation: 'Mapa',
+      transcript: 'Stenogram',
+      crossCheck: 'Inne media',
+      metadata: 'Metadane',
     } satisfies Record<StationKind, string>,
     hint: {
       pickupConveyor: 'Weź teczkę z taśmy',
@@ -1184,6 +1342,14 @@ export const pl = {
     playerReady: (nickname: string) => `${nickname}: gotowy`,
     playerWaiting: (nickname: string) => `${nickname}: czyta`,
     skipIntro: 'Pomiń animację',
+    /** The dealt run (S7-25): its folders, star thresholds and the rule behind them. */
+    runTitle: 'To wydanie:',
+    starsFrom: (stars: number, points: number) => `${stars} gwiazdki od ${points}\u00a0pkt`,
+    /** A threshold chip: „od” (dropped on phones, the label keeps it) and the points. */
+    from: 'od',
+    points: (points: number) => `${points}\u00a0pkt`,
+    shareRule: (two: number, three: number, max: number) =>
+      `Progi: ${two}\u00a0% i ${three}\u00a0% z\u00a0${max}\u00a0pkt możliwych`,
   },
   /** Campaign map in the lobby (S3-04). */
   campaign: {
@@ -1208,9 +1374,17 @@ export const pl = {
       tool: 'Co to wykryło',
       realWorld: 'Gdzie to się zdarza',
     },
-    /** The story's deciding proof; until S7-07 only the proofs nobody checked are listed. */
+    /** The story's deciding proof on a folder that did not end well, with where each one was. */
     proofTitle: 'Dowód, który rozstrzygał',
-    proofMissing: 'nie sprawdzono',
+    proofStatus: {
+      cited: 'wskazany',
+      collected: 'w teczce',
+      missing: 'nie sprawdzono',
+    } satisfies Record<ProofStatus, string>,
+    /** Endless: a story that came back, grouped on one card. */
+    repeats: (n: number) => `×${n}`,
+    repeatsLabel: (n: number) =>
+      `${n} ${pluralPl(n, 'teczka', 'teczki', 'teczek')} z tą wiadomością`,
     vote: 'Wpadka dnia?',
     voted: 'Twój głos',
     leader: 'Wpadka dnia!',
@@ -1297,6 +1471,14 @@ export const pl = {
       tempoUp: 'Tempo rośnie',
       record: 'Nowy rekord',
       beltFull: 'Taśma pełna',
+      abilityArmed: 'Zdolność uzbrojona',
+      expertise: 'Ekspertyza!',
+      callStarted: 'Telefon z terenu',
+      callStamp: 'Pieczątka z terenu',
+      callDropped: 'Rozmowa przerwana',
+      secondChance: 'Druga szansa',
+      folderPassed: 'Teczka podana',
+      rescued: 'Teczka uratowana!',
     },
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---

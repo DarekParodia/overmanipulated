@@ -233,6 +233,61 @@ describe('ticks and snapshots', () => {
     });
   });
 
+  it('carries every player’s ability state in snapshots, in join order (S7-36)', () => {
+    const host = join('Ala');
+    const guest = join('Bartek', welcomeOf(host).roomCode);
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
+    startPastBriefing(host);
+    registry.tick();
+    const idle = { abilityReadyAtMs: 0, abilityArmed: false, fieldCall: null, rescuesLeft: 0 };
+    expect(guest.last('snapshot')?.crew).toEqual([
+      { id: welcomeOf(host).playerId, ...idle },
+      { id: welcomeOf(guest).playerId, ...idle },
+    ]);
+  });
+
+  it('resolves useAbility next tick and reports the cooldown in crew (S7-37)', () => {
+    // A fixed run seed: this run deals an important story first (90 s on Normal).
+    registry = createRoomRegistry({ hub: fake.hub, now: () => time, random: () => 0.9 });
+    const host = join('Ala');
+    const hostId = welcomeOf(host).playerId;
+    registry.handleMessage(host, {
+      type: 'lobby',
+      action: { kind: 'setRole', role: 'managingEditor' },
+    });
+    startPastBriefing(host);
+    for (let i = 0; i < 60; i++) {
+      registry.tick();
+    }
+    const before = host.last('snapshot');
+    expect(before?.elapsedMs).toBe(3000);
+    expect(before?.folders.map((f) => [f.id, f.spawnedAtMs, f.deadlineMs])).toEqual([
+      ['f1', 3000, 93_000],
+    ]);
+    registry.handleMessage(host, { type: 'command', command: { kind: 'useAbility' } });
+    registry.tick();
+    expect(host.all('event').map((e) => e.event)).toContainEqual({
+      kind: 'ability',
+      playerId: hostId,
+      ability: 'extendDeadline',
+      stage: 'done',
+      folderId: 'f1',
+      addedMs: 20_000,
+    });
+    const after = host.last('snapshot');
+    expect(after?.folders[0]).toMatchObject({ id: 'f1', deadlineMs: 113_000, extendedMs: 20_000 });
+    expect(after?.crew[0]).toMatchObject({
+      id: hostId,
+      abilityReadyAtMs: (after?.elapsedMs ?? 0) + 60_000,
+    });
+    // A second press within the cooldown is ignored without an event.
+    const abilityEvents = () => host.all('event').filter((e) => e.event.kind === 'ability');
+    registry.handleMessage(host, { type: 'command', command: { kind: 'useAbility' } });
+    registry.tick();
+    expect(abilityEvents()).toHaveLength(1);
+    expect(host.last('snapshot')?.folders[0]?.deadlineMs).toBe(113_000);
+  });
+
   it('announces the next scheduled folder in every snapshot, from the first one on', () => {
     const { guest } = startedRoom();
     // The default level, l0-greybox, deals its first folder at 3 s and the second at 21 s.

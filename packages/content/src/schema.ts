@@ -9,6 +9,7 @@ import {
   prioritySchema,
   type SimLevel,
   type SimStory,
+  STATION_KINDS,
   type StationKind,
   stampRelevanceSchema,
   stationKindSchema,
@@ -76,7 +77,8 @@ export const storySchema = z
     /** Who sent it in, as shown on the folder („Post na grupie Nowe Brzegi Info”). */
     source: text(80),
     media: mediaSchema.optional(),
-    stamps: z.array(stampSchema).min(1).max(6),
+    /** At most one stamp per station, so at most one per station kind. */
+    stamps: z.array(stampSchema).min(1).max(STATION_KINDS.length),
     justifyingStamps: z.array(z.string()).min(1),
     /**
      * Distinct justifying stamps the desk must cite (multi-stamp folder, S7-18); 1 is a classic
