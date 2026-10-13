@@ -1,6 +1,7 @@
 // Test fixtures for gameplay subsystems: the greybox level with a short schedule and one story
 // per truth value. Plain data, independent of the content package.
 import { TICK_MS } from '../../constants.ts';
+import { NORMAL_TUNING } from '../../difficulty.ts';
 import type { PlayerCommand } from '../../protocol.ts';
 import type { SimLevel, SimStory, StoryBook } from '../content.ts';
 import type { QueuedCommand, SimContext } from '../frame.ts';
@@ -53,8 +54,16 @@ export const TEST_LEVEL: SimLevel = {
   stars: { two: 30, three: 60 },
 };
 
+/** The test level on Normal; `overrides` replace any field (e.g. `tuning: simTuning('expert')`). */
 export function testContext(overrides: Partial<SimContext> = {}): SimContext {
-  return { dtMs: TICK_MS, map: TEST_MAP, level: TEST_LEVEL, stories: TEST_STORIES, ...overrides };
+  return {
+    dtMs: TICK_MS,
+    map: TEST_MAP,
+    level: TEST_LEVEL,
+    stories: TEST_STORIES,
+    tuning: NORMAL_TUNING,
+    ...overrides,
+  };
 }
 
 const NO_ACTIONS = { interact: false, work: false };

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { simTuning } from '../difficulty.ts';
 import type { Priority, Truth, Verdict } from '../domain.ts';
 import { correctVerdictFor } from '../domain.ts';
 import type { Folder, FolderReason, FolderResult } from '../entities.ts';
@@ -71,6 +72,7 @@ function frameFor(
   state: GameState,
   commands: QueuedCommand[] = [],
   intents: Partial<Record<string, { work?: boolean; moving?: boolean }>> = {},
+  ctx = testContext(),
 ): SimFrame {
   const all: SimFrame['intents'] = Object.fromEntries(
     Object.keys(state.players).map((id) => [
@@ -78,7 +80,7 @@ function frameFor(
       { interact: false, work: intents[id]?.work ?? false, moving: intents[id]?.moving ?? false },
     ]),
   );
-  return { ctx: testContext(), intents: all, commands, events: [] };
+  return { ctx, intents: all, commands, events: [] };
 }
 
 function withOperator(state: GameState, playerId = 'p1'): GameState {
@@ -176,6 +178,58 @@ describe('evaluateVerdict — scoring table', () => {
   it('never pays a speed bonus for a wrong verdict', () => {
     const r = evaluateVerdict(story('true', 'normal'), collected(), 'reject', ['s-image'], 0);
     expect(r.bonuses).toEqual({ speed: 0, multiStamp: 0, bossCall: 0 });
+  });
+});
+
+describe('evaluateVerdict — difficulty (Stage 7)', () => {
+  const fake = story('false', 'normal');
+
+  it('takes 30 points and 38 credibility for a published fake on expert', () => {
+    const r = evaluateVerdict(fake, collected(), 'publish', ['s-image'], 0, simTuning('expert'));
+    expect(r).toMatchObject({ reason: 'publishedFake', scoreDelta: -30, credibilityDelta: -38 });
+  });
+
+  it('takes 10 points and 13 credibility for a published fake on easy', () => {
+    const r = evaluateVerdict(fake, collected(), 'publish', ['s-image'], 0, simTuning('easy'));
+    expect(r).toMatchObject({ reason: 'publishedFake', scoreDelta: -10, credibilityDelta: -13 });
+  });
+
+  it('scales the penalties the table adds for context stories', () => {
+    const r = evaluateVerdict(
+      story('misleading', 'normal'),
+      collected(),
+      'publish',
+      ['s-image'],
+      0,
+      simTuning('hard'),
+    );
+    expect(r).toMatchObject({
+      reason: 'publishedWithoutContext',
+      scoreDelta: -13,
+      credibilityDelta: -13,
+    });
+  });
+
+  it('never scales a reward, a half reward or the speed bonus', () => {
+    const expert = simTuning('expert');
+    const fast = evaluateVerdict(
+      story('misleading', 'normal'),
+      collected(),
+      'publishWithContext',
+      ['s-image'],
+      0,
+      expert,
+    );
+    expect(fast).toMatchObject({ scoreDelta: 35, credibilityDelta: 5 });
+    const weak = evaluateVerdict(
+      story('true', 'important'),
+      collected(),
+      'publish',
+      ['s-archive'],
+      30_000,
+      expert,
+    );
+    expect(weak).toMatchObject({ reason: 'weakProof', scoreDelta: 10, credibilityDelta: 0 });
   });
 });
 
@@ -495,6 +549,16 @@ describe('stepDesk — verdicts', () => {
     expect(next.credibility).toBe(75);
     expect(next.results[0]).toMatchObject({ outcome: 'wrong', reason: 'publishedFake' });
     expect(next.results[0]?.missedStampIds).toEqual(['t-false-image']);
+  });
+
+  it('applies the difficulty from the context to a wrong verdict', () => {
+    const state = withOperator(deskState(folder({ storyId: 't-false', stamps: [] })));
+    const ctx = testContext({ tuning: simTuning('expert') });
+    const frame = frameFor(state, [verdict('publish', 't-false-image')], {}, ctx);
+    const next = stepDesk(state, frame);
+    expect(next.score).toBe(-30);
+    expect(next.credibility).toBe(62);
+    expect(next.results[0]).toMatchObject({ scoreDelta: -30, credibilityDelta: -38 });
   });
 
   it('clamps credibility at the maximum', () => {

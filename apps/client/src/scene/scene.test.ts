@@ -11,6 +11,7 @@ import {
   folderLook,
   folderPlacement,
   isFirstDeskTile,
+  lockoutFraction,
   MAX_STAMP_MARKS,
   restingYaw,
   SURFACE_HEIGHT,
@@ -150,6 +151,16 @@ describe('station indicator', () => {
     expect(
       stationIndicator(station({ phase: 'lockout', lockoutMs: MINIGAME_FAIL_LOCKOUT_MS / 2 })),
     ).toEqual({ kind: 'lockout', fraction: 0.5 });
+  });
+
+  it('drains a difficulty-scaled lockout against the announced total', () => {
+    const locked = station({ phase: 'lockout', lockoutMs: 4500 });
+    expect(stationIndicator(locked, undefined, 6000)).toEqual({ kind: 'lockout', fraction: 0.75 });
+    expect(stationIndicator(locked, undefined, 1500)).toEqual({ kind: 'lockout', fraction: 1 });
+    // Without an announced total (e.g. after a reconnect) the Normal 3 s lockout stands in.
+    expect(lockoutFraction(1500, undefined)).toBe(0.5);
+    expect(lockoutFraction(4500, undefined)).toBe(1);
+    expect(lockoutFraction(0, 0)).toBe(0);
   });
 });
 

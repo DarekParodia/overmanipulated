@@ -31,6 +31,7 @@ import {
   type JoinMessage,
   type LobbyAction,
   MAX_PLAYERS,
+  NORMAL_TUNING,
   nextScheduledSpawn,
   PLAYER_COLOR_COUNT,
   type PlayerCommand,
@@ -671,6 +672,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         map: room.map,
         level: room.level,
         stories: room.stories,
+        // Rooms play on Normal until the lobby can pick a difficulty (S7-23).
+        tuning: NORMAL_TUNING,
       };
       const result = stepGame(room.game, inputs, commands, ctx);
       room.game = result.state;

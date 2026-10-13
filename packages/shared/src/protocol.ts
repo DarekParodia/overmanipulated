@@ -260,6 +260,8 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     stationId: entityId,
     playerId: playerIdSchema,
     folderId: entityId,
+    /** How long the station is now locked: the difficulty-scaled lockout (protocol 4). */
+    lockoutMs: z.number().int().nonnegative(),
   }),
   z.object({
     kind: z.literal('stampApplied'),

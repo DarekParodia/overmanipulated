@@ -107,7 +107,9 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Ustawienia poziomu trudności | `DifficultyPreset` | Factors for deadlines, spawn gap, work time, lockout, penalties and minigame time; extra mistakes; hints; answer reveal |
 | Strojenie symulacji | `SimTuning` (`simTuning`, `NORMAL_TUNING`) | The preset part the simulation applies: work time, lockout, penalties |
 | Limit pomyłek | `mistakeLimit` | Mistakes a minigame allows on a difficulty; never below `MINIGAME_MIN_MISTAKES` |
-| Blokada stanowiska | lockout (`failLockoutMs`) | How long a failed minigame blocks its station |
+| Blokada stanowiska | lockout (`failLockoutMs`, `tunedLockoutMs`) | How long a failed minigame blocks its station; announced in `minigameFailed.lockoutMs` |
+| Skalowanie kar | `scalePenalty` (`penaltyFactor`) | Wrong-verdict, expiry and correction penalties × the factor, halves rounded away from zero; rewards are never scaled |
+| Utrata / odzysk przy sprostowaniu | `correctionLoss` / `correctionRecover` | Credibility a correction costs (scaled) and the share of it a filed correction gives back |
 | Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
 
 ## Screens (`ScreenId`)

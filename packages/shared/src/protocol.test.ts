@@ -16,8 +16,8 @@ const EMPTY_LEVEL = {
 };
 
 describe('protocol version', () => {
-  it('is 3 for the Stage 7 M1 wire (verdict cites, folder result reasons, level end)', () => {
-    expect(PROTOCOL_VERSION).toBe(3);
+  it('is 4 for the Stage 7 M2 wire (difficulty-scaled lockout, difficulty and run)', () => {
+    expect(PROTOCOL_VERSION).toBe(4);
   });
 });
 
@@ -214,6 +214,23 @@ describe('server messages', () => {
     expect(parse({ ...verdictResult, bonuses: { speed: -5, multiStamp: 0, bossCall: 0 } })).toBe(
       false,
     );
+  });
+
+  it('carries the lockout of a failed minigame', () => {
+    const failed = {
+      kind: 'minigameFailed',
+      stationId: 'sourceRegistry-0',
+      playerId: 'p1',
+      folderId: 'f3',
+      lockoutMs: 6000,
+    };
+    const parse = (event: unknown) => parseServerMessage({ type: 'event', tick: 9, event }).ok;
+    expect(parse(failed)).toBe(true);
+    expect(parse({ ...failed, lockoutMs: 0 })).toBe(true);
+    const { lockoutMs: _dropped, ...withoutLockout } = failed;
+    expect(parse(withoutLockout)).toBe(false);
+    expect(parse({ ...failed, lockoutMs: -1 })).toBe(false);
+    expect(parse({ ...failed, lockoutMs: 1500.5 })).toBe(false);
   });
 
   it('accepts an endless levelEnd with an unfinished folder and no thresholds', () => {

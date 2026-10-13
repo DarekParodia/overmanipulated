@@ -23,6 +23,7 @@ import {
   mistakeLimit,
   NORMAL_TUNING,
   simTuning,
+  tunedLockoutMs,
 } from './difficulty.ts';
 import { DIFFICULTIES, difficultySchema } from './domain.ts';
 
@@ -94,6 +95,12 @@ describe('failLockoutMs', () => {
 
   it('is the authored lockout on normal', () => {
     expect(failLockoutMs('normal')).toBe(MINIGAME_FAIL_LOCKOUT_MS);
+  });
+
+  it('is what the simulation applies for the same difficulty', () => {
+    expect(tunedLockoutMs(NORMAL_TUNING)).toBe(3000);
+    expect(tunedLockoutMs(simTuning('expert'))).toBe(6000);
+    expect(tunedLockoutMs({ ...NORMAL_TUNING, lockoutFactor: 1.25 })).toBe(3750);
   });
 });
 

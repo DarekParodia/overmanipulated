@@ -39,7 +39,12 @@ export function mistakeLimit(base: number, difficulty: Difficulty): number {
   return Math.max(MINIGAME_MIN_MISTAKES, base + DIFFICULTY[difficulty].extraMistakes);
 }
 
+/** How long a failed minigame blocks its station under this tuning (what the sim applies). */
+export function tunedLockoutMs(tuning: SimTuning): number {
+  return Math.round(MINIGAME_FAIL_LOCKOUT_MS * tuning.lockoutFactor);
+}
+
 /** How long a failed minigame blocks its station on this difficulty. */
 export function failLockoutMs(difficulty: Difficulty): number {
-  return Math.round(MINIGAME_FAIL_LOCKOUT_MS * DIFFICULTY[difficulty].lockoutFactor);
+  return tunedLockoutMs(simTuning(difficulty));
 }

@@ -2,12 +2,9 @@
 // Emits: workStarted, workCancelled, minigameStarted, minigameFailed, stampApplied, and the end
 // of an outage levelEvent (S4-08: a station with outageMs > 0 accepts no work).
 // Consumes commands: minigameResult, cancel (when operating a station).
-import {
-  MINIGAME_FAIL_LOCKOUT_MS,
-  ROLE_STATIONS,
-  ROLE_WORK_TIME_FACTOR,
-  STATION_WORK_MS,
-} from '../constants.ts';
+// Work time and lockout length follow the difficulty (`ctx.tuning`, Stage 7).
+import { ROLE_STATIONS, ROLE_WORK_TIME_FACTOR, STATION_WORK_MS } from '../constants.ts';
+import { type SimTuning, tunedLockoutMs } from '../difficulty.ts';
 import type { StationKind } from '../domain.ts';
 import type { Folder, Station } from '../entities.ts';
 import type { QueuedCommand, SimFrame } from './frame.ts';
@@ -47,12 +44,20 @@ function stampFor(frame: SimFrame, folder: Folder, kind: StationKind): string | 
   return frame.ctx.stories[folder.storyId]?.stamps.find((s) => s.station === kind)?.id;
 }
 
-/** Work time at a station of `kind` for a player, with the role bonus applied. */
-export function workDurationMs(state: GameState, playerId: string, kind: StationKind): number {
+/**
+ * Work time at a station of `kind` for a player: the role bonus and the difficulty's work-time
+ * factor applied, rounded to whole milliseconds.
+ */
+export function workDurationMs(
+  state: GameState,
+  playerId: string,
+  kind: StationKind,
+  tuning: SimTuning,
+): number {
   const role = state.crew[playerId]?.role ?? null;
   const roleStations: readonly StationKind[] = role ? ROLE_STATIONS[role] : [];
   const factor = roleStations.includes(kind) ? ROLE_WORK_TIME_FACTOR : 1;
-  return STATION_WORK_MS[kind] * factor;
+  return Math.round(STATION_WORK_MS[kind] * factor * tuning.workTimeFactor);
 }
 
 /** The first command from the operator that concerns this station, if any. */
@@ -141,7 +146,7 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           operatorId: candidate,
           phase: 'working',
           progressMs: 0,
-          durationMs: workDurationMs(state, candidate, station.kind),
+          durationMs: workDurationMs(state, candidate, station.kind, frame.ctx.tuning),
           lockoutMs: 0,
         };
         frame.events.push({ kind: 'workStarted', stationId, playerId: candidate });
@@ -231,16 +236,14 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           }
           next = idleStation(station);
         } else {
-          next = {
-            ...idleStation(station),
-            phase: 'lockout',
-            lockoutMs: MINIGAME_FAIL_LOCKOUT_MS,
-          };
+          const lockoutMs = tunedLockoutMs(frame.ctx.tuning);
+          next = { ...idleStation(station), phase: 'lockout', lockoutMs };
           frame.events.push({
             kind: 'minigameFailed',
             stationId,
             playerId: operatorId,
             folderId: folder.id,
+            lockoutMs,
           });
         }
         operators.delete(operatorId);

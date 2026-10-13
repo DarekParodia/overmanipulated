@@ -3,7 +3,7 @@
 import type { Difficulty, Role, StationKind } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
