@@ -9,6 +9,7 @@ export const PAD = {
   south: 0, // A / Cross → pick up / put down
   west: 2, // X / Square → work (hold)
   north: 3, // Y / Triangle → ping
+  start: 9, // Start / Options → in-game menu (input/menu-button.ts)
   dpadUp: 12,
   dpadDown: 13,
   dpadLeft: 14,

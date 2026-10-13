@@ -78,15 +78,32 @@ export const pl = {
     playersCount: (n: number, max: number) => `${n} z ${max} przy biurkach`,
   },
   game: {
-    room: 'Pokój',
-    ping: (ms: number) => `${ms} ms`,
     leave: 'Wyjdź z redakcji',
-    fullscreen: 'Pełny ekran',
-    settings: 'Ustawienia',
     rotate: 'Obróć telefon poziomo',
     rotateHint: 'Gra działa tylko poziomo.',
     reconnecting: 'Łączymy ponownie…',
     loading: 'Wczytujemy redakcję…',
+  },
+  /**
+   * In-game menu (S7-10): the one top-right button and its sheet. Solo, it pauses the level;
+   * with teammates the level runs on.
+   */
+  gameMenu: {
+    open: 'Menu',
+    title: 'Menu',
+    paused: 'Pauza',
+    live: 'Gra trwa dalej',
+    resume: 'Wróć do gry',
+    settings: 'Ustawienia',
+    fullscreen: 'Pełny ekran',
+    exitFullscreen: 'Zamknij pełny ekran',
+    leave: 'Wyjdź z redakcji',
+    leaveConfirm: 'Na pewno? Wyjdź',
+    room: (code: string) => `Pokój ${code}`,
+    copy: 'Skopiuj kod',
+    copied: 'Skopiowano!',
+    ping: (ms: number) => `${ms}\u00a0ms`,
+    offline: 'Brak połączenia',
   },
   touch: {
     interact: 'Podnieś',
@@ -99,7 +116,6 @@ export const pl = {
     online: 'Połączono',
     reconnecting: 'Łączymy ponownie…',
     offline: 'Brak połączenia',
-    room: (code: string) => `Pokój ${code}`,
   },
   errors: {
     invalidMessage: 'Coś poszło nie tak w łączności. Spróbuj jeszcze raz.',

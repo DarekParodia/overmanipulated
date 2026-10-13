@@ -160,6 +160,7 @@ export function installHudDevFixture(): (() => void) | undefined {
         folders: fixtureFolders(useApp.getState().playerId ?? 'p-dev').slice(0, options.folders),
         nextFolder: FIXTURE_NEXT_FOLDER,
         conveyorFull: false,
+        paused: false,
         levelEnd: null,
       });
     },

@@ -87,6 +87,11 @@ export const lobbyActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('skipBriefing') }),
   /** On the results/debrief screen: vote for the story that fooled the team most. */
   z.object({ kind: z.literal('voteBlunder'), storyId: entityId }),
+  /**
+   * In-game menu (S7-10): pause or resume. Pausing is accepted only while playing a co-op room
+   * with exactly one connected player and no spectators; anyone joining clears it.
+   */
+  z.object({ kind: z.literal('setPaused'), paused: z.boolean() }),
 ]);
 
 export const lobbyMessageSchema = z.object({
@@ -217,6 +222,8 @@ export const snapshotMessageSchema = z.object({
   nextFolder: nextFolderSchema.nullable(),
   /** A scheduled folder is due but waits, because every conveyor tile holds a folder. */
   conveyorFull: z.boolean(),
+  /** A solo player has the in-game menu open: the room is not stepped (S7-10). */
+  paused: z.boolean(),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [

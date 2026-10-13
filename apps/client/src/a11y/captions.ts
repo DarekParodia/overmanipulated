@@ -70,6 +70,7 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'player.start': skip('decorative'),
   'player.stop': skip('decorative'),
   'game.start': skip('visual-elsewhere'),
+  'game.paused': skip('visual-elsewhere'),
   'stamp.applied': skip('visual-elsewhere'),
   'folder.arrive': chip('folder', t.newFolder, 'info', { group: 'arrive', ttlMs: 1800 }),
   'folder.pickup': skip('own-action'),

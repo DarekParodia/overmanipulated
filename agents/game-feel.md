@@ -87,6 +87,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `event.raidResolved` | `raidResolved` | banner "Nalot odparty!" | rising arpeggio (`evclear`) | confetti + glitch squares | small shake, thud | ●●● |
 | `event.end` | other `levelEvent` end | none | paper slap | dust | — | ● |
 | `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
+| `game.paused` | `paused` rising edge (`fx/gameplay-feedback.ts`): a solo player opened the in-game menu and the server holds the level (S7-10) | the menu sheet slides in (scale-pop on desktop, slide from the right on phones; none under reduced motion) with the „Pauza” chip; the level clock stops; deadline ticks and work loops stop | soft paper slide (`slide`, ui bus, 0.6) | — (DOM sheet; caption skipped: the chip says it) | light tick | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |
 | `sourceRegistry.file` | card filed correctly | „Sprawdzone” stamp slams on the card | stamp thud | — | thud | ● |
@@ -104,7 +105,8 @@ Add a row here when you add a cue, in the same commit.
 Event → cue mapping lives in `fx/event-cues.ts` (pure, unit-tested for every gameplay event
 kind); `net/game-events.ts` adds where it happens (fixture tile centre, folder location or
 player position) and who it is about. State-driven feedback (work loop reconciliation, deadline
-ticker, last-30-s sting, full-belt alert, level-end stingers) lives in `fx/gameplay-feedback.ts`.
+ticker, last-30-s sting, full-belt alert, solo pause, level-end stingers) lives in
+`fx/gameplay-feedback.ts`. Opening and closing the in-game menu use `ui.click` / `ui.back`.
 The next-folder countdown (ghost card, conveyor ring) makes no sound: it runs all level long and
 would only be noise. Animation listeners (`feedback.onAnimation`) receive
 `{ reducedMotion, noFlash }` and must honour them; cues about another player (`remote`) never

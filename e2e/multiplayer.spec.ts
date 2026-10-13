@@ -121,6 +121,50 @@ test('leaving frees the slot and returns to the front page', async ({ browser },
   await expect(host.page.getByText('1 z 4 przy biurkach')).toBeVisible();
 });
 
+test('leaving mid-level goes through the menu, which keeps a shared level running', async ({
+  browser,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'device-independent');
+  const host = await openPlayer(browser, 'Zośka', DESKTOP);
+  const guest = await openPlayer(browser, 'Łukasz', DESKTOP);
+  // Both have seen the tutorial, so Esc goes straight to the menu.
+  for (const player of [host, guest]) {
+    await player.page.evaluate(() => localStorage.setItem('redakcja.tutorial.done', '1'));
+  }
+  const code = await createRoom(host);
+  await joinRoom(guest, code);
+  await host.page.getByRole('button', { name: 'Do składu!' }).click();
+  for (const player of [host, guest]) {
+    await expect(player.page.getByTestId('hud')).toBeVisible();
+  }
+  await expect.poll(async () => Object.keys(await avatarPositions(guest)).length).toBe(2);
+
+  const elapsed = () =>
+    host.page.evaluate(
+      () =>
+        (window as unknown as { __game: { getState(): { elapsedMs: number } } }).__game.getState()
+          .elapsedMs,
+    );
+  await host.page.keyboard.press('Escape');
+  const menu = host.page.getByTestId('game-menu');
+  await expect(menu).toBeVisible();
+  await expect(menu.getByTestId('game-menu-status')).toHaveText('Gra trwa dalej');
+  const openedAt = await elapsed();
+  await expect.poll(elapsed).toBeGreaterThan(openedAt + 500);
+
+  // Software WebGL is slow; the two presses must land within 3 s and need no scene.
+  await host.page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  const leave = menu.getByTestId('game-menu-leave');
+  await leave.click();
+  await expect(leave).toHaveText('Na pewno? Wyjdź');
+  // Confirmed from the keyboard: a click's actionability checks can outlast the 3 s window here.
+  await leave.press('Enter');
+  await expect(
+    host.page.getByRole('heading', { name: 'Redakcja na Ostatnią Chwilę' }),
+  ).toBeVisible();
+  await expect.poll(async () => Object.keys(await avatarPositions(guest))).toEqual(['Łukasz']);
+});
+
 test('joining an unknown room shows a Polish error', async ({ browser }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'device-independent');
   const player = await openPlayer(browser, 'Ala', DESKTOP);

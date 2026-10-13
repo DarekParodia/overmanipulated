@@ -9,6 +9,7 @@ import {
 import { reconnectDelayMs } from './backoff.ts';
 import { useGame } from './game-store.ts';
 import { createPredictor } from './prediction.ts';
+import { createRuntime } from './runtime.ts';
 import { createSnapshotBuffer, lerpAngle } from './snapshot-buffer.ts';
 
 function snapshot(tick: number, x: number): SnapshotMessage {
@@ -26,6 +27,7 @@ function snapshot(tick: number, x: number): SnapshotMessage {
     deadlineExtensionUsed: false,
     nextFolder: { atMs: 3000, sinceMs: 0 },
     conveyorFull: false,
+    paused: false,
   };
 }
 
@@ -158,5 +160,40 @@ describe('game store', () => {
     useGame.getState().applySnapshot({ ...snapshot(13, 1), nextFolder: null });
     expect(useGame.getState()).toMatchObject({ nextFolder: null, conveyorFull: false });
     useGame.getState().reset();
+  });
+});
+
+describe('pause (S7-10)', () => {
+  it('stores the paused flag from every snapshot', () => {
+    useGame.getState().reset();
+    expect(useGame.getState().paused).toBe(false);
+    useGame.getState().applySnapshot({ ...snapshot(10, 1), paused: true });
+    expect(useGame.getState().paused).toBe(true);
+    // The pause snapshot repeats the last tick; the store still takes it.
+    useGame.getState().applySnapshot({ ...snapshot(10, 1), paused: false });
+    expect(useGame.getState().paused).toBe(false);
+    useGame.getState().reset();
+  });
+
+  it('sends no input while the server holds the level, and re-learns the clock after', () => {
+    const sent: number[] = [];
+    const runtime = createRuntime(
+      () => 'p1',
+      (message) => sent.push(message.seq),
+    );
+    runtime.onSnapshot(snapshot(10, 1), 500);
+    runtime.frame(600, 2 * TICK_MS);
+    expect(sent).toEqual([0, 1]);
+
+    runtime.onSnapshot({ ...snapshot(10, 1), paused: true }, 650);
+    runtime.frame(700, 4 * TICK_MS);
+    expect(sent).toEqual([0, 1]);
+
+    // Resumed 10 s later: the buffer forgets the old offset instead of drawing from it.
+    runtime.onSnapshot(snapshot(11, 2), 10_550);
+    // Tick 11 arrived at 10 550, so just before that it is still ahead of the render time.
+    expect(runtime.buffer.depth(10_549, 0)).toBe(1);
+    runtime.frame(10_600, TICK_MS);
+    expect(sent).toEqual([0, 1, 2]);
   });
 });
