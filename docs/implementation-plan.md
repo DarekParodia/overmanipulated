@@ -416,7 +416,7 @@ feedback on desktop and phones; first playtest held.
   quality.
 - [x] **S5-10 — Haptics and controller polish.** Tuned vibration patterns per cue on Android and
   gamepads; rumble intensity setting.
-- [ ] **S5-03 — UI art pass** on top of the S1-17 foundation: final textures, complete icon set,
+- [x] **S5-03 — UI art pass** on top of the S1-17 foundation: final textures, complete icon set,
   final stamp lettering, every screen re-checked against the design rules and the reference board.
 - [x] **S5-04 — Technique encyclopedia** with unlockable cards and in-game examples.
 - [x] **S5-05 — Accessibility** (colour-blind safe palette audit, text scaling, no-flash mode,
@@ -434,12 +434,12 @@ feedback on desktop and phones; first playtest held.
 
 ## Stage 6 — Balance and contest materials
 
-- [ ] **S6-01 — Balance** station times, deadlines, points and star thresholds from playtest data.
+- [ ] **S6-01 — Balance** station times, deadlines, points and star thresholds from playtest data. _Prepared: bot-based balance done (`bun run balance`, docs/balance.md); needs real playtest data to confirm._
 - [ ] **S6-02 — Content review** — supervisor signs off all stories (`reviewed: true`).
-- [ ] **S6-03 — Contest materials** in `docs/contest/`: screenshots of every screen, labelled
+- [ ] **S6-03 — Contest materials** in `docs/contest/`: screenshots of every screen, labelled _Prepared: generators, maps, role/folder cards, criteria mapping and screenshots done; gameplay video still to record (`bun run contest:build -- --video`)._
   newsroom map, role cards, 3–4 sample folders with stamps, 60–90 s gameplay video, criteria
   mapping.
-- [ ] **S6-04 — Production deploy and smoke test** on a school-like network (port 443 only) with
+- [ ] **S6-04 — Production deploy and smoke test** on a school-like network (port 443 only) with _Prepared: stack hardened and smoke-tested locally (`bun run smoke`, docs/deploy.md); real host, domain and school-network test still to do._
   the device matrix from [`../agents/platforms.md`](../agents/platforms.md).
 
 ---
