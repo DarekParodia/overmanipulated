@@ -176,6 +176,100 @@
   stroke-width: 3.4;
 }
 
+/* Multi-stamp pick (S7-19): the tick carries the pick's order number instead of the ✓. */
+.tickNo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1;
+  padding-top: 0.1em;
+}
+
+/* "k/N" chip on the step heading. */
+.count {
+  margin-left: var(--space-1);
+  padding: 0 var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Amber warning: the folder holds fewer stamps than the story needs proofs. */
+.shortfall,
+.blocked {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.shortfall {
+  background: var(--orange);
+}
+
+/* A pick beyond N: a blue info line (selection), and the row nudges sideways. */
+.blocked {
+  background: var(--surface-soft);
+  border-color: var(--blue-dark);
+}
+
+.noteGlyph {
+  flex: none;
+}
+
+.nudgeA {
+  animation: nudge-a var(--motion-slow) var(--ease-out);
+}
+
+.nudgeB {
+  animation: nudge-b var(--motion-slow) var(--ease-out);
+}
+
+/* Two identical keyframes so a second blocked pick on the same row plays again. */
+@keyframes nudge-a {
+  0%,
+  100% {
+    translate: 0;
+  }
+  25% {
+    translate: -6px;
+  }
+  50% {
+    translate: 6px;
+  }
+  75% {
+    translate: -3px;
+  }
+}
+
+@keyframes nudge-b {
+  0%,
+  100% {
+    translate: 0;
+  }
+  25% {
+    translate: -6px;
+  }
+  50% {
+    translate: 6px;
+  }
+  75% {
+    translate: -3px;
+  }
+}
+
 /* Keyboard / gamepad focus: a thick blue ring outside the element. */
 .focused {
   outline: 4px solid var(--blue);
@@ -440,13 +534,17 @@
 }
 
 :global(:root[data-reduced-motion="true"]) .tick,
-:global(:root[data-reduced-motion="true"]) .extended {
+:global(:root[data-reduced-motion="true"]) .extended,
+:global(:root[data-reduced-motion="true"]) .nudgeA,
+:global(:root[data-reduced-motion="true"]) .nudgeB {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tick,
-  .extended {
+  .extended,
+  .nudgeA,
+  .nudgeB {
     animation: none;
   }
 }
@@ -490,6 +588,17 @@
   }
 
   .stampText {
+    font-size: var(--text-sm);
+  }
+
+  .count {
+    font-size: var(--text-sm);
+    padding: 0 var(--space-2);
+  }
+
+  .shortfall,
+  .blocked {
+    padding: 2px var(--space-2) 2px var(--space-1);
     font-size: var(--text-sm);
   }
 
