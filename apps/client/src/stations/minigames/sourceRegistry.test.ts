@@ -287,3 +287,36 @@ describe('initialState with the retry memory (S7-14)', () => {
     expect(state.outcome).toBe('success');
   });
 });
+
+describe('mistake limit per difficulty (S7-24)', () => {
+  it('allows 3 mistakes on Łatwy, 2 on Normalny and Trudny, 1 on Ekspert', () => {
+    const card = flaggedCard();
+    expect(initialState(card, undefined, 'easy').maxMistakes).toBe(3);
+    expect(initialState(card).maxMistakes).toBe(2);
+    expect(initialState(card, undefined, 'hard').maxMistakes).toBe(2);
+    expect(initialState(card, undefined, 'expert').maxMistakes).toBe(1);
+  });
+
+  it('fails on the first mistake on Ekspert', () => {
+    const card = flaggedCard();
+    const [state, effects] = run(initialState(card, undefined, 'expert'), [
+      { type: 'file' },
+      { type: 'file' },
+    ]);
+    expect(effects).toEqual(['failed', null]);
+    expect(state.mistakes).toBe(1);
+    expect(state.outcome).toBe('failure');
+  });
+
+  it('survives two mistakes on Łatwy and fails on the third', () => {
+    const card = flaggedCard();
+    const clean = card.fields.findIndex((f) => !f.flagged);
+    const [state, effects] = run(initialState(card, undefined, 'easy'), [
+      { type: 'file' },
+      { type: 'toggle', index: clean },
+      { type: 'file' },
+    ]);
+    expect(effects).toEqual(['missing', 'mistake', 'failed']);
+    expect(state.outcome).toBe('failure');
+  });
+});

@@ -1,7 +1,9 @@
 // Editorial briefing before a level (S3-03, design doc §3): one newspaper card with the level,
 // the topic of the day, up to three short lines, the stations new today, a countdown ring and
-// who is ready. The card spins in and slaps onto the desk (a fade under reduced motion); any
-// tap or key skips the intro. One main action: the yellow "Gotowy!".
+// who is ready. Since S7-25 it also names the room's difficulty and the dealt run: its folders,
+// the points two and three stars take, and the share rule behind them. The card spins in and
+// slaps onto the desk (a fade under reduced motion); any tap or key skips the intro. One main
+// action: the yellow "Gotowy!".
 import { getLevel, LEVELS } from '@redakcja/content';
 import { BRIEFING_DURATION_MS, ENDLESS_LEVEL_ID, type StationKind } from '@redakcja/shared';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
@@ -17,10 +19,13 @@ import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { playerColorVar } from '../ui/tokens.ts';
 import styles from './Briefing.module.css';
+import { briefingRun } from './briefing-model.ts';
 
 const RING_RADIUS = 26;
 const RING_LENGTH = 2 * Math.PI * RING_RADIUS;
 const CONFIRM_KEYS = new Set(['Enter', 'NumpadEnter', 'Space', 'KeyE']);
+/** The stars the run line names thresholds for (one star only needs a won level). */
+const STAR_STEPS = [2, 3] as const;
 
 /** Seconds left until the level starts by itself, ticking locally from the server's value. */
 function useCountdown(endsInMs: number | null, briefingKey: unknown): number | null {
@@ -44,6 +49,7 @@ function useCountdown(endsInMs: number | null, briefingKey: unknown): number | n
 export function Briefing() {
   const room = useApp((s) => s.room);
   const playerId = useApp((s) => s.playerId);
+  const run = briefingRun(useApp((s) => s.run));
   const [intro, setIntro] = useState(true);
   const [pressed, setPressed] = useState(false);
   const readyButton = useRef<HTMLDivElement>(null);
@@ -164,6 +170,10 @@ export function Briefing() {
                 pl.briefing.levelNumber(number)
               )}
             </span>
+            <span className={styles.difficultyChip} data-testid="briefing-difficulty">
+              <Icon name="gauge" size={24} />
+              {pl.difficulty.names[room.difficulty]}
+            </span>
             <span className="visually-hidden">{pl.briefing.label}</span>
           </p>
           {seconds !== null && (
@@ -198,6 +208,53 @@ export function Briefing() {
             <p className={styles.topic}>
               <span className={styles.topicLabel}>{pl.briefing.topic}</span> {typeset(level.topic)}
             </p>
+          )}
+          {run && (
+            <section
+              className={`${styles.fresh} ${styles.run}`}
+              aria-labelledby="briefing-run"
+              data-testid="briefing-run"
+            >
+              <h2 id="briefing-run" className={`${styles.freshTitle} ${styles.runTitle}`}>
+                {pl.briefing.runTitle}
+              </h2>
+              <ul className={styles.chips}>
+                <li
+                  className={`${styles.chip} ${styles.runFolders}`}
+                  data-testid="briefing-folders"
+                >
+                  <Icon name="article" size={26} />
+                  {pl.lobbyRoles.levelFolders(run.folders)}
+                </li>
+                {STAR_STEPS.map((stars) => {
+                  const points = stars === 2 ? run.two : run.three;
+                  return (
+                    <li
+                      key={stars}
+                      className={styles.chip}
+                      aria-label={pl.briefing.starsFrom(stars, points)}
+                      data-testid={`briefing-stars-${stars}`}
+                    >
+                      <span className={styles.stars} aria-hidden="true">
+                        {Array.from({ length: stars }, (_, i) => (
+                          // biome-ignore lint/suspicious/noArrayIndexKey: identical stars.
+                          <Icon key={i} name="star" size={20} />
+                        ))}
+                      </span>
+                      <span aria-hidden="true">
+                        <span className={styles.from}>{pl.briefing.from} </span>
+                        {pl.briefing.points(points)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+              {run.shares && (
+                <p className={styles.rule} data-testid="briefing-rule">
+                  {typeset(pl.briefing.shareRule(run.shares.two, run.shares.three, run.maxScore))}
+                </p>
+              )}
+            </section>
           )}
         </header>
 

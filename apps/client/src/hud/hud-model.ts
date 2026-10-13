@@ -17,6 +17,7 @@ import {
   STATION_KINDS,
   type StationKind,
   type StoryType,
+  scalePenalty,
   type Truth,
 } from '@redakcja/shared';
 import { pl } from '../strings/pl.ts';
@@ -244,11 +245,15 @@ export function verdictToast(
   };
 }
 
-/** `folderExpired` carries no deltas; they follow the scoring table (design doc, Punktacja). */
+/**
+ * `folderExpired` carries no deltas; they follow the scoring table (design doc, Punktacja),
+ * scaled like the sim scales them: `scalePenalty(·, penaltyFactor)` of the room's difficulty.
+ */
 export function expiredToast(
   event: { folderId: string; storyId: string },
   story: StoryInfo | undefined,
   serial: number,
+  penaltyFactor = 1,
 ): ToastSlip {
   const penalized = story ? expiryIsPenalized(story.truth, story.priority) : true;
   const reason: FolderReason = penalized ? 'expired' : 'expiredUnpenalized';
@@ -256,8 +261,8 @@ export function expiredToast(
     id: `${event.folderId}:${serial}`,
     title: pl.outcome.title[reason],
     headline: story?.headline ?? pl.hud.untitled,
-    scoreDelta: penalized ? SCORE.expired : null,
-    credibilityDelta: penalized ? CREDIBILITY_DELTAS.expired : 0,
+    scoreDelta: penalized ? scalePenalty(SCORE.expired, penaltyFactor) : null,
+    credibilityDelta: penalized ? scalePenalty(CREDIBILITY_DELTAS.expired, penaltyFactor) : 0,
     tone: 'bad',
     mark: 'expired',
   };

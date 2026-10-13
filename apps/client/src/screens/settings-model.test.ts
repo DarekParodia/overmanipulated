@@ -79,8 +79,17 @@ describe('controls help', () => {
         'interact',
         'work',
         'ping',
+        'ability',
       ]);
     }
+  });
+
+  test('the role ability is R, RB and the fourth touch button (S7-39)', () => {
+    const ability = (device: 'keyboard' | 'gamepad' | 'touch') =>
+      controlRows(device).find((r) => r.action === 'ability')?.options;
+    expect(ability('keyboard')).toEqual([['R']]);
+    expect(ability('gamepad')).toEqual([['RB']]);
+    expect(ability('touch')).toEqual([['Zdolność']]);
   });
 
   test('key labels', () => {
