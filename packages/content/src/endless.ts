@@ -12,7 +12,7 @@ import {
   type StoryBook,
 } from '@redakcja/shared';
 import { bagDrawer } from './bag.ts';
-import { levelNumberOf, proofCount } from './checks.ts';
+import { levelNumberOf, levelStoryIds, proofCount, storyBookFor } from './rules.ts';
 import type { Level, Story } from './schema.ts';
 
 /** An endless level: a regular `Level` that the sim ends only at 0 credibility. */
@@ -69,15 +69,15 @@ function byCampaignOrder(a: Story, b: Story): number {
 }
 
 /**
- * Stories endless mode may draw: every solvable story that a campaign level schedules (the
- * level 0 greybox test content is left out), in campaign order. Falls back to all solvable
+ * Stories endless mode may draw: every solvable story that a campaign level schedules or pools
+ * (`levelStoryIds`; the level 0 greybox test content is left out), in campaign order. Falls back to all solvable
  * stories when no level schedules any.
  */
 export function endlessStoryPool(levels: readonly Level[], stories: readonly Story[]): Story[] {
   const scheduled = new Set(
     levels
       .filter((level) => levelNumberOf(level.id) !== 0)
-      .flatMap((level) => level.schedule.map((spawn) => spawn.storyId)),
+      .flatMap((level) => levelStoryIds(level)),
   );
   const solvable = stories.filter(isSolvable).sort(byCampaignOrder);
   const pool = solvable.filter((story) => scheduled.has(story.id) && levelNumberOf(story.id) !== 0);
@@ -210,17 +210,5 @@ export function storiesForEndless(
   level: Level,
   stories: readonly Story[],
 ): StoryBook & Readonly<Record<string, Story>> {
-  const byId = new Map(stories.map((story) => [story.id, story]));
-  const ids = new Set([
-    ...level.schedule.map((spawn) => spawn.storyId),
-    ...level.events.flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId])),
-  ]);
-  const book: Record<string, Story> = {};
-  for (const id of ids) {
-    const story = byId.get(id);
-    if (story) {
-      book[id] = story;
-    }
-  }
-  return book;
+  return storyBookFor(level, stories);
 }
