@@ -3,20 +3,24 @@
 The game runs as two containers behind one public port:
 
 ```
-browser ──https/wss :443──▶ web (Caddy: TLS, static client, reverse proxy)
+browser ──https/wss :443──▶ web (Caddy: TLS, static client, security headers, reverse proxy)
                                    │  /ws, /api/*, /health
                                    ▼
                              server (Bun + Hono, rooms in memory, SQLite on a volume)
 ```
 
-Everything goes over **443** (school networks often block other ports, and `wss://` needs TLS).
-The game server is never exposed directly.
+Everything goes over **443** (school networks often block other ports, and `wss://` needs TLS):
+the page, the assets, `/api/*`, `/health` and the game WebSocket `/ws` all share one origin.
+Port 80 only redirects to HTTPS and answers the ACME challenge; 443/udp carries HTTP/3 and is
+optional (browsers fall back to TCP). The game server is never exposed directly.
 
 ## Requirements
 
-- A Linux VPS with Docker Engine and the compose plugin.
+- A Linux VPS with Docker Engine and the compose plugin. 1 vCPU / 1 GB RAM is plenty: measured
+  idle usage is about 30 MB (server) + 15 MB (Caddy), and the compose file caps them at 384 MB
+  and 128 MB.
 - A domain whose A/AAAA record points at the VPS (for automatic Let's Encrypt certificates).
-- Ports 80 and 443 open (80 is only used for the ACME challenge and HTTP→HTTPS redirect).
+- Ports 80/tcp, 443/tcp and 443/udp open in the firewall (`ufw allow 80,443/tcp && ufw allow 443/udp`).
 
 ## First deploy
 
@@ -24,13 +28,13 @@ The game server is never exposed directly.
 git clone <repo> redakcja && cd redakcja
 cp .env.example .env          # set DOMAIN=gra.example.pl
 docker compose up -d --build
-docker compose ps             # server should be "healthy"
-curl https://gra.example.pl/api/health
+docker compose ps             # server and web should both be "healthy"
+bun run smoke -- https://gra.example.pl     # from any machine with Bun, see "Smoke test"
 ```
 
 Without a `DOMAIN`, Caddy serves `https://localhost` with its own local CA, which is handy for
 trying the production stack on a laptop (`docker compose up --build`, then accept the
-certificate warning or install Caddy's root CA).
+certificate warning or run the smoke test with `--insecure`).
 
 ## Updating
 
@@ -41,44 +45,213 @@ docker compose up -d --build
 
 Rooms live in memory, so a restart ends running matches. Deploy outside lesson hours.
 Players who are mid-game get the "connection lost" notice and can create a new room.
-
-## Data
-
-- SQLite file: Docker volume `db`, mounted at `/data/redakcja.sqlite` in the server container.
-  It holds only the leaderboard and similar aggregate data. Nicknames only, no personal data;
-  entries older than `LEADERBOARD_RETENTION_DAYS` are deleted hourly.
-- Migrations run automatically when the server starts.
-- Backup: `docker compose exec server bun -e "new (require('bun:sqlite').Database)('/data/redakcja.sqlite').run(\"VACUUM INTO '/data/backup.sqlite'\")"`
-  then `docker compose cp server:/data/backup.sqlite ./backup.sqlite`.
-- Certificates: volumes `caddy-data` / `caddy-config`. Keep them so Caddy doesn't re-issue
-  certificates on every deploy.
+Browsers that still have the old page open keep working until reload: hashed assets of the old
+build are gone, so such a tab shows the load error; reloading fixes it.
 
 ## Configuration
 
 | Variable | Where | Default | Meaning |
 | --- | --- | --- | --- |
 | `DOMAIN` | `.env` → web | `localhost` | Public host name for TLS |
-| `PORT` | server | `3000` | Internal HTTP/WS port |
-| `DATABASE_PATH` | server | `/data/redakcja.sqlite` | SQLite file |
-| `DEV_LATENCY_MS` | server | `0` | Dev only: artificial latency for netcode testing |
-| `LOG_LEVEL` | server | — | `silent` disables logs |
+| `LOG_LEVEL` | `.env` → server | `info` | `silent` disables server logs |
+| `PORT` | server | `3000` | Internal HTTP/WS port (set by compose) |
+| `DATABASE_PATH` | server | `/data/redakcja.sqlite` | SQLite file (set by compose) |
+| `BRIEFING_MS` | server | `18000` | Briefing length before a level auto-starts (tests shorten it) |
+| `DEV_LATENCY_MS` | server | `0` | Dev only: artificial latency for netcode testing. Keep `0` in production |
 
-## Checking a deploy
+Retention (90 days) and the limits below are constants in the code, not environment variables:
+`LEADERBOARD_RETENTION_DAYS` in `packages/shared/src/constants.ts` and
+`apps/server/src/limits.ts`.
 
-1. `https://<domain>/api/health` returns `{"status":"ok","db":"ok",…}`.
-2. Open the site on a laptop and a phone, create a room on one, join by code on the other,
-   start, and move: both must see each other.
-3. In the browser dev tools the socket URL must be `wss://<domain>/ws`.
+## What Caddy does (and how to check it)
 
-## Local production-like test without Docker
+| Concern | Setting | Quick check |
+| --- | --- | --- |
+| WebSocket upgrade | `reverse_proxy` passes `Upgrade` through; no read timeout on a proxied socket. The client sends a heartbeat every 2 s and Bun answers protocol pings, so NATs and proxies never see an idle connection. `stream_close_delay 5m` keeps sockets alive across a Caddy config reload. Verified: a socket that sent nothing for 150 s through Caddy (beyond Bun's 120 s idle timeout) was still open and answered a heartbeat | `bun run smoke` (heartbeat round trip) |
+| Compression | zstd and gzip on the fly; Brotli files are pre-built at image build time (`tools/deploy/precompress.ts`) and served by `precompressed br` | `curl -sI -H 'Accept-Encoding: br' https://<domain>/assets/<index>.js` |
+| Cache: hashed assets | `/assets/<name>-<8 hash chars>.(js\|css\|woff2)` → `public, max-age=31536000, immutable`. Only when the file exists: a missing hashed file is a plain 404, never `index.html` cached for a year | `curl -sI` the script |
+| Cache: everything else | `index.html`, manifest, icons and the un-hashed audio in `/assets/audio` → `no-cache` (revalidate by ETag) | `curl -sI https://<domain>/` |
+| Cache: API | `/api/*`, `/health`, `/ws` → `no-store` | |
+| Security headers | `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` plus CSP `frame-ancestors 'none'`, `Permissions-Policy` (no camera, microphone, geolocation), `Cross-Origin-Opener-Policy`, no `Server` header | `bun run smoke -- <url> --strict` |
+| CSP | `default-src 'self'`; `script-src 'self'`; `style-src 'self' 'unsafe-inline'` (React inline style attributes); `img-src 'self' data: blob:`; `font-src 'self'`; `media-src 'self' blob: data:`; `connect-src 'self' wss://<host>` (the explicit `wss://` entry is for older Safari that does not match `'self'` against WebSocket URLs); `object-src 'none'`. Verified with a real Chromium session (menu, lobby, briefing, playing level, audio, WebGL) against this exact policy: no violations | Browser console |
+| Request size | `/ws`, `/api/*` request bodies capped at 8 KB | |
+| Upstream health | Caddy probes `/health` every 5 s and stops routing to an unhealthy server (503) until it recovers | |
+| Access logs | Off on purpose: no IP addresses are written. Errors still go to the container log | See "Debugging with access logs" |
 
-Useful when Docker Hub is unavailable. Requires the `caddy` binary.
+If you add an external origin (analytics, CDN, fonts) the CSP must be extended in the
+`Caddyfile`; the game itself loads nothing from other hosts.
+
+### Abuse limits in the game server
+
+Implemented in the server (`apps/server/src/limits.ts`, tested in `limits.test.ts`); Caddy adds
+the 8 KB body cap. Because a whole class often sits behind one school IP, the per-address
+numbers are generous: they stop scripts, not students.
+
+| Limit | Value | Behaviour when exceeded |
+| --- | --- | --- |
+| WebSocket message size | 4096 bytes (`MAX_CLIENT_MESSAGE_BYTES`) | `invalidMessage` error, socket stays open |
+| Message rate per socket | 60/s sustained, burst 200 (gameplay input is 20/s) | Socket closed with code 1008 |
+| Joins (create or join) per IP | 120 per minute | `invalidMessage` error ("too many requests") |
+| New rooms per IP | 20 per minute | `invalidMessage` error |
+| Rooms alive at once | 300 | `roomFull` ("server is busy") for new rooms |
+| Players per room | 4 | `roomFull` |
+| Every message | validated with Zod | `invalidMessage` |
+
+The client address is the first `X-Forwarded-For` entry, which Caddy sets itself (it replaces
+any value sent by the browser).
+
+## Data, backups and retention
+
+- SQLite file: Docker volume `db`, mounted at `/data/redakcja.sqlite` in the server container
+  (WAL mode). It holds only the endless-mode leaderboard (nicknames, score, room code) and the
+  anonymous "blunder of the day" votes. No accounts, no e-mail addresses, no IP addresses.
+- **Retention: 90 days.** The server deletes leaderboard entries and votes older than
+  `LEADERBOARD_RETENTION_DAYS` (90) when it starts and then every hour. Backups are older
+  copies of the same data, so they follow the same rule: keep them no longer than needed (the
+  script below defaults to 14 days).
+- Migrations run automatically when the server starts.
+- The data is low value (a leaderboard), so backups are optional, but cheap:
 
 ```sh
-bun run build
+tools/deploy/backup.sh ./backups 14     # consistent copy (VACUUM INTO), integrity-checked
+```
+
+  Cron on the VPS (03:17 every night): `17 3 * * * cd /srv/redakcja && tools/deploy/backup.sh >> backups/backup.log 2>&1`
+
+- **Restore** (stops the server for a few seconds; replace the file name):
+
+```sh
+docker compose stop server
+docker compose run --rm --no-deps -T -v "$PWD/backups:/backups:ro" --entrypoint sh server -c \
+  'rm -f /data/redakcja.sqlite-wal /data/redakcja.sqlite-shm && cp /backups/redakcja-20261011T031700Z.sqlite /data/redakcja.sqlite'
+docker compose up -d server
+```
+
+  Both commands were exercised against a real stack (seed, back up, wipe the volume, restore,
+  read the data back).
+- Certificates live in volumes `caddy-data` / `caddy-config`. Keep them so Caddy does not
+  re-issue certificates on every deploy (Let's Encrypt rate limits).
+- Never run `docker compose down -v` in production: it deletes the volumes.
+
+## Operations
+
+- **Graceful shutdown:** on `SIGTERM` (compose `stop_grace_period: 15s`) the server stops the
+  loop, closes sockets and the database and exits 0. Measured: stop in about 0.5 s, exit code 0,
+  data intact after the restart. Both containers use `init: true`.
+- **Health checks:** `server` calls `/health` every 15 s (database probe included); `web`
+  asks Caddy's admin endpoint (`localhost:2019`, not published). `web` starts only after
+  `server` is healthy. `restart: unless-stopped` brings both back after a crash or reboot.
+- **Limits:** server 384 MB / 1 CPU, web 128 MB / 0.5 CPU, 128 processes each; the server runs
+  as the unprivileged `bun` user with no Linux capabilities and `no-new-privileges`.
+- **Log rotation:** the `json-file` driver keeps 3 files of 10 MB per container.
+- **Logs:** `docker compose logs -f server` (one JSON line per event: `room created`,
+  `player joined`, `player left`, `room closed`, `invalid client message`, `join rate limited`,
+  `room limit reached`, ...), `docker compose logs -f web` (Caddy errors).
+  Quick views: `docker compose logs --since 10m server | grep -c '"room created"'`.
+  Room codes and event names are logged; nicknames and IP addresses are not.
+- **Debugging with access logs:** add `log` inside the site block of the `Caddyfile`, run
+  `docker compose up -d --build web`, and remove it again afterwards (it records IP addresses).
+
+## Smoke test
+
+```sh
+bun run smoke -- https://gra.example.pl            # add --insecure for a self-signed local stack
+bun run smoke -- https://gra.example.pl --strict   # security-header warnings become failures
+```
+
+It uses only the public URL, like a school network would: `/api/health`, `/health`, the leaderboard
+endpoint, the HTML page and every script/stylesheet it links (cache header, compression,
+security headers), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
+create room, second socket joins by code, ready, start, skip the briefing, receive live
+snapshots that acknowledge the input. It prints PASS/WARN/FAIL per step and exits 1 on any
+failure. The script is covered by `tools/smoke/smoke.test.ts` (runs against a local server).
+
+## Local production-like test
+
+With Docker: `docker compose up -d --build` and `bun run smoke -- https://localhost --insecure`.
+
+Without Docker (needs the `caddy` binary):
+
+```sh
+bun run build && bun tools/deploy/precompress.ts apps/client/dist
 PORT=3000 DATABASE_PATH=:memory: bun apps/server/src/index.ts &
 sed -e 's|{$DOMAIN:localhost}|localhost:8443|' -e 's|server:3000|localhost:3000|' \
     -e "s|root \* /srv|root * $PWD/apps/client/dist|" Caddyfile > /tmp/Caddyfile.local
 caddy run --config /tmp/Caddyfile.local --adapter caddyfile
-# open https://localhost:8443
+bun run smoke -- https://localhost:8443 --insecure
 ```
+
+## School network notes
+
+- Port 443 only: the whole game works over `https`/`wss` on 443. If a class cannot connect, ask
+  IT whether the school proxy blocks WebSockets (`Upgrade` header) or inspects TLS with its own
+  certificate (then `wss` fails with a certificate error; the IT department must trust the
+  domain or bypass the proxy for it).
+- Some filters block newly registered or uncategorised domains: ask IT to allow the domain a
+  few days before the first lesson.
+- A class of 30 behind one IP is fine: the per-IP limits above leave room for it.
+
+## Device matrix (fill in before a stage exit and before the first lesson)
+
+Run a full 8-minute level in each row (mobile GPUs throttle after a few minutes) with at least
+one phone and one laptop in the same room. Mark each cell OK / issue (with note), and add the
+date and tester. The matrix comes from `agents/platforms.md`.
+
+| Device | Browser | Date / tester | Loads < 10 s | Join + lobby | Controls (move, work, ping) | Stations / minigames | FPS (F3 / `?debug`) | Sound | Reconnect (app switch 30 s) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| School laptop, Windows, Intel UHD 620 | Chrome | | | | | | | | n/a | |
+| School laptop, Windows, Intel UHD 620 | Edge | | | | | | | | n/a | |
+| Any laptop | Firefox | | | | | | | | n/a | |
+| Mac laptop (if available) | Safari 17+ | | | | | | | | n/a | |
+| Mid-range Android phone (~2021), landscape | Chrome Android | | | | | | | | | |
+| iPhone (11 or newer), landscape | Safari iOS 17+ | | | | | | | | | |
+| Tablet (iPad or Android), landscape | Safari / Chrome | | | | | | | | | |
+| Mixed room: 2 laptops + 2 phones | any | | | | | | | | | |
+
+Targets: 60 FPS on the laptop and never below 30 FPS on the mid-range phone for the whole
+level; text readable at 640×360; no console errors; sound unlocks after the first tap on iOS.
+
+## First lesson: ops checklist
+
+**A few days before**
+
+1. Domain is allowed on the school network (ask IT); the lesson room's Wi-Fi was tried once.
+2. `docker compose ps` shows both services healthy; `bun run smoke -- https://<domain> --strict`
+   passes with no warnings.
+3. Supervisor sign-off done (`reviewed: true` for all stories, see `docs/review/`), and the
+   privacy note (`docs/privacy.pl.md`) went to the teacher.
+4. Device matrix above filled in at least for laptop + Android + iPhone.
+
+**Before class (30 minutes)**
+
+1. `docker compose pull` is not needed; do **not** deploy now. Only run
+   `bun run smoke -- https://<domain>` from your laptop on the lesson-room network if possible
+   (or a phone hotspot to rule out the server).
+2. Warm up: open the game once on the teacher's laptop and play the first 30 seconds of
+   level 1 so the browser cache is warm; check the sound.
+3. `docker compose logs --since 1h server | tail` shows no errors; `docker stats --no-stream`
+   shows memory far below the limits.
+4. Have the room-code flow ready: the teacher opens the room and shows the 4-letter code on
+   the projector. Backup plan: a mobile hotspot, and a second room on another laptop.
+
+**During class**
+
+1. Watch live: `docker compose logs -f server` (rooms created, players joining/leaving,
+   `invalid client message`, `join rate limited`) and `docker compose logs -f web` (errors).
+2. Health at a glance: `curl -s https://<domain>/api/health` → `rooms` is the number of open
+   rooms.
+3. A student cannot join: check the code (4 letters, no `0/O`), the room is not full (4
+   players), and the student is on the right domain. A dropped student reconnects with the
+   same page within 60 s and keeps the place.
+4. If something is really wrong: do **not** restart mid-lesson unless the server is unhealthy;
+   a restart ends all running rooms.
+
+**After class**
+
+1. Note problems and the time they happened (the logs are JSON with timestamps); fill in the
+   device matrix with what teachers and students reported.
+2. `tools/deploy/backup.sh` (optional), then `docker compose logs --since 3h server | grep -c error`.
+3. Collect the "blunder of the day" statistics for the debrief:
+   `curl -s 'https://<domain>/api/stats/blunders?levelId=l1-burza'`.
+4. Deploy fixes only now, outside lesson hours (`git pull && docker compose up -d --build`),
+   then run the smoke test again.

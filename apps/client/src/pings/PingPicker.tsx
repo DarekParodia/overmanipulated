@@ -23,7 +23,7 @@ import {
 } from './ping-store.ts';
 
 /** Icon per ping: archive (clock = dates), fake (✗), mine (✓). */
-const PING_ICON: Record<PingKind, IconName> = {
+export const PING_ICON: Record<PingKind, IconName> = {
   needArchive: 'archive',
   fake: 'cross',
   mine: 'hand',

@@ -96,13 +96,25 @@
 /* Compact landscape (phones, 640x360): the HUD pill is taller, so the stack drops lower, shows
    only the two newest chips and uses smaller ones. */
 @media (max-height: 500px) {
+  /* Between the stacked HUD pill and the resting joystick there is room for one chip. */
   .stack {
-    top: calc(max(var(--space-3), env(safe-area-inset-top)) + 11rem);
+    top: calc(max(var(--space-2), env(safe-area-inset-top)) + 10rem);
     max-width: min(13rem, 34%);
   }
 
-  .chip:nth-last-child(n + 3) {
+  .chip:nth-last-child(n + 2) {
     display: none;
+  }
+
+  /* Left-handed: the buttons own the left corner, the joystick the right one; the captions
+     move to the right edge, above the joystick. */
+  .mirrored {
+    left: auto;
+    right: max(var(--space-3), env(safe-area-inset-right));
+  }
+
+  .mirrored .chip {
+    align-self: flex-end;
   }
 
   .mark {

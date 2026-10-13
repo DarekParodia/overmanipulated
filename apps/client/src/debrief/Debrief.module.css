@@ -202,37 +202,6 @@
   margin: 0;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 2px var(--space-3) 2px var(--space-2);
-  border: var(--outline-border);
-  border-radius: var(--radius-pill);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--text-md);
-  line-height: 1.6;
-  color: var(--outline);
-  white-space: nowrap;
-}
-
-.chipPublish {
-  background: var(--green);
-}
-
-.chipReject {
-  background: var(--red);
-}
-
-.chipContext {
-  background: var(--orange);
-}
-
-.chipExpired {
-  background: var(--surface-sunk);
-}
-
 /* --- Debrief chunks -------------------------------------------------------------------------- */
 
 .sections {

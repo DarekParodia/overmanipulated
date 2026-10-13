@@ -28,77 +28,77 @@
     {
       "atS": 4,
       "storyId": "l6-godziny-lokali",
-      "deadlineS": 70
+      "deadlineS": 50
     },
     {
       "atS": 31,
       "storyId": "l6-referendum-w-poniedzialek",
-      "deadlineS": 60
+      "deadlineS": 40
     },
     {
       "atS": 58,
       "storyId": "l6-apel-mieszkancow",
-      "deadlineS": 90
+      "deadlineS": 65
     },
     {
       "atS": 85,
       "storyId": "l6-sondaz-pracowni",
-      "deadlineS": 80
+      "deadlineS": 55
     },
     {
       "atS": 112,
       "storyId": "l6-sonda-w-grupie",
-      "deadlineS": 75
+      "deadlineS": 55
     },
     {
       "atS": 139,
       "storyId": "l6-tlum-przed-ratuszem",
-      "deadlineS": 70
+      "deadlineS": 50
     },
     {
       "atS": 166,
       "storyId": "l6-autobusy-w-niedziele",
-      "deadlineS": 70
+      "deadlineS": 50
     },
     {
       "atS": 193,
       "storyId": "l6-nagranie-zastepcy",
-      "deadlineS": 60
+      "deadlineS": 40
     },
     {
       "atS": 220,
       "storyId": "l6-satyra-linia-12",
-      "deadlineS": 75
+      "deadlineS": 55
     },
     {
       "atS": 247,
       "storyId": "l6-anonimowa-komisja",
-      "deadlineS": 60
+      "deadlineS": 40
     },
     {
       "atS": 274,
       "storyId": "l6-frekwencja-w-poludnie",
-      "deadlineS": 80
+      "deadlineS": 55
     },
     {
       "atS": 301,
       "storyId": "l6-hashtag-12-to-koniec",
-      "deadlineS": 85
+      "deadlineS": 60
     },
     {
       "atS": 328,
       "storyId": "l6-wyrwany-cytat-radnej",
-      "deadlineS": 75
+      "deadlineS": 55
     },
     {
       "atS": 355,
       "storyId": "l6-dowoz-seniorow",
-      "deadlineS": 70
+      "deadlineS": 50
     },
     {
       "atS": 382,
       "storyId": "l6-fotka-urny",
-      "deadlineS": 70
+      "deadlineS": 50
     }
   ],
   "events": [
@@ -106,20 +106,20 @@
       "kind": "botRaid",
       "atS": 60,
       "storyId": "l6-nalot-zostaje12",
-      "deadlineS": 75,
+      "deadlineS": 55,
       "count": 4
     },
     {
       "kind": "correction",
       "atS": 140,
       "storyId": "l6-sprostowanie-apel",
-      "deadlineS": 80
+      "deadlineS": 55
     },
     {
       "kind": "bossCall",
       "atS": 195,
       "storyId": "l6-szef-kaze-publikowac",
-      "deadlineS": 55
+      "deadlineS": 40
     },
     {
       "kind": "outage",
@@ -131,18 +131,15 @@
       "kind": "botRaid",
       "atS": 285,
       "storyId": "l6-nalot-hashtag",
-      "deadlineS": 85,
+      "deadlineS": 60,
       "count": 5
     },
     {
       "kind": "correction",
       "atS": 345,
       "storyId": "l6-sprostowanie-tlum",
-      "deadlineS": 80
+      "deadlineS": 55
     }
   ],
-  "stars": {
-    "two": 250,
-    "three": 340
-  }
+  "stars": { "two": 250, "three": 360 }
 }

@@ -16,6 +16,7 @@ import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
+import { VerdictStamp } from '../ui/VerdictStamp.tsx';
 import styles from './DeskOverlay.module.css';
 import { DEADLINE_EXTENSION_S, mayExtendDeadline } from './deadline-extension.ts';
 import { FolderSheet } from './FolderSheet.tsx';
@@ -100,6 +101,7 @@ function CorrectionView({ folder, story, pending, onVerdict, onClose }: DeskOver
           {story ? <FolderSheet folder={folder} story={story} /> : <p>{pl.desk.unknownStory}</p>}
         </div>
         <div className={styles.correctionAct}>
+          <VerdictStamp kind="correction" size="md" className={styles.correctionStamp} />
           <p className={styles.correctionNote} role="status">
             <Icon name="siren" size={26} className={`${styles.correctionIcon}`} />
             <span>{typeset(pl.events.correction.line)}</span>
@@ -499,10 +501,7 @@ function ResultView({
             </p>
             {story && <p className={styles.outcomeStory}>{typeset(story.headline)}</p>}
           </div>
-          <span className={`${styles.verdictChip} ${styles[result.verdict]}`}>
-            <Icon name={result.verdict} size={22} />
-            {pl.desk.verdictShort[result.verdict]}
-          </span>
+          <VerdictStamp kind={result.verdict} size="md" slam data-testid="desk-result-stamp" />
         </div>
 
         <p className={styles.deltas}>

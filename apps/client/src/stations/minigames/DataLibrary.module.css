@@ -135,10 +135,12 @@
 }
 
 .table tbody th {
-  width: 26%;
+  width: 30%;
   text-align: left;
   color: var(--text);
-  overflow-wrap: anywhere;
+  /* Row names stay whole words ("Transport" must not break); long ones hyphenate. */
+  overflow-wrap: normal;
+  hyphens: auto;
 }
 
 .table td {

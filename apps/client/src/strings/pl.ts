@@ -182,6 +182,25 @@ export const pl = {
     stamps: 'Pieczątki',
     stampAgain: 'Przybij jeszcze raz',
     minigames: 'Minigry',
+    stampsHint: 'Pieczątki werdyktów – jedno pismo w całej grze.',
+    iconGroups: {
+      storyTypes: 'Rodzaje materiałów',
+      stations: 'Stanowiska',
+      verdicts: 'Werdykty',
+      roles: 'Role',
+      events: 'Zdarzenia',
+      pings: 'Sygnały',
+      techniques: 'Techniki manipulacji',
+      ui: 'Interfejs',
+    },
+  },
+  /** Final verdict stamp lettering (ui/VerdictStamp.tsx); short words, shown in capitals. */
+  stamps: {
+    publish: 'Opublikuj',
+    reject: 'Odrzuć',
+    publishWithContext: 'Z kontekstem',
+    correction: 'Sprostowanie',
+    expired: 'Przepadła',
   },
   // --- Stage 2 gameplay. Shared vocabulary first, then one namespace per feature. ----------
   vocab: {

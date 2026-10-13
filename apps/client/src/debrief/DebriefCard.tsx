@@ -12,6 +12,7 @@ import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
+import { VerdictStamp } from '../ui/VerdictStamp.tsx';
 import styles from './Debrief.module.css';
 import type { DebriefCard as Card, Voter } from './debrief-model.ts';
 
@@ -29,12 +30,6 @@ const MARK = {
   expired: 'expired',
 } as const satisfies Record<Card['outcome'], IconName>;
 
-const VERDICT_TONE: Record<Verdict, string | undefined> = {
-  publish: styles.chipPublish,
-  reject: styles.chipReject,
-  publishWithContext: styles.chipContext,
-};
-
 const SECTIONS = [
   { key: 'what', icon: 'folder' },
   { key: 'technique', icon: 'lightbulb' },
@@ -47,19 +42,9 @@ const SWIPE_PX = 56;
 
 function VerdictChip({ verdict }: { verdict: Verdict | null }) {
   if (verdict === null) {
-    return (
-      <span className={`${styles.chip} ${styles.chipExpired}`}>
-        <Icon name="expired" size={20} />
-        {pl.debrief.expired}
-      </span>
-    );
+    return <VerdictStamp kind="expired" size="sm" />;
   }
-  return (
-    <span className={`${styles.chip} ${VERDICT_TONE[verdict]}`}>
-      <Icon name={verdict} size={20} />
-      {pl.desk.verdictShort[verdict]}
-    </span>
-  );
+  return <VerdictStamp kind={verdict} size="sm" />;
 }
 
 export type DebriefCardProps = {

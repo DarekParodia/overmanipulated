@@ -357,6 +357,7 @@
 
   .ribbon {
     gap: var(--space-3);
+    min-width: 0;
     padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
   }
 
@@ -407,15 +408,17 @@
     gap: 0;
   }
 
+  /* Points over credibility: stacked, so the ribbon keeps room for the headline and the
+     „Nowa karta!” chip instead of letting them run under the stars. */
   .figures {
-    grid-template-columns: auto auto;
-    gap: var(--space-2);
+    grid-template-columns: auto;
+    gap: 2px;
     width: auto;
   }
 
   .figure {
     gap: var(--space-1);
-    padding: 2px var(--space-3) 2px var(--space-2);
+    padding: 0 var(--space-3) 0 var(--space-2);
   }
 
   .figure svg {

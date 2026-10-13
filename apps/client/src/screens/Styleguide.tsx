@@ -1,17 +1,25 @@
 // Living style guide at ?styleguide (S1-17): the cartoon newsroom system on one page — colours
 // by meaning, type scale, every button variant, the panel, inputs, icons and stamps — plus the
 // minigame bench, to review against agents/design-rules.md on desktop and phone.
+
+import { TECHNIQUES } from '@redakcja/content';
+import { LEVEL_EVENT_KINDS, PING_KINDS, ROLES, STATION_KINDS, VERDICTS } from '@redakcja/shared';
 import { useState } from 'react';
+import { cardIcon } from '../encyclopedia/card-icons.ts';
+import { EVENT_ICON } from '../events/event-model.ts';
 import { emitCue } from '../fx/feedback.ts';
+import { PING_ICON } from '../pings/PingPicker.tsx';
+import { STATION_ICON } from '../stations/kit.tsx';
 import { MinigameBench } from '../stations/minigames/MinigameBench.tsx';
 import { pl } from '../strings/pl.ts';
 import { formatNumber, typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Checkbox } from '../ui/Checkbox.tsx';
 import { Field } from '../ui/Field.tsx';
-import { Icon, iconNames } from '../ui/icons/Icon.tsx';
+import { Icon, type IconName, iconNames } from '../ui/icons/Icon.tsx';
+import { RoleIcon } from '../ui/icons/RoleIcon.tsx';
 import { Slider } from '../ui/Slider.tsx';
-import { Stamp } from '../ui/Stamp.tsx';
+import { STAMP_KINDS, VerdictStamp } from '../ui/VerdictStamp.tsx';
 import { GameLogo } from './GameLogo.tsx';
 import styles from './Styleguide.module.css';
 
@@ -27,6 +35,73 @@ const baseSwatches = [
   'text-faint',
 ];
 const playerSwatches = ['player-0', 'player-1', 'player-2', 'player-3'];
+
+type IconItem = {
+  key: string;
+  label: string;
+  icon: IconName;
+  role?: (typeof ROLES)[number] | 'none';
+};
+type IconGroup = { id: keyof typeof pl.styleguide.iconGroups; items: IconItem[] };
+
+const storyTypeNames = Object.keys(pl.vocab.storyTypes) as (keyof typeof pl.vocab.storyTypes)[];
+
+/** Every icon of the set, grouped by what it stands for; the rest lands under "Interfejs". */
+function buildIconGroups(): IconGroup[] {
+  const groups: IconGroup[] = [
+    {
+      id: 'storyTypes',
+      items: storyTypeNames.map((t) => ({ key: t, label: pl.vocab.storyTypes[t], icon: t })),
+    },
+    {
+      id: 'stations',
+      items: STATION_KINDS.map((k) => ({
+        key: k,
+        label: pl.vocab.stations[k],
+        icon: STATION_ICON[k],
+      })),
+    },
+    {
+      id: 'verdicts',
+      items: VERDICTS.map((v) => ({ key: v, label: pl.vocab.verdicts[v], icon: v })),
+    },
+    {
+      id: 'roles',
+      items: [...ROLES, 'none' as const].map((r) => ({
+        key: r,
+        label: r === 'none' ? pl.lobbyRoles.noRole : pl.vocab.roles[r],
+        icon: 'user' as const,
+        role: r,
+      })),
+    },
+    {
+      id: 'events',
+      items: LEVEL_EVENT_KINDS.map((k) => ({
+        key: k,
+        label: pl.events.banner[k].title,
+        icon: EVENT_ICON[k],
+      })),
+    },
+    {
+      id: 'pings',
+      items: PING_KINDS.map((k) => ({ key: k, label: pl.vocab.pings[k], icon: PING_ICON[k] })),
+    },
+    {
+      id: 'techniques',
+      items: TECHNIQUES.map((t) => ({ key: t.id, label: t.name, icon: cardIcon(t) })),
+    },
+  ];
+  const shown = new Set(groups.flatMap((g) => g.items.map((i) => i.icon)));
+  groups.push({
+    id: 'ui',
+    items: iconNames
+      .filter((name) => !shown.has(name))
+      .map((name) => ({ key: name, label: name, icon: name })),
+  });
+  return groups;
+}
+
+const iconGroups = buildIconGroups();
 
 const typeScale = ['3xl', '2xl', 'xl', 'lg', 'md', 'sm'];
 
@@ -153,33 +228,42 @@ export function Styleguide() {
         </section>
       </div>
 
-      <section className={`panel ${styles.section}`}>
+      <section className={`panel ${styles.section}`} id="icons">
         <h2>{s.icons}</h2>
-        <div className={styles.icons}>
-          {iconNames.map((name) => (
-            <figure key={name} className={styles.icon}>
-              <Icon name={name} size={40} />
-              <figcaption>
-                <code>{name}</code>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
+        {iconGroups.map((group) => (
+          <div key={group.id} data-testid={`icon-group-${group.id}`}>
+            <h3>{s.iconGroups[group.id]}</h3>
+            <div className={styles.icons}>
+              {group.items.map((item) => (
+                <figure key={item.key} className={styles.icon}>
+                  {item.role ? (
+                    <RoleIcon role={item.role} size={40} />
+                  ) : (
+                    <Icon name={item.icon} size={40} />
+                  )}
+                  <figcaption>{item.label}</figcaption>
+                </figure>
+              ))}
+            </div>
+          </div>
+        ))}
       </section>
 
-      <section className={`panel ${styles.section}`}>
+      <section className={`panel ${styles.section}`} id="stamps">
         <h2>{s.stamps}</h2>
+        <p>{s.stampsHint}</p>
         <div className={styles.stamps} key={slamKey}>
-          <Stamp text="Fałsz" subtext="Kartoteka źródeł" tone="red" seed={11} slam />
-          <Stamp
-            text="Potwierdzone"
-            subtext="6.10.2026"
-            tone="blue"
-            shape="double"
-            seed={23}
-            slam
-          />
-          <Stamp text="Kontekst" tone="ochre" shape="circle" seed={37} slam size={130} />
+          {STAMP_KINDS.map((kind) => (
+            <VerdictStamp key={kind} kind={kind} size="lg" slam />
+          ))}
+        </div>
+        <div className={styles.stamps}>
+          {STAMP_KINDS.map((kind) => (
+            <VerdictStamp key={kind} kind={kind} size="md" />
+          ))}
+          {STAMP_KINDS.map((kind) => (
+            <VerdictStamp key={kind} kind={kind} size="sm" />
+          ))}
         </div>
         <div className={styles.row}>
           <Button

@@ -22,6 +22,7 @@ export function CaptionStack() {
   const enabled = useSettings((s) => s.captions);
   const muted = useSettings((s) => s.muted);
   const update = useSettings((s) => s.update);
+  const leftHanded = useSettings((s) => s.leftHanded);
   const chips = useCaptions((s) => s.chips);
   const [dismissed, setDismissed] = useState(suggestionDismissed);
 
@@ -43,7 +44,10 @@ export function CaptionStack() {
   }
 
   return (
-    <section className={styles.stack} aria-label={pl.a11y.captionsRegion}>
+    <section
+      className={`${styles.stack} ${leftHanded ? styles.mirrored : ''}`}
+      aria-label={pl.a11y.captionsRegion}
+    >
       {suggest && (
         <div className={styles.suggest}>
           <Button

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Karty ról: Redakcja na Ostatnią Chwilę</title>
+<style>
+@font-face{font-family:'Baloo 2';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/baloo-2-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Baloo 2';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/baloo-2-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+@font-face{font-family:'Nunito';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/nunito-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Nunito';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/nunito-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+:root{--sky:#7cc8f5;--surface:#ffffff;--soft:#eef6fc;--sunk:#d9e9f5;--ink:#1e2a4a;--ink-soft:#4d5b80;--yellow:#ffd23f;--yellow-dark:#e8b400;--green:#36c46a;--green-dark:#1f9a4c;--red:#ff5a5f;--red-dark:#d63339;--orange:#ff9f1c;--orange-dark:#e07b00;--blue:#3a86ff;--blue-dark:#1f63d6;--folder:#ffd76a;--folder-dark:#e8b400;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sky);color:var(--ink);font-family:Nunito,sans-serif;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3,.display{font-family:'Baloo 2',sans-serif;font-weight:800;margin:0;line-height:1.1}
+svg{display:block;flex:none}
+.sheet{padding:24px;display:grid;gap:24px;justify-content:center}
+@media print{body{background:var(--surface)}.sheet{padding:0}}
+
+.card.role{width:540px;height:410px;background:var(--surface);border:6px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:20px 24px 14px;display:flex;flex-direction:column;gap:10px}
+.role header{display:flex;gap:16px;align-items:center}
+.role .badge{width:92px;height:92px;border-radius:50%;background:var(--sky);border:5px solid var(--ink);display:grid;place-items:center}
+.role .kicker{margin:0 0 2px;font-weight:800;font-size:15px;color:var(--ink-soft)}
+.role h2{font-size:34px}
+.role h3{font-size:17px;display:flex;gap:8px;align-items:center;margin-bottom:2px}
+.role p{margin:0;font-size:16px;line-height:1.3}
+.role .bonus{background:var(--soft);border:4px solid var(--ink);border-radius:18px;padding:8px 14px}
+.role .bonus p{font-weight:800;font-size:18px}
+.chips{list-style:none;margin:6px 0 0;padding:0;display:flex;gap:8px;flex-wrap:wrap}
+.chips li{display:flex;gap:6px;align-items:center;background:var(--surface);border:3px solid var(--ink);border-radius:999px;padding:2px 12px 2px 8px;font-weight:800;font-size:14px}
+.role .tip{display:flex;gap:12px;align-items:center;background:var(--yellow);border:4px solid var(--ink);border-radius:18px;padding:8px 14px}
+.role .tip p{font-weight:800;font-size:16px}
+.role footer{margin-top:auto;font-size:12px;color:var(--ink-soft);font-weight:700;text-align:center}
+.role-sheet{grid-template-columns:repeat(2,540px);padding-bottom:40px;gap:28px}
+@media print{@page{size:A4 landscape;margin:8mm}.role-sheet{zoom:.78;gap:22px;align-content:center;min-height:190mm}}
+</style></head>
+<body><main class="sheet role-sheet">
+<article class="card role" data-role="photoEditor">
+  <header>
+    <div class="badge"><svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4.5h11v9h-11Z" style="fill:#ffd23f"></path><path d="M3.5 11l3-3 2.5 2.5"></path><path d="M11 14a4 4 0 1 0 8 0a4 4 0 1 0-8 0Z" style="fill:#ffd23f"></path><path d="M18 17l3 3"></path></svg></div>
+    <div>
+      <p class="kicker">Karta roli</p>
+      <h2>Fotoedytor</h2>
+    </div>
+  </header>
+  <section class="bonus">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
+    <p>Lupa obrazu i Skaner AI działają o 40% szybciej.</p>
+    <ul class="chips"><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0-12 0Z" style="fill:#ffd23f"></path><path d="M14.5 14.5L20 20M7.5 11.5l1.8-2 1.5 1.5 1.2-1 1.5 1.8"></path></svg>Lupa obrazu</li><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10H7Z" style="fill:#ffd23f"></path><path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"></path></svg>Skaner AI</li></ul>
+  </section>
+  <section>
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
+    <p>Wyszukiwanie obrazem, wykrywanie edycji i AI.</p>
+  </section>
+  <section class="tip">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 16.5c0-2-3-3.5-3-7.5a6 6 0 0 1 12 0c0 4-3 5.5-3 7.5Z" style="fill:#ffd23f"></path><path d="M9.5 19.5h5M10.5 22h3"></path></svg>
+    <p>Piękne zdjęcie to jeszcze nie dowód. Najpierw sprawdź, skąd pochodzi.</p>
+  </section>
+  <footer>Role nie blokują stanowisk: każdy może pracować wszędzie.</footer>
+</article>
+<article class="card role" data-role="archivist">
+  <header>
+    <div class="badge"><svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 13.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0ZM13.5 13.5a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0Z" style="fill:#ffd23f"></path><path d="M10.5 13c1-.9 2-.9 3 0M3.5 13L2.5 9.5M20.5 13l1-3.5"></path></svg></div>
+    <div>
+      <p class="kicker">Karta roli</p>
+      <h2>Archiwista</h2>
+    </div>
+  </header>
+  <section class="bonus">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
+    <p>Archiwum działa o 40% szybciej.</p>
+    <ul class="chips"><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5h14v17H5Z" style="fill:#ffd23f"></path><path d="M5 9.25h14M5 14.75h14M10.5 6.5h3M10.5 12h3M10.5 17.75h3"></path></svg>Archiwum</li></ul>
+  </section>
+  <section>
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
+    <p>Sprawdzanie dat, starych wersji stron i kontekstu.</p>
+  </section>
+  <section class="tip">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 16.5c0-2-3-3.5-3-7.5a6 6 0 0 1 12 0c0 4-3 5.5-3 7.5Z" style="fill:#ffd23f"></path><path d="M9.5 19.5h5M10.5 22h3"></path></svg>
+    <p>Data publikacji to nie data zdarzenia. Zajrzyj do tego, co było wcześniej.</p>
+  </section>
+  <footer>Role nie blokują stanowisk: każdy może pracować wszędzie.</footer>
+</article>
+<article class="card role" data-role="reporter">
+  <header>
+    <div class="badge"><svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h10v17H6Z" style="fill:#ffd23f"></path><path d="M4 7.5h3M4 12h3M4 16.5h3M9.5 8h3.5M9.5 11.5h3.5"></path><path d="M18.5 3.5h2v13l-1 2.5-1-2.5Z" style="fill:#ffd23f"></path></svg></div>
+    <div>
+      <p class="kicker">Karta roli</p>
+      <h2>Reporter</h2>
+    </div>
+  </header>
+  <section class="bonus">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
+    <p>Telefon do źródła bez kolejki.</p>
+    <ul class="chips"><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 7 7l1.5-2 4 1.5v3A1.5 1.5 0 0 1 18.5 20.5 15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4Z" style="fill:#ffd23f"></path></svg>Telefon</li></ul>
+  </section>
+  <section>
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
+    <p>Dotarcie do źródła pierwotnego i świadków.</p>
+  </section>
+  <section class="tip">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 16.5c0-2-3-3.5-3-7.5a6 6 0 0 1 12 0c0 4-3 5.5-3 7.5Z" style="fill:#ffd23f"></path><path d="M9.5 19.5h5M10.5 22h3"></path></svg>
+    <p>Najlepszy dowód to osoba, która tam była. Zadzwoń, zanim uwierzysz.</p>
+  </section>
+  <footer>Role nie blokują stanowisk: każdy może pracować wszędzie.</footer>
+</article>
+<article class="card role" data-role="managingEditor">
+  <header>
+    <div class="badge"><svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4h4l-.8 3.5h-2.4Z" style="fill:#ffd23f"></path><path d="M10.8 7.5L9 16.5l3 4 3-4-1.8-9Z" style="fill:#ffd23f"></path><path d="M6.5 3l3.5 1M17.5 3L14 4"></path></svg></div>
+    <div>
+      <p class="kicker">Karta roli</p>
+      <h2>Redaktor prowadzący</h2>
+    </div>
+  </header>
+  <section class="bonus">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
+    <p>Raz na poziom przedłuża termin jednej teczki.</p>
+    
+  </section>
+  <section>
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
+    <p>Decyzje przy stole redakcyjnym i koordynacja zespołu.</p>
+  </section>
+  <section class="tip">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 16.5c0-2-3-3.5-3-7.5a6 6 0 0 1 12 0c0 4-3 5.5-3 7.5Z" style="fill:#ffd23f"></path><path d="M9.5 19.5h5M10.5 22h3"></path></svg>
+    <p>Pilne nie znaczy prawdziwe. Przy stole zwolnij i zapytaj zespół o dowód.</p>
+  </section>
+  <footer>Role nie blokują stanowisk: każdy może pracować wszędzie.</footer>
+</article>
+</main></body></html>
