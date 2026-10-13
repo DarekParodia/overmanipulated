@@ -1,8 +1,16 @@
 // Station overlay (S2-03): hosts the minigame for the station the local player operates, enforces
 // the time limit and reports the outcome to the server exactly once. Also the two small plates
 // shown around it: the hold-to-work ring while working, and the lockout plate after a failure.
+// A station that keeps its card (the Kartoteka, MINIGAME_STABLE_SEED_STATIONS) starts a round
+// that follows a cancel with the clock that was left (S7-14, retry-memory.ts).
 import { getStory } from '@redakcja/content';
-import { type Folder, MINIGAME_TIME_LIMIT_MS, ROLE_STATIONS, type Station } from '@redakcja/shared';
+import {
+  type Folder,
+  MINIGAME_STABLE_SEED_STATIONS,
+  MINIGAME_TIME_LIMIT_MS,
+  ROLE_STATIONS,
+  type Station,
+} from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
@@ -12,6 +20,12 @@ import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { KeyCap, ResultMark, STATION_ICON } from './kit.tsx';
 import { minigameFor } from './minigames/index.ts';
+import {
+  recallCard,
+  remainingAfter,
+  roundClockMs,
+  useRetryMemory,
+} from './minigames/retry-memory.ts';
 import { OverlayFrame } from './OverlayFrame.tsx';
 import { secondsLeft } from './overlay-logic.ts';
 import styles from './StationOverlay.module.css';
@@ -37,6 +51,13 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
     role !== null &&
     (ROLE_STATIONS[role] as readonly string[]).includes(station.kind);
   const story = folder ? getStory(folder.storyId) : undefined;
+  const seed = station.minigameSeed;
+  const keepsCard = MINIGAME_STABLE_SEED_STATIONS.includes(station.kind);
+  // Read once per round: StationLayer unmounts the overlay whenever the station leaves the
+  // minigame phase, so a Kartoteka retry (same seed, same key) still mounts afresh.
+  const [clockMs] = useState(() =>
+    keepsCard ? roundClockMs(recallCard(seed)) : MINIGAME_TIME_LIMIT_MS,
+  );
   const [startedAt] = useState(() => performance.now());
   const [now, setNow] = useState(startedAt);
   const settled = useRef(false);
@@ -54,6 +75,10 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
         return;
       }
       settled.current = true;
+      if (keepsCard && !success) {
+        // The card comes back after the lockout with its circles but a full clock.
+        useRetryMemory.getState().rememberFailure(seed);
+      }
       sendCommand({ kind: 'minigameResult', stationId: station.id, success });
       // Failure feedback comes with the server's minigameFailed event (net/game-events.ts).
       if (success) {
@@ -61,7 +86,7 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
       }
       onResult(success);
     },
-    [station.id, onResult],
+    [station.id, keepsCard, seed, onResult],
   );
 
   const close = useCallback(() => {
@@ -69,9 +94,14 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
       return;
     }
     settled.current = true;
+    if (keepsCard && playable) {
+      // Putting the card down keeps the clock where it was: no fresh time for a peek.
+      const left = remainingAfter(clockMs, performance.now() - startedAt);
+      useRetryMemory.getState().rememberCancel(seed, left);
+    }
     sendCommand({ kind: 'cancel' });
     onClose();
-  }, [onClose]);
+  }, [keepsCard, playable, clockMs, startedAt, seed, onClose]);
 
   useEffect(() => {
     if (!playable) {
@@ -82,10 +112,10 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
   }, [playable]);
 
   useEffect(() => {
-    if (playable && elapsed >= MINIGAME_TIME_LIMIT_MS) {
+    if (playable && elapsed >= clockMs) {
       finish(false);
     }
-  }, [playable, elapsed, finish]);
+  }, [playable, elapsed, clockMs, finish]);
 
   // The frame only takes `back`; everything else goes on to the minigame inside.
   useNavIntent((intent) => {
@@ -98,8 +128,9 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
   });
 
   const Game = minigameFor(station.kind);
-  const timeLeft = Math.max(0, MINIGAME_TIME_LIMIT_MS - elapsed);
-  const timeUsed = Math.min(1, elapsed / MINIGAME_TIME_LIMIT_MS);
+  const timeLeft = remainingAfter(clockMs, elapsed);
+  // Shares of the full limit, so a resumed round shows the clock as it was left.
+  const timeUsed = Math.min(1, 1 - timeLeft / MINIGAME_TIME_LIMIT_MS);
 
   return (
     <OverlayFrame
@@ -121,7 +152,7 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
     >
       {story ? (
         <Game
-          seed={station.minigameSeed}
+          seed={seed}
           story={story}
           stamp={story.stamps.find((s) => s.station === station.kind)}
           device={device}

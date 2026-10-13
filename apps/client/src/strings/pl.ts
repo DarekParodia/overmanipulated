@@ -464,13 +464,16 @@ export const pl = {
     sourceRegistry: {
       kinds: { account: 'Konto', website: 'Strona' },
       task: 'Zakreśl podejrzane wpisy, potem odłóż kartę',
+      /** Task line when the same card comes back after a failure or a cancel (S7-14). */
+      retryTask: 'Ta sama karta: dokończ zakreślanie',
       file: 'Odłóż kartę',
       marked: (n: number) => (n === 0 ? 'Nic nie zakreślone' : `Zakreślone: ${n}`),
       notThis: 'W porządku',
       missing: 'Czegoś brakuje!',
-      revealed: 'Przerywane: tego szukaliśmy',
       filed: 'Sprawdzone!',
       failed: 'Źle zakreślone',
+      /** Under „Źle zakreślone”: no answer is shown, the card comes back after the lockout. */
+      failedSameCard: 'Karta na ciebie poczeka.',
       clean: 'Źródło w porządku',
       flagged: 'Źródło podejrzane',
       keys: {

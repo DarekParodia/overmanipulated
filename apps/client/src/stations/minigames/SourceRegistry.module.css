@@ -129,12 +129,6 @@
   outline-color: var(--blue);
 }
 
-/* Revealed after a failure: the rows the player should have marked, dashed. */
-.field[data-missed="true"] {
-  border-style: dashed;
-  border-color: var(--red-dark);
-}
-
 .flag {
   position: absolute;
   top: 50%;
