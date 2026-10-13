@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { type Folder, folderResultSchema } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
-import { runStep, TEST_MAP, testContext } from './__fixtures__/greybox.ts';
+import { runStep, TEST_MAP, testContext, testFolder } from './__fixtures__/greybox.ts';
 import type { SimFrame } from './frame.ts';
 import { applyCredibility, starsFor, stepScoring } from './scoring.ts';
 import { createGameState, type GameState } from './state.ts';
@@ -14,6 +14,7 @@ const expired = (folderId: string, storyId: string, stamps: string[] = []): Game
   kind: 'folderExpired',
   stamps,
   folderId,
+  spawnKey: testFolder(folderId).spawnKey,
   storyId,
 });
 
@@ -27,16 +28,14 @@ const NO_BONUS = { speed: 0, multiStamp: 0, bossCall: 0 };
 
 /** A folder still in play on a conveyor tile. */
 function inPlay(id: string, storyId: string, stamps: string[] = [], tag?: Folder['tag']): Folder {
-  return {
-    id,
+  return testFolder(id, {
     storyId,
     location: { kind: 'fixture', fixtureId: `conveyor-${id}` },
     stamps,
     spawnedAtMs: 1000,
     deadlineMs: 200_000,
-    warned: false,
     ...(tag ? { tag } : {}),
-  };
+  });
 }
 
 describe('stepScoring — expiry', () => {
@@ -47,6 +46,7 @@ describe('stepScoring — expiry', () => {
     expect(next.results).toEqual([
       {
         folderId: 'f1',
+        spawnKey: 's1',
         storyId: 't-true',
         outcome: 'expired',
         reason: 'expired',
@@ -165,6 +165,7 @@ describe('stepScoring — folders left when the level ends', () => {
     expect(next.results).toEqual([
       {
         folderId: 'f1',
+        spawnKey: 's1',
         storyId: 't-true',
         outcome: 'unfinished',
         reason: 'unfinished',
@@ -178,6 +179,7 @@ describe('stepScoring — folders left when the level ends', () => {
       },
       {
         folderId: 'f2',
+        spawnKey: 's2',
         storyId: 't-false',
         outcome: 'unfinished',
         reason: 'unfinished',

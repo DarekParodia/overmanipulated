@@ -273,6 +273,7 @@ export function stepDesk(state: GameState, frame: SimFrame): GameState {
         );
         const result: FolderResult = {
           folderId: folder.id,
+          spawnKey: folder.spawnKey,
           storyId: story.id,
           ...evaluation,
           verdict: command.verdict,

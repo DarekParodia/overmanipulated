@@ -69,12 +69,16 @@ function StationHost({ playerId }: { playerId: string | null }) {
   // A station that is down (outage event) opens no minigame and shows no work prompt; the
   // server also kicks the worker out, this covers the snapshot or two before that.
   const down = stationIsDown(station);
-  const operating = station !== undefined;
+  // The server has moved on once the station leaves the minigame (or the player leaves it). A
+  // Kartoteka retry reopens the same card, i.e. the same round id (S7-13), so the settled round
+  // is forgotten here and not only when the player stops operating: after a cancel, work held
+  // on may take the station again before any snapshot shows it free.
+  const inMinigame = phase === 'minigame';
   useEffect(() => {
-    if (!operating) {
+    if (!inMinigame) {
       setSettledRound(null);
     }
-  }, [operating]);
+  }, [inMinigame]);
 
   const onResult = useCallback(
     (success: boolean) => {
@@ -135,6 +139,7 @@ function DeskHost({ playerId }: { playerId: string | null }) {
             ? known
             : {
                 id: event.folderId,
+                spawnKey: event.spawnKey,
                 storyId: event.storyId,
                 location: { kind: 'fixture', fixtureId: 'desk' },
                 stamps: [...event.justifyingStampIds],

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import {
   MINIGAME_FAIL_LOCKOUT_MS,
+  MINIGAME_STABLE_SEED_STATIONS,
   ROLE_WORK_TIME_FACTOR,
   STATION_WORK_MS,
   TICK_MS,
@@ -8,10 +9,18 @@ import {
 import type { Role } from '../domain.ts';
 import type { Folder } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
-import { runStep, TEST_MAP, testCommand, testContext, testInput } from './__fixtures__/greybox.ts';
+import {
+  runStep,
+  TEST_MAP,
+  testCommand,
+  testContext,
+  testFolder,
+  testInput,
+} from './__fixtures__/greybox.ts';
 import type { PlayerIntent, QueuedCommand, SimFrame } from './frame.ts';
+import { minigameSeedFor } from './rng.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
-import { stepStations } from './stations.ts';
+import { drawMinigameSeed, minigameAttemptKey, stepStations } from './stations.ts';
 
 const FACING_UP = -Math.PI / 2;
 /** Floor tiles directly below the stations (row 2), facing up. */
@@ -24,15 +33,7 @@ const BELOW = {
 type Spot = keyof typeof BELOW;
 
 function makeFolder(id: string, fixtureId: string, stamps: string[] = []): Folder {
-  return {
-    id,
-    storyId: 't-true',
-    location: { kind: 'fixture', fixtureId },
-    stamps,
-    spawnedAtMs: 0,
-    deadlineMs: 60_000,
-    warned: false,
-  };
+  return testFolder(id, { location: { kind: 'fixture', fixtureId }, stamps });
 }
 
 function withPlayer(state: GameState, id: string, spot: Spot, role: Role | null = null) {
@@ -185,7 +186,11 @@ describe('stepStations: progress and duration', () => {
       seed: station?.minigameSeed ?? -1,
     });
     expect(station?.operatorId).toBe('a');
-    expect(run.state.rng).not.toBe(7);
+    // Derived from the match seed (7), the folder's spawn key (s1), the kind and attempt 0.
+    expect(station?.minigameSeed).toBe(1347914757);
+    expect(station?.minigameSeed).toBe(minigameSeedFor(7, 's1', 'imageSearch', 0));
+    expect(run.state.seed).toBe(7);
+    expect(run.state.minigameAttempts).toEqual({});
   });
 
   it('is deterministic: same state and inputs give the same seed', () => {
@@ -485,5 +490,154 @@ describe('stations scenario via step', () => {
     ]);
     expect(result.state.folders.f1?.stamps).toEqual(['t-true-image']);
     expect(result.state.stations['imageSearch-0']?.phase).toBe('idle');
+  });
+});
+
+describe('stepStations: minigame seeds (S7-13)', () => {
+  const fail = (stationId: string) =>
+    testCommand('a', { kind: 'minigameResult', stationId, success: false });
+  const cancel = testCommand('a', { kind: 'cancel' });
+
+  /** Ends the minigame round at `stationId` with `command`, then waits out the lockout. */
+  function endRound(state: GameState, stationId: string, command: QueuedCommand): GameState {
+    let current = tick(state, [], [command]).state;
+    for (let i = 0; i < MINIGAME_FAIL_LOCKOUT_MS / TICK_MS; i++) {
+      if (current.stations[stationId]?.phase === 'idle') {
+        break;
+      }
+      current = tick(current, []).state;
+    }
+    return current;
+  }
+
+  function seedAt(state: GameState, stationId: string): number {
+    return state.stations[stationId]?.minigameSeed ?? -1;
+  }
+
+  const atRegistry = (folders = [makeFolder('f1', 'sourceRegistry-0')]) =>
+    setup([{ id: 'a', spot: 'sourceRegistry' }], folders);
+
+  it('keeps the Kartoteka card after a failure', () => {
+    expect(MINIGAME_STABLE_SEED_STATIONS).toEqual(['sourceRegistry']);
+    const first = workUntilMinigame(atRegistry(), ['a'], 'sourceRegistry-0').state;
+    expect(seedAt(first, 'sourceRegistry-0')).toBe(1262930342);
+    const failed = endRound(first, 'sourceRegistry-0', fail('sourceRegistry-0'));
+    expect(failed.stations['sourceRegistry-0']?.phase).toBe('idle');
+    const retry = workUntilMinigame(failed, ['a'], 'sourceRegistry-0').state;
+    expect(seedAt(retry, 'sourceRegistry-0')).toBe(1262930342);
+    expect(retry.minigameAttempts).toEqual({});
+  });
+
+  it('keeps the Kartoteka card after a cancel', () => {
+    const first = workUntilMinigame(atRegistry(), ['a'], 'sourceRegistry-0').state;
+    const cancelled = tick(first, [], [cancel]).state;
+    expect(cancelled.stations['sourceRegistry-0']?.phase).toBe('idle');
+    const retry = workUntilMinigame(cancelled, ['a'], 'sourceRegistry-0').state;
+    expect(seedAt(retry, 'sourceRegistry-0')).toBe(1262930342);
+    expect(retry.minigameAttempts).toEqual({});
+  });
+
+  it('gives another folder another Kartoteka card', () => {
+    const other = atRegistry([makeFolder('f2', 'sourceRegistry-0')]);
+    const run = workUntilMinigame(other, ['a'], 'sourceRegistry-0').state;
+    expect(run.folders.f2?.spawnKey).toBe('s2');
+    expect(seedAt(run, 'sourceRegistry-0')).toBe(1999573610);
+  });
+
+  it('gives an image search retry a fresh puzzle after a failure or a cancel', () => {
+    const first = workUntilMinigame(
+      setup([{ id: 'a', spot: 'imageSearch' }]),
+      ['a'],
+      'imageSearch-0',
+    );
+    expect(seedAt(first.state, 'imageSearch-0')).toBe(1347914757);
+
+    const failed = endRound(first.state, 'imageSearch-0', fail('imageSearch-0'));
+    expect(failed.minigameAttempts).toEqual({ 's1:imageSearch': 1 });
+    const second = workUntilMinigame(failed, ['a'], 'imageSearch-0').state;
+    expect(seedAt(second, 'imageSearch-0')).toBe(1518889876);
+
+    const cancelled = tick(second, [], [cancel]).state;
+    expect(cancelled.minigameAttempts).toEqual({ 's1:imageSearch': 2 });
+    const third = workUntilMinigame(cancelled, ['a'], 'imageSearch-0').state;
+    expect(seedAt(third, 'imageSearch-0')).toBe(minigameSeedFor(7, 's1', 'imageSearch', 2));
+    expect(new Set([1347914757, 1518889876, seedAt(third, 'imageSearch-0')]).size).toBe(3);
+  });
+
+  it('counts a minigame cut short by an outage as a cancel', () => {
+    const run = workUntilMinigame(
+      setup([{ id: 'a', spot: 'imageSearch' }]),
+      ['a'],
+      'imageSearch-0',
+    );
+    const station = run.state.stations['imageSearch-0'];
+    if (!station) throw new Error('station missing');
+    const down = {
+      ...run.state,
+      stations: { ...run.state.stations, 'imageSearch-0': { ...station, outageMs: 1000 } },
+    };
+    expect(tick(down, []).state.minigameAttempts).toEqual({ 's1:imageSearch': 1 });
+  });
+
+  it('does not count a round that ends with a stamp', () => {
+    const run = workUntilMinigame(
+      setup([{ id: 'a', spot: 'imageSearch' }]),
+      ['a'],
+      'imageSearch-0',
+    );
+    const success = testCommand('a', {
+      kind: 'minigameResult',
+      stationId: 'imageSearch-0',
+      success: true,
+    });
+    const done = tick(run.state, [], [success]).state;
+    expect(done.folders.f1?.stamps).toEqual(['t-true-image']);
+    expect(done.minigameAttempts).toEqual({});
+  });
+
+  it('gives two newsrooms with one seed the same puzzles whatever order they work in', () => {
+    // Different folder ids, the same spawn keys: as in two versus teams whose belts differ.
+    const newsroom = (imageFolderId: string, archiveFolderId: string) => {
+      let state = setup(
+        [
+          { id: 'a', spot: 'imageSearch' },
+          { id: 'b', spot: 'archive' },
+        ],
+        [
+          testFolder(imageFolderId, {
+            spawnKey: 'e0.1',
+            location: { kind: 'fixture', fixtureId: 'imageSearch-0' },
+          }),
+          testFolder(archiveFolderId, {
+            spawnKey: 's3',
+            location: { kind: 'fixture', fixtureId: 'archive-0' },
+          }),
+        ],
+      );
+      state = { ...state, nextFolderNumber: 10 };
+      return state;
+    };
+    let a = newsroom('f1', 'f2');
+    a = workUntilMinigame(a, ['a'], 'imageSearch-0').state;
+    a = workUntilMinigame(a, ['b'], 'archive-0').state;
+
+    let b = newsroom('f7', 'f3');
+    b = workUntilMinigame(b, ['b'], 'archive-0').state;
+    b = workUntilMinigame(b, ['a'], 'imageSearch-0').state;
+
+    expect(seedAt(a, 'imageSearch-0')).toBe(seedAt(b, 'imageSearch-0'));
+    expect(seedAt(a, 'archive-0')).toBe(seedAt(b, 'archive-0'));
+    expect(seedAt(a, 'imageSearch-0')).toBe(minigameSeedFor(7, 'e0.1', 'imageSearch', 0));
+    expect(seedAt(a, 'archive-0')).toBe(minigameSeedFor(7, 's3', 'archive', 0));
+  });
+
+  it('drawMinigameSeed reads the attempt counter by spawn key and kind', () => {
+    const state = {
+      ...createGameState({ seed: 7 }),
+      minigameAttempts: { [minigameAttemptKey('s1', 'imageSearch')]: 1 },
+    };
+    expect(minigameAttemptKey('s1', 'imageSearch')).toBe('s1:imageSearch');
+    expect(drawMinigameSeed(state, { spawnKey: 's1' }, 'imageSearch')).toBe(1518889876);
+    expect(drawMinigameSeed(state, { spawnKey: 's1' }, 'sourceRegistry')).toBe(1262930342);
   });
 });

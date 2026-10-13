@@ -70,6 +70,7 @@ export function unfinishedResults(
     const story = stories[folder.storyId];
     results.push({
       folderId: folder.id,
+      spawnKey: folder.spawnKey,
       storyId: folder.storyId,
       outcome: 'unfinished',
       reason: 'unfinished',
@@ -112,6 +113,7 @@ export function stepScoring(state: GameState, frame: SimFrame): GameState {
     credibility = applyCredibility(credibility, credibilityDelta);
     expired.push({
       folderId: event.folderId,
+      spawnKey: event.spawnKey,
       storyId: event.storyId,
       outcome: 'expired',
       reason: penalized ? 'expired' : 'expiredUnpenalized',

@@ -138,14 +138,14 @@ describe('endless mode in a room', () => {
     const host = join('Ala');
     selectEndless(host);
     startPlaying(host);
-    const first = registry.inspect(codeOf(host))?.game.rng;
+    const first = registry.inspect(codeOf(host))?.game.seed;
     patch = { credibility: 0 };
     registry.tick();
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'backToLobby' } });
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'skipBriefing' } });
     expect(phaseOf(host)).toBe('playing');
-    expect(registry.inspect(codeOf(host))?.game.rng).not.toBe(first);
+    expect(registry.inspect(codeOf(host))?.game.seed).not.toBe(first);
   });
 
   it('does not store campaign runs and survives a failing write', () => {

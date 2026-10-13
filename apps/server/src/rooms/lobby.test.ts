@@ -14,6 +14,7 @@ import { createRoomRegistry, type RoomRegistry } from './registry.ts';
 
 const RESULT: FolderResult = {
   folderId: 'f1',
+  spawnKey: 's0',
   storyId: 's1',
   outcome: 'correct',
   reason: 'correctImportant',

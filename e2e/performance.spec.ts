@@ -75,6 +75,7 @@ test('4 players and 7 folders stay inside the render budget on the high preset',
     game.inject({
       folders: Array.from({ length: 7 }, (_, i) => ({
         id: `perf-${i}`,
+        spawnKey: `s${i}`,
         storyId,
         location: { kind: 'floor', x: 4 + i * 1.5, y: 5 + (i % 3) },
         stamps: i % 2 ? ['x'] : [],

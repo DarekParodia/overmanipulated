@@ -90,6 +90,7 @@ function expireRaids(state: GameState, frame: SimFrame): GameState {
       frame.events.push({
         kind: 'folderExpired',
         folderId: id,
+        spawnKey: folder.spawnKey,
         storyId: folder.storyId,
         stamps: [...folder.stamps],
       });
@@ -164,7 +165,11 @@ function startOutage(
   };
 }
 
-/** Returns null when the conveyor has no room yet. An unknown story is skipped. */
+/**
+ * Returns null when the conveyor has no room yet. An unknown story is skipped. The folders get
+ * spawn keys `e<index>.<waveIndex>`: a newsroom with a fuller belt may get fewer raid folders,
+ * but the keys it gets name the same folders as in any other newsroom.
+ */
 function startFolderEvent(
   state: GameState,
   frame: SimFrame,
@@ -186,9 +191,10 @@ function startFolderEvent(
   const tag = tagFor(event, state, index);
   let next = state;
   const folderIds: string[] = [];
-  for (const tile of tiles.slice(0, wanted)) {
+  for (const [waveIndex, tile] of tiles.slice(0, wanted).entries()) {
     folderIds.push(`f${next.nextFolderNumber}`);
     next = spawnFolderAt(next, frame, tile, {
+      spawnKey: `e${index}.${waveIndex}`,
       storyId: event.storyId,
       deadlineS: event.deadlineS,
       tag,

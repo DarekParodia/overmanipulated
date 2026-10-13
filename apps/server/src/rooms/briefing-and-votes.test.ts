@@ -16,6 +16,7 @@ const BRIEFING_MS = 10_000;
 function result(folderId: string, storyId: string): FolderResult {
   return {
     folderId,
+    spawnKey: `s${folderId.slice(1)}`,
     storyId,
     outcome: 'correct',
     reason: 'correctImportant',

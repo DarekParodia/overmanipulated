@@ -157,6 +157,7 @@ describe('server messages', () => {
         folders: [
           {
             id: 'f1',
+            spawnKey: 's0',
             storyId: 'l0-story',
             location: { kind: 'carried', playerId: 'p1' },
             stamps: [],
@@ -191,6 +192,7 @@ describe('server messages', () => {
     const verdictResult = {
       kind: 'verdictResult',
       folderId: 'f1',
+      spawnKey: 'e2.1',
       storyId: 'l1-story',
       playerId: 'p1',
       outcome: 'wrongJustification',
@@ -212,6 +214,30 @@ describe('server messages', () => {
     expect(parse({ ...verdictResult, bonuses: { speed: -5, multiStamp: 0, bossCall: 0 } })).toBe(
       false,
     );
+    const { spawnKey: _key, ...withoutKey } = verdictResult;
+    expect(parse(withoutKey)).toBe(false);
+  });
+
+  it('takes spawn keys s<scheduleIndex> and e<eventIndex>.<waveIndex> only', () => {
+    const expired = (spawnKey: unknown) =>
+      parseServerMessage({
+        type: 'event',
+        tick: 4,
+        event: { kind: 'folderExpired', folderId: 'f3', spawnKey, storyId: 'l1-story', stamps: [] },
+      }).ok;
+    for (const key of ['s0', 's12', 'e0.0', 'e3.2']) {
+      expect(expired(key)).toBe(true);
+    }
+    for (const key of ['f1', 's', 'e3', 'e3.', 's-1', 's1.0', 'e1.0.0', ' s1', '', 3]) {
+      expect(expired(key)).toBe(false);
+    }
+    expect(
+      parseServerMessage({
+        type: 'event',
+        tick: 4,
+        event: { kind: 'folderExpired', folderId: 'f3', storyId: 'l1-story', stamps: [] },
+      }).ok,
+    ).toBe(false);
   });
 
   it('accepts an endless levelEnd with an unfinished folder and no thresholds', () => {
@@ -225,6 +251,7 @@ describe('server messages', () => {
       results: [
         {
           folderId: 'f9',
+          spawnKey: 's7',
           storyId: 'l3-story',
           outcome: 'unfinished',
           reason: 'unfinished',

@@ -9,6 +9,7 @@ import {
   TEST_STORIES,
   testCommand,
   testContext,
+  testFolder,
   testInput,
 } from './__fixtures__/greybox.ts';
 import { countsAsProof, type SimStory } from './content.ts';
@@ -27,16 +28,11 @@ function must<T>(value: T | undefined): T {
 const AT_DESK = { x: 9.5, y: 6.5 };
 
 function folder(overrides: Partial<Folder> = {}): Folder {
-  return {
-    id: 'f1',
-    storyId: 't-true',
+  return testFolder(overrides.id ?? 'f1', {
     location: { kind: 'fixture', fixtureId: 'desk-0' },
     stamps: ['t-true-image'],
-    spawnedAtMs: 0,
-    deadlineMs: 60_000,
-    warned: false,
     ...overrides,
-  };
+  });
 }
 
 function story(truth: Truth, priority: Priority): SimStory {
@@ -452,6 +448,7 @@ describe('stepDesk — verdicts', () => {
     expect(next.score).toBe(10);
     const result: FolderResult & { verdict: Verdict } = {
       folderId: 'f1',
+      spawnKey: 's1',
       storyId: 't-true',
       outcome: 'correct',
       reason: 'correctNormal',

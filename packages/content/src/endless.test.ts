@@ -6,6 +6,8 @@ import {
   levelOutcome,
   parseLayout,
   type SimLevel,
+  step,
+  TICK_MS,
 } from '@redakcja/shared';
 import {
   ENDLESS_STATIONS,
@@ -145,5 +147,36 @@ describe('endless outcome', () => {
       stars: 0,
       lossReason: 'credibility',
     });
+  });
+});
+
+describe('endless spawn keys', () => {
+  it('names schedule folders s<index> and event folders e<eventIndex>.<waveIndex>', () => {
+    const level = generate(1);
+    const map = parseLayout(level.layout);
+    const ctx = { dtMs: TICK_MS, map, level, stories: storiesForEndless(level, STORIES) };
+    let state = createGameState({ map, seed: 1 });
+    const seen = new Map<string, string>();
+    while (state.elapsedMs < 400_000) {
+      state = step(state, {}, [], ctx).state;
+      for (const folder of Object.values(state.folders)) {
+        seen.set(folder.spawnKey, folder.storyId);
+      }
+      // A team that clears the belt at once, so every spawn and event arrives on time.
+      state = { ...state, folders: {} };
+    }
+    const scheduled = [...seen].filter(([key]) => key.startsWith('s'));
+    const fromEvents = [...seen].filter(([key]) => key.startsWith('e'));
+    expect(scheduled.length).toBeGreaterThan(10);
+    expect(fromEvents.length).toBeGreaterThan(0);
+    for (const [key, storyId] of scheduled) {
+      expect(level.schedule[Number(key.slice(1))]?.storyId).toBe(storyId);
+    }
+    for (const [key, storyId] of fromEvents) {
+      const [eventIndex, waveIndex] = key.slice(1).split('.').map(Number);
+      const event = level.events[eventIndex ?? -1];
+      expect(event && event.kind !== 'outage' ? event.storyId : null).toBe(storyId);
+      expect(waveIndex).toBeLessThan(event?.kind === 'botRaid' ? event.count : 1);
+    }
   });
 });

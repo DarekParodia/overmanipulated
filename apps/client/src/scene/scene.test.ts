@@ -24,6 +24,7 @@ const fixtures = new Map(GREYBOX_MAP.fixtures.map((f) => [f.id, f]));
 function folder(location: Folder['location'], stamps: string[] = []): Folder {
   return {
     id: 'f1',
+    spawnKey: 's0',
     storyId: STORIES[0]?.id ?? 'missing',
     location,
     stamps,

@@ -24,6 +24,7 @@ import {
   folderResultSchema,
   folderSchema,
   lossReasonSchema,
+  spawnKeySchema,
   stationSchema,
 } from './entities.ts';
 
@@ -235,6 +236,8 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('folderExpired'),
     folderId: entityId,
+    /** The expired folder's spawn key, so its result carries it (S7-13). */
+    spawnKey: spawnKeySchema,
     storyId: entityId,
     /** Stamps the folder had collected when it expired. */
     stamps: z.array(entityId).max(16),

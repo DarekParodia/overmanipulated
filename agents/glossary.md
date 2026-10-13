@@ -8,6 +8,11 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | --- | --- | --- |
 | Zgłoszenie | `story` | Content unit: the claim/material to verify (data) |
 | Teczka | `folder` | In-world object carrying one story; has position, holder, stamps, deadline |
+| Klucz teczki | `spawnKey` | Where a folder came from: `s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`. The same in every newsroom of a match, unlike the per-sim folder id `f<n>` |
+| Ziarno rozgrywki | `seed` (`GameState.seed`) | Constant for one level run; minigame seeds are derived from it |
+| Ziarno minigry | `minigameSeed` (`minigameSeedFor`, `drawMinigameSeed`) | Derived from (seed, spawnKey, station kind, attempt); the client builds the puzzle from it |
+| Podejście | `attempt` (`minigameAttempts`, key `spawnKey:kind`) | Minigame rounds of one station kind on one folder that ended without a stamp (failure or cancel) |
+| Ta sama karta | stable-seed station (`MINIGAME_STABLE_SEED_STATIONS`) | `sourceRegistry`: attempts are not counted, so a retry shows the same Kartoteka card |
 | Pieczątka | `stamp` | Result of a station on a folder |
 | Stanowisko | `station` | Verification workstation with a minigame |
 | Stół redakcyjny | `editorialDesk` (`desk`) | Where verdicts are made |

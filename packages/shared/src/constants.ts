@@ -120,6 +120,11 @@ export const ROLE_STATIONS = {
 export const MINIGAME_FAIL_LOCKOUT_MS = 3000;
 /** Client-side time limit for one minigame attempt; running out counts as a failure. */
 export const MINIGAME_TIME_LIMIT_MS = 20_000;
+/**
+ * Stations whose minigame keeps its puzzle for a folder after a failure or a cancel (S7-13): the
+ * Kartoteka shows the same card again. Elsewhere every retry gets a fresh puzzle.
+ */
+export const MINIGAME_STABLE_SEED_STATIONS: readonly StationKind[] = ['sourceRegistry'];
 
 // --- Stage 7: difficulty (S7-16) -------------------------------------------------------------
 // Pure helpers that apply a preset live in `difficulty.ts`. Normal is the identity: every factor

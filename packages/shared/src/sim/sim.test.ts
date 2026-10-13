@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test';
 import { PLAYER_HALF_SIZE, TICK_MS } from '../constants.ts';
-import { testCommand, testContext } from './__fixtures__/greybox.ts';
+import { testCommand, testContext, testFolder } from './__fixtures__/greybox.ts';
 import { findInteractionTarget, GREYBOX_MAP, isSolid, parseLayout } from './map.ts';
 import { moveBody, normalizeMove } from './movement.ts';
-import { createRng, nextRandom } from './rng.ts';
+import { createRng, hashText, MINIGAME_SEED_MAX, minigameSeedFor, nextRandom } from './rng.ts';
 import { addPlayer, carriedFolder, createGameState, removePlayer } from './state.ts';
 import { type PlayerInput, step } from './step.ts';
 
@@ -184,6 +184,27 @@ describe('rng', () => {
     const [, next] = nextRandom(1);
     expect(next).not.toBe(1);
   });
+
+  it('hashText is 32-bit FNV-1a as a signed integer', () => {
+    expect(hashText('')).toBe(-2128831035); // 0x811c9dc5, the offset basis
+    expect(hashText('a')).toBe(-468965076); // 0xe40c292c
+    expect(hashText('Nowe Brzegi')).toBe(1737948175);
+  });
+
+  it('minigameSeedFor depends on the seed, spawn key, kind and attempt only', () => {
+    expect(minigameSeedFor(7, 's0', 'imageSearch', 0)).toBe(571775437);
+    expect(minigameSeedFor(7, 's0', 'imageSearch', 1)).toBe(1758137110);
+    expect(minigameSeedFor(7, 's0', 'sourceRegistry', 0)).toBe(1099696789);
+    expect(minigameSeedFor(7, 's1', 'imageSearch', 0)).toBe(1347914757);
+    expect(minigameSeedFor(7, 'e2.1', 'imageSearch', 0)).toBe(2114083543);
+    expect(minigameSeedFor(8, 's0', 'imageSearch', 0)).toBe(721322083);
+    for (const seed of [0, 1, -5, 0x7fffffff]) {
+      const value = minigameSeedFor(seed, 's12', 'dataLibrary', 3);
+      expect(Number.isInteger(value)).toBe(true);
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThan(MINIGAME_SEED_MAX);
+    }
+  });
 });
 
 describe('fixtures and interaction targets', () => {
@@ -221,15 +242,11 @@ describe('fixtures and interaction targets', () => {
     state = {
       ...state,
       folders: {
-        f1: {
-          id: 'f1',
+        f1: testFolder('f1', {
           storyId: 's',
           location: { kind: 'carried', playerId: 'a' },
-          stamps: [],
-          spawnedAtMs: 0,
           deadlineMs: 1000,
-          warned: false,
-        },
+        }),
       },
       desks: { 'desk-0': { id: 'desk-0', operatorId: 'a' } },
     };
