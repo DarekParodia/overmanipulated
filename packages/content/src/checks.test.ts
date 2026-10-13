@@ -578,18 +578,11 @@ describe('validate CLI', () => {
     expect(decisiveNotJustifying.map((match) => match[1])).toEqual([
       'l6-frekwencja-w-poludnie-archive',
     ]);
-    // New stories wait for their level's bag pool: since S7-33 every l4 story is in the l4 pool;
-    // S7-30 writes l3 stories and S7-31 puts them into the l3 pool.
+    // New stories wait for their level's bag pool: since S7-31 and S7-33 every l3 and l4 story
+    // is in its level's pool.
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([]);
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([
-      'l3-zalana-sala',
-      'l3-dyrektor-na-plazy',
-      'l3-pusta-stolowka',
-      'l3-pracownia-robotyki',
-      'l3-psycholog-z-sieci',
-      'l3-zajecia-przed-matura',
-    ]);
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([]);
     const warnings = decisiveNotJustifying.length + notScheduled.length;
     expect(out).toContain(`0 error(s), ${warnings} warning(s)`);
     expect(result.exitCode).toBe(0);

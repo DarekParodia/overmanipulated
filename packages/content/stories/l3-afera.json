@@ -1094,5 +1094,185 @@
       "realWorld": "Czytanie w poprzek: zamiast oceniać tekst po wyglądzie, sprawdzasz, kto go wydał i czy inne źródła mówią to samo. To szybsze niż analiza samego tekstu."
     },
     "reviewed": false
+  },
+  {
+    "id": "l3-stara-afera",
+    "type": "article",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "„Dyrektor LO nr 3 zawieszony!” Artykuł znów krąży w sieci",
+    "body": "Link do tekstu „Kuriera Nowobrzeskiego” o zawieszeniu dyrektora. Udostępniający piszą: „No i się doigrał!”.",
+    "source": "Link na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-stara-afera-image",
+        "station": "imageSearch",
+        "text": "Miniaturka linku to samo logo „Kuriera”, bez zdjęcia osoby.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-stara-afera-source",
+        "station": "sourceRegistry",
+        "text": "„Kurier Nowobrzeski” jest w rejestrze prasy, link prowadzi do jego strony.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-stara-afera-archive",
+        "station": "archive",
+        "text": "Tekst jest z 2012 r. i dotyczy poprzedniego dyrektora. Sprawę umorzono.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-stara-afera-phone",
+        "station": "phone",
+        "text": "Sekretariat: „Pan dyrektor jest dziś na wyjeździe”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-stara-afera-archive"],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwy artykuł sprzed lat o poprzednim dyrektorze, udostępniany tak, jakby był świeży i dotyczył obecnego.",
+      "technique": "Wyrwane z kontekstu: tekst jest autentyczny, ale bez daty i nazwiska czytelnik sam dopowiada, że chodzi o dzisiejszą aferę.",
+      "tool": "Archiwum pokazało datę publikacji i to, kogo dotyczył tekst. Kartoteka źródeł potwierdziła tylko, że gazeta istnieje.",
+      "realWorld": "Stare artykuły wracają, gdy temat znów jest gorący. Podgląd linku w mediach społecznościowych często nie pokazuje daty, więc przed udostępnieniem warto ją sprawdzić."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-zmyslony-wywiad",
+    "type": "quote",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dyrektor w wywiadzie: „Uczniowie są tu tylko po świadectwo”",
+    "body": "Grafika z cytatem i zdjęciem dyrektora. Podpis: wywiad dla „Kuriera Nowobrzeskiego” z 2023 r. Uczniowie są oburzeni.",
+    "source": "Grafika z profilu Uczniowie LO3",
+    "stamps": [
+      {
+        "id": "l3-zmyslony-wywiad-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie dyrektora pochodzi ze strony szkoły, bez przeróbek.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-zmyslony-wywiad-source",
+        "station": "sourceRegistry",
+        "text": "Profil „Uczniowie LO3” działa od lat i ma 2 tys. obserwujących.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-zmyslony-wywiad-archive",
+        "station": "archive",
+        "text": "Pełny wywiad z 2023 r. jest w archiwum. Takiego zdania w nim nie ma.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-zmyslony-wywiad-phone",
+        "station": "phone",
+        "text": "Redakcja „Kuriera”: „Autor wywiadu jest na urlopie”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-zmyslony-wywiad-archive"],
+    "technique": "zmyslony-cytat",
+    "debrief": {
+      "what": "Zmyślony cytat dopisany do prawdziwego zdjęcia i nazwy prawdziwej gazety.",
+      "technique": "Zmyślony cytat: grafika z twarzą i tytułem znanego medium wygląda wiarygodnie, choć nikt tego zdania nie wypowiedział.",
+      "tool": "Archiwum: pełny tekst wywiadu z 2023 r. nie zawiera tego zdania.",
+      "realWorld": "Grafikę z cytatem można zrobić w kilka minut, a rozchodzi się szybciej niż sprostowanie. Zanim uwierzysz, znajdź pierwotny tekst lub nagranie, z którego cytat rzekomo pochodzi."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-boisko-ze-zbiorki",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Rada rodziców: nowe boisko przy LO nr 3 ze zbiórki",
+    "body": "Wpis rady rodziców ze zdjęciem placu: zbiórka zakończona, boisko powstanie wiosną. W komentarzach: „Pewnie dyrektor przytuli kasę”.",
+    "source": "Post na profilu rady rodziców",
+    "stamps": [
+      {
+        "id": "l3-boisko-ze-zbiorki-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie placu za szkołą jest nowe, brak wcześniejszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-boisko-ze-zbiorki-source",
+        "station": "sourceRegistry",
+        "text": "Profil rady rodziców założony tydzień temu, ma tylko trzy wpisy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-boisko-ze-zbiorki-archive",
+        "station": "archive",
+        "text": "Protokół rady rodziców z września: zbiórka, kwota i plan budowy boiska.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-boisko-ze-zbiorki-phone",
+        "station": "phone",
+        "text": "Przewodnicząca rady rodziców nie odbiera telefonu.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-boisko-ze-zbiorki-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja rady rodziców, potwierdzona protokołem z zebrania.",
+      "technique": "Brak manipulacji. Świeży profil i podejrzliwe komentarze to jeszcze nie dowód, że wiadomość jest fałszywa.",
+      "tool": "Archiwum: protokół zebrania rady rodziców z kwotą zbiórki i planem budowy.",
+      "realWorld": "Organizacje często zakładają profil dopiero przy konkretnej sprawie. Nowe konto to sygnał, by sprawdzić dokładniej, a nie powód do odrzucenia. Rozstrzyga dokument albo niezależne potwierdzenie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-dyrektor-bez-dyplomu",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Anonim: dyrektor LO nr 3 nie ma dyplomu! „Sprawdźcie jego papiery”",
+    "body": "Wpis bez podpisu: „Wiem od kogoś z kuratorium, że dyrektor nie skończył studiów”. Setki udostępnień w godzinę.",
+    "source": "Post z konta LO3 bez cenzury",
+    "stamps": [
+      {
+        "id": "l3-dyrektor-bez-dyplomu-image",
+        "station": "imageSearch",
+        "text": "Wpis nie ma zdjęcia, to tylko tekst na kolorowym tle.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-dyrektor-bez-dyplomu-source",
+        "station": "sourceRegistry",
+        "text": "Konto „LO3 bez cenzury” prowadzą uczniowie od 2022 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-dyrektor-bez-dyplomu-archive",
+        "station": "archive",
+        "text": "Protokół konkursu z 2019 r.: komisja sprawdziła dyplom i kwalifikacje dyrektora.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-dyrektor-bez-dyplomu-phone",
+        "station": "phone",
+        "text": "Kuratorium: „Odpowiemy na piśmie w ciągu 14 dni”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-dyrektor-bez-dyplomu-archive"],
+    "technique": "anonimowy-informator",
+    "debrief": {
+      "what": "Fałszywa plotka anonimowego autora. Dokumenty konkursu na dyrektora potwierdzają jego wykształcenie.",
+      "technique": "Anonimowy informator: „wiem od kogoś z kuratorium” brzmi jak przeciek, ale nie da się tego sprawdzić ani nikogo rozliczyć.",
+      "tool": "Archiwum: protokół komisji konkursowej z 2019 r. z listą sprawdzonych dokumentów.",
+      "realWorld": "Plotki „od znajomego z urzędu” rozchodzą się szybciej niż sprostowania. Szukaj dokumentu albo osoby, która podpisuje się nazwiskiem. Anonimowe „źródło” samo niczego nie dowodzi."
+    },
+    "reviewed": false
   }
 ]
