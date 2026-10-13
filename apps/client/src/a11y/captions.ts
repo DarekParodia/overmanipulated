@@ -162,6 +162,7 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   // S7-36 abilities. Arming is the player's own press; teammates see the armed badge (S7-42).
   'ability.armed': chip('bolt', t.abilityArmed, 'info', { scope: 'local' }),
   'ability.disarmed': skip('own-action'),
+  'ability.denied': skip('own-action'),
   'ability.expertise': chip('bolt', t.expertise, 'good'),
   'ability.call.start': chip('phone', t.callStarted, 'info'),
   'ability.call.done': chip('phone', t.callStamp, 'good'),

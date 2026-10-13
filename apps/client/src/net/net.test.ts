@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'bun:test';
 import {
   GREYBOX_MAP,
+  type PlayerCommand,
   type PlayerInput,
   type PlayerState,
+  type Role,
+  type RoomStateMessage,
   type SnapshotMessage,
   TICK_MS,
 } from '@redakcja/shared';
+import { feedback } from '../fx/feedback.ts';
+import { touchInput } from '../input/input-manager.ts';
+import { useApp } from '../store/app.ts';
 import { reconnectDelayMs } from './backoff.ts';
 import { selectCrewMember, useGame } from './game-store.ts';
 import { createPredictor } from './prediction.ts';
@@ -206,6 +212,7 @@ describe('pause (S7-10)', () => {
     const runtime = createRuntime(
       () => 'p1',
       (message) => sent.push(message.seq),
+      () => {},
     );
     runtime.onSnapshot(snapshot(10, 1), 500);
     runtime.frame(600, 2 * TICK_MS);
@@ -221,5 +228,62 @@ describe('pause (S7-10)', () => {
     expect(runtime.buffer.depth(10_549, 0)).toBe(1);
     runtime.frame(10_600, TICK_MS);
     expect(sent).toEqual([0, 1, 2]);
+  });
+});
+
+function soloRoom(role: Role | null): RoomStateMessage {
+  return {
+    type: 'roomState',
+    roomCode: 'ABCD',
+    hostId: 'p1',
+    phase: 'playing',
+    levelId: 'l0-greybox',
+    difficulty: 'normal',
+    run: null,
+    players: [{ id: 'p1', nickname: 'Zośka', colorIndex: 0, connected: true, role, ready: true }],
+    briefing: null,
+    blunderVotes: [],
+  };
+}
+
+describe('role ability press (S7-39)', () => {
+  /** Runs one input tick after a touch press; returns what was sent and which cues played. */
+  function pressOnce(role: Role | null, abilityReadyAtMs: number) {
+    const commands: PlayerCommand[] = [];
+    const cues: string[] = [];
+    const stop = feedback.onCue((id) => cues.push(id));
+    useApp.setState({ room: soloRoom(role) });
+    const runtime = createRuntime(
+      () => 'p1',
+      () => {},
+      (command) => commands.push(command),
+    );
+    const state = {
+      ...snapshot(200, 1),
+      crew: [{ id: 'p1', abilityReadyAtMs, abilityArmed: false, fieldCall: null, rescuesLeft: 0 }],
+    };
+    runtime.onSnapshot(state, 500);
+    useGame.getState().applySnapshot(state);
+    touchInput.pressAbility();
+    runtime.frame(600, TICK_MS);
+    // The press is consumed: the next tick sends nothing more.
+    runtime.frame(650, TICK_MS);
+    stop();
+    useApp.setState({ room: null });
+    useGame.getState().reset();
+    return { commands, cues: cues.filter((id) => id.startsWith('ability.')) };
+  }
+
+  it('sends useAbility once for a ready role ability', () => {
+    // Snapshot tick 200 is level time 10 000 ms.
+    expect(pressOnce('managingEditor', 10_000)).toEqual({
+      commands: [{ kind: 'useAbility' }],
+      cues: [],
+    });
+  });
+
+  it('plays the denied cue and sends nothing while cooling or without a role', () => {
+    expect(pressOnce('reporter', 10_050)).toEqual({ commands: [], cues: ['ability.denied'] });
+    expect(pressOnce(null, 0)).toEqual({ commands: [], cues: ['ability.denied'] });
   });
 });

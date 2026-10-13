@@ -295,7 +295,7 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
       cycleFragment();
     } else if (intent === 'confirm') {
       choose(state.cursor);
-    } else if (intent !== 'back') {
+    } else if (intent !== 'back' && intent !== 'ability') {
       const cursor = moveCursor(state.cursor, intent, puzzle.results.length);
       if (cursor !== state.cursor) {
         const next = { ...state, cursor };

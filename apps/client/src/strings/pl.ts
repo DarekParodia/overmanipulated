@@ -112,6 +112,8 @@ export const pl = {
     work: 'Pracuj',
     ping: 'Sygnał',
     joystick: 'Ruch',
+    /** The fourth thumb button before it shows the role's own ability (S7-39). */
+    abilityGeneric: 'Zdolność',
   },
   connection: {
     connecting: 'Łączenie…',
@@ -194,6 +196,7 @@ export const pl = {
       interact: 'Podnieś / odłóż',
       work: 'Pracuj (trzymaj)',
       ping: 'Sygnał',
+      ability: 'Zdolność roli',
     },
     keySpace: 'Spacja',
     padStick: 'Lewa gałka',

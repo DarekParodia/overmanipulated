@@ -163,7 +163,8 @@ export function handleMenuIntent(intent: NavIntent): boolean {
     }
     return false;
   }
-  if (intent === 'alt') {
+  // Menus have no use for `alt` or the role ability: pass them on.
+  if (intent === 'alt' || intent === 'ability') {
     return false;
   }
   const controls = collectControls(root);

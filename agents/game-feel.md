@@ -88,6 +88,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `event.raidResolved` | `raidResolved` | banner "Nalot odparty!" | rising arpeggio (`evclear`) | confetti + glitch squares | small shake, thud | ●●● |
 | `event.end` | other `levelEvent` end | none | paper slap | dust | — | ● |
 | `ability.armed` / `ability.disarmed` | `ability` stage `armed` / `disarmed` (Ekspertyza, Druga szansa waiting for their trigger; S7-36) | — (armed badge lands in S7-42) | placeholder `copy` / soft back (`abpower` in S7-42) | ink puff in player colour / dust | light tick / — | ● |
+| `ability.denied` | local press of R / RB / the ability button with no role or while cooling (client-only, nothing is sent; S7-39) | — (`abilityDenied` chip shake lands in S7-40, none under reduced motion) | soft back (`back`, ui bus) | — | light tick | ● |
 | `ability.expertise` | `ability` expertise `done`: the stamp lands without the minigame | — (`stamp.applied` slams it when the sim emits one) | rising chime (placeholder) | star burst + ink puff | success buzz | ●● |
 | `ability.call.start` / `.done` / `.dropped` | `ability` fieldCall `started` / `done` / `cancelled` (Telefon z terenu) | — / — / `wobble` (call bubble in S7-42) | phone bell `ping3` / quieter `ping3` / fail blips | ink puff / paper bits / smoke wisp | light tick / — / — | ● |
 | `ability.extendDeadline` | `ability` extendDeadline `done` (Przedłużenie; replaces `folder.deadlineExtended` in S7-37) | `hop`, `cardHop` | counter bell (`arrive`) | paper flutter ×6 | success buzz | ● |

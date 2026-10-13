@@ -143,6 +143,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Koło ratunkowe | `rescue` (passive; `rescuesLeft`, `RESCUE_ADD_MS`, `folderRescued`) | A folder that reaches its deadline in the rescuer's hands gets +20 s, once per level |
 | Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |
 | Stan zdolności załogi | crew ability state (`AbilityState`, `snapshot.crew`, `crewSnapshot`) | `abilityReadyAtMs`, `abilityArmed`, `fieldCall`, `rescuesLeft` per player |
+| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue (no role, cooling) |
 | Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
 
 ## Station families (`StationFamily`, Stage 7)
