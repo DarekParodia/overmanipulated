@@ -6,27 +6,29 @@ import {
   CONTENT_THREE_STARS_SHARE,
   CONTENT_TRUE_STORY_SHARE,
   CONTENT_TWO_STARS_SHARE,
-  countsAsProof,
-  EVENTS,
+  createRng,
+  DIFFICULTIES,
   isHintOnly,
   MULTI_STAMP_FIRST_LEVEL,
   multiStampExtraMs,
-  type ProofStory,
   parseLayout,
   requiredStampsOf,
-  SCORE,
-  type SimStory,
   type StationKind,
 } from '@redakcja/shared';
 import type { z } from 'zod';
+import { bagSlotTimes, bagStations, matchStories, pinnedCounts } from './bag.ts';
+import { levelNumberOf, levelStoryIds, maxLevelScore, proofCount } from './rules.ts';
 import {
-  type Level,
-  levelSchema,
+  type LevelBag,
+  type LevelFile,
+  levelFileSchema,
   type Story,
   storySchema,
   type Technique,
   techniqueSchema,
 } from './schema.ts';
+
+export { levelNumberOf, levelStoryIds, maxLevelScore, maxStoryScore, proofCount } from './rules.ts';
 
 export type Severity = 'error' | 'warning';
 
@@ -57,77 +59,8 @@ export function formatIssue(issue: Issue): string {
   return `${issue.severity === 'error' ? 'error  ' : 'warning'} ${where}: ${issue.message}`;
 }
 
-/**
- * Points for a correct verdict delivered with more than half the time left (design doc), plus
- * the multi-stamp bonus for every proof beyond the first (S7-18).
- */
-export function maxStoryScore(
-  story: Pick<SimStory, 'priority' | 'correctVerdict' | 'requiredStamps'>,
-): number {
-  const base =
-    story.correctVerdict === 'publishWithContext'
-      ? SCORE.correctWithContext
-      : story.priority === 'normal'
-        ? SCORE.correctNormal
-        : SCORE.correctImportant;
-  return base + SCORE.speedBonus + (requiredStampsOf(story) - 1) * SCORE.multiStampBonus;
-}
-
-/**
- * Distinct proofs `stations` can give the story: justifying stamps that count as proof
- * (`countsAsProof`, so never a hint-only stamp) from one of those stations. The story can be
- * solved there when this reaches `requiredStampsOf(story)`.
- */
-export function proofCount(story: ProofStory, stations: Iterable<StationKind>): number {
-  const available = new Set(stations);
-  const proofs = story.justifyingStamps.filter((id) => {
-    const station = story.stamps.find((stamp) => stamp.id === id)?.station;
-    return station !== undefined && available.has(station) && countsAsProof(story, id);
-  });
-  return new Set(proofs).size;
-}
-
-/**
- * The best score a perfect team can reach on a level: scheduled stories plus what the events add.
- * A viral story scores like a normal one; a boss call adds its bonus for true stories; a bot raid
- * is one verdict, one result; a correction folder scores `correctionScore` when filed.
- */
-export function maxLevelScore(level: Level, storiesById: ReadonlyMap<string, Story>): number {
-  let total = 0;
-  for (const spawn of level.schedule) {
-    const story = storiesById.get(spawn.storyId);
-    if (story) {
-      total += maxStoryScore(story);
-    }
-  }
-  for (const event of level.events) {
-    if (event.kind === 'outage') {
-      continue;
-    }
-    const story = storiesById.get(event.storyId);
-    if (!story) {
-      continue;
-    }
-    if (event.kind === 'correction') {
-      total += EVENTS.correctionScore;
-    } else {
-      total += maxStoryScore(story);
-      if (event.kind === 'bossCall' && story.truth === 'true') {
-        total += EVENTS.bossCallBonusScore;
-      }
-    }
-  }
-  return total;
-}
-
 /** Same-kind level events closer than this (seconds) are reported. */
 export const EVENT_MIN_GAP_S = 10;
-
-/** Number in a content id: `l3-foo` → 3. */
-export function levelNumberOf(id: string): number | undefined {
-  const match = /^l(\d+)-/.exec(id);
-  return match ? Number(match[1]) : undefined;
-}
 
 /** Validates all content. Returns every issue found; an empty list means the content is valid. */
 export function validateContent(
@@ -179,7 +112,7 @@ export function validateContent(
   const storiesById = new Map([...stories].map(([id, located]) => [id, located.story]));
   const levelIds = new Set<string>();
   const used = new Set<string>();
-  /** Stations of every (parsed) level that schedules or spawns the story. */
+  /** Stations of every (parsed) level that schedules, pools or spawns the story. */
   const hostStations = new Map<string, Set<StationKind>>();
   for (const { file, data } of levelFiles) {
     // Read story ids from the raw data too, so a level that fails the schema does not make its
@@ -187,7 +120,7 @@ export function validateContent(
     for (const id of rawStoryIds(data)) {
       used.add(id);
     }
-    const parsed = levelSchema.safeParse(data);
+    const parsed = levelFileSchema.safeParse(data);
     if (!parsed.success) {
       addZod(file, [], parsed.error);
       continue;
@@ -211,9 +144,10 @@ export function validateContent(
       add(severity, file, path, message),
     );
     checkLevel(level, storiesById, (path, severity, message) => add(severity, file, path, message));
-    for (const id of [...level.schedule, ...level.events.filter((e) => e.kind !== 'outage')].map(
-      (entry) => ('storyId' in entry ? entry.storyId : ''),
-    )) {
+    const eventIds = level.events.flatMap((event) =>
+      event.kind === 'outage' ? [] : [event.storyId],
+    );
+    for (const id of [...levelStoryIds(level), ...eventIds]) {
       const hosts = hostStations.get(id) ?? new Set<StationKind>();
       for (const station of level.stations) {
         hosts.add(station);
@@ -252,11 +186,12 @@ function rawStoryIds(data: unknown): string[] {
   if (typeof data !== 'object' || data === null) {
     return [];
   }
+  const record = data as Record<string, unknown>;
   const entries = (['schedule', 'events'] as const).flatMap((key) => {
-    const list = (data as Record<string, unknown>)[key];
+    const list = record[key];
     return Array.isArray(list) ? list : [];
   });
-  return entries.flatMap((spawn: unknown) =>
+  const ids = entries.flatMap((spawn: unknown) =>
     typeof spawn === 'object' &&
     spawn !== null &&
     'storyId' in spawn &&
@@ -264,6 +199,12 @@ function rawStoryIds(data: unknown): string[] {
       ? [spawn.storyId]
       : [],
   );
+  const bag = record.bag;
+  const pool =
+    typeof bag === 'object' && bag !== null && 'pool' in bag && Array.isArray(bag.pool)
+      ? bag.pool.filter((id: unknown): id is string => typeof id === 'string')
+      : [];
+  return [...ids, ...pool];
 }
 
 type Report = (path: readonly PathPart[], severity: Severity, message: string) => void;
@@ -294,6 +235,21 @@ function checkStory(story: Story, report: Report): void {
         ['stamps', i, 'relevance'],
         'error',
         'an AI scanner stamp may only be decisive next to a justifying stamp from another station',
+      );
+    }
+  });
+  // A stamp that looks decisive but does not justify the verdict decides nothing (the one rule,
+  // `proofCount`): the bag never deals the story to that station and guidance never sends it there.
+  story.stamps.forEach((stamp, i) => {
+    if (
+      stamp.relevance === 'decisive' &&
+      !isHintOnly(stamp.station) &&
+      !story.justifyingStamps.includes(stamp.id)
+    ) {
+      report(
+        ['stamps', i, 'relevance'],
+        'warning',
+        `decisive stamp "${stamp.id}" does not justify the verdict, so ${stamp.station} decides nothing; add it to justifyingStamps or lower its relevance`,
       );
     }
   });
@@ -358,7 +314,7 @@ function dueS(atS: number, deadlineS: number, story: Story): number {
 /** Rules a story must meet to be spawned in a level (scheduled or by an event). */
 function checkStoryFitsLevel(
   story: Story,
-  level: Level,
+  level: Pick<LevelFile, 'id' | 'stations'>,
   path: readonly PathPart[],
   report: Report,
 ): boolean {
@@ -405,11 +361,51 @@ function checkStoryFitsLevel(
   return proofs >= required;
 }
 
-function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, report: Report): void {
-  const levelNumber = levelNumberOf(level.id);
-  const scheduled: Story[] = [];
-  let broken = false;
+/** The aim range for the share of true stories a level deals. */
+function checkTrueShare(
+  stories: readonly Story[],
+  path: readonly PathPart[],
+  report: Report,
+): void {
+  const unique = [...new Map(stories.map((story) => [story.id, story])).values()];
+  if (unique.length === 0) {
+    return;
+  }
+  const share = unique.filter((story) => story.truth === 'true').length / unique.length;
+  const range = CONTENT_TRUE_STORY_SHARE;
+  if (share < range.min || share > range.max) {
+    report(
+      path,
+      'warning',
+      `${Math.round(share * 100)}% of stories are true; aim for ${range.min * 100}–${range.max * 100}%`,
+    );
+  }
+}
 
+/** Whether a star threshold, as a share of the maximum score, sits in its aim range. */
+function checkStarShare(
+  key: 'two' | 'three',
+  share: number,
+  path: readonly PathPart[],
+  report: Report,
+  what: string,
+): void {
+  const range = key === 'two' ? CONTENT_TWO_STARS_SHARE : CONTENT_THREE_STARS_SHARE;
+  if (share < range.min || share > range.max) {
+    report(
+      path,
+      'warning',
+      `${key} stars at ${Math.round(share * 100)}% of ${what}; aim for ${range.min * 100}–${range.max * 100}%`,
+    );
+  }
+}
+
+function checkLevel(
+  level: LevelFile,
+  storiesById: ReadonlyMap<string, Story>,
+  report: Report,
+): void {
+  const levelNumber = levelNumberOf(level.id);
   if (levelNumber !== undefined && levelNumber >= 1) {
     if (!level.topic) {
       report(['topic'], 'warning', 'campaign levels need a topic for the briefing card');
@@ -422,8 +418,26 @@ function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, repor
       );
     }
   }
+  const eventsOk = checkEvents(level, storiesById, report);
+  if (level.bag) {
+    checkBag({ ...level, bag: level.bag }, storiesById, report);
+  } else if (level.schedule && level.stars) {
+    checkSchedule(level, level.schedule, level.stars, eventsOk, storiesById, report);
+  }
+}
 
-  level.schedule.forEach((spawn, i) => {
+/** A level with an authored schedule: its stories, deadlines, true share and stars. */
+function checkSchedule(
+  level: LevelFile,
+  schedule: NonNullable<LevelFile['schedule']>,
+  stars: NonNullable<LevelFile['stars']>,
+  eventsOk: boolean,
+  storiesById: ReadonlyMap<string, Story>,
+  report: Report,
+): void {
+  const scheduled: Story[] = [];
+  let broken = !eventsOk;
+  schedule.forEach((spawn, i) => {
     const story = storiesById.get(spawn.storyId);
     if (!story) {
       report(['schedule', i, 'storyId'], 'error', `unknown story "${spawn.storyId}"`);
@@ -438,63 +452,187 @@ function checkLevel(level: Level, storiesById: ReadonlyMap<string, Story>, repor
       report(['schedule', i, 'deadlineS'], 'warning', 'deadline runs past the end of the level');
     }
   });
-
-  if (!checkEvents(level, storiesById, report)) {
-    broken = true;
-  }
-
-  const unique = [...new Map(scheduled.map((story) => [story.id, story])).values()];
-  if (unique.length > 0) {
-    const share = unique.filter((story) => story.truth === 'true').length / unique.length;
-    const range = CONTENT_TRUE_STORY_SHARE;
-    if (share < range.min || share > range.max) {
-      report(
-        ['schedule'],
-        'warning',
-        `${Math.round(share * 100)}% of stories are true; aim for ${range.min * 100}–${range.max * 100}%`,
-      );
-    }
-  }
+  checkTrueShare(scheduled, ['schedule'], report);
 
   // The maximum score is only meaningful once every scheduled story is known and solvable.
   if (broken) {
     return;
   }
-  const max = maxLevelScore(level, storiesById);
-  if (level.stars.three > max) {
-    report(['stars', 'three'], 'error', `three stars need ${level.stars.three}, max is ${max}`);
+  const max = maxLevelScore({ schedule, events: level.events }, storiesById);
+  if (stars.three > max) {
+    report(['stars', 'three'], 'error', `three stars need ${stars.three}, max is ${max}`);
   } else if (max > 0) {
-    const twoTooHigh = level.stars.two > max * 0.9;
+    const twoTooHigh = stars.two > max * 0.9;
     if (twoTooHigh) {
       report(
         ['stars', 'two'],
         'warning',
-        `two stars need ${level.stars.two}, over 90% of the max score ${max}`,
+        `two stars need ${stars.two}, over 90% of the max score ${max}`,
+      );
+    } else {
+      checkStarShare('two', stars.two / max, ['stars', 'two'], report, `the max score ${max}`);
+    }
+    checkStarShare('three', stars.three / max, ['stars', 'three'], report, `the max score ${max}`);
+  }
+}
+
+/** A bag level as `checkBag` reads it. */
+export type BagLevel = Pick<LevelFile, 'id' | 'durationS' | 'stations' | 'events'> & {
+  bag: LevelBag;
+};
+
+/**
+ * Pool rules of a bag level (S7-21). Errors: unknown pool ids, pool stories that do not fit the
+ * level (wrong level number, a missing stamp, too few proofs), pool stories that are also event
+ * stories, and coverage: on every difficulty, every worst-case split of the slots over the bag
+ * stations must get distinct stories (`matchStories`). Warnings: a station with fewer pinned
+ * stories than ⌈Normal slots / bag stations⌉, the share of true stories, a last folder whose
+ * Normal deadline runs past the level end (the generator clamps it), star shares outside the aim
+ * ranges, and a level station that decides no pool story.
+ */
+export function checkBag(
+  level: BagLevel,
+  storiesById: ReadonlyMap<string, Story>,
+  report: Report,
+): void {
+  const { bag } = level;
+  const eventIds = new Set(
+    level.events.flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId])),
+  );
+  const pool: Story[] = [];
+  let broken = false;
+  bag.pool.forEach((id, i) => {
+    const path = ['bag', 'pool', i];
+    const story = storiesById.get(id);
+    if (!story) {
+      report(path, 'error', `unknown story "${id}"`);
+      broken = true;
+      return;
+    }
+    if (eventIds.has(id)) {
+      report(
+        path,
+        'error',
+        `story "${id}" is also an event story; keep event stories out of the pool`,
       );
     }
-    const ranges = [
-      ['two', level.stars.two, CONTENT_TWO_STARS_SHARE],
-      ['three', level.stars.three, CONTENT_THREE_STARS_SHARE],
-    ] as const;
-    for (const [key, threshold, range] of ranges) {
-      if (key === 'two' && twoTooHigh) {
-        continue;
-      }
-      const share = threshold / max;
-      if (share < range.min || share > range.max) {
-        report(
-          ['stars', key],
-          'warning',
-          `${key} stars at ${Math.round(share * 100)}% of the max score ${max}; aim for ${range.min * 100}–${range.max * 100}%`,
-        );
-      }
+    if (!checkStoryFitsLevel(story, level, path, report)) {
+      broken = true;
+    }
+    pool.push(story);
+  });
+  checkTrueShare(pool, ['bag', 'pool'], report);
+
+  const latest = Math.max(
+    ...pool.map((story) => bag.deadlineS[story.priority] + multiStampExtraMs(story) / 1000),
+  );
+  if (pool.length > 0 && bag.lastSpawnS + latest > level.durationS) {
+    report(
+      ['bag', 'lastSpawnS'],
+      'warning',
+      `a folder at ${bag.lastSpawnS} s needs up to ${latest} s, past the level end at ${level.durationS} s; late folders get less time`,
+    );
+  }
+  if (bag.starShares) {
+    for (const key of ['two', 'three'] as const) {
+      checkStarShare(
+        key,
+        bag.starShares[key],
+        ['bag', 'starShares', key],
+        report,
+        'the run maximum',
+      );
+    }
+  }
+  if (broken) {
+    return;
+  }
+
+  const stations = bagStations(pool, level.stations);
+  level.stations.forEach((station, i) => {
+    if (!isHintOnly(station) && !stations.includes(station)) {
+      report(
+        ['stations', i],
+        'warning',
+        `station "${station}" decides no pool story; it stays idle`,
+      );
+    }
+  });
+  if (stations.length === 0) {
+    return;
+  }
+  for (const difficulty of DIFFICULTIES) {
+    const slots = bagSlotTimes(bag, difficulty).length;
+    for (const [station, demand] of coverageGaps(pool, level.stations, stations, slots)) {
+      report(
+        ['bag', 'pool'],
+        'error',
+        `station ${station} cannot get ${demand} distinct folders on ${difficulty}; add stories decided only at ${station}`,
+      );
+    }
+  }
+  const normalSlots = bagSlotTimes(bag, 'normal').length;
+  const target = Math.ceil(normalSlots / stations.length);
+  for (const [station, pinned] of pinnedCounts(pool, level.stations)) {
+    if (pinned < target) {
+      report(
+        ['bag', 'pool'],
+        'warning',
+        `station ${station} has ${pinned} pinned stories (decided only there, one proof); aim for ${target} (${normalSlots} Normal folders over ${stations.length} stations)`,
+      );
     }
   }
 }
 
+/**
+ * Bag stations that cannot get distinct stories in a run of `slots` folders: every worst-case
+ * split (`slots mod k` stations get one folder more) is matched, and the stations of the slots
+ * left empty in the first split that fails are returned with their demand. Empty when the pool
+ * covers every split.
+ */
+function coverageGaps(
+  pool: readonly Story[],
+  levelStations: readonly StationKind[],
+  stations: readonly StationKind[],
+  slots: number,
+): Map<StationKind, number> {
+  const base = Math.floor(slots / stations.length);
+  const extra = slots % stations.length;
+  for (const more of combinations(stations, extra)) {
+    const demand = new Map(
+      stations.map((station) => [station, base + (more.has(station) ? 1 : 0)]),
+    );
+    const sequence = stations.flatMap((station) =>
+      Array.from({ length: demand.get(station) ?? 0 }, () => station),
+    );
+    const matched = matchStories(sequence, pool, levelStations, createRng(0));
+    const gaps = new Map<StationKind, number>();
+    matched.forEach((story, slot) => {
+      const station = sequence[slot];
+      if (!story && station !== undefined) {
+        gaps.set(station, demand.get(station) ?? 0);
+      }
+    });
+    if (gaps.size > 0) {
+      return gaps;
+    }
+  }
+  return new Map();
+}
+
+/** Every `size`-element subset of `items`, as sets. */
+function combinations<T>(items: readonly T[], size: number): Set<T>[] {
+  if (size === 0) {
+    return [new Set()];
+  }
+  return items.flatMap((item, i) =>
+    combinations(items.slice(i + 1), size - 1).map((rest) => new Set([item, ...rest])),
+  );
+}
+
 /** Level event rules. Returns false when an event's story is missing or unsolvable. */
 function checkEvents(
-  level: Level,
+  level: Pick<LevelFile, 'id' | 'durationS' | 'layout' | 'stations' | 'events'>,
   storiesById: ReadonlyMap<string, Story>,
   report: Report,
 ): boolean {

@@ -3,6 +3,7 @@
 // files. The content files stay the single source of truth; nothing here keeps its own copy.
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { levelStoryIds } from '../../packages/content/src/rules.ts';
 
 // --- Data model (a loose view of the files; the Zod schemas in packages/content are the law) ---
 
@@ -35,7 +36,9 @@ export type ReviewLevel = {
   topic?: string;
   briefing: string;
   stations: string[];
-  schedule: { atS: number; storyId: string }[];
+  /** Authored schedule; a bag level has a `bag` pool instead (S7-21). */
+  schedule?: { atS: number; storyId: string }[];
+  bag?: { pool: string[] };
   events: { kind: string; atS: number; storyId?: string }[];
 };
 
@@ -174,9 +177,13 @@ function usageOf(level: ReviewLevel | undefined, id: string): string {
     return '';
   }
   const parts: string[] = [];
-  const scheduled = level.schedule.filter((s) => s.storyId === id);
-  if (scheduled.length > 0) {
-    parts.push(`taśma (${scheduled.map((s) => `${s.atS} s`).join(', ')})`);
+  if (levelStoryIds(level).includes(id)) {
+    const scheduled = (level.schedule ?? []).filter((s) => s.storyId === id);
+    parts.push(
+      scheduled.length > 0
+        ? `taśma (${scheduled.map((s) => `${s.atS} s`).join(', ')})`
+        : 'taśma (pula losowana w każdej rozgrywce)',
+    );
   }
   for (const event of level.events.filter((e) => e.storyId === id)) {
     parts.push(`${EVENT_PL[event.kind] ?? event.kind} (${event.atS} s)`);

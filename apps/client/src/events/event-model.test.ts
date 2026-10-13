@@ -204,6 +204,7 @@ describe('guidance for tagged folders', () => {
       targetFixtureId: null,
       device: 'keyboard',
       story: (id) => (id === 'story' ? story : undefined),
+      next: { kind: 'none' },
       ...partial,
     };
   }

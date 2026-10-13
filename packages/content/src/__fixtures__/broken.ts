@@ -4,7 +4,7 @@
 import l0Level from '../../levels/l0-greybox.json';
 import l0Stories from '../../stories/l0-greybox.json';
 import type { ContentFile, Issue } from '../checks.ts';
-import { type Level, levelSchema, type Story, storyFileSchema } from '../schema.ts';
+import { type Level, type LevelFile, levelSchema, type Story, storyFileSchema } from '../schema.ts';
 
 export const LEVEL_FILE = 'levels/l0-greybox.json';
 export const STORY_FILE = 'stories/l0-greybox.json';
@@ -19,7 +19,11 @@ export function realContent(): Content {
   };
 }
 
-export function toFiles(content: Content): { levels: ContentFile[]; stories: ContentFile[] } {
+export function toFiles(content: {
+  level: LevelFile;
+  stories: readonly Story[];
+  extraStories?: readonly Story[];
+}): { levels: ContentFile[]; stories: ContentFile[] } {
   const stories: ContentFile[] = [{ file: STORY_FILE, data: content.stories }];
   if (content.extraStories) {
     stories.push({ file: 'stories/extra.json', data: content.extraStories });
@@ -42,6 +46,22 @@ export type BrokenCase = {
 };
 
 export const BROKEN_CASES: readonly BrokenCase[] = [
+  {
+    name: 'a decisive stamp that does not justify the verdict',
+    breakIt: (c) => {
+      const stamp = story(c, 'l0-nocny-autobus').stamps.find((s) => s.station === 'imageSearch');
+      if (stamp) {
+        stamp.relevance = 'decisive';
+      }
+    },
+    expected: {
+      severity: 'warning',
+      file: STORY_FILE,
+      path: '[1].stamps[2].relevance',
+      message:
+        'decisive stamp "l0-nocny-autobus-image" does not justify the verdict, so imageSearch decides nothing; add it to justifyingStamps or lower its relevance',
+    },
+  },
   {
     name: 'wrong correctVerdict',
     breakIt: (c) => {

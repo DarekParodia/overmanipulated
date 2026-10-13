@@ -3,24 +3,31 @@
 import { ENDLESS_LEVEL_ID, type StoryBook } from '@redakcja/shared';
 import { ENDLESS_PREVIEW_SEED, generateEndlessLevel } from './endless.ts';
 import { LEVEL_FILES, STORY_FILES, TECHNIQUE_FILES } from './files.ts';
+import { type PreparedRun, prepareRun, type RunOptions, resolveLevel } from './run.ts';
 import {
   type Level,
-  levelSchema,
+  levelFileSchema,
   type Story,
   storyFileSchema,
   type Technique,
   techniqueFileSchema,
 } from './schema.ts';
 
-export { maxLevelScore, maxStoryScore } from './checks.ts';
+export * from './bag.ts';
 export * from './endless.ts';
+export { levelStoryIds, maxLevelScore, maxStoryScore } from './rules.ts';
+export * from './run.ts';
 export * from './schema.ts';
 
-export const LEVELS: readonly Level[] = Object.values(LEVEL_FILES).map((file) =>
-  levelSchema.parse(file),
-);
 export const STORIES: readonly Story[] = Object.values(STORY_FILES).flatMap((file) =>
   storyFileSchema.parse(file),
+);
+/**
+ * Every level, resolved: a bag level is its Normal preview run (`BAG_PREVIEW_SEED`), which the
+ * lobby, briefing and tools show; a room plays the run `prepareLevelRun` deals.
+ */
+export const LEVELS: readonly Level[] = Object.values(LEVEL_FILES).map((file) =>
+  resolveLevel(levelFileSchema.parse(file), STORIES),
 );
 
 /** Encyclopedia cards, in display order (S5-04). */
@@ -46,6 +53,15 @@ export function getLevel(id: string): Level | undefined {
     return endlessPreview;
   }
   return levelsById.get(id);
+}
+
+/**
+ * The run a room plays on level `levelId` for a run seed and difficulty (`prepareRun` over the
+ * bundled content); undefined for an unknown level.
+ */
+export function prepareLevelRun(levelId: string, options: RunOptions): PreparedRun | undefined {
+  const base = getLevel(levelId);
+  return base ? prepareRun(base, options, LEVELS, STORIES) : undefined;
 }
 
 export function getStory(id: string): Story | undefined {

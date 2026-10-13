@@ -185,6 +185,15 @@ export const cues = {
     particles: { preset: 'paperFlutter', count: 4 },
     animation: ['hop', 'cardHop'],
   },
+  /**
+   * A scheduled folder is due but every conveyor tile holds one (`conveyorFull` rising edge, fx/
+   * gameplay-feedback.ts); the ghost card and the conveyor sign turn orange.
+   */
+  'folder.beltFull': {
+    severity: 1,
+    sound: { ids: ['hmm'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
+  },
   'folder.expired': {
     severity: 2,
     sound: { ids: ['buzzer'], bus: 'sfx', volume: 0.75 },

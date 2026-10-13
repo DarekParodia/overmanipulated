@@ -5,6 +5,7 @@ import {
   type Fixture,
   type Folder,
   MINIGAME_FAIL_LOCKOUT_MS,
+  type NextFolder,
   type Priority,
   type Station,
   type StoryType,
@@ -160,7 +161,11 @@ export type StationIndicator =
   | { kind: 'busy'; operatorId: string | null }
   | { kind: 'lockout'; fraction: number }
   /** The station is down (outage event): time left as a fraction of the announced duration. */
-  | { kind: 'down'; fraction: number; seconds: number };
+  | { kind: 'down'; fraction: number; seconds: number }
+  /** Conveyor: the next scheduled folder, the ring filling up as it nears (S7-09). */
+  | { kind: 'incoming'; fraction: number; seconds: number }
+  /** Conveyor: a due folder waits because every conveyor tile holds one. */
+  | { kind: 'full' };
 
 /**
  * What to show above a station: a work dial, a "busy" tag, the lockout countdown, or the
@@ -196,6 +201,32 @@ export function stationIndicator(
     case 'lockout':
       return { kind: 'lockout', fraction: lockoutFraction(station.lockoutMs, lockoutTotalMs) };
   }
+}
+
+/**
+ * What the conveyor sign shows: `full` while a due folder waits for a free tile, otherwise the
+ * next scheduled folder as a ring that fills from the previous scheduled time (`sinceMs`) to its
+ * due time, with the whole seconds left; nothing once the schedule is used up. `sinceMs` is a
+ * due time, not an arrival, so after a held spawn the ring may start part-filled; two entries
+ * due at the same moment count as a full ring.
+ */
+export function conveyorIndicator(
+  next: NextFolder | null,
+  elapsedMs: number,
+  full: boolean,
+): StationIndicator {
+  if (full) {
+    return { kind: 'full' };
+  }
+  if (!next) {
+    return { kind: 'none' };
+  }
+  const span = next.atMs - next.sinceMs;
+  return {
+    kind: 'incoming',
+    fraction: span > 0 ? clamp01((elapsedMs - next.sinceMs) / span) : 1,
+    seconds: Math.max(0, Math.ceil((next.atMs - elapsedMs) / 1000)),
+  };
 }
 
 /**

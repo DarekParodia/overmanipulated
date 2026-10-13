@@ -70,6 +70,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `verdict.wrong` | needless context on a true story | `shrug`, `scorePop` | low sting (quieter) | grey ash | small shake | ●● |
 | `folder.deadlineWarning` / `folder.deadlineTick` | `deadlineWarning`; ticker while any warned folder is in play (`fx/deadline-ticker.ts`, 800 → 220 ms) | `tremble` | warning ticks, then clock ticks speeding up; stops on resolve or extension | paper flutter; timer turns red (HUD; no blinking in no-flash) | light tick | ● → ●● |
 | `folder.deadlineExtended` | `deadlineExtended` | `hop` | soft bell | paper flutter | — | ● |
+| `folder.beltFull` | `conveyorFull` rising edge (`fx/gameplay-feedback.ts`): a scheduled folder is due but every conveyor tile holds one | — (state-driven: the queue's ghost card band and the conveyor sign ring turn orange, the sign says „Pełna”) | unsure two-note dip (`hmm`, ui bus, 0.6) | — | light tick | ● |
 | `folder.expired` | `folderExpired` | `crumple` | buzzer | grey ash | small shake, thud | ●● |
 | `minigame.success` / `fail` | minigame result | card flip / wobble | success ding / fail buzz | sparkle / smoke wisp | — | ● |
 | `station.open` / `desk.open` | minigame sheet / desk folder opens | sheet slides in | paper slide | — | light tick (mobile) | ● |
@@ -104,10 +105,12 @@ Add a row here when you add a cue, in the same commit.
 Event → cue mapping lives in `fx/event-cues.ts` (pure, unit-tested for every gameplay event
 kind); `net/game-events.ts` adds where it happens (fixture tile centre, folder location or
 player position) and who it is about. State-driven feedback (work loop reconciliation, deadline
-ticker, last-30-s sting, level-end stingers) lives in `fx/gameplay-feedback.ts`. Animation
-listeners (`feedback.onAnimation`) receive `{ reducedMotion, noFlash }` and must honour them;
-cues about another player (`remote`) never vibrate. In a `?debug` build, `window.__fx`
-exposes `handleGameEvent`, `emitCue` and `useGame` for testing feedback by hand.
+ticker, last-30-s sting, full-belt alert, level-end stingers) lives in `fx/gameplay-feedback.ts`.
+The next-folder countdown (ghost card, conveyor ring) makes no sound: it runs all level long and
+would only be noise. Animation listeners (`feedback.onAnimation`) receive
+`{ reducedMotion, noFlash }` and must honour them; cues about another player (`remote`) never
+vibrate. In a `?debug` build, `window.__fx` exposes `handleGameEvent`, `emitCue` and `useGame`
+for testing feedback by hand.
 
 ## Music
 

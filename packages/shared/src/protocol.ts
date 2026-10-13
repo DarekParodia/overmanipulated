@@ -336,6 +336,16 @@ export const starThresholdsSchema = z.object({
   three: z.number().int().nonnegative(),
 });
 
+/**
+ * What a prepared run holds (`runSummary`, S7-21): dealt folders, the score a perfect team can
+ * reach, and the star thresholds (null in endless). `roomState.run` carries it from S7-23 on.
+ */
+export const runSummarySchema = z.object({
+  folders: z.number().int().nonnegative(),
+  maxScore: z.number().int().nonnegative(),
+  stars: starThresholdsSchema.nullable(),
+});
+
 /** Sent once when the level ends; the room moves to the `results` phase. */
 export const levelEndMessageSchema = z.object({
   type: z.literal('levelEnd'),
@@ -395,6 +405,7 @@ export type EventMessage = z.infer<typeof eventMessageSchema>;
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 export type ErrorMessage = z.infer<typeof errorMessageSchema>;
 export type StarThresholds = z.infer<typeof starThresholdsSchema>;
+export type RunSummary = z.infer<typeof runSummarySchema>;
 export type LevelEndMessage = z.infer<typeof levelEndMessageSchema>;
 export type ServerMessage = z.infer<typeof serverMessageSchema>;
 

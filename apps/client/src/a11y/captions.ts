@@ -84,6 +84,7 @@ export const captionTable: Record<CueId, CaptionEntry> = {
     ttlMs: 1600,
   }),
   'folder.deadlineExtended': chip('hourglass', t.moreTime, 'good'),
+  'folder.beltFull': chip('conveyor', t.beltFull, 'warn'),
   'folder.expired': chip('expired', t.folderLost, 'danger'),
   'station.workStart': skip('own-action'),
   'station.workCancel': skip('own-action'),

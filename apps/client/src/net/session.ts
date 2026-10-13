@@ -13,6 +13,7 @@ import {
   type ServerMessage,
 } from '@redakcja/shared';
 import { emitCue } from '../fx/feedback.ts';
+import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
 import { useApp } from '../store/app.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
@@ -123,6 +124,8 @@ function handleMessage(message: ServerMessage): void {
     case 'event': {
       const { event } = message;
       if (event.kind === 'gameStarted') {
+        // Kartoteka cards the player left in the last level do not come back (S7-14).
+        useRetryMemory.getState().reset();
         emitCue('game.start');
         return;
       }

@@ -14,6 +14,7 @@ import {
   type StationKind,
   type TileMap,
 } from '@redakcja/shared';
+import type { NextFolderState } from '../hud/hud-model.ts';
 import type { InputDevice } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 
@@ -40,7 +41,7 @@ export type NextStepKind =
   | 'openDesk'
   /** The verdict sheet is open. */
   | 'verdict'
-  /** Nothing to do: no folders anywhere. */
+  /** Nothing to do: no folders anywhere (says when the next scheduled folder comes). */
   | 'wait';
 
 export type NextStep = {
@@ -72,6 +73,9 @@ export type NextStepInput = {
   targetFixtureId: string | null;
   device: InputDevice;
   story(storyId: string): StoryStamps | undefined;
+  /** The next scheduled folder (`nextFolderState`): the wait hint counts down to it, and a full
+   * belt turns the conveyor pick-up into „Taśma pełna”. */
+  next: NextFolderState;
 };
 
 /** Steps during which another piece of UI (overlay, work prompt) already says what to do. */
@@ -300,9 +304,11 @@ export function nextStep(input: NextStepInput): NextStep {
 
   const onConveyor = waitingFolders(input, 'conveyor')[0];
   if (onConveyor) {
-    return step('pickup', tagHint(onConveyor) ?? guidance.hint.pickupConveyor, [
-      fixtureOf(onConveyor),
-    ]);
+    // A full belt holds the next folder back: clearing it comes first, unless the folder's own
+    // event hint says something more pressing.
+    const conveyorText =
+      input.next.kind === 'full' ? guidance.hint.conveyorFull : guidance.hint.pickupConveyor;
+    return step('pickup', tagHint(onConveyor) ?? conveyorText, [fixtureOf(onConveyor)]);
   }
   // Folders left on tables, stations and desks; most urgent first.
   const elsewhere = [
@@ -319,7 +325,13 @@ export function nextStep(input: NextStepInput): NextStep {
   if (input.folders.some((f) => f.location.kind === 'floor')) {
     return step('pickup', guidance.hint.pickupWaiting);
   }
-  return step('wait', guidance.hint.wait);
+  return waitStep(input.next);
+}
+
+/** Nothing to do: how long until the next scheduled folder, while that is still ahead. */
+function waitStep(next: NextFolderState): NextStep {
+  const seconds = next.kind === 'in' ? Math.ceil(next.ms / 1000) : 0;
+  return step('wait', seconds > 0 ? pl.guidance.hint.waitIn(seconds) : pl.guidance.hint.wait);
 }
 
 /** Two steps say and point at the same thing (avoids store churn). */

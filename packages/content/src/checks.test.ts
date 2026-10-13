@@ -3,6 +3,12 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { correctVerdictFor, EVENTS, parseLayout } from '@redakcja/shared';
+import {
+  type BagContent,
+  bagContent,
+  FIXTURE_BAG,
+  thinBagContent,
+} from './__fixtures__/bag-level.ts';
 import { BROKEN_CASES, realContent, toFiles } from './__fixtures__/broken.ts';
 import {
   checkRegistration,
@@ -305,7 +311,18 @@ describe('validate CLI', () => {
 
   it('passes on the real content', () => {
     const result = run();
-    expect(result.stdout.toString()).toContain('0 error(s), 0 warning(s)');
+    const out = result.stdout.toString();
+    // Decisive stamps that do not justify (S7-21 warning); S7-33 cleans up l4, S7-58 l6.
+    const decisiveNotJustifying = [...out.matchAll(/decisive stamp "([^"]+)" does not justify/g)];
+    expect(decisiveNotJustifying.map((match) => match[1])).toEqual([
+      'l4-ankieta-uczniow-phone',
+      'l4-raport-pielegniarek-phone',
+      'l4-darmowe-badania-wzroku-archive',
+      'l4-darmowe-badania-wzroku-data',
+      'l4-woda-z-kranu-phone',
+      'l6-frekwencja-w-poludnie-archive',
+    ]);
+    expect(out).toContain('0 error(s), 6 warning(s)');
     expect(result.exitCode).toBe(0);
   });
 
@@ -420,3 +437,178 @@ describe('validateTechniques', () => {
     expect(issues.some((i) => i.severity === 'error' && i.path === '[0].stations')).toBe(true);
   });
 });
+
+describe('bag levels (checkBag)', () => {
+  const validate = (content: BagContent) => {
+    const { levels, stories } = toFiles(content);
+    return validateContent(levels, stories);
+  };
+  const LEVEL = 'levels/l0-greybox.json';
+  const bagOf = (content: BagContent) => {
+    const { bag } = content.level;
+    if (!bag) {
+      throw new Error('fixture level has no bag');
+    }
+    return bag;
+  };
+
+  it('accepts the fixture bag level without errors or warnings', () => {
+    expect(validate(bagContent())).toEqual([]);
+  });
+
+  it('reports a pool too thin to cover a run on every difficulty', () => {
+    const issues = validate(thinBagContent());
+    expect(
+      issues.filter((issue) => issue.severity === 'error').map((issue) => issue.message),
+    ).toEqual([...THIN_POOL_ERRORS]);
+    expect(issues).toContainEqual({
+      severity: 'warning',
+      file: LEVEL,
+      path: 'bag.pool',
+      message:
+        'station imageSearch has 0 pinned stories (decided only there, one proof); aim for 4 (10 Normal folders over 3 stations)',
+    });
+  });
+
+  it('warns about a decisive pool stamp that does not justify the verdict', () => {
+    const content = bagContent();
+    const story = content.stories.find((s) => s.id === 'l0-bag-lupa-prawda');
+    const archive = story?.stamps.find((stamp) => stamp.station === 'archive');
+    if (!archive) {
+      throw new Error('fixture stamp missing');
+    }
+    archive.relevance = 'decisive';
+    expect(validate(content)).toEqual([
+      {
+        severity: 'warning',
+        file: 'stories/l0-greybox.json',
+        path: '[10].stamps[1].relevance',
+        message:
+          'decisive stamp "l0-bag-lupa-prawda-archive" does not justify the verdict, so archive decides nothing; add it to justifyingStamps or lower its relevance',
+      },
+    ]);
+  });
+
+  it('reports unknown and event stories in the pool', () => {
+    const content = bagContent();
+    bagOf(content).pool.push('l0-nie-ma-takiej');
+    content.level.events = [{ kind: 'viral', atS: 30, storyId: 'l0-zalany-rynek', deadlineS: 60 }];
+    const issues = validate(content);
+    expect(issues).toContainEqual({
+      severity: 'error',
+      file: LEVEL,
+      path: 'bag.pool[17]',
+      message: 'unknown story "l0-nie-ma-takiej"',
+    });
+    expect(issues).toContainEqual({
+      severity: 'error',
+      file: LEVEL,
+      path: 'bag.pool[0]',
+      message: 'story "l0-zalany-rynek" is also an event story; keep event stories out of the pool',
+    });
+  });
+
+  it('reports a pool story of another level and the stamps it is missing', () => {
+    const content = bagContent();
+    const foreign = content.stories.find((s) => s.id === 'l0-bag-lupa-satyra');
+    if (!foreign) {
+      throw new Error('fixture story missing');
+    }
+    content.stories = content.stories.filter((s) => s !== foreign);
+    const moved = { ...foreign, id: 'l1-obca-historia' };
+    bagOf(content).pool = bagOf(content).pool.map((id) => (id === foreign.id ? moved.id : id));
+    const issues = validate({ ...content, stories: [...content.stories, moved] });
+    expect(issues).toContainEqual({
+      severity: 'error',
+      file: LEVEL,
+      path: 'bag.pool[12]',
+      message: 'story "l1-obca-historia" belongs to level 1, not level 0',
+    });
+  });
+
+  it('warns about late deadlines, star shares off the aim and an idle station', () => {
+    const content = thinBagContent();
+    const bag = bagOf(content);
+    bag.deadlineS.important = 90;
+    bag.starShares = { two: 0.3, three: 0.8 };
+    bag.pool = bag.pool.filter((id) => id !== 'l0-zalany-rynek' && id !== 'l0-most-zamkniety');
+    const issues = validate(content);
+    expect(issues).toContainEqual({
+      severity: 'warning',
+      file: LEVEL,
+      path: 'bag.lastSpawnS',
+      message:
+        'a folder at 175 s needs up to 90 s, past the level end at 240 s; late folders get less time',
+    });
+    expect(issues).toContainEqual({
+      severity: 'warning',
+      file: LEVEL,
+      path: 'bag.starShares.two',
+      message: 'two stars at 30% of the run maximum; aim for 35–65%',
+    });
+    expect(issues).toContainEqual({
+      severity: 'warning',
+      file: LEVEL,
+      path: 'stations[0]',
+      message: 'station "imageSearch" decides no pool story; it stays idle',
+    });
+  });
+
+  it('rejects a level file with both a schedule and a bag, or neither', () => {
+    const both = realContent();
+    const withBag = { ...both.level, bag: bagOverSchedule(both) };
+    const { schedule: _schedule, stars: _stars, ...neither } = both.level;
+    const messages = (level: unknown) =>
+      validateContent(
+        [{ file: LEVEL, data: level }],
+        [{ file: 'stories/l0-greybox.json', data: both.stories }],
+      )
+        .filter((issue) => issue.severity === 'error')
+        .map((issue) => `${issue.path}: ${issue.message}`);
+    expect(messages(withBag)).toEqual(['bag: a level has either a schedule or a bag, not both']);
+    expect(messages(neither)).toEqual([': a level needs a schedule or a bag']);
+  });
+
+  it('rejects stars, a late last folder, duplicate ids and shares that do not grow', () => {
+    const content = bagContent();
+    const bag = bagOf(content);
+    const level = {
+      ...content.level,
+      stars: { two: 100, three: 200 },
+      bag: {
+        ...bag,
+        lastSpawnS: 240,
+        pool: [...bag.pool, 'l0-zalany-rynek'],
+        starShares: { two: 0.8, three: 0.8 },
+      },
+    };
+    const issues = validateContent(
+      [{ file: LEVEL, data: level }],
+      [{ file: 'stories/l0-greybox.json', data: content.stories }],
+    );
+    expect(issues.map((issue) => `${issue.path}: ${issue.message}`)).toEqual([
+      'stars: a bag level gets its stars from each run (use bag.starShares)',
+      'bag.lastSpawnS: the last folder comes after the level ends',
+      'bag.starShares: three stars must need a larger share',
+      'bag.pool[17]: duplicate id "l0-zalany-rynek"',
+    ]);
+  });
+});
+
+/** A valid bag block over the greybox schedule's stories. */
+function bagOverSchedule(content: ReturnType<typeof realContent>) {
+  return { ...FIXTURE_BAG, pool: content.level.schedule.map((spawn) => spawn.storyId) };
+}
+
+/** The ten greybox stories as a pool: the image search decides only two of them. */
+const THIN_POOL_ERRORS: readonly string[] = [
+  ['imageSearch', 3, 'easy'],
+  ['imageSearch', 4, 'normal'],
+  ['imageSearch', 4, 'hard'],
+  ['archive', 4, 'hard'],
+  ['imageSearch', 4, 'expert'],
+  ['archive', 4, 'expert'],
+].map(
+  ([station, demand, difficulty]) =>
+    `station ${station} cannot get ${demand} distinct folders on ${difficulty}; add stories decided only at ${station}`,
+);

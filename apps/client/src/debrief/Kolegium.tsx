@@ -1,6 +1,7 @@
-// The Kolegium: the level's stories as debrief cards. Desktop shows a scrollable list (the
-// current card has a blue outline); phones show one card at a time, paged from the footer or by
-// swiping. Votes go to the server; this player's own vote shows at once (optimistic).
+// The Kolegium: the level's folders as debrief cards (one per story in endless). Desktop shows a
+// scrollable list (the current card has a blue outline); phones show one card at a time, paged
+// from the footer or by swiping. Votes go to the server; this player's own vote shows at once
+// (optimistic).
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { voteBlunder } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
@@ -115,7 +116,7 @@ export function Kolegium({
     const card = cards[current];
     return (
       <div className={styles.page} aria-live="polite">
-        {card && <div key={card.storyId}>{render(card, current)}</div>}
+        {card && <div key={card.folderId}>{render(card, current)}</div>}
       </div>
     );
   }
@@ -123,7 +124,7 @@ export function Kolegium({
   return (
     <ol ref={list} className={styles.list} aria-label={pl.debrief.cardsLabel}>
       {cards.map((card, index) => (
-        <li key={card.storyId}>{render(card, index)}</li>
+        <li key={card.folderId}>{render(card, index)}</li>
       ))}
     </ol>
   );

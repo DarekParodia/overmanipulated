@@ -261,12 +261,14 @@ export const STAR_SHARES = { two: 0.55, three: 0.8 } as const;
 export const STAR_THRESHOLD_STEP = 5;
 /** Chance that a bag slot tries stories decidable at several stations before single-station ones. */
 export const BAG_FLEX_CHANCE = 0.3;
-/** The first this many folders of a run prefer single-proof, non-urgent stories. */
+/** The first this many folders get single-proof, non-urgent stories when the pool allows. */
 export const BAG_OPENING_SLOTS = 2;
-/** Multi-stamp stories are drawn only from this slot index (0-based) on. */
+/** Multi-stamp stories are drawn only from this slot index (0-based) on, when the pool allows. */
 export const BAG_MULTI_STAMP_MIN_SLOT = 4;
 /** Floor of a bag folder's deadline after difficulty scaling and the fit-the-level clamp (s). */
 export const BAG_MIN_DEADLINE_S = 30;
+/** Seed of the Normal run `LEVELS` and `getLevel` show for a bag level (lobby, briefing, tools). */
+export const BAG_PREVIEW_SEED = 0;
 
 // --- S2-11 Pings (client picker) -----------------------------------------------------------
 

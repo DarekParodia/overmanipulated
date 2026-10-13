@@ -22,6 +22,7 @@ import {
   minigameTimeLimitMs,
   mistakeLimit,
   NORMAL_TUNING,
+  scaledDeadlineS,
   simTuning,
   tunedLockoutMs,
 } from './difficulty.ts';
@@ -170,5 +171,17 @@ describe('Stage 7 balance constants', () => {
 
   it('asks for endless station decks of at least four stories', () => {
     expect(ENDLESS_MIN_DECK).toBe(4);
+  });
+});
+
+describe('scaledDeadlineS', () => {
+  it('scales a deadline by the preset and rounds to whole seconds', () => {
+    expect(DIFFICULTIES.map((d) => scaledDeadlineS(45, d))).toEqual([59, 45, 38, 34]);
+    expect(DIFFICULTIES.map((d) => scaledDeadlineS(60, d))).toEqual([78, 60, 51, 45]);
+  });
+
+  it('keeps an authored fraction on Normal', () => {
+    expect(scaledDeadlineS(52.5, 'normal')).toBe(52.5);
+    expect(scaledDeadlineS(52.5, 'easy')).toBe(68);
   });
 });
