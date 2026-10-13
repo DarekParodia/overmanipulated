@@ -5,6 +5,7 @@ import {
   createRng,
   ENDLESS,
   ENDLESS_LEVEL_ID,
+  type Rng,
   type SimLevelEvent,
   type StationKind,
   type StoryBook,
@@ -108,8 +109,6 @@ function endlessEventIntervalS(atS: number): number {
 }
 
 const round1 = (value: number) => Math.round(value * 10) / 10;
-
-type Rng = ReturnType<typeof createRng>;
 
 const jitter = (rng: Rng) => 1 + (rng.next() * 2 - 1) * ENDLESS.intervalJitter;
 

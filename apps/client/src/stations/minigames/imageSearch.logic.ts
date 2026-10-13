@@ -8,6 +8,7 @@ import {
   IMAGE_SEARCH_FRAGMENTS,
   IMAGE_SEARCH_MAX_MISTAKES,
   IMAGE_SEARCH_RESULTS,
+  type Rng,
 } from '@redakcja/shared';
 
 /** Scene size in SVG units (4:3, like a print). */
@@ -97,8 +98,6 @@ const CROP_ATTEMPTS = 12;
 const FIRST_YEAR = 2014;
 const YEAR_SPAN = 12;
 const DEFAULT_MATCH_YEAR = 2019;
-
-type Rng = ReturnType<typeof createRng>;
 
 function pickOne<T>(rng: Rng, items: readonly T[]): T {
   const item = items[rng.int(items.length)];

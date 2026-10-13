@@ -21,6 +21,8 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Licznik czasu | `deadline` / `timeLeftMs` | |
 | Premia za tempo | `speedBonus` | Balance value `SCORE.speedBonus`; on a folder result it is `bonuses.speed` |
 | Premie | `bonuses` (`speed`, `multiStamp`, `bossCall`) | Points on top of a folder's base points; base = `scoreDelta − Σ bonuses` |
+| Premia za komplet dowodów | `multiStampBonus` | Balance value `SCORE.multiStampBonus`, paid per proof beyond the first; on a folder result it is `bonuses.multiStamp` |
+| Teczka z kilkoma dowodami | multi-stamp folder | Its story has `requiredStamps` > 1; spawns with `MULTI_STAMP_EXTRA_DEADLINE_MS` more per extra proof |
 | Przeterminowane | `expired` | |
 | Wynik teczki | `folderResult` (`FolderResult`) | Outcome, reason, deltas, cited stamps and bonuses of one folder |
 | Powód wyniku | `reason` (`FolderReason`) | Why a folder ended the way it did; 14 values, each belongs to one outcome |
@@ -32,6 +34,9 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Stanowisko-podpowiedź | hint-only station (`HINT_ONLY_STATIONS`, `isHintOnly`) | `aiScanner`: its stamp may justify, but never counts as proof (`countsAsProof`) |
 | Powód porażki | `lossReason` (`credibility` / `score`) | Why a level was lost; null when won |
 | Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
+| Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |
+| Worek stanowisk | station bag (`bag`, constants `BAG_*`) | Run generation: folders are dealt in shuffled rounds over the stations that decide the level's stories |
+| Talia stanowiska (tryb nieskończony) | station deck | Endless stories one station can decide; should hold at least `ENDLESS_MIN_DECK` |
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
 | Status prawdziwości | `truth` | |
 | Prawda / Fałsz / Zwodnicze / Satyra / Niepotwierdzalne | `true` / `false` / `misleading` / `satire` / `unverifiable` | |
@@ -90,6 +95,18 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Nalot botów | `botRaid` |
 | Awaria | `outage` |
 | Sprostowanie | `correction` |
+
+## Difficulty (`Difficulty`)
+
+| Polish | English | Notes |
+| --- | --- | --- |
+| Poziom trudności | `difficulty` | Set per room (default `DEFAULT_DIFFICULTY`); picks one `DIFFICULTY` preset |
+| Łatwy / Normalny / Trudny / Ekspert | `easy` / `normal` / `hard` / `expert` | `DIFFICULTIES`, easiest first; every Normal factor is 1 |
+| Ustawienia poziomu trudności | `DifficultyPreset` | Factors for deadlines, spawn gap, work time, lockout, penalties and minigame time; extra mistakes; hints; answer reveal |
+| Strojenie symulacji | `SimTuning` (`simTuning`, `NORMAL_TUNING`) | The preset part the simulation applies: work time, lockout, penalties |
+| Limit pomyłek | `mistakeLimit` | Mistakes a minigame allows on a difficulty; never below `MINIGAME_MIN_MISTAKES` |
+| Blokada stanowiska | lockout (`failLockoutMs`) | How long a failed minigame blocks its station |
+| Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
 
 ## Screens (`ScreenId`)
 

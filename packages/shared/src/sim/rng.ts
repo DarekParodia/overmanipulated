@@ -19,8 +19,11 @@ export function nextInt(state: RngState, maxExclusive: number): [value: number, 
   return [Math.floor(value * maxExclusive), next];
 }
 
+/** A stateful RNG: `next()` is a float in [0, 1), `int(max)` an integer in [0, max). */
+export type Rng = { next: () => number; int: (max: number) => number };
+
 /** Convenience wrapper for code outside the simulation (tests, tools) that wants a stateful RNG. */
-export function createRng(seed: number): { next: () => number; int: (max: number) => number } {
+export function createRng(seed: number): Rng {
   let state: RngState = seed | 0;
   return {
     next() {

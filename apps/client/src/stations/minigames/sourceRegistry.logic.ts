@@ -5,6 +5,7 @@
 import type { Stamp, Story } from '@redakcja/content';
 import {
   createRng,
+  type Rng,
   SOURCE_REGISTRY_CLEAN_CHANCE,
   SOURCE_REGISTRY_FIELDS,
   SOURCE_REGISTRY_MAX_FLAGS,
@@ -41,8 +42,6 @@ const KIND_BY_STORY_TYPE: Record<StoryType, CardKind> = {
   statistic: 'website',
   article: 'website',
 };
-
-type Rng = ReturnType<typeof createRng>;
 
 /**
  * Whether the card must show warning signs, consistent with the stamp the station gives:

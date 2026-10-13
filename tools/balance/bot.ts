@@ -14,6 +14,7 @@ import {
   PLAYER_SPEED_TILES_PER_S,
   type PlayerCommand,
   type PlayerInput,
+  type Rng,
   raidOfFolder,
   type SimContext,
   type SimStory,
@@ -95,7 +96,7 @@ export class Bot {
   private verdictAtMs = 0;
   private readonly memory = new Map<string, Memory>();
   private readonly wanted = new Map<string, boolean>();
-  private readonly rng: ReturnType<typeof createRng>;
+  private readonly rng: Rng;
   private readonly extensionUser: boolean;
 
   constructor(
