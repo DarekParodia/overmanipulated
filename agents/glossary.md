@@ -30,7 +30,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Teczka z kilkoma dowodami | multi-stamp folder | Its story has `requiredStamps` > 1; spawns with `MULTI_STAMP_EXTRA_DEADLINE_MS` more per extra proof (`multiStampExtraMs`), schedule and event folders alike; content warns before level `MULTI_STAMP_FIRST_LEVEL` |
 | Przeterminowane | `expired` | |
 | Wynik teczki | `folderResult` (`FolderResult`) | Outcome, reason, deltas, cited stamps and bonuses of one folder |
-| Powód wyniku | `reason` (`FolderReason`) | Why a folder ended the way it did; 14 values, each belongs to one outcome |
+| Powód wyniku | `reason` (`FolderReason`) | Why a folder ended the way it did; 14 values, each belongs to one outcome. Its title `pl.outcome.title[reason]` is shared by the toast, the desk and the Kolegium |
 | Niedokończona (nie zdążyliście) | `unfinished` | Folder still in play when the level ends; 0 points |
 | Słaby dowód | `weakProof` | Reason: a cited stamp is not valid proof; half points |
 | Za mało dowodów | `incompleteProof` | Reason: fewer countable proofs than required, e.g. only the AI scanner cited; half points |
@@ -38,6 +38,8 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Wymagane dowody | `requiredStamps` | Distinct justifying, non-hint stamps a story needs; 1 unless set |
 | Rozwiązywalna historia | solvable story (`proofCount`) | The level's stations give at least `requiredStamps` proofs: `proofCount(story, stations)` counts distinct justifying, non-hint stamps from those stations; checked by `checkStoryFitsLevel` and endless `isSolvable` |
 | Stanowisko-podpowiedź | hint-only station (`HINT_ONLY_STATIONS`, `isHintOnly`) | `aiScanner`: its stamp may justify, but never counts as proof (`countsAsProof`) |
+| Stanowisko rozstrzygające (Rozstrzyga) | deciding station (`decidingStations`, S7-20) | A station on the level's map with a justifying, non-hint stamp of the story; the desk result names it after „Rozstrzyga:” |
+| Linie wyniku werdyktu | `deskResultLines` (`DeskResultLine`) | At most two lines under the desk result: `proof`, `weakProof`, `tooFewProofs`, `hintOnly`, `decidedBy`, `correctVerdict`, `proofInFolder`, `notChecked`; the same on every difficulty |
 | Powód porażki | `lossReason` (`credibility` / `score`) | Why a level was lost; null when won |
 | Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
 | Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |

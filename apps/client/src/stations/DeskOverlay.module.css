@@ -374,39 +374,55 @@
   font-size: var(--text-xl);
 }
 
-.missed {
+/* At most two short lines under the deltas: a label, then station chips or the right verdict. */
+.lines {
   display: grid;
   gap: var(--space-2);
+  margin: 0;
   padding: var(--space-3);
+  list-style: none;
   background: var(--surface-soft);
   border: var(--stroke) solid var(--outline);
   border-radius: var(--radius-md);
 }
 
-.missedTitle {
-  font-size: var(--text-lg);
-  color: var(--red-dark);
-}
-
-.missed ul {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.missed li {
+.line {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-md);
+  min-height: 2.5rem;
+}
+
+.lineIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.lineLabel {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
   line-height: var(--leading-snug);
 }
 
-.missed .stampIcon {
-  width: 2.25rem;
-  height: 2.25rem;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
 }
 
 .next {
@@ -517,11 +533,27 @@
     font-size: var(--text-lg);
   }
 
-  .missed {
-    padding: var(--space-2);
+  .lines {
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
   }
 
-  .missed li {
+  .line {
+    gap: var(--space-1) var(--space-2);
+    min-height: 2rem;
+  }
+
+  .lineIcon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .lineLabel {
+    font-size: var(--text-md);
+  }
+
+  .chip {
+    padding: 0 var(--space-2) 0 var(--space-1);
     font-size: var(--text-sm);
   }
 
@@ -529,8 +561,21 @@
     display: none;
   }
 
-  .missedTitle {
-    font-size: var(--text-md);
+  /* Two result lines and "Dalej" fit 640x360 without scrolling: a regular-height button. */
+  .next > button {
+    min-height: var(--touch-target);
+    padding-block: var(--space-1);
+    font-size: var(--text-lg);
+  }
+
+  /* Bonus chips keep the icon and the points; the label stays for screen readers. */
+  .bonusLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .extended {

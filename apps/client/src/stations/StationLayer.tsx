@@ -18,8 +18,11 @@ import { useApp } from '../store/app.ts';
 import { DeskOverlay, type VerdictResultEvent } from './DeskOverlay.tsx';
 import { LockoutNote, StationOverlay, WorkPrompt } from './StationOverlay.tsx';
 
-/** How long the verdict outcome stays on the desk sheet unless dismissed. */
-const VERDICT_RESULT_SHOW_MS = 4000;
+/**
+ * How long the verdict outcome stays on the desk sheet unless dismissed: longer after a
+ * mistake, so there is time to read the right verdict and the deciding station (S7-04).
+ */
+const VERDICT_RESULT_SHOW_MS = { good: 4000, bad: 6500 } as const;
 /** A sent verdict with no answer by then can be sent again. */
 const VERDICT_PENDING_TIMEOUT_MS = 4000;
 
@@ -164,7 +167,8 @@ function DeskHost({ playerId }: { playerId: string | null }) {
     if (!result) {
       return;
     }
-    const timer = setTimeout(() => setResult(null), VERDICT_RESULT_SHOW_MS);
+    const showMs = VERDICT_RESULT_SHOW_MS[result.event.outcome === 'correct' ? 'good' : 'bad'];
+    const timer = setTimeout(() => setResult(null), showMs);
     return () => clearTimeout(timer);
   }, [result]);
 

@@ -1,6 +1,7 @@
-// One story on the Kolegium: the outcome mark (slams on during the reveal), the headline, what
-// the team decided next to the right verdict, the debrief in four short titled chunks, the
-// stamps the team missed, and the blunder-of-the-day vote with a dot per voter.
+// One story on the Kolegium: the outcome mark (slams on during the reveal), the headline, the
+// result title by reason (the same `pl.outcome` title as the toast and the desk), what the team
+// decided next to the right verdict, the debrief in four short titled chunks, the deciding proof
+// nobody checked, and the blunder-of-the-day vote with a dot per voter.
 
 import type { Verdict } from '@redakcja/shared';
 import type { PointerEvent } from 'react';
@@ -118,7 +119,7 @@ export function DebriefCard({
         <span
           className={`${styles.mark} ${marked ? styles.markOn : styles.markOff}`}
           role="img"
-          aria-label={pl.results.outcomes[card.outcome]}
+          aria-label={pl.outcome.group[card.outcome]}
         >
           <Icon name={MARK[card.outcome]} size={30} />
         </span>
@@ -127,7 +128,7 @@ export function DebriefCard({
             {headline}
           </h3>
           <p className={styles.outcome}>
-            <span>{pl.results.outcomes[card.outcome]}</span>
+            <span>{typeset(pl.outcome.title[card.reason])}</span>
             <span className={styles.points}>
               {pl.results.scoreDelta(formatDelta(card.scoreDelta))}
             </span>
@@ -206,13 +207,14 @@ export function DebriefCard({
         <section className={styles.missed}>
           <h4 className={styles.sectionTitle}>
             <Icon name="stamp" size={22} />
-            {pl.debrief.missed}
+            {pl.debrief.proofTitle}
           </h4>
           <ul className={styles.missedList}>
             {card.missedStamps.map((stamp) => (
               <li key={stamp.id} className={styles.missedItem}>
                 <Icon name={stamp.station} size={22} label={pl.vocab.stations[stamp.station]} />
                 <span>{typeset(stamp.text)}</span>
+                <span className={styles.proofStatus}>{pl.debrief.proofMissing}</span>
               </li>
             ))}
           </ul>
