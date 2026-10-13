@@ -39,6 +39,7 @@ describe('defaults', () => {
       [d.musicVolume, sliderSpecs.volume],
       [d.sfxVolume, sliderSpecs.volume],
       [d.uiVolume, sliderSpecs.volume],
+      [d.voiceVolume, sliderSpecs.volume],
       [d.textScale, sliderSpecs.textScale],
       [d.rumbleIntensity, sliderSpecs.rumbleIntensity],
       [d.touchScale, sliderSpecs.touchScale],

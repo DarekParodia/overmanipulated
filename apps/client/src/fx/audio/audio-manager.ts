@@ -1,7 +1,8 @@
-// Howler-based audio: one sprite for all SFX, buses with settings-driven volume, a limiter on the
-// output bus, stereo pan, mobile autoplay unlock and mute while the tab is hidden. Also runs the
-// newsroom ambience during play: the room-tone loop, the voice-less chatter bed and random distant
-// one-shots (ambience.ts, mix.ts). Big stingers dip the music (duck.ts).
+// Howler-based audio: one sprite for all SFX, buses with settings-driven volume (mix.ts), a
+// limiter on the output bus (limiter.ts), stereo pan, mobile autoplay unlock and mute while the
+// tab is hidden. Also runs the newsroom ambience during play: the room-tone loop, the voice-less
+// chatter bed and random distant one-shots (ambience.ts, mix.ts). Big stingers dip the music
+// (duck.ts). Settings changes also reach the intro voiceover (voice.ts).
 import { Howl, Howler } from 'howler';
 import { selectOperatedDesk, selectOperatedStation, useGame } from '../../net/game-store.ts';
 import { useQuality } from '../../scene/quality.ts';
@@ -10,8 +11,10 @@ import { type Settings, useSettings } from '../../store/settings.ts';
 import { type AudioBus, cues } from '../cues.ts';
 import { createAmbience } from './ambience.ts';
 import { DUCKING_SOUNDS, musicDucker, soundDurationMs } from './duck.ts';
-import { BUS_TRIM, chatterLevel, LIMITER, type MixSettings } from './mix.ts';
+import { installMasterLimiter } from './limiter.ts';
+import { busVolume, chatterLevel, type MixSettings } from './mix.ts';
 import sprite from './sfx-sprite.json';
+import { applyVoiceVolume } from './voice.ts';
 
 type SpriteMap = Record<string, [number, number, boolean]>;
 const spriteMap = sprite as unknown as SpriteMap;
@@ -21,47 +24,6 @@ export const soundIds: ReadonlySet<string> = new Set(Object.keys(spriteMap));
 let sfx: Howl | null = null;
 let ambienceId: number | null = null;
 let chatterId: number | null = null;
-let limiterInstalled = false;
-
-/** Effective volume of a bus (master × bus level), before global mute. */
-export function busVolume(settings: Settings, bus: AudioBus): number {
-  const busLevel =
-    bus === 'ui' ? settings.uiVolume : bus === 'music' ? settings.musicVolume : settings.sfxVolume;
-  return settings.masterVolume * busLevel * BUS_TRIM[bus];
-}
-
-/**
- * Puts a limiter (a fast DynamicsCompressor) between Howler's gain stage and the speakers, so
- * stacked stingers and the music never clip. Safe to call repeatedly; call after the first Howl
- * exists (that is when Howler creates its audio context).
- */
-export function installMasterLimiter(): void {
-  const ctx = Howler.ctx;
-  const gainStage = Howler.masterGain;
-  if (limiterInstalled || !Howler.usingWebAudio || !ctx || !gainStage) {
-    return;
-  }
-  limiterInstalled = true;
-  try {
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = LIMITER.thresholdDb;
-    limiter.knee.value = LIMITER.kneeDb;
-    limiter.ratio.value = LIMITER.ratio;
-    limiter.attack.value = LIMITER.attackS;
-    limiter.release.value = LIMITER.releaseS;
-    gainStage.disconnect();
-    gainStage.connect(limiter);
-    limiter.connect(ctx.destination);
-  } catch {
-    // Without a limiter the audio still plays: drop any half-built path, go straight to the output.
-    try {
-      gainStage.disconnect();
-      gainStage.connect(ctx.destination);
-    } catch {
-      // Nothing more to do.
-    }
-  }
-}
 
 function load(): Howl {
   if (!sfx) {
@@ -235,6 +197,7 @@ export function initAudio(): () => void {
     for (const [playId, loop] of loopVolumes) {
       sfx?.volume(Math.min(1, busVolume(settings, loop.bus) * loop.volume), playId);
     }
+    applyVoiceVolume(settings);
   };
   apply();
   const unsubscribe = useSettings.subscribe(apply);
