@@ -72,4 +72,37 @@ describe('Caddyfile', () => {
   it('the backend matcher is unchanged', () => {
     expect(LINES).toContain('@backend path /ws /api /api/* /health');
   });
+
+  // S7-71: the game server renders the pages, so its CSP and Referrer-Policy must win there.
+  it('CSP, Referrer-Policy and COOP are defaults only', () => {
+    const [headers] = blocks('(security_headers'); // `\b` cannot follow ')'
+    for (const name of [
+      'Content-Security-Policy',
+      'Referrer-Policy',
+      'Cross-Origin-Opener-Policy',
+    ]) {
+      expect(headers).toMatch(new RegExp(`^\\s*\\?${name} "`, 'm'));
+      expect(headers).not.toMatch(new RegExp(`^\\s*${name} "`, 'm'));
+    }
+    expect(headers).toContain('X-Content-Type-Options "nosniff"');
+  });
+
+  it('static files never include the HTML shell, and the catch-all goes to the game server', () => {
+    const [staticMatcher] = blocks('@static');
+    expect(staticMatcher).toContain('not path / /index.html');
+    expect(staticMatcher).toContain('file');
+    expect(LINES).not.toContain('try_files {path} /index.html');
+    // Two handles proxy to the game server: @backend and the catch-all `handle {`.
+    const proxied = blocks('handle').filter((body) => body.includes('import game_server'));
+    expect(proxied).toHaveLength(2);
+    expect(LINES).toContain('handle {');
+  });
+
+  it('a 502/503/504 serves the static index.html, never for /ads.txt or the API', () => {
+    const [errors] = blocks('handle_errors 502 503 504');
+    expect(errors).toContain('import security_headers');
+    expect(errors).toContain('@page not path /ads.txt /api /api/* /ws /health');
+    expect(errors).toContain('rewrite * /index.html');
+    expect(errors).toContain('file_server');
+  });
 });
