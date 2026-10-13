@@ -42,6 +42,13 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
 | Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |
 | Worek stanowisk | station bag (`bag`, constants `BAG_*`) | Run generation: folders are dealt in shuffled rounds over the stations that decide the level's stories |
+| Stanowisko rozstrzygające | deciding station (`decidingStations`) | A station decides a story when the story has a justifying, non-hint stamp from it (`proofCount`); a decisive stamp that does not justify decides nothing. The one rule for the bag, validation and guidance |
+| Stanowiska worka | bag stations (`bagStations`) | The level stations that decide at least one pool story |
+| Historia przypięta / elastyczna | pinned / flex story (`isPinned`, `pinnedCounts`) | Pinned: exactly one deciding station and one required proof. Every other decidable story is flex; multi-stamp stories are always flex |
+| Losowanie z worka | `bagDrawer` | Whole shuffled rounds over a list, never the same item twice in a row; deals the station sequence and endless stories |
+| Kolejka stanowisk | station sequence (`stationSequence`) | The station designated for each folder slot of a run: whole shuffled rounds over the bag stations |
+| Terminy teczek w worku | slot times (`bagSlotTimes`) | `firstAtS + i × gapS × spawnGapFactor` up to `lastSpawnS`, rounded to 0.1 s; harder difficulties get more slots |
+| Dobór historii | story matching (`matchStories`, `assignStories`) | Distinct pool stories for the slots, each decidable at its slot's station (Kuhn's maximum matching with opening and multi-stamp preferences); `assignStories` fills what the pool cannot cover with the least-used story |
 | Talia stanowiska (tryb nieskończony) | station deck | Endless stories one station can decide; should hold at least `ENDLESS_MIN_DECK` |
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
 | Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced |

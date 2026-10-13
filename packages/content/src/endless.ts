@@ -11,6 +11,7 @@ import {
   type StationKind,
   type StoryBook,
 } from '@redakcja/shared';
+import { bagDrawer } from './bag.ts';
 import { levelNumberOf, proofCount } from './checks.ts';
 import type { Level, Story } from './schema.ts';
 
@@ -113,32 +114,6 @@ const round1 = (value: number) => Math.round(value * 10) / 10;
 
 const jitter = (rng: Rng) => 1 + (rng.next() * 2 - 1) * ENDLESS.intervalJitter;
 
-/** Shuffled rounds over the pool, never the same story twice in a row. */
-function storyDrawer(pool: readonly Story[], rng: Rng): () => Story {
-  let bag: Story[] = [];
-  let last: Story | undefined;
-  const refill = () => {
-    bag = [...pool];
-    for (let i = bag.length - 1; i > 0; i--) {
-      const j = rng.int(i + 1);
-      [bag[i], bag[j]] = [bag[j] as Story, bag[i] as Story];
-    }
-    // The bag is drawn from the end; keep the previous round's last story away from it.
-    const end = bag.length - 1;
-    if (bag.length > 1 && bag[end] === last) {
-      [bag[0], bag[end]] = [bag[end] as Story, bag[0] as Story];
-    }
-  };
-  return () => {
-    if (bag.length === 0) {
-      refill();
-    }
-    const story = bag.pop() as Story;
-    last = story;
-    return story;
-  };
-}
-
 const EVENT_KINDS = ['viral', 'bossCall', 'botRaid', 'outage', 'correction'] as const;
 
 function generateEvents(pool: readonly Story[], rng: Rng): SimLevelEvent[] {
@@ -202,7 +177,7 @@ export function generateEndlessLevel(
     throw new Error('Endless mode needs at least one solvable story');
   }
   const rng = createRng(seed);
-  const draw = storyDrawer(pool, rng);
+  const draw = bagDrawer(pool, rng);
   const schedule: Level['schedule'][number][] = [];
   let atS: number = ENDLESS.firstSpawnS;
   while (atS < ENDLESS.scheduleLengthS) {
