@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'bun:test';
 import { STATION_KINDS, type StationKind } from '@redakcja/shared';
 import { minigames } from '../stations/minigames/index.ts';
+import { drawnHints } from '../stations/StationHelpCard.tsx';
 import type { InputDevice } from '../store/app.ts';
 import { type KeyHint, pl } from './pl.ts';
 import { dashes, polishQuotes } from './typography.ts';
@@ -32,6 +33,7 @@ describe('wordCount', () => {
 
 describe('station help copy', () => {
   it('covers every station kind and nothing else', () => {
+    expect(STATION_KINDS.length).toBe(10);
     expect(Object.keys(pl.stationHelp.kinds).sort()).toEqual([...STATION_KINDS].sort());
   });
 
@@ -57,6 +59,13 @@ describe('station help copy', () => {
     }
     expect(wordCount(pl.stationHelp.title)).toBeLessThanOrEqual(MAX_WORDS);
     expect(wordCount(pl.stationHelp.proofLabel)).toBe(1);
+    // The help card's own lines (S7-94).
+    expect(wordCount(pl.stationHelp.got)).toBe(1);
+    expect(wordCount(pl.stationHelp.deadlineRuns)).toBe(4);
+    for (const kind of STATION_KINDS) {
+      const heading = `${pl.stationHelp.title} ${pl.vocab.stations[kind]}`;
+      expect(wordCount(heading), heading).toBeLessThanOrEqual(MAX_WORDS);
+    }
   });
 
   it('has a real-world line for every station', () => {
@@ -127,5 +136,30 @@ describe('minigame key hints', () => {
       'Stuknij',
       pl.minigames.sourceRegistry.file,
     ]);
+  });
+});
+
+describe('station help card drawing', () => {
+  it('draws at most three of the minigame key hints for the device', () => {
+    expect(drawnHints('imageSearch', 'keyboard').map((hint) => hint.keys)).toEqual([
+      ['Strzałki'],
+      ['Spacja'],
+      ['Q'],
+    ]);
+    expect(drawnHints('archive', 'gamepad').map((hint) => hint.keys)).toEqual([['Krzyżak'], ['A']]);
+    expect(drawnHints('phone', 'touch').map((hint) => hint.keys)).toEqual([['Stuknij']]);
+    for (const kind of STATION_KINDS) {
+      for (const device of DEVICES) {
+        expect(drawnHints(kind, device).length, `${kind}/${device}`).toBeLessThanOrEqual(3);
+      }
+    }
+  });
+
+  it('draws controls for every registered minigame on every device', () => {
+    for (const kind of STATION_KINDS.filter((k) => minigames[k] !== undefined)) {
+      for (const device of DEVICES) {
+        expect(drawnHints(kind, device).length, `${kind}/${device}`).toBeGreaterThan(0);
+      }
+    }
   });
 });

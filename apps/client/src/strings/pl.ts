@@ -231,6 +231,8 @@ export const pl = {
     stamps: 'Pieczątki',
     stampAgain: 'Przybij jeszcze raz',
     minigames: 'Minigry',
+    stationHelp: 'Pomoc stanowisk',
+    stationHelpVariants: { inPlay: 'W grze', full: 'W „Jak grać”' },
     stampsHint: 'Pieczątki werdyktów – jedno pismo w całej grze.',
     iconGroups: {
       storyTypes: 'Rodzaje materiałów',
@@ -910,6 +912,13 @@ export const pl = {
   stationHelp: {
     title: 'Jak to działa?',
     proofLabel: 'Dowód:',
+    /** The help card's one (yellow) button: close the card and get to work (S7-94). */
+    got: 'Rozumiem',
+    /** The help card's note: reading help does not stop the folder's deadline. */
+    deadlineRuns: 'Termin teczki biegnie dalej',
+    /** Accessible names of the card's parts. */
+    stepsLabel: 'Kroki',
+    realWorldLabel: 'Tak jest naprawdę',
     kinds: {
       imageSearch: {
         purpose: 'Czy to zdjęcie krążyło już wcześniej?',

@@ -1,0 +1,180 @@
+/* Drawn controls (ControlsArt.tsx): key caps, pad buttons, d-pad, touch labels and the tutorial
+   step drawings. Shared by the tutorial card, the station help card and the intro. */
+
+.key {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  color: var(--text);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.keyWide {
+  min-width: 6rem;
+}
+
+.wasd {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.wasdRow {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.padButton,
+.touchButton {
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  border: var(--stroke) solid var(--outline);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.padButton {
+  width: 3rem;
+  height: 3rem;
+  font-size: var(--text-xl);
+}
+
+/* The thumb button's label, drawn as a pill so long Polish words fit. */
+.touchButton {
+  height: 3rem;
+  padding: 0 var(--space-3);
+  font-size: var(--text-md);
+}
+
+/* The gamepad d-pad: a rounded plus with a hard drop shadow. */
+.dpad {
+  display: inline-block;
+  width: 3rem;
+  height: 3rem;
+  overflow: visible;
+  filter: drop-shadow(0 4px 0 var(--outline));
+}
+
+.dpadShape {
+  fill: var(--surface);
+  stroke: var(--outline);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.dpadDot {
+  fill: var(--outline);
+}
+
+/* Small inline controls (the tutorial's "or Esc" / "or B B" note). */
+.key.small,
+.padButton.small {
+  min-width: 2rem;
+  width: auto;
+  height: 2rem;
+  font-size: var(--text-md);
+  box-shadow: none;
+}
+
+.padButton.small {
+  width: 2rem;
+}
+
+.stick {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 5rem;
+  height: 5rem;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+}
+
+.stickKnob {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--outline);
+  transform: translate(0.7rem, -0.7rem);
+}
+
+.pair {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.verdicts {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: var(--space-1);
+}
+
+.verdict {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  border: var(--stroke) solid var(--outline);
+  color: var(--outline);
+}
+
+.publish {
+  background: var(--green);
+}
+
+.context {
+  background: var(--orange);
+}
+
+.reject {
+  background: var(--red);
+}
+
+.doneMark {
+  width: 4.5rem;
+  height: 4.5rem;
+}
+
+/* Small landscape phones: smaller drawings. */
+@media (max-height: 480px) {
+  .key {
+    min-width: 2rem;
+    height: 2rem;
+    font-size: var(--text-md);
+  }
+
+  .keyWide {
+    min-width: 4.5rem;
+  }
+
+  .touchButton {
+    height: 2.5rem;
+  }
+
+  .stick {
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+
+  .stickKnob {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+}
