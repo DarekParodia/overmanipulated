@@ -1,0 +1,33 @@
+LICENCJA – WSZELKIE PRAWA ZASTRZEŻONE
+
+Copyright © 2026 Kamil Wida. Wszelkie prawa zastrzeżone.
+
+1. Prawa autorskie.
+Projekt „Redakcja na Ostatnią Chwilę" („Overmanipulated"), obejmujący w szczególności kod źródłowy, grafiki, modele 3D, animacje, dźwięki, muzykę, teksty, scenariusze, treści edukacyjne, projekt rozgrywki, dokumentację oraz wszelkie inne elementy repozytorium („Projekt"), stanowi utwór w rozumieniu ustawy z dnia 4 lutego 1994 r. o prawie autorskim i prawach pokrewnych. Wyłącznym właścicielem wszelkich praw autorskich do Projektu, osobistych i majątkowych, jest Kamil Wida („Właściciel").
+
+2. Brak udzielenia licencji.
+Niniejszy dokument nie udziela żadnej licencji ani zgody na korzystanie z Projektu. Bez uprzedniej, wyraźnej, pisemnej zgody Właściciela zabronione jest w szczególności:
+a) kopiowanie, utrwalanie i zwielokrotnianie Projektu w całości lub w części;
+b) modyfikowanie, tłumaczenie, adaptowanie lub tworzenie utworów zależnych;
+c) rozpowszechnianie, publikowanie, udostępnianie publiczne, sprzedaż, wynajem, użyczanie lub sublicencjonowanie;
+d) uruchamianie Projektu lub jego części w celach komercyjnych oraz w celu świadczenia usług osobom trzecim;
+e) wykorzystywanie Projektu lub jego elementów do trenowania systemów sztucznej inteligencji lub uczenia maszynowego;
+f) usuwanie lub zmienianie informacji o prawach autorskich.
+
+3. Wyjątki ustawowe.
+Postanowienia powyżej nie wyłączają uprawnień przysługujących na mocy bezwzględnie obowiązujących przepisów prawa, w tym dozwolonego użytku (np. cytatu).
+
+4. Wkłady osób trzecich.
+Jakikolwiek wkład w Projekt (kod, treści, grafiki lub inne materiały) przekazany Właścicielowi może zostać włączony do Projektu wyłącznie na podstawie odrębnej pisemnej umowy, w której autor wkładu przenosi na Właściciela autorskie prawa majątkowe lub udziela mu wyłącznej, nieodwołalnej licencji, w zakresie umożliwiającym Właścicielowi dowolne korzystanie i rozporządzanie wkładem.
+
+5. Składniki zewnętrzne.
+Biblioteki i narzędzia open source użyte w Projekcie (np. React, Vite, Hono, Drizzle) pozostają własnością ich autorów i podlegają ich własnym licencjom. Niniejsza licencja ich nie dotyczy.
+
+6. Wyłączenie gwarancji.
+Projekt, w zakresie w jakim jest udostępniany za zgodą Właściciela, jest dostarczany „tak jak jest", bez jakiejkolwiek gwarancji, wyraźnej lub dorozumianej, w tym gwarancji przydatności do określonego celu. Właściciel nie ponosi odpowiedzialności za szkody wynikłe z korzystania z Projektu, w maksymalnym zakresie dopuszczalnym przez prawo.
+
+7. Prawo właściwe.
+Niniejszy dokument podlega prawu polskiemu. Spory rozstrzygać będzie sąd właściwy dla siedziby Właściciela.
+
+8. Kontakt.
+W sprawie uzyskania zgody lub licencji: Kamil Wida, darekparodia@gmail.com.
