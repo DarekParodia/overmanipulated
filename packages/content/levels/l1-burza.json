@@ -48,11 +48,11 @@
       "l1-grad-jak-jajka"
     ],
     "firstAtS": 4,
-    "gapS": 22,
+    "gapS": 20,
     "lastSpawnS": 312,
     "deadlineS": {
-      "normal": 55,
-      "important": 60,
+      "normal": 50,
+      "important": 55,
       "urgent": 40
     },
     "starShares": {

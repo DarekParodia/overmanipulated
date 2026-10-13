@@ -240,9 +240,16 @@ function soloRoom(role: Role | null): RoomStateMessage {
     levelId: 'l0-greybox',
     difficulty: 'normal',
     run: null,
-    players: [{ id: 'p1', nickname: 'Zośka', colorIndex: 0, connected: true, role, ready: true }],
+    players: [
+      { id: 'p1', nickname: 'Zośka', colorIndex: 0, connected: true, role, ready: true, team: 0 },
+    ],
     briefing: null,
     blunderVotes: [],
+    mode: 'coop',
+    visibility: 'private',
+    name: null,
+    spectatorsAllowed: false,
+    spectators: [],
   };
 }
 

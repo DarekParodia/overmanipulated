@@ -175,6 +175,11 @@ function handleMessage(message: ServerMessage): void {
     case 'heartbeatAck':
       useApp.setState({ rttMs: Math.round(performance.now() - message.clientTime) });
       return;
+    case 'spectatorEvent':
+    case 'matchStats':
+      // Spectator-only messages (protocol 7); this client never joins as a spectator before the
+      // spectate screen lands (S7-84).
+      return;
   }
 }
 

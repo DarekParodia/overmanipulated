@@ -3,7 +3,7 @@
 <!-- Plik wygenerowany poleceniem `bun run review:export`. Nie edytuj go ręcznie: zatwierdzenia
 wpisuj w pliku CSV (stories-for-review.csv) i wczytaj poleceniem `bun run review:apply`. -->
 
-Razem **110** historii (poziomy 0–6 i zdarzenia), zatwierdzonych: **0**.
+Razem **144** historii (poziomy 0–6 i zdarzenia), zatwierdzonych: **0**.
 Jak sprawdzać i jak zatwierdzać: [README.pl.md](README.pl.md).
 
 Skróty: pieczątka z gwiazdką (*) uzasadnia poprawny werdykt; „rozstrzygająca” oznacza,
@@ -14,11 +14,11 @@ na manowce, „nieistotna” nic nie wnosi.
 
 | Poziom | Historii | Zatwierdzonych |
 | --- | --- | --- |
-| [0: Makieta](#poziom-0) | 10 | 0 |
-| [1: Pierwszy dzień – Burza nad miastem](#poziom-1) | 15 | 0 |
-| [2: Kampania – Kampania na prezydenta miasta](#poziom-2) | 15 | 0 |
-| [3: Afera w szkole – Viral o dyrektorze liceum](#poziom-3) | 18 | 0 |
-| [4: Zdrowie – Suplement i „cudowne badanie”](#poziom-4) | 15 | 0 |
+| [0: Makieta](#poziom-0) | 17 | 0 |
+| [1: Pierwszy dzień – Burza nad miastem](#poziom-1) | 20 | 0 |
+| [2: Kampania – Kampania na prezydenta miasta](#poziom-2) | 18 | 0 |
+| [3: Afera w szkole – Viral o dyrektorze liceum](#poziom-3) | 28 | 0 |
+| [4: Zdrowie – Suplement i „cudowne badanie”](#poziom-4) | 24 | 0 |
 | [5: Głęboka podróbka – Nagranie burmistrza](#poziom-5) | 17 | 0 |
 | [6: Atak – Referendum o linii 12](#poziom-6) | 20 | 0 |
 
@@ -44,6 +44,13 @@ Odprawa: Próbny dyżur w szarej makiecie redakcji. Teczki wpadają na taśmę,
 | ☐ | `l0-rowery-miejskie` | Rowery miejskie: o 20% więcej wypożyczeń niż rok temu | statystyka | prawda | publikuj | |
 | ☐ | `l0-most-zamkniety` | Most Portowy zamknięty do odwołania, objazd przez Nadrzecze | zdjęcie | prawda | publikuj | |
 | ☐ | `l0-koncert-na-bulwarach` | Podobno sobotni koncert na bulwarach przeniesiony na niedzielę | post | niepotwierdzalne | odrzuć | |
+| ☐ | `l0-dzik-w-galerii` | Dzik spaceruje po galerii handlowej przy ulicy Portowej | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l0-tecza-nad-latarnia` | Podwójna tęcza nad latarnią morską – zdjęcie czytelniczki | zdjęcie | prawda | publikuj | |
+| ☐ | `l0-rekin-w-porcie` | Rekin przy nabrzeżu! Mieszkańcy chcą zamknięcia kąpieliska | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l0-tlum-na-skateparku` | Tłumy na otwarciu skateparku – ratusz chwali się zdjęciem | zdjęcie | zwodnicze | publikuj z kontekstem | |
+| ☐ | `l0-stary-komunikat` | Ratusz: od jutra ulica Rybacka zamknięta na pół roku | post | fałsz | odrzuć | |
+| ☐ | `l0-jubileusz-liceum` | Liceum nad Zatoką kończy sto lat – jubileusz w sobotę | artykuł | prawda | publikuj | |
+| ☐ | `l0-kradzieze-rowerow` | Dwa razy więcej kradzieży rowerów niż rok temu! | statystyka | zwodnicze | publikuj z kontekstem | |
 
 ### l0-zalany-rynek
 
@@ -51,7 +58,7 @@ Odprawa: Próbny dyżur w szarej makiecie redakcji. Teczki wpadają na taśmę,
 
 > Zdjęcie zalanego rynku krąży po grupach mieszkańców. Podpis: „Tak wyglądało wczoraj o 18:00”.
 
-Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (3 s)
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
 
@@ -77,7 +84,7 @@ Wyjaśnienie na kolegium:
 
 > Przewoźnik miejski zapowiada nocny kurs co 40 minut, od dworca do osiedla Nadrzecze.
 
-Źródło: Mail od czytelnika · Typ: artykuł · Waga: zwykły · Użycie: taśma (20 s)
+Źródło: Mail od czytelnika · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -103,7 +110,7 @@ Wyjaśnienie na kolegium:
 
 > Post z konta „StrazMiejska_NoweBrzegi” zapowiada kontrole od 7:00. Pod spodem setki udostępnień i pytań, czy to prawda.
 
-Źródło: Konto „StrazMiejska_NoweBrzegi” · Typ: post · Waga: pilny · Użycie: taśma (40 s)
+Źródło: Konto „StrazMiejska_NoweBrzegi” · Typ: post · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywa instytucja (podszywanie-sie-pod-instytucje)
 
@@ -129,7 +136,7 @@ Wyjaśnienie na kolegium:
 
 > Od soboty czytelnia działa do 20:00, a w piwnicy powstała sala gier planszowych dla młodzieży.
 
-Źródło: Komunikat prasowy ratusza · Typ: artykuł · Waga: ważny · Użycie: taśma (60 s)
+Źródło: Komunikat prasowy ratusza · Typ: artykuł · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -155,7 +162,7 @@ Wyjaśnienie na kolegium:
 
 > Według artykułu właściciele balkonów zapłacą 15 zł za każdą mewę, która na nich usiądzie. Tekst udostępniają oburzeni mieszkańcy.
 
-Źródło: Portal „Brzeski Szpikulec” · Typ: artykuł · Waga: zwykły · Użycie: taśma (80 s)
+Źródło: Portal „Brzeski Szpikulec” · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **satyra** → poprawny werdykt: **publikuj z kontekstem** · Technika: Satyra brana na serio (satyra-brana-na-powaznie)
 
@@ -181,7 +188,7 @@ Wyjaśnienie na kolegium:
 
 > Męski głos mówi, że „znajomy z wodociągów” ostrzega przed skażeniem. Nagranie przekazano dalej kilkaset razy.
 
-Źródło: Wiadomość głosowa z komunikatora · Typ: nagranie · Waga: pilny · Użycie: taśma (100 s)
+Źródło: Wiadomość głosowa z komunikatora · Typ: nagranie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **niepotwierdzalne** → poprawny werdykt: **odrzuć** · Technika: Anonimowy informator (anonimowy-informator)
 
@@ -207,7 +214,7 @@ Wyjaśnienie na kolegium:
 
 > Grafika z cytatem i zdjęciem kandydatki krąży po sieci. Autor dopisał: „Zapamiętajcie to przed wyborami!”.
 
-Źródło: Grafika udostępniona na komunikatorze · Typ: cytat · Waga: ważny · Użycie: taśma (120 s)
+Źródło: Grafika udostępniona na komunikatorze · Typ: cytat · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Wyrwane z kontekstu (cytat-wyrwany-z-kontekstu)
 
@@ -233,7 +240,7 @@ Wyjaśnienie na kolegium:
 
 > Operator systemu podaje, że w czerwcu mieszkańcy wypożyczyli rowery 48 tys. razy. Rok wcześniej – 40 tys.
 
-Źródło: Raport operatora rowerów miejskich · Typ: statystyka · Waga: zwykły · Użycie: taśma (140 s)
+Źródło: Raport operatora rowerów miejskich · Typ: statystyka · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -259,7 +266,7 @@ Wyjaśnienie na kolegium:
 
 > Zdjęcie znaku „Zakaz ruchu” i ekipy drogowej przy moście przysłał stały fotoreporter. Kierowcy pytają o objazd.
 
-Źródło: Fotoreporter współpracujący z redakcją · Typ: zdjęcie · Waga: pilny · Użycie: taśma (160 s)
+Źródło: Fotoreporter współpracujący z redakcją · Typ: zdjęcie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -285,7 +292,7 @@ Wyjaśnienie na kolegium:
 
 > Ktoś napisał na grupie osiedlowej, że „słyszał od kolegi”. Organizator jeszcze nie odpowiedział na pytania.
 
-Źródło: Komentarz na grupie Osiedle Nadrzecze · Typ: post · Waga: zwykły · Użycie: taśma (175 s)
+Źródło: Komentarz na grupie Osiedle Nadrzecze · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **niepotwierdzalne** → poprawny werdykt: **odrzuć** · Technika: Plotka bez źródła (plotka-bez-zrodla)
 
@@ -301,6 +308,188 @@ Wyjaśnienie na kolegium:
 - **Technika:** Informacja „z drugiej ręki”: nikt nie podaje źródła, a powtarzanie dodaje jej pozornej wiarygodności.
 - **Narzędzie:** Kartoteka źródeł: brak źródła i brak komunikatu organizatora. Zwykłą niepotwierdzalną sprawę można przeczekać.
 - **Przykład z życia:** Plotki o odwołanych wydarzeniach często krążą w lokalnych grupach. Pewna jest dopiero informacja od organizatora.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l0-dzik-w-galerii
+
+**Dzik spaceruje po galerii handlowej przy ulicy Portowej**
+
+> Zdjęcie dzika między sklepami obiega grupy mieszkańców. Podpis: „Dziś rano, galeria przy Portowej. Uważajcie!”.
+
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: To samo zdjęcie krąży w sieci od 2017 r., opisane jako galeria w innym mieście.
+- Archiwum [nieistotna]: W archiwum brak tekstów o dzikach w centrum miasta.
+- Kartoteka źródeł [nieistotna]: Autorka postu jest na grupie od 4 lat; zwykle pisze o korkach.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe zdjęcie dzika, ale sprzed lat i z innego miasta. W galerii przy Portowej żadnego dzika nie było.
+- **Technika:** Stare zdjęcie z nowym podpisem: autentyczny obraz dostaje nowe miejsce i nową datę.
+- **Narzędzie:** Wyszukiwanie obrazem znalazło wcześniejsze publikacje tego samego zdjęcia.
+- **Przykład z życia:** Zdjęcia dzikich zwierząt w miastach wracają w sieci co kilka miesięcy, za każdym razem z innym miastem w podpisie.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l0-tecza-nad-latarnia
+
+**Podwójna tęcza nad latarnią morską – zdjęcie czytelniczki**
+
+> Czytelniczka przysłała zdjęcie zrobione wczoraj po burzy z Bulwaru Latarników. Pyta, czy pokażemy je w galerii dnia.
+
+Źródło: Mail od czytelniczki · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Brak wcześniejszych kopii zdjęcia. Metadane: wczoraj, 19:12, Bulwar Latarników.
+- Archiwum [nieistotna]: Archiwum: latarnię odnowiono 2 lata temu.
+- Kartoteka źródeł [nieistotna]: Nadawczyni nie ma wpisu w kartotece; to jej pierwszy mail do redakcji.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe, świeże zdjęcie od czytelniczki.
+- **Technika:** Brak manipulacji. Ładne zdjęcie też bywa po prostu prawdziwe.
+- **Narzędzie:** Wyszukiwanie obrazem nie znalazło starszych kopii, a metadane zgadzają się z miejscem i czasem.
+- **Przykład z życia:** Redakcje często publikują zdjęcia od czytelników. Najpierw sprawdzają, czy zdjęcie nie krążyło już w sieci i czy zgadza się data.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l0-rekin-w-porcie
+
+**Rekin przy nabrzeżu! Mieszkańcy chcą zamknięcia kąpieliska**
+
+> Zdjęcie płetwy rekina tuż przy Plaży Miejskiej udostępniono już tysiące razy. Ludzie pytają, czy można dziś pływać.
+
+Źródło: Konto „Portowe Newsy” · Typ: zdjęcie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Tania podróbka (tania-podrobka)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Płetwę wklejono z darmowego zdjęcia z banku grafik. Nabrzeże pochodzi z innego zdjęcia.
+- Archiwum [nieistotna]: Archiwum: kąpielisko otwarto w tym sezonie 1 lipca.
+- Kartoteka źródeł [zwodnicza]: Konto „Portowe Newsy” działa od 3 lat i zwykle wrzuca prawdziwe zdjęcia z portu.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Fotomontaż: płetwę rekina wklejono w zdjęcie nabrzeża. Żadnego rekina w porcie nie było.
+- **Technika:** Tania podróbka: dwa prawdziwe zdjęcia sklejone prostym montażem, bez sztucznej inteligencji.
+- **Narzędzie:** Wyszukiwanie obrazem znalazło oba zdjęcia, z których powstał montaż.
+- **Przykład z życia:** Po burzach i powodziach w sieci regularnie krąży montaż rekina płynącego zalaną ulicą. Zaufane konto też może udostępnić podróbkę.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l0-tlum-na-skateparku
+
+**Tłumy na otwarciu skateparku – ratusz chwali się zdjęciem**
+
+> Na zdjęciu z otwarcia skateparku na Nadrzeczu widać ciasny tłum. Ratusz pisze: „Przyszło całe miasto!”.
+
+Źródło: Komunikat prasowy ratusza · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Pełna wersja zdjęcia jest u fotografa: tłum stoi tylko przy scenie, dalej jest prawie pusto.
+- Archiwum [nieistotna]: Archiwum: budowę skateparku ogłoszono w zeszłym roku.
+- Kartoteka źródeł [zwodnicza]: Komunikat wysłano z oficjalnego adresu ratusza.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe zdjęcie z otwarcia, ale przycięte tak, by kilkadziesiąt osób wyglądało jak tłum.
+- **Technika:** Wyrwane z kontekstu: kadr jest prawdziwy, ale bez reszty zdjęcia zmienia sens.
+- **Narzędzie:** Wyszukiwanie obrazem doprowadziło do pełnej wersji zdjęcia u fotografa.
+- **Przykład z życia:** Instytucje i organizatorzy chętnie pokazują najlepszy kadr. Warto zobaczyć całe zdjęcie, zanim napisze się o „tłumach”.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l0-stary-komunikat
+
+**Ratusz: od jutra ulica Rybacka zamknięta na pół roku**
+
+> Zrzut ekranu komunikatu krąży po grupach kierowców. Ludzie pytają, którędy dojechać do szkoły i przychodni.
+
+Źródło: Zrzut ekranu z komunikatora · Typ: post · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
+
+Pieczątki:
+
+- Archiwum [rozstrzygająca] *: Archiwum: ten komunikat ratusz wydał 2 lata temu. Remont Rybackiej skończył się w ubiegłym roku.
+- Kartoteka źródeł [zwodnicza]: Treść zgadza się ze starym wpisem na oficjalnej stronie ratusza.
+- Lupa obrazu [nieistotna]: Zrzut ekranu nie ma wcześniejszych kopii w sieci.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwy komunikat ratusza, ale sprzed dwóch lat. Ulica Rybacka jest dziś otwarta.
+- **Technika:** Wyrwane z kontekstu: stara wiadomość bez daty udaje bieżącą.
+- **Narzędzie:** Archiwum pokazało, kiedy naprawdę wydano komunikat i że remont już się skończył.
+- **Przykład z życia:** Stare komunikaty o utrudnieniach, zbiórkach czy zaginięciach krążą latami, bo zrzut ekranu gubi datę.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l0-jubileusz-liceum
+
+**Liceum nad Zatoką kończy sto lat – jubileusz w sobotę**
+
+> Uczeń przysłał zaproszenie: w sobotę szkoła otwiera drzwi dla absolwentów i pokazuje stare kroniki.
+
+Źródło: Mail od ucznia · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Archiwum [rozstrzygająca] *: Archiwum: notatka sprzed stu lat o otwarciu liceum przy ulicy Zatokowej.
+- Kartoteka źródeł [zwodnicza]: Szkoła nie opublikowała jeszcze zaproszenia na swojej stronie.
+- Lupa obrazu [nieistotna]: Zaproszenie nie zawiera zdjęć.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa informacja: archiwum potwierdza datę otwarcia szkoły.
+- **Technika:** Brak manipulacji. Brak komunikatu na stronie nie znaczy, że wiadomość jest fałszywa.
+- **Narzędzie:** Archiwum: stara notatka o otwarciu liceum potwierdziła rocznicę.
+- **Przykład z życia:** Rocznice łatwo sprawdzić w archiwach gazet i szkolnych kronikach. To szybki sposób, by potwierdzić lokalną wiadomość.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l0-kradzieze-rowerow
+
+**Dwa razy więcej kradzieży rowerów niż rok temu!**
+
+> Stowarzyszenie z Nadrzecza podaje: w tym roku 24 zgłoszone kradzieże rowerów, rok temu 12. „Rowerem po mieście już się nie da” – piszą.
+
+Źródło: Post stowarzyszenia „Bezpieczne Nadrzecze” · Typ: statystyka · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Kłamliwa statystyka (zmanipulowana-statystyka)
+
+Pieczątki:
+
+- Archiwum [rozstrzygająca] *: Archiwum: rok temu w mieście jeździło 2 tys. rowerów, dziś 4 tys. Na 1000 rowerów kradzieży jest tyle samo.
+- Kartoteka źródeł [zwodnicza]: Liczby 24 i 12 zgadzają się z danymi policji.
+- Lupa obrazu [nieistotna]: Wykres w poście nie ma wcześniejszych kopii w sieci.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Liczby są prawdziwe, ale rowerów w mieście też przybyło dwa razy. Ryzyko kradzieży się nie zmieniło.
+- **Technika:** Kłamliwa statystyka: same liczby, bez porównania z tym, ile jest rowerów, straszą wzrostem.
+- **Narzędzie:** Archiwum pokazało, że liczba rowerów w mieście też się podwoiła.
+- **Przykład z życia:** Wzrost liczby zdarzeń trzeba porównać z tym, ilu jest ludzi, aut czy rowerów. Bez tego nawet prawdziwe dane wprowadzają w błąd.
 
 - [ ] Zatwierdzam
 - Uwagi: 
@@ -330,6 +519,11 @@ Odprawa: Pierwszy dzień w redakcji! W nocy nad Nowymi Brzegami przeszła burz
 | ☐ | `l1-falszywy-ratusz` | Ratusz: cały tydzień wolny od szkoły i pracy! | post | fałsz | odrzuć | |
 | ☐ | `l1-zalany-przejazd` | Zalany przejazd pod torami na Kolejowej, objazd przez Most Portowy | zdjęcie | prawda | publikuj | |
 | ☐ | `l1-zalane-piwnice` | Zalane piwnice na Starym Mieście po nocnej ulewie | zdjęcie | zwodnicze | publikuj z kontekstem | |
+| ☐ | `l1-tecza-nad-portem` | Podwójna tęcza nad portem po nocnej burzy | zdjęcie | prawda | publikuj | |
+| ☐ | `l1-zerwany-dach-hali` | Wiatr zerwał część dachu hali sportowej na Wydmach | zdjęcie | prawda | publikuj | |
+| ☐ | `l1-rekin-na-ulicy` | Rekin pływa po zalanej ulicy Portowej! | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l1-zerwany-most` | Burza zerwała most przy parku Nadrzecze! | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l1-grad-jak-jajka` | Grad wielkości jajek spadł wczoraj na Stare Miasto | zdjęcie | zwodnicze | publikuj z kontekstem | |
 
 ### l1-brak-pradu
 
@@ -337,7 +531,7 @@ Odprawa: Pierwszy dzień w redakcji! W nocy nad Nowymi Brzegami przeszła burz
 
 > Dostawca energii: wiatr zerwał linię przy ul. Lipowej. Ekipy już pracują, prąd wróci po południu.
 
-Źródło: Profil „Brzeska Energia” · Typ: post · Waga: zwykły · Użycie: taśma (4 s)
+Źródło: Profil „Brzeska Energia” · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -362,7 +556,7 @@ Wyjaśnienie na kolegium:
 
 > Zdjęcie ulicy zalanej po kolana krąży po grupach mieszkańców. Podpis: „Burza zrobiła z centrum rzekę”.
 
-Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (25 s)
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
 
@@ -387,7 +581,7 @@ Wyjaśnienie na kolegium:
 
 > „Z powodu burzy zamykamy centrum dla aut. Za wjazd mandat 500 zł”. Post ma herb miasta i setki udostępnień.
 
-Źródło: Konto „StrazMiejska_NoweBrzegi” · Typ: post · Waga: pilny · Użycie: taśma (47 s)
+Źródło: Konto „StrazMiejska_NoweBrzegi” · Typ: post · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywa instytucja (podszywanie-sie-pod-instytucje)
 
@@ -412,7 +606,7 @@ Wyjaśnienie na kolegium:
 
 > Mieszkanka przysłała zdjęcie kaczek na boisku zamienionym w staw. Zarząd zieleni zamknął park do jutra.
 
-Źródło: Zdjęcie od czytelniczki · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (70 s)
+Źródło: Zdjęcie od czytelniczki · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -437,7 +631,7 @@ Wyjaśnienie na kolegium:
 
 > Na zdjęciu wielki dąb leży na zgniecionym dachu. Podpis: „Liceum nr 2 dziś rano. Nie idźcie do szkoły!”.
 
-Źródło: Udostępnienie na komunikatorze · Typ: zdjęcie · Waga: ważny · Użycie: taśma (92 s)
+Źródło: Udostępnienie na komunikatorze · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
 
@@ -462,7 +656,7 @@ Wyjaśnienie na kolegium:
 
 > Urząd miasta: w trzech szkołach na Nadrzeczu nadal nie ma prądu. Uczniowie mają jutro wolne.
 
-Źródło: Komunikat urzędu miasta · Typ: artykuł · Waga: ważny · Użycie: taśma (114 s)
+Źródło: Komunikat urzędu miasta · Typ: artykuł · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -487,7 +681,7 @@ Wyjaśnienie na kolegium:
 
 > „Skoro ulice to rzeki, komunikacja miejska przejdzie na wiosła” – czytamy w tekście, który udostępniają tysiące osób.
 
-Źródło: Portal „Brzeski Szpikulec” · Typ: artykuł · Waga: zwykły · Użycie: taśma (136 s)
+Źródło: Portal „Brzeski Szpikulec” · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **satyra** → poprawny werdykt: **publikuj z kontekstem** · Technika: Satyra brana na serio (satyra-brana-na-powaznie)
 
@@ -512,7 +706,7 @@ Wyjaśnienie na kolegium:
 
 > Regionalne Biuro Prognoz wydało ostrzeżenie 2. stopnia: grad, wiatr do 90 km/h. Lepiej zostać w domu.
 
-Źródło: Komunikat Regionalnego Biura Prognoz · Typ: artykuł · Waga: pilny · Użycie: taśma (158 s)
+Źródło: Komunikat Regionalnego Biura Prognoz · Typ: artykuł · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -537,7 +731,7 @@ Wyjaśnienie na kolegium:
 
 > „Brzeska Energia” pisze: kto opłaci „ekspresową naprawę” przez link w poście, dostanie prąd jeszcze dziś.
 
-Źródło: Konto „BrzeskaEnergia_Pomoc” · Typ: post · Waga: ważny · Użycie: taśma (180 s)
+Źródło: Konto „BrzeskaEnergia_Pomoc” · Typ: post · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywa instytucja (podszywanie-sie-pod-instytucje)
 
@@ -562,7 +756,7 @@ Wyjaśnienie na kolegium:
 
 > Efektowne zdjęcie błyskawicy tuż nad zegarem ratusza ma tysiące polubień. Podpis: „Wczoraj, 23:10”.
 
-Źródło: Fanpage „Piękne Nowe Brzegi” · Typ: zdjęcie · Waga: ważny · Użycie: taśma (202 s)
+Źródło: Fanpage „Piękne Nowe Brzegi” · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
 
@@ -587,7 +781,7 @@ Wyjaśnienie na kolegium:
 
 > Głos w nagraniu: „Kolega z wodociągów mówi, że wał na Nadrzeczu przecieka. Wyjeżdżajcie”. Nagranie krąży od godziny.
 
-Źródło: Wiadomość głosowa z komunikatora · Typ: nagranie · Waga: pilny · Użycie: taśma (224 s)
+Źródło: Wiadomość głosowa z komunikatora · Typ: nagranie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **niepotwierdzalne** → poprawny werdykt: **odrzuć** · Technika: Anonimowy informator (anonimowy-informator)
 
@@ -612,7 +806,7 @@ Wyjaśnienie na kolegium:
 
 > Zdjęcie peronu zalanego aż po krawędź. Podpis: „Dworzec w Nowych Brzegach. Dziś nigdzie nie pojedziecie”.
 
-Źródło: Post na grupie Osiedle Nadrzecze · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (246 s)
+Źródło: Post na grupie Osiedle Nadrzecze · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
 
@@ -637,7 +831,7 @@ Wyjaśnienie na kolegium:
 
 > „Po burzy wszyscy mieszkańcy dostają tydzień wolnego. Pozdrawiamy!” – ogłasza profil z herbem miasta.
 
-Źródło: Konto „Ratusz_NoweBrzegi_Oficjalny” · Typ: post · Waga: zwykły · Użycie: taśma (268 s)
+Źródło: Konto „Ratusz_NoweBrzegi_Oficjalny” · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywa instytucja (podszywanie-sie-pod-instytucje)
 
@@ -662,7 +856,7 @@ Wyjaśnienie na kolegium:
 
 > Fotoreporter przysłał zdjęcie autobusu zawracającego przed wodą w tunelu. Zarząd dróg kieruje auta na objazd.
 
-Źródło: Fotoreporter współpracujący z redakcją · Typ: zdjęcie · Waga: pilny · Użycie: taśma (290 s)
+Źródło: Fotoreporter współpracujący z redakcją · Typ: zdjęcie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -687,7 +881,7 @@ Wyjaśnienie na kolegium:
 
 > Zdjęcie piwnicy z pływającymi słoikami. Podpis: „Moja piwnica dziś rano”. Straż pożarna pisze o 20 wezwaniach.
 
-Źródło: Komentarz pod artykułem o burzy · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (312 s)
+Źródło: Komentarz pod artykułem o burzy · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
 
@@ -702,6 +896,131 @@ Wyjaśnienie na kolegium:
 - **Technika:** Stare zdjęcie z nowym podpisem: prawdziwe zdarzenie, ale cudzy, stary obraz. Trzeba to dopisać przy publikacji.
 - **Narzędzie:** Lupa obrazu: zdjęcie było w sieci już w 2018 r.
 - **Przykład z życia:** Ludzie często ilustrują prawdziwe wydarzenia „podobnymi” zdjęciami z sieci. Informacja może być prawdziwa, a zdjęcie – nie.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l1-tecza-nad-portem
+
+**Podwójna tęcza nad portem po nocnej burzy**
+
+> Czytelnik przysłał zdjęcie dwóch tęcz nad dźwigami w porcie. Pisze: „Zrobiłem je dziś o 6:40 z falochronu”.
+
+Źródło: Zdjęcie od czytelnika · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 6:41, okolice falochronu.
+- Kartoteka źródeł [zwodnicza]: Czytelnik pierwszy raz pisze do redakcji. Brak innych informacji o autorze.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe, świeże zdjęcie zrobione dziś rano w porcie.
+- **Technika:** Brak manipulacji. Nowy, nieznany autor nie oznacza fałszywego zdjęcia.
+- **Narzędzie:** Lupa obrazu: brak starszych kopii, a metadane zgadzają się z czasem i miejscem z podpisu.
+- **Przykład z życia:** Po burzach redakcje dostają wiele zdjęć od czytelników. Brak historii autora to powód, by sprawdzić zdjęcie, a nie od razu je odrzucić.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l1-zerwany-dach-hali
+
+**Wiatr zerwał część dachu hali sportowej na Wydmach**
+
+> Na zdjęciu blachy z dachu leżą na boisku obok hali. Ośrodek sportu odwołał dziś wszystkie zajęcia.
+
+Źródło: Post na grupie Osiedle Wydmy · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Najstarsza kopia: dziś, 7:05, u autora posta. Inne dzisiejsze zdjęcia hali pokazują to samo.
+- Kartoteka źródeł [zwodnicza]: Konto anonimowe, założone pół roku temu. Publikuje rzadko.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe zdjęcie: wiatr naprawdę uszkodził dach hali, a zajęcia odwołano.
+- **Technika:** Brak manipulacji. Anonimowe konto też może pokazać prawdziwe zdarzenie.
+- **Narzędzie:** Lupa obrazu: zdjęcie pojawiło się pierwszy raz dziś rano, a inne ujęcia z tego dnia pokazują to samo.
+- **Przykład z życia:** Pierwsze zdjęcia z miejsca zdarzenia często publikują przypadkowi świadkowie. Porównanie z innymi ujęciami pomaga ocenić, czy pokazują to, co opisują.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l1-rekin-na-ulicy
+
+**Rekin pływa po zalanej ulicy Portowej!**
+
+> Zdjęcie płetwy rekina między zaparkowanymi autami bije rekordy udostępnień. Podpis: „Nie wchodźcie do wody!”
+
+Źródło: Konto „Burza Live” na portalu z filmikami · Typ: zdjęcie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Tania podróbka (zmanipulowane-zdjecie)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Ulica to zdjęcie z powodzi z 2011 r., bez rekina. Rekina wycięto z fotografii przyrodniczej.
+- Kartoteka źródeł [nieistotna]: Konto założone tydzień temu. Publikuje zdjęcia burz z całego świata.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Fotomontaż: do starego zdjęcia zalanej ulicy ktoś wkleił rekina z innej fotografii.
+- **Technika:** Zmanipulowane zdjęcie: dwa prawdziwe obrazy połączone w jeden. Sensacja i strach sprawiają, że ludzie udostępniają, zanim się zastanowią.
+- **Narzędzie:** Lupa obrazu: znalazła oryginał ulicy bez rekina i osobno zdjęcie samego rekina.
+- **Przykład z życia:** Wklejone rekiny i inne dzikie zwierzęta pojawiają się w sieci przy prawie każdej powodzi. Wyszukiwanie obrazem odnajduje zdjęcia, z których je złożono.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l1-zerwany-most
+
+**Burza zerwała most przy parku Nadrzecze!**
+
+> Zdjęcie pokazuje most złamany na pół nad rwącą wodą. Autor ostrzega: „Nie jedźcie tędy, nie ma przejazdu!”
+
+Źródło: Wiadomość przesyłana w komunikatorze · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Zdjęcie z 2016 r., z powodzi w innym kraju. Most na nim ma inny kształt niż ten przy Nadrzeczu.
+- Kartoteka źródeł [nieistotna]: Wiadomość przesłano dalej wiele razy. Nie da się ustalić autora.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Most przy Nadrzeczu stoi cały. Zdjęcie przedstawia inny most, zniszczony przez powódź kilka lat temu.
+- **Technika:** Stare zdjęcie z nowym podpisem: prawdziwa katastrofa z innego miejsca podpisana jako lokalna. Ostrzeżenie „nie jedźcie tędy” zachęca do szybkiego przesyłania dalej.
+- **Narzędzie:** Lupa obrazu: zdjęcie było publikowane już w 2016 r., a most na nim wygląda inaczej niż ten w mieście.
+- **Przykład z życia:** W czasie klęsk żywiołowych w komunikatorach krążą „ostrzeżenia” ze starymi zdjęciami. Mogą wywołać panikę i zablokować drogi służbom.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l1-grad-jak-jajka
+
+**Grad wielkości jajek spadł wczoraj na Stare Miasto**
+
+> Zdjęcie dłoni pełnej ogromnych kul gradu. Podpis: „Wczoraj na Starym Mieście”. Synoptycy potwierdzają, że grad padał.
+
+Źródło: Fanpage „Pogoda Nowe Brzegi” · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Zdjęcie krąży od 2017 r. Pierwszy raz opublikowano je po burzy w innym regionie.
+- Kartoteka źródeł [zwodnicza]: Fanpage od lat publikuje trafne prognozy. Ma wielu obserwujących.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Grad naprawdę spadł, ale był drobny. Zdjęcie ogromnych kul gradu ma kilka lat i pochodzi z innego regionu.
+- **Technika:** Stare zdjęcie z nowym podpisem: prawdziwe zjawisko pokazane na cudzym, bardziej efektownym zdjęciu. Wiarygodny fanpage też może się pomylić.
+- **Narzędzie:** Lupa obrazu: to samo zdjęcie było w sieci już w 2017 r.
+- **Przykład z życia:** Zdjęcia rekordowego gradu wracają po każdej letniej burzy. Nawet zaufane profile czasem biorą je z sieci bez sprawdzenia.
 
 - [ ] Zatwierdzam
 - Uwagi: 
@@ -733,6 +1052,9 @@ Odprawa: Za kilka dni wybory na prezydenta Nowych Brzegów! W sieci pełno cyta
 | ☐ | `l2-rezygnacja-kandydata` | Wierzchowski: „Wycofuję się z wyborów” | post | fałsz | odrzuć | |
 | ☐ | `l2-frekwencja-wyborcza` | Frekwencja w Nowych Brzegach: 48% do godz. 17:00 | statystyka | prawda | publikuj | |
 | ☐ | `l2-przerobione-banery` | Szelągowska pod sztandarem z hasłem „Wyprzedaż szkół” | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l2-debata-w-liceum` | Kandydaci ściskają sobie dłonie po debacie w II LO | zdjęcie | prawda | publikuj | |
+| ☐ | `l2-plaza-w-kampanii` | Wierzchowski na leżaku w środku kampanii? | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l2-wycinka-w-parku` | Szelągowska przy wycince drzew w parku Nadrzecznym | zdjęcie | zwodnicze | publikuj z kontekstem | |
 
 ### l2-debata-w-ratuszu
 
@@ -740,7 +1062,7 @@ Odprawa: Za kilka dni wybory na prezydenta Nowych Brzegów! W sieci pełno cyta
 
 > Komisja wyborcza zaprasza na debatę w sali ratusza. Wejście wolne, transmisja w lokalnym radiu.
 
-Źródło: Komunikat Miejskiej Komisji Wyborczej · Typ: artykuł · Waga: zwykły · Użycie: taśma (4 s)
+Źródło: Komunikat Miejskiej Komisji Wyborczej · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -766,7 +1088,7 @@ Wyjaśnienie na kolegium:
 
 > Grafika z jej zdjęciem i cytatem obiega grupy rodziców. Podpis: „Tak mówiła na wczorajszym spotkaniu z mieszkańcami”.
 
-Źródło: Grafika z komunikatora · Typ: cytat · Waga: ważny · Użycie: taśma (28 s)
+Źródło: Grafika z komunikatora · Typ: cytat · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Zmyślony cytat (zmyslony-cytat)
 
@@ -792,7 +1114,7 @@ Wyjaśnienie na kolegium:
 
 > Krótki fragment wystąpienia kandydata trafił do sieci z komentarzem: „Chce nas obłożyć nowymi podatkami!”.
 
-Źródło: Filmik na grupie Nowe Brzegi Info · Typ: cytat · Waga: ważny · Użycie: taśma (52 s)
+Źródło: Filmik na grupie Nowe Brzegi Info · Typ: cytat · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (cytat-wyrwany-z-kontekstu)
 
@@ -818,7 +1140,7 @@ Wyjaśnienie na kolegium:
 
 > Kolorowy wykres z logo „Pracowni Opinii” pokazuje miażdżącą przewagę kandydata. Udostępniono go już tysiące razy.
 
-Źródło: Wykres z portalu społecznościowego · Typ: statystyka · Waga: ważny · Użycie: taśma (76 s)
+Źródło: Wykres z portalu społecznościowego · Typ: statystyka · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Sondaż bez metody (falszywy-sondaz)
 
@@ -844,7 +1166,7 @@ Wyjaśnienie na kolegium:
 
 > Ankieta w sieci pokazuje wyraźną przewagę kandydatki. W opisie mała czcionka: „odpowiedziało 97 osób”.
 
-Źródło: Ankieta na stronie lokalnego bloga · Typ: statystyka · Waga: zwykły · Użycie: taśma (100 s)
+Źródło: Ankieta na stronie lokalnego bloga · Typ: statystyka · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Sondaż bez metody (falszywy-sondaz)
 
@@ -870,7 +1192,7 @@ Wyjaśnienie na kolegium:
 
 > Czytelnik przysłał zdjęcie pełnego Rynku. Podpis: „Wiec zakończył się godzinę temu, ludzie jeszcze stoją”.
 
-Źródło: Zdjęcie od czytelnika · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (124 s)
+Źródło: Zdjęcie od czytelnika · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -896,7 +1218,7 @@ Wyjaśnienie na kolegium:
 
 > Zdjęcie pustej sali z hasłem kandydatki krąży z komentarzem: „Nikt nie przyszedł, kampania upada”.
 
-Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (148 s)
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
 
@@ -922,7 +1244,7 @@ Wyjaśnienie na kolegium:
 
 > Mieszkaniec przypomina zdanie kandydata sprzed lat: „Ścieżka nad rzeką powstanie w pierwszej kadencji”.
 
-Źródło: Wiadomość od czytelnika · Typ: cytat · Waga: zwykły · Użycie: taśma (172 s)
+Źródło: Wiadomość od czytelnika · Typ: cytat · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -948,7 +1270,7 @@ Wyjaśnienie na kolegium:
 
 > Fragment rozmowy w internetowym radiu jest cytowany jako przyznanie się do braku planu. Kandydatka milczy.
 
-Źródło: Skrót wywiadu na blogu · Typ: artykuł · Waga: ważny · Użycie: taśma (196 s)
+Źródło: Skrót wywiadu na blogu · Typ: artykuł · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (cytat-wyrwany-z-kontekstu)
 
@@ -974,7 +1296,7 @@ Wyjaśnienie na kolegium:
 
 > „Pod rzeką pociągnę linię, a stacje będą ogrzewane”. Tekst udostępniają jako prawdziwą obietnicę wyborczą.
 
-Źródło: Portal „Brzeski Szpikulec” · Typ: artykuł · Waga: zwykły · Użycie: taśma (220 s)
+Źródło: Portal „Brzeski Szpikulec” · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **satyra** → poprawny werdykt: **publikuj z kontekstem** · Technika: Satyra brana na serio (satyra-brana-na-powaznie)
 
@@ -1000,7 +1322,7 @@ Wyjaśnienie na kolegium:
 
 > Pracownia „Opinia Brzeska” podaje 41% do 39%. Zbadano 1000 mieszkańców, błąd to 3 punkty procentowe.
 
-Źródło: Komunikat pracowni badawczej „Opinia Brzeska” · Typ: statystyka · Waga: pilny · Użycie: taśma (244 s)
+Źródło: Komunikat pracowni badawczej „Opinia Brzeska” · Typ: statystyka · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1026,7 +1348,7 @@ Wyjaśnienie na kolegium:
 
 > Rozmowa z parkingu, w tle słychać męski głos. Nadawca podpisał się: „Ktoś z ratusza”. Brak daty.
 
-Źródło: Anonimowy plik z komunikatora · Typ: nagranie · Waga: pilny · Użycie: taśma (268 s)
+Źródło: Anonimowy plik z komunikatora · Typ: nagranie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **niepotwierdzalne** → poprawny werdykt: **odrzuć** · Technika: Anonimowy informator (anonimowy-informator)
 
@@ -1052,7 +1374,7 @@ Wyjaśnienie na kolegium:
 
 > Post z logiem sztabu, cytat: „Rezygnuję z kandydowania, głosujcie na kogoś innego”. Kilkaset udostępnień w godzinę.
 
-Źródło: Konto „Sztab_Wierzchowski” · Typ: post · Waga: pilny · Użycie: taśma (292 s)
+Źródło: Konto „Sztab_Wierzchowski” · Typ: post · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Zmyślony cytat (zmyslony-cytat)
 
@@ -1078,7 +1400,7 @@ Wyjaśnienie na kolegium:
 
 > Miejska komisja podała wynik cząstkowy. To o sześć punktów więcej niż w poprzednich wyborach o tej porze.
 
-Źródło: Komunikat Miejskiej Komisji Wyborczej · Typ: statystyka · Waga: zwykły · Użycie: taśma (316 s)
+Źródło: Komunikat Miejskiej Komisji Wyborczej · Typ: statystyka · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1104,7 +1426,7 @@ Wyjaśnienie na kolegium:
 
 > Zdjęcie z wiecu: za kandydatką widać wielki baner z napisem. Komentarze mówią o skandalu.
 
-Źródło: Zdjęcie na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (340 s)
+Źródło: Zdjęcie na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Tania podróbka (zmanipulowane-zdjecie)
 
@@ -1120,6 +1442,84 @@ Wyjaśnienie na kolegium:
 - **Technika:** Zmanipulowane zdjęcie: autentyczna scena z podmienionym szczegółem robi z hasła skandal.
 - **Narzędzie:** Lupa obrazu: porównanie z oryginałem pokazuje inny napis i ślady edycji.
 - **Przykład z życia:** Przeróbki zdjęć przed wyborami są coraz łatwiejsze. Warto zawsze znaleźć najstarszą wersję obrazu.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l2-debata-w-liceum
+
+**Kandydaci ściskają sobie dłonie po debacie w II LO**
+
+> Uczennica przysłała zdjęcie obojga kandydatów na szkolnej scenie. Pisze: „Debata skończyła się pół godziny temu”.
+
+Źródło: Zdjęcie od czytelniczki · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 13:15, aula II LO w Nowych Brzegach.
+- Archiwum [nieistotna]: Archiwum ma zdjęcia auli z akademii szkolnych, ale nie z dzisiejszej debaty.
+- Kartoteka źródeł [zwodnicza]: Autorka pierwszy raz pisze do redakcji. Brak innych informacji o niej.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe, świeże zdjęcie z debaty kandydatów w liceum.
+- **Technika:** Brak manipulacji. Nieznana autorka nie oznacza fałszywego zdjęcia.
+- **Narzędzie:** Lupa obrazu: brak starszych kopii, a metadane zgadzają się z miejscem i godziną debaty.
+- **Przykład z życia:** W kampanii redakcje dostają wiele zdjęć od świadków. Gdy obraz jest nowy i zrobiony tam, gdzie mówi podpis, można go opublikować.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l2-plaza-w-kampanii
+
+**Wierzchowski na leżaku w środku kampanii?**
+
+> Zdjęcie kandydata na plaży krąży z podpisem: „Dziś rano. Inni pracują, a on się opala”. Setki udostępnień.
+
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Najstarsza kopia to wpis samego kandydata z urlopu w sierpniu 2019 r. Kadr jest identyczny.
+- Archiwum [nieistotna]: Archiwum nie ma zdjęć kandydata z plaży ani z jego urlopów.
+- Kartoteka źródeł [zwodnicza]: Autor posta to prawdziwy mieszkaniec, aktywny na grupie od lat.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Fałsz: zdjęcie jest prawdziwe, ale sprzed kilku lat. Kandydat sam pokazał je po urlopie.
+- **Technika:** Stare zdjęcie, nowy podpis: autentyczny obraz z innego czasu udaje dzisiejsze wydarzenie.
+- **Narzędzie:** Lupa obrazu: najstarsza kopia pochodzi z sierpnia 2019 r., z konta kandydata.
+- **Przykład z życia:** W kampaniach wracają stare zdjęcia polityków z wakacji, podpisane jako „dziś”. Wyszukiwanie obrazem pokazuje, kiedy zdjęcie pojawiło się pierwszy raz.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l2-wycinka-w-parku
+
+**Szelągowska przy wycince drzew w parku Nadrzecznym**
+
+> Zdjęcie: kandydatka stoi obok ściętego pnia. Podpis: „Obiecuje zieleń, a sama tnie drzewa!”.
+
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Pełny kadr z tej chwili ma obok tablicę: „Chore drzewo. W zamian 30 nowych”. Ktoś ją odciął.
+- Archiwum [nieistotna]: W archiwum brak materiałów o parku Nadrzecznym z ostatnich tygodni.
+- Kartoteka źródeł [zwodnicza]: Post wrzuciło anonimowe konto założone w tym miesiącu.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe zdjęcie z obciętym kadrem. Drzewo było chore, a miasto posadzi w zamian 30 nowych.
+- **Technika:** Wyrwane z kontekstu: przycięty kadr zmienia sens prawdziwej sceny.
+- **Narzędzie:** Lupa obrazu: pełna wersja zdjęcia pokazuje tablicę o nowych nasadzeniach, którą ktoś przyciął.
+- **Przykład z życia:** Przycięcie zdjęcia to najprostsza przeróbka. Zanim ocenisz scenę, poszukaj szerszego kadru lub innych ujęć z tej samej chwili.
 
 - [ ] Zatwierdzam
 - Uwagi: 
@@ -1152,6 +1552,16 @@ Odprawa: Sieć huczy od plotek o dyrektorze liceum, a posty mnożą się w oc
 | ☐ | `l3-viral-ukryta-kontrola` | Dyrektor ukrył wyniki kontroli! Udostępnij, zanim zniknie | post | fałsz | odrzuć | |
 | ☐ | `l3-viral-pakuje-sie` | Dyrektor wynosi pudła ze szkoły. Pakuje się? | zdjęcie | zwodnicze | publikuj z kontekstem | |
 | ☐ | `l3-viral-pozegnanie` | Pożegnalny wpis dyrektora: „Rezygnuję, to wszystko prawda” | post | fałsz | odrzuć | |
+| ☐ | `l3-zalana-sala` | Zalana sala gimnastyczna w LO nr 3. Dyrekcja ukrywa awarię! | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l3-dyrektor-na-plazy` | Dyrektor Wrzosek na plaży, a uczniowie bez lekcji! | zdjęcie | fałsz | odrzuć | |
+| ☐ | `l3-pusta-stolowka` | Pusta stołówka w LO nr 3. Uczniowie bojkotują dyrektora! | zdjęcie | zwodnicze | publikuj z kontekstem | |
+| ☐ | `l3-pracownia-robotyki` | LO nr 3 otwiera pracownię robotyki. Zobaczcie zdjęcia | zdjęcie | prawda | publikuj | |
+| ☐ | `l3-psycholog-z-sieci` | Psycholog ostrzega: dyrektor Wrzosek ma cechy tyrana | post | fałsz | odrzuć | |
+| ☐ | `l3-zajecia-przed-matura` | Bezpłatne zajęcia przed maturą w LO nr 3 od listopada | artykuł | prawda | publikuj | |
+| ☐ | `l3-stara-afera` | „Dyrektor LO nr 3 zawieszony!” Artykuł znów krąży w sieci | artykuł | zwodnicze | publikuj z kontekstem | |
+| ☐ | `l3-zmyslony-wywiad` | Dyrektor w wywiadzie: „Uczniowie są tu tylko po świadectwo” | cytat | fałsz | odrzuć | |
+| ☐ | `l3-boisko-ze-zbiorki` | Rada rodziców: nowe boisko przy LO nr 3 ze zbiórki | post | prawda | publikuj | |
+| ☐ | `l3-dyrektor-bez-dyplomu` | Anonim: dyrektor LO nr 3 nie ma dyplomu! „Sprawdźcie jego papiery” | post | fałsz | odrzuć | |
 
 ### l3-dzien-otwarty
 
@@ -1159,7 +1569,7 @@ Odprawa: Sieć huczy od plotek o dyrektorze liceum, a posty mnożą się w oc
 
 > Szkoła zaprasza gimnazjalistów i rodziców na dzień otwarty. Będą pokazy w pracowniach i rozmowy z nauczycielami.
 
-Źródło: Profil „LO nr 3 Nowe Brzegi” · Typ: post · Waga: zwykły · Użycie: taśma (4 s)
+Źródło: Profil „LO nr 3 Nowe Brzegi” · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1186,7 +1596,7 @@ Wyjaśnienie na kolegium:
 
 > „Słyszałem od znajomej, że dyrektor Wrzosek wyleciał dziś rano. Podobno przez skargi nauczycieli”. Post ma już tysiące udostępnień.
 
-Źródło: Anonimowy post na grupie Nowe Brzegi Info · Typ: post · Waga: pilny · Użycie: taśma (28 s)
+Źródło: Anonimowy post na grupie Nowe Brzegi Info · Typ: post · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Plotka bez źródła (plotka-bez-zrodla)
 
@@ -1213,7 +1623,7 @@ Wyjaśnienie na kolegium:
 
 > Zrzut ekranu czatu, w którym „dyrektor” wyzywa klasę. Bez linku, bez daty, za to z dopiskiem „UDOSTĘPNIJ, ZANIM USUNĄ”.
 
-Źródło: Zrzut ekranu z komunikatora · Typ: zdjęcie · Waga: ważny · Użycie: taśma (52 s)
+Źródło: Zrzut ekranu z komunikatora · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Zrzut ekranu bez linku (screenshot-bez-linku)
 
@@ -1240,7 +1650,7 @@ Wyjaśnienie na kolegium:
 
 > Nowy regulamin liceum wchodzi od poniedziałku. Uczniowie mogą korzystać z telefonów na przerwach i w bibliotece.
 
-Źródło: Informacja z tablicy ogłoszeń szkoły · Typ: artykuł · Waga: zwykły · Użycie: taśma (76 s)
+Źródło: Informacja z tablicy ogłoszeń szkoły · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1267,7 +1677,7 @@ Wyjaśnienie na kolegium:
 
 > Zdjęcie: dyrektor Wrzosek trzyma grubą kopertę przy wejściu do szkoły. Podpis sugeruje łapówkę.
 
-Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (100 s)
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
 
@@ -1294,7 +1704,7 @@ Wyjaśnienie na kolegium:
 
 > Rada rodziców zebrała podpisy pod listem poparcia. List trafi do kuratorium w piątek.
 
-Źródło: Post rady rodziców · Typ: post · Waga: zwykły · Użycie: taśma (124 s)
+Źródło: Post rady rodziców · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1321,7 +1731,7 @@ Wyjaśnienie na kolegium:
 
 > „Jak wszyscy, to musi być prawda”. Post ma 3 tys. udostępnień i setki komentarzy „ja też słyszałem”.
 
-Źródło: Post na grupie Nowe Brzegi Info · Typ: post · Waga: ważny · Użycie: taśma (148 s)
+Źródło: Post na grupie Nowe Brzegi Info · Typ: post · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Presja tłumu (argument-z-tlumu)
 
@@ -1348,7 +1758,7 @@ Wyjaśnienie na kolegium:
 
 > Grafika z jedną czerwoną liczbą. Autor pisze, że „statystyki nie kłamią” i apeluje o zmianę dyrekcji.
 
-Źródło: Grafika z prywatnego profilu · Typ: statystyka · Waga: ważny · Użycie: taśma (172 s)
+Źródło: Grafika z prywatnego profilu · Typ: statystyka · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Kłamliwa statystyka (wyrwana-statystyka)
 
@@ -1375,7 +1785,7 @@ Wyjaśnienie na kolegium:
 
 > Artykuł twierdzi, że od teraz uczniowie mają „odpoczywać po weekendzie” i przychodzić dopiero we wtorek.
 
-Źródło: Portal „Brzegi Bez Powagi” · Typ: artykuł · Waga: zwykły · Użycie: taśma (196 s)
+Źródło: Portal „Brzegi Bez Powagi” · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **satyra** → poprawny werdykt: **publikuj z kontekstem** · Technika: Satyra brana na serio (satyra-brana-na-powaznie)
 
@@ -1402,7 +1812,7 @@ Wyjaśnienie na kolegium:
 
 > Rutynowa kontrola obejmie dokumentację i organizację zajęć. Kuratorium zapowiada raport za dwa tygodnie.
 
-Źródło: Informacja prasowa kuratorium · Typ: artykuł · Waga: ważny · Użycie: taśma (220 s)
+Źródło: Informacja prasowa kuratorium · Typ: artykuł · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1429,7 +1839,7 @@ Wyjaśnienie na kolegium:
 
 > Post z logo liceum. „Pilne! Zajęcia odwołane do odwołania. Szczegóły pod linkiem”.
 
-Źródło: Konto „LO3_NoweBrzegi_info” · Typ: post · Waga: pilny · Użycie: taśma (244 s)
+Źródło: Konto „LO3_NoweBrzegi_info” · Typ: post · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywa instytucja (podszywanie-sie-pod-instytucje)
 
@@ -1456,7 +1866,7 @@ Wyjaśnienie na kolegium:
 
 > Dwunastosekundowe nagranie głosu, ktoś krzyczy „Ma być cicho i koniec!”. Podpis: „Tak traktuje młodzież”.
 
-Źródło: Nagranie z komunikatora · Typ: nagranie · Waga: ważny · Użycie: taśma (268 s)
+Źródło: Nagranie z komunikatora · Typ: nagranie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
 
@@ -1483,7 +1893,7 @@ Wyjaśnienie na kolegium:
 
 > W krótkim oświadczeniu dyrektor Wrzosek zaprasza kuratorium do wglądu w dokumentację i prosi o spokój.
 
-Źródło: Oświadczenie na stronie szkoły · Typ: cytat · Waga: zwykły · Użycie: taśma (292 s)
+Źródło: Oświadczenie na stronie szkoły · Typ: cytat · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1510,7 +1920,7 @@ Wyjaśnienie na kolegium:
 
 > Zrzut ekranu z nagłówkiem „AFERA W LICEUM: DYREKTOR ZNIKA Z PIENIĘDZMI”. Brak linku do strony.
 
-Źródło: Zrzut ekranu z grupy · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (316 s)
+Źródło: Zrzut ekranu z grupy · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Zrzut ekranu bez linku (screenshot-bez-linku)
 
@@ -1537,7 +1947,7 @@ Wyjaśnienie na kolegium:
 
 > Samorząd uczniowski i dyrekcja apelują o spokój. Uczniowie mogą rozmawiać z pedagogiem w gabinecie 12.
 
-Źródło: Profil samorządu uczniowskiego · Typ: post · Waga: zwykły · Użycie: taśma (340 s)
+Źródło: Profil samorządu uczniowskiego · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1639,6 +2049,276 @@ Wyjaśnienie na kolegium:
 - [ ] Zatwierdzam
 - Uwagi: 
 
+### l3-zalana-sala
+
+**Zalana sala gimnastyczna w LO nr 3. Dyrekcja ukrywa awarię!**
+
+> Zdjęcie: woda po kostki na parkiecie sali. Autor pisze, że dyrektor kazał uczniom milczeć.
+
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: To zdjęcie krąży w sieci od 2018 r. jako hala sportowa w innym mieście.
+- Kartoteka źródeł [nieistotna]: Konto założone w tym miesiącu, publikuje głównie memy.
+- Archiwum [zwodnicza]: W 2021 r. szkoła remontowała dach nad salą gimnastyczną.
+- Telefon [nieistotna]: Woźny: „Ja nic nie wiem, proszę pytać w sekretariacie”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Stare zdjęcie zalanej hali z innego miasta, opisane jako sala w LO nr 3.
+- **Technika:** Stare zdjęcie, nowy podpis: prawdziwy kadr z innego miejsca i czasu dostaje świeży opis, który pasuje do gorącej afery.
+- **Narzędzie:** Lupa obrazu znalazła najstarszą kopię zdjęcia z 2018 r. razem z pierwotnym opisem.
+- **Przykład z życia:** Przy każdej awarii, burzy czy pożarze w sieci wracają stare zdjęcia z innych miejsc. Wyszukiwanie obrazem pokazuje, kiedy kadr pojawił się po raz pierwszy.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-dyrektor-na-plazy
+
+**Dyrektor Wrzosek na plaży, a uczniowie bez lekcji!**
+
+> Zdjęcie: dyrektor na leżaku pod palmą. Podpis: „Tak wygląda jego zwolnienie lekarskie”.
+
+Źródło: Anonimowy profil „Prawda o LO3” · Typ: zdjęcie · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Tania podróbka (tania-podrobka)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Oryginał to zdjęcie turysty z bloga podróżniczego. Twarz dyrektora wklejono.
+- Kartoteka źródeł [nieistotna]: Profil anonimowy, wcześniej wrzucał głównie memy o szkole.
+- Archiwum [nieistotna]: Brak wzmianek o urlopie dyrektora w archiwum lokalnej prasy.
+- Telefon [nieistotna]: Sekretariat: „Nie udzielamy informacji o nieobecnościach pracowników”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Fotomontaż: twarz dyrektora wklejona w cudze zdjęcie z wakacji.
+- **Technika:** Tania podróbka: wystarczy prosty program do zdjęć, żeby wkleić twarz w cudzy kadr. Krzykliwy podpis odwraca uwagę od krzywych krawędzi i niepasującego światła.
+- **Narzędzie:** Lupa obrazu odnalazła oryginał na blogu podróżniczym, z twarzą innego turysty.
+- **Przykład z życia:** Fotomontaże z osobami publicznymi w kompromitujących sytuacjach to stały element sporów w sieci. Wyszukiwanie obrazem często od razu pokazuje oryginał.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-pusta-stolowka
+
+**Pusta stołówka w LO nr 3. Uczniowie bojkotują dyrektora!**
+
+> Zdjęcie: puste stoły i krzesła w szkolnej stołówce. Autor: „Nikt już tu nie je, tak protestujemy”.
+
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Pełny kadr z profilu szkoły: zegar wskazuje 7:40, stołówka otwiera się o 11:30.
+- Kartoteka źródeł [nieistotna]: Autor to uczeń szkoły, konto prywatne od kilku lat.
+- Archiwum [nieistotna]: Brak wcześniejszych publikacji tego zdjęcia w archiwum prasy.
+- Telefon [nieistotna]: Kucharka: „Ja tylko gotuję, proszę pytać w sekretariacie”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwe, ale przycięte zdjęcie: stołówka rano, przed otwarciem, a nie w czasie bojkotu.
+- **Technika:** Wyrwane z kontekstu: kadr jest autentyczny, ale odcięto zegar na ścianie. Bez niego zwykły poranek wygląda jak protest.
+- **Narzędzie:** Lupa obrazu znalazła pełne zdjęcie na profilu szkoły, z godziną na zegarze.
+- **Przykład z życia:** Przycięcie zdjęcia to najtańsza manipulacja: niczego nie trzeba podrabiać. Pytaj, co było poza kadrem, i szukaj pełnej wersji.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-pracownia-robotyki
+
+**LO nr 3 otwiera pracownię robotyki. Zobaczcie zdjęcia**
+
+> Zdjęcie: uczniowie przy stołach z ramionami robotów. Wpis udostępnia mama jednej z uczennic.
+
+Źródło: Post na grupie Nowe Brzegi Info · Typ: zdjęcie · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Lupa obrazu [rozstrzygająca] *: Najstarsza kopia: profil szkoły, wczoraj. Brak wcześniejszych wersji zdjęcia.
+- Kartoteka źródeł [nieistotna]: Autorka to prywatna osoba, konto bez historii publikacji.
+- Archiwum [zwodnicza]: W 2022 r. szkoła przegrała konkurs na grant na pracownię.
+- Telefon [nieistotna]: Sekretariat: „Dyrektora nie ma, proszę dzwonić jutro”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa informacja: szkoła sama opublikowała to zdjęcie dzień wcześniej.
+- **Technika:** Brak manipulacji. Udostępnienie przez prywatną osobę nie czyni wiadomości fałszywą, a dawna porażka w konkursie nie wyklucza nowej pracowni.
+- **Narzędzie:** Lupa obrazu pokazała, że zdjęcie pochodzi z oficjalnego profilu szkoły.
+- **Przykład z życia:** Wiele prawdziwych wiadomości dociera do nas z drugiej ręki. Wyszukiwanie obrazem pozwala dojść do pierwszej publikacji i ocenić ją u źródła.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-psycholog-z-sieci
+
+**Psycholog ostrzega: dyrektor Wrzosek ma cechy tyrana**
+
+> „Ekspert” ocenia dyrektora na podstawie jednego nagrania. Wpis ma tysiące udostępnień i link do płatnego kursu.
+
+Źródło: Profil „Dr Psycholog Radzi” · Typ: post · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywy ekspert (falszywy-ekspert)
+
+Pieczątki:
+
+- Lupa obrazu [nieistotna]: Grafika z wpisu jest nowa, brak wcześniejszych kopii.
+- Kartoteka źródeł [rozstrzygająca] *: Autor nie figuruje w rejestrze psychologów. Tytuł „dr” nie ma pokrycia.
+- Archiwum [nieistotna]: Archiwum prasy: dyrektor kieruje szkołą od 2017 r.
+- Telefon [nieistotna]: Szkoła: „Nie komentujemy wpisów w sieci”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Wpis fałszywego eksperta: autor nie jest psychologiem i sprzedaje kursy.
+- **Technika:** Fałszywy ekspert: tytuł i pewny ton dodają wpisowi powagi. Prawdziwy specjalista nie stawia diagnozy na podstawie jednego nagrania w sieci.
+- **Narzędzie:** Kartoteka źródeł sprawdziła rejestr zawodowy: autora w nim nie ma.
+- **Przykład z życia:** „Eksperci” z mediów społecznościowych często używają tytułów, których nie mają, żeby sprzedać kurs lub zdobyć zasięgi. Zawody zaufania publicznego mają rejestry, które każdy może sprawdzić.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-zajecia-przed-matura
+
+**Bezpłatne zajęcia przed maturą w LO nr 3 od listopada**
+
+> Lokalny portal pisze, że nauczyciele poprowadzą dodatkowe zajęcia z matematyki i polskiego po lekcjach.
+
+Źródło: Portal „Kurier Nowobrzeski” · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Lupa obrazu [nieistotna]: Zdjęcie klasy z artykułu jest nowe, brak wcześniejszych kopii.
+- Kartoteka źródeł [rozstrzygająca] *: Portal w rejestrze prasy, autorka podpisana. Ten sam komunikat jest na stronie szkoły.
+- Archiwum [zwodnicza]: Rok temu podobne zajęcia odwołano po dwóch tygodniach.
+- Telefon [zwodnicza]: Nauczycielka matematyki: „Nic nie wiem, jestem na zwolnieniu”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa informacja z rzetelnego portalu, zgodna z komunikatem szkoły.
+- **Technika:** Brak manipulacji. Wiadomość ma podpisaną autorkę, wydawcę w rejestrze prasy i potwierdzenie na oficjalnej stronie.
+- **Narzędzie:** Kartoteka źródeł: portal jest w rejestrze prasy, a szkoła podała to samo na swojej stronie.
+- **Przykład z życia:** Czytanie w poprzek: zamiast oceniać tekst po wyglądzie, sprawdzasz, kto go wydał i czy inne źródła mówią to samo. To szybsze niż analiza samego tekstu.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-stara-afera
+
+**„Dyrektor LO nr 3 zawieszony!” Artykuł znów krąży w sieci**
+
+> Link do tekstu „Kuriera Nowobrzeskiego” o zawieszeniu dyrektora. Udostępniający piszą: „No i się doigrał!”.
+
+Źródło: Link na grupie Nowe Brzegi Info · Typ: artykuł · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
+
+Pieczątki:
+
+- Lupa obrazu [nieistotna]: Miniaturka linku to samo logo „Kuriera”, bez zdjęcia osoby.
+- Kartoteka źródeł [zwodnicza]: „Kurier Nowobrzeski” jest w rejestrze prasy, link prowadzi do jego strony.
+- Archiwum [rozstrzygająca] *: Tekst jest z 2012 r. i dotyczy poprzedniego dyrektora. Sprawę umorzono.
+- Telefon [nieistotna]: Sekretariat: „Pan dyrektor jest dziś na wyjeździe”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwy artykuł sprzed lat o poprzednim dyrektorze, udostępniany tak, jakby był świeży i dotyczył obecnego.
+- **Technika:** Wyrwane z kontekstu: tekst jest autentyczny, ale bez daty i nazwiska czytelnik sam dopowiada, że chodzi o dzisiejszą aferę.
+- **Narzędzie:** Archiwum pokazało datę publikacji i to, kogo dotyczył tekst. Kartoteka źródeł potwierdziła tylko, że gazeta istnieje.
+- **Przykład z życia:** Stare artykuły wracają, gdy temat znów jest gorący. Podgląd linku w mediach społecznościowych często nie pokazuje daty, więc przed udostępnieniem warto ją sprawdzić.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-zmyslony-wywiad
+
+**Dyrektor w wywiadzie: „Uczniowie są tu tylko po świadectwo”**
+
+> Grafika z cytatem i zdjęciem dyrektora. Podpis: wywiad dla „Kuriera Nowobrzeskiego” z 2023 r. Uczniowie są oburzeni.
+
+Źródło: Grafika z profilu Uczniowie LO3 · Typ: cytat · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Zmyślony cytat (zmyslony-cytat)
+
+Pieczątki:
+
+- Lupa obrazu [nieistotna]: Zdjęcie dyrektora pochodzi ze strony szkoły, bez przeróbek.
+- Kartoteka źródeł [zwodnicza]: Profil „Uczniowie LO3” działa od lat i ma 2 tys. obserwujących.
+- Archiwum [rozstrzygająca] *: Pełny wywiad z 2023 r. jest w archiwum. Takiego zdania w nim nie ma.
+- Telefon [nieistotna]: Redakcja „Kuriera”: „Autor wywiadu jest na urlopie”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Zmyślony cytat dopisany do prawdziwego zdjęcia i nazwy prawdziwej gazety.
+- **Technika:** Zmyślony cytat: grafika z twarzą i tytułem znanego medium wygląda wiarygodnie, choć nikt tego zdania nie wypowiedział.
+- **Narzędzie:** Archiwum: pełny tekst wywiadu z 2023 r. nie zawiera tego zdania.
+- **Przykład z życia:** Grafikę z cytatem można zrobić w kilka minut, a rozchodzi się szybciej niż sprostowanie. Zanim uwierzysz, znajdź pierwotny tekst lub nagranie, z którego cytat rzekomo pochodzi.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-boisko-ze-zbiorki
+
+**Rada rodziców: nowe boisko przy LO nr 3 ze zbiórki**
+
+> Wpis rady rodziców ze zdjęciem placu: zbiórka zakończona, boisko powstanie wiosną. W komentarzach: „Pewnie dyrektor przytuli kasę”.
+
+Źródło: Post na profilu rady rodziców · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Lupa obrazu [nieistotna]: Zdjęcie placu za szkołą jest nowe, brak wcześniejszych kopii.
+- Kartoteka źródeł [zwodnicza]: Profil rady rodziców założony tydzień temu, ma tylko trzy wpisy.
+- Archiwum [rozstrzygająca] *: Protokół rady rodziców z września: zbiórka, kwota i plan budowy boiska.
+- Telefon [nieistotna]: Przewodnicząca rady rodziców nie odbiera telefonu.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa informacja rady rodziców, potwierdzona protokołem z zebrania.
+- **Technika:** Brak manipulacji. Świeży profil i podejrzliwe komentarze to jeszcze nie dowód, że wiadomość jest fałszywa.
+- **Narzędzie:** Archiwum: protokół zebrania rady rodziców z kwotą zbiórki i planem budowy.
+- **Przykład z życia:** Organizacje często zakładają profil dopiero przy konkretnej sprawie. Nowe konto to sygnał, by sprawdzić dokładniej, a nie powód do odrzucenia. Rozstrzyga dokument albo niezależne potwierdzenie.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l3-dyrektor-bez-dyplomu
+
+**Anonim: dyrektor LO nr 3 nie ma dyplomu! „Sprawdźcie jego papiery”**
+
+> Wpis bez podpisu: „Wiem od kogoś z kuratorium, że dyrektor nie skończył studiów”. Setki udostępnień w godzinę.
+
+Źródło: Post z konta LO3 bez cenzury · Typ: post · Waga: pilny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Anonimowy informator (anonimowy-informator)
+
+Pieczątki:
+
+- Lupa obrazu [nieistotna]: Wpis nie ma zdjęcia, to tylko tekst na kolorowym tle.
+- Kartoteka źródeł [nieistotna]: Konto „LO3 bez cenzury” prowadzą uczniowie od 2022 r.
+- Archiwum [rozstrzygająca] *: Protokół konkursu z 2019 r.: komisja sprawdziła dyplom i kwalifikacje dyrektora.
+- Telefon [nieistotna]: Kuratorium: „Odpowiemy na piśmie w ciągu 14 dni”.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Fałszywa plotka anonimowego autora. Dokumenty konkursu na dyrektora potwierdzają jego wykształcenie.
+- **Technika:** Anonimowy informator: „wiem od kogoś z kuratorium” brzmi jak przeciek, ale nie da się tego sprawdzić ani nikogo rozliczyć.
+- **Narzędzie:** Archiwum: protokół komisji konkursowej z 2019 r. z listą sprawdzonych dokumentów.
+- **Przykład z życia:** Plotki „od znajomego z urzędu” rozchodzą się szybciej niż sprostowania. Szukaj dokumentu albo osoby, która podpisuje się nazwiskiem. Anonimowe „źródło” samo niczego nie dowodzi.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
 <a id="poziom-4"></a>
 
 ## Poziom 4: Zdrowie – Suplement i „cudowne badanie”
@@ -1666,6 +2346,15 @@ Odprawa: Po mieście krąży nowy suplement i „cudowne badanie”. Biblioteka
 | ☐ | `l4-nowa-pracownia` | Szkoła nr 4 otwiera pracownię dietetyczną | post | prawda | publikuj | |
 | ☐ | `l4-woda-z-kranu` | Naukowcy: woda z kranu leczy wszystko, nawet poniedziałki | artykuł | satyra | publikuj z kontekstem | |
 | ☐ | `l4-alarm-zakaz-lipowitu` | PILNE! Inspekcja zakazuje Lipowitu, wyrzućcie z domów! | post | fałsz | odrzuć | |
+| ☐ | `l4-tlumy-na-sorze` | Tłumy na SOR-ze! Szpital miejski nie radzi sobie z grypą | post | fałsz | odrzuć | |
+| ☐ | `l4-zimna-woda-po-obiedzie` | Lekarze ostrzegają: zimna woda po obiedzie szkodzi sercu | post | fałsz | odrzuć | |
+| ☐ | `l4-ratownik-o-kaskach` | Ratownik medyczny: „Kask rowerowy nic nie daje” | cytat | zwodnicze | publikuj z kontekstem | |
+| ☐ | `l4-basen-zamkniety` | Basen przy Parkowej zamknięty do 20 listopada | artykuł | prawda | publikuj | |
+| ☐ | `l4-sobotnie-szczepienia` | Przychodnia na Lipowej: w sobotę szczepienia na grypę bez zapisów | post | prawda | publikuj | |
+| ☐ | `l4-obowiazkowe-szczepienia` | Wydział Zdrowia: od poniedziałku szczepienia w szkołach obowiązkowe! | post | fałsz | odrzuć | |
+| ☐ | `l4-rodzice-za-lipowitem` | Rodzice z Nowych Brzegów chcą Lipowitu w każdej szkole | post | zwodnicze | publikuj z kontekstem | |
+| ☐ | `l4-ospa-w-przychodni` | Lekarka z przychodni dziecięcej: „Mamy dwa razy więcej przypadków ospy” | cytat | prawda | publikuj | |
+| ☐ | `l4-szkoly-zamkniete-w-piatek` | Grypa: w piątek wszystkie szkoły w mieście zamknięte! | post | fałsz | odrzuć | |
 
 ### l4-dziewiec-na-dziesiec
 
@@ -1673,7 +2362,7 @@ Odprawa: Po mieście krąży nowy suplement i „cudowne badanie”. Biblioteka
 
 > Baner w sieci: „Aż 90% badanych poleca Lipowit”. Pod spodem drobnym drukiem: „ankieta własna”.
 
-Źródło: Reklama na portalu Nowe Brzegi Info · Typ: statystyka · Waga: ważny · Użycie: taśma (4 s)
+Źródło: Reklama na portalu Nowe Brzegi Info · Typ: statystyka · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Kłamliwa statystyka (zmanipulowana-statystyka)
 
@@ -1700,7 +2389,7 @@ Wyjaśnienie na kolegium:
 
 > Portal podaje wynik „badania klinicznego”. Cytowany w nim Instytut Badań Prozdrowotnych potwierdza, że badanie się odbyło.
 
-Źródło: Artykuł na portalu Zdrowie Brzegów · Typ: statystyka · Waga: ważny · Użycie: taśma (76 s)
+Źródło: Artykuł na portalu Zdrowie Brzegów · Typ: statystyka · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Kłamliwa statystyka (zmanipulowana-statystyka)
 
@@ -1727,7 +2416,7 @@ Wyjaśnienie na kolegium:
 
 > W reklamie występuje „kardiolog, profesor”. Podpis: „Prof. dr hab. Alojzy Wrzosowiec, Akademia Zdrowia”.
 
-Źródło: Spot reklamowy Lipowitu · Typ: cytat · Waga: ważny · Użycie: taśma (52 s)
+Źródło: Spot reklamowy Lipowitu · Typ: cytat · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywy ekspert (falszywy-ekspert)
 
@@ -1754,7 +2443,7 @@ Wyjaśnienie na kolegium:
 
 > Przychodnia szkolna opublikowała wyniki ankiety wśród uczniów liceów. Zachęca do rozmowy z pielęgniarką.
 
-Źródło: Komunikat przychodni szkolnej · Typ: statystyka · Waga: zwykły · Użycie: taśma (28 s)
+Źródło: Komunikat przychodni szkolnej · Typ: statystyka · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1762,14 +2451,14 @@ Pieczątki:
 
 - Kartoteka źródeł [rozstrzygająca] *: Konto przychodni zweryfikowane, prowadzone od 5 lat przez miasto.
 - Archiwum [nieistotna]: Poprzednie raporty z lat ubiegłych mają podobny wynik.
-- Telefon [rozstrzygająca]: Pielęgniarka potwierdza, że ankietę zebrano w październiku.
+- Telefon [rozstrzygająca] *: Pielęgniarka potwierdza ankietę i wynik: 41% uczniów śpi krócej niż 7 godzin.
 - Biblioteka danych [rozstrzygająca] *: Tabela zgadza się z komunikatem: 1 180 uczniów, 41% śpi poniżej 7 godzin.
 
 Wyjaśnienie na kolegium:
 
 - **Co to było:** Prawdziwy raport miejskiej przychodni szkolnej, oparty na dużej, losowo dobranej grupie uczniów.
 - **Technika:** Brak manipulacji. Liczby zgadzają się z tabelą, a próba jest duża i opisana.
-- **Narzędzie:** Biblioteka danych: dane w tabeli zgadzają się z komunikatem. Kartoteka źródeł potwierdziła autora.
+- **Narzędzie:** Biblioteka danych: dane w tabeli zgadzają się z komunikatem. Kartoteka źródeł potwierdziła autora, a pielęgniarka – wynik.
 - **Przykład z życia:** Miasta publikują raporty z ankiet szkolnych. Warto sprawdzić liczebność próby i czy liczby zgadzają się z tabelą.
 
 - [ ] Zatwierdzam
@@ -1781,7 +2470,7 @@ Wyjaśnienie na kolegium:
 
 > Producent soku brzozowego chwali się: w klasach, które piją Brzozolin, średnia jest o punkt wyższa.
 
-Źródło: Post producenta napoju Brzozolin · Typ: post · Waga: zwykły · Użycie: taśma (124 s)
+Źródło: Post producenta napoju Brzozolin · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Korelacja to nie przyczyna (korelacja-jako-przyczyna)
 
@@ -1808,7 +2497,7 @@ Wyjaśnienie na kolegium:
 
 > Autorka wywiadu o suplemencie Lipowit przedstawia się jako „doktor z Narodowego Instytutu Zdrowia Natury”.
 
-Źródło: Wywiad na blogu Zdrowa Strona · Typ: artykuł · Waga: zwykły · Użycie: taśma (148 s)
+Źródło: Wywiad na blogu Zdrowa Strona · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywy ekspert (falszywy-ekspert)
 
@@ -1835,7 +2524,7 @@ Wyjaśnienie na kolegium:
 
 > Instytut Zdrowia Publicznego w Nowych Brzegach opisuje wzrost zgłoszeń uczniów z bólami głowy. Zachęca do rozmowy z opiekunem.
 
-Źródło: Raport Instytutu Zdrowia Publicznego · Typ: artykuł · Waga: ważny · Użycie: taśma (196 s)
+Źródło: Raport Instytutu Zdrowia Publicznego · Typ: artykuł · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -1843,7 +2532,7 @@ Pieczątki:
 
 - Kartoteka źródeł [rozstrzygająca] *: Instytut miejski, od 15 lat publikuje raporty. Strona zweryfikowana.
 - Archiwum [nieistotna]: Poprzedni raport z 2024 r. potwierdza punkt wyjścia: liczbę wizyt rok wcześniej.
-- Telefon [rozstrzygająca]: Rzeczniczka instytutu potwierdza, że raport jest prawdziwy.
+- Telefon [zwodnicza]: Rzeczniczka na urlopie. Dyżurny instytutu: „Nic nie wiem o żadnym raporcie”.
 - Biblioteka danych [rozstrzygająca] *: Tabela: 2 410 wizyt, rok wcześniej 2 150. Wzrost o 12% jest policzony poprawnie.
 
 Wyjaśnienie na kolegium:
@@ -1862,7 +2551,7 @@ Wyjaśnienie na kolegium:
 
 > Blog pokazuje mapę: dzielnice z dużą liczbą aptek mają też najwięcej zgłoszeń chorób. „Czy apteki szkodzą?”
 
-Źródło: Wpis na blogu Dane z Brzegów · Typ: statystyka · Waga: zwykły · Użycie: taśma (244 s)
+Źródło: Wpis na blogu Dane z Brzegów · Typ: statystyka · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Korelacja to nie przyczyna (korelacja-jako-przyczyna)
 
@@ -1889,7 +2578,7 @@ Wyjaśnienie na kolegium:
 
 > Wykres w reklamie: słupek Lipowitu wielokrotnie wyższy niż „zwykłego preparatu”. Oś zaczyna się od 96%.
 
-Źródło: Plakat sieci sklepów zielarskich · Typ: statystyka · Waga: ważny · Użycie: taśma (292 s)
+Źródło: Plakat sieci sklepów zielarskich · Typ: statystyka · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Kłamliwa statystyka (zmanipulowana-statystyka)
 
@@ -1916,22 +2605,22 @@ Wyjaśnienie na kolegium:
 
 > Miasto zaprasza uczniów klas pierwszych na przesiewowe badania wzroku. Badania w godzinach lekcji, za zgodą rodziców.
 
-Źródło: Komunikat Urzędu Miasta Nowe Brzegi · Typ: post · Waga: zwykły · Użycie: taśma (100 s)
+Źródło: Komunikat Urzędu Miasta Nowe Brzegi · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
 Pieczątki:
 
 - Kartoteka źródeł [rozstrzygająca] *: Konto urzędu zweryfikowane od 9 lat. Komunikat ma numer i datę.
-- Archiwum [rozstrzygająca]: W archiwum jest podobny komunikat z ubiegłego roku, o tej samej akcji.
+- Archiwum [zwodnicza]: W archiwum niemal ten sam komunikat sprzed roku, tylko z inną datą.
 - Telefon [rozstrzygająca] *: Wydział zdrowia potwierdza termin i listę szkół.
-- Biblioteka danych [rozstrzygająca]: Tabela szkół z harmonogramem zgadza się z komunikatem.
+- Biblioteka danych [rozstrzygająca] *: Tabela szkół z harmonogramem zgadza się z komunikatem.
 
 Wyjaśnienie na kolegium:
 
 - **Co to było:** Prawdziwy komunikat urzędu o cyklicznej akcji badań przesiewowych w szkołach.
 - **Technika:** Brak manipulacji. Źródło, termin i lista szkół zostały potwierdzone w kilku miejscach.
-- **Narzędzie:** Kartoteka źródeł i telefon do wydziału zdrowia potwierdziły komunikat. Archiwum pokazało, że akcja jest cykliczna.
+- **Narzędzie:** Kartoteka źródeł, telefon do wydziału zdrowia i tabela szkół potwierdziły komunikat. Stary komunikat w archiwum nie znaczył, że post jest odgrzany: akcja jest cykliczna.
 - **Przykład z życia:** Miasta ogłaszają badania przesiewowe zwykle w komunikatach urzędowych. Warto sprawdzić, czy ten sam komunikat jest na stronie urzędu.
 
 - [ ] Zatwierdzam
@@ -1943,7 +2632,7 @@ Wyjaśnienie na kolegium:
 
 > Wynik krąży jako „sondaż szkolny”. Głosowało 340 osób. Link do sondy wysłano w czacie fanów Lipowitu.
 
-Źródło: Wpis na grupie Smacznie i Zdrowo · Typ: statystyka · Waga: ważny · Użycie: taśma (220 s)
+Źródło: Wpis na grupie Smacznie i Zdrowo · Typ: statystyka · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Kłamliwa statystyka (zmanipulowana-statystyka)
 
@@ -1970,7 +2659,7 @@ Wyjaśnienie na kolegium:
 
 > Wycinek wypowiedzi krąży jako „potwierdzenie bezpieczeństwa”. Źródło: wywiad dla lokalnej telewizji.
 
-Źródło: Post fanpage’a Lipowitu · Typ: cytat · Waga: ważny · Użycie: taśma (340 s)
+Źródło: Post fanpage’a Lipowitu · Typ: cytat · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (cytat-wyrwany-z-kontekstu)
 
@@ -1997,7 +2686,7 @@ Wyjaśnienie na kolegium:
 
 > Uczniowie będą uczyć się planować posiłki na zajęciach z pielęgniarką. Otwarcie w piątek o 10:00.
 
-Źródło: Strona Szkoły Podstawowej nr 4 · Typ: post · Waga: zwykły · Użycie: taśma (268 s)
+Źródło: Strona Szkoły Podstawowej nr 4 · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
 
@@ -2024,7 +2713,7 @@ Wyjaśnienie na kolegium:
 
 > Artykuł „Brzeskiego Kuriera Absurdu” z wypowiedziami „ekspertów”, w tym kota prof. Mruczka. Wiele osób udostępnia go na poważnie.
 
-Źródło: Portal Brzeski Kurier Absurdu · Typ: artykuł · Waga: zwykły · Użycie: taśma (316 s)
+Źródło: Portal Brzeski Kurier Absurdu · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **satyra** → poprawny werdykt: **publikuj z kontekstem** · Technika: Satyra brana na serio (satyra-brana-na-serio)
 
@@ -2032,7 +2721,7 @@ Pieczątki:
 
 - Kartoteka źródeł [rozstrzygająca] *: Serwis satyryczny, w stopce: „Wszystko tu jest zmyślone”.
 - Archiwum [nieistotna]: W archiwum wiele podobnych żartów tego serwisu o „odkryciach”.
-- Telefon [rozstrzygająca]: Redakcja Kuriera potwierdza: to satyra, nie badanie.
+- Telefon [zwodnicza]: Wodociągi miejskie: woda z kranu jest czysta i można ją pić.
 - Biblioteka danych [nieistotna]: Brak tabel i liczb, cytowane „wyniki” są absurdalne.
 
 Wyjaśnienie na kolegium:
@@ -2051,7 +2740,7 @@ Wyjaśnienie na kolegium:
 
 > Post z logo „Państwowej Inspekcji Zdrowia” zbiera tysiące udostępnień. Wezwanie do natychmiastowego usunięcia produktu.
 
-Źródło: Konto „PIZ_Nowe_Brzegi” · Typ: post · Waga: ważny · Użycie: taśma (172 s)
+Źródło: Konto „PIZ_Nowe_Brzegi” · Typ: post · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
 
 Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywa instytucja (podszywanie-sie-pod-instytucje)
 
@@ -2068,6 +2757,249 @@ Wyjaśnienie na kolegium:
 - **Technika:** Podszywanie się pod instytucję: logo i pilny ton wywołują panikę, zanim ktoś sprawdzi, kto pisze.
 - **Narzędzie:** Kartoteka źródeł: konto nowe i niezweryfikowane. Telefon do inspekcji potwierdził brak zakazu.
 - **Przykład z życia:** Alarmowe posty „od urzędów” rozchodzą się tym szybciej, im bardziej straszą. Zanim udostępnisz, sprawdź konto i oficjalną stronę.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-tlumy-na-sorze
+
+**Tłumy na SOR-ze! Szpital miejski nie radzi sobie z grypą**
+
+> Zdjęcie zatłoczonego korytarza z podpisem: „Dziś rano w szpitalu w Nowych Brzegach. Grypa zbiera żniwo!”.
+
+Źródło: Post profilu „Zdrowie NB Alert” · Typ: post · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Stare zdjęcie, nowy podpis (stare-zdjecie-nowy-podpis)
+
+Pieczątki:
+
+- Kartoteka źródeł [zwodnicza]: Profil „Zdrowie NB Alert” założono w tym tygodniu. Nie podaje autora.
+- Archiwum [rozstrzygająca] *: To zdjęcie „Gazeta Brzegowa” opublikowała w 2017 r. przy ćwiczeniach ewakuacyjnych.
+- Telefon [nieistotna]: Rzecznik szpitala jest na urlopie. Sekretariat prosi o maila.
+- Biblioteka danych [nieistotna]: Szpital nie publikuje dziennych danych o liczbie pacjentów na SOR-ze.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Straszący podpis o grypie dopisano do starego zdjęcia z ćwiczeń ewakuacyjnych w szpitalu sprzed kilku lat.
+- **Technika:** Stare zdjęcie, nowy podpis: autentyczna fotografia dostaje nową datę i miejsce, żeby straszyć „dzisiejszym” tłokiem.
+- **Narzędzie:** Archiwum: to samo zdjęcie ukazało się w 2017 r. w artykule o ćwiczeniach. Nowy profil bez autora był tylko sygnałem ostrzegawczym.
+- **Przykład z życia:** W sezonie grypowym często krążą stare zdjęcia zatłoczonych szpitali. Zanim udostępnisz, poszukaj, kiedy zdjęcie pojawiło się pierwszy raz.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-zimna-woda-po-obiedzie
+
+**Lekarze ostrzegają: zimna woda po obiedzie szkodzi sercu**
+
+> Łańcuszek na komunikatorze: „Lekarz ze szpitala w Nowych Brzegach prosi: przekaż dalej 10 osobom!”. Brak nazwiska lekarza.
+
+Źródło: Wiadomość przekazana na czacie klasowym · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Plotka bez źródła (plotka-bez-zrodla)
+
+Pieczątki:
+
+- Kartoteka źródeł [zwodnicza]: Nie da się ustalić, kto pierwszy wysłał wiadomość. Brak autora.
+- Archiwum [rozstrzygająca] *: Ten sam łańcuszek krążył w 2019 i 2022 r., za każdym razem z innym szpitalem w treści.
+- Telefon [nieistotna]: Szpital ma infolinię tylko dla pacjentów. Nikt nie chce komentować.
+- Biblioteka danych [nieistotna]: Wiadomość nie podaje liczb ani badań, z którymi można porównać dane.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Stary łańcuszek z wymyśloną poradą „od lekarza”, który co kilka lat wraca z nazwą innego szpitala. Żadne badania nie pokazują, że zimna woda po posiłku szkodzi sercu.
+- **Technika:** Plotka bez źródła: brak nazwiska, brak badań, za to prośba o przekazanie dalej i nazwa znanego szpitala dla powagi.
+- **Narzędzie:** Archiwum: ta sama treść krążyła już dwa razy, tylko z innym szpitalem. Brak autora wskazywał trop, ale nie przesądzał.
+- **Przykład z życia:** Łańcuszki z „poradami lekarzy” wracają falami. Wpisz fragment tekstu w wyszukiwarkę: często okazuje się, że ma kilka lat.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-ratownik-o-kaskach
+
+**Ratownik medyczny: „Kask rowerowy nic nie daje”**
+
+> Grafika z cytatem krąży wśród rowerzystów. Podpis: „Ratownik z 20-letnim stażem, wywiad dla Radia Brzegi”.
+
+Źródło: Grafika na forum „Rowerem po NB” · Typ: cytat · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Wyrwane z kontekstu (wyrwane-z-kontekstu)
+
+Pieczątki:
+
+- Kartoteka źródeł [zwodnicza]: Forum prowadzą miłośnicy rowerów. Grafikę wrzucił anonimowy użytkownik.
+- Archiwum [rozstrzygająca] *: Pełny wywiad w archiwum radia: „Kask nic nie daje, jeśli jest źle zapięty i za luźny”.
+- Telefon [nieistotna]: Ratownik jest na dyżurze w karetce. Oddzwoni po weekendzie.
+- Biblioteka danych [nieistotna]: Brak tabel. Wypowiedź nie dotyczy konkretnych liczb.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa wypowiedź ratownika z radiowego wywiadu, ucięta w połowie zdania. W całości była radą, jak dobrze zapiąć kask.
+- **Technika:** Cytat wyrwany z kontekstu: obcięcie zastrzeżenia odwraca sens wypowiedzi. Słowa są prawdziwe, ale przekaz już nie.
+- **Narzędzie:** Archiwum: pełny zapis wywiadu w radiu pokazał całe zdanie i jego sens.
+- **Przykład z życia:** Krótkie cytaty na grafikach łatwo przyciąć tak, by mówiły coś przeciwnego. Szukaj pełnej wypowiedzi w oryginalnym nagraniu.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-basen-zamkniety
+
+**Basen przy Parkowej zamknięty do 20 listopada**
+
+> Miejski basen nie przyjmie pływaków przez dwa tygodnie. Powód: wymiana filtrów i badanie wody przez sanepid.
+
+Źródło: Notka w serwisie „Nowe Brzegi Info” · Typ: artykuł · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Kartoteka źródeł [zwodnicza]: Serwis istnieje od lat, ale notka nie ma autora ani linku do źródła.
+- Archiwum [rozstrzygająca] *: W archiwum jest komunikat sanepidu z 3 listopada: basen zamknięty do 20 listopada.
+- Telefon [nieistotna]: Kasa basenu nie odbiera. Automat podaje stare godziny otwarcia.
+- Biblioteka danych [nieistotna]: Brak danych liczbowych do porównania. Komunikat podaje tylko daty.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa informacja o czasowym zamknięciu basenu, oparta na oficjalnym komunikacie sanepidu.
+- **Technika:** Brak manipulacji. Notka powtarza daty i powód z komunikatu, choć zapomniała podać źródło.
+- **Narzędzie:** Archiwum: komunikat sanepidu z tymi samymi datami potwierdził notkę.
+- **Przykład z życia:** Lokalne serwisy często skracają komunikaty urzędów. Jeśli brakuje linku, znajdź oryginalny komunikat i porównaj daty.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-sobotnie-szczepienia
+
+**Przychodnia na Lipowej: w sobotę szczepienia na grypę bez zapisów**
+
+> Mama ucznia pisze na grupie rodziców: „W sobotę od 9 do 14 można przyjść bez rejestracji. Wystarczy dowód osobisty”.
+
+Źródło: Post na grupie „Rodzice z Nowych Brzegów” · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Kartoteka źródeł [zwodnicza]: Autorka posta nie pracuje w przychodni. Grupa nie weryfikuje wpisów.
+- Archiwum [nieistotna]: W zeszłym roku podobna akcja odbyła się w październiku.
+- Telefon [rozstrzygająca] *: Rejestracja przychodni potwierdza: sobota 9–14, bez zapisów, z dowodem osobistym.
+- Biblioteka danych [nieistotna]: Brak danych liczbowych do porównania.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa informacja o sobotniej akcji szczepień, przekazana przez rodzica na grupie w sieci.
+- **Technika:** Brak manipulacji. Wpis był zgodny z tym, co mówi sama przychodnia, choć autorka nie była oficjalnym źródłem.
+- **Narzędzie:** Telefon do rejestracji przychodni potwierdził godziny i zasady akcji.
+- **Przykład z życia:** Na grupach mieszkańców krąży wiele praktycznych informacji. Gdy chodzi o zdrowie, krótki telefon do źródła rozwiewa wątpliwości.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-obowiazkowe-szczepienia
+
+**Wydział Zdrowia: od poniedziałku szczepienia w szkołach obowiązkowe!**
+
+> Komunikat z herbem miasta: „Uczeń bez szczepienia na grypę nie wejdzie do szkoły”. Udostępniło go już 2 tysiące osób.
+
+Źródło: Profil „Wydział Zdrowia NB – info” · Typ: post · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Fałszywa instytucja (podszywanie-sie-pod-instytucje)
+
+Pieczątki:
+
+- Kartoteka źródeł [rozstrzygająca] *: Profil założono wczoraj. Prawdziwy wydział ma konto zweryfikowane od 8 lat i inny adres.
+- Archiwum [nieistotna]: W archiwum są tylko ogłoszenia o dobrowolnych szczepieniach z lat ubiegłych.
+- Telefon [zwodnicza]: Sekretariat Szkoły nr 2: „Rodzice dzwonią od rana, też o tym słyszeliśmy”.
+- Biblioteka danych [nieistotna]: Komunikat nie podaje liczb, nie ma czego porównać.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Fałszywy komunikat o obowiązkowych szczepieniach, opublikowany przez profil udający miejski wydział zdrowia.
+- **Technika:** Podszywanie się pod instytucję: herb, urzędowy ton i nazwa podobna do prawdziwej mają sprawić, że nikt nie sprawdzi nadawcy.
+- **Narzędzie:** Kartoteka źródeł: profil powstał dzień wcześniej, a prawdziwy wydział ma inne, zweryfikowane konto. Telefony zaniepokojonych rodziców niczego nie potwierdzały.
+- **Przykład z życia:** Fałszywe profile urzędów i szpitali pojawiają się zwłaszcza wtedy, gdy ludzie się boją. Sprawdź, od kiedy konto istnieje i czy prowadzi je instytucja.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-rodzice-za-lipowitem
+
+**Rodzice z Nowych Brzegów chcą Lipowitu w każdej szkole**
+
+> Strona „Rodzice za zdrowiem” zebrała 312 podpisów pod apelem: „Nasze dzieci zasługują na Lipowit w stołówce!”.
+
+Źródło: Strona „Rodzice za zdrowiem” · Typ: post · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **zwodnicze** → poprawny werdykt: **publikuj z kontekstem** · Technika: Sztuczny ruch społeczny (astroturfing)
+
+Pieczątki:
+
+- Kartoteka źródeł [rozstrzygająca] *: Stronę zarejestrowała agencja reklamowa, która prowadzi kampanię producenta Lipowitu.
+- Archiwum [nieistotna]: Brak wcześniejszych wpisów tej strony w archiwum.
+- Telefon [zwodnicza]: Dwie mamy z listy potwierdzają, że naprawdę podpisały apel.
+- Biblioteka danych [nieistotna]: Pod apelem jest 312 podpisów, tyle, ile podaje strona.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwy apel z prawdziwymi podpisami, ale zorganizowany przez agencję producenta, a nie przez rodziców.
+- **Technika:** Astroturfing: kampania firmy udaje oddolną akcję zwykłych ludzi, żeby reklama wyglądała jak głos mieszkańców.
+- **Narzędzie:** Kartoteka źródeł: stronę zarejestrowała agencja reklamowa producenta. Podpisy są prawdziwe, więc wystarczy opublikować z kontekstem: kto stoi za apelem.
+- **Przykład z życia:** Firmy i grupy interesu czasem zakładają „oddolne” inicjatywy. Sprawdź, kto zarejestrował stronę i kto płaci za kampanię.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-ospa-w-przychodni
+
+**Lekarka z przychodni dziecięcej: „Mamy dwa razy więcej przypadków ospy”**
+
+> Cytat krąży na grupie rodziców: dr Anna Lis z przychodni przy ul. Klonowej prosi o obserwowanie wysypki u dzieci.
+
+Źródło: Post na grupie „Mamy z Nowych Brzegów” · Typ: cytat · Waga: zwykły · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **prawda** → poprawny werdykt: **publikuj** · Technika: Prawdziwa wiadomość (none)
+
+Pieczątki:
+
+- Kartoteka źródeł [zwodnicza]: Cytat wkleiła osoba prywatna, bez linku do źródła.
+- Archiwum [nieistotna]: Brak nagrania tej wypowiedzi w archiwum.
+- Telefon [rozstrzygająca] *: Dr Lis potwierdza słowa i liczby: 46 dzieci z ospą w tym tygodniu, tydzień wcześniej 22.
+- Biblioteka danych [nieistotna]: Miasto nie publikuje tygodniowych danych o ospie.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Prawdziwa wypowiedź lekarki o wzroście zachorowań na ospę, przekazana dalej przez rodziców.
+- **Technika:** Brak manipulacji. Cytat bez linku wyglądał podejrzanie, ale lekarka potwierdziła i słowa, i liczby.
+- **Narzędzie:** Telefon do lekarki potwierdził wypowiedź. Brak linku był sygnałem do sprawdzenia, a nie dowodem fałszu.
+- **Przykład z życia:** Wiele prawdziwych informacji krąży bez źródła. Najprostszy test to zapytać osobę, którą się cytuje.
+
+- [ ] Zatwierdzam
+- Uwagi: 
+
+### l4-szkoly-zamkniete-w-piatek
+
+**Grypa: w piątek wszystkie szkoły w mieście zamknięte!**
+
+> Wiadomość krąży w klasowych czatach: „Kuzynka z urzędu mówi, że decyzja zapadła. Przekażcie dalej!”.
+
+Źródło: Wiadomość w czatach klasowych · Typ: post · Waga: ważny · Użycie: taśma (pula losowana w każdej rozgrywce)
+
+Prawdziwość: **fałsz** → poprawny werdykt: **odrzuć** · Technika: Plotka bez źródła (plotka-bez-zrodla)
+
+Pieczątki:
+
+- Kartoteka źródeł [zwodnicza]: Wiadomość przekazała dalej nauczycielka, ale nie jest jej autorką. Autor nieznany.
+- Archiwum [zwodnicza]: W 2019 r. szkoły w mieście zamknięto na tydzień z powodu grypy.
+- Telefon [rozstrzygająca] *: Wydział edukacji: „Nie ma decyzji o zamknięciu szkół. Lekcje w piątek normalnie”.
+- Biblioteka danych [nieistotna]: Brak danych o nieobecnościach z tego tygodnia.
+
+Wyjaśnienie na kolegium:
+
+- **Co to było:** Plotka o zamknięciu szkół, której nie potwierdził urząd odpowiedzialny za taką decyzję.
+- **Technika:** Plotka bez źródła: „kuzynka z urzędu” brzmi wiarygodnie, ale nie da się jej sprawdzić, a prośba „przekażcie dalej” przyspiesza obieg.
+- **Narzędzie:** Telefon do wydziału edukacji: decyzji nie ma, lekcje odbędą się normalnie. Archiwum pokazało tylko, że kiedyś szkoły zamknięto, nie że stanie się to teraz.
+- **Przykład z życia:** W sezonie chorób często krążą plotki o zamknięciu szkół. Decyzję ogłasza urząd lub dyrekcja, więc tam warto zadzwonić.
 
 - [ ] Zatwierdzam
 - Uwagi: 
