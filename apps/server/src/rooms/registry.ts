@@ -20,6 +20,7 @@ import {
   COMMAND_QUEUE_MAX,
   conveyorBlocked,
   createGameState,
+  crewSnapshot,
   DEFAULT_DIFFICULTY,
   type Difficulty,
   ENDLESS,
@@ -56,6 +57,7 @@ import {
 } from '@redakcja/shared';
 import { MAX_ROOMS } from '../limits.ts';
 import { log } from '../log.ts';
+import type { RoomSettings } from '../public-config.ts';
 import { generateReconnectToken, generateRoomCode, secureRandom } from './codes.ts';
 import { CLOSE_REPLACED, type Connection, type Hub } from './connection.ts';
 
@@ -101,6 +103,8 @@ type Room = {
   briefing: { endsAt: number; skippedBy: Set<string> } | null;
   /** Blunder-of-the-day votes of the current results screen, by player id. */
   blunderVotes: Map<string, { storyId: string; rowId: number | null }>;
+  /** A solo player has the in-game menu open: the level is not stepped (S7-10). */
+  paused: boolean;
 };
 
 function requireLevel(id: string): Level {
@@ -132,8 +136,13 @@ export type RegistryOptions = {
     storyId: string;
     previousId: number | null;
   }) => number;
-  /** Rooms alive at once; creating another is refused with `roomFull`. */
+  /** Rooms alive at once; creating another is refused with `roomFull`. Wins over `settings`. */
   maxRooms?: number;
+  /**
+   * Live settings from config.json (S7-68), read at every room creation so a reload applies to
+   * the next room: `maxRooms`, the difficulty a new room starts at, and the feature flags.
+   */
+  settings?: () => RoomSettings;
   /** Persists a finished endless run for the leaderboard (S4-11), with its difficulty (S7-23). */
   recordLeaderboardEntry?: (entry: {
     roomCode: string;
@@ -320,6 +329,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         previous.close(CLOSE_REPLACED, 'replaced');
       }
       attach(room, player, connection);
+      // A reload comes back with the menu closed; a returning teammate shares the clock again.
+      room.paused = false;
       log.info('player reconnected', { room: room.code, player: player.id });
       broadcastEvent(room, { kind: 'playerReconnected', playerId: player.id });
       broadcastRoomState(room);
@@ -327,7 +338,8 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
 
     if (message.roomCode === undefined) {
-      if (rooms.size >= (options.maxRooms ?? MAX_ROOMS)) {
+      const settings = options.settings?.();
+      if (rooms.size >= (options.maxRooms ?? settings?.maxRooms ?? MAX_ROOMS)) {
         log.warn('room limit reached', { rooms: rooms.size });
         sendError(connection, 'roomFull', 'server is busy');
         return;
@@ -343,12 +355,13 @@ export function createRoomRegistry(options: RegistryOptions) {
         game: createGameState({ map }),
         level,
         stories: storiesForLevel(level),
-        difficulty: DEFAULT_DIFFICULTY,
+        difficulty: settings?.defaultDifficulty ?? DEFAULT_DIFFICULTY,
         run: null,
         map,
         nextPlayerNumber: 1,
         briefing: null,
         blunderVotes: new Map(),
+        paused: false,
       };
       rooms.set(code, room);
       const player = addToRoom(room, message.nickname, connection);
@@ -369,6 +382,8 @@ export function createRoomRegistry(options: RegistryOptions) {
       return;
     }
     const player = addToRoom(room, message.nickname, connection);
+    // A shared co-op level never waits for one player's menu.
+    room.paused = false;
     log.info('player joined', { room: room.code, player: player.id });
     broadcastEvent(room, { kind: 'playerJoined', playerId: player.id });
     broadcastRoomState(room);
@@ -483,6 +498,9 @@ export function createRoomRegistry(options: RegistryOptions) {
       case 'voteBlunder':
         voteBlunder(room, player, action.storyId);
         return;
+      case 'setPaused':
+        setPaused(room, action.paused);
+        return;
       case 'setDifficulty':
         if (player.id !== room.hostId) {
           rejectNotHost(player);
@@ -519,6 +537,34 @@ export function createRoomRegistry(options: RegistryOptions) {
         broadcastRoomState(room);
         return;
     }
+  }
+
+  /**
+   * The in-game menu pauses a solo level (S7-10): only while playing, with exactly one
+   * connected player. Rooms have no spectators yet (S7-78 adds them and must refuse here too).
+   * Resuming is always accepted. Anything else is ignored, like other out-of-phase actions.
+   */
+  function setPaused(room: Room, paused: boolean): void {
+    if (paused && (room.phase !== 'playing' || connectedCount(room) !== 1)) {
+      return;
+    }
+    if (room.paused === paused) {
+      return;
+    }
+    room.paused = paused;
+    log.info(paused ? 'room paused' : 'room resumed', { room: room.code });
+    // The tick that skips a paused room sends nothing, so the flag goes out now.
+    broadcastSnapshot(room);
+  }
+
+  function connectedCount(room: Room): number {
+    let count = 0;
+    for (const p of room.players.values()) {
+      if (p.connection !== null) {
+        count++;
+      }
+    }
+    return count;
   }
 
   /** Nicknames of connected non-host players who have not pressed ready. The host is
@@ -601,6 +647,7 @@ export function createRoomRegistry(options: RegistryOptions) {
   function startLevel(room: Room): void {
     room.phase = 'playing';
     room.briefing = null;
+    room.paused = false;
     // The run (endless included) was dealt at the briefing; the sim seed is a separate draw.
     let game = createGameState({ map: room.map, seed: drawSeed() });
     for (const p of room.players.values()) {
@@ -717,6 +764,14 @@ export function createRoomRegistry(options: RegistryOptions) {
       if (room.phase !== 'playing') {
         continue;
       }
+      if (room.paused) {
+        // The world waits for the menu. Input sent meanwhile is stale (the client sends none
+        // while paused); queued decisions wait for the resume.
+        for (const player of room.players.values()) {
+          player.inputQueue = [];
+        }
+        continue;
+      }
       const inputs: Record<string, PlayerInput[]> = {};
       const commands: QueuedCommand[] = [];
       for (const player of room.players.values()) {
@@ -771,6 +826,8 @@ export function createRoomRegistry(options: RegistryOptions) {
       deadlineExtensionUsed: game.deadlineExtensionUsed,
       nextFolder: nextScheduledSpawn(game, schedule),
       conveyorFull: conveyorBlocked(game, schedule),
+      crew: crewSnapshot(game),
+      paused: room.paused,
     });
   }
 
@@ -844,6 +901,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         hostId: room.hostId,
         phase: room.phase,
         levelId: room.level.id,
+        paused: room.paused,
         difficulty: room.difficulty,
         /** The dealt run with its seed (the seed never goes on the wire). */
         run: room.run ? { seed: room.run.seed, summary: { ...room.run.summary } } : null,

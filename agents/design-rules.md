@@ -85,11 +85,19 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
 
 - **HUD:** time + points + credibility in one compact pill top-left; folder queue (max 3 cards,
   fewer when the band between pill and tools is too narrow, "+N" chip for the rest) top-centre;
-  tool buttons top-right; nothing else on screen during play except the hint bubble and touch
-  controls. A free queue slot may hold one ghost card for the next scheduled folder: dashed navy
-  outline, soft fill, no pop shadow, an hourglass and the seconds; while the belt is full its
-  band turns orange with the conveyor icon and „Taśma pełna”. An empty queue shows the ghost on
-  its side with „Nowa teczka za N s”. Level-event folders are never announced.
+  one round menu button top-right (three bars; a red dot while offline); nothing else on screen
+  during play except the hint bubble and touch controls. A free queue slot may hold one ghost
+  card for the next scheduled folder: dashed navy outline, soft fill, no pop shadow, an
+  hourglass and the seconds; while the belt is full its band turns orange with the conveyor
+  icon and „Taśma pełna”. An empty queue shows the ghost on its side with „Nowa teczka za N s”.
+  Level-event folders are never announced.
+- **In-game menu** (the top-right button, Esc, a pad's Start): one sheet, never a second screen.
+  Desktop: a 24 rem panel under the button; phones: a full-height sheet on the right with 48 px
+  buttons in two columns. One yellow „Wróć do gry”, then Ustawienia, Pełny ekran, the room code
+  with copy and ping, and „Wyjdź z redakcji”, which asks „Na pewno? Wyjdź” and needs a second
+  press within 3 s. The header chip says what the world does meanwhile: „Pauza” (pause icon) when
+  the player is alone — the level waits — or the orange „Gra trwa dalej” (play icon) with
+  teammates, whose shared level runs on.
 - **Overlays** (stations, desk): one panel, title with icon at the top, the task in the middle,
   the main action at the bottom. Desktop: right half, scene visible. Phone: full width, close
   button always reachable.

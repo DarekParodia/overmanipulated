@@ -32,7 +32,7 @@ export type MinigameProps = {
   stamp: Stamp | undefined;
   /** Device the player used last, for button prompts. */
   device: InputDevice;
-  /** The local player's role skips the phone queue (reporter, per `ROLE_STATIONS`). */
+  /** The local player's role skips the phone queue (reporter, per `ROLE_PERKS.skipsPhoneQueue`). */
   skipsQueue?: boolean;
   /** 0..1 share of `timeLimitMs` already used (for urgency visuals; a resumed round starts > 0). */
   timeUsed: number;

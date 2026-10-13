@@ -233,6 +233,25 @@ describe('ticks and snapshots', () => {
     });
   });
 
+  it('carries every player’s ability state in snapshots and ignores useAbility (S7-36)', () => {
+    const host = join('Ala');
+    const guest = join('Bartek', welcomeOf(host).roomCode);
+    registry.handleMessage(host, {
+      type: 'lobby',
+      action: { kind: 'setRole', role: 'managingEditor' },
+    });
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
+    startPastBriefing(host);
+    registry.handleMessage(host, { type: 'command', command: { kind: 'useAbility' } });
+    registry.tick();
+    const idle = { abilityReadyAtMs: 0, abilityArmed: false, fieldCall: null, rescuesLeft: 0 };
+    expect(guest.last('snapshot')?.crew).toEqual([
+      { id: welcomeOf(host).playerId, ...idle },
+      { id: welcomeOf(guest).playerId, ...idle },
+    ]);
+    expect(guest.all('event').some((e) => e.event.kind === 'ability')).toBe(false);
+  });
+
   it('announces the next scheduled folder in every snapshot, from the first one on', () => {
     const { guest } = startedRoom();
     // The default level, l0-greybox, deals its first folder at 3 s and the second at 21 s.
@@ -259,6 +278,97 @@ describe('ticks and snapshots', () => {
     const host = join('Ala');
     input(host, 0, 1, 0);
     expect(registry.inspect(welcomeOf(host).roomCode)?.players[0]?.queued).toBe(0);
+  });
+});
+
+describe('pausing from the in-game menu (S7-10)', () => {
+  function pause(connection: FakeConnection, paused: boolean): void {
+    registry.handleMessage(connection, { type: 'lobby', action: { kind: 'setPaused', paused } });
+  }
+
+  function soloRoom() {
+    const host = join('Ala');
+    startPastBriefing(host);
+    const code = welcomeOf(host).roomCode;
+    registry.tick();
+    registry.tick();
+    return { host, code };
+  }
+
+  it('freezes a solo level while paused and resumes where it stopped', () => {
+    const { host, code } = soloRoom();
+    expect(registry.inspect(code)?.game.elapsedMs).toBe(2 * TICK_MS);
+    pause(host, true);
+    expect(registry.inspect(code)?.paused).toBe(true);
+    expect(host.last('snapshot')).toMatchObject({ elapsedMs: 100, paused: true });
+    const snapshots = host.all('snapshot').length;
+    for (let i = 0; i < 40; i++) {
+      input(host, i, 1, 0);
+      registry.tick();
+    }
+    expect(registry.inspect(code)?.game.elapsedMs).toBe(100);
+    expect(registry.inspect(code)?.game.tick).toBe(2);
+    // Nothing is sent and no input waits for the resume.
+    expect(host.all('snapshot')).toHaveLength(snapshots);
+    expect(registry.inspect(code)?.players[0]?.queued).toBe(0);
+
+    pause(host, false);
+    registry.tick();
+    expect(registry.inspect(code)?.game.elapsedMs).toBe(150);
+    expect(host.last('snapshot')).toMatchObject({ elapsedMs: 150, paused: false });
+  });
+
+  it('is cleared when a second player joins, and then refused', () => {
+    const { host, code } = soloRoom();
+    pause(host, true);
+    const guest = join('Bartek', code);
+    expect(registry.inspect(code)?.paused).toBe(false);
+    registry.tick();
+    expect(registry.inspect(code)?.game.elapsedMs).toBe(150);
+    expect(guest.last('snapshot')).toMatchObject({ paused: false });
+
+    pause(host, true);
+    pause(guest, true);
+    registry.tick();
+    expect(registry.inspect(code)?.paused).toBe(false);
+    expect(registry.inspect(code)?.game.elapsedMs).toBe(200);
+  });
+
+  it('refuses a pause in a two-player room and outside the playing phase', () => {
+    const host = join('Ala');
+    const code = welcomeOf(host).roomCode;
+    pause(host, true);
+    expect(registry.inspect(code)?.paused).toBe(false);
+
+    const guest = join('Bartek', code);
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
+    startPastBriefing(host);
+    pause(host, true);
+    registry.tick();
+    expect(registry.inspect(code)?.paused).toBe(false);
+    expect(registry.inspect(code)?.game.elapsedMs).toBe(50);
+    expect(host.last('snapshot')).toMatchObject({ paused: false });
+  });
+
+  it('lets the last connected player pause while a teammate is away, until they return', () => {
+    const { host, code } = soloRoom();
+    const guest = join('Bartek', code);
+    const { reconnectToken } = welcomeOf(guest);
+    registry.handleDisconnect(guest, false);
+    pause(host, true);
+    expect(registry.inspect(code)?.paused).toBe(true);
+    join('Bartek', undefined, reconnectToken);
+    expect(registry.inspect(code)?.paused).toBe(false);
+  });
+
+  it('clears the pause when the solo player reloads (the menu comes back closed)', () => {
+    const { host, code } = soloRoom();
+    const { reconnectToken } = welcomeOf(host);
+    pause(host, true);
+    registry.handleDisconnect(host, false);
+    expect(registry.inspect(code)?.paused).toBe(true);
+    join('Ala', undefined, reconnectToken);
+    expect(registry.inspect(code)?.paused).toBe(false);
   });
 });
 

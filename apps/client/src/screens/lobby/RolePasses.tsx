@@ -1,7 +1,7 @@
 // Role picker: big chunky cards, each with the role's icon, its name and one short bonus line.
 // The chosen card lifts up with a blue ring and a ✓ badge. Native radios keep keyboard (arrows),
 // gamepad focus and screen-reader behaviour.
-import { ROLE_STATIONS, ROLE_WORK_TIME_FACTOR, ROLES, type Role } from '@redakcja/shared';
+import { ROLE_PERKS, ROLES, type Role } from '@redakcja/shared';
 import { useId } from 'react';
 import { emitCue } from '../../fx/feedback.ts';
 import { pl } from '../../strings/pl.ts';
@@ -17,8 +17,8 @@ function roleBonus(role: Role): string {
   return (
     special[role] ??
     pl.lobbyRoles.fasterAt(
-      ROLE_STATIONS[role].map((station) => pl.vocab.stations[station]),
-      Math.round((1 - ROLE_WORK_TIME_FACTOR) * 100),
+      ROLE_PERKS[role].fasterAt.map((station) => pl.vocab.stations[station]),
+      Math.round((1 - ROLE_PERKS[role].workFactor) * 100),
     )
   );
 }

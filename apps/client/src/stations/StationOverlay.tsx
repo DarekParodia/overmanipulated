@@ -8,7 +8,7 @@ import { getStory } from '@redakcja/content';
 import {
   type Folder,
   MINIGAME_STABLE_SEED_STATIONS,
-  ROLE_STATIONS,
+  ROLE_PERKS,
   type Station,
 } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -47,10 +47,7 @@ export type StationOverlayProps = {
 export function StationOverlay({ station, folder, onResult, onClose }: StationOverlayProps) {
   const device = useApp((s) => s.inputDevice);
   const role = useApp((s) => s.room?.players.find((p) => p.id === s.playerId)?.role);
-  const skipsQueue =
-    role !== undefined &&
-    role !== null &&
-    (ROLE_STATIONS[role] as readonly string[]).includes(station.kind);
+  const skipsQueue = role ? ROLE_PERKS[role].skipsPhoneQueue : false;
   const story = folder ? getStory(folder.storyId) : undefined;
   const seed = station.minigameSeed;
   const keepsCard = MINIGAME_STABLE_SEED_STATIONS.includes(station.kind);
