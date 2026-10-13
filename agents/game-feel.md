@@ -87,6 +87,13 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `event.correction.start` | `levelEvent` correction start | banner; siren with sweeping beam over the folder, yellow dot trail to the nearest desk | siren (`evcorrection`) | red/yellow alert dots | medium shake, buzz | ●●● |
 | `event.raidResolved` | `raidResolved` | banner "Nalot odparty!" | rising arpeggio (`evclear`) | confetti + glitch squares | small shake, thud | ●●● |
 | `event.end` | other `levelEvent` end | none | paper slap | dust | — | ● |
+| `ability.armed` / `ability.disarmed` | `ability` stage `armed` / `disarmed` (Ekspertyza, Druga szansa waiting for their trigger; S7-36) | — (armed badge lands in S7-42) | placeholder `copy` / soft back (`abpower` in S7-42) | ink puff in player colour / dust | light tick / — | ● |
+| `ability.expertise` | `ability` expertise `done`: the stamp lands without the minigame | — (`stamp.applied` slams it when the sim emits one) | rising chime (placeholder) | star burst + ink puff | success buzz | ●● |
+| `ability.call.start` / `.done` / `.dropped` | `ability` fieldCall `started` / `done` / `cancelled` (Telefon z terenu) | — / — / `wobble` (call bubble in S7-42) | phone bell `ping3` / quieter `ping3` / fail blips | ink puff / paper bits / smoke wisp | light tick / — / — | ● |
+| `ability.extendDeadline` | `ability` extendDeadline `done` (Przedłużenie; replaces `folder.deadlineExtended` in S7-37) | `hop`, `cardHop` | counter bell (`arrive`) | paper flutter ×6 | success buzz | ● |
+| `ability.secondChance` | `ability` secondChance `done` (Druga szansa: lockout gone, minigame reopens) | — | power-up (`evback`, quiet) | sparks ×6 | light tick | ● |
+| `ability.pass` | `ability` passFolder `done` (Podaj teczkę; the 450 ms arc lands in S7-42) | `hop` | paper rustle | paper flutter ×3 | light tick | ● |
+| `role.rescue` | `folderRescued` (Koło ratunkowe: a folder at its deadline in a Ratownik's hands gets +20 s) | `hop`, `cardHop` | rising arpeggio (`evclear`) | star burst | small shake, success buzz | ●● |
 | `ui.click` / `ui.hover` / `ui.back` | menus | button press | click / tick | — | light tick (mobile) | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |

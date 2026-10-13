@@ -116,12 +116,42 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 
 ## Roles (`RoleId`)
 
-| Polish | English | Bonus |
+Passives and abilities live in `ROLE_PERKS` (`RolePerk`, S7-36): `fasterAt` × `workFactor` is the
+passive, `ability` the active one (R / RB / the fourth touch button).
+
+| Polish | English | Bonus (passive) | Ability |
+| --- | --- | --- | --- |
+| Fotoedytor | `photoEditor` | `imageSearch` and `aiScanner` 40% faster | Ekspertyza (`image` family) |
+| Archiwista | `archivist` | `archive` 40% faster | Ekspertyza (`documents` family) |
+| Reporter | `reporter` | `phone` 40% faster; skips the `phone` queue | Telefon z terenu |
+| Redaktor prowadzący | `managingEditor` | Extends one folder's deadline per level (until S7-37) | Przedłużenie |
+
+## Abilities (`Ability`, Stage 7)
+
+| Polish | English | Notes |
 | --- | --- | --- |
-| Fotoedytor | `photoEditor` | `imageSearch` (and `aiScanner` image work) 40% faster |
-| Archiwista | `archivist` | `archive` 40% faster |
-| Reporter | `reporter` | Skips the `phone` queue |
-| Redaktor prowadzący | `managingEditor` | Extends one folder's deadline per level |
+| Zdolność (roli) | ability (`abilitySchema`, `ABILITY`, `abilityOf`) | A role's active power, sent as the target-free `useAbility` command; the server resolves the target |
+| Odnowienie | cooldown (`ABILITY[a].cooldownMs`, `abilityReadyAtMs`) | Time until the ability is ready again; starts when the effect happens, not when armed |
+| Uzbrojona | armed (`abilityArmed`, stage `armed`) | Ekspertyza and Druga szansa wait for their trigger; a second press disarms |
+| Ekspertyza | `expertise` | The next minigame at a station of the role's family is solved at once |
+| Telefon z terenu | `fieldCall` (`FieldCall`) | The carried folder gets its phone stamp after a call while walking |
+| Przedłużenie | `extendDeadline` | +20 s for a folder (`extendedMs`); the speed bonus ignores the added time |
+| Druga szansa | `secondChance` | A failed minigame reopens without the lockout |
+| Podaj teczkę | `passFolder` | The carried folder goes to the nearest free teammate |
+| Koło ratunkowe | `rescue` (passive; `rescuesLeft`, `RESCUE_ADD_MS`, `folderRescued`) | A folder that reaches its deadline in the rescuer's hands gets +20 s, once per level |
+| Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |
+| Stan zdolności załogi | crew ability state (`AbilityState`, `snapshot.crew`, `crewSnapshot`) | `abilityReadyAtMs`, `abilityArmed`, `fieldCall`, `rescuesLeft` per player |
+| Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
+
+## Station families (`StationFamily`, Stage 7)
+
+`STATION_FAMILY` maps every station kind (`familyStations(family)` lists them back); families only gate Ekspertyza.
+
+| Polish | English | Stations |
+| --- | --- | --- |
+| Obraz | `image` | `imageSearch`, `aiScanner` |
+| Dokumenty | `documents` | `archive`, `dataLibrary` |
+| Źródła | `sources` | `sourceRegistry`, `phone` |
 
 ## Random events (`EventKind`)
 

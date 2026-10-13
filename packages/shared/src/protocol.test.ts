@@ -13,11 +13,12 @@ const EMPTY_LEVEL = {
   deadlineExtensionUsed: false,
   nextFolder: { atMs: 3000, sinceMs: 0 },
   conveyorFull: false,
+  crew: [],
 };
 
 describe('protocol version', () => {
-  it('is 4 for the Stage 7 M2 wire (difficulty-scaled lockout, difficulty and run)', () => {
-    expect(PROTOCOL_VERSION).toBe(4);
+  it('is 5 for the Stage 7 M3 wire (abilities, crew state, stamp source)', () => {
+    expect(PROTOCOL_VERSION).toBe(5);
   });
 });
 
@@ -125,6 +126,12 @@ describe('client messages', () => {
         command: { kind: 'verdict', folderId: 'f1', verdict: 'reject', justifyingStampId: 's1' },
       }).ok,
     ).toBe(false);
+  });
+
+  it('accepts a target-free useAbility press (S7-36)', () => {
+    const command = (command: unknown) => parseClientMessage({ type: 'command', command }).ok;
+    expect(command({ kind: 'useAbility' })).toBe(true);
+    expect(command({ kind: 'useAbilities' })).toBe(false);
   });
 
   it('rejects unknown types and malformed JSON', () => {
@@ -271,6 +278,97 @@ describe('server messages', () => {
     expect(parse(withoutLockout)).toBe(false);
     expect(parse({ ...failed, lockoutMs: -1 })).toBe(false);
     expect(parse({ ...failed, lockoutMs: 1500.5 })).toBe(false);
+  });
+
+  it('carries every player’s ability state in the snapshot (S7-36)', () => {
+    const member = {
+      id: 'p1',
+      abilityReadyAtMs: 63_000,
+      abilityArmed: false,
+      fieldCall: { folderId: 'f2', endsAtMs: 9000 },
+      rescuesLeft: 1,
+    };
+    const parse = (crew: unknown) =>
+      parseServerMessage({ type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL, crew }).ok;
+    expect(parse([member])).toBe(true);
+    expect(
+      parse([{ ...member, id: 'p2', abilityArmed: true, fieldCall: null, rescuesLeft: 0 }]),
+    ).toBe(true);
+    expect(parse(Array.from({ length: 5 }, () => member))).toBe(false);
+    expect(parse([{ ...member, rescuesLeft: -1 }])).toBe(false);
+    expect(parse([{ ...member, fieldCall: { folderId: 'f2' } }])).toBe(false);
+    const { abilityArmed: _armed, ...withoutArmed } = member;
+    expect(parse([withoutArmed])).toBe(false);
+    const { crew: _crew, ...withoutCrew } = EMPTY_LEVEL;
+    expect(parseServerMessage({ type: 'snapshot', tick: 1, players: [], ...withoutCrew }).ok).toBe(
+      false,
+    );
+  });
+
+  it('carries ability stages and rescued folders as events (S7-36)', () => {
+    const parse = (event: unknown) => parseServerMessage({ type: 'event', tick: 7, event }).ok;
+    const ability = { kind: 'ability', playerId: 'p1', ability: 'extendDeadline', stage: 'done' };
+    expect(parse({ ...ability, folderId: 'f1', addedMs: 20_000 })).toBe(true);
+    for (const stage of ['armed', 'disarmed', 'started', 'done', 'cancelled']) {
+      expect(parse({ ...ability, ability: 'expertise', stage })).toBe(true);
+    }
+    expect(parse({ ...ability, ability: 'fieldCall', stage: 'cancelled', reason: 'dropped' })).toBe(
+      true,
+    );
+    expect(parse({ ...ability, ability: 'passFolder', folderId: 'f1', targetPlayerId: 'p2' })).toBe(
+      true,
+    );
+    expect(parse({ ...ability, ability: 'secondChance', stationId: 'archive-0' })).toBe(true);
+    expect(parse({ ...ability, ability: 'teleport' })).toBe(false);
+    expect(parse({ ...ability, stage: 'charging' })).toBe(false);
+    expect(parse({ ...ability, reason: 'bored' })).toBe(false);
+
+    const rescued = {
+      kind: 'folderRescued',
+      playerId: 'p3',
+      folderId: 'f4',
+      addedMs: 20_000,
+      folderIds: ['f4', 'f5'],
+    };
+    expect(parse(rescued)).toBe(true);
+    expect(parse({ ...rescued, folderIds: [] })).toBe(false);
+    expect(parse({ ...rescued, folderIds: Array.from({ length: 9 }, (_, i) => `f${i}`) })).toBe(
+      false,
+    );
+  });
+
+  it('says what earned a stamp (S7-36)', () => {
+    const stamp = {
+      kind: 'stampApplied',
+      stationId: 'phone-0',
+      playerId: 'p1',
+      folderId: 'f1',
+      stampId: 'l3-story-phone',
+    };
+    const parse = (event: unknown) => parseServerMessage({ type: 'event', tick: 7, event }).ok;
+    expect(parse({ ...stamp, via: 'minigame' })).toBe(true);
+    expect(parse({ ...stamp, via: 'expertise' })).toBe(true);
+    expect(parse({ ...stamp, via: 'fieldCall' })).toBe(true);
+    expect(parse({ ...stamp, via: 'magic' })).toBe(false);
+    expect(parse(stamp)).toBe(false);
+  });
+
+  it('lets a folder carry the time abilities added to it (S7-36)', () => {
+    const folder = {
+      id: 'f1',
+      spawnKey: 's0',
+      storyId: 'l1-story',
+      location: { kind: 'carried', playerId: 'p1' },
+      stamps: [],
+      spawnedAtMs: 0,
+      deadlineMs: 80_000,
+      warned: false,
+    };
+    const parse = (f: unknown) =>
+      parseServerMessage({ type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL, folders: [f] })
+        .ok;
+    expect(parse({ ...folder, extendedMs: 20_000 })).toBe(true);
+    expect(parse({ ...folder, extendedMs: -1 })).toBe(false);
   });
 
   it('accepts an endless levelEnd with an unfinished folder and no thresholds', () => {

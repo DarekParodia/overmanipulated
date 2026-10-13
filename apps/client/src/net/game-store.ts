@@ -2,6 +2,7 @@
 // buffer and prediction): folders, stations, desks, score, credibility, level timer, the next
 // scheduled folder and the level result. Updated on every snapshot; UI subscribes with selectors.
 import type {
+  CrewSnapshot,
   Desk,
   Folder,
   LevelEndMessage,
@@ -22,6 +23,8 @@ export type GameStore = {
   desks: readonly Desk[];
   /** The level's one deadline extension has been used. */
   deadlineExtensionUsed: boolean;
+  /** Every player's ability state (cooldown, armed, field call, rescues), in join order. */
+  crew: readonly CrewSnapshot[];
   /** Level times of the next scheduled folder and the previous one; null when none is left. */
   nextFolder: NextFolder | null;
   /** A scheduled folder is due but waits for a free conveyor tile. */
@@ -43,6 +46,7 @@ const EMPTY = {
   stations: [],
   desks: [],
   deadlineExtensionUsed: false,
+  crew: [],
   nextFolder: null,
   conveyorFull: false,
   levelEnd: null,
@@ -68,6 +72,7 @@ export const useGame = create<GameStore>((set, get) => ({
       stations: snapshot.stations,
       desks: snapshot.desks,
       deadlineExtensionUsed: snapshot.deadlineExtensionUsed,
+      crew: snapshot.crew,
       nextFolder: stableNextFolder(get().nextFolder, snapshot.nextFolder),
       conveyorFull: snapshot.conveyorFull,
     });
@@ -87,6 +92,14 @@ export function selectCarried(state: GameStore, playerId: string | null): Folder
   return playerId === null
     ? undefined
     : state.folders.find((f) => f.location.kind === 'carried' && f.location.playerId === playerId);
+}
+
+/** The given player's ability state, if they are in the crew. */
+export function selectCrewMember(
+  state: GameStore,
+  playerId: string | null,
+): CrewSnapshot | undefined {
+  return playerId === null ? undefined : state.crew.find((m) => m.id === playerId);
 }
 
 /** The station the given player operates, if any. */

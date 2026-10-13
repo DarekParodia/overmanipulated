@@ -7,6 +7,7 @@ export * from './map.ts';
 export * from './movement.ts';
 export * from './pings.ts';
 export * from './rng.ts';
+export * from './roles.ts';
 export * from './scoring.ts';
 export * from './state.ts';
 export * from './stations.ts';

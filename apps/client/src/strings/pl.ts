@@ -286,7 +286,7 @@ export const pl = {
     passesTitle: 'Wybierz rolę',
     noRole: 'Bez roli',
     noRoleBonus: 'Bez premii',
-    /** Speed bonus line built from ROLE_STATIONS and ROLE_WORK_TIME_FACTOR. */
+    /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor). */
     fasterAt: (stations: readonly string[], percent: number) =>
       `${stations.join(' i ')} +${percent}%`,
     /** Roles whose bonus is not (only) speed get their own line. */
@@ -1279,6 +1279,14 @@ export const pl = {
       tempoUp: 'Tempo rośnie',
       record: 'Nowy rekord',
       beltFull: 'Taśma pełna',
+      abilityArmed: 'Zdolność uzbrojona',
+      expertise: 'Ekspertyza!',
+      callStarted: 'Telefon z terenu',
+      callStamp: 'Pieczątka z terenu',
+      callDropped: 'Rozmowa przerwana',
+      secondChance: 'Druga szansa',
+      folderPassed: 'Teczka podana',
+      rescued: 'Teczka uratowana!',
     },
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---

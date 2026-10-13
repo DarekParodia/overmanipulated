@@ -233,6 +233,25 @@ describe('ticks and snapshots', () => {
     });
   });
 
+  it('carries every player’s ability state in snapshots and ignores useAbility (S7-36)', () => {
+    const host = join('Ala');
+    const guest = join('Bartek', welcomeOf(host).roomCode);
+    registry.handleMessage(host, {
+      type: 'lobby',
+      action: { kind: 'setRole', role: 'managingEditor' },
+    });
+    registry.handleMessage(guest, { type: 'lobby', action: { kind: 'setReady', ready: true } });
+    startPastBriefing(host);
+    registry.handleMessage(host, { type: 'command', command: { kind: 'useAbility' } });
+    registry.tick();
+    const idle = { abilityReadyAtMs: 0, abilityArmed: false, fieldCall: null, rescuesLeft: 0 };
+    expect(guest.last('snapshot')?.crew).toEqual([
+      { id: welcomeOf(host).playerId, ...idle },
+      { id: welcomeOf(guest).playerId, ...idle },
+    ]);
+    expect(guest.all('event').some((e) => e.event.kind === 'ability')).toBe(false);
+  });
+
   it('announces the next scheduled folder in every snapshot, from the first one on', () => {
     const { guest } = startedRoom();
     // The default level, l0-greybox, deals its first folder at 3 s and the second at 21 s.

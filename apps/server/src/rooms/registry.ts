@@ -20,6 +20,7 @@ import {
   COMMAND_QUEUE_MAX,
   conveyorBlocked,
   createGameState,
+  crewSnapshot,
   DEFAULT_DIFFICULTY,
   type Difficulty,
   ENDLESS,
@@ -771,6 +772,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       deadlineExtensionUsed: game.deadlineExtensionUsed,
       nextFolder: nextScheduledSpawn(game, schedule),
       conveyorFull: conveyorBlocked(game, schedule),
+      crew: crewSnapshot(game),
     });
   }
 

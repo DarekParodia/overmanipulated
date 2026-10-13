@@ -7,7 +7,7 @@ import {
   TICK_MS,
 } from '@redakcja/shared';
 import { reconnectDelayMs } from './backoff.ts';
-import { useGame } from './game-store.ts';
+import { selectCrewMember, useGame } from './game-store.ts';
 import { createPredictor } from './prediction.ts';
 import { createSnapshotBuffer, lerpAngle } from './snapshot-buffer.ts';
 
@@ -26,6 +26,7 @@ function snapshot(tick: number, x: number): SnapshotMessage {
     deadlineExtensionUsed: false,
     nextFolder: { atMs: 3000, sinceMs: 0 },
     conveyorFull: false,
+    crew: [{ id: 'p1', abilityReadyAtMs: 0, abilityArmed: false, fieldCall: null, rescuesLeft: 0 }],
   };
 }
 
@@ -157,6 +158,31 @@ describe('game store', () => {
     });
     useGame.getState().applySnapshot({ ...snapshot(13, 1), nextFolder: null });
     expect(useGame.getState()).toMatchObject({ nextFolder: null, conveyorFull: false });
+    useGame.getState().reset();
+  });
+
+  it('stores the crew’s ability state and finds a player in it (S7-36)', () => {
+    useGame.getState().reset();
+    expect(useGame.getState().crew).toEqual([]);
+    const calling = { folderId: 'f2', endsAtMs: 9000 };
+    useGame.getState().applySnapshot({
+      ...snapshot(10, 1),
+      crew: [
+        {
+          id: 'p1',
+          abilityReadyAtMs: 70_000,
+          abilityArmed: false,
+          fieldCall: null,
+          rescuesLeft: 0,
+        },
+        { id: 'p2', abilityReadyAtMs: 0, abilityArmed: false, fieldCall: calling, rescuesLeft: 0 },
+      ],
+    });
+    const state = useGame.getState();
+    expect(selectCrewMember(state, 'p1')?.abilityReadyAtMs).toBe(70_000);
+    expect(selectCrewMember(state, 'p2')?.fieldCall).toEqual(calling);
+    expect(selectCrewMember(state, 'p3')).toBeUndefined();
+    expect(selectCrewMember(state, null)).toBeUndefined();
     useGame.getState().reset();
   });
 });

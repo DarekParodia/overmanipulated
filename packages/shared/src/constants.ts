@@ -1,9 +1,9 @@
 // Balance and engine constants shared by client and server.
 // Change values here, never inline (AGENTS.md rule 6).
-import type { Difficulty, Role, StationKind } from './domain.ts';
+import type { Ability, Difficulty, Role, StationFamily, StationKind } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 4;
+export const PROTOCOL_VERSION = 5;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -112,14 +112,92 @@ export const STATION_WORK_MS = {
   dataLibrary: 5000,
 } as const satisfies Record<StationKind, number>;
 
-/** Role bonus: work time multiplier at the role's stations ("40% faster"). */
-export const ROLE_WORK_TIME_FACTOR = 0.6;
-export const ROLE_STATIONS = {
-  photoEditor: ['imageSearch', 'aiScanner'],
-  archivist: ['archive'],
-  reporter: ['phone'],
-  managingEditor: [],
-} as const satisfies Record<Role, readonly StationKind[]>;
+// --- Stage 7: roles, station families, abilities (S7-36) --------------------------------------
+
+/**
+ * The family of every station kind. In Stage 7 families only gate Ekspertyza (a photo editor's
+ * covers the image stations, an archivist's the documents); role passives keep explicit lists.
+ */
+export const STATION_FAMILY = {
+  imageSearch: 'image',
+  aiScanner: 'image',
+  archive: 'documents',
+  dataLibrary: 'documents',
+  sourceRegistry: 'sources',
+  phone: 'sources',
+} as const satisfies Record<StationKind, StationFamily>;
+
+/** What a role brings: its passive work bonus, its active ability and its special rules. */
+export type RolePerk = {
+  /** Stations where the role's hold-to-work time is multiplied by `workFactor` (the passive). */
+  fasterAt: readonly StationKind[];
+  /** Work-time multiplier at `fasterAt` stations ("40% faster" is 0.6); 1 elsewhere. */
+  workFactor: number;
+  /** The role's active ability (R / RB / the fourth touch button). */
+  ability: Ability;
+  /** The station family the role's Ekspertyza covers; null for roles without Ekspertyza. */
+  expertiseFamily: StationFamily | null;
+  /** The phone minigame starts without the queue (client-side, design doc). */
+  skipsPhoneQueue: boolean;
+  /** Koło ratunkowe: deadline rescues of a carried folder per level (0 without the perk). */
+  rescuesPerLevel: number;
+};
+
+export const ROLE_PERKS = {
+  photoEditor: {
+    fasterAt: ['imageSearch', 'aiScanner'],
+    workFactor: 0.6,
+    ability: 'expertise',
+    expertiseFamily: 'image',
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  archivist: {
+    fasterAt: ['archive'],
+    workFactor: 0.6,
+    ability: 'expertise',
+    expertiseFamily: 'documents',
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  reporter: {
+    fasterAt: ['phone'],
+    workFactor: 0.6,
+    ability: 'fieldCall',
+    expertiseFamily: null,
+    skipsPhoneQueue: true,
+    rescuesPerLevel: 0,
+  },
+  managingEditor: {
+    fasterAt: [],
+    workFactor: 1,
+    ability: 'extendDeadline',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+} as const satisfies Record<Role, RolePerk>;
+
+/**
+ * Ability tuning. Every cooldown starts at 60 s and is retuned only from bot data (S7-46); the
+ * cooldown starts when the effect happens, not when an ability is armed.
+ * - fieldCall.callMs: how long Telefon z terenu dials before the phone stamp lands;
+ * - extendDeadline.addMs: time Przedłużenie adds to a folder (a botRaid wave moves together);
+ * - secondChance.rangeTiles: how far a locked station may be for an immediate Druga szansa;
+ * - passFolder.rangeTiles: how far Podaj teczkę reaches a free teammate.
+ */
+export const ABILITY = {
+  expertise: { cooldownMs: 60_000 },
+  fieldCall: { cooldownMs: 60_000, callMs: 6000 },
+  extendDeadline: { cooldownMs: 60_000, addMs: 20_000 },
+  secondChance: { cooldownMs: 60_000, rangeTiles: 2.5 },
+  passFolder: { cooldownMs: 60_000, rangeTiles: 6 },
+} as const satisfies Record<Ability, { cooldownMs: number } & Record<string, number>>;
+
+/** Koło ratunkowe: time added to a folder that reaches its deadline in a Ratownik's hands. */
+export const RESCUE_ADD_MS = 20_000;
+/** Abilities are first ready this long after the level (or a mid-game join) starts. */
+export const ABILITY_FIRST_READY_MS = 0;
 
 /** A failed minigame blocks the station for this long ("failure costs time"). */
 export const MINIGAME_FAIL_LOCKOUT_MS = 3000;
