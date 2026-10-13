@@ -1,8 +1,10 @@
 // On-screen touch controls (agents/platforms.md): a floating joystick appears where the thumb
 // lands on the movement half (a faint one rests in the corner to show where); chunky round
-// action buttons with an icon and a short label sit under the other thumb. Mirrored for
-// left-handed players.
+// action buttons with an icon and a short label sit under the other thumb; with a role the
+// fourth one is the role ability (abilities/AbilityButton, S7-40). Mirrored for left-handed
+// players.
 import { type CSSProperties, type PointerEvent, useRef, useState } from 'react';
+import { AbilityButton } from '../abilities/AbilityButton.tsx';
 import { emitCue } from '../fx/feedback.ts';
 import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { pressPingAgain, usePings } from '../pings/ping-store.ts';
@@ -102,6 +104,7 @@ export function TouchControls() {
         )}
       </div>
       <div className={styles.buttons}>
+        <AbilityButton />
         <button
           type="button"
           className={`${styles.action} ${styles.work}`}

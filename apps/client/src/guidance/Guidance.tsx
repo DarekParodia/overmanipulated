@@ -1,6 +1,7 @@
 // Guidance during play: the purple "what next" hint bubble at the bottom centre, replaced by the
 // first-game tutorial card while the tutorial runs. Neither blocks input: the game keeps
 // running underneath and only the skip button takes pointer events.
+import { abilityOf } from '@redakcja/shared';
 import { useGame } from '../net/game-store.ts';
 import { isCoarsePointer } from '../scene/quality.ts';
 import { useApp } from '../store/app.ts';
@@ -37,12 +38,17 @@ export function Guidance() {
   const device = useApp((s) => s.inputDevice);
   const leftHanded = useSettings((s) => s.leftHanded);
   const touch = device === 'touch' || isCoarsePointer();
+  // The keyboard / gamepad ability chip (S7-40) shows for every player with a role.
+  const hasAbility = useApp(
+    (s) => abilityOf(s.room?.players.find((p) => p.id === s.playerId)?.role ?? null) !== null,
+  );
+  const chipClear = !touch && hasAbility;
   if (ended) {
     return null;
   }
   return (
     <div
-      className={`${styles.dock} ${touch ? styles.touch : ''} ${leftHanded ? styles.leftHanded : ''}`}
+      className={`${styles.dock} ${touch ? styles.touch : ''} ${leftHanded ? styles.leftHanded : ''} ${chipClear ? styles.chipClear : ''}`}
     >
       {tutorialStep !== null ? <Tutorial step={tutorialStep} /> : <HintBubble />}
     </div>

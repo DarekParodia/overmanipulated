@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { defaultSettings } from '../store/settings.ts';
 import {
+  abilityKeyCap,
   controlRows,
   keyLabel,
   nextTab,
@@ -99,6 +100,11 @@ describe('controls help', () => {
     expect(ability('keyboard')).toEqual([['R']]);
     expect(ability('gamepad')).toEqual([['RB']]);
     expect(ability('touch')).toEqual([['Zdolność']]);
+  });
+
+  test('the HUD chip shows the same caps (S7-40)', () => {
+    expect(abilityKeyCap('keyboard')).toBe('R');
+    expect(abilityKeyCap('gamepad')).toBe('RB');
   });
 
   test('key labels', () => {

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { startCaptions } from './a11y/caption-store.ts';
+import { useAdRequestPause } from './ads/use-ad-pause.ts';
 import { PerfOverlay } from './debug/PerfOverlay.tsx';
 import { EncyclopediaScreen } from './encyclopedia/EncyclopediaScreen.tsx';
 import { initAudio, playSound } from './fx/audio/audio-manager.ts';
@@ -22,6 +23,7 @@ import { applySettingsToDocument, useSettings } from './store/settings.ts';
 export function App() {
   const screen = useApp((s) => s.screen);
   useMenuNavigation();
+  useAdRequestPause();
 
   useEffect(() => {
     if (new URLSearchParams(window.location.search).has('styleguide')) {

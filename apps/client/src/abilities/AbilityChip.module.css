@@ -1,0 +1,72 @@
+/*
+ * Role ability chip (S7-40): bottom-left on keyboard and gamepad (the HUD layer's `--hud-left`),
+ * a white pill like the HUD pill with the ring on its left end. Ready is green (not yellow: the
+ * screen keeps one yellow action), armed blue, a call orange, cooling and blocked grey.
+ * The guidance dock keeps `--ability-chip-reserve` free on both sides while the chip shows.
+ */
+.chip {
+  position: absolute;
+  left: var(--hud-left);
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: var(--ability-chip-w);
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-1);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  pointer-events: none;
+}
+
+.ring {
+  --ring-size: 4rem;
+  background: var(--surface);
+}
+
+.text {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  white-space: nowrap;
+}
+
+.status {
+  overflow: hidden;
+  font-size: var(--text-md);
+  color: var(--text-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ready .status {
+  color: var(--green-dark);
+}
+
+.armed .status {
+  color: var(--blue-dark);
+}
+
+/* Blocked: nothing to do here; the ring and the icon fade back, the reason stays readable. */
+.blocked .ring {
+  opacity: 0.55;
+}
+
+/* Koło ratunkowe hangs on the ring's top edge. */
+.rescue {
+  position: absolute;
+  top: calc(-1 * var(--space-3));
+  left: var(--space-6);
+}

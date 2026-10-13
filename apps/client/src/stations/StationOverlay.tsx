@@ -4,6 +4,11 @@
 // A station that keeps its card (the Kartoteka, MINIGAME_STABLE_SEED_STATIONS) starts a round
 // that follows a cancel with the clock that was left (S7-14, retry-memory.ts). The room's
 // difficulty sets the time limit and whether a failure shows the answer (S7-24, rules.ts).
+// Role abilities (S7-41): R / RB arrive here as the nav intent `ability` while the overlay owns
+// the input. In a minigame the player's Ekspertyza covers, the header offers it (a button with
+// the key cap; icon only on phones, where it is the only way to use it mid-minigame): the round
+// is settled, the press is sent and the button waits for the server to stamp and free the
+// station. Any other press goes the same way as one in the world (`runtime.pressAbility`).
 // The first time this browser opens a station, its help card covers the minigame, which starts
 // only when the card is closed; the '?' in the header (H / Select) brings the card back. While
 // the card is up the client clock stands still and the card takes every nav intent (S7-95). The
@@ -16,12 +21,17 @@ import {
   type Station,
 } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ABILITY_ICON } from '../abilities/ability-icons.ts';
+import { localAbility, useLocalAbility } from '../abilities/use-ability.ts';
 import { emitCue } from '../fx/feedback.ts';
+import { useEffectiveHints } from '../guidance/store.ts';
 import { type NavIntent, subscribeNav, useInputCapture } from '../input/ui-nav.ts';
-import { sendCommand } from '../net/session.ts';
-import { useApp } from '../store/app.ts';
+import { runtime, sendCommand } from '../net/session.ts';
+import { abilityKeyCap } from '../screens/settings-model.ts';
+import { type InputDevice, useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
+import { ProgressRing } from '../ui/ProgressRing.tsx';
 import { KeyCap, ResultMark, STATION_ICON } from './kit.tsx';
 import { minigameFor } from './minigames/index.ts';
 import { recallCard, roundClockMs, useRetryMemory } from './minigames/retry-memory.ts';
@@ -31,7 +41,16 @@ import { secondsLeft } from './overlay-logic.ts';
 import { StationHelpCard } from './StationHelpCard.tsx';
 import styles from './StationOverlay.module.css';
 import { markStationHelpSeen, stationHelpSeen } from './station-help-store.ts';
+import { expertiseOffered, secondChanceOffered } from './station-round.ts';
 import { useMinigameClock } from './use-minigame-clock.ts';
+
+/**
+ * A sent Ekspertyza with no stamp by then gives the round back to the player (the server found
+ * nothing to do, e.g. a teammate's stamp landed first), so the overlay never hangs.
+ */
+const EXPERTISE_PENDING_TIMEOUT_MS = 4000;
+/** How often the lockout plate re-renders its countdown. */
+const LOCKOUT_TICK_MS = 250;
 
 export type StationOverlayProps = {
   station: Station;
@@ -68,6 +87,9 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
   helpOpenRef.current = helpOpen;
   const clock = useMinigameClock(limitMs, helpOpen, resumeMs);
   const settled = useRef(false);
+  const playerId = useApp((s) => s.playerId);
+  const local = useLocalAbility(runtime);
+  const [expertiseSent, setExpertiseSent] = useState(false);
   const playable = story !== undefined;
 
   useInputCapture(true);
@@ -126,15 +148,38 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
     onClose();
   }, [keepsCard, playable, gameStarted, readRemaining, seed, onClose]);
 
+  /** Ekspertyza mid-minigame: the round ends here, the server stamps and frees the station. */
+  const sendExpertise = useCallback(() => {
+    if (settled.current) {
+      return;
+    }
+    settled.current = true;
+    emitCue('ui.click');
+    setExpertiseSent(true);
+    sendCommand({ kind: 'useAbility' });
+  }, []);
+
+  useEffect(() => {
+    if (!expertiseSent) {
+      return;
+    }
+    const timer = setTimeout(() => {
+      settled.current = false;
+      setExpertiseSent(false);
+    }, EXPERTISE_PENDING_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [expertiseSent]);
+
   useEffect(() => {
     if (playable && clock.remainingMs <= 0) {
       finish(false);
     }
   }, [playable, clock.remainingMs, finish]);
 
-  // The frame takes `back` and `help`; everything else goes on to the minigame inside. While
-  // the help card is up it takes every intent: confirm, back and help close the card (never the
-  // station), the rest does nothing.
+  // The frame takes `back`, `help` and `ability`; everything else goes on to the minigame
+  // inside, except while a sent Ekspertyza waits for its stamp. While the help card is up it
+  // takes every intent: confirm, back and help close the card (never the station), the rest
+  // does nothing.
   const onIntent = useRef<(intent: NavIntent) => unknown>(() => false);
   onIntent.current = (intent) => {
     if (helpOpenRef.current) {
@@ -144,9 +189,20 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
       }
       return true;
     }
+    if (expertiseSent) {
+      return true;
+    }
     if (intent === 'help') {
       emitCue('ui.click');
       openHelp();
+      return true;
+    }
+    if (intent === 'ability') {
+      if (expertiseOffered(localAbility(runtime, playerId), station.id)) {
+        sendExpertise();
+      } else {
+        runtime.pressAbility();
+      }
       return true;
     }
     if (intent !== 'back') {
@@ -175,6 +231,11 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
       backKey={pl.station.backKey[device]}
       onClose={close}
       testId="station-overlay"
+      headerAction={
+        expertiseSent || expertiseOffered(local, station.id) ? (
+          <ExpertiseButton device={device} sending={expertiseSent} onPress={sendExpertise} />
+        ) : undefined
+      }
       help={
         helpOpen
           ? undefined
@@ -205,20 +266,22 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
       }
     >
       {!gameStarted ? null : story ? (
-        <Game
-          seed={seed}
-          folderId={folder?.id ?? ''}
-          difficulty={rules.difficulty}
-          timeLimitMs={limitMs}
-          revealOnFail={rules.revealOnFail}
-          {...(resumeMs === undefined ? {} : { resumeMs })}
-          story={story}
-          stamp={story.stamps.find((s) => s.station === station.kind)}
-          device={device}
-          skipsQueue={skipsQueue}
-          timeUsed={timeUsed}
-          onDone={finish}
-        />
+        <div className={expertiseSent ? styles.sending : undefined} aria-busy={expertiseSent}>
+          <Game
+            seed={seed}
+            folderId={folder?.id ?? ''}
+            difficulty={rules.difficulty}
+            timeLimitMs={limitMs}
+            revealOnFail={rules.revealOnFail}
+            {...(resumeMs === undefined ? {} : { resumeMs })}
+            story={story}
+            stamp={story.stamps.find((s) => s.station === station.kind)}
+            device={device}
+            skipsQueue={skipsQueue}
+            timeUsed={timeUsed}
+            onDone={finish}
+          />
+        </div>
       ) : (
         <p className={styles.empty}>{folder ? pl.station.unknownStory : pl.station.noFolder}</p>
       )}
@@ -226,9 +289,46 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
   );
 }
 
-/** Ring geometry for the work prompt (SVG units). */
-const RING_R = 26;
-const RING_C = 2 * Math.PI * RING_R;
+/**
+ * The header's Ekspertyza button: the ability icon, the name and the key cap (R / RB); only the
+ * icon on phones. While the press is on its way it reads „Ekspertyza…” and takes no more taps.
+ */
+function ExpertiseButton({
+  device,
+  sending,
+  onPress,
+}: {
+  device: InputDevice;
+  sending: boolean;
+  onPress(): void;
+}) {
+  // The short name, as on the HUD chip, leaves the header's time bar room; the full name is the
+  // accessible one.
+  const label = sending ? pl.station.expertiseSending : pl.vocab.abilities.expertise;
+  const shown = sending ? pl.station.expertiseSending : pl.touch.ability.expertise;
+  return (
+    <button
+      type="button"
+      className={styles.expertise}
+      aria-label={label}
+      title={label}
+      disabled={sending}
+      data-testid="station-expertise"
+      data-sending={sending || undefined}
+      onClick={onPress}
+    >
+      <Icon name={ABILITY_ICON.expertise} size={26} />
+      <span className={styles.expertiseText} aria-hidden="true">
+        {shown}
+      </span>
+      {device !== 'touch' && !sending && (
+        <span className={styles.expertiseKey} aria-hidden="true">
+          <KeyCap>{abilityKeyCap(device)}</KeyCap>
+        </span>
+      )}
+    </button>
+  );
+}
 
 /** While the player holds the work button: a big progress ring and "Hold [key]". */
 export function WorkPrompt({ station }: { station: Station }) {
@@ -237,29 +337,14 @@ export function WorkPrompt({ station }: { station: Station }) {
     station.durationMs > 0 ? Math.min(1, station.progressMs / station.durationMs) : 0;
   return (
     <div className={`panel ${styles.plate}`} role="status" data-testid="work-prompt">
-      <span
+      <ProgressRing
+        progress={progress}
+        tone="work"
         className={styles.ring}
-        role="progressbar"
-        aria-label={pl.vocab.stations[station.kind]}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress * 100)}
+        label={pl.vocab.stations[station.kind]}
       >
-        <svg viewBox="0 0 64 64" aria-hidden="true">
-          <circle className={styles.ringTrack} cx={32} cy={32} r={RING_R} />
-          <circle
-            className={styles.ringFill}
-            cx={32}
-            cy={32}
-            r={RING_R}
-            strokeDasharray={RING_C}
-            strokeDashoffset={RING_C * (1 - progress)}
-          />
-        </svg>
-        <span className={styles.ringIcon}>
-          <Icon name={STATION_ICON[station.kind]} size={26} />
-        </span>
-      </span>
+        <Icon name={STATION_ICON[station.kind]} size={26} />
+      </ProgressRing>
       <span className={styles.plateText}>
         {device === 'touch' ? (
           <span>{pl.station.holdTouch}</span>
@@ -274,12 +359,28 @@ export function WorkPrompt({ station }: { station: Station }) {
   );
 }
 
-/** "Missed, wait" plate after a lost minigame; disappears when the lockout runs out. */
-export function LockoutNote({ until, onDone }: { until: number; onDone(): void }) {
+/**
+ * "Missed, wait" plate after a lost minigame; disappears when the lockout runs out. When the
+ * local Druga szansa would reopen the locked station now, a hint line names the press (the key
+ * cap, or the ability icon pointing at the touch button); hidden with the effective hints off.
+ */
+export function LockoutNote({
+  until,
+  stationId,
+  onDone,
+}: {
+  until: number;
+  /** The locked station, from the server's `minigameFailed`; null when unknown. */
+  stationId: string | null;
+  onDone(): void;
+}) {
+  const device = useApp((s) => s.inputDevice);
+  const local = useLocalAbility(runtime);
+  const hintsOn = useEffectiveHints();
   const [now, setNow] = useState(() => performance.now());
   const left = until - now;
   useEffect(() => {
-    const timer = setInterval(() => setNow(performance.now()), 250);
+    const timer = setInterval(() => setNow(performance.now()), LOCKOUT_TICK_MS);
     return () => clearInterval(timer);
   }, []);
   useEffect(() => {
@@ -290,6 +391,7 @@ export function LockoutNote({ until, onDone }: { until: number; onDone(): void }
   if (left <= 0) {
     return null;
   }
+  const offered = secondChanceOffered(local, stationId, hintsOn);
   return (
     <div
       className={`panel ${styles.plate} ${styles.failed}`}
@@ -302,6 +404,16 @@ export function LockoutNote({ until, onDone }: { until: number; onDone(): void }
         <span className={styles.wait}>
           {pl.station.wait} {pl.station.seconds(secondsLeft(left))}
         </span>
+        {offered && (
+          <span className={styles.second} data-testid="lockout-second-chance">
+            {device === 'touch' ? (
+              <Icon name={ABILITY_ICON.secondChance} size={20} />
+            ) : (
+              <KeyCap>{abilityKeyCap(device)}</KeyCap>
+            )}
+            {pl.vocab.abilities.secondChance}
+          </span>
+        )}
       </span>
     </div>
   );

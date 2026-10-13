@@ -85,6 +85,11 @@ const PAD_FACE: Readonly<Record<number, string>> = {
   [PAD.select]: 'Select',
 };
 
+/** The role ability's key cap for a device with keys (the HUD chip, S7-40). */
+export function abilityKeyCap(device: 'keyboard' | 'gamepad'): string {
+  return device === 'gamepad' ? (PAD_FACE[PAD.rb] ?? '') : keyLabel(KEY_BINDINGS.ability[0]);
+}
+
 /** The keyboard key that opens the station help in an overlay (S7-95). */
 const HELP_KEY = Object.keys(NAV_KEYS).find((code) => NAV_KEYS[code] === 'help') ?? '';
 

@@ -12,7 +12,8 @@ import {
   TICK_MS,
   type TileMap,
 } from '@redakcja/shared';
-import { localAbilityPress } from '../abilities/ability-press.ts';
+import { abilityPressOutcome } from '../abilities/ability-model.ts';
+import { localAbility } from '../abilities/use-ability.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { sampleInput } from '../input/input-manager.ts';
 import { openPingPicker } from '../pings/ping-store.ts';
@@ -50,6 +51,11 @@ export type GameRuntime = {
   frame(now: number, dtMs: number): Map<string, RenderedPlayer>;
   /** Clears all match state; `levelId` selects the map for the next match. */
   reset(levelId?: string): void;
+  /**
+   * One role ability press from an overlay that captures the input (R / RB as the nav intent
+   * `ability`, S7-41): sent, or refused here with the "denied" cue, like a press in the world.
+   */
+  pressAbility(): void;
 };
 
 export function createRuntime(
@@ -66,9 +72,13 @@ export function createRuntime(
   /** The server holds the level still (solo menu, S7-10): no input is sent or predicted. */
   let paused = false;
 
-  /** One role ability press (S7-39): sent, or refused here with the local "denied" cue. */
+  /**
+   * One role ability press (S7-39): sent, or refused here with the local "denied" cue, as the
+   * shared ability preview says (S7-40).
+   */
   function pressAbility(localId: string | null): void {
-    if (localAbilityPress(localId) === 'send') {
+    const sources = { map, buffer, predictor };
+    if (abilityPressOutcome(localAbility(sources, localId).preview) === 'send') {
       sendCommand({ kind: 'useAbility' });
     } else {
       emitCue('ability.denied');
@@ -82,6 +92,12 @@ export function createRuntime(
     buffer,
     get predictor() {
       return predictor;
+    },
+
+    pressAbility() {
+      if (localKnown && !paused) {
+        pressAbility(getLocalId());
+      }
     },
 
     onSnapshot(snapshot, receivedAt) {

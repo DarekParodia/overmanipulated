@@ -1,6 +1,8 @@
 // All player-facing Polish text. Keys are English; wording follows agents/design-rules.md §9:
 // a gruff, warm editor-in-chief — short, concrete, newsroom vocabulary, no marketing voice.
 import type {
+  Ability,
+  AbilityBlockReason,
   Difficulty,
   ErrorCode,
   FolderBonuses,
@@ -14,8 +16,10 @@ import type {
   StoryType,
   Verdict,
 } from '@redakcja/shared';
+import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
+import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import { listPl, pluralPl } from './plural.ts';
 
@@ -66,6 +70,13 @@ export const pl = {
     needByline: 'Najpierw wpisz podpis.',
     needCode: 'Kod ma cztery litery.',
     pressDown: 'Serwer gry nie odpowiada.',
+    /** Message of the day (S7-72): the banner's name and its close button. */
+    motdLabel: 'Komunikat redakcji',
+    motdClose: 'Zamknij komunikat',
+  },
+  /** Ads (S7-73): the frame's label, also its name for screen readers. */
+  ads: {
+    label: 'Reklama',
   },
   lobby: {
     codeLabel: 'Kod pokoju',
@@ -116,6 +127,14 @@ export const pl = {
     joystick: 'Ruch',
     /** The fourth thumb button before it shows the role's own ability (S7-39). */
     abilityGeneric: 'Zdolność',
+    /** The fourth thumb button's one-word label per ability (S7-40). */
+    ability: {
+      expertise: 'Ekspert',
+      fieldCall: 'Dzwoń',
+      extendDeadline: `+${ABILITY.extendDeadline.addMs / 1000}\u00a0s`,
+      secondChance: 'Szansa',
+      passFolder: 'Podaj',
+    } satisfies Record<Ability, string>,
   },
   connection: {
     connecting: 'Łączenie…',
@@ -294,7 +313,17 @@ export const pl = {
       archivist: 'Archiwista',
       reporter: 'Reporter',
       managingEditor: 'Redaktor prowadzący',
+      generalist: 'Wszechstronny',
+      rescuer: 'Ratownik',
     } satisfies Record<Role, string>,
+    /** Role abilities (S7-36, glossary): the HUD chip's accessible name and the help texts. */
+    abilities: {
+      expertise: 'Ekspertyza',
+      fieldCall: 'Telefon z terenu',
+      extendDeadline: 'Przedłużenie',
+      secondChance: 'Druga szansa',
+      passFolder: 'Podaj teczkę',
+    } satisfies Record<Ability, string>,
     pings: {
       needArchive: 'Potrzebuję Archiwum!',
       fake: 'Fałszywka!',
@@ -323,6 +352,19 @@ export const pl = {
     noRoleBonus: 'Bez premii',
     /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor), short station names. */
     fasterAt: (stations: readonly string[], percent: number) => `${listPl(stations)} +${percent}%`,
+    /** Speed bonus line of a role that is faster at every station (Wszechstronny). */
+    everywhereFaster: (percent: number) => `Wszędzie +${percent}%`,
+    /** Bonus line of a role with Koło ratunkowe (Ratownik), from RESCUE_ADD_MS. */
+    rescuePassive: (seconds: number) => `Raz ratuje teczkę (+${seconds}\u00a0s)`,
+    /** What each role's ability does, in a few words (lobby detail panel, tutorial; S7-44/45). */
+    abilityWhat: {
+      photoEditor: 'zadanie przy obrazie od razu',
+      archivist: 'zadanie przy dokumentach od razu',
+      reporter: 'pieczątka Telefonu bez chodzenia',
+      managingEditor: `+${ABILITY.extendDeadline.addMs / 1000}\u00a0s dla teczki w\u00a0ręce lub najpilniejszej`,
+      generalist: 'po pudle od razu jeszcze raz',
+      rescuer: 'rzut do najbliższej wolnej osoby',
+    } satisfies Record<Role, string>,
     /** Roles whose bonus is not (only) speed get their own line. */
     specialBonuses: {
       reporter: 'Telefon bez kolejki',
@@ -401,6 +443,40 @@ export const pl = {
     evidenceNeed: (need: number) => `Wymaga ${need} dowodów`,
     evidenceShortHave: (have: number, need: number) => `${have}/${need}`,
     evidenceShortNeed: (need: number) => `×${need}`,
+    /**
+     * The role ability chip (keyboard and gamepad) and the touch button (S7-40): a status of at
+     * most two words under the ability's short name.
+     */
+    ability: {
+      ready: 'Gotowa',
+      armed: 'Uzbrojona',
+      calling: 'Dzwonię…',
+      /** Cooling down; the ring shows the seconds left. */
+      cooling: 'Odnowienie',
+      blocked: {
+        noStation: 'Nie tutaj',
+        noFolder: 'Weź teczkę',
+        noStamp: 'Bez Telefonu',
+        noPhone: 'Brak Telefonu',
+        noTarget: 'Nikt wolny',
+        noFolders: 'Brak teczek',
+        busy: 'Zajęty',
+      } satisfies Record<AbilityBlockReason, string>,
+      /** Accessible name of the chip and the button: ability name and its status. */
+      label: (name: string, status: string) => `${name}: ${status}`,
+      /** The same while the ring counts down (cooling, a field call). */
+      labelSeconds: (name: string, status: string, s: number) => `${name}: ${status}, ${s}\u00a0s`,
+      /** Koło ratunkowe's badge next to the chip or the button. */
+      rescueReady: 'Koło ratunkowe gotowe',
+      rescueUsed: 'Koło ratunkowe zużyte',
+      /** The folder card's mark after Przedłużenie or Koło ratunkowe (seconds added). */
+      extended: (s: number) => `+${s}`,
+      extendedLabel: (s: number) => `Przedłużona o\u00a0${s}\u00a0s`,
+      /** The folder card the local player's ready ability press would act on. */
+      targetLabel: 'Cel twojej zdolności',
+      /** The folder card carried by a Ratownik with the rescue left. */
+      rescueLabel: 'Chroni ją koło ratunkowe',
+    },
     /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
       credibility: (delta: string) => `wiarygodność ${delta}`,
@@ -487,6 +563,13 @@ export const pl = {
     seconds: (s: number) => `${s} s`,
     noFolder: 'Brak teczki na stanowisku.',
     unknownStory: 'Nieznana teczka.',
+    /**
+     * Role abilities around the overlay (S7-41). The header's Ekspertyza button shows
+     * `touch.ability.expertise` (accessible name from `vocab.abilities`) and the lockout plate's
+     * line `vocab.abilities.secondChance`; this is the button while the press is on its way
+     * (the overlay closes when the stamp lands).
+     */
+    expertiseSending: 'Ekspertyza…',
   },
   desk: {
     title: 'Stół redakcyjny',
@@ -912,6 +995,72 @@ export const pl = {
       ],
     },
     /**
+     * Mapa (S7-55): the folder's photo shows two landmarks and its caption names a district; the
+     * town map shows each district's two landmarks. All districts are invented parts of Nowe
+     * Brzegi; the landmarks are generic shapes, no real buildings.
+     */
+    geolocation: {
+      task: 'Znajdź na mapie miejsce ze zdjęcia',
+      /** The caption chip on the photo: where the folder says it was taken. */
+      caption: (district: string) => `Podpis: ${district}`,
+      notHere: 'Nie ma na mapie',
+      right: 'Namierzone!',
+      wrong: 'Pudło!',
+      /** Shown after the round: where the photo was really taken. */
+      reasons: {
+        match: () => 'Zdjęcie z miejsca z podpisu.',
+        otherDistrict: (claimed: string, actual: string) => `To nie ${claimed} – to ${actual}.`,
+        otherTown: () => 'Tych miejsc nie ma w Nowych Brzegach.',
+      } satisfies Record<GeoOutcome, (claimed: string, actual: string) => string>,
+      /** Screen-reader names: the photo and one district tile. */
+      photoLabel: (a: string, b: string) => `Zdjęcie: ${a} i ${b}`,
+      tileLabel: (district: string, a: string, b: string) => `${district}: ${a} i ${b}`,
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'tu!' },
+          { keys: ['Q'], label: 'nie ma na mapie' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'tu!' },
+          { keys: ['Y'], label: 'nie ma na mapie' },
+        ],
+        touch: [
+          { keys: ['Stuknij'], label: 'dzielnicę' },
+          { keys: ['Nie ma na mapie'], label: 'inne miasto' },
+        ],
+      } satisfies KeyHints,
+      /** Twelve invented districts of Nowe Brzegi, each ≤ 9 characters to fit a map tile. */
+      districts: [
+        'Rynek',
+        'Port',
+        'Dworzec',
+        'Lipowa',
+        'Klonowa',
+        'Młyny',
+        'Zatoka',
+        'Wzgórze',
+        'Park',
+        'Nadrzecze',
+        'Stocznia',
+        'Błonia',
+      ],
+      /** Landmark names, for screen readers (the glyphs carry the meaning on screen). */
+      landmarks: {
+        clockTower: 'wieża zegarowa',
+        archBridge: 'most łukowy',
+        fountain: 'fontanna',
+        tramStop: 'przystanek tramwajowy',
+        twinChurch: 'kościół z dwiema wieżami',
+        waterTower: 'wieża ciśnień',
+        portCrane: 'dźwig portowy',
+        windmill: 'wiatrak',
+        lighthouse: 'latarnia morska',
+        monument: 'pomnik',
+      } satisfies Record<Landmark, string>,
+    },
+    /**
      * Metadane (S7-52): the folder's description of a file next to the file's own data. One
      * field contradicts the description, none does, or a social site stripped the data.
      * All places, devices and programs are invented; no real brands or towns.
@@ -1017,6 +1166,251 @@ export const pl = {
       ],
       /** Invented other towns: where a contradicting file was really made. */
       otherTowns: ['Srebrne Wydmy', 'Mglisty Bród', 'Kamienna Zatoka', 'Wysokie Sady'],
+    },
+    /**
+     * Stenogram (S7-53): the clip quoted in the folder next to the full record of what was said
+     * (four numbered lines). Find the line the clip comes from, or answer „Nie ma w zapisie”;
+     * then judge whether the cut changes the meaning. All speakers, places and settings are
+     * invented (Nowe Brzegi); no real people or events.
+     */
+    transcript: {
+      task: 'Znajdź cytat w zapisie i oceń sens',
+      /** The task line once the clip's line is found. */
+      judgeTask: 'Czy cięcie zmienia sens?',
+      clipTitle: 'Cytat w teczce',
+      recordTitle: 'Pełny zapis',
+      /** Shown next to the found line: the underlined words are the ones the clip left out. */
+      cutLegend: 'podkreślone – wycięte',
+      line: (n: number, text: string) => `Linia ${n}: ${text}`,
+      /** The find-phase button for a clip nobody said. */
+      notInRecord: 'Nie ma w zapisie',
+      same: 'Sens ten sam',
+      changed: 'Sens zmieniony',
+      right: 'Sprawdzone!',
+      wrong: 'Pudło!',
+      /** Shown after the round: what the record says about the clip. */
+      reasons: {
+        fair: 'Skrót, ale sens ten sam.',
+        cut: 'Cięcie odwróciło sens wypowiedzi.',
+        absent: 'Tych słów nie ma w zapisie.',
+      },
+      /** Key hints while looking for the line. */
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+          { keys: ['Q'], label: 'nie ma w zapisie' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+          { keys: ['Y'], label: 'nie ma w zapisie' },
+        ],
+        touch: [
+          { keys: ['Stuknij'], label: 'linię z cytatem' },
+          { keys: ['Nie ma w zapisie'], label: 'brak cytatu' },
+        ],
+      } satisfies KeyHints,
+      /** Key hints while judging the cut. */
+      judgeKeys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'oceń' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'oceń' },
+        ],
+        touch: [{ keys: ['Stuknij'], label: 'ocenę' }],
+      } satisfies KeyHints,
+      /** Where the record comes from (the chip above the lines). */
+      settings: [
+        'Sesja rady miasta',
+        'Wywiad w Radiu Nadrzecze',
+        'Konferencja w ratuszu',
+        'Spotkanie z mieszkańcami',
+        'Debata w liceum na Wzgórzu',
+      ],
+      /** A shortening that keeps the meaning: only a filler phrase is left out. */
+      fair: [
+        {
+          line: 'Proszę państwa, remont mostu ruszy w maju i potrwa do jesieni.',
+          clip: 'Remont mostu ruszy w maju i potrwa do jesieni.',
+        },
+        {
+          line: 'Szczerze mówiąc, nowa linia autobusowa to dobry pomysł dla Lipowej.',
+          clip: 'Nowa linia autobusowa to dobry pomysł dla Lipowej.',
+        },
+        {
+          line: 'Basen na Błoniach otworzymy w czerwcu – tak, jak obiecywaliśmy.',
+          clip: 'Basen na Błoniach otworzymy w czerwcu.',
+        },
+        {
+          line: 'Dziękuję za pytanie. Szkoła przy Klonowej dostanie nowe boisko.',
+          clip: 'Szkoła przy Klonowej dostanie nowe boisko.',
+        },
+        {
+          line: 'No cóż, przyznaję: w porcie zabrakło kontroli.',
+          clip: 'W porcie zabrakło kontroli.',
+        },
+        {
+          line: 'Jak już mówiłam, ceny biletów w tym roku nie wzrosną.',
+          clip: 'Ceny biletów w tym roku nie wzrosną.',
+        },
+        {
+          line: 'Krótko mówiąc: park nad rzeką zostaje parkiem.',
+          clip: 'Park nad rzeką zostaje parkiem.',
+        },
+      ],
+      /** A cut that flips the meaning: the left-out words were the point. */
+      cut: [
+        {
+          line: 'Nie obchodzą mnie plotki – obchodzą mnie problemy mieszkańców.',
+          clip: 'Nie obchodzą mnie problemy mieszkańców.',
+        },
+        {
+          line: 'Mówi się, że podniesiemy podatki. To nieprawda.',
+          clip: 'Podniesiemy podatki.',
+        },
+        {
+          line: 'Nigdy nie powiem, że trzeba zamknąć bibliotekę.',
+          clip: 'Trzeba zamknąć bibliotekę.',
+        },
+        {
+          line: 'Gdyby nie wolontariusze, festyn byłby porażką.',
+          clip: 'Festyn byłby porażką.',
+        },
+        {
+          line: 'Słyszę, że tramwaj to strata pieniędzy. Nie zgadzam się.',
+          clip: 'Tramwaj to strata pieniędzy.',
+        },
+        {
+          line: 'Nie twierdzę, że woda w kranach jest skażona.',
+          clip: 'Woda w kranach jest skażona.',
+        },
+        {
+          line: 'Nie chodzi o to, by zamknąć targ, tylko go odnowić.',
+          clip: 'Chodzi o to, by zamknąć targ.',
+        },
+      ],
+      /** A clip nobody said: the decoy line shares its keywords but says something else. */
+      absent: [
+        {
+          clip: 'Zlikwidujemy wszystkie przystanki na Lipowej.',
+          decoy: 'Na Lipowej dobudujemy dwa nowe przystanki.',
+        },
+        {
+          clip: 'Ratusz sprzeda park miejski deweloperowi.',
+          decoy: 'Ratusz posadzi w parku miejskim sto drzew.',
+        },
+        {
+          clip: 'Od jutra woda w kranach będzie dwa razy droższa.',
+          decoy: 'Od jutra sprawdzamy wodę w kranach co tydzień.',
+        },
+        {
+          clip: 'Szkoła na Wzgórzu zostanie zamknięta.',
+          decoy: 'Szkoła na Wzgórzu dostanie nowy dach.',
+        },
+        {
+          clip: 'Nikt nie wie, ile kosztował nowy most.',
+          decoy: 'Każdy wie, ile kosztował nowy most: raport jest na stronie miasta.',
+        },
+        {
+          clip: 'Port w Nowych Brzegach zostanie sprzedany.',
+          decoy: 'Port w Nowych Brzegach przyjmie więcej promów.',
+        },
+        {
+          clip: 'Mieszkańcy Młynów zimą nie dostaną ogrzewania.',
+          decoy: 'Mieszkańcy Młynów dostaną nowe ogrzewanie przed zimą.',
+        },
+      ],
+      /** The rest of the record: lines with no claim in them. */
+      filler: [
+        'Dzień dobry, witam wszystkich na dzisiejszym spotkaniu.',
+        'Zacznijmy od spraw, o które pytali mieszkańcy.',
+        'Szczegóły budżetu przedstawimy na kolejnej sesji.',
+        'Pytania można też wysyłać przez stronę miasta.',
+        'Dziękuję radnym za pracę w komisjach.',
+        'Protokół z obrad będzie gotowy w przyszłym tygodniu.',
+        'Proszę o ciszę, zostały nam jeszcze trzy punkty.',
+        'Następne pytanie zadał pan z Nadrzecza.',
+        'Za chwilę oddam głos przewodniczącej.',
+        'Zrobimy krótką przerwę, wracamy za dziesięć minut.',
+        'Na to pytanie odpowiem na piśmie.',
+        'Wszystkie dokumenty leżą do wglądu w ratuszu.',
+        'Dziękuję, przejdźmy do głosowania.',
+      ],
+    },
+    /**
+     * Inne media (S7-54): what other outlets say about the folder's claim. Only agencies and
+     * newsrooms with their own reporter count; copies of someone else's post, satire and
+     * anonymous groups do not. Every outlet is invented (Nowe Brzegi); no real brands.
+     */
+    crossCheck: {
+      task: 'Co mówią niezależne media?',
+      claimTitle: 'W teczce',
+      cardsTitle: 'Inne media',
+      /** The kind badge on a coverage card. */
+      kinds: {
+        agency: 'agencja',
+        newsroom: 'redakcja',
+        satire: 'satyra',
+        anonymous: 'anonim',
+        junk: 'portal-klon',
+      },
+      /** The stance chip: a copy looks exactly like a confirmation. */
+      stances: { confirms: 'pisze to samo', echoes: 'pisze to samo', denies: 'zaprzecza' },
+      /** The source line: own reporter, a copied post, none named, or made up for a joke. */
+      sources: {
+        own: 'własny reporter',
+        unnamed: 'bez źródła',
+        invented: 'wymyślone',
+        copied: (via: string) => `za: ${via}`,
+      },
+      /** What a copy took the claim from. */
+      vias: ['post z grupy', 'wpis w sieci', 'film z sieci', 'inny portal'],
+      /** The stamp a copied card (an echo) gets after the round; satire and anonymous fade. */
+      copy: 'kopia',
+      card: (outlet: string, kind: string, stance: string, source: string) =>
+        `${outlet} (${kind}): ${stance}, ${source}`,
+      answers: {
+        confirmed: 'Potwierdzają',
+        denied: 'Zaprzeczają',
+        unconfirmed: 'Za mało źródeł',
+      },
+      right: 'Trafione!',
+      wrong: 'Pudło!',
+      /** Shown after the round: what the independent coverage says. */
+      reasons: {
+        confirmed: 'Co najmniej dwa niezależne źródła to potwierdzają.',
+        denied: 'Niezależne źródło temu zaprzecza.',
+        unconfirmed: 'Za mało niezależnych źródeł, by potwierdzić.',
+      },
+      keys: {
+        keyboard: [
+          { keys: ['←', '→'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+        ],
+        touch: [{ keys: ['Stuknij'], label: 'odpowiedź' }],
+      } satisfies KeyHints,
+      /** Invented outlets of Nowe Brzegi, per kind. */
+      outlets: {
+        agency: ['Agencja Nadrzecze', 'Agencja Fala'],
+        newsroom: [
+          'Radio Nadrzecze',
+          'Kurier Nowobrzeski',
+          'TV Brzegi',
+          'Gazeta Portowa',
+          'Tygodnik Błonia',
+        ],
+        satire: ['Brzeski Szpikulec', 'Kurier Absurdu'],
+        anonymous: ['Grupa „Nowe Brzegi Info”', 'Grupa „Plotki z Portu”'],
+        junk: ['nb-prawda24.top', 'szok-brzegi24.top'],
+      },
     },
   },
   /** Station help (S7-15): what each station checks and how to work it on every device. */
@@ -1172,50 +1566,49 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
-      // Stage 7 stations (S7-48): provisional copy for Mapa, Stenogram and Inne media; each
-      // minigame task (S7-53..S7-55) settles the steps against its final controls and button
-      // labels. Metadane is final (S7-52).
+      // Stage 7 stations (S7-48): Metadane (S7-52), Stenogram (S7-53), Inne media (S7-54) and
+      // Mapa (S7-55) are final, settled against each minigame's controls and button labels.
       geolocation: {
         purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
         proves: 'Zdjęcie jest z innego miejsca niż podpis',
         steps: {
           keyboard: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
             'Strzałki wybierają dzielnicę, spacja ją wskazuje',
-            'Q, gdy takiego miejsca nie ma na mapie',
+            'Nie ma obu? Q – „Nie ma na mapie”',
           ],
           gamepad: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
             'Krzyżak wybiera dzielnicę, A ją wskazuje',
-            'Y, gdy takiego miejsca nie ma na mapie',
+            'Nie ma obu? Y – „Nie ma na mapie”',
           ],
           touch: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
-            'Stuknij dzielnicę, w której oba stoją',
-            'Nie ma ich na mapie? Stuknij przycisk',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
+            'Stuknij dzielnicę, w której stoją oba',
+            'Nie ma obu? Stuknij „Nie ma na mapie”',
           ],
         },
         realWorld:
-          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic.',
+          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic. Podpis może kłamać, widok nie.',
       },
       transcript: {
         purpose: 'Czy wycięty cytat znaczy to samo co całość?',
         proves: 'Cytat jest wycięty z kontekstu albo zmyślony',
         steps: {
           keyboard: [
-            'Strzałki wybierają linię, spacja potwierdza',
-            'Q, gdy cytatu nie ma w zapisie',
-            'Potem oceń, czy cięcie zmienia sens',
+            'Strzałki wybierają linię z cytatem, spacja wskazuje',
+            'Brak cytatu? Q – „Nie ma w zapisie”',
+            'Potem oceń: „Sens ten sam” czy „Sens zmieniony”?',
           ],
           gamepad: [
-            'Krzyżak wybiera linię, A potwierdza',
-            'Y, gdy cytatu nie ma w zapisie',
-            'Potem oceń, czy cięcie zmienia sens',
+            'Krzyżak wybiera linię z cytatem, A wskazuje',
+            'Brak cytatu? Y – „Nie ma w zapisie”',
+            'Potem oceń: „Sens ten sam” czy „Sens zmieniony”?',
           ],
           touch: [
             'Stuknij linię, z której pochodzi cytat',
-            'Nie ma go w zapisie? Stuknij przycisk',
-            'Potem oceń, czy cięcie zmienia sens',
+            'Brak cytatu? Stuknij „Nie ma w zapisie”',
+            'Potem oceń: „Sens ten sam” czy „Sens zmieniony”?',
           ],
         },
         realWorld:
@@ -1226,23 +1619,23 @@ export const pl = {
         proves: 'Niezależne media potwierdzają albo zaprzeczają',
         steps: {
           keyboard: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             '← i → wybierają odpowiedź, spacja potwierdza',
           ],
           gamepad: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Krzyżak wybiera odpowiedź, A potwierdza',
           ],
           touch: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Stuknij swoją odpowiedź',
           ],
         },
         realWorld:
-          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje.',
+          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje. Kopia cudzego wpisu niczego nie potwierdza.',
       },
       metadata: {
         purpose: 'Kiedy, czym i gdzie powstał plik?',
@@ -1452,6 +1845,63 @@ export const pl = {
       done: 'Super! Tak trzymaj!',
     },
   },
+  /**
+   * The intro (S7-99): the player's buttons and the narrator's script. The narrator is the
+   * editor-in-chief; each line is both the subtitle (typeset at render) and the voiceover text
+   * (`tools/audio/intro-lines.ts` respells key names for the TTS). One sentence is one subtitle
+   * chunk and must fit two lines at 640×360 (intro/intro-script.test.ts). The scenes, their
+   * order and the scripted input tracks are in `intro/intro-script.ts`.
+   */
+  intro: {
+    label: 'Wprowadzenie',
+    skip: 'Pomiń',
+    next: 'Dalej',
+    prev: 'Wstecz',
+    pause: 'Pauza',
+    resume: 'Wznów',
+    /** „Dalej” on the last scene. */
+    finish: 'Do roboty!',
+    /** The chip shown while the browser still blocks audio; subtitles run on regardless. */
+    soundLocked: 'Stuknij, by włączyć głos',
+    scene: (n: number, total: number) => `Scena ${n} z ${total}`,
+    voice: {
+      welcome:
+        'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
+      folders:
+        'Każda teczka to zgłoszenie: prawda, fałszywka albo prawda bez kontekstu. Karta „Następna teczka” pokazuje, za ile sekund wpadnie kolejna.',
+      pickup: {
+        keyboard: 'Chodzisz klawiszami W, A, S i D. Podejdź do taśmy i weź teczkę klawiszem E.',
+        gamepad: 'Chodzisz lewą gałką. Podejdź do taśmy i weź teczkę przyciskiem A.',
+        touch:
+          'Chodzisz, przesuwając kciukiem po lewej stronie ekranu. Przy taśmie wciśnij przycisk „Podnieś”.',
+      } satisfies Record<Device, string>,
+      work: {
+        keyboard:
+          'Zanieś teczkę na stanowisko i przytrzymaj spację. Potem rozwiąż krótkie zadanie.',
+        gamepad:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk X. Potem rozwiąż krótkie zadanie.',
+        touch:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk „Pracuj”. Potem rozwiąż krótkie zadanie.',
+      } satisfies Record<Device, string>,
+      stations:
+        'Każde stanowisko sprawdza co innego, na przykład Lupa szuka starszych kopii zdjęcia. Dobrze rozwiązane zadanie daje pieczątkę: to twój dowód.',
+      desk: 'Z dowodami idź do stołu redakcyjnego. Najpierw wskaż dowód, potem werdykt: Publikuj, Odrzuć albo Z kontekstem.',
+      proof:
+        'Liczy się dowód, który naprawdę rozstrzyga. Słaby dowód to tylko połowa punktów, nawet przy dobrym werdykcie. Trudniejsze teczki wymagają dwóch albo trzech dowodów.',
+      credibility:
+        'Pilnuj terminów i wiarygodności gazety. Spóźnienie kosztuje, ale fałszywka w druku kosztuje najwięcej. Gdy wiarygodność spadnie do zera, wydanie przepada.',
+      roles: {
+        keyboard:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz klawiszem R, a potem musi się odnowić.',
+        gamepad:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz przyciskiem RB, a potem musi się odnowić.',
+        touch:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz czwartym przyciskiem po prawej, a potem musi się odnowić.',
+      } satisfies Record<Device, string>,
+      team: 'Rozmawiajcie i dzielcie się pracą. Fioletowy dymek podpowie, co dalej.',
+      end: 'Po wydaniu Kolegium wyjaśni każdą teczkę i pokaże, za co są punkty i gwiazdki. Do roboty!',
+    },
+  },
   /** Editorial briefing before a level (S3-03). */
   briefing: {
     label: 'Briefing redakcyjny',
@@ -1603,6 +2053,7 @@ export const pl = {
       secondChance: 'Druga szansa',
       folderPassed: 'Teczka podana',
       rescued: 'Teczka uratowana!',
+      abilityReady: 'Zdolność gotowa',
     },
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---

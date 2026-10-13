@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-# Two runtime targets: `server` (Bun game server) and `web` (Caddy serving the client and
-# proxying /ws and /api to the server). See docs/deploy.md.
+# Two runtime targets: `server` (Bun game server, which also renders the HTML shell, /ads.txt and
+# /prywatnosc) and `web` (Caddy serving the client's static files and proxying everything else to
+# the server). See docs/deploy.md.
 
 ARG BUN_VERSION=1.4.2
 
@@ -40,7 +41,14 @@ COPY --from=server-deps /app /app
 COPY tsconfig.base.json ./
 COPY packages packages
 COPY apps/server apps/server
-RUN mkdir -p /data && chown bun:bun /data
+# The HTML shell the server renders per request (nonce, embedded config, CSP; S7-70) comes from
+# the same client build the web image serves from /srv, and the privacy note it renders at
+# /prywatnosc. Asset hashes in index.html must exist in /srv: always build both services together
+# (docker compose up -d --build).
+COPY --from=client-build /app/apps/client/dist/index.html apps/client/dist/index.html
+COPY docs/privacy.pl.md docs/privacy.pl.md
+# /app/config is the mount point for config.json (docker-compose.yml, CONFIG_PATH).
+RUN mkdir -p /data /app/config && chown bun:bun /data
 USER bun
 VOLUME ["/data"]
 EXPOSE 3000
@@ -50,6 +58,8 @@ CMD ["bun", "apps/server/src/index.ts"]
 
 FROM caddy:2-alpine AS web
 COPY Caddyfile /etc/caddy/Caddyfile
+# The whole build, index.html included: Caddy serves it as the fallback page while the game
+# server is down (Caddyfile handle_errors).
 COPY --from=client-build /app/apps/client/dist /srv
 # Caddy's admin API listens on localhost:2019 inside the container; answering means the config
 # loaded. (Caddy serves plain HTTP on :80; TLS is terminated by the external reverse proxy.)

@@ -1,8 +1,9 @@
 // Feedback driven by game state rather than single events: the station work loop (kept in step
 // with station phases), the deadline ticker, the last-30-seconds sting, the full-belt alert, the
-// solo pause and the level-end stingers. Also mounts the hit-stop and loop outputs of the feedback bus.
-import { ENDLESS_LEVEL_ID, LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
-import { useGame } from '../net/game-store.ts';
+// solo pause, the local role ability coming off its cooldown (S7-40) and the level-end stingers.
+// Also mounts the hit-stop and loop outputs of the feedback bus.
+import { type CrewSnapshot, ENDLESS_LEVEL_ID, LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
+import { selectCrewMember, useGame } from '../net/game-store.ts';
 import { renderState } from '../scene/render-state.ts';
 import { useApp } from '../store/app.ts';
 import { startLoopSound, stopSound } from './audio/audio-manager.ts';
@@ -35,6 +36,26 @@ export function beltJustFilled(previous: boolean, current: boolean): boolean {
 /** True when the server just started holding the level still for the solo menu (S7-10). */
 export function justPaused(previous: boolean, current: boolean): boolean {
   return current && !previous;
+}
+
+/** One player's ability state at one snapshot's level time. */
+export type AbilityClock = { member: CrewSnapshot | undefined; elapsedMs: number };
+
+/**
+ * True when the ability just came off its cooldown between two snapshots: the same cooldown was
+ * running before and has run out now, with no call or armed state in the way.
+ */
+export function abilityJustReady(previous: AbilityClock, current: AbilityClock): boolean {
+  const before = previous.member;
+  const now = current.member;
+  if (!before || !now || now.fieldCall !== null || now.abilityArmed) {
+    return false;
+  }
+  return (
+    before.abilityReadyAtMs === now.abilityReadyAtMs &&
+    previous.elapsedMs < before.abilityReadyAtMs &&
+    current.elapsedMs >= now.abilityReadyAtMs
+  );
 }
 
 export function startGameplayFeedback(): () => void {
@@ -111,6 +132,19 @@ export function startGameplayFeedback(): () => void {
       beltJustFilled(previous.conveyorFull, state.conveyorFull)
     ) {
       emitCue('folder.beltFull');
+    }
+    const app = useApp.getState();
+    const role = app.room?.players.find((p) => p.id === app.playerId)?.role ?? null;
+    if (
+      !state.levelEnd &&
+      app.screen === 'game' &&
+      role !== null &&
+      abilityJustReady(
+        { member: selectCrewMember(previous, app.playerId), elapsedMs: previous.elapsedMs },
+        { member: selectCrewMember(state, app.playerId), elapsedMs: state.elapsedMs },
+      )
+    ) {
+      emitCue('ability.ready');
     }
 
     // Keep work loops in step with station phases (a lost event never leaves a loop running).

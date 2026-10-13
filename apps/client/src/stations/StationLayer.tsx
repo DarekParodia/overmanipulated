@@ -1,9 +1,12 @@
 // Mount point for the 2D gameplay overlays drawn over the scene: the station minigame overlay
 // with its work prompt and lockout note (S2-03), and the editorial desk sheet (S2-07). Which
-// overlay is open follows the server: the station or desk the local player operates.
+// overlay is open follows the server: the station or desk the local player operates. A round is
+// keyed by station, seed and the local player's start count (S7-41), so a minigame that reopens
+// with the same seed (Druga szansa, the Kartoteka's kept card) opens the overlay again.
 import { getStory } from '@redakcja/content';
 import { type Difficulty, type Folder, failLockoutMs, type Verdict } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { localAbility } from '../abilities/use-ability.ts';
 import { installGameHook } from '../debug/game-hook.ts';
 import { stationIsDown } from '../events/event-model.ts';
 import { onGameEvent } from '../net/game-events.ts';
@@ -13,10 +16,18 @@ import {
   selectOperatedStation,
   useGame,
 } from '../net/game-store.ts';
-import { sendCommand } from '../net/session.ts';
+import { runtime, sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { DeskOverlay, type VerdictResultEvent } from './DeskOverlay.tsx';
 import { LockoutNote, StationOverlay, WorkPrompt } from './StationOverlay.tsx';
+import {
+  countStart,
+  failureReopens,
+  type LocalStarts,
+  lockoutUntil as lockoutEnd,
+  NO_STARTS,
+  shownRound,
+} from './station-round.ts';
 
 /**
  * How long the verdict outcome stays on the desk sheet unless dismissed: longer after a
@@ -42,7 +53,11 @@ function StationHost({ playerId }: { playerId: string | null }) {
   const folder = useGame((s) => (station ? selectFolderOn(s, station.id) : undefined));
   // The round the player already finished or left, hidden until the server moves on.
   const [settledRound, setSettledRound] = useState<string | null>(null);
+  // The local player's minigame starts so far (the round nonce) and the latest one.
+  const [starts, setStarts] = useState<LocalStarts>(NO_STARTS);
   const [lockoutUntil, setLockoutUntil] = useState(0);
+  // The station the lockout plate is about (for its Druga szansa line).
+  const [lockedStation, setLockedStation] = useState<string | null>(null);
   const difficulty = useApp((s) => s.difficulty);
   // A local failure shows an estimate until the server's `minigameFailed` replaces it with the
   // real length: the room's difficulty lockout (`failLockoutMs`, S7-24), then the last non-zero
@@ -55,21 +70,29 @@ function StationHost({ playerId }: { playerId: string | null }) {
         : failLockoutMs(difficulty),
     [difficulty],
   );
-  const round = station ? `${station.id}:${station.minigameSeed}` : null;
+  // A station that is down (outage event) opens no minigame and shows no work prompt; the
+  // server also kicks the worker out, this covers the snapshot or two before that.
+  const down = stationIsDown(station);
+  const round = shownRound(station, starts, settledRound, down);
 
-  const startLockout = useCallback((ms: number) => {
+  const startLockout = useCallback((ms: number, stationId: string | null) => {
     setLockoutUntil((until) => Math.max(until, performance.now() + ms));
+    setLockedStation(stationId);
   }, []);
 
   useEffect(
     () =>
       onGameEvent((event) => {
-        if (event.kind === 'minigameFailed' && event.playerId === playerId) {
-          // A lockout-free failure (0) hides the note but is no estimate for the next one.
+        if (event.kind === 'minigameStarted' && event.playerId === playerId) {
+          setStarts((current) => countStart(current, event.stationId, event.seed));
+        } else if (event.kind === 'minigameFailed' && event.playerId === playerId) {
+          // A lockout-free failure (0, Druga szansa) hides the note but is no estimate for the
+          // next one.
           if (event.lockoutMs > 0) {
             announced.current = { difficulty: useApp.getState().difficulty, ms: event.lockoutMs };
           }
-          setLockoutUntil(event.lockoutMs > 0 ? performance.now() + event.lockoutMs : 0);
+          setLockoutUntil(lockoutEnd(event.lockoutMs, performance.now()));
+          setLockedStation(event.stationId);
         }
       }),
     [playerId],
@@ -81,38 +104,41 @@ function StationHost({ playerId }: { playerId: string | null }) {
   // biome-ignore lint/correctness/useExhaustiveDependencies: serverLockoutMs is read on entry only
   useEffect(() => {
     if (phase === 'lockout') {
-      startLockout(serverLockoutMs);
+      startLockout(serverLockoutMs, station?.id ?? null);
     }
   }, [phase, startLockout]);
 
-  // A station that is down (outage event) opens no minigame and shows no work prompt; the
-  // server also kicks the worker out, this covers the snapshot or two before that.
-  const down = stationIsDown(station);
   // The server has moved on once the station leaves the minigame (or the player leaves it). A
   // Kartoteka retry reopens the same card, i.e. the same round id (S7-13), so the settled round
   // is forgotten here and not only when the player stops operating: after a cancel, work held
-  // on may take the station again before any snapshot shows it free.
+  // on may take the station again before any snapshot shows it free. A round that never leaves
+  // the minigame (armed Druga szansa) gets a new key from the start count instead. The latest
+  // start's seed is dropped here too, so a start the client missed (a reconnect) never holds a
+  // later round back.
   const inMinigame = phase === 'minigame';
   useEffect(() => {
     if (!inMinigame) {
       setSettledRound(null);
+      setStarts((current) => (current.last ? { ...current, last: null } : current));
     }
   }, [inMinigame]);
 
+  const stationId = station?.id ?? null;
   const onResult = useCallback(
     (success: boolean) => {
       setSettledRound(round);
-      if (!success) {
-        startLockout(estimateLockoutMs());
+      // An armed Druga szansa reopens the minigame instead: no estimate, no plate flash.
+      if (!success && !failureReopens(localAbility(runtime, playerId))) {
+        startLockout(estimateLockoutMs(), stationId);
       }
     },
-    [round, startLockout, estimateLockoutMs],
+    [round, startLockout, estimateLockoutMs, playerId, stationId],
   );
   const onClose = useCallback(() => setSettledRound(round), [round]);
 
   return (
     <>
-      {station?.phase === 'minigame' && round !== settledRound && !down && (
+      {station && round !== null && (
         <StationOverlay
           key={round}
           station={station}
@@ -123,7 +149,12 @@ function StationHost({ playerId }: { playerId: string | null }) {
       )}
       {station?.phase === 'working' && !down && <WorkPrompt station={station} />}
       {lockoutUntil > 0 && (
-        <LockoutNote key={lockoutUntil} until={lockoutUntil} onDone={() => setLockoutUntil(0)} />
+        <LockoutNote
+          key={lockoutUntil}
+          until={lockoutUntil}
+          stationId={lockedStation}
+          onDone={() => setLockoutUntil(0)}
+        />
       )}
     </>
   );

@@ -1,10 +1,15 @@
-// Printable cards (S6-03 deliverables 3 and 4): the four role cards and sample story folders
+// Printable cards (S6-03 deliverables 3 and 4): the role cards and sample story folders
 // rendered from real content. Output in docs/contest/cards/: role-cards.html (one A4 page),
 // folders.html (one A4 page per folder) plus a PNG of every card.
 
 import { listPl } from '../../apps/client/src/strings/plural.ts';
 import type { Role, Verdict } from '../../packages/shared/src/index.ts';
-import { ROLE_PERKS, ROLES } from '../../packages/shared/src/index.ts';
+import {
+  RESCUE_ADD_MS,
+  ROLE_PERKS,
+  ROLES,
+  STATION_KINDS,
+} from '../../packages/shared/src/index.ts';
 import {
   colors,
   copyFonts,
@@ -62,7 +67,20 @@ const ROLE_INFO: Record<Role, { task: string; tip: string }> = {
     task: 'Decyzje przy stole redakcyjnym i koordynacja zespołu.',
     tip: 'Pilne nie znaczy prawdziwe. Przy stole zwolnij i zapytaj zespół o dowód.',
   },
+  generalist: {
+    task: 'Pomoc tam, gdzie właśnie jest kolejka.',
+    tip: 'Jeden dowód to mało? Sprawdź drugim narzędziem.',
+  },
+  rescuer: {
+    task: 'Pilnowanie terminów i podawanie teczek.',
+    tip: 'Pośpiech sprzyja manipulacji. Zyskaj czas, zanim zdecydujesz.',
+  },
 };
+
+/** The role is faster at every station (Wszechstronny): no station chips, one line instead. */
+function fasterEverywhere(role: Role): boolean {
+  return ROLE_PERKS[role].fasterAt.length === STATION_KINDS.length;
+}
 
 function bonusLine(role: Role): string {
   const stations = ROLE_PERKS[role].fasterAt.map((kind) => pl.vocab.stations[kind]);
@@ -73,12 +91,18 @@ function bonusLine(role: Role): string {
   if (role === 'reporter') {
     return `Telefon do źródła bez kolejki. ${listPl(stations)} ${stations.length > 1 ? 'działają' : 'działa'} o ${percent}% szybciej.`;
   }
+  if (fasterEverywhere(role)) {
+    return `Każde stanowisko działa o ${percent}% szybciej.`;
+  }
+  if (ROLE_PERKS[role].rescuesPerLevel > 0) {
+    return `Koło ratunkowe: raz na poziom teczka w jego rękach dostaje +${RESCUE_ADD_MS / 1000} s.`;
+  }
   return 'Raz na poziom przedłuża termin jednej teczki.';
 }
 
 function roleCard(role: Role): string {
   const info = ROLE_INFO[role];
-  const stations = ROLE_PERKS[role].fasterAt;
+  const stations = fasterEverywhere(role) ? [] : ROLE_PERKS[role].fasterAt;
   return `<article class="card role" data-role="${role}">
   <header>
     <div class="badge">${roleIconSvg(role, 76, colors.outline, colors.yellow)}</div>

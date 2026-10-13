@@ -20,6 +20,7 @@ import { Icon } from '../ui/icons/Icon.tsx';
 import { playerColorVar } from '../ui/tokens.ts';
 import {
   conveyorIndicator,
+  SIGN_ABOVE,
   type StationIndicator,
   stationIndicator,
   surfaceHeight,
@@ -27,8 +28,6 @@ import {
 import { screenTransform, useOverlay } from './overlay.ts';
 import styles from './StationIndicators.module.css';
 
-/** Height of the sign's foot above the fixture's surface; the sign rises from there. */
-const SIGN_ABOVE = 0.45;
 const FILL_RATE = 12;
 /** Ring circumference in SVG units (r = 27). */
 const RING_RADIUS = 27;

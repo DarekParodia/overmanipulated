@@ -3,6 +3,12 @@
 # and is published on host port 8080 for that proxy; the proxy must forward WebSocket upgrades
 # and the original Host header.
 # Access logs are off on purpose (no IP addresses stored); see docs/deploy.md to switch them on.
+#
+# Who serves what (S7-71): Caddy serves the build output (/assets/*, manifest, icons) itself.
+# Every other path ("/", SPA paths, /index.html, /ads.txt, /prywatnosc) goes to the game server,
+# which renders the HTML shell with a per-request nonce, the embedded public config and its own
+# CSP. When the game server does not answer (502/503/504), Caddy serves the static index.html
+# from the same build, so the menu still loads and can say the server is not responding.
 {
 	servers {
 		# Client address for the game server's per-address limits. The external TLS proxy reports
@@ -17,54 +23,65 @@
 	}
 }
 
-:80 {
-	encode zstd gzip
-
+# Headers on every response, including the fallback page.
+(security_headers) {
 	header {
 		-Server
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
-		Referrer-Policy "no-referrer"
 		X-Frame-Options "DENY"
 		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
-		Cross-Origin-Opener-Policy "same-origin"
-		# 'unsafe-inline' for styles only: React inline style attributes. Scripts are same-origin
-		# only. wss: is listed next to 'self' because older Safari versions do not
-		# match 'self' against ws(s) URLs, and behind an external proxy the Host seen here may not
-		# be the public name. blob:/data: serve canvas textures and decoded audio.
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self' wss:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		# Defaults only ("?": set when the response has none). The game server sets these itself
+		# on the pages it renders (config-driven: the ads policy on ad hosts), so its values win.
+		# This CSP is the server's base policy byte for byte (tools/deploy/caddyfile.test.ts):
+		# 'unsafe-inline' for styles only (React inline style attributes); scripts are
+		# same-origin only; wss: next to 'self' for older Safari, which does not match 'self'
+		# against ws(s) URLs; blob:/data: serve canvas textures and decoded audio.
+		?Referrer-Policy "no-referrer"
+		?Cross-Origin-Opener-Policy "same-origin"
+		?Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self' wss:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 	}
+}
 
-	# Game socket and REST API go to the Bun server. WebSocket upgrades pass through untouched;
-	# there is no idle timeout on a proxied socket, the client's 2 s heartbeat and the server's
-	# own pings keep NATs and proxies awake.
+# The Bun game server. WebSocket upgrades pass through untouched; there is no idle timeout on a
+# proxied socket, the client's 2 s heartbeat and the server's own pings keep NATs and proxies
+# awake.
+(game_server) {
+	reverse_proxy server:3000 {
+		# The only address header the game server reads; set here, so a value sent by the
+		# browser is always overwritten.
+		header_up X-Real-IP {client_ip}
+		transport http {
+			dial_timeout 3s
+			response_header_timeout 15s
+		}
+		health_uri /health
+		health_interval 5s
+		health_timeout 2s
+		# Keep running matches alive across a Caddy config reload.
+		stream_close_delay 5m
+	}
+}
+
+:80 {
+	encode zstd gzip
+	root * /srv
+	import security_headers
+
+	# Game socket and REST API.
 	@backend path /ws /api /api/* /health
 	handle @backend {
 		header Cache-Control "no-store"
 		request_body {
 			max_size 8KB
 		}
-		reverse_proxy server:3000 {
-			# The only address header the game server reads; set here, so a value sent by the
-			# browser is always overwritten.
-			header_up X-Real-IP {client_ip}
-			transport http {
-				dial_timeout 3s
-				response_header_timeout 15s
-			}
-			health_uri /health
-			health_interval 5s
-			health_timeout 2s
-			# Keep running matches alive across a Caddy config reload.
-			stream_close_delay 5m
-		}
+		import game_server
 	}
 
 	# Build output. Names carry a content hash, so they never change: cache for a year. A missing
-	# file under /assets is a real 404, never the SPA fallback (a stale tab asking for an old hash
-	# must not get index.html cached as "immutable"). Audio files have no hash: always revalidate.
+	# file under /assets is a real 404, never the HTML shell (a stale tab asking for an old hash
+	# must not get a page cached as "immutable"). Audio files have no hash: always revalidate.
 	handle /assets/* {
-		root * /srv
 		@hashed {
 			path_regexp hashed ^/assets/[^/]+-[A-Za-z0-9_-]{8}\.(js|css|woff2)$
 			file {path}
@@ -81,13 +98,41 @@
 		}
 	}
 
-	# index.html, manifest, icons: revalidate on every load (ETag makes that cheap).
-	handle {
-		root * /srv
+	# Other public files of the build (manifest, icons), but never the HTML shell: "/" and
+	# /index.html always go to the game server (index.html.br is left unused). Revalidate on every
+	# load (ETag makes that cheap).
+	@static {
+		not path / /index.html
+		file
+	}
+	handle @static {
 		header Cache-Control "no-cache"
-		try_files {path} /index.html
+		# Caddy knows no MIME type for .webmanifest and would send none.
+		header /manifest.webmanifest Content-Type "application/manifest+json"
 		file_server {
 			precompressed br
+		}
+	}
+
+	# "/", SPA paths, /index.html, /ads.txt, /prywatnosc: rendered by the game server, which also
+	# sets their Cache-Control. Unknown file-like paths get its plain 404, never HTML.
+	handle {
+		request_body {
+			max_size 8KB
+		}
+		import game_server
+	}
+
+	# Game server down or restarting: serve the static shell of the same build, so the menu loads
+	# and reports the server as unreachable. Never for /ads.txt or the API (a crawler or the
+	# typed client must not read HTML there). The status stays 502/503/504; browsers render it.
+	handle_errors 502 503 504 {
+		import security_headers
+		@page not path /ads.txt /api /api/* /ws /health
+		handle @page {
+			rewrite * /index.html
+			header Cache-Control "no-store"
+			file_server
 		}
 	}
 }
