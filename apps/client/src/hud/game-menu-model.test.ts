@@ -15,6 +15,8 @@ function room(connected: boolean[]): RoomStateMessage {
     hostId: 'p1',
     phase: 'playing',
     levelId: 'l0-greybox',
+    difficulty: 'normal',
+    run: null,
     players: connected.map((online, i) => ({
       id: `p${i + 1}`,
       nickname: `Gracz ${i + 1}`,
