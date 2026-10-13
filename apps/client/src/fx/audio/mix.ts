@@ -1,5 +1,5 @@
-// Mix rules (S5-08), pure: bus trims, when the voice-less chatter bed plays, and how it follows
-// ducking. The WebAudio graph itself (master limiter) lives in audio-manager.ts.
+// Mix rules (S5-08), pure: bus volumes and trims, when the voice-less chatter bed plays, and how
+// it follows ducking. The WebAudio graph itself (master limiter) lives in limiter.ts.
 import type { QualityPreset, Settings } from '../../store/settings.ts';
 import type { AudioBus } from '../cues.ts';
 import { AMBIENCE_TUNING } from './ambience.ts';
@@ -17,7 +17,24 @@ export const BUS_TRIM: Readonly<Record<AudioBus, number>> = {
   music: 1,
   sfx: 1,
   ui: 0.9,
+  voice: 1,
 };
+
+/** The settings slider behind each bus. */
+const BUS_SLIDER = {
+  music: 'musicVolume',
+  sfx: 'sfxVolume',
+  ui: 'uiVolume',
+  voice: 'voiceVolume',
+} as const satisfies Record<AudioBus, keyof Settings>;
+
+/** Effective volume of a bus (master × bus slider × trim), before global mute. */
+export function busVolume(
+  settings: Pick<Settings, 'masterVolume' | (typeof BUS_SLIDER)[AudioBus]>,
+  bus: AudioBus,
+): number {
+  return settings.masterVolume * settings[BUS_SLIDER[bus]] * BUS_TRIM[bus];
+}
 
 /** Master limiter (a DynamicsCompressor on the master bus): catches stacked stingers. */
 export const LIMITER = {

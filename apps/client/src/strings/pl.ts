@@ -119,6 +119,7 @@ export const pl = {
     music: 'Muzyka',
     sfx: 'Efekty',
     ui: 'Przyciski',
+    voice: 'Lektor',
     mute: 'Wycisz wszystko',
     display: 'Obraz',
     quality: 'Jakość grafiki',

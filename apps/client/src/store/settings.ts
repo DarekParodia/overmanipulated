@@ -13,6 +13,8 @@ const settingsSchema = z.object({
   musicVolume: unit.catch(0.6),
   sfxVolume: unit.catch(0.9),
   uiVolume: unit.catch(0.7),
+  /** The intro voiceover's bus ('Lektor', S7-98). */
+  voiceVolume: unit.catch(0.9),
   muted: z.boolean().catch(false),
   /** null = choose automatically from the device. */
   quality: z.enum(qualityPresets).nullable().catch(null),
