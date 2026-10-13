@@ -29,7 +29,8 @@ export function startServer(env: Env): RunningServer {
     onActive: () => loop.start(),
     briefingMs: env.BRIEFING_MS,
     recordBlunderVote: (vote) => recordBlunderVote(db, vote),
-    recordLeaderboardEntry: (entry) => {
+    recordLeaderboardEntry: ({ difficulty: _difficulty, ...entry }) => {
+      // The difficulty column arrives with S7-26; until then every row reads as Normal.
       insertLeaderboardEntry(db, entry);
     },
   });

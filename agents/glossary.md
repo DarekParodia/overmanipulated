@@ -61,7 +61,8 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Podgląd poziomu z workiem | bag preview (`resolveLevel`, `BAG_PREVIEW_SEED`) | The Normal run `LEVELS` and `getLevel` serve for a bag level (lobby, briefing, tools) |
 | Rozgrywka (przygotowana) | prepared run (`prepareRun`, `prepareLevelRun`, `PreparedRun`) | The level a room plays for one run seed and difficulty: dealt schedule, deadlines, stars, stories, `maxScore` |
 | Ziarno rozgrywki | run seed (`RunOptions.seed`) | Picks the dealt stations and stories; drawn by the server per briefing, separate from the sim seed |
-| Podsumowanie rozgrywki | run summary (`runSummary`, `RunSummary`) | `{folders, maxScore, stars}` of a prepared run; stars null in endless |
+| Podsumowanie rozgrywki | run summary (`runSummary`, `RunSummary`) | `{folders, maxScore, stars}` of a prepared run; stars null in endless; `roomState.run` from the briefing through the results, null in the lobby |
+| Stanowisko z worka (teczki) | bag station (`folder.bagStation`, schedule entry `station`) | The station the bag slot designated for a dealt folder, copied from its schedule entry at spawn; absent on event folders and authored schedules |
 | Rozdanie z worka | `generateBagLevel` (`bagDeadlineS`) | One run of a bag level: slot times, station sequence, matched stories, scaled and clamped deadlines, stars from the run maximum |
 | Skalowanie terminów | `scaledDeadlineS`, `applyDifficulty` | Deadline × `deadlineFactor`, rounded to whole seconds (Normal unchanged); `applyDifficulty` scales a fixed schedule's deadlines only |
 | Historie poziomu | `levelStoryIds` | The pool of a bag level, otherwise the scheduled ids; never event stories |
@@ -135,7 +136,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 
 | Polish | English | Notes |
 | --- | --- | --- |
-| Poziom trudności | `difficulty` | Set per room (default `DEFAULT_DIFFICULTY`); picks one `DIFFICULTY` preset |
+| Poziom trudności | `difficulty` | Set per room (default `DEFAULT_DIFFICULTY`) by the host in the lobby (`setDifficulty`, resets ready); picks one `DIFFICULTY` preset; on `roomState` and `levelEnd` |
 | Łatwy / Normalny / Trudny / Ekspert | `easy` / `normal` / `hard` / `expert` | `DIFFICULTIES`, easiest first; every Normal factor is 1 |
 | Ustawienia poziomu trudności | `DifficultyPreset` | Factors for deadlines, spawn gap, work time, lockout, penalties and minigame time; extra mistakes; hints; answer reveal |
 | Strojenie symulacji | `SimTuning` (`simTuning`, `NORMAL_TUNING`) | The preset part the simulation applies: work time, lockout, penalties |

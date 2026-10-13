@@ -90,6 +90,17 @@ describe('client messages', () => {
     expect(parseClientMessage({ type: 'heartbeat', clientTime: 123.4 }).ok).toBe(true);
   });
 
+  it('accepts setDifficulty with the four difficulties only (S7-23)', () => {
+    const set = (difficulty: unknown) =>
+      parseClientMessage({ type: 'lobby', action: { kind: 'setDifficulty', difficulty } }).ok;
+    expect(set('easy')).toBe(true);
+    expect(set('normal')).toBe(true);
+    expect(set('hard')).toBe(true);
+    expect(set('expert')).toBe(true);
+    expect(set('insane')).toBe(false);
+    expect(set(undefined)).toBe(false);
+  });
+
   it('accepts a verdict citing one to three stamps, and nothing else', () => {
     const verdict = (justifyingStampIds: unknown) =>
       parseClientMessage({
@@ -140,6 +151,8 @@ describe('server messages', () => {
         levelId: 'l0-greybox',
         briefing: null,
         blunderVotes: [],
+        difficulty: 'normal',
+        run: null,
         players: [
           {
             id: 'p1',
@@ -172,6 +185,7 @@ describe('server messages', () => {
       {
         type: 'levelEnd',
         levelId: 'l0-greybox',
+        difficulty: 'normal',
         won: true,
         stars: 2,
         score: 40,
@@ -263,6 +277,7 @@ describe('server messages', () => {
     const end = {
       type: 'levelEnd',
       levelId: 'endless',
+      difficulty: 'hard',
       won: false,
       stars: 0,
       score: 120,
@@ -292,6 +307,57 @@ describe('server messages', () => {
     expect(parseServerMessage({ ...end, lossReason: 'time' }).ok).toBe(false);
     const { lossReason: _dropped, ...withoutReason } = end;
     expect(parseServerMessage(withoutReason).ok).toBe(false);
+    const { difficulty: _difficulty, ...withoutDifficulty } = end;
+    expect(parseServerMessage(withoutDifficulty).ok).toBe(false);
+  });
+
+  it("carries the room's difficulty and the dealt run in roomState (S7-23)", () => {
+    const room = {
+      type: 'roomState',
+      roomCode: 'KLMN',
+      hostId: 'p1',
+      phase: 'briefing',
+      levelId: 'l1-burza',
+      players: [],
+      briefing: { endsInMs: 8000, skippedBy: [] },
+      blunderVotes: [],
+      difficulty: 'expert',
+      run: { folders: 16, maxScore: 410, stars: { two: 225, three: 330 } },
+    };
+    const parse = (message: unknown) => parseServerMessage(message).ok;
+    expect(parse(room)).toBe(true);
+    expect(parse({ ...room, run: { folders: 40, maxScore: 1200, stars: null } })).toBe(true);
+    expect(parse({ ...room, phase: 'lobby', briefing: null, run: null })).toBe(true);
+    expect(parse({ ...room, difficulty: 'insane' })).toBe(false);
+    expect(parse({ ...room, run: { folders: -1, maxScore: 410, stars: null } })).toBe(false);
+    const { difficulty: _difficulty, ...withoutDifficulty } = room;
+    expect(parse(withoutDifficulty)).toBe(false);
+    const { run: _run, ...withoutRun } = room;
+    expect(parse(withoutRun)).toBe(false);
+  });
+
+  it("lets a folder carry its bag slot's station, optionally (S7-23)", () => {
+    const folder = {
+      id: 'f1',
+      spawnKey: 's0',
+      storyId: 'l1-story',
+      location: { kind: 'fixture', fixtureId: 'conveyor-0' },
+      stamps: [],
+      spawnedAtMs: 0,
+      deadlineMs: 60_000,
+      warned: false,
+    };
+    const parse = (f: unknown) =>
+      parseServerMessage({
+        type: 'snapshot',
+        tick: 1,
+        players: [],
+        ...EMPTY_LEVEL,
+        folders: [f],
+      }).ok;
+    expect(parse(folder)).toBe(true);
+    expect(parse({ ...folder, bagStation: 'imageSearch' })).toBe(true);
+    expect(parse({ ...folder, bagStation: 'map' })).toBe(false);
   });
 
   it('carries the next scheduled folder and the conveyor-full flag in every snapshot', () => {
@@ -327,6 +393,10 @@ describe('server messages', () => {
         hostId: 'p1',
         phase: 'lobby',
         levelId: 'l0-greybox',
+        briefing: null,
+        blunderVotes: [],
+        difficulty: 'normal',
+        run: null,
         players: [
           {
             id: 'p1',

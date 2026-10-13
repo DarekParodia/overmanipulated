@@ -218,6 +218,7 @@ export function installHudDevFixture(): (() => void) | undefined {
       const message: LevelEndMessage = {
         type: 'levelEnd',
         levelId: 'l0-greybox',
+        difficulty: 'normal',
         won,
         stars,
         // The results' own sum, so the totals need no 'Inne' row.

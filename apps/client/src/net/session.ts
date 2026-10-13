@@ -3,6 +3,7 @@
 // messages to the store, the game runtime and the feedback cues.
 import {
   type ClientMessage,
+  type Difficulty,
   encodeMessage,
   type LobbyAction,
   type PlayerCommand,
@@ -90,7 +91,7 @@ function handleMessage(message: ServerMessage): void {
       return;
     case 'roomState': {
       const previous = app.room;
-      useApp.setState({ room: message });
+      app.setRoom(message);
       if (message.phase === 'briefing' && app.screen !== 'briefing') {
         // Topic of the day before the level (S3-03). Entering it (from the lobby or, on a
         // replay, from the results screen) drops the previous level's state once.
@@ -271,7 +272,8 @@ function closeSession(): void {
 
 function resetToMenu(): void {
   runtime.reset();
-  useApp.setState({ playerId: null, room: null, screen: 'mainMenu', rttMs: null });
+  useApp.getState().clearRoom();
+  useApp.setState({ playerId: null, screen: 'mainMenu', rttMs: null });
 }
 
 /** Creates a new room (no code) or joins one by code. */
@@ -312,6 +314,11 @@ export function setReady(ready: boolean): void {
 
 export function selectLevel(levelId: string): void {
   lobby({ kind: 'selectLevel', levelId });
+}
+
+/** Host, in the lobby: the room's difficulty for the next run (resets everyone's ready). */
+export function setDifficulty(difficulty: Difficulty): void {
+  lobby({ kind: 'setDifficulty', difficulty });
 }
 
 /** Briefing: this player has read it; the level starts when everyone has (or on time). */

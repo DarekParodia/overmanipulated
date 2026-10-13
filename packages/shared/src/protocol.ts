@@ -12,6 +12,7 @@ import {
   ROOM_CODE_LENGTH,
 } from './constants.ts';
 import {
+  difficultySchema,
   levelEventKindSchema,
   pingKindSchema,
   roleSchema,
@@ -87,6 +88,8 @@ export const lobbyActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('skipBriefing') }),
   /** On the results/debrief screen: vote for the story that fooled the team most. */
   z.object({ kind: z.literal('voteBlunder'), storyId: entityId }),
+  /** Host only, lobby only; resets every player's ready flag like `selectLevel` (S7-23). */
+  z.object({ kind: z.literal('setDifficulty'), difficulty: difficultySchema }),
 ]);
 
 export const lobbyMessageSchema = z.object({
@@ -176,6 +179,22 @@ export const welcomeMessageSchema = z.object({
   reconnectToken: reconnectTokenSchema,
 });
 
+export const starThresholdsSchema = z.object({
+  two: z.number().int().nonnegative(),
+  three: z.number().int().nonnegative(),
+});
+
+/**
+ * What a prepared run holds (`runSummary`, S7-21): dealt folders, the score a perfect team can
+ * reach, and the star thresholds (null in endless). `roomState.run` carries it from the briefing
+ * on (S7-23); the run seed that dealt it stays on the server, so it never spoils the sequence.
+ */
+export const runSummarySchema = z.object({
+  folders: z.number().int().nonnegative(),
+  maxScore: z.number().int().nonnegative(),
+  stars: starThresholdsSchema.nullable(),
+});
+
 export const roomStateMessageSchema = z.object({
   type: z.literal('roomState'),
   roomCode: roomCodeSchema,
@@ -187,6 +206,10 @@ export const roomStateMessageSchema = z.object({
   briefing: briefingStateSchema.nullable(),
   /** Blunder-of-the-day votes cast on the results screen (one per player). */
   blunderVotes: z.array(blunderVoteSchema).max(MAX_PLAYERS),
+  /** The room's difficulty (host picks it in the lobby; it persists across level changes). */
+  difficulty: difficultySchema,
+  /** The run dealt at the briefing, kept through play and results; null in the lobby. */
+  run: runSummarySchema.nullable(),
 });
 
 export const playerSnapshotSchema = z.object({
@@ -331,25 +354,12 @@ export const errorMessageSchema = z.object({
   detail: z.string().max(200).optional(),
 });
 
-export const starThresholdsSchema = z.object({
-  two: z.number().int().nonnegative(),
-  three: z.number().int().nonnegative(),
-});
-
-/**
- * What a prepared run holds (`runSummary`, S7-21): dealt folders, the score a perfect team can
- * reach, and the star thresholds (null in endless). `roomState.run` carries it from S7-23 on.
- */
-export const runSummarySchema = z.object({
-  folders: z.number().int().nonnegative(),
-  maxScore: z.number().int().nonnegative(),
-  stars: starThresholdsSchema.nullable(),
-});
-
 /** Sent once when the level ends; the room moves to the `results` phase. */
 export const levelEndMessageSchema = z.object({
   type: z.literal('levelEnd'),
   levelId: levelIdSchema,
+  /** The difficulty the run was played on (progress and the leaderboard are kept per difficulty). */
+  difficulty: difficultySchema,
   won: z.boolean(),
   stars: z.number().int().min(0).max(3),
   score: z.number().int(),
@@ -357,9 +367,9 @@ export const levelEndMessageSchema = z.object({
   results: z.array(folderResultSchema).max(ENDLESS.maxResultsSent),
   /** Why the level was lost; null when it was won. An endless run always ends on credibility. */
   lossReason: lossReasonSchema.nullable(),
-  /** The level's two- and three-star scores; null in endless (no stars). */
+  /** The run's two- and three-star scores; null in endless (no stars). */
   starThresholds: starThresholdsSchema.nullable(),
-  /** The best score a perfect team could reach on this level; null in endless. */
+  /** The best score a perfect team could reach in this run; null in endless. */
   maxScore: z.number().int().nonnegative().nullable(),
   /** Endless runs only: whole seconds the newsroom survived (also stored on the leaderboard). */
   survivedS: z.number().int().nonnegative().optional(),

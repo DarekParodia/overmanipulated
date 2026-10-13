@@ -137,6 +137,7 @@ export async function main() {
           levelEnd: {
             type: 'levelEnd',
             levelId: 'l1-burza',
+            difficulty: 'normal',
             won: true,
             stars: 2,
             // Two stars on l1 need 205 (starThresholds below).
