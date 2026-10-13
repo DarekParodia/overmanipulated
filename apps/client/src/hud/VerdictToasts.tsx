@@ -1,9 +1,11 @@
 // Verdict feedback: a big, short toast under the folder queue for every verdict and expired
-// folder ("Dobrze! +30", "Fałszywka! −20", "Przepadło −5"), colour plus an outcome icon. At
-// most two at once, newest on top; each disappears on its own.
+// folder ("Dobrze! +30", "Fałszywka w druku! −20", "Teczka przepadła −5"; titles by reason from
+// `pl.outcome`), colour plus an outcome icon. At most two at once, newest on top; each
+// disappears on its own.
 import { useEffect, useRef, useState } from 'react';
 import { onGameEvent } from '../net/game-events.ts';
 import { pl } from '../strings/pl.ts';
+import { typeset } from '../strings/typography.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { HudGlyph } from './HudGlyph.tsx';
 import { expiredToast, formatDelta, pushToast, type ToastSlip, verdictToast } from './hud-model.ts';
@@ -61,7 +63,7 @@ export function VerdictToasts() {
           <span className={styles.mark}>
             <Icon name={toast.mark} size={28} />
           </span>
-          <span className={styles.title}>{toast.title}</span>
+          <span className={styles.title}>{typeset(toast.title)}</span>
           {toast.scoreDelta !== null && (
             <span className={styles.delta}>{formatDelta(toast.scoreDelta)}</span>
           )}

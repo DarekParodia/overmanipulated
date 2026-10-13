@@ -1,10 +1,11 @@
 // Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick one collected
 // stamp as the evidence (sent as a one-element cite list). 2: press one of three big verdict
-// buttons. After the server's verdict the sheet shows the outcome (✓ / ✗, points, what was
-// missed) until dismissed. The managing editor also gets the level's one "+20 s" deadline
-// extension here (S4-04 groundwork).
+// buttons. After the server's verdict the sheet shows the outcome until dismissed (S7-04): ✓ / ✗,
+// the title by reason, points, credibility and bonus chips, then at most two short lines from
+// `desk-result-model.ts` (the proof, or the right verdict and the deciding station). The
+// managing editor also gets the level's one "+20 s" deadline extension here (S4-04 groundwork).
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
-import type { Folder, GameEvent, Verdict } from '@redakcja/shared';
+import type { Folder, FolderBonuses, GameEvent, Verdict } from '@redakcja/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { correctionStampId } from '../events/event-model.ts';
 import { emitCue } from '../fx/feedback.ts';
@@ -16,10 +17,16 @@ import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
-import { Icon } from '../ui/icons/Icon.tsx';
+import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import { VerdictStamp } from '../ui/VerdictStamp.tsx';
 import styles from './DeskOverlay.module.css';
 import { DEADLINE_EXTENSION_S, mayExtendDeadline } from './deadline-extension.ts';
+import {
+  type DeskResultLine,
+  deskResultChips,
+  deskResultLabel,
+  deskResultLines,
+} from './desk-result-model.ts';
 import { FolderSheet } from './FolderSheet.tsx';
 import { OutcomeBanner, ResultMark, STATION_ICON } from './kit.tsx';
 import { OverlayFrame } from './OverlayFrame.tsx';
@@ -468,22 +475,40 @@ function Step({
   );
 }
 
+/** Bonus chips in a fixed order, each with its icon. */
+const BONUS_ICON: Record<keyof FolderBonuses, IconName> = {
+  speed: 'clock',
+  multiStamp: 'stamp',
+  bossCall: 'phone',
+};
+const BONUS_ORDER: readonly (keyof FolderBonuses)[] = ['speed', 'multiStamp', 'bossCall'];
+
 function ResultView({
+  folder,
   story,
   result,
   onDismissResult,
 }: DeskOverlayProps & { result: VerdictResultEvent }) {
   const device = useApp((s) => s.inputDevice);
+  // The level's stations do not change while the result shows; read them once, not per snapshot.
+  const [levelStations] = useState(() => useGame.getState().stations.map((s) => s.kind));
   useNavIntent((intent) => {
     if (intent === 'confirm' || intent === 'back') {
       emitCue('ui.click');
       onDismissResult();
     }
   });
-  const missed = result.missedStampIds
-    .map((id) => story?.stamps.find((stamp) => stamp.id === id))
-    .filter((stamp): stamp is StoryStamp => stamp !== undefined);
   const good = result.outcome === 'correct';
+  const lines = deskResultLines(
+    {
+      reason: result.reason,
+      justifyingStampIds: result.justifyingStampIds,
+      requiredStamps: result.requiredStamps,
+      folderStampIds: folder.stamps,
+      levelStations,
+    },
+    story,
+  );
 
   return (
     <OverlayFrame
@@ -495,11 +520,16 @@ function ResultView({
       testId="desk-result"
     >
       <div className={styles.result}>
-        <div className={styles.outcome} role="status" data-testid="desk-outcome">
+        <div
+          className={styles.outcome}
+          role="status"
+          data-testid="desk-outcome"
+          data-reason={result.reason}
+        >
           <ResultMark success={good} size="lg" />
           <div className={styles.outcomeText}>
             <p className={`${styles.outcomeTitle} ${good ? styles.good : styles.bad}`}>
-              {typeset(pl.desk.outcomes[result.outcome])}
+              {typeset(pl.outcome.title[result.reason])}
             </p>
             {story && <p className={styles.outcomeStory}>{typeset(story.headline)}</p>}
           </div>
@@ -513,28 +543,21 @@ function ResultView({
           <span className={styles.delta}>
             {pl.desk.credibility(signed(result.credibilityDelta))}
           </span>
-          {result.bonuses.speed > 0 && (
-            <span className={styles.delta}>
-              <Icon name="clock" size={20} />
-              {pl.desk.speedBonus}
+          {BONUS_ORDER.filter((bonus) => result.bonuses[bonus] > 0).map((bonus) => (
+            <span key={bonus} className={styles.delta} data-testid={`desk-bonus-${bonus}`}>
+              <Icon name={BONUS_ICON[bonus]} size={20} />
+              <span className={styles.bonusLabel}>{pl.desk.result.bonuses[bonus]}</span>
+              {signed(result.bonuses[bonus])}
             </span>
-          )}
+          ))}
         </p>
 
-        {missed.length > 0 && (
-          <div className={styles.missed}>
-            <h3 className={styles.missedTitle}>{pl.desk.missed}</h3>
-            <ul>
-              {missed.map((m) => (
-                <li key={m.id}>
-                  <span className={styles.stampIcon}>
-                    <Icon name={STATION_ICON[m.station]} size={22} />
-                  </span>
-                  <span>{typeset(m.text)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {lines.length > 0 && (
+          <ul className={styles.lines} data-testid="desk-result-lines">
+            {lines.map((line) => (
+              <ResultLine key={line.kind} line={line} />
+            ))}
+          </ul>
         )}
 
         <div className={styles.next}>
@@ -544,6 +567,37 @@ function ResultView({
         </div>
       </div>
     </OverlayFrame>
+  );
+}
+
+/** Lines without chips lead with an icon, so no line is words alone. */
+const LINE_ICON: Partial<Record<DeskResultLine['kind'], IconName>> = {
+  weakProof: 'stamp',
+  tooFewProofs: 'stamp',
+};
+
+/** One short line: a label, then station chips (icon + short name) or the right verdict. */
+function ResultLine({ line }: { line: DeskResultLine }) {
+  const icon =
+    line.kind === 'hintOnly' && line.stations[0]
+      ? STATION_ICON[line.stations[0]]
+      : LINE_ICON[line.kind];
+  return (
+    <li className={styles.line} data-testid={`desk-line-${line.kind}`}>
+      {icon && (
+        <span className={styles.lineIcon}>
+          <Icon name={icon} size={20} />
+        </span>
+      )}
+      <span className={styles.lineLabel}>{typeset(deskResultLabel(line))}</span>
+      {deskResultChips(line).map((station) => (
+        <span key={station} className={styles.chip}>
+          <Icon name={STATION_ICON[station]} size={20} />
+          {pl.guidance.stationShort[station]}
+        </span>
+      ))}
+      {line.kind === 'correctVerdict' && <VerdictStamp kind={line.verdict} size="sm" />}
+    </li>
   );
 }
 

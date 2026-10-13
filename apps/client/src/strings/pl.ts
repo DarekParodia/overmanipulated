@@ -2,7 +2,9 @@
 // a gruff, warm editor-in-chief — short, concrete, newsroom vocabulary, no marketing voice.
 import type {
   ErrorCode,
+  FolderBonuses,
   FolderOutcome,
+  FolderReason,
   PingKind,
   Priority,
   Role,
@@ -301,15 +303,41 @@ export const pl = {
       floor: 'na podłodze',
     },
     untitled: 'Teczka bez opisu',
+    /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
-      correct: 'Dobrze!',
-      wrongJustification: 'Prawie!',
-      fakePublished: 'Fałszywka!',
-      truthRejected: 'To była prawda!',
-      wrong: 'Pudło!',
-      expired: 'Przepadło',
       credibility: (delta: string) => `wiarygodność ${delta}`,
     },
+  },
+  /**
+   * One outcome vocabulary (S7-04): the verdict toast, the desk result and the Kolegium read
+   * the same titles. Every title is at most 8 words (it shows during play).
+   */
+  outcome: {
+    /** A folder result's title, by the reason it ended that way. */
+    title: {
+      correctNormal: 'Dobrze!',
+      correctImportant: 'Dobrze!',
+      correctWithContext: 'Dobrze, z kontekstem!',
+      correctionFiled: 'Sprostowanie poszło!',
+      weakProof: 'Słaby dowód',
+      incompleteProof: 'Za mało dowodów',
+      publishedFake: 'Fałszywka w druku!',
+      rejectedTrue: 'To była prawda!',
+      contextOnTrue: 'Kontekst niepotrzebny',
+      publishedWithoutContext: 'Bez kontekstu!',
+      rejectedContextStory: 'Wystarczył kontekst',
+      expired: 'Teczka przepadła',
+      expiredUnpenalized: 'Teczka przepadła',
+      unfinished: 'Nie zdążyliście',
+    } satisfies Record<FolderReason, string>,
+    /** The outcome group: the accessible name of the ✓ / ✗ / hourglass marks. */
+    group: {
+      correct: 'Dobrze',
+      wrongJustification: 'Słaby dowód',
+      wrong: 'Błędny werdykt',
+      expired: 'Przepadła',
+      unfinished: 'Nie zdążyliście',
+    } satisfies Record<FolderOutcome, string>,
   },
   /** Station overlay and work progress (S2-03). */
   station: {
@@ -347,17 +375,29 @@ export const pl = {
       publishWithContext: 'Z kontekstem',
     } satisfies Record<Verdict, string>,
     next: 'Dalej',
-    outcomes: {
-      correct: 'Dobrze!',
-      wrongJustification: 'Werdykt dobry, dowód nie',
-      wrong: 'Zły werdykt',
-      expired: 'Teczka przepadła',
-      unfinished: 'Nie zdążyliście',
-    } satisfies Record<FolderOutcome, string>,
     points: (n: string) => `${n} pkt`,
     credibility: (n: string) => `Wiarygodność ${n}`,
-    speedBonus: 'Premia za tempo',
-    missed: 'Zabrakło:',
+    /**
+     * Lines under the desk result (`stations/desk-result-model.ts`), at most two; the chips
+     * after a label carry station names only, so every line stays within 8 words.
+     */
+    result: {
+      proof: 'Dowód:',
+      weakProof: 'Ten dowód niczego nie rozstrzyga',
+      tooFewProofs: (have: number, need: number) => `Dowody: ${have} z ${need}`,
+      /** `stations` are full station names, e.g. [„Skaner AI”]. */
+      hintOnly: (stations: readonly string[]) => `${stations.join(' i ')} to tylko wskazówka`,
+      decidedBy: 'Rozstrzyga:',
+      correctVerdict: 'Właściwy werdykt:',
+      proofInFolder: 'Dowód był w teczce:',
+      notChecked: 'Nie sprawdzono:',
+      /** Bonus chips next to the points: an icon, this label, then the points ("+5"). */
+      bonuses: {
+        speed: 'Premia za tempo',
+        multiStamp: 'Premia za dowody',
+        bossCall: 'Szef dzwonił',
+      } satisfies Record<keyof FolderBonuses, string>,
+    },
     unknownStory: 'Nieznana teczka.',
     /** The managing editor's one deadline extension per level. */
     extend: 'Przedłuż termin',
@@ -786,13 +826,6 @@ export const pl = {
     credibilityDelta: (delta: string) => `wiarygodność ${delta}`,
     folders: 'Teczki',
     noFolders: 'Żadna teczka nie dostała werdyktu.',
-    outcomes: {
-      correct: 'Trafnie',
-      wrongJustification: 'Słaby dowód',
-      wrong: 'Błąd',
-      expired: 'Przepadła',
-      unfinished: 'Niedokończona',
-    } satisfies Record<FolderOutcome, string>,
     backToLobby: 'Wróć do redakcji',
     waitingForHost: 'Czekamy na gospodarza…',
   },
@@ -903,7 +936,9 @@ export const pl = {
       tool: 'Co to wykryło',
       realWorld: 'Gdzie to się zdarza',
     },
-    missed: 'Zabrakło pieczątek',
+    /** The story's deciding proof; until S7-07 only the proofs nobody checked are listed. */
+    proofTitle: 'Dowód, który rozstrzygał',
+    proofMissing: 'nie sprawdzono',
     vote: 'Wpadka dnia?',
     voted: 'Twój głos',
     leader: 'Wpadka dnia!',
