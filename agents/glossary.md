@@ -127,6 +127,16 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
+
+| Polish | English | Notes |
+| --- | --- | --- |
+| Problem na stanowisku | `problemFromStamp(story, stamp)` | Whether a station's puzzle shows a problem: decisive stamp → the story is untrue; misleading → the story is true; irrelevant → no; no stamp → `null` (the minigame rolls its own chance). Shared by every minigame from S7-52 |
+| Opis w teczce / Dane pliku | `MetadataPuzzle.claim` / `MetadataPuzzle.file` | Metadane: what the folder says about a file (when, device, editing, place) / the file's own four fields (`METADATA_FIELD_IDS`: `taken`, `device`, `software`, `place`) |
+| Sprzeczność | `contradiction` (`MetadataOutcome`) | Exactly one file field contradicts the description |
+| Zgadza się | `consistent` (`MetadataOutcome`; answer `matches`) | No field contradicts the description |
+| Dane usunięte (Brak danych) | `stripped` (`MetadataOutcome`; answer `noData`) | A social site stripped the file data; missing data proves nothing. An irrelevant Metadane stamp always means this |
+
 ## Roles (`RoleId`)
 
 Passives and abilities live in `ROLE_PERKS` (`RolePerk`, S7-36): `fasterAt` × `workFactor` is the

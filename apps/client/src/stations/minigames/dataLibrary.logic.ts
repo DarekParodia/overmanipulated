@@ -13,12 +13,11 @@ import {
   DATA_LIBRARY_YEARS,
   DEFAULT_DIFFICULTY,
   type Difficulty,
-  hashText,
   mistakeLimit,
   type Rng,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
-import { cardHasFlags } from './sourceRegistry.logic.ts';
+import { hashText, pick, problemFromStamp, shuffled } from './evidence.ts';
 
 export type MismatchKind = 'wrongYear' | 'wrongRow' | 'wrongUnit' | 'cherryPick' | 'invented';
 export type Verdict = 'match' | MismatchKind;
@@ -62,27 +61,9 @@ export function columnCount(table: DataTable): number {
   return table.years.length + 1;
 }
 
-// FNV-1a (now in the shared sim, S7-13), so the headline and stamp text steer the puzzle without
-// any new content field.
+// FNV-1a (the shared sim's, through evidence.ts), so the headline and stamp text steer the puzzle
+// without any new content field.
 export { hashText };
-
-function pick<T>(rng: Rng, items: readonly T[]): T {
-  const item = items[rng.int(items.length)];
-  if (item === undefined) {
-    throw new Error('empty pool');
-  }
-  return item;
-}
-
-/** Fisher–Yates on a copy. */
-function shuffled<T>(rng: Rng, items: readonly T[]): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = rng.int(i + 1);
-    [out[i], out[j]] = [out[j] as T, out[i] as T];
-  }
-  return out;
-}
 
 function average(values: readonly number[]): number {
   return Math.round(values.reduce((sum, v) => sum + v, 0) / values.length);
@@ -235,9 +216,7 @@ export function generatePuzzle(seed: number, story: Story, stamp: Stamp | undefi
   const col = rng.int(columnCount(table));
   // A decisive stamp on an untrue story (or a misleading one on a true story) means the figure
   // was altered; without a stamp it is random.
-  const altered = stamp
-    ? cardHasFlags(story, stamp, rng)
-    : rng.next() < DATA_LIBRARY_ALTERED_CHANCE;
+  const altered = problemFromStamp(story, stamp) ?? rng.next() < DATA_LIBRARY_ALTERED_CHANCE;
   const wanted: Verdict = altered ? pick(rng, MISMATCH_KINDS) : 'match';
   const claim = makeClaim(rng, table, row, col, wanted);
   return { table, claim, verdict: diagnose(table, claim) };

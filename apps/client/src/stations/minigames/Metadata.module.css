@@ -1,0 +1,344 @@
+/*
+ * Metadane: the folder's description (chips on a manila card) next to the file's data (four big
+ * white field tiles in a 2×2 grid), with two white answer buttons underneath. No yellow: a
+ * yellow answer would hint at the solution (design-rules §1.1). A wrong pick is struck out in
+ * red; after the round the contradicting field gets a ✗, or every field a ✓.
+ */
+.root {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-3);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* Narrow: description, file, answers stacked. */
+.body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Wide / landscape: description left, file data right, answers under the file data. */
+@container (min-width: 34rem) {
+  .body {
+    grid-template-columns: minmax(9rem, 14rem) minmax(0, 1fr);
+    grid-template-areas:
+      "claim file"
+      "claim foot";
+    grid-template-rows: auto 1fr;
+    align-items: start;
+  }
+
+  .claim {
+    grid-area: claim;
+    align-self: stretch;
+  }
+
+  .file {
+    grid-area: file;
+  }
+
+  .foot {
+    grid-area: foot;
+  }
+}
+
+.title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.note {
+  padding: 0 var(--space-2);
+  background: var(--surface-sunk);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* --- The folder's description ----------------------------------------------------------- */
+
+.claim {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  color: var(--text);
+}
+
+.chips {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.chip > svg {
+  flex: none;
+  color: var(--text-soft);
+}
+
+/* --- The file data ---------------------------------------------------------------------- */
+
+.file {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--pop);
+  color: var(--text);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.field {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 2px;
+  min-height: 3.75rem;
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 3px 0 var(--outline);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1.1;
+  color: var(--text-soft);
+}
+
+.value {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.value[data-empty="true"] {
+  color: var(--text-faint);
+}
+
+/* --- The two answers -------------------------------------------------------------------- */
+
+.foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+/* The outcome banner takes the whole row. */
+.foot > [role="status"] {
+  grid-column: 1 / -1;
+}
+
+.answer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 3.5rem;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.field:disabled,
+.answer:disabled {
+  cursor: default;
+}
+
+.field:not(:disabled):active,
+.answer:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: var(--pop-pressed);
+}
+
+/* Keyboard/gamepad cursor: blue outline and a lift. */
+.field[data-focused="true"],
+.field:focus-visible,
+.answer[data-focused="true"],
+.answer:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 0;
+  transform: translateY(-2px);
+}
+
+/* Wrong: struck out in red (no second penalty). */
+.field[data-struck="true"],
+.answer[data-struck="true"] {
+  background: var(--surface-sunk);
+  border-color: var(--red-dark);
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 3px;
+}
+
+.field[data-struck="true"] .label {
+  color: var(--text-faint);
+}
+
+/* After the round: the contradicting field flips to a red ✗; matching fields get a green ✓. */
+.mark {
+  position: absolute;
+  top: -0.6rem;
+  right: -0.4rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--stroke) solid var(--outline);
+  border-radius: 50%;
+  color: var(--text);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+.mark[data-kind="check"] {
+  background: var(--green);
+}
+
+.mark[data-kind="cross"] {
+  background: var(--red);
+}
+
+.field[data-mark="cross"] {
+  border-color: var(--red-dark);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+/* A failure shows the right answer dashed (unless the difficulty hides it). */
+.field[data-revealed="true"] {
+  border-style: dashed;
+  outline: 3px solid var(--red);
+  outline-offset: 0;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+:global(:root[data-reduced-motion="true"]) .mark,
+:global(:root[data-reduced-motion="true"]) .field[data-mark="cross"] {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark,
+  .field[data-mark="cross"] {
+    animation: none;
+  }
+}
+
+/*
+ * Short landscape phones: the wide layout already puts the answers under the file data, next to
+ * the description, so only the spacing tightens (a third column for the answers would squeeze
+ * the 2×2 fields below a readable width at 640×360).
+ */
+@media (max-height: 430px) {
+  .root,
+  .body {
+    gap: var(--space-2);
+  }
+
+  .claim {
+    gap: var(--space-1);
+    padding: var(--space-2);
+  }
+
+  .file {
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2) var(--space-2);
+  }
+
+  .grid,
+  .foot {
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .chip {
+    padding: 2px var(--space-1);
+    gap: var(--space-1);
+  }
+
+  .field {
+    min-height: var(--touch-target);
+    padding: 2px var(--space-2);
+  }
+
+  .value {
+    font-size: var(--text-sm);
+  }
+
+  .answer {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-md);
+  }
+}

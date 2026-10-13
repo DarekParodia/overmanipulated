@@ -146,6 +146,8 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'aiScanner.wrong': skip('own-action'),
   'dataLibrary.right': skip('own-action'),
   'dataLibrary.mistake': skip('own-action'),
+  'metadata.right': skip('own-action'),
+  'metadata.mistake': skip('own-action'),
   'endless.tempo': chip('clock', t.tempoUp, 'warn'),
   'endless.over': skip('visual-elsewhere'),
   'endless.record': chip('trophy', t.record, 'good'),
