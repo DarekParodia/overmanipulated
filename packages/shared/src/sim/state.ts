@@ -76,8 +76,6 @@ export type GameState = {
   desks: Record<string, Desk>;
   score: number;
   credibility: number;
-  /** The managing editor's one deadline extension per level. */
-  deadlineExtensionUsed: boolean;
   /** Every resolved folder, then the ones still in play when the level ended (`unfinished`). */
   results: FolderResult[];
   /** Set once when the level is over; the server then sends `levelEnd`. */
@@ -126,7 +124,6 @@ export function createGameState(options: GameStateOptions = {}): GameState {
     desks,
     score: 0,
     credibility: CREDIBILITY_START,
-    deadlineExtensionUsed: false,
     results: [],
     ended: null,
   };

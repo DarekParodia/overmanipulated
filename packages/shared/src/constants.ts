@@ -99,8 +99,6 @@ export const MULTI_STAMP_FIRST_LEVEL = 4;
 export const INTERACTION_REACH_TILES = 1.1;
 /** A folder enters the "deadline warning" state with this much time left. */
 export const DEADLINE_WARNING_MS = 10_000;
-/** Managing editor: one deadline extension per level, by this much. */
-export const DEADLINE_EXTENSION_MS = 20_000;
 
 /** Hold-to-work time at each station before its minigame opens (design doc: 3–8 s). */
 export const STATION_WORK_MS = {

@@ -57,6 +57,7 @@ import {
 } from '@redakcja/shared';
 import { MAX_ROOMS } from '../limits.ts';
 import { log } from '../log.ts';
+import type { RoomSettings } from '../public-config.ts';
 import { generateReconnectToken, generateRoomCode, secureRandom } from './codes.ts';
 import { CLOSE_REPLACED, type Connection, type Hub } from './connection.ts';
 
@@ -135,8 +136,13 @@ export type RegistryOptions = {
     storyId: string;
     previousId: number | null;
   }) => number;
-  /** Rooms alive at once; creating another is refused with `roomFull`. */
+  /** Rooms alive at once; creating another is refused with `roomFull`. Wins over `settings`. */
   maxRooms?: number;
+  /**
+   * Live settings from config.json (S7-68), read at every room creation so a reload applies to
+   * the next room: `maxRooms`, the difficulty a new room starts at, and the feature flags.
+   */
+  settings?: () => RoomSettings;
   /** Persists a finished endless run for the leaderboard (S4-11), with its difficulty (S7-23). */
   recordLeaderboardEntry?: (entry: {
     roomCode: string;
@@ -332,7 +338,8 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
 
     if (message.roomCode === undefined) {
-      if (rooms.size >= (options.maxRooms ?? MAX_ROOMS)) {
+      const settings = options.settings?.();
+      if (rooms.size >= (options.maxRooms ?? settings?.maxRooms ?? MAX_ROOMS)) {
         log.warn('room limit reached', { rooms: rooms.size });
         sendError(connection, 'roomFull', 'server is busy');
         return;
@@ -348,7 +355,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         game: createGameState({ map }),
         level,
         stories: storiesForLevel(level),
-        difficulty: DEFAULT_DIFFICULTY,
+        difficulty: settings?.defaultDifficulty ?? DEFAULT_DIFFICULTY,
         run: null,
         map,
         nextPlayerNumber: 1,
@@ -816,7 +823,6 @@ export function createRoomRegistry(options: RegistryOptions) {
       folders: Object.values(game.folders),
       stations: Object.values(game.stations),
       desks: Object.values(game.desks),
-      deadlineExtensionUsed: game.deadlineExtensionUsed,
       nextFolder: nextScheduledSpawn(game, schedule),
       conveyorFull: conveyorBlocked(game, schedule),
       crew: crewSnapshot(game),

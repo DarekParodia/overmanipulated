@@ -1,17 +1,26 @@
 // Lobby (design-rules §5): the room code big in a pill, the players as a row of cards, the
-// role picker, the level, and one main action — "Gotowy" for guests, "Do składu!" for the host.
+// role picker, the difficulty (S7-25), the level, and one main action — "Gotowy" for guests,
+// "Do składu!" for the host.
 import { MAX_PLAYERS, type Role } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
-import { leaveRoom, selectLevel, setReady, setRole, startGame } from '../net/session.ts';
+import {
+  leaveRoom,
+  selectLevel,
+  setDifficulty,
+  setReady,
+  setRole,
+  startGame,
+} from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './Lobby.module.css';
+import { DifficultyPicker } from './lobby/DifficultyPicker.tsx';
 import { LevelCard } from './lobby/LevelCard.tsx';
 import { PlayerCard } from './lobby/PlayerCard.tsx';
 import { ReadyToggle } from './lobby/ReadyToggle.tsx';
@@ -43,11 +52,29 @@ function useRemoteReadyCue(playerId: string | null): void {
   }, [players, playerId]);
 }
 
+/** Guests hear a click when the host picks another difficulty (their chip pops with it). */
+function useRemoteDifficultyCue(isHost: boolean): void {
+  const difficulty = useApp((s) => s.room?.difficulty);
+  const before = useRef(difficulty);
+  useEffect(() => {
+    if (
+      before.current !== undefined &&
+      difficulty !== undefined &&
+      difficulty !== before.current &&
+      !isHost
+    ) {
+      emitCue('ui.click');
+    }
+    before.current = difficulty;
+  }, [difficulty, isHost]);
+}
+
 export function Lobby() {
   const room = useApp((s) => s.room);
   const playerId = useApp((s) => s.playerId);
   const connection = useApp((s) => s.connection);
   const error = useApp((s) => s.error);
+  const run = useApp((s) => s.run);
   const setSettingsOpen = useApp((s) => s.setSettingsOpen);
   const [copied, setCopied] = useState(false);
   const [boardOpen, setBoardOpen] = useState(false);
@@ -62,6 +89,7 @@ export function Lobby() {
     [],
   );
   useRemoteReadyCue(playerId);
+  useRemoteDifficultyCue(room !== null && room.hostId === playerId);
 
   if (!room) {
     return null;
@@ -176,9 +204,19 @@ export function Lobby() {
         onChange={(role: Role | null) => act(() => setRole(role))}
       />
 
+      {isHost && (
+        <DifficultyPicker
+          difficulty={room.difficulty}
+          disabled={!online}
+          onChange={(difficulty) => act(() => setDifficulty(difficulty))}
+        />
+      )}
+
       <footer className={styles.bottom}>
         <LevelCard
           levelId={room.levelId}
+          difficulty={room.difficulty}
+          runFolders={run?.folders ?? null}
           isHost={isHost}
           disabled={!online}
           onSelect={(levelId) => act(() => selectLevel(levelId))}

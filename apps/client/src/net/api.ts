@@ -1,6 +1,11 @@
 // Typed REST client for /api, generated from the server's Hono routes (no hand-written URLs).
 import type { AppType } from '@redakcja/server/app';
-import { type LeaderboardResponse, leaderboardResponseSchema } from '@redakcja/shared';
+import {
+  type LeaderboardResponse,
+  leaderboardResponseSchema,
+  type PublicConfig,
+  publicConfigSchema,
+} from '@redakcja/shared';
 import { hc } from 'hono/client';
 
 export const api = hc<AppType>(globalThis.location?.origin ?? 'http://localhost').api;
@@ -36,5 +41,23 @@ export async function fetchHealth(): Promise<{ status: HealthStatus; rooms: numb
     return { status: body.status, rooms: body.rooms };
   } catch {
     return { status: 'unreachable', rooms: 0 };
+  }
+}
+
+/**
+ * The server's public config for this host (`GET /api/config`), validated against the shared
+ * schema. Never throws: a network, HTTP or shape error gives null, so the caller keeps what it
+ * has (the embedded config or the safe defaults). `fetchImpl` replaces `fetch` in tests.
+ */
+export async function fetchPublicConfig(fetchImpl?: typeof fetch): Promise<PublicConfig | null> {
+  try {
+    const res = await api.config.$get(undefined, fetchImpl ? { fetch: fetchImpl } : undefined);
+    if (!res.ok) {
+      return null;
+    }
+    const parsed = publicConfigSchema.safeParse(await res.json());
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
   }
 }

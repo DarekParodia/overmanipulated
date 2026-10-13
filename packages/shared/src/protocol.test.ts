@@ -10,7 +10,6 @@ const EMPTY_LEVEL = {
   folders: [],
   stations: [],
   desks: [],
-  deadlineExtensionUsed: false,
   nextFolder: { atMs: 3000, sinceMs: 0 },
   conveyorFull: false,
   crew: [],
@@ -142,6 +141,13 @@ describe('client messages', () => {
     const command = (command: unknown) => parseClientMessage({ type: 'command', command }).ok;
     expect(command({ kind: 'useAbility' })).toBe(true);
     expect(command({ kind: 'useAbilities' })).toBe(false);
+  });
+
+  it('no longer accepts the once-per-level extendDeadline command or its event (S7-37)', () => {
+    const command = (command: unknown) => parseClientMessage({ type: 'command', command }).ok;
+    expect(command({ kind: 'extendDeadline', folderId: 'f1' })).toBe(false);
+    const event = (event: unknown) => parseServerMessage({ type: 'event', tick: 4, event }).ok;
+    expect(event({ kind: 'deadlineExtended', folderId: 'f1', playerId: 'p1' })).toBe(false);
   });
 
   it('rejects unknown types and malformed JSON', () => {

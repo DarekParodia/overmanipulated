@@ -216,7 +216,6 @@ const everyEvent: GameplayEvent[] = [
   },
   { kind: 'deadlineWarning', folderId: 'f1' },
   { kind: 'folderExpired', folderId: 'f1', spawnKey: 's0', storyId: 's1', stamps: [] },
-  { kind: 'deadlineExtended', folderId: 'f1', playerId: player },
   { kind: 'workStarted', stationId: 'imageSearch-0', playerId: player },
   { kind: 'workCancelled', stationId: 'imageSearch-0', playerId: player },
   {
@@ -241,6 +240,14 @@ const everyEvent: GameplayEvent[] = [
     folderId: 'f1',
     stampId: 'x',
     via: 'minigame',
+  },
+  {
+    kind: 'stampApplied',
+    stationId: 'phone-0',
+    playerId: player,
+    folderId: 'f1',
+    stampId: 'x',
+    via: 'fieldCall',
   },
   { kind: 'deskOpened', deskId: 'desk-0', playerId: player, folderId: 'f1' },
   { kind: 'deskClosed', deskId: 'desk-0', playerId: player },

@@ -24,6 +24,10 @@ describe('ping picker navigation', () => {
     expect(pickerNav(0, 'alt')).toEqual({ kind: 'again' });
   });
 
+  it('swallows the role ability key (S7-39)', () => {
+    expect(pickerNav(1, 'ability')).toEqual({ kind: 'none' });
+  });
+
   it('maps number keys 1–3 (row and numpad) to pings', () => {
     expect(pingForKey('Digit1')).toBe('needArchive');
     expect(pingForKey('Numpad2')).toBe('fake');

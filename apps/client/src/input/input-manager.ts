@@ -1,5 +1,5 @@
 // Collects keyboard, gamepad and touch into one InputState, sampled once per simulation tick.
-// Edge-triggered actions (pick up, ping) are latched between samples so a quick tap that starts
+// Edge-triggered actions (pick up, ping, role ability) are latched between samples so a quick tap that starts
 // and ends within one 50 ms tick is never lost.
 import type { InputActions, MoveVector } from '@redakcja/shared';
 import { useApp } from '../store/app.ts';
@@ -8,12 +8,18 @@ import { firstGamepad } from './gamepad-access.ts';
 import { GAME_KEYS, isWorkHeld, KEY_BINDINGS, keysToMove } from './keyboard.ts';
 import { handleNavKey, isInputCaptured } from './ui-nav.ts';
 
-export type InputSample = { move: MoveVector; actions: InputActions; ping: boolean };
+export type InputSample = {
+  move: MoveVector;
+  actions: InputActions;
+  ping: boolean;
+  /** The role ability was pressed since the last sample (R, RB or the touch button; S7-39). */
+  ability: boolean;
+};
 
 const pressedKeys = new Set<string>();
 const touch = { move: { x: 0, y: 0 } as MoveVector, work: false };
-const latched = { interact: false, ping: false };
-const padPrevious = { interact: false, ping: false };
+const latched = { interact: false, ping: false, ability: false };
+const padPrevious = { interact: false, ping: false, ability: false };
 let attached = false;
 
 const NATIVE_DIALOG_KEYS: ReadonlySet<string> = new Set([
@@ -49,6 +55,9 @@ function onKeyDown(event: KeyboardEvent): void {
     }
     if ((KEY_BINDINGS.ping as readonly string[]).includes(event.code)) {
       latched.ping = true;
+    }
+    if ((KEY_BINDINGS.ability as readonly string[]).includes(event.code)) {
+      latched.ability = true;
     }
   }
   pressedKeys.add(event.code);
@@ -103,6 +112,11 @@ export const touchInput = {
     latched.ping = true;
     useApp.getState().setInputDevice('touch');
   },
+  /** The fourth thumb button (S7-40 mounts it); one press = one ability press. */
+  pressAbility(): void {
+    latched.ability = true;
+    useApp.getState().setInputDevice('touch');
+  },
 };
 
 function strongest(a: MoveVector, b: MoveVector): MoveVector {
@@ -115,13 +129,20 @@ export function sampleInput(): InputSample {
     // An overlay owns the input: the avatar stands still and nothing is picked up.
     latched.interact = false;
     latched.ping = false;
+    latched.ability = false;
     const pad = firstGamepad();
     if (pad) {
       const reading = readGamepad(pad);
       padPrevious.interact = reading.interact;
       padPrevious.ping = reading.ping;
+      padPrevious.ability = reading.ability;
     }
-    return { move: { x: 0, y: 0 }, actions: { interact: false, work: false }, ping: false };
+    return {
+      move: { x: 0, y: 0 },
+      actions: { interact: false, work: false },
+      ping: false,
+      ability: false,
+    };
   }
   let move = strongest(keysToMove(pressedKeys), touch.move);
   let work = isWorkHeld(pressedKeys) || touch.work;
@@ -139,15 +160,21 @@ export function sampleInput(): InputSample {
     if (reading.ping && !padPrevious.ping) {
       latched.ping = true;
     }
+    if (reading.ability && !padPrevious.ability) {
+      latched.ability = true;
+    }
     padPrevious.interact = reading.interact;
     padPrevious.ping = reading.ping;
+    padPrevious.ability = reading.ability;
   }
   const sample: InputSample = {
     move,
     actions: { interact: latched.interact, work },
     ping: latched.ping,
+    ability: latched.ability,
   };
   latched.interact = false;
   latched.ping = false;
+  latched.ability = false;
   return sample;
 }

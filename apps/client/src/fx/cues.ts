@@ -188,12 +188,6 @@ export const cues = {
     severity: 1,
     sound: { ids: ['tick'], bus: 'sfx', volume: 0.45, rateJitter: 0.03 },
   },
-  'folder.deadlineExtended': {
-    severity: 1,
-    sound: { ids: ['arrive'], bus: 'sfx', volume: 0.45, rateJitter: 0.04 },
-    particles: { preset: 'paperFlutter', count: 4 },
-    animation: ['hop', 'cardHop'],
-  },
   /**
    * A scheduled folder is due but every conveyor tile holds one (`conveyorFull` rising edge, fx/
    * gameplay-feedback.ts); the ghost card and the conveyor sign turn orange.
@@ -639,6 +633,15 @@ export const cues = {
     sound: { ids: ['back'], bus: 'sfx', volume: 0.4 },
     particles: { preset: 'dust', count: 2 },
   },
+  /**
+   * A local ability press with nothing to do: no role, or the ability is still cooling (S7-39).
+   * Only the presser hears it; the HUD chip shake (`abilityDenied`) arrives with S7-40.
+   */
+  'ability.denied': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui' },
+    haptic: 'tick',
+  },
   /** Ekspertyza solved the station's task: the stamp lands without a minigame. */
   'ability.expertise': {
     severity: 2,
@@ -667,7 +670,7 @@ export const cues = {
     particles: { preset: 'smoke', count: 4 },
     animation: 'wobble',
   },
-  /** Przedłużenie: +20 s for a folder (replaces folder.deadlineExtended in S7-37). */
+  /** Przedłużenie: +20 s for a folder (and its raid wave). */
   'ability.extendDeadline': {
     severity: 1,
     sound: { ids: ['arrive'], bus: 'sfx', volume: 0.6, rateJitter: 0.04 },

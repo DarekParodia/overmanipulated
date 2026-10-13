@@ -6,9 +6,16 @@ import { useApp } from '../store/app.ts';
 import { PAD, radialDeadzone } from './gamepad.ts';
 import { firstGamepad } from './gamepad-access.ts';
 
-export type NavIntent = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'alt';
+/**
+ * `ability` is the role ability key (R / RB, S7-39): overlays that offer an ability use it
+ * (Ekspertyza, the desk's Przedłużenie); everything else ignores it or passes it on.
+ */
+export type NavIntent = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'alt' | 'ability';
 
-/** Physical key → intent. WASD and arrows navigate; Space/Enter/E confirm; Esc/Backspace back. */
+/**
+ * Physical key → intent. WASD and arrows navigate; Space/Enter/E confirm; Esc/Backspace back;
+ * Q/Tab alt; R is the role ability.
+ */
 export const NAV_KEYS: Readonly<Record<string, NavIntent>> = {
   ArrowUp: 'up',
   KeyW: 'up',
@@ -26,9 +33,13 @@ export const NAV_KEYS: Readonly<Record<string, NavIntent>> = {
   Backspace: 'back',
   KeyQ: 'alt',
   Tab: 'alt',
+  KeyR: 'ability',
 };
 
-/** Gamepad: d-pad / left stick navigate, south confirms, east backs out, north is `alt`. */
+/**
+ * Gamepad: d-pad / left stick navigate, south confirms, east backs out, north is `alt`, RB is
+ * the role ability.
+ */
 const PAD_EAST = 1;
 const STICK_THRESHOLD = 0.6;
 
@@ -114,6 +125,7 @@ function padIntents(): Set<NavIntent> {
   if (pressed(PAD.south)) intents.add('confirm');
   if (pressed(PAD_EAST)) intents.add('back');
   if (pressed(PAD.north)) intents.add('alt');
+  if (pressed(PAD.rb)) intents.add('ability');
   return intents;
 }
 

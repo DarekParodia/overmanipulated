@@ -141,6 +141,13 @@
   transition: transform var(--motion-base) var(--ease-bounce);
 }
 
+/* After a failure (when the difficulty allows it): the first mention, dashed. */
+.card.revealed {
+  border-style: dashed;
+  border-color: var(--green-dark);
+  outline: 3px solid var(--green);
+}
+
 /* The frame the right card has to stop in: thick yellow, outlined. */
 .frame {
   position: absolute;

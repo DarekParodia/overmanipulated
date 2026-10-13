@@ -163,6 +163,12 @@ function TouchPreview() {
         <div className={styles.pvKnob} />
       </div>
       <div className={styles.pvButtons}>
+        <span
+          className={`${styles.pvButton} ${styles.pvAbility}`}
+          data-testid="touch-preview-ability"
+        >
+          <Icon name="bolt" size={18} />
+        </span>
         <span className={`${styles.pvButton} ${styles.pvPing}`}>
           <Icon name="ping" size={18} />
         </span>

@@ -7,7 +7,7 @@ import { fixtureById } from '@redakcja/shared';
 import { useRef } from 'react';
 import { BackSide, type Group } from 'three';
 import { BUSY_KINDS, HERE_KINDS } from '../guidance/next-step.ts';
-import { useGuidance } from '../guidance/store.ts';
+import { effectiveHintsNow, useGuidance } from '../guidance/store.ts';
 import { useGame } from '../net/game-store.ts';
 import { runtime } from '../net/session.ts';
 import { useSettings } from '../store/settings.ts';
@@ -40,7 +40,8 @@ export function GuidanceMarkers() {
   }));
 
   useFrame(({ clock }) => {
-    const { step, hintsEnabled } = useGuidance.getState();
+    const { step } = useGuidance.getState();
+    const hintsEnabled = effectiveHintsNow();
     const ended = useGame.getState().levelEnd !== null;
     const ids =
       !hintsEnabled || ended || !step || BUSY_KINDS.has(step.kind) ? [] : step.targetFixtureIds;

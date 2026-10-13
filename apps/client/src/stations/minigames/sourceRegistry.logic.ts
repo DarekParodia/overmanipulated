@@ -5,6 +5,9 @@
 import type { Stamp, Story } from '@redakcja/content';
 import {
   createRng,
+  DEFAULT_DIFFICULTY,
+  type Difficulty,
+  mistakeLimit,
   type Rng,
   SOURCE_REGISTRY_CLEAN_CHANCE,
   SOURCE_REGISTRY_FIELDS,
@@ -122,6 +125,8 @@ export type GameState = {
   /** Clean fields the player circled by mistake (crossed out, cannot be circled again). */
   struck: boolean[];
   mistakes: number;
+  /** Mistakes that fail the round on this difficulty (`mistakeLimit`, S7-24). */
+  maxMistakes: number;
   /** The last filing missed a warning sign. */
   missing: boolean;
   outcome: Outcome;
@@ -154,9 +159,13 @@ export type Effect =
  * A fresh round of `card`. When the player left this very card earlier (`remembered` has the
  * same seed), the warning signs they circled stay circled; a circle on a clean field never
  * lasts (it is struck at once), so only flagged fields are restored. Mistakes and struck fields
- * start fresh: the retry has its own mistake budget.
+ * start fresh: the retry has its own mistake budget, set by the room's difficulty.
  */
-export function initialState(card: SourceCard, remembered?: RememberedCard): GameState {
+export function initialState(
+  card: SourceCard,
+  remembered?: RememberedCard,
+  difficulty: Difficulty = DEFAULT_DIFFICULTY,
+): GameState {
   const memory = remembered?.seed === card.seed ? remembered : undefined;
   return {
     card,
@@ -164,6 +173,7 @@ export function initialState(card: SourceCard, remembered?: RememberedCard): Gam
     circled: card.fields.map((field, i) => field.flagged && memory?.circled[i] === true),
     struck: card.fields.map(() => false),
     mistakes: 0,
+    maxMistakes: mistakeLimit(SOURCE_REGISTRY_MAX_MISTAKES, difficulty),
     missing: false,
     outcome: 'playing',
     retry: memory !== undefined,
@@ -172,7 +182,7 @@ export function initialState(card: SourceCard, remembered?: RememberedCard): Gam
 
 function withMistake(state: GameState, patch: Partial<GameState>): [GameState, Effect] {
   const mistakes = state.mistakes + 1;
-  const failed = mistakes >= SOURCE_REGISTRY_MAX_MISTAKES;
+  const failed = mistakes >= state.maxMistakes;
   return [
     { ...state, ...patch, mistakes, outcome: failed ? 'failure' : 'playing' },
     failed ? 'failed' : patch.missing ? 'missing' : 'mistake',

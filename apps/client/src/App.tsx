@@ -16,6 +16,7 @@ import { MainMenu } from './screens/MainMenu.tsx';
 import { SettingsPanel } from './screens/SettingsPanel.tsx';
 import { Styleguide } from './screens/Styleguide.tsx';
 import { useApp } from './store/app.ts';
+import { usePublicConfig } from './store/public-config.ts';
 import { applySettingsToDocument, useSettings } from './store/settings.ts';
 
 export function App() {
@@ -28,6 +29,8 @@ export function App() {
     } else {
       resumeIfPossible();
     }
+    // Flags, MOTD and ads for this host: the shell embeds them, dev and preview fetch them.
+    void usePublicConfig.getState().refresh(true);
     applySettingsToDocument(useSettings.getState());
     const unsubscribeSettings = useSettings.subscribe(applySettingsToDocument);
     const stopAudio = initAudio();

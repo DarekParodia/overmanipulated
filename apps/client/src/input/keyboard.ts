@@ -9,6 +9,8 @@ export const KEY_BINDINGS = {
   interact: ['KeyE'],
   work: ['Space'],
   ping: ['KeyQ'],
+  /** The role's active ability (S7-39). */
+  ability: ['KeyR'],
 } as const;
 
 export const GAME_KEYS: ReadonlySet<string> = new Set(Object.values(KEY_BINDINGS).flat());

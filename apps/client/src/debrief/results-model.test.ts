@@ -289,8 +289,23 @@ const stories: Record<string, DebriefStory> = {
     },
   },
   'l1-b': { headline: 'Nocny autobus', correctVerdict: 'publish' },
+  // Two proofs required: the image search and the archive; the phone is on another level only,
+  // the AI scanner is a hint.
+  'l1-m': {
+    headline: 'Pożar w porcie',
+    correctVerdict: 'reject',
+    stamps: [
+      { id: 'l1-m-image', station: 'imageSearch', text: 'Zdjęcie z innego portu.' },
+      { id: 'l1-m-ai', station: 'aiScanner', text: 'Skaner: 60% AI.' },
+      { id: 'l1-m-archive', station: 'archive', text: 'Brak pożaru w archiwum.' },
+      { id: 'l1-m-phone', station: 'phone', text: 'Straż: spokojna noc.' },
+      { id: 'l1-m-source', station: 'sourceRegistry', text: 'Konto założone wczoraj.' },
+    ],
+    justifyingStamps: ['l1-m-image', 'l1-m-ai', 'l1-m-archive', 'l1-m-phone'],
+  },
 };
 const lookup = (id: string) => stories[id];
+const L1_STATIONS = ['imageSearch', 'archive', 'sourceRegistry', 'aiScanner'] as const;
 
 describe('kolegium cards', () => {
   test('orders cards by folder arrival, not by resolution', () => {
@@ -351,7 +366,7 @@ describe('kolegium cards', () => {
     expect(cards[1]).toMatchObject({ storyId: 'l1-b', count: 1, scoreDelta: 10 });
   });
 
-  test('carries the reason, the correct verdict, the debrief and the missed proof texts', () => {
+  test('carries the reason, the correct verdict, the debrief and the deciding proof', () => {
     const [card] = kolegiumCards(
       [
         result('f1', 'l1-a', {
@@ -372,10 +387,198 @@ describe('kolegium cards', () => {
     expect(card?.correctVerdict).toBe('publishWithContext');
     expect(card?.credibilityDelta).toBe(-5);
     expect(card?.debrief?.technique).toBe('Nowy podpis.');
-    // The AI scanner's stamp is a hint, never the deciding proof.
-    expect(card?.missedStamps).toEqual([
-      { id: 'l1-a-image', station: 'imageSearch', text: 'Zdjęcie z 2019 r.' },
+    // Without the story's justifying list the missed stamps stand in; the AI scanner's stamp is
+    // a hint, never the deciding proof, and an unknown id has no text to show.
+    expect(card?.proof).toEqual([
+      { id: 'l1-a-image', station: 'imageSearch', text: 'Zdjęcie z 2019 r.', status: 'missing' },
     ]);
+  });
+
+  test('marks each deciding proof as cited, in the folder or never checked', () => {
+    // Wrong verdict on the two-proof story: the image was cited, the archive stamp sat in the
+    // folder, the phone was never asked (and is not on this level).
+    const [card] = kolegiumCards(
+      [
+        result('f1', 'l1-m', {
+          outcome: 'wrong',
+          reason: 'rejectedTrue',
+          verdict: 'publish',
+          scoreDelta: -20,
+          credibilityDelta: -25,
+          justifyingStampIds: ['l1-m-image'],
+          requiredStamps: 2,
+          missedStampIds: ['l1-m-ai', 'l1-m-phone'],
+        }),
+      ],
+      lookup,
+      'folder',
+      L1_STATIONS,
+    );
+    expect(card?.proof).toEqual([
+      {
+        id: 'l1-m-image',
+        station: 'imageSearch',
+        text: 'Zdjęcie z innego portu.',
+        status: 'cited',
+      },
+      {
+        id: 'l1-m-archive',
+        station: 'archive',
+        text: 'Brak pożaru w archiwum.',
+        status: 'collected',
+      },
+    ]);
+    // With the level unknown the phone's proof is listed as never checked.
+    const [anyLevel] = kolegiumCards(
+      [result('f1', 'l1-m', { outcome: 'wrong', missedStampIds: ['l1-m-phone'] })],
+      lookup,
+      'folder',
+    );
+    expect(anyLevel?.proof?.map((row) => [row.id, row.status])).toEqual([
+      ['l1-m-image', 'cited'],
+      ['l1-m-archive', 'collected'],
+      ['l1-m-phone', 'missing'],
+    ]);
+  });
+
+  test('hides the proof section on a correct folder, a correction included', () => {
+    const cards = kolegiumCards(
+      [
+        result('f1', 'l1-m', { justifyingStampIds: ['l1-m-image', 'l1-m-archive'] }),
+        result('f2', 'l1-a', { reason: 'correctionFiled', justifyingStampIds: [] }),
+        result('f3', 'l1-m', {
+          outcome: 'wrongJustification',
+          reason: 'weakProof',
+          justifyingStampIds: ['l1-m-source'],
+          missedStampIds: ['l1-m-phone'],
+        }),
+      ],
+      lookup,
+      'folder',
+      L1_STATIONS,
+    );
+    expect(cards.map((card) => card.proof?.length ?? null)).toEqual([null, null, 2]);
+  });
+
+  test('counts the cited proofs and names a hint cited without proof', () => {
+    const cards = kolegiumCards(
+      [
+        result('f1', 'l1-m', {
+          outcome: 'wrongJustification',
+          reason: 'incompleteProof',
+          scoreDelta: 10,
+          justifyingStampIds: ['l1-m-image', 'l1-m-ai'],
+          requiredStamps: 2,
+          missedStampIds: [],
+        }),
+        result('f2', 'l1-m', {
+          outcome: 'wrongJustification',
+          reason: 'incompleteProof',
+          scoreDelta: 10,
+          justifyingStampIds: ['l1-m-ai'],
+          requiredStamps: 2,
+        }),
+      ],
+      lookup,
+      'folder',
+    );
+    expect(cards.map((c) => [c.citedProofs, c.requiredStamps, c.hintStations])).toEqual([
+      [1, 2, []],
+      [0, 2, ['aiScanner']],
+    ]);
+  });
+
+  test('puts the folders still in play at the end last, in arrival order', () => {
+    const unfinished = { outcome: 'unfinished', reason: 'unfinished', verdict: null } as const;
+    const cards = kolegiumCards(
+      [
+        result('f2', 'l1-b'),
+        result('f5', 'l1-a', { ...unfinished, scoreDelta: 0 }),
+        result('f1', 'l1-a', { ...unfinished, scoreDelta: 0 }),
+        result('f4', 'l1-m', { outcome: 'expired', reason: 'expired', scoreDelta: -5 }),
+      ],
+      lookup,
+      'folder',
+    );
+    expect(cards.map((c) => [c.folderId, c.outcome])).toEqual([
+      ['f2', 'correct'],
+      ['f4', 'expired'],
+      ['f1', 'unfinished'],
+      ['f5', 'unfinished'],
+    ]);
+  });
+
+  test('tallies a grouped story per outcome and keeps the first proof it needed', () => {
+    const cards = kolegiumCards(
+      [
+        result('f1', 'l1-m'),
+        result('f3', 'l1-m', {
+          outcome: 'wrong',
+          reason: 'rejectedTrue',
+          scoreDelta: -20,
+          justifyingStampIds: ['l1-m-image'],
+          missedStampIds: ['l1-m-ai', 'l1-m-archive', 'l1-m-phone'],
+        }),
+        result('f2', 'l1-m'),
+        result('f9', 'l1-b', { outcome: 'unfinished', reason: 'unfinished', scoreDelta: 0 }),
+        result('f8', 'l1-m', { outcome: 'unfinished', reason: 'unfinished', scoreDelta: 0 }),
+        result('f4', 'l1-a'),
+      ],
+      lookup,
+      'story',
+      L1_STATIONS,
+    );
+    expect(cards.map((c) => [c.storyId, c.outcome, c.count, c.scoreDelta])).toEqual([
+      ['l1-m', 'correct', 4, 0],
+      ['l1-a', 'correct', 1, 10],
+      ['l1-b', 'unfinished', 1, 0],
+    ]);
+    expect(cards[0]?.tally).toEqual({
+      correct: 2,
+      wrongJustification: 0,
+      wrong: 1,
+      expired: 0,
+      unfinished: 1,
+    });
+    expect(cards[0]?.proof?.map((row) => [row.id, row.status])).toEqual([
+      ['l1-m-image', 'cited'],
+      ['l1-m-archive', 'missing'],
+    ]);
+  });
+
+  test("a campaign level's card points add up to the level's score", () => {
+    // A level end as the server sends it: a story that came twice (a correction), a bonus, a
+    // half-points verdict, a fake in print, an expiry and a folder left at the end.
+    const results = [
+      result('f1', 'l1-a', {
+        reason: 'correctImportant',
+        scoreDelta: 25,
+        credibilityDelta: 5,
+        bonuses: { speed: 5, multiStamp: 0, bossCall: 0 },
+      }),
+      result('f2', 'l1-m', {
+        outcome: 'wrongJustification',
+        reason: 'incompleteProof',
+        scoreDelta: 10,
+        justifyingStampIds: ['l1-m-image'],
+        requiredStamps: 2,
+      }),
+      result('f4', 'l1-a', { reason: 'correctionFiled', scoreDelta: 15, credibilityDelta: 10 }),
+      result('f3', 'l1-b', {
+        outcome: 'wrong',
+        reason: 'publishedFake',
+        scoreDelta: -20,
+        credibilityDelta: -25,
+      }),
+      result('f5', 'l1-m', { outcome: 'expired', reason: 'expired', scoreDelta: -5 }),
+      result('f6', 'l1-b', { outcome: 'unfinished', reason: 'unfinished', scoreDelta: 0 }),
+    ];
+    const levelEnd = { score: 25, results };
+    const cards = kolegiumCards(levelEnd.results, lookup, 'folder', L1_STATIONS);
+    expect(cards).toHaveLength(6);
+    expect(cards.map((c) => c.scoreDelta)).toEqual([25, 10, -20, 15, -5, 0]);
+    expect(sumOf(cards.map((c) => c.scoreDelta))).toBe(levelEnd.score);
+    expect(resultTotals(levelEnd.results, levelEnd.score).points).toBe(levelEnd.score);
   });
 
   test('still shows a card for a story the content does not know', () => {
