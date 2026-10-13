@@ -14,24 +14,29 @@ svg{display:block;flex:none}
 .sheet{padding:24px;display:grid;gap:24px;justify-content:center}
 @media print{body{background:var(--surface)}.sheet{padding:0}}
 
-.card.role{width:540px;height:410px;background:var(--surface);border:6px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:20px 24px 14px;display:flex;flex-direction:column;gap:10px}
+.card.role{width:540px;height:510px;background:var(--surface);border:6px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:16px 22px 10px;display:flex;flex-direction:column;gap:7px;break-inside:avoid}
 .role header{display:flex;gap:16px;align-items:center}
-.role .badge{width:92px;height:92px;border-radius:50%;background:var(--sky);border:5px solid var(--ink);display:grid;place-items:center}
+.role .badge{width:84px;height:84px;border-radius:50%;background:var(--sky);border:5px solid var(--ink);display:grid;place-items:center}
 .role .kicker{margin:0 0 2px;font-weight:800;font-size:15px;color:var(--ink-soft)}
-.role h2{font-size:34px}
+.role h2{font-size:32px}
 .role h3{font-size:17px;display:flex;gap:8px;align-items:center;margin-bottom:2px}
-.role p{margin:0;font-size:16px;line-height:1.3}
-.role .bonus{background:var(--soft);border:4px solid var(--ink);border-radius:18px;padding:8px 14px}
-.role .bonus p{font-weight:800;font-size:18px}
-.chips{list-style:none;margin:6px 0 0;padding:0;display:flex;gap:8px;flex-wrap:wrap}
-.chips li{display:flex;gap:6px;align-items:center;background:var(--surface);border:3px solid var(--ink);border-radius:999px;padding:2px 12px 2px 8px;font-weight:800;font-size:14px}
-.role .tip{display:flex;gap:12px;align-items:center;background:var(--yellow);border:4px solid var(--ink);border-radius:18px;padding:8px 14px}
-.role .tip p{font-weight:800;font-size:16px}
+.role p{margin:0;font-size:15px;line-height:1.28}
+.role .bonus{background:var(--soft);border:4px solid var(--ink);border-radius:18px;padding:6px 14px}
+.role .bonus p{font-weight:800;font-size:16px}
+.role .ability{background:var(--surface);border:4px solid var(--ink);border-radius:18px;padding:6px 14px}
+.role .ability p{font-weight:800}
+.role .ability .keys{margin-top:3px;font-size:13px;color:var(--ink-soft)}
+.chips{list-style:none;margin:5px 0 0;padding:0;display:flex;gap:5px;flex-wrap:wrap}
+.chips li{display:flex;gap:6px;align-items:center;background:var(--surface);border:3px solid var(--ink);border-radius:999px;padding:1px 8px 1px 5px;font-weight:800;font-size:12px}
+.role .tip{display:flex;gap:12px;align-items:center;background:var(--yellow);border:4px solid var(--ink);border-radius:18px;padding:6px 14px}
+.role .tip p{font-weight:800;font-size:15px}
+.role>*{flex:none}
 .role footer{margin-top:auto;font-size:12px;color:var(--ink-soft);font-weight:700;text-align:center}
-.role-sheet{grid-template-columns:repeat(2,540px);padding-bottom:40px;gap:28px}
-@media print{@page{size:A4 landscape;margin:8mm}.role-sheet{zoom:.78;gap:22px;align-content:center;min-height:190mm}}
+.role-sheet{grid-template-columns:repeat(2,540px);gap:28px}
+@media print{@page{size:A4 landscape;margin:8mm}.role-sheet{zoom:.66;gap:22px;break-after:page}.role-sheet:last-child{break-after:auto}}
 </style></head>
-<body><main class="sheet role-sheet">
+<body><main>
+<section class="sheet role-sheet">
 <article class="card role" data-role="photoEditor">
   <header>
     <div class="badge"><svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4.5h11v9h-11Z" style="fill:#ffd23f"></path><path d="M3.5 11l3-3 2.5 2.5"></path><path d="M11 14a4 4 0 1 0 8 0a4 4 0 1 0-8 0Z" style="fill:#ffd23f"></path><path d="M18 17l3 3"></path></svg></div>
@@ -42,8 +47,13 @@ svg{display:block;flex:none}
   </header>
   <section class="bonus">
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
-    <p>Lupa obrazu i Skaner AI działają o 40% szybciej.</p>
-    <ul class="chips"><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0-12 0Z" style="fill:#ffd23f"></path><path d="M14.5 14.5L20 20M7.5 11.5l1.8-2 1.5 1.5 1.2-1 1.5 1.8"></path></svg>Lupa obrazu</li><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10H7Z" style="fill:#ffd23f"></path><path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"></path></svg>Skaner AI</li></ul>
+    <p>Stanowiska poniżej działają o 40% szybciej.</p>
+    <ul class="chips"><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0-12 0Z" style="fill:#ffd23f"></path><path d="M14.5 14.5L20 20M7.5 11.5l1.8-2 1.5 1.5 1.2-1 1.5 1.8"></path></svg>Lupa obrazu</li><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10H7Z" style="fill:#ffd23f"></path><path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"></path></svg>Skaner AI</li><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6.5l5-2 7 2 5-2v13l-5 2-7-2-5 2Z" style="fill:#ffd23f"></path><path d="M12 16c-2-2.2-3-3.8-3-5.3a3 3 0 0 1 6 0c0 1.5-1 3.1-3 5.3Z" fill="#1e2a4a"></path></svg>Mapa</li><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12l5-6h12v12h-12Z" style="fill:#ffd23f"></path><path d="M7.5 12a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z" fill="#1e2a4a"></path><path d="M13 10h4.5M13 14h4.5"></path></svg>Metadane</li></ul>
+  </section>
+  <section class="ability">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Zdolność: Ekspertyza</h3>
+    <p>Następne zadanie przy obrazie zalicza się samo: pieczątka od razu.</p>
+    <p class="keys">R · RB · przycisk Ekspert na ekranie · odnowienie 60 s</p>
   </section>
   <section>
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
@@ -65,8 +75,13 @@ svg{display:block;flex:none}
   </header>
   <section class="bonus">
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
-    <p>Archiwum działa o 40% szybciej.</p>
-    <ul class="chips"><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5h14v17H5Z" style="fill:#ffd23f"></path><path d="M5 9.25h14M5 14.75h14M10.5 6.5h3M10.5 12h3M10.5 17.75h3"></path></svg>Archiwum</li></ul>
+    <p>Stanowiska poniżej działają o 40% szybciej.</p>
+    <ul class="chips"><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5h14v17H5Z" style="fill:#ffd23f"></path><path d="M5 9.25h14M5 14.75h14M10.5 6.5h3M10.5 12h3M10.5 17.75h3"></path></svg>Archiwum</li><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 2.5h13v19h-13Z" style="fill:#ffd23f"></path><path d="M8.5 6.5h7M8.5 17.5h4.5"></path><path d="M8.5 10.5h7v2.5h-7Z" fill="#1e2a4a"></path></svg>Stenogram</li></ul>
+  </section>
+  <section class="ability">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Zdolność: Ekspertyza</h3>
+    <p>Następne zadanie przy dokumentach zalicza się samo: pieczątka od razu.</p>
+    <p class="keys">R · RB · przycisk Ekspert na ekranie · odnowienie 60 s</p>
   </section>
   <section>
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
@@ -88,8 +103,13 @@ svg{display:block;flex:none}
   </header>
   <section class="bonus">
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
-    <p>Telefon do źródła bez kolejki.</p>
-    <ul class="chips"><li><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 7 7l1.5-2 4 1.5v3A1.5 1.5 0 0 1 18.5 20.5 15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4Z" style="fill:#ffd23f"></path></svg>Telefon</li></ul>
+    <p>Telefon do źródła bez kolejki, a stanowiska poniżej działają o 40% szybciej.</p>
+    <ul class="chips"><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 7 7l1.5-2 4 1.5v3A1.5 1.5 0 0 1 18.5 20.5 15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4Z" style="fill:#ffd23f"></path></svg>Telefon</li><li><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3.5h11v11H3Z" style="fill:#ffd23f"></path><path d="M5.5 6.5h6M5.5 10h2"></path><path d="M10 9.5h11v11H10Z" style="fill:#ffd23f"></path><path d="M12.5 13h6M12.5 16.5h6"></path></svg>Inne media</li></ul>
+  </section>
+  <section class="ability">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 7 7l1.5-2 4 1.5v3A1.5 1.5 0 0 1 18.5 20.5 15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4Z" style="fill:#ffd23f"></path></svg> Zdolność: Telefon z terenu</h3>
+    <p>Dzwoni z teczką w ręce: po 6 s pieczątka Telefonu bez chodzenia.</p>
+    <p class="keys">R · RB · przycisk Dzwoń na ekranie · odnowienie 60 s</p>
   </section>
   <section>
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
@@ -111,8 +131,13 @@ svg{display:block;flex:none}
   </header>
   <section class="bonus">
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
-    <p>Raz na poziom przedłuża termin jednej teczki.</p>
+    <p>Bez premii za szybkość: jego siłą jest zdolność.</p>
     
+  </section>
+  <section class="ability">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3.5h11M6.5 20.5h11M8 3.5v2.5c0 2.5 4 4 4 6s-4 3.5-4 6v2.5M16 3.5v2.5c0 2.5-4 4-4 6s4 3.5 4 6v2.5"></path><path d="M9.5 20.5c0-1.4 1.2-2.4 2.5-3 1.3.6 2.5 1.6 2.5 3Z" fill="#1e2a4a"></path></svg> Zdolność: Przedłużenie</h3>
+    <p>+20 s dla teczki w ręce, na jego stole albo najpilniejszej.</p>
+    <p class="keys">R · RB · przycisk +20 s na ekranie · odnowienie 60 s</p>
   </section>
   <section>
     <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
@@ -124,4 +149,63 @@ svg{display:block;flex:none}
   </section>
   <footer>Role nie blokują stanowisk: każdy może pracować wszędzie.</footer>
 </article>
+</section>
+<section class="sheet role-sheet">
+<article class="card role" data-role="generalist">
+  <header>
+    <div class="badge"><svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15h13.5a2.25 2.25 0 0 1 0 4.5H4a2.25 2.25 0 0 1 0-4.5Z" style="fill:#ffd23f"></path><path d="M5 15l5-8.5 2.6 1.5L8 15" style="fill:#ffd23f"></path><path d="M10 6.5l1.8-2.8.8 4.3"></path><path d="M15 9.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z" style="fill:#ffd23f"></path><path d="M17 12.3l-1 2.7"></path></svg></div>
+    <div>
+      <p class="kicker">Karta roli</p>
+      <h2>Wszechstronny</h2>
+    </div>
+  </header>
+  <section class="bonus">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 2.5L5.5 13.5h6l-1 8 8-11h-6Z" style="fill:#ffd23f"></path></svg> Premia</h3>
+    <p>Każde stanowisko działa o 20% szybciej.</p>
+    
+  </section>
+  <section class="ability">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95"></path><path d="M17 3v4.2h-4.2"></path></svg> Zdolność: Druga szansa</h3>
+    <p>Po nieudanej minigrze gra od razu jeszcze raz, bez blokady.</p>
+    <p class="keys">R · RB · przycisk Szansa na ekranie · odnowienie 60 s</p>
+  </section>
+  <section>
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
+    <p>Pomoc tam, gdzie właśnie jest kolejka.</p>
+  </section>
+  <section class="tip">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 16.5c0-2-3-3.5-3-7.5a6 6 0 0 1 12 0c0 4-3 5.5-3 7.5Z" style="fill:#ffd23f"></path><path d="M9.5 19.5h5M10.5 22h3"></path></svg>
+    <p>Jeden dowód to mało? Sprawdź drugim narzędziem.</p>
+  </section>
+  <footer>Role nie blokują stanowisk: każdy może pracować wszędzie.</footer>
+</article>
+<article class="card role" data-role="rescuer">
+  <header>
+    <div class="badge"><svg viewBox="0 0 24 24" width="76" height="76" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0-17 0ZM8 12a4 4 0 1 1 8 0a4 4 0 1 1-8 0Z" style="fill:#ffd23f"></path><path d="M9.2 9.2L6 6M14.8 9.2L18 6M9.2 14.8L6 18M14.8 14.8L18 18"></path></svg></div>
+    <div>
+      <p class="kicker">Karta roli</p>
+      <h2>Ratownik</h2>
+    </div>
+  </header>
+  <section class="bonus">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0-17 0Z" style="fill:#ffd23f"></path><path d="M8.5 12a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0Z"></path><path d="M6 6l3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5"></path></svg> Premia</h3>
+    <p>Koło ratunkowe: raz na poziom teczka w jego rękach dostaje +20 s.</p>
+    
+  </section>
+  <section class="ability">
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 15h6.5v5.5H3.5Z" style="fill:#ffd23f"></path><path d="M7 11.5C9 7 13.5 5 19.5 6.5"></path><path d="M16 3.5l3.5 3-3 3.5"></path></svg> Zdolność: Podaj teczkę</h3>
+    <p>Rzuca teczkę najbliższej wolnej osobie (do 6 pól).</p>
+    <p class="keys">R · RB · przycisk Podaj na ekranie · odnowienie 60 s</p>
+  </section>
+  <section>
+    <h3><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 12V6.5a1.5 1.5 0 0 1 3 0V11M10 10.5V5a1.5 1.5 0 0 1 3 0v5.5M13 10.5V6a1.5 1.5 0 0 1 3 0v5M16 11V9.5a1.5 1.5 0 0 1 3 0V14c0 4-2.7 6.5-6.5 6.5-3 0-5.1-1.6-6.3-4.1L4.6 13.4a1.5 1.5 0 0 1 2.6-1.4L8 13.5"></path></svg> Typowe zadanie</h3>
+    <p>Pilnowanie terminów i podawanie teczek.</p>
+  </section>
+  <section class="tip">
+    <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 16.5c0-2-3-3.5-3-7.5a6 6 0 0 1 12 0c0 4-3 5.5-3 7.5Z" style="fill:#ffd23f"></path><path d="M9.5 19.5h5M10.5 22h3"></path></svg>
+    <p>Pośpiech sprzyja manipulacji. Zyskaj czas, zanim zdecydujesz.</p>
+  </section>
+  <footer>Role nie blokują stanowisk: każdy może pracować wszędzie.</footer>
+</article>
+</section>
 </main></body></html>
