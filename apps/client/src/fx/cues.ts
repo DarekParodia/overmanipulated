@@ -523,6 +523,18 @@ export const cues = {
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
     haptic: 'error',
   },
+  // S7-52 Metadane minigame: the contradicting field (or „Zgadza się” / „Brak danych”) found, or
+  // a wrong pick struck through. DOM overlay only, so no particles.
+  'metadata.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'metadata.mistake': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
   // S4-11 endless mode: the tempo steps up each minute; the run ends friendly, not as a failure.
   'endless.tempo': {
     severity: 2,

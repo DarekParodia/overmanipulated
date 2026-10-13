@@ -1,8 +1,12 @@
 // Database schema: the single source of truth for persisted data. Live game state never goes
 // here (AGENTS.md rule 9). After changing this file run `bun run db:generate`.
+import type { Difficulty } from '@redakcja/shared';
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
-/** Endless-mode leaderboard (S4-11): one row per finished run. Nicknames only, no other data. */
+/**
+ * Endless-mode leaderboard (S4-11): one row per finished run. Nicknames only, no other data.
+ * Each difficulty keeps its own list (S7-26); rows from before the column read as 'normal'.
+ */
 export const leaderboardEntries = sqliteTable(
   'leaderboard_entries',
   {
@@ -10,6 +14,7 @@ export const leaderboardEntries = sqliteTable(
     roomCode: text().notNull(),
     players: text({ mode: 'json' }).$type<string[]>().notNull(),
     score: integer().notNull(),
+    difficulty: text().$type<Difficulty>().notNull().default('normal'),
     /** Whole seconds the newsroom survived. */
     survivedS: integer().notNull(),
     createdAt: integer({ mode: 'timestamp_ms' })
@@ -18,6 +23,7 @@ export const leaderboardEntries = sqliteTable(
   },
   (table) => [
     index('leaderboard_score_idx').on(table.score),
+    index('leaderboard_difficulty_score_idx').on(table.difficulty, table.score),
     index('leaderboard_room_idx').on(table.roomCode),
     index('leaderboard_created_at_idx').on(table.createdAt),
   ],

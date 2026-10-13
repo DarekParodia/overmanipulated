@@ -907,6 +907,113 @@ export const pl = {
         },
       ],
     },
+    /**
+     * Metadane (S7-52): the folder's description of a file next to the file's own data. One
+     * field contradicts the description, none does, or a social site stripped the data.
+     * All places, devices and programs are invented; no real brands or towns.
+     */
+    metadata: {
+      task: 'Porównaj dane pliku z opisem',
+      claimTitle: 'Opis w teczce',
+      fileTitle: 'Dane pliku',
+      /** Field labels, in the order of the 2×2 grid. */
+      fields: {
+        taken: 'Wykonano',
+        device: 'Urządzenie',
+        software: 'Program',
+        place: 'Miejsce (GPS)',
+      },
+      /** What a stripped field shows, and the note under the empty grid. */
+      empty: '—',
+      emptyAria: 'brak',
+      strippedNote: 'usunięte przez serwis',
+      field: (label: string, value: string) => `${label}: ${value}`,
+      matches: 'Zgadza się',
+      noData: 'Brak danych',
+      right: 'Trafione!',
+      wrong: 'Pudło!',
+      /** Shown after the round: what the file data says. */
+      reasons: {
+        consistent: 'Dane pliku zgadzają się z opisem.',
+        taken: 'Plik jest starszy niż opis.',
+        device: 'Plik powstał w generatorze, nie w urządzeniu.',
+        software: 'Plik obrabiano w programie.',
+        place: 'Plik powstał w innym miejscu.',
+        stripped: 'Serwis usunął dane – to nic nie dowodzi.',
+      },
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+          { keys: ['Q'], label: 'zgadza się' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+          { keys: ['Y'], label: 'zgadza się' },
+        ],
+        touch: [
+          { keys: ['Stuknij'], label: 'sprzeczne pole' },
+          { keys: ['Zgadza się'], label: 'nic nie przeczy' },
+        ],
+      } satisfies KeyHints,
+      /** When the file was made: the claim, the matching file time, and a years-older one. */
+      times: [
+        { claim: 'dziś, ok. 14:00', file: 'dziś, 14:03', old: '14.06.2019, 14:03' },
+        { claim: 'wczoraj wieczorem', file: 'wczoraj, 20:41', old: '3.11.2018, 20:41' },
+        { claim: 'dziś rano', file: 'dziś, 7:52', old: '21.04.2020, 7:52' },
+        { claim: 'w sobotę po południu', file: 'sobota, 16:15', old: '9.08.2017, 16:15' },
+        { claim: 'wczoraj w nocy', file: 'wczoraj, 23:37', old: '30.01.2019, 23:37' },
+      ],
+      /** What made the file, per media kind: the claim and the matching file entry. */
+      devices: {
+        photo: [
+          { claim: 'zdjęcie z telefonu świadka', file: 'Telefon, aparat tylny' },
+          { claim: 'zdjęcie z aparatu reportera', file: 'Aparat cyfrowy' },
+          { claim: 'zdjęcie z telefonu przechodnia', file: 'Telefon, aparat tylny' },
+        ],
+        recording: [
+          { claim: 'nagranie z telefonu świadka', file: 'Telefon, dyktafon' },
+          { claim: 'nagranie z kamery w ratuszu', file: 'Kamera sali obrad' },
+          { claim: 'nagranie z dyktafonu reportera', file: 'Dyktafon cyfrowy' },
+        ],
+        screenshot: [
+          { claim: 'zrzut ekranu z telefonu', file: 'Telefon, zrzut ekranu' },
+          { claim: 'zrzut ekranu z komputera', file: 'Komputer, zrzut ekranu' },
+        ],
+      },
+      /** The device entry of a file no camera or microphone ever recorded. */
+      generated: 'brak – plik wygenerowany',
+      /** Editing, per media kind: the claim, the clean file entry and edited ones. */
+      software: {
+        photo: {
+          claim: 'bez obróbki',
+          clean: 'zapis z aparatu',
+          edited: ['Edytor zdjęć – zapisano 3 razy', 'Edytor zdjęć – fotomontaż'],
+        },
+        recording: {
+          claim: 'bez montażu',
+          clean: 'zapis z urządzenia',
+          edited: ['Program do montażu', 'Program do montażu – 4 cięcia'],
+        },
+        screenshot: {
+          claim: 'bez obróbki',
+          clean: 'zrzut systemowy',
+          edited: ['Edytor grafiki – zapisano 2 razy', 'Edytor grafiki – podmiana tekstu'],
+        },
+      },
+      /** Places in Nowe Brzegi the description gives (the file agrees when it is consistent). */
+      places: [
+        'Nowe Brzegi, Rynek',
+        'Nowe Brzegi, Port',
+        'Nowe Brzegi, Dworzec',
+        'Nowe Brzegi, Nadrzecze',
+        'Nowe Brzegi, Błonia',
+        'Nowe Brzegi, Stocznia',
+      ],
+      /** Invented other towns: where a contradicting file was really made. */
+      otherTowns: ['Srebrne Wydmy', 'Mglisty Bród', 'Kamienna Zatoka', 'Wysokie Sady'],
+    },
   },
   /** Station help (S7-15): what each station checks and how to work it on every device. */
   stationHelp: {
@@ -1058,8 +1165,9 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
-      // Stage 7 stations (S7-48): provisional copy; each minigame task (S7-52..S7-55) settles the
-      // steps against its final controls and button labels.
+      // Stage 7 stations (S7-48): provisional copy for Mapa, Stenogram and Inne media; each
+      // minigame task (S7-53..S7-55) settles the steps against its final controls and button
+      // labels. Metadane is final (S7-52).
       geolocation: {
         purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
         proves: 'Zdjęcie jest z innego miejsca niż podpis',
@@ -1134,23 +1242,23 @@ export const pl = {
         proves: 'Dane pliku pasują do opisu albo mu przeczą',
         steps: {
           keyboard: [
-            'Porównaj dane pliku z opisem w teczce',
-            'Strzałki wybierają pole, spacja wskazuje sprzeczność',
-            'Q, gdy wszystko się zgadza',
+            'Znajdź pole, które przeczy opisowi w teczce',
+            'Strzałki wybierają, spacja wskazuje; Q – „Zgadza się”',
+            'Puste pola? „Brak danych” – to nic nie dowodzi',
           ],
           gamepad: [
-            'Porównaj dane pliku z opisem w teczce',
-            'Krzyżak wybiera pole, A wskazuje sprzeczność',
-            'Y, gdy wszystko się zgadza',
+            'Znajdź pole, które przeczy opisowi w teczce',
+            'Krzyżak wybiera, A wskazuje; Y – „Zgadza się”',
+            'Puste pola? „Brak danych” – to nic nie dowodzi',
           ],
           touch: [
-            'Porównaj dane pliku z opisem w teczce',
-            'Stuknij pole, które przeczy opisowi',
-            'Brak danych niczego nie dowodzi',
+            'Znajdź pole, które przeczy opisowi w teczce',
+            'Stuknij to pole albo „Zgadza się”',
+            'Puste pola? „Brak danych” – to nic nie dowodzi',
           ],
         },
         realWorld:
-          'Tak czyta się metadane pliku (EXIF): datę, urządzenie i miejsce zdjęcia. Serwisy społecznościowe często je usuwają.',
+          'Tak czyta się metadane pliku (EXIF): datę, urządzenie, program i miejsce. Serwisy społecznościowe często je usuwają, a brak danych niczego nie dowodzi.',
       },
     } satisfies Record<StationKind, StationHelp>,
   },
@@ -1418,6 +1526,8 @@ export const pl = {
         : `Tryb bez końca${best ? `, najlepszy wynik ${best}` : ''}`,
     timer: 'Czas gry',
     tempo: (n: number) => `Tempo ×${n}`,
+    /** The same chip inside the one-row phone pill (S7-11): the icon carries „tempo”. */
+    tempoShort: (n: number) => `×${n}`,
     tempoLabel: (n: number) => `Tempo: ${n} razy szybciej`,
     headline: (score: string) => `Redakcja upadła – wynik: ${score}`,
     lede: 'Spróbujcie jeszcze raz!',
@@ -1445,8 +1555,8 @@ export const pl = {
     rank: (n: number) => `Miejsce ${n}`,
     row: (rank: number, players: string, score: string, time: string) =>
       `${rank}. ${players}: ${score} pkt, ${time}`,
-    listLabel: (scope: 'room' | 'global') =>
-      scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich',
+    listLabel: (scope: 'room' | 'global', difficulty: string) =>
+      `${scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich'}, poziom ${difficulty.toLowerCase()}`,
   },
   /** S5-05 accessibility: captions for audio-only cues and the muted-sound suggestion. */
   a11y: {

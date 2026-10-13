@@ -2,8 +2,9 @@
 import { type ConfigStore, createConfigStore, reloadOnSignal } from './config.ts';
 import { readEnv } from './env.ts';
 import { log } from './log.ts';
-import { DEFAULT_CONFIG_PATH } from './paths.ts';
+import { DEFAULT_CONFIG_PATH, DEFAULT_SHELL_HTML_PATH } from './paths.ts';
 import { startServer } from './server.ts';
+import { loadShellAssets } from './shell/assets.ts';
 
 const env = readEnv();
 
@@ -21,7 +22,9 @@ try {
   process.exit(1);
 }
 
-const running = startServer(env, { config });
+// Read once: a new client build ships with a new server image (docker compose up -d --build).
+const shell = loadShellAssets({ indexPath: env.SHELL_HTML_PATH ?? DEFAULT_SHELL_HTML_PATH });
+const running = startServer(env, { config, shell });
 // `docker compose kill -s SIGHUP server` (compose `init: true` forwards it); file saves reload too.
 const stopSignalReload = reloadOnSignal(config, process);
 

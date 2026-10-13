@@ -25,13 +25,14 @@ export type ApiDeps = {
   /** Where the running config came from and how often it was reloaded with changes. */
   configMeta?: () => ConfigMeta;
   /**
-   * False when the served HTML cannot carry the ads CSP (S7-70: a shell built without the nonce
-   * placeholder), which forces ads off in the public config. Absent (dev, tests): true.
+   * False when the served HTML cannot carry the ads CSP (a shell built without the nonce
+   * placeholder), which forces ads off in the public config. `createApp` derives it from the
+   * shell assets (`adsCspReady` in shell/assets.ts); absent here: true.
    */
   adsCspReady?: boolean;
 };
 
-const DEFAULT_CONFIG_META: ConfigMeta = { source: 'defaults', revision: 0 };
+export const DEFAULT_CONFIG_META: ConfigMeta = { source: 'defaults', revision: 0 };
 
 /** Supervisor view of the debrief votes: which stories fooled the class most (S3-02). */
 const blunderStatsQuerySchema = z.object({ levelId: levelIdSchema });
@@ -75,11 +76,13 @@ export function createApiRoutes(deps: ApiDeps) {
         }
         const entries = getTopEntries(deps.db, {
           limit: query.limit,
+          difficulty: query.difficulty,
           roomCode: query.scope === 'room' ? query.room?.toUpperCase() : undefined,
         }).map((e) => ({
           roomCode: e.roomCode,
           players: e.players,
           score: e.score,
+          difficulty: e.difficulty,
           survivedS: e.survivedS,
           createdAt: e.createdAt.getTime(),
         }));

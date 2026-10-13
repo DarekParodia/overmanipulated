@@ -107,6 +107,22 @@ type Room = {
   paused: boolean;
 };
 
+/**
+ * The players whose connection dropped (they may still reconnect), for `SimContext.absent`:
+ * Podaj teczkę never passes a folder to them. Undefined while everyone is connected.
+ */
+export function absentPlayerIds(
+  players: Iterable<{ id: string; connection: unknown }>,
+): ReadonlySet<string> | undefined {
+  const absent = new Set<string>();
+  for (const player of players) {
+    if (player.connection === null) {
+      absent.add(player.id);
+    }
+  }
+  return absent.size > 0 ? absent : undefined;
+}
+
 function requireLevel(id: string): Level {
   const level = getLevel(id);
   if (!level) {
@@ -783,12 +799,14 @@ export function createRoomRegistry(options: RegistryOptions) {
           commands.push({ playerId: player.id, command });
         }
       }
+      const absent = absentPlayerIds(room.players.values());
       const ctx: SimContext = {
         dtMs: TICK_MS,
         map: room.map,
         level: room.level,
         stories: room.stories,
         tuning: simTuning(room.difficulty),
+        ...(absent ? { absent } : {}),
       };
       const result = stepGame(room.game, inputs, commands, ctx);
       room.game = result.state;

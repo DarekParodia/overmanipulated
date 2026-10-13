@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { SCORE, TICK_MS } from '../constants.ts';
 import type { Role } from '../domain.ts';
-import type { Folder } from '../entities.ts';
+import type { Folder, Station } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
 import {
   runStep,
@@ -11,12 +11,16 @@ import {
   testCommand,
   testContext,
   testFolder,
+  testInput,
 } from './__fixtures__/greybox.ts';
+import { GENERALIST, RESCUER, useStandInRoles } from './__fixtures__/stand-in-roles.ts';
 import {
   type AbilityBlockReason,
+  type AbilityPreview,
   abilityEnvOf,
   abilityPreview,
   pickExtendTarget,
+  pickPassTarget,
   stepAbilities,
 } from './abilities.ts';
 import type { SimStory } from './content.ts';
@@ -24,6 +28,9 @@ import { evaluateVerdict } from './desk.ts';
 import type { SimContext, SimFrame } from './frame.ts';
 import { GREYBOX_LAYOUT, parseLayout } from './map.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
+import { drawMinigameSeed, stepStations } from './stations.ts';
+
+useStandInRoles();
 
 function must<T>(value: T | undefined): T {
   if (value === undefined) {
@@ -116,6 +123,54 @@ function withCrew(state: GameState, playerId: string, patch: Partial<GameState['
     crew: { ...state.crew, [playerId]: { ...must(state.crew[playerId]), ...patch } },
   };
 }
+
+const FACING_UP = -Math.PI / 2;
+const FACING_DOWN = Math.PI / 2;
+const QUIET_CONTEXT = testContext({ level: QUIET_LEVEL });
+
+/** Moves a player to (x, y), facing `facing`. */
+function placed(state: GameState, playerId: string, x: number, y: number, facing = FACING_UP) {
+  const player = must(state.players[playerId]);
+  return { ...state, players: { ...state.players, [playerId]: { ...player, x, y, facing } } };
+}
+
+function withStation(state: GameState, stationId: string, patch: Partial<Station>): GameState {
+  const station = must(state.stations[stationId]);
+  return { ...state, stations: { ...state.stations, [stationId]: { ...station, ...patch } } };
+}
+
+function onStation(id: string, stationId: string, patch: Partial<Folder> = {}): Folder {
+  return testFolder(id, { location: { kind: 'fixture', fixtureId: stationId }, ...patch });
+}
+
+/** Runs `stepStations` once: `working` hold work, `commands` arrived this tick. */
+function stationTick(
+  state: GameState,
+  working: readonly string[],
+  commands: SimFrame['commands'] = [],
+) {
+  const frame = frameFor(state, [], QUIET_CONTEXT);
+  const intents = Object.fromEntries(
+    Object.keys(state.players).map((id) => [
+      id,
+      { interact: false, work: working.includes(id), moving: false },
+    ]),
+  );
+  const run = { ...frame, intents, commands };
+  return { state: stepStations(state, run), events: run.events };
+}
+
+function minigameResult(playerId: string, stationId: string, success: boolean) {
+  return testCommand(playerId, { kind: 'minigameResult', stationId, success });
+}
+
+/** The greybox without its image search (like l4) and without its archive (like l1). */
+const NO_IMAGE_MAP = parseLayout(
+  GREYBOX_LAYOUT.map((row, index) => (index === 1 ? row.replace('I', '.') : row)),
+);
+const NO_ARCHIVE_MAP = parseLayout(
+  GREYBOX_LAYOUT.map((row, index) => (index === 1 ? row.replace('A', '.') : row)),
+);
 
 function ofKind<K extends GameEvent['kind']>(events: readonly GameEvent[], kind: K) {
   return events.filter((e): e is Extract<GameEvent, { kind: K }> => e.kind === kind);
@@ -343,6 +398,123 @@ describe('6. Koło ratunkowe', () => {
   });
 });
 
+describe('7. Ekspertyza', () => {
+  /** An armed photo editor below the image search, facing it, with f1 on the station. */
+  function armedAt(x: number, stationId: string) {
+    const state = crewOf(['photoEditor'], 10_000, TEST_MAP, [onStation('f1', stationId)]);
+    return withCrew(placed(state, 'p1', x, 2.5), 'p1', { abilityArmed: true });
+  }
+
+  /** Steps the whole tick with p1 holding work until `until` or 200 ticks. */
+  function holdWork(state: GameState, until: (events: readonly GameEvent[]) => boolean) {
+    let current = state;
+    const events: GameEvent[] = [];
+    for (let seq = 1; seq <= 200; seq++) {
+      const run = runStep(
+        current,
+        { p1: [testInput(seq, { x: 0, y: 0 }, { work: true })] },
+        [],
+        QUIET_CONTEXT,
+      );
+      current = run.state;
+      events.push(...run.events);
+      if (until(run.events)) {
+        break;
+      }
+    }
+    return { state: current, events };
+  }
+
+  it('arms away from a minigame and disarms on a second press', () => {
+    const state = crewOf(['photoEditor']);
+    expect(abilityPreview(state, 'p1', GREYBOX_ENV)).toEqual({ kind: 'arm' });
+    const armed = press(state, ['p1']);
+    expect(armed.events).toEqual([
+      { kind: 'ability', playerId: 'p1', ability: 'expertise', stage: 'armed' },
+    ]);
+    expect(armed.state.crew.p1).toMatchObject({ abilityArmed: true, abilityReadyAtMs: 0 });
+    expect(abilityPreview(armed.state, 'p1', GREYBOX_ENV)).toEqual({ kind: 'armed' });
+    const disarmed = press(armed.state, ['p1']);
+    expect(disarmed.events).toEqual([
+      { kind: 'ability', playerId: 'p1', ability: 'expertise', stage: 'disarmed' },
+    ]);
+    expect(disarmed.state.crew.p1).toMatchObject({ abilityArmed: false, abilityReadyAtMs: 0 });
+  });
+
+  it('stamps after the 2.4 s hold at a station of its family instead of opening the minigame', () => {
+    const run = holdWork(armedAt(8.5, 'imageSearch-0'), (events) =>
+      events.some((e) => e.kind === 'stampApplied'),
+    );
+    expect(run.state.elapsedMs).toBe(12_450);
+    expect(ofKind(run.events, 'minigameStarted')).toEqual([]);
+    expect(run.events.filter((e) => e.kind !== 'workStarted')).toEqual([
+      {
+        kind: 'stampApplied',
+        stationId: 'imageSearch-0',
+        playerId: 'p1',
+        folderId: 'f1',
+        stampId: 't-true-image',
+        via: 'expertise',
+      },
+      {
+        kind: 'ability',
+        playerId: 'p1',
+        ability: 'expertise',
+        stage: 'done',
+        stationId: 'imageSearch-0',
+        folderId: 'f1',
+      },
+    ]);
+    expect(run.state.stations['imageSearch-0']).toMatchObject({ phase: 'idle', operatorId: null });
+    expect(run.state.folders.f1?.stamps).toEqual(['t-true-image']);
+    expect(run.state.crew.p1).toMatchObject({ abilityArmed: false, abilityReadyAtMs: 72_450 });
+    expect(run.state.minigameAttempts).toEqual({});
+  });
+
+  it('opens the minigame as usual outside its family and stays armed', () => {
+    const run = holdWork(armedAt(12.5, 'archive-0'), (events) =>
+      events.some((e) => e.kind === 'minigameStarted'),
+    );
+    expect(run.state.elapsedMs).toBe(15_050);
+    expect(ofKind(run.events, 'minigameStarted')).toHaveLength(1);
+    expect(ofKind(run.events, 'stampApplied')).toEqual([]);
+    expect(run.state.crew.p1).toMatchObject({ abilityArmed: true, abilityReadyAtMs: 0 });
+  });
+
+  it('solves a running minigame of its family at once; the late result is ignored', () => {
+    const base = crewOf(['photoEditor'], 10_000, TEST_MAP, [onStation('f1', 'imageSearch-0')]);
+    const state = withStation(placed(base, 'p1', 8.5, 2.5), 'imageSearch-0', {
+      operatorId: 'p1',
+      phase: 'minigame',
+      progressMs: 2400,
+      durationMs: 2400,
+      minigameSeed: 99,
+    });
+    expect(abilityPreview(state, 'p1', GREYBOX_ENV)).toEqual({
+      kind: 'now',
+      stationId: 'imageSearch-0',
+      folderId: 'f1',
+    });
+    const run = runStep(
+      state,
+      {},
+      [testCommand('p1', { kind: 'useAbility' }), minigameResult('p1', 'imageSearch-0', false)],
+      QUIET_CONTEXT,
+    );
+    expect(run.events.map((e) => e.kind)).toEqual(['stampApplied', 'ability']);
+    expect(ofKind(run.events, 'stampApplied')[0]?.via).toBe('expertise');
+    expect(run.state.stations['imageSearch-0']).toMatchObject({ phase: 'idle', lockoutMs: 0 });
+    expect(run.state.folders.f1?.stamps).toEqual(['t-true-image']);
+    expect(run.state.crew.p1?.abilityReadyAtMs).toBe(70_050);
+  });
+
+  it('arms in a minigame its family does not cover', () => {
+    const base = crewOf(['photoEditor'], 10_000, TEST_MAP, [onStation('f1', 'archive-0')]);
+    const state = withStation(base, 'archive-0', { operatorId: 'p1', phase: 'minigame' });
+    expect(abilityPreview(state, 'p1', GREYBOX_ENV)).toEqual({ kind: 'arm' });
+  });
+});
+
 describe('8. Telefon z terenu', () => {
   const start = 10_000;
   const calling = () =>
@@ -445,6 +617,245 @@ describe('8. Telefon z terenu', () => {
   });
 });
 
+describe('9. Druga szansa', () => {
+  /** A generalist at (x, y) and the archive locked out with f1 on it. */
+  function lockedArchive(x: number, y: number, facing = FACING_UP) {
+    const base = crewOf([GENERALIST], 10_000, TEST_MAP, [onStation('f1', 'archive-0')]);
+    return withStation(placed(base, 'p1', x, y, facing), 'archive-0', {
+      phase: 'lockout',
+      lockoutMs: 3000,
+    });
+  }
+
+  it('reopens the faced locked station at once, without the hold', () => {
+    const state = lockedArchive(12.5, 2.5);
+    expect(abilityPreview(state, 'p1', GREYBOX_ENV)).toEqual({
+      kind: 'now',
+      stationId: 'archive-0',
+      folderId: 'f1',
+    });
+    const seed = drawMinigameSeed(state, must(state.folders.f1), 'archive');
+    const run = press(state, ['p1']);
+    expect(run.events).toEqual([
+      {
+        kind: 'minigameStarted',
+        stationId: 'archive-0',
+        station: 'archive',
+        playerId: 'p1',
+        folderId: 'f1',
+        seed,
+      },
+      {
+        kind: 'ability',
+        playerId: 'p1',
+        ability: 'secondChance',
+        stage: 'done',
+        stationId: 'archive-0',
+        folderId: 'f1',
+      },
+    ]);
+    expect(run.state.stations['archive-0']).toMatchObject({
+      phase: 'minigame',
+      operatorId: 'p1',
+      lockoutMs: 0,
+      minigameSeed: seed,
+      progressMs: 4000,
+      durationMs: 4000,
+    });
+    expect(run.state.crew.p1).toMatchObject({ abilityArmed: false, abilityReadyAtMs: 70_000 });
+  });
+
+  it('reaches the nearest locked station within 2.5 tiles, else arms', () => {
+    // Facing away, 2.24 tiles from the archive's centre.
+    expect(abilityPreview(lockedArchive(10.5, 2.5, FACING_DOWN), 'p1', GREYBOX_ENV)).toEqual({
+      kind: 'now',
+      stationId: 'archive-0',
+      folderId: 'f1',
+    });
+    // 3.61 tiles away.
+    expect(abilityPreview(lockedArchive(9.5, 3.5, FACING_DOWN), 'p1', GREYBOX_ENV)).toEqual({
+      kind: 'arm',
+    });
+    // A lockout without a folder is no target.
+    const empty = { ...lockedArchive(12.5, 2.5), folders: {} };
+    expect(abilityPreview(empty, 'p1', GREYBOX_ENV)).toEqual({ kind: 'arm' });
+  });
+
+  describe('armed', () => {
+    /** p1 (`role`) plays the minigame at `stationId` with f1 on it. */
+    function inMinigame(role: Role, stationId: string, armed: boolean) {
+      const base = crewOf([role], 10_000, TEST_MAP, [onStation('f1', stationId)]);
+      const state = withStation(base, stationId, {
+        operatorId: 'p1',
+        phase: 'minigame',
+        progressMs: 4000,
+        durationMs: 4000,
+        minigameSeed: drawMinigameSeed(base, must(base.folders.f1), 'archive'),
+      });
+      return withCrew(state, 'p1', { abilityArmed: armed });
+    }
+
+    it('arms while the player operates a station', () => {
+      const state = inMinigame(GENERALIST, 'archive-0', false);
+      expect(abilityPreview(state, 'p1', GREYBOX_ENV)).toEqual({ kind: 'arm' });
+      expect(press(state, ['p1']).state.crew.p1?.abilityArmed).toBe(true);
+    });
+
+    it('turns a failure into a fresh round for the same operator, without the lockout', () => {
+      const run = stationTick(
+        inMinigame(GENERALIST, 'archive-0', true),
+        [],
+        [minigameResult('p1', 'archive-0', false)],
+      );
+      expect(run.state.minigameAttempts).toEqual({ 's1:archive': 1 });
+      const seed = drawMinigameSeed(run.state, must(run.state.folders.f1), 'archive');
+      expect(run.events).toEqual([
+        {
+          kind: 'minigameFailed',
+          stationId: 'archive-0',
+          playerId: 'p1',
+          folderId: 'f1',
+          lockoutMs: 0,
+        },
+        {
+          kind: 'ability',
+          playerId: 'p1',
+          ability: 'secondChance',
+          stage: 'done',
+          stationId: 'archive-0',
+          folderId: 'f1',
+        },
+        {
+          kind: 'minigameStarted',
+          stationId: 'archive-0',
+          station: 'archive',
+          playerId: 'p1',
+          folderId: 'f1',
+          seed,
+        },
+      ]);
+      expect(run.state.stations['archive-0']).toMatchObject({
+        phase: 'minigame',
+        operatorId: 'p1',
+        lockoutMs: 0,
+        minigameSeed: seed,
+      });
+      expect(run.state.crew.p1).toMatchObject({ abilityArmed: false, abilityReadyAtMs: 70_000 });
+    });
+
+    it('shows the same Kartoteka card again', () => {
+      const state = inMinigame(GENERALIST, 'sourceRegistry-0', true);
+      const seed = drawMinigameSeed(state, must(state.folders.f1), 'sourceRegistry');
+      const run = stationTick(state, [], [minigameResult('p1', 'sourceRegistry-0', false)]);
+      expect(ofKind(run.events, 'minigameStarted')[0]?.seed).toBe(seed);
+      expect(run.state.stations['sourceRegistry-0']?.minigameSeed).toBe(seed);
+    });
+
+    it('keeps the lockout without it, and for an armed Ekspertyza', () => {
+      for (const state of [
+        inMinigame(GENERALIST, 'archive-0', false),
+        inMinigame('photoEditor', 'archive-0', true),
+      ]) {
+        const run = stationTick(state, [], [minigameResult('p1', 'archive-0', false)]);
+        expect(run.events).toEqual([
+          {
+            kind: 'minigameFailed',
+            stationId: 'archive-0',
+            playerId: 'p1',
+            folderId: 'f1',
+            lockoutMs: 3000,
+          },
+        ]);
+        expect(run.state.stations['archive-0']).toMatchObject({
+          phase: 'lockout',
+          operatorId: null,
+          lockoutMs: 3000,
+        });
+        expect(run.state.crew.p1).toEqual(state.crew.p1);
+      }
+    });
+  });
+});
+
+describe('10. Podaj teczkę', () => {
+  /** Ratownik p1 at (2.5, 2.5) carries f1; p3 at (3.5, 2.5) carries f2; p2 stands at (x, y). */
+  function passScene(x = 5.5, y = 2.5) {
+    const base = crewOf([RESCUER, null, null], 10_000, TEST_MAP, [
+      carriedBy('p1', 'f1'),
+      carriedBy('p3', 'f2'),
+    ]);
+    return placed(placed(placed(base, 'p1', 2.5, 2.5), 'p2', x, y), 'p3', 3.5, 2.5);
+  }
+
+  it('hands the carried folder to the nearest free teammate', () => {
+    const state = passScene();
+    expect(abilityPreview(state, 'p1', GREYBOX_ENV)).toEqual({
+      kind: 'now',
+      folderId: 'f1',
+      targetPlayerId: 'p2',
+    });
+    const run = press(state, ['p1']);
+    expect(run.events).toEqual([
+      {
+        kind: 'ability',
+        playerId: 'p1',
+        ability: 'passFolder',
+        stage: 'done',
+        folderId: 'f1',
+        targetPlayerId: 'p2',
+      },
+    ]);
+    expect(run.state.folders.f1?.location).toEqual({ kind: 'carried', playerId: 'p2' });
+    expect(run.state.crew.p1).toMatchObject({ abilityArmed: false, abilityReadyAtMs: 70_000 });
+  });
+
+  it('reaches exactly 6 tiles', () => {
+    expect(pickPassTarget(passScene(8.5), 'p1', GREYBOX_ENV)).toBe('p2');
+  });
+
+  it('passes to nobody beyond 6 tiles, at a station or desk, or away', () => {
+    const away = passScene();
+    const cases: [GameState, SimContext][] = [
+      [passScene(8.6), QUIET_CONTEXT],
+      [
+        withStation(passScene(), 'imageSearch-0', { operatorId: 'p2', phase: 'working' }),
+        QUIET_CONTEXT,
+      ],
+      [
+        { ...away, desks: { ...away.desks, 'desk-0': { id: 'desk-0', operatorId: 'p2' } } },
+        QUIET_CONTEXT,
+      ],
+      [away, testContext({ level: QUIET_LEVEL, absent: new Set(['p2']) })],
+    ];
+    for (const [state, ctx] of cases) {
+      expect(abilityPreview(state, 'p1', abilityEnvOf(ctx))).toEqual({
+        kind: 'blocked',
+        reason: 'noTarget',
+      });
+      const run = press(state, ['p1'], ctx);
+      expect(run.state).toBe(state);
+      expect(run.events).toEqual([]);
+    }
+  });
+
+  it('breaks a tie by join order', () => {
+    // p2 and p3 both 3 tiles away and free.
+    const state = placed(passScene(), 'p3', 2.5, 5.5);
+    const { f2: _f2, ...folders } = state.folders;
+    const tied = { ...state, folders };
+    expect(pickPassTarget(tied, 'p1', GREYBOX_ENV)).toBe('p2');
+    expect(pickPassTarget(placed(tied, 'p3', 2.5, 5.4), 'p1', GREYBOX_ENV)).toBe('p3');
+  });
+
+  it('needs a carried folder', () => {
+    const { f1: _f1, ...folders } = passScene().folders;
+    expect(abilityPreview({ ...passScene(), folders }, 'p1', GREYBOX_ENV)).toEqual({
+      kind: 'blocked',
+      reason: 'noFolder',
+    });
+  });
+});
+
 describe('11. ignored presses', () => {
   it('leaves the state untouched without a role', () => {
     const state = crewOf([null], 10_000, TEST_MAP, [onTable('f1')]);
@@ -489,7 +900,7 @@ describe('12. speed bonus on the base deadline', () => {
   });
 });
 
-describe('13. ability preview (S7-37 rules)', () => {
+describe('13. ability preview per role', () => {
   it('previews the managing editor’s and the reporter’s press', () => {
     const state = crewOf(['managingEditor', 'reporter'], 10_000, TEST_MAP, [
       carriedBy('p2', 'f1', { storyId: 't-phone' }),
@@ -498,5 +909,31 @@ describe('13. ability preview (S7-37 rules)', () => {
     expect(abilityPreview(state, 'p1', env)).toEqual({ kind: 'now', folderId: 'f1' });
     // The greybox (like l0–l2) has no phone.
     expect(abilityPreview(state, 'p2', env)).toEqual({ kind: 'blocked', reason: 'noPhone' });
+  });
+
+  it('previews Ekspertyza, Druga szansa and Podaj teczkę on a fresh level', () => {
+    const roles = ['photoEditor', 'archivist', GENERALIST, RESCUER] as const;
+    const greybox = crewOf(roles);
+    const expected: Record<string, AbilityPreview> = {
+      p1: { kind: 'arm' },
+      p2: { kind: 'arm' },
+      p3: { kind: 'arm' },
+      p4: { kind: 'blocked', reason: 'noFolder' },
+    };
+    for (const [id, preview] of Object.entries(expected)) {
+      expect(abilityPreview(greybox, id, GREYBOX_ENV)).toEqual(preview);
+    }
+    // Without a station of the family Ekspertyza has nothing to cover.
+    expect(abilityPreview(crewOf(roles, 0, NO_IMAGE_MAP), 'p1', GREYBOX_ENV)).toEqual({
+      kind: 'blocked',
+      reason: 'noStation',
+    });
+    expect(abilityPreview(crewOf(roles, 0, NO_IMAGE_MAP), 'p2', GREYBOX_ENV)).toEqual({
+      kind: 'arm',
+    });
+    expect(abilityPreview(crewOf(roles, 0, NO_ARCHIVE_MAP), 'p2', GREYBOX_ENV)).toEqual({
+      kind: 'blocked',
+      reason: 'noStation',
+    });
   });
 });
