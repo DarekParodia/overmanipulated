@@ -153,6 +153,16 @@ export const pl = {
     notInRoom: 'Nie jesteś w żadnej redakcji.',
     notReady: 'Nie wszyscy są gotowi.',
     unknownLevel: 'Nie ma takiego wydania.',
+    teamFull: 'Ta redakcja ma już komplet.',
+    spectatorsFull: 'Na widowni nie ma już miejsc.',
+    spectatorsOff: 'Ta redakcja nie wpuszcza widowni.',
+    matchInProgress: 'Pojedynek trwa. Możesz go oglądać.',
+    teamEmpty: 'Każda redakcja potrzebuje gracza.',
+    kicked: 'Gospodarz usunął cię z pokoju.',
+    kickCooldown: 'Gospodarz niedawno cię usunął. Wróć później.',
+    invalidTarget: 'Tej osoby nie ma już w pokoju.',
+    invalidName: 'Ta nazwa nie przejdzie. Wybierz inną.',
+    featureDisabled: 'Ta opcja jest wyłączona na serwerze.',
     connectionLost: 'Zerwane połączenie z redakcją.',
   } satisfies Record<ErrorCode | 'connectionLost', string>,
   settings: {
@@ -346,12 +356,15 @@ export const pl = {
     passesTitle: 'Wybierz rolę',
     noRole: 'Bez roli',
     noRoleBonus: 'Bez premii',
-    /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor), short station names. */
-    fasterAt: (stations: readonly string[], percent: number) => `${listPl(stations)} +${percent}%`,
-    /** Speed bonus line of a role that is faster at every station (Wszechstronny). */
-    everywhereFaster: (percent: number) => `Wszędzie +${percent}%`,
-    /** Bonus line of a role with Koło ratunkowe (Ratownik), from RESCUE_ADD_MS. */
-    rescuePassive: (seconds: number) => `Raz ratuje teczkę (+${seconds}\u00a0s)`,
+    noRoleAbility: 'Bez zdolności',
+    /** Lobby detail panel (S7-44): the passive's speed bonus; station chips follow it. */
+    fasterPassive: (percent: number) => `Praca o\u00a0${percent}% szybciej`,
+    /** The passive of a role that is faster at every station (Wszechstronny). */
+    everywhereFaster: (percent: number) => `Wszędzie praca o\u00a0${percent}% szybciej`,
+    /** The reporter's second passive rule (`ROLE_PERKS.skipsPhoneQueue`). */
+    phoneQueue: 'Telefon bez kolejki',
+    /** Koło ratunkowe (Ratownik), from RESCUE_ADD_MS. */
+    rescuePassive: (seconds: number) => `Raz ratuje teczkę w\u00a0ręce (+${seconds}\u00a0s)`,
     /** What each role's ability does, in a few words (lobby detail panel, tutorial; S7-44/45). */
     abilityWhat: {
       photoEditor: 'zadanie przy obrazie od razu',
@@ -361,12 +374,21 @@ export const pl = {
       generalist: 'po pudle od razu jeszcze raz',
       rescuer: 'rzut do najbliższej wolnej osoby',
     } satisfies Record<Role, string>,
-    /** Roles whose bonus is not (only) speed get their own line. */
-    specialBonuses: {
-      reporter: 'Telefon bez kolejki',
-      managingEditor: 'Raz przedłuża termin',
-    } satisfies Partial<Record<Role, string>>,
-    noEditorNote: 'Bez redaktora przy stole decyduje każdy.',
+    /** The ability line: its name and what it does. */
+    abilityLine: (name: string, what: string) => `${name} – ${what}`,
+    /** The ability's cooldown in the detail panel. */
+    cooldown: (seconds: number) => `co ${seconds}\u00a0s`,
+    /** The key cap of the ability on touch (the fourth thumb button). */
+    touchKey: 'Przycisk',
+    /** Headings of the detail panel's two lines (screen readers and the compact layout). */
+    passiveLabel: 'Premia',
+    abilityLabel: 'Zdolność',
+    /** Notes under the detail panel when the shown role's perk does nothing on the chosen level. */
+    passiveNotHere: 'Ta premia nie działa na tym poziomie.',
+    abilityNotHere: 'Ta zdolność nie działa na tym poziomie.',
+    /** Screen-reader line of a role pass: which teammates chose it (the dots on the pass). */
+    pickedBy: (names: readonly string[]) =>
+      `${names.length === 1 ? 'Tę rolę ma' : 'Tę rolę mają'}: ${listPl(names)}`,
     ready: 'Gotowy',
     readyDone: 'Gotowy!',
     readyHint: 'Zaznacz, gdy możesz grać.',
@@ -559,6 +581,13 @@ export const pl = {
     seconds: (s: number) => `${s} s`,
     noFolder: 'Brak teczki na stanowisku.',
     unknownStory: 'Nieznana teczka.',
+    /**
+     * Role abilities around the overlay (S7-41). The header's Ekspertyza button shows
+     * `touch.ability.expertise` (accessible name from `vocab.abilities`) and the lockout plate's
+     * line `vocab.abilities.secondChance`; this is the button while the press is on its way
+     * (the overlay closes when the stamp lands).
+     */
+    expertiseSending: 'Ekspertyza…',
   },
   desk: {
     title: 'Stół redakcyjny',
@@ -1829,6 +1858,63 @@ export const pl = {
       minigame: 'Rozwiąż zadanie na stanowisku',
       verdict: 'Zanieś teczkę na stół, wybierz werdykt',
       done: 'Super! Tak trzymaj!',
+    },
+  },
+  /**
+   * The intro (S7-99): the player's buttons and the narrator's script. The narrator is the
+   * editor-in-chief; each line is both the subtitle (typeset at render) and the voiceover text
+   * (`tools/audio/intro-lines.ts` respells key names for the TTS). One sentence is one subtitle
+   * chunk and must fit two lines at 640×360 (intro/intro-script.test.ts). The scenes, their
+   * order and the scripted input tracks are in `intro/intro-script.ts`.
+   */
+  intro: {
+    label: 'Wprowadzenie',
+    skip: 'Pomiń',
+    next: 'Dalej',
+    prev: 'Wstecz',
+    pause: 'Pauza',
+    resume: 'Wznów',
+    /** „Dalej” on the last scene. */
+    finish: 'Do roboty!',
+    /** The chip shown while the browser still blocks audio; subtitles run on regardless. */
+    soundLocked: 'Stuknij, by włączyć głos',
+    scene: (n: number, total: number) => `Scena ${n} z ${total}`,
+    voice: {
+      welcome:
+        'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
+      folders:
+        'Każda teczka to zgłoszenie: prawda, fałszywka albo prawda bez kontekstu. Karta „Następna teczka” pokazuje, za ile sekund wpadnie kolejna.',
+      pickup: {
+        keyboard: 'Chodzisz klawiszami W, A, S i D. Podejdź do taśmy i weź teczkę klawiszem E.',
+        gamepad: 'Chodzisz lewą gałką. Podejdź do taśmy i weź teczkę przyciskiem A.',
+        touch:
+          'Chodzisz, przesuwając kciukiem po lewej stronie ekranu. Przy taśmie wciśnij przycisk „Podnieś”.',
+      } satisfies Record<Device, string>,
+      work: {
+        keyboard:
+          'Zanieś teczkę na stanowisko i przytrzymaj spację. Potem rozwiąż krótkie zadanie.',
+        gamepad:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk X. Potem rozwiąż krótkie zadanie.',
+        touch:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk „Pracuj”. Potem rozwiąż krótkie zadanie.',
+      } satisfies Record<Device, string>,
+      stations:
+        'Każde stanowisko sprawdza co innego, na przykład Lupa szuka starszych kopii zdjęcia. Dobrze rozwiązane zadanie daje pieczątkę: to twój dowód.',
+      desk: 'Z dowodami idź do stołu redakcyjnego. Najpierw wskaż dowód, potem werdykt: Publikuj, Odrzuć albo Z kontekstem.',
+      proof:
+        'Liczy się dowód, który naprawdę rozstrzyga. Słaby dowód to tylko połowa punktów, nawet przy dobrym werdykcie. Trudniejsze teczki wymagają dwóch albo trzech dowodów.',
+      credibility:
+        'Pilnuj terminów i wiarygodności gazety. Spóźnienie kosztuje, ale fałszywka w druku kosztuje najwięcej. Gdy wiarygodność spadnie do zera, wydanie przepada.',
+      roles: {
+        keyboard:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz klawiszem R, a potem musi się odnowić.',
+        gamepad:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz przyciskiem RB, a potem musi się odnowić.',
+        touch:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz czwartym przyciskiem po prawej, a potem musi się odnowić.',
+      } satisfies Record<Device, string>,
+      team: 'Rozmawiajcie i dzielcie się pracą. Fioletowy dymek podpowie, co dalej.',
+      end: 'Po wydaniu Kolegium wyjaśni każdą teczkę i pokaże, za co są punkty i gwiazdki. Do roboty!',
     },
   },
   /** Editorial briefing before a level (S3-03). */

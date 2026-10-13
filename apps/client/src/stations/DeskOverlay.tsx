@@ -6,7 +6,8 @@
 // credibility and bonus chips (the multi-stamp one included), then at most two short lines from
 // `desk-result-model.ts` (the proof, or the right verdict and the deciding station). The
 // managing editor's Przedłużenie is the role ability (R / RB / the touch button, S7-37), not a
-// sheet button.
+// sheet button: while the sheet owns the input, R / RB arrive as the nav intent `ability` and
+// go out as a world press (S7-41), which targets the folder on the desk.
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
 import {
   type Folder,
@@ -20,6 +21,7 @@ import { correctionStampId } from '../events/event-model.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { type NavIntent, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { useGame } from '../net/game-store.ts';
+import { runtime } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
@@ -64,6 +66,15 @@ const verdictKey = (verdict: Verdict) => `verdict:${verdict}`;
 
 export function DeskOverlay(props: DeskOverlayProps) {
   useInputCapture(true);
+  // Subscribed after the view inside (React runs a parent's effects last), so this sees the
+  // role ability key first and passes everything else on.
+  useNavIntent((intent: NavIntent) => {
+    if (intent !== 'ability') {
+      return false;
+    }
+    runtime.pressAbility();
+    return true;
+  });
   if (props.result) {
     return <ResultView {...props} result={props.result} />;
   }

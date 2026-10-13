@@ -45,12 +45,12 @@ describe('bagSlotTimes', () => {
     expect(bagSlotTimes(bag, 'expert').slice(0, 4)).toEqual([4, 23.2, 42.4, 61.6]);
   });
 
-  it('gives the level 0 bag 8 / 10 / 11 / 12 slots', () => {
-    const l0 = { firstAtS: 3, gapS: 18, lastSpawnS: 175 };
+  it('gives the level 0 bag 7 / 8 / 9 / 10 slots', () => {
+    const l0 = { firstAtS: 3, gapS: 22, lastSpawnS: 165 };
     const lengths = (['easy', 'normal', 'hard', 'expert'] as const).map(
       (d) => bagSlotTimes(l0, d).length,
     );
-    expect(lengths).toEqual([8, 10, 11, 12]);
+    expect(lengths).toEqual([7, 8, 9, 10]);
   });
 
   it('rejects a gap that is not positive', () => {

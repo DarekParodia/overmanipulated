@@ -1,12 +1,15 @@
 # Audio
 
-All audio is synthesised from oscillators and filtered noise (no samples, nothing to license).
-Generators live in `tools/audio/` and need `numpy` and `ffmpeg`.
+All sound effects and music are synthesised from oscillators and filtered noise (no samples,
+nothing to license). The one exception is the intro voiceover (see Voice): speech, made by
+`synth_voice.py` from a volunteer recording or an audited TTS voice. Generators live in
+`tools/audio/` and need `numpy` and `ffmpeg`.
 
 | Script | Produces |
 | --- | --- |
 | `synth_placeholders.py` | `public/assets/audio/sfx.{webm,mp3}` (one sprite) and `src/fx/audio/sfx-sprite.json` |
 | `synth_music.py` | `public/assets/audio/music/*.{webm,mp3}` and `src/fx/audio/music-manifest.json` |
+| `synth_voice.py` | `public/assets/voice/intro.{webm,mp3}` and the voice sprite `public/assets/voice/intro.json` (see Voice) |
 | `measure.py` | Decodes the shipped files and prints peak/RMS per file and per bus; exits non-zero on clipping, missing files, out-of-window buses or a payload over budget |
 
 Run the generators, then `python3 tools/audio/measure.py`. Sprite offsets change whenever a sound's
@@ -107,11 +110,75 @@ uses the bus: the intro subtitles every line, so voice lines are not cues and ne
 - `applyVoiceVolume(settings)` runs from `initAudio`'s settings subscription, so moving the slider
   reaches a line that is playing.
 
-The audio files, the voice sprite json, their loudness window and size budget, and the licence
-notes come with S7-100. Until then `loadVoice` resolves false and the intro runs on subtitles and
-fallback timing alone.
+The lines come from the intro script (S7-99, `apps/client/src/intro/intro-script.ts`, words in
+`pl.intro.voice`): 17 clips, ids such as `welcome` or `pickup.touch`.
+`bun tools/audio/intro-lines.ts` prints them as JSON (`{clipId: {subtitle, tts}}`) for the
+generator; `tts` is the subtitle with plain spaces, no quotes and the key names respelled
+(`PRONOUNCE`), and `textSha1`, the sha1 of the subtitle's words (`voiceText`: NFC, runs of spaces
+collapsed, so typographic spacing never makes a clip stale).
+
+### Generating the voice (`synth_voice.py`)
+
+**Status: not generated yet.** No TTS voice passed the licence audit, and the generator cannot
+reach the Piper voice host from the build sandbox (huggingface.co is denied by the egress policy).
+Until the files exist the intro runs on subtitles and fallback timing alone: `loadIntroVoice()`
+(`intro/voice-sprite.ts`) finds no sprite and resolves false, `measure.py` reports the voice as not
+generated, and `voice-sync.test.ts` only checks that no audio ships without its sprite. To ship
+the voice, run the generator on a machine with the takes (or with access to the model host) and
+commit the three files together:
+
+```
+python3 tools/audio/synth_voice.py --recordings DIR --voice LABEL   # volunteer takes, CC0
+python3 tools/audio/measure.py && bun test apps/client/src/intro
+```
+
+`DIR/<clipId>.wav` holds one take per clip (17: the ids `bun tools/audio/intro-lines.ts` prints).
+The volunteer releases the takes under CC0 and is named in CREDITS.md. `--model PATH --voice LABEL
+--licence L [--credit TEXT]` uses an offline Piper voice instead (`pip install piper-tts==1.8.0`),
+and `--voice NAME` downloads one listed in the tool's `VOICES` table, checked against pinned
+SHA-256 values; both only for a voice whose whole chain passed the audit below.
+
+Every take gets the same treatment: silence below -45 dBFS trimmed (40 ms kept around speech),
+10 ms fades, -20 dBFS RMS over the audible part with the peak at or under -3 dBFS. Clips are
+joined with a 120 ms gap and encoded as `intro.webm` (Opus, mono, 24 kbps, VoIP tuning) and
+`intro.mp3` (mono, 22.05 kHz, 40 kbps). The tool writes nothing when either file would exceed
+`VOICE_MAX_BYTES` (700 000 bytes; a trial run of 117 s of speech gave 345 KiB webm and 570 KiB
+mp3). Its sprite json is `{voice, source: 'tts' | 'recording', licence, credit?, clips: {[id]:
+{startMs, durationMs, textSha1}}}`, validated by `voiceSpriteSchema` when the intro fetches it.
+It is fetched at runtime from `/assets/voice/intro.json`, not imported, so the build never depends
+on a file that may not exist and the json stays beside its audio.
+
+Checks: `voice-sync.test.ts` fails when a clip of the script is missing from the sprite, when its
+words changed since generation ("clip X out of date: run python3 tools/audio/synth_voice.py"),
+when the sprite has unknown or overlapping clips, or when a file is missing or over the cap.
+`measure.py` checks each clip against the voice window (-24 to -16 dBFS RMS) and the size cap.
+
+### Licence audit (2026-10-13)
+
+Only a voice whose whole chain (dataset and every checkpoint it was fine-tuned from) allows
+redistribution and commercial use may be generated; the sprite's `licence` field only accepts
+`CC0-1.0`, `CC-BY-4.0`, `MIT` or `self-recorded-CC0`, so a non-commercial voice cannot ship.
+Sources: the Piper model cards (`raw.githubusercontent.com/rhasspy/piper-samples/.../MODEL_CARD`),
+the OHF-Voice voice-datasets README, the MBROLA voices licence, the Arch Linux RHVoice packages and
+the Piper licensing discussion (rhasspy/piper #271); the CSTR licence page itself was unreachable.
+
+| Candidate | Chain | Verdict |
+| --- | --- | --- |
+| Piper `pl_PL-darkman-medium`, `gosia-medium` | dataset CC0 (OHF-Voice/NabuCasa voice-datasets) ← fine-tuned from `en_US-lessac-medium` ← Blizzard 2013 Lessac data: a research licence agreement, no commercial use | Blocked |
+| Piper `pl_PL-mc_speech-medium` | MC Speech dataset CC0 ← fine-tuned from `en_US-lessac-medium` (as above) | Blocked |
+| Piper `pl_PL-mls_6892-low` | MLS speaker 6892 (OpenSLR 94, CC BY 4.0) ← fine-tuned from `en_US-ryan-low` ← RyanSpeech, CC BY-NC-SA 4.0 | Blocked |
+| RHVoice Polish (Magda, Natan…) | voices CC BY-NC-ND 4.0 | Blocked |
+| eSpeak NG + MBROLA `pl1` | MBROLA databases: use only with the MBROLA program, not in a product that is sold without the author's permission | Blocked |
+| eSpeak NG (formant synthesis, no recorded data) | GPL-3.0-or-later program; its output is not covered | Allowed, rejected on quality: a robotic voice for a 75 s narrated intro |
+| Volunteer recording, `--recordings` | the volunteer releases the takes under CC0 | **Chosen** |
+
+The Piper program (piper-tts 1.8.0, GPL-3.0-or-later) only runs offline; nothing from it ships.
+A Piper voice trained from scratch on a CC0 dataset (e.g. darkman, without the lessac
+checkpoint) would pass; it goes in through `--model` once its own audit is recorded.
 
 ## Budget
 
 Whole payload (both formats are shipped, a browser loads one): webm about 2.2 MB, mp3 about 2.1 MB;
 limit 2.5 MB. Only the sfx sprite (about 170 KB) is in the first-load path; music is fetched lazily.
+The intro voice has its own cap (each of `intro.webm` / `intro.mp3` at most 700 000 bytes) and is
+fetched only when the intro asks for it, never in the first-load path.

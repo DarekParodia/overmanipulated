@@ -192,11 +192,11 @@ describe('prepareRun and applyDifficulty', () => {
     expect(prepareLevelRun('l9-nie-ma', { seed: 2, difficulty: 'hard' })).toBeUndefined();
   });
 
-  it('deals bundled level 1 from its bag: 16 folders on hard, a new deal per seed', () => {
+  it('deals bundled level 1 from its bag: 18 folders on hard, a new deal per seed', () => {
     const file = levelFileSchema.parse(LEVEL_FILES['levels/l1-burza.json']);
     const run = prepareLevelRun('l1-burza', { seed: 2, difficulty: 'hard' });
     expect(run?.level).toEqual(generateBagLevel(file, STORIES, 2, 'hard'));
-    expect(run?.level.schedule).toHaveLength(16);
+    expect(run?.level.schedule).toHaveLength(18);
     expect(run?.level.schedule[0]?.atS).toBe(4);
     const other = prepareLevelRun('l1-burza', { seed: 3, difficulty: 'hard' });
     expect(other?.level.schedule).not.toEqual(run?.level.schedule);
