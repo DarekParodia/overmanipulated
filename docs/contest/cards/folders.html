@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Przykładowe teczki: Redakcja na Ostatnią Chwilę</title>
+<style>
+@font-face{font-family:'Baloo 2';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/baloo-2-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Baloo 2';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/baloo-2-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+@font-face{font-family:'Nunito';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/nunito-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Nunito';font-weight:400 800;font-style:normal;font-display:block;src:url('../assets/fonts/nunito-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+:root{--sky:#7cc8f5;--surface:#ffffff;--soft:#eef6fc;--sunk:#d9e9f5;--ink:#1e2a4a;--ink-soft:#4d5b80;--yellow:#ffd23f;--yellow-dark:#e8b400;--green:#36c46a;--green-dark:#1f9a4c;--red:#ff5a5f;--red-dark:#d63339;--orange:#ff9f1c;--orange-dark:#e07b00;--blue:#3a86ff;--blue-dark:#1f63d6;--folder:#ffd76a;--folder-dark:#e8b400;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--sky);color:var(--ink);font-family:Nunito,sans-serif;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+h1,h2,h3,.display{font-family:'Baloo 2',sans-serif;font-weight:800;margin:0;line-height:1.1}
+svg{display:block;flex:none}
+.sheet{padding:24px;display:grid;gap:24px;justify-content:center}
+@media print{body{background:var(--surface)}.sheet{padding:0}}
+
+.card.folder{width:780px;position:relative;padding:38px 14px 14px 0;page-break-after:always}
+.folder .tab{position:absolute;top:0;left:30px;height:46px;min-width:300px;background:var(--folder);border:5px solid var(--ink);border-bottom:none;border-radius:18px 18px 0 0;display:flex;gap:10px;align-items:center;padding:0 18px;font-family:'Baloo 2',sans-serif;font-size:20px}
+.folder .tab span{margin-left:auto;background:var(--surface);border:3px solid var(--ink);border-radius:999px;padding:0 12px;font-size:16px;font-weight:800}
+.folder .paper{background:var(--folder);border:5px solid var(--ink);border-radius:0 24px 24px 24px;box-shadow:0 8px 0 var(--ink);padding:22px 26px 16px;display:flex;flex-direction:column;gap:10px}
+.folder .kicker{margin:0;font-size:13px;font-weight:800;color:var(--ink-soft)}
+.folder h2{font-size:30px}
+.folder h3{font-size:19px;margin-top:2px}
+.folder h4{font-family:'Baloo 2',sans-serif;font-size:15px;margin:0 0 1px}
+.folder p{margin:0}
+.folder .body{background:var(--surface);border:4px solid var(--ink);border-radius:16px;padding:10px 14px;font-size:16px;line-height:1.35}
+.folder .source{display:flex;gap:8px;align-items:center;font-size:15px;font-weight:800}
+.folder .source span{color:var(--ink-soft)}
+.stamps{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.stamp{background:var(--surface);border:4px solid var(--ink);border-radius:14px;padding:6px 12px}
+.stamp p{font-size:14.5px;line-height:1.3;margin-top:2px}
+.stamp-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:15px}
+.stamp-head b{font-family:'Baloo 2',sans-serif;font-size:16px}
+.tag{margin-left:auto;font-size:12.5px;font-weight:800;border:3px solid var(--ink);border-radius:999px;padding:0 9px;background:var(--soft)}
+.tag.star{margin-left:0;background:var(--yellow);display:flex;gap:4px;align-items:center}
+.r-decisive{background:var(--surface)}
+.r-decisive .tag:first-of-type{background:var(--green)}
+.r-misleading .tag:first-of-type{background:var(--orange)}
+.stamp.key{border-color:var(--green-dark);box-shadow:0 0 0 3px var(--green)}
+.verdict{margin:2px 0}
+.vchip{display:flex;gap:10px;align-items:center;border:5px solid var(--ink);border-radius:18px;padding:8px 16px;font-family:'Baloo 2',sans-serif;font-size:24px;font-weight:800;box-shadow:0 5px 0 var(--ink)}
+.v-publish .vchip{background:var(--green)}
+.v-context .vchip{background:var(--orange)}
+.v-reject .vchip{background:var(--red)}
+.debrief{background:var(--surface);border:4px solid var(--ink);border-radius:16px;padding:10px 14px;display:grid;gap:6px}
+.debrief section p{font-size:14.5px;line-height:1.32}
+.folder .note{margin-top:auto;font-size:11.5px;color:var(--ink-soft);font-weight:700;text-align:center}
+.folder-sheet{grid-template-columns:780px}
+@media print{@page{size:A4 portrait;margin:8mm}.card.folder{zoom:.93}}
+</style></head>
+<body><main class="sheet folder-sheet">
+<article class="card folder" data-story="l1-zalana-ulica">
+  <div class="tab"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5A2 2 0 0 1 5 6.5h2.5L9 4h6l1.5 2.5H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" style="fill:#ffffff"></path><path d="M8.5 13a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0Z"></path></svg><b>Zdjęcie</b><span>Ważny</span></div>
+  <div class="paper">
+    <p class="kicker">Przykładowa teczka · Poziom 1 · l1-zalana-ulica</p>
+    <h2>Tak teraz wygląda centrum Nowych Brzegów!</h2>
+    <p class="body">Zdjęcie ulicy zalanej po kolana krąży po grupach mieszkańców. Podpis: „Burza zrobiła z centrum rzekę”.</p>
+    <p class="source"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><span>Źródło:</span> Post na grupie Nowe Brzegi Info</p>
+    <h3>Pieczątki ze stanowisk</h3>
+    <ul class="stamps"><li class="stamp r-decisive key">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0-12 0Z" style="fill:#ffd23f"></path><path d="M14.5 14.5L20 20M7.5 11.5l1.8-2 1.5 1.5 1.2-1 1.5 1.8"></path></svg><b>Lupa obrazu</b><span class="tag">Dowód</span><span class="tag star"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5L14.5 9.4L20.8 9.9L16 14.1L17.5 20.3L12 17L6.5 20.3L8 14.1L3.2 9.9L9.5 9.4Z" style="fill:#ffd23f"></path></svg> Uzasadnia werdykt</span></div>
+        <p>Zdjęcie krąży w sieci od 2019 r. Pochodzi z powodzi w innym kraju.</p>
+      </li><li class="stamp r-irrelevant">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><b>Kartoteka źródeł</b><span class="tag">Nic nie wnosi</span></div>
+        <p>Konto prywatne, aktywne od 4 lat. Zwykle udostępnia lokalne wiadomości.</p>
+      </li></ul>
+    <div class="verdict v-context">
+      <div class="vchip"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12.5l4 4L14 8M16.5 12h4M16.5 16h4M18 8h2.5"></path></svg><span>Właściwy werdykt: Publikuj z kontekstem</span></div>
+    </div>
+    <div class="debrief"><h3>Kolegium: wyjaśnienie</h3><section><h4>Co to było</h4><p>Burza w Nowych Brzegach była prawdziwa, ale zdjęcie pochodzi z innego kraju i sprzed kilku lat.</p></section><section><h4>Jak działa ta sztuczka</h4><p>Stare zdjęcie z nowym podpisem: obraz jest autentyczny, fałszywe jest miejsce i czas. Prawdziwe wydarzenie uwiarygadnia cudzy kadr.</p></section><section><h4>Co to wykryło</h4><p>Lupa obrazu: wyszukiwanie obrazem znalazło starsze publikacje tego samego zdjęcia z 2019 r.</p></section><section><h4>Gdzie to się zdarza</h4><p>Po każdej większej burzy w sieci wracają efektowne zdjęcia powodzi z innych miejsc i lat. Wyszukiwanie obrazem szybko pokazuje ich pochodzenie.</p></section></div>
+    <p class="note">Fikcyjne miasto Nowe Brzegi. Treść wymyślona na potrzeby gry, oparta na realnym mechanizmie dezinformacji.</p>
+  </div>
+</article>
+<article class="card folder" data-story="l2-cytat-o-liceach">
+  <div class="tab"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14.5C4 10.5 5.5 8 8.5 6.5M14 14.5C14 10.5 15.5 8 18.5 6.5"></path><path d="M4 14.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0ZM14 14.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z" fill="#1e2a4a"></path></svg><b>Cytat</b><span>Ważny</span></div>
+  <div class="paper">
+    <p class="kicker">Przykładowa teczka · Poziom 2 · l2-cytat-o-liceach</p>
+    <h2>Kandydatka Szelągowska: „Zamknę połowę liceów w mieście”</h2>
+    <p class="body">Grafika z jej zdjęciem i cytatem obiega grupy rodziców. Podpis: „Tak mówiła na wczorajszym spotkaniu z mieszkańcami”.</p>
+    <p class="source"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><span>Źródło:</span> Grafika z komunikatora</p>
+    <h3>Pieczątki ze stanowisk</h3>
+    <ul class="stamps"><li class="stamp r-misleading">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0-12 0Z" style="fill:#ffd23f"></path><path d="M14.5 14.5L20 20M7.5 11.5l1.8-2 1.5 1.5 1.2-1 1.5 1.8"></path></svg><b>Lupa obrazu</b><span class="tag">Myli tropem</span></div>
+        <p>Zdjęcie kandydatki jest prawdziwe, z jej strony kampanijnej. Cytat dodano później.</p>
+      </li><li class="stamp r-decisive key">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5h14v17H5Z" style="fill:#ffd23f"></path><path d="M5 9.25h14M5 14.75h14M10.5 6.5h3M10.5 12h3M10.5 17.75h3"></path></svg><b>Archiwum</b><span class="tag">Dowód</span><span class="tag star"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5L14.5 9.4L20.8 9.9L16 14.1L17.5 20.3L12 17L6.5 20.3L8 14.1L3.2 9.9L9.5 9.4Z" style="fill:#ffd23f"></path></svg> Uzasadnia werdykt</span></div>
+        <p>Zapis całego spotkania z mieszkańcami: nie padły tam takie słowa ani nic podobnego.</p>
+      </li><li class="stamp r-irrelevant">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><b>Kartoteka źródeł</b><span class="tag">Nic nie wnosi</span></div>
+        <p>Autor grafiki to anonimowe konto, które nie opublikowało nic innego.</p>
+      </li></ul>
+    <div class="verdict v-reject">
+      <div class="vchip"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg><span>Właściwy werdykt: Odrzuć</span></div>
+    </div>
+    <div class="debrief"><h3>Kolegium: wyjaśnienie</h3><section><h4>Co to było</h4><p>Zmyślony cytat doklejony do prawdziwego zdjęcia kandydatki. Nic takiego nie zostało powiedziane.</p></section><section><h4>Jak działa ta sztuczka</h4><p>Zmyślony cytat: autentyczna twarz i miejsce uwiarygadniają zdanie, którego nikt nie wypowiedział.</p></section><section><h4>Co to wykryło</h4><p>Archiwum: pełny zapis spotkania nie zawiera tych słów.</p></section><section><h4>Gdzie to się zdarza</h4><p>Grafiki z „cytatami” polityków łatwo zrobić w minutę. Zanim uznasz słowa za prawdziwe, szukaj nagrania albo stenogramu.</p></section></div>
+    <p class="note">Fikcyjne miasto Nowe Brzegi. Treść wymyślona na potrzeby gry, oparta na realnym mechanizmie dezinformacji.</p>
+  </div>
+</article>
+<article class="card folder" data-story="l5-nagranie-podatek">
+  <div class="tab"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0Z" style="fill:#ffffff"></path><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"></path></svg><b>Nagranie</b><span>Pilny</span></div>
+  <div class="paper">
+    <p class="kicker">Przykładowa teczka · Poziom 5 · l5-nagranie-podatek</p>
+    <h2>Burmistrz w nagraniu: podatek od psów wzrośnie pięciokrotnie</h2>
+    <p class="body">Krótkie nagranie audio. Głos burmistrza Wrzoska mówi: „od stycznia pięć razy więcej”. Krąży w komunikatorach.</p>
+    <p class="source"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><span>Źródło:</span> Nagranie z komunikatora</p>
+    <h3>Pieczątki ze stanowisk</h3>
+    <ul class="stamps"><li class="stamp r-irrelevant">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10a6 6 0 1 0 12 0a6 6 0 1 0-12 0Z" style="fill:#ffd23f"></path><path d="M14.5 14.5L20 20M7.5 11.5l1.8-2 1.5 1.5 1.2-1 1.5 1.8"></path></svg><b>Lupa obrazu</b><span class="tag">Nic nie wnosi</span></div>
+        <p>Do nagrania dołączono tylko szare tło. Brak obrazu do sprawdzenia.</p>
+      </li><li class="stamp r-decisive key">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10H7Z" style="fill:#ffd23f"></path><path d="M10 3.5V7M14 3.5V7M10 17v3.5M14 17v3.5M3.5 10H7M3.5 14H7M17 10h3.5M17 14h3.5"></path></svg><b>Skaner AI</b><span class="tag">Dowód</span><span class="tag star"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5L14.5 9.4L20.8 9.9L16 14.1L17.5 20.3L12 17L6.5 20.3L8 14.1L3.2 9.9L9.5 9.4Z" style="fill:#ffd23f"></path></svg> Uzasadnia werdykt</span></div>
+        <p>Skaner AI: 94% – głos prawdopodobnie syntetyczny. To tylko prawdopodobieństwo.</p>
+      </li><li class="stamp r-irrelevant">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><b>Kartoteka źródeł</b><span class="tag">Nic nie wnosi</span></div>
+        <p>Nadawca nieznany, numer bez historii. Nie da się go powiązać z urzędem.</p>
+      </li><li class="stamp r-decisive key">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 7 7l1.5-2 4 1.5v3A1.5 1.5 0 0 1 18.5 20.5 15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4Z" style="fill:#ffd23f"></path></svg><b>Telefon</b><span class="tag">Dowód</span><span class="tag star"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5L14.5 9.4L20.8 9.9L16 14.1L17.5 20.3L12 17L6.5 20.3L8 14.1L3.2 9.9L9.5 9.4Z" style="fill:#ffd23f"></path></svg> Uzasadnia werdykt</span></div>
+        <p>Rzecznik urzędu: „Żadnej podwyżki nie ma, burmistrz nie nagrywał takiego oświadczenia”.</p>
+      </li><li class="stamp r-irrelevant">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5h14v17H5Z" style="fill:#ffd23f"></path><path d="M5 9.25h14M5 14.75h14M10.5 6.5h3M10.5 12h3M10.5 17.75h3"></path></svg><b>Archiwum</b><span class="tag">Nic nie wnosi</span></div>
+        <p>W archiwum uchwał brak projektu podwyżki podatku od psów.</p>
+      </li></ul>
+    <div class="verdict v-reject">
+      <div class="vchip"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg><span>Właściwy werdykt: Odrzuć</span></div>
+    </div>
+    <div class="debrief"><h3>Kolegium: wyjaśnienie</h3><section><h4>Co to było</h4><p>Nagranie z głosem burmistrza wygenerowane przez program. Burmistrz niczego takiego nie powiedział.</p></section><section><h4>Jak działa ta sztuczka</h4><p>Deepfake audio: model uczy się głosu z publicznych wystąpień i czyta dowolny tekst. Brzmi znajomo, więc budzi zaufanie.</p></section><section><h4>Co to wykryło</h4><p>Telefon: rzecznik urzędu zaprzeczył. Skaner AI tylko to wsparł – sam o niczym nie przesądza.</p></section><section><h4>Gdzie to się zdarza</h4><p>Sklonowane głosy polityków krążą w sieci przed wyborami. Zanim uwierzysz w nagranie, zapytaj osobę lub jej biuro.</p></section></div>
+    <p class="note">Fikcyjne miasto Nowe Brzegi. Treść wymyślona na potrzeby gry, oparta na realnym mechanizmie dezinformacji.</p>
+  </div>
+</article>
+<article class="card folder" data-story="l4-ankieta-uczniow">
+  <div class="tab"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 20.5V14H9v6.5ZM10.25 20.5V9h3.5v11.5ZM15 20.5V4.5h3.5v16Z" style="fill:#ffffff"></path><path d="M3.5 20.5h17"></path></svg><b>Statystyka</b><span>Zwykły</span></div>
+  <div class="paper">
+    <p class="kicker">Przykładowa teczka · Poziom 4 · l4-ankieta-uczniow</p>
+    <h2>Miejski raport: 4 na 10 uczniów śpi za krótko</h2>
+    <p class="body">Przychodnia szkolna opublikowała wyniki ankiety wśród uczniów liceów. Zachęca do rozmowy z pielęgniarką.</p>
+    <p class="source"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><span>Źródło:</span> Komunikat przychodni szkolnej</p>
+    <h3>Pieczątki ze stanowisk</h3>
+    <ul class="stamps"><li class="stamp r-decisive key">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 10.5V6.5H11v4M12.5 10.5V4h6v6.5" style="fill:#ffd23f"></path><path d="M3.5 10.5h17v10h-17Z" style="fill:#ffd23f"></path><path d="M10 15h4"></path></svg><b>Kartoteka źródeł</b><span class="tag">Dowód</span><span class="tag star"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5L14.5 9.4L20.8 9.9L16 14.1L17.5 20.3L12 17L6.5 20.3L8 14.1L3.2 9.9L9.5 9.4Z" style="fill:#ffd23f"></path></svg> Uzasadnia werdykt</span></div>
+        <p>Konto przychodni zweryfikowane, prowadzone od 5 lat przez miasto.</p>
+      </li><li class="stamp r-irrelevant">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 3.5h14v17H5Z" style="fill:#ffd23f"></path><path d="M5 9.25h14M5 14.75h14M10.5 6.5h3M10.5 12h3M10.5 17.75h3"></path></svg><b>Archiwum</b><span class="tag">Nic nie wnosi</span></div>
+        <p>Poprzednie raporty z lat ubiegłych mają podobny wynik.</p>
+      </li><li class="stamp r-decisive">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h3l1.5 4-2 1.5a11 11 0 0 0 7 7l1.5-2 4 1.5v3A1.5 1.5 0 0 1 18.5 20.5 15.5 15.5 0 0 1 3.5 5.5 1.5 1.5 0 0 1 5 4Z" style="fill:#ffd23f"></path></svg><b>Telefon</b><span class="tag">Dowód</span></div>
+        <p>Pielęgniarka potwierdza, że ankietę zebrano w październiku.</p>
+      </li><li class="stamp r-decisive key">
+        <div class="stamp-head"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6c0-1.4 3.1-2.5 7-2.5s7 1.1 7 2.5v12c0 1.4-3.1 2.5-7 2.5S5 19.4 5 18Z" style="fill:#ffd23f"></path><path d="M5 6c0 1.4 3.1 2.5 7 2.5S19 7.4 19 6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"></path></svg><b>Biblioteka danych</b><span class="tag">Dowód</span><span class="tag star"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5L14.5 9.4L20.8 9.9L16 14.1L17.5 20.3L12 17L6.5 20.3L8 14.1L3.2 9.9L9.5 9.4Z" style="fill:#ffd23f"></path></svg> Uzasadnia werdykt</span></div>
+        <p>Tabela zgadza się z komunikatem: 1 180 uczniów, 41% śpi poniżej 7 godzin.</p>
+      </li></ul>
+    <div class="verdict v-publish">
+      <div class="vchip"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="#1e2a4a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12.5l5 5L19.5 7"></path></svg><span>Właściwy werdykt: Publikuj</span></div>
+    </div>
+    <div class="debrief"><h3>Kolegium: wyjaśnienie</h3><section><h4>Co to było</h4><p>Prawdziwy raport miejskiej przychodni szkolnej, oparty na dużej, losowo dobranej grupie uczniów.</p></section><section><h4>Jak działa ta sztuczka</h4><p>Brak manipulacji. Liczby zgadzają się z tabelą, a próba jest duża i opisana.</p></section><section><h4>Co to wykryło</h4><p>Biblioteka danych: dane w tabeli zgadzają się z komunikatem. Kartoteka źródeł potwierdziła autora.</p></section><section><h4>Gdzie to się zdarza</h4><p>Miasta publikują raporty z ankiet szkolnych. Warto sprawdzić liczebność próby i czy liczby zgadzają się z tabelą.</p></section></div>
+    <p class="note">Fikcyjne miasto Nowe Brzegi. Treść wymyślona na potrzeby gry, oparta na realnym mechanizmie dezinformacji.</p>
+  </div>
+</article>
+</main></body></html>
