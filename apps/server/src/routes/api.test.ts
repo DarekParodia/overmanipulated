@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test';
-import { leaderboardResponseSchema, PROTOCOL_VERSION } from '@redakcja/shared';
+import { leaderboardResponseSchema, PROTOCOL_VERSION, publicConfigSchema } from '@redakcja/shared';
 import { createFakeHub } from '../__fixtures__/fake-transport.ts';
 import { createApp } from '../app.ts';
+import { staticConfigStore } from '../config.ts';
 import { openDatabase } from '../db/client.ts';
 import { recordBlunderVote } from '../db/queries/blunder-votes.ts';
 import { insertLeaderboardEntry } from '../db/queries/leaderboard.ts';
@@ -38,6 +39,72 @@ describe('REST routes', () => {
     });
     const body = await (await app.request('/health')).json();
     expect(body).toMatchObject({ status: 'ok', config: { source: 'file', revision: 3 } });
+  });
+
+  it('GET /api/config serves the default public config, never cached', async () => {
+    const { app } = setup();
+    const res = await app.request('/api/config', { headers: { host: 'localhost:3000' } });
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+    const body = publicConfigSchema.parse(await res.json());
+    expect(body).toEqual({
+      revision: 0,
+      siteOrigin: null,
+      features: { roomBrowser: false, versus: true, spectators: true, intro: true },
+      defaultDifficulty: 'normal',
+      motd: null,
+      ads: { enabled: false },
+    });
+  });
+
+  describe('GET /api/config with a config.json', () => {
+    const store = staticConfigStore({
+      ads: {
+        enabled: true,
+        client: 'ca-pub-1234567890123456',
+        slots: { menu: '1111111111' },
+        domains: ['bronsie.drkp.dev'],
+        signOff: { by: 'Anna Nowak, opiekunka projektu', date: '2026-10-01' },
+      },
+      motd: { id: 'stara', text: 'Ten komunikat już wygasł.', until: '2020-01-01T00:00:00Z' },
+    });
+    function app(adsCspReady?: boolean) {
+      return createApp({
+        db: openDatabase(':memory:'),
+        registry: createRoomRegistry({ hub: createFakeHub().hub }),
+        devLatencyMs: 0,
+        config: () => store.get(),
+        configMeta: () => ({ source: 'file', revision: 4 }),
+        ...(adsCspReady === undefined ? {} : { adsCspReady }),
+      });
+    }
+    async function get(host: string, adsCspReady?: boolean) {
+      const res = await app(adsCspReady).request('/api/config', { headers: { host } });
+      expect(res.status).toBe(200);
+      return publicConfigSchema.parse(await res.json());
+    }
+
+    it('enables ads only for a configured host (port and case ignored)', async () => {
+      const body = await get('Bronsie.DRKP.dev:443');
+      expect(body.revision).toBe(4);
+      expect(body.ads).toEqual({
+        enabled: true,
+        mode: 'limited',
+        client: 'ca-pub-1234567890123456',
+        slots: { menu: '1111111111' },
+        ageTreatment: 'teen',
+      });
+      expect((await get('localhost:5173')).ads).toEqual({ enabled: false });
+      expect((await get('drkp.dev')).ads).toEqual({ enabled: false });
+    });
+
+    it('keeps ads off when the shell cannot carry the ads CSP', async () => {
+      expect((await get('bronsie.drkp.dev', false)).ads).toEqual({ enabled: false });
+    });
+
+    it('drops an expired message of the day', async () => {
+      expect((await get('bronsie.drkp.dev')).motd).toBeNull();
+    });
   });
 
   it('GET /health is an alias for container checks', async () => {

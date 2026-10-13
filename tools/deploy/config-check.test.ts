@@ -31,6 +31,28 @@ describe('config:check', () => {
     );
   });
 
+  it('prints the public config for each ads host and for any other host', () => {
+    const result = checkConfig(
+      JSON.stringify({
+        motd: { id: 'stara', text: 'Wygasło.', until: '2026-10-01T00:00:00Z' },
+        ads: {
+          enabled: true,
+          client: 'ca-pub-1234567890123456',
+          slots: { menu: '1111111111' },
+          domains: ['bronsie.drkp.dev'],
+          signOff: { by: 'Anna Nowak', date: '2026-10-01' },
+        },
+      }),
+      {},
+      Date.parse('2026-10-13T12:00:00Z'),
+    );
+    const features = '{"roomBrowser":false,"versus":true,"spectators":true,"intro":true}';
+    expect(result.lines.slice(-2)).toEqual([
+      `public config for bronsie.drkp.dev: {"revision":0,"siteOrigin":null,"features":${features},"defaultDifficulty":"normal","motd":null,"ads":{"enabled":true,"mode":"limited","client":"ca-pub-1234567890123456","slots":{"menu":"1111111111"},"ageTreatment":"teen"}}`,
+      `public config for any other host: {"revision":0,"siteOrigin":null,"features":${features},"defaultDifficulty":"normal","motd":null,"ads":{"enabled":false}}`,
+    ]);
+  });
+
   it('refuses ads without a sign-off, also when ADS_ENABLED=true forces them', () => {
     const result = checkConfig('{"ads": {"client": "ca-pub-1234567890123456"}}', {
       adsEnabled: true,

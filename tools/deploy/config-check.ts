@@ -1,15 +1,24 @@
 // Checks a config.json before it goes live: `bun run config:check -- config/config.json`.
 // Prints OK and the effective config (defaults filled in, ADS_ENABLED applied as the server
-// would), or the validation errors with exit code 1. Run it before saving the file on the
+// would) and the public config clients get (`GET /api/config`) on each ads host and on any other
+// host, or the validation errors with exit code 1. Run it before saving the file on the
 // server: the running server keeps its old config when a reload fails, but says so only in its log.
 import { readFileSync } from 'node:fs';
 import { type ConfigOverrides, parseConfigText } from '../../apps/server/src/config.ts';
 import { readEnv } from '../../apps/server/src/env.ts';
 import { DEFAULT_CONFIG_PATH } from '../../apps/server/src/paths.ts';
+import { toPublicConfig } from '../../apps/server/src/public-config.ts';
 
 export type CheckResult = { ok: boolean; lines: string[] };
 
-export function checkConfig(text: string, overrides: ConfigOverrides = {}): CheckResult {
+/** Stands for every host outside ads.domains (where ads are always off). */
+const OTHER_HOSTS = 'any other host';
+
+export function checkConfig(
+  text: string,
+  overrides: ConfigOverrides = {},
+  nowMs: number = Date.now(),
+): CheckResult {
   const result = parseConfigText(text, overrides);
   if (!result.ok) {
     return {
@@ -34,6 +43,16 @@ export function checkConfig(text: string, overrides: ConfigOverrides = {}): Chec
     lines.push(`ADS_ENABLED=${overrides.adsEnabled} from env applied`);
   }
   lines.push('effective config:', JSON.stringify(config, null, 2));
+  // What GET /api/config serves now (MOTD window applied), revision 0 as after a restart.
+  for (const host of [...ads.domains, OTHER_HOSTS]) {
+    const publicConfig = toPublicConfig(config, {
+      host: host === OTHER_HOSTS ? null : host,
+      nowMs,
+      revision: 0,
+      adsCspReady: true,
+    });
+    lines.push(`public config for ${host}: ${JSON.stringify(publicConfig)}`);
+  }
   return { ok: true, lines };
 }
 

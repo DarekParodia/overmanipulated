@@ -46,7 +46,8 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
 - Routes:
   - `GET /health`: liveness, plus a DB check.
   - `GET /ws`: WebSocket upgrade for the game protocol.
-  - `/api/*`: REST endpoints (leaderboard, content preview for the supervisor, room stats).
+  - `/api/*`: REST endpoints (leaderboard, content preview for the supervisor, room stats, and
+    `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`).
 - REST input is validated with `@hono/zod-validator` and the shared Zod schemas. The app exports
   `type AppType = typeof routes` so the client calls REST through Hono's typed RPC client (`hc`)
   and never hand-writes `fetch` URLs or response types.

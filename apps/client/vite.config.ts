@@ -12,6 +12,9 @@ export default defineConfig({
     proxy: {
       '/ws': { target: `ws://${serverTarget}`, ws: true },
       '/api': { target: `http://${serverTarget}` },
+      // Served by the game server in production (S7-70, S7-75): same paths in dev and preview.
+      '/ads.txt': { target: `http://${serverTarget}` },
+      '/prywatnosc': { target: `http://${serverTarget}` },
     },
   },
   preview: {
@@ -19,6 +22,9 @@ export default defineConfig({
     proxy: {
       '/ws': { target: `ws://${serverTarget}`, ws: true },
       '/api': { target: `http://${serverTarget}` },
+      // Served by the game server in production (S7-70, S7-75): same paths in dev and preview.
+      '/ads.txt': { target: `http://${serverTarget}` },
+      '/prywatnosc': { target: `http://${serverTarget}` },
     },
   },
   build: {
