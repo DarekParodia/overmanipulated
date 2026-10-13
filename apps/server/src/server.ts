@@ -38,10 +38,7 @@ export function startServer(env: Env, options: ServerOptions = {}): RunningServe
     briefingMs: env.BRIEFING_MS,
     settings: () => roomSettings(config.get()),
     recordBlunderVote: (vote) => recordBlunderVote(db, vote),
-    recordLeaderboardEntry: ({ difficulty: _difficulty, ...entry }) => {
-      // The difficulty column arrives with S7-26; until then every row reads as Normal.
-      insertLeaderboardEntry(db, entry);
-    },
+    recordLeaderboardEntry: (entry) => insertLeaderboardEntry(db, entry),
   });
   const loop = createGameLoop(registry);
   const app = createApp({

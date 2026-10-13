@@ -1,18 +1,27 @@
 // Campaign progress per browser (S3-04): best stars per level id in localStorage, no accounts.
-// The campaign is the levels ordered by their number (`l<n>-…`); level 0 is the training
-// level, always open and outside the unlock chain. A campaign level opens once the one before
-// it has at least one star; the first campaign level is always open.
+// Since S7-26 the stars are kept per difficulty (`redakcja.progress.v2`); the v1 store, from
+// before difficulties existed, is read once as Normal. The campaign is the levels ordered by
+// their number (`l<n>-…`); level 0 is the training level, always open and outside the unlock
+// chain. A campaign level opens once the one before it has at least one star on any difficulty;
+// the first campaign level is always open.
+import { DIFFICULTIES, type Difficulty } from '@redakcja/shared';
 import { z } from 'zod';
 import { create } from 'zustand';
 import { readStored, writeStored } from './safe-storage.ts';
 
-const STORAGE_KEY = 'redakcja.progress.v1';
+const STORAGE_KEY = 'redakcja.progress.v2';
+/** S3-04 storage: one `{levelId: stars}` map, played before difficulties existed (= Normal). */
+const LEGACY_STORAGE_KEY = 'redakcja.progress.v1';
+/** The difficulty v1 progress was earned on. */
+const LEGACY_DIFFICULTY: Difficulty = 'normal';
 const MAX_STARS = 3;
 /** Stars needed on a level to open the next one. */
 const STARS_TO_UNLOCK = 1;
 
-/** Best stars per level id. */
-export type Progress = Readonly<Record<string, number>>;
+/** Best stars per level id, on one difficulty (or the best across all of them). */
+export type LevelStars = Readonly<Record<string, number>>;
+/** Best stars per difficulty, then per level id. */
+export type Progress = Readonly<Partial<Record<Difficulty, LevelStars>>>;
 
 /** The part of a level the campaign needs (content `Level` fits). */
 export type CampaignLevel = { id: string; stations: readonly string[] };
@@ -26,24 +35,26 @@ export type CampaignTile<L extends CampaignLevel> = {
   unlocked: boolean;
 };
 
-const progressSchema = z.record(z.string(), z.unknown());
+const recordSchema = z.record(z.string(), z.unknown());
 
-/** Reads stored progress; anything malformed is dropped, never thrown. */
-export function parseProgress(raw: string | null): Progress {
+function parseJson(raw: string | null): unknown {
   if (!raw) {
-    return {};
+    return undefined;
   }
-  let data: unknown;
   try {
-    data = JSON.parse(raw);
+    return JSON.parse(raw);
   } catch {
-    return {};
+    return undefined;
   }
-  const parsed = progressSchema.safeParse(data);
-  if (!parsed.success) {
-    return {};
-  }
+}
+
+/** Whole, clamped star counts from one `{levelId: stars}` map; anything else is dropped. */
+function levelStarsFrom(data: unknown): Record<string, number> {
+  const parsed = recordSchema.safeParse(data);
   const out: Record<string, number> = {};
+  if (!parsed.success) {
+    return out;
+  }
   for (const [id, value] of Object.entries(parsed.data)) {
     if (typeof value === 'number' && Number.isInteger(value) && value >= 0) {
       out[id] = Math.min(value, MAX_STARS);
@@ -52,13 +63,55 @@ export function parseProgress(raw: string | null): Progress {
   return out;
 }
 
-/** Keeps the best result: a worse run never lowers the stars. */
-export function withResult(progress: Progress, levelId: string, stars: number): Progress {
+/**
+ * Reads stored progress; anything malformed is dropped, never thrown. Without a readable v2
+ * store the v1 map (`legacy`) is migrated into Normal.
+ */
+export function parseProgress(raw: string | null, legacy: string | null = null): Progress {
+  const parsed = recordSchema.safeParse(parseJson(raw));
+  if (parsed.success) {
+    const out: Partial<Record<Difficulty, LevelStars>> = {};
+    for (const difficulty of DIFFICULTIES) {
+      const stars = levelStarsFrom(parsed.data[difficulty]);
+      if (Object.keys(stars).length > 0) {
+        out[difficulty] = stars;
+      }
+    }
+    return out;
+  }
+  const old = levelStarsFrom(parseJson(legacy));
+  return Object.keys(old).length > 0 ? { [LEGACY_DIFFICULTY]: old } : {};
+}
+
+/** The stars earned on one difficulty. */
+export function starsOn(progress: Progress, difficulty: Difficulty): LevelStars {
+  return progress[difficulty] ?? {};
+}
+
+/** The best stars of every level across all difficulties (what unlocks the campaign). */
+export function bestStars(progress: Progress): LevelStars {
+  const out: Record<string, number> = {};
+  for (const difficulty of DIFFICULTIES) {
+    for (const [id, stars] of Object.entries(starsOn(progress, difficulty))) {
+      out[id] = Math.max(out[id] ?? 0, stars);
+    }
+  }
+  return out;
+}
+
+/** Keeps the best result per difficulty: a worse run never lowers the stars. */
+export function withResult(
+  progress: Progress,
+  difficulty: Difficulty,
+  levelId: string,
+  stars: number,
+): Progress {
   const clamped = Math.max(0, Math.min(MAX_STARS, Math.floor(stars)));
-  if ((progress[levelId] ?? -1) >= clamped) {
+  const current = starsOn(progress, difficulty);
+  if ((current[levelId] ?? -1) >= clamped) {
     return progress;
   }
-  return { ...progress, [levelId]: clamped };
+  return { ...progress, [difficulty]: { ...current, [levelId]: clamped } };
 }
 
 /** The number in `l<n>-slug`; ids without one sort last. */
@@ -67,22 +120,29 @@ export function levelNumber(id: string): number {
   return match?.[1] ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
 }
 
-/** Training first, then the campaign in level order, with stars and locks. */
+/**
+ * Training first, then the campaign in level order. Each tile shows the stars earned on
+ * `difficulty`; the locks follow the best stars across every difficulty, so switching to Hard
+ * never locks a level the crew already opened on Easy.
+ */
 export function campaignTiles<L extends CampaignLevel>(
   levels: readonly L[],
   progress: Progress,
+  difficulty: Difficulty,
 ): CampaignTile<L>[] {
   const ordered = [...levels].sort((a, b) => levelNumber(a.id) - levelNumber(b.id));
-  let previousStars: number | null = null;
+  const shown = starsOn(progress, difficulty);
+  const best = bestStars(progress);
+  let previousBest: number | null = null;
   return ordered.map((level) => {
     const number = levelNumber(level.id);
     const training = number === 0;
-    const stars = progress[level.id] ?? 0;
+    const stars = shown[level.id] ?? 0;
     if (training) {
       return { level, number, training, stars, unlocked: true };
     }
-    const unlocked = previousStars === null || previousStars >= STARS_TO_UNLOCK;
-    previousStars = stars;
+    const unlocked = previousBest === null || previousBest >= STARS_TO_UNLOCK;
+    previousBest = best[level.id] ?? 0;
     return { level, number, training, stars, unlocked };
   });
 }
@@ -111,14 +171,14 @@ export function newStations<S extends string>(
 
 type ProgressStore = {
   best: Progress;
-  /** Stores the stars of a finished level if they beat the best so far. */
-  record(levelId: string, stars: number): void;
+  /** Stores the stars of a finished level if they beat the best so far on that difficulty. */
+  record(levelId: string, difficulty: Difficulty, stars: number): void;
 };
 
 export const useProgress = create<ProgressStore>((set, get) => ({
-  best: parseProgress(readStored('local', STORAGE_KEY)),
-  record(levelId, stars) {
-    const next = withResult(get().best, levelId, stars);
+  best: parseProgress(readStored('local', STORAGE_KEY), readStored('local', LEGACY_STORAGE_KEY)),
+  record(levelId, difficulty, stars) {
+    const next = withResult(get().best, difficulty, levelId, stars);
     if (next !== get().best) {
       set({ best: next });
       writeStored('local', STORAGE_KEY, JSON.stringify(next));
@@ -126,14 +186,18 @@ export const useProgress = create<ProgressStore>((set, get) => ({
   },
 }));
 
-// --- Endless mode: best run in this browser (S4-11) ------------------------------------------
+// --- Endless mode: best run per difficulty in this browser (S4-11, S7-26) ---------------------
 
-const ENDLESS_KEY = 'redakcja.endless.v1';
+const ENDLESS_KEY = 'redakcja.endless.v2';
+/** S4-11 storage: a single best run, played before difficulties existed (= Normal). */
+const LEGACY_ENDLESS_KEY = 'redakcja.endless.v1';
 
 export type EndlessRun = { score: number; survivedS: number };
+/** The best run on each difficulty. */
+export type EndlessBest = Readonly<Partial<Record<Difficulty, EndlessRun>>>;
 
 /** Higher score wins; with equal scores the longer run does. */
-export function isBetterRun(candidate: EndlessRun, best: EndlessRun | null): boolean {
+export function isBetterRun(candidate: EndlessRun, best: EndlessRun | null | undefined): boolean {
   if (!best) {
     return true;
   }
@@ -143,17 +207,8 @@ export function isBetterRun(candidate: EndlessRun, best: EndlessRun | null): boo
   );
 }
 
-/** Reads the stored best run; anything malformed is dropped, never thrown. */
-export function parseEndlessBest(raw: string | null): EndlessRun | null {
-  if (!raw) {
-    return null;
-  }
-  let data: unknown;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    return null;
-  }
+/** One stored run, or null when it is malformed. */
+export function endlessRunFrom(data: unknown): EndlessRun | null {
   if (typeof data !== 'object' || data === null) {
     return null;
   }
@@ -170,20 +225,46 @@ export function parseEndlessBest(raw: string | null): EndlessRun | null {
   return null;
 }
 
+/**
+ * Reads the stored best runs; anything malformed is dropped, never thrown. Without a readable v2
+ * store the single v1 run (`legacy`) is migrated into Normal.
+ */
+export function parseEndlessBest(raw: string | null, legacy: string | null = null): EndlessBest {
+  const parsed = recordSchema.safeParse(parseJson(raw));
+  if (parsed.success) {
+    const out: Partial<Record<Difficulty, EndlessRun>> = {};
+    for (const difficulty of DIFFICULTIES) {
+      const run = endlessRunFrom(parsed.data[difficulty]);
+      if (run) {
+        out[difficulty] = run;
+      }
+    }
+    return out;
+  }
+  const old = endlessRunFrom(parseJson(legacy));
+  return old ? { [LEGACY_DIFFICULTY]: old } : {};
+}
+
+/** The best run on one difficulty, or null before the first one. */
+export function endlessBestOn(best: EndlessBest, difficulty: Difficulty): EndlessRun | null {
+  return best[difficulty] ?? null;
+}
+
 type EndlessStore = {
-  best: EndlessRun | null;
-  /** Stores a finished run if it beats the best; returns whether it did. */
-  record(run: EndlessRun): boolean;
+  best: EndlessBest;
+  /** Stores a finished run if it beats the best on its difficulty; returns whether it did. */
+  record(difficulty: Difficulty, run: EndlessRun): boolean;
 };
 
 export const useEndlessBest = create<EndlessStore>((set, get) => ({
-  best: parseEndlessBest(readStored('local', ENDLESS_KEY)),
-  record(run) {
-    if (!isBetterRun(run, get().best)) {
+  best: parseEndlessBest(readStored('local', ENDLESS_KEY), readStored('local', LEGACY_ENDLESS_KEY)),
+  record(difficulty, run) {
+    if (!isBetterRun(run, get().best[difficulty])) {
       return false;
     }
-    set({ best: run });
-    writeStored('local', ENDLESS_KEY, JSON.stringify(run));
+    const next: EndlessBest = { ...get().best, [difficulty]: run };
+    set({ best: next });
+    writeStored('local', ENDLESS_KEY, JSON.stringify(next));
     return true;
   },
 }));

@@ -29,6 +29,13 @@
       "when": 1791527926917,
       "tag": "0003_endless_leaderboard",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791906415440,
+      "tag": "0004_leaderboard_difficulty",
+      "breakpoints": true
     }
   ]
 }

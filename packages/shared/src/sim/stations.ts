@@ -1,9 +1,13 @@
 // Verification stations: occupancy, hold-to-work, minigame round, stamps, lockout (S2-03).
 // Emits: workStarted, workCancelled, minigameStarted, minigameFailed, stampApplied, and the end
-// of an outage levelEvent (S4-08: a station with outageMs > 0 accepts no work).
+// of an outage levelEvent (S4-08: a station with outageMs > 0 accepts no work); `ability` done
+// when an armed Ekspertyza or Druga szansa triggers (S7-38).
 // Consumes commands: minigameResult, cancel (when operating a station).
 // Work time and lockout length follow the difficulty (`ctx.tuning`, Stage 7).
 // Minigame seeds are derived per folder spawn key, station kind and attempt (S7-13).
+// Armed abilities (S7-38): an armed Ekspertyza that covers the station stamps the folder instead
+// of opening the minigame; an armed Druga szansa turns a failure into a fresh round for the same
+// operator without the lockout. Both start the cooldown, so the crew is part of the result.
 import { MINIGAME_STABLE_SEED_STATIONS, STATION_WORK_MS } from '../constants.ts';
 import { type SimTuning, tunedLockoutMs } from '../difficulty.ts';
 import type { StationKind } from '../domain.ts';
@@ -11,7 +15,7 @@ import type { Folder, Station } from '../entities.ts';
 import type { QueuedCommand, SimFrame } from './frame.ts';
 import { findInteractionTarget } from './map.ts';
 import { minigameSeedFor } from './rng.ts';
-import { roleWorkFactor } from './roles.ts';
+import { abilityOf, expertiseCovers, roleWorkFactor, spendAbility } from './roles.ts';
 import { folderOnFixture, type GameState } from './state.ts';
 
 /** Key of `GameState.minigameAttempts` for the minigame of `kind` on one folder. */
@@ -50,7 +54,8 @@ function countUnstampedRound(
   return { ...attempts, [key]: (attempts[key] ?? 0) + 1 };
 }
 
-function idleStation(station: Station): Station {
+/** The station with no operator, no progress and no lockout (its outage is kept). */
+export function idleStation(station: Station): Station {
   return {
     ...station,
     operatorId: null,
@@ -117,6 +122,7 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
   const { dtMs } = frame.ctx;
   let attempts = state.minigameAttempts;
   let folders = state.folders;
+  let crew = state.crew;
   const stations: Record<string, Station> = {};
   // Operators as of the stations already processed this tick plus the ones still to come.
   const operators = new Set<string>();
@@ -214,6 +220,39 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           next = { ...station, progressMs };
           break;
         }
+        const operator = crew[operatorId];
+        const stampId = stampFor(frame, folder, station.kind);
+        if (
+          operator?.abilityArmed &&
+          expertiseCovers(operator.role, station.kind) &&
+          stampId !== undefined &&
+          !folder.stamps.includes(stampId)
+        ) {
+          // Armed Ekspertyza: the stamp lands without the minigame and the operator is free.
+          folders = { ...folders, [folder.id]: { ...folder, stamps: [...folder.stamps, stampId] } };
+          frame.events.push(
+            {
+              kind: 'stampApplied',
+              stationId,
+              playerId: operatorId,
+              folderId: folder.id,
+              stampId,
+              via: 'expertise',
+            },
+            {
+              kind: 'ability',
+              playerId: operatorId,
+              ability: 'expertise',
+              stage: 'done',
+              stationId,
+              folderId: folder.id,
+            },
+          );
+          crew = spendAbility(crew, operatorId, 'expertise', state.elapsedMs);
+          next = idleStation(station);
+          operators.delete(operatorId);
+          break;
+        }
         const seed = drawMinigameSeed(
           { seed: state.seed, minigameAttempts: attempts },
           folder,
@@ -276,18 +315,57 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
             });
           }
           next = idleStation(station);
-        } else {
-          const lockoutMs = tunedLockoutMs(frame.ctx.tuning);
-          next = { ...idleStation(station), phase: 'lockout', lockoutMs };
-          frame.events.push({
-            kind: 'minigameFailed',
-            stationId,
-            playerId: operatorId,
-            folderId: folder.id,
-            lockoutMs,
-          });
-          attempts = countUnstampedRound(attempts, folder, station.kind);
+          operators.delete(operatorId);
+          break;
         }
+        attempts = countUnstampedRound(attempts, folder, station.kind);
+        const operator = crew[operatorId];
+        if (operator?.abilityArmed && abilityOf(operator.role) === 'secondChance') {
+          // Armed Druga szansa: no lockout, the same operator gets the next round at once (the
+          // Kartoteka's stable seed shows the same card again).
+          const seed = drawMinigameSeed(
+            { seed: state.seed, minigameAttempts: attempts },
+            folder,
+            station.kind,
+          );
+          next = { ...station, minigameSeed: seed, lockoutMs: 0 };
+          frame.events.push(
+            {
+              kind: 'minigameFailed',
+              stationId,
+              playerId: operatorId,
+              folderId: folder.id,
+              lockoutMs: 0,
+            },
+            {
+              kind: 'ability',
+              playerId: operatorId,
+              ability: 'secondChance',
+              stage: 'done',
+              stationId,
+              folderId: folder.id,
+            },
+            {
+              kind: 'minigameStarted',
+              stationId,
+              station: station.kind,
+              playerId: operatorId,
+              folderId: folder.id,
+              seed,
+            },
+          );
+          crew = spendAbility(crew, operatorId, 'secondChance', state.elapsedMs);
+          break;
+        }
+        const lockoutMs = tunedLockoutMs(frame.ctx.tuning);
+        next = { ...idleStation(station), phase: 'lockout', lockoutMs };
+        frame.events.push({
+          kind: 'minigameFailed',
+          stationId,
+          playerId: operatorId,
+          folderId: folder.id,
+          lockoutMs,
+        });
         operators.delete(operatorId);
         break;
       }
@@ -305,8 +383,13 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
     stations[stationId] = next;
   }
 
-  if (!changed && folders === state.folders && attempts === state.minigameAttempts) {
+  if (
+    !changed &&
+    folders === state.folders &&
+    attempts === state.minigameAttempts &&
+    crew === state.crew
+  ) {
     return state;
   }
-  return { ...state, minigameAttempts: attempts, folders, stations };
+  return { ...state, minigameAttempts: attempts, folders, stations, crew };
 }

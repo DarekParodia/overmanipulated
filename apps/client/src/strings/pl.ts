@@ -1517,6 +1517,8 @@ export const pl = {
         : `Tryb bez końca${best ? `, najlepszy wynik ${best}` : ''}`,
     timer: 'Czas gry',
     tempo: (n: number) => `Tempo ×${n}`,
+    /** The same chip inside the one-row phone pill (S7-11): the icon carries „tempo”. */
+    tempoShort: (n: number) => `×${n}`,
     tempoLabel: (n: number) => `Tempo: ${n} razy szybciej`,
     headline: (score: string) => `Redakcja upadła – wynik: ${score}`,
     lede: 'Spróbujcie jeszcze raz!',
@@ -1544,8 +1546,8 @@ export const pl = {
     rank: (n: number) => `Miejsce ${n}`,
     row: (rank: number, players: string, score: string, time: string) =>
       `${rank}. ${players}: ${score} pkt, ${time}`,
-    listLabel: (scope: 'room' | 'global') =>
-      scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich',
+    listLabel: (scope: 'room' | 'global', difficulty: string) =>
+      `${scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich'}, poziom ${difficulty.toLowerCase()}`,
   },
   /** S5-05 accessibility: captions for audio-only cues and the muted-sound suggestion. */
   a11y: {

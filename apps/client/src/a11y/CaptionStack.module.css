@@ -1,12 +1,17 @@
 /*
- * Caption stack: left edge under the HUD pill (and its endless-mode tempo chip). Chips are
+ * Caption stack: left edge under the measured HUD band (`--hud-band`, hud/hud-band.ts: the pill,
+ * its endless-mode tempo chip, the folder queue and the menu button). The fallback is the old
+ * fixed offset, used only before the first measurement. Chips are
  * compact pills; the coloured disc repeats the cue's tone, the icon and the words carry the
  * meaning so colour is never the only signal.
  */
 .stack {
   position: absolute;
   z-index: 10;
-  top: calc(max(var(--space-3), env(safe-area-inset-top)) + 9.75rem);
+  top: calc(
+    var(--hud-band, max(var(--space-3), env(safe-area-inset-top)) + 9.75rem) +
+    var(--space-2)
+  );
   left: max(var(--space-3), env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
@@ -93,12 +98,14 @@
   pointer-events: auto;
 }
 
-/* Compact landscape (phones, 640x360): the HUD pill is taller, so the stack drops lower, shows
-   only the two newest chips and uses smaller ones. */
+/* Compact landscape (phones, 640x360): only the newest chip, a smaller one, under the one-row
+   HUD pill (S7-11). */
 @media (max-height: 500px) {
-  /* Between the stacked HUD pill and the resting joystick there is room for one chip. */
   .stack {
-    top: calc(max(var(--space-2), env(safe-area-inset-top)) + 10rem);
+    top: calc(
+      var(--hud-band, max(var(--space-2), env(safe-area-inset-top)) + 10rem) +
+      var(--space-2)
+    );
     max-width: min(13rem, 34%);
   }
 
@@ -107,8 +114,13 @@
   }
 
   /* Left-handed: the buttons own the left corner, the joystick the right one; the captions
-     move to the right edge, above the joystick. */
+     move to the right edge, above the joystick and below the event banners, where they always
+     were (never higher than the HUD band). */
   .mirrored {
+    top: max(
+      calc(var(--hud-band, 0px) + var(--space-2)),
+      calc(max(var(--space-2), env(safe-area-inset-top)) + 10rem)
+    );
     left: auto;
     right: max(var(--space-3), env(safe-area-inset-right));
   }

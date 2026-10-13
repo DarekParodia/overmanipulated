@@ -172,6 +172,7 @@ export function Lobby() {
       <LeaderboardDialog
         open={boardOpen}
         roomCode={room.roomCode}
+        difficulty={room.difficulty}
         onClose={() => setBoardOpen(false)}
       />
 

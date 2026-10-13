@@ -3,12 +3,14 @@
 // (native radios under the tiles). Guests see the chosen level read-only: title plus chips
 // (minutes, folders, and the room's difficulty, which the host picks next to the card, S7-25).
 // The folder count is the dealt run's when there is one, else what the room's difficulty deals.
+// Tile stars and the endless best are the ones earned on the room's difficulty; the locks follow
+// the best stars across every difficulty (S7-26).
 import { getLevel, LEVELS } from '@redakcja/content';
 import { type Difficulty, ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { useId } from 'react';
 import { endlessUnlocked } from '../../endless/endless-model.ts';
 import { emitCue } from '../../fx/feedback.ts';
-import { campaignTiles, useEndlessBest, useProgress } from '../../store/progress.ts';
+import { campaignTiles, endlessBestOn, useEndlessBest, useProgress } from '../../store/progress.ts';
 import { pl } from '../../strings/pl.ts';
 import { Icon } from '../../ui/icons/Icon.tsx';
 import styles from './LevelCard.module.css';
@@ -40,7 +42,7 @@ export function LevelCard({
 }: LevelCardProps) {
   const groupName = useId();
   const best = useProgress((s) => s.best);
-  const endlessBest = useEndlessBest((s) => s.best);
+  const endlessBest = useEndlessBest((s) => endlessBestOn(s.best, difficulty));
   const endless = levelId === ENDLESS_LEVEL_ID;
   const level = getLevel(levelId);
   // Guests cannot change the difficulty, so they read it here; the host has the picker.
@@ -96,7 +98,7 @@ export function LevelCard({
     );
   }
 
-  const tiles = campaignTiles(LEVELS, best);
+  const tiles = campaignTiles(LEVELS, best, difficulty);
   const endlessLocked = !endlessUnlocked(LEVELS, best);
   const endlessScore = endlessBest ? String(endlessBest.score) : null;
   return (

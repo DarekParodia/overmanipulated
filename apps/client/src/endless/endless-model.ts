@@ -1,15 +1,19 @@
 // Pure rules behind the client side of endless mode (S4-11): when the card unlocks, the tempo
 // chip, time formatting and where a run sits on a leaderboard. No React, no I/O. The local best
 // run lives in `store/progress.ts` next to the campaign stars.
-import type { LeaderboardEntry } from '@redakcja/shared';
+import type { Difficulty, LeaderboardEntry } from '@redakcja/shared';
 import {
+  bestStars,
   type CampaignLevel,
   type EndlessRun,
   levelNumber,
   type Progress,
 } from '../store/progress.ts';
 
-/** Endless mode opens once this campaign level has at least this many stars in this browser. */
+/**
+ * Endless mode opens once this campaign level has at least this many stars in this browser, on
+ * any difficulty.
+ */
 export const ENDLESS_UNLOCK = { levelNumber: 1, stars: 1 } as const;
 
 /** The HUD tempo chip grows by one step this often (display only; the generator speeds up). */
@@ -25,7 +29,7 @@ export function endlessGate(levels: readonly CampaignLevel[]): CampaignLevel | u
 
 export function endlessUnlocked(levels: readonly CampaignLevel[], progress: Progress): boolean {
   const gate = endlessGate(levels);
-  return gate !== undefined && (progress[gate.id] ?? 0) >= ENDLESS_UNLOCK.stars;
+  return gate !== undefined && (bestStars(progress)[gate.id] ?? 0) >= ENDLESS_UNLOCK.stars;
 }
 
 /** „Tempo ×N”: 1 in the first minute, one more each minute after. */
@@ -70,4 +74,21 @@ export function findOwnRun(
 /** Crew names for a leaderboard row. */
 export function formatPlayers(players: readonly string[]): string {
   return players.join(', ');
+}
+
+/**
+ * The `/api/leaderboard` query string: one scope (the room needs its code) and one difficulty,
+ * since every difficulty has its own list (S7-26).
+ */
+export function leaderboardQuery(
+  scope: 'global' | 'room',
+  roomCode: string | null,
+  difficulty: Difficulty,
+  limit: number,
+): string {
+  const query = new URLSearchParams({ scope, difficulty, limit: String(limit) });
+  if (scope === 'room' && roomCode) {
+    query.set('room', roomCode);
+  }
+  return query.toString();
 }

@@ -151,8 +151,49 @@ describe('REST routes', () => {
     expect(body.entries.map((e) => e.score)).toEqual([3, 2]);
   });
 
+  it('GET /api/leaderboard lists one difficulty, normal by default', async () => {
+    const { app, db } = setup();
+    insertLeaderboardEntry(db, { roomCode: 'ABCD', players: ['Ala'], score: 42, survivedS: 300 });
+    insertLeaderboardEntry(db, {
+      roomCode: 'WXYZ',
+      players: ['Ola'],
+      score: 90,
+      survivedS: 480,
+      difficulty: 'hard',
+    });
+    insertLeaderboardEntry(db, {
+      roomCode: 'ABCD',
+      players: ['Ewa'],
+      score: 15,
+      survivedS: 60,
+      difficulty: 'hard',
+    });
+    const plain = leaderboardResponseSchema.parse(
+      await (await app.request('/api/leaderboard')).json(),
+    );
+    expect(plain.entries.map((e) => [e.roomCode, e.score, e.difficulty])).toEqual([
+      ['ABCD', 42, 'normal'],
+    ]);
+    const hard = leaderboardResponseSchema.parse(
+      await (await app.request('/api/leaderboard?difficulty=hard')).json(),
+    );
+    expect(hard.entries.map((e) => [e.roomCode, e.score, e.difficulty])).toEqual([
+      ['WXYZ', 90, 'hard'],
+      ['ABCD', 15, 'hard'],
+    ]);
+    const hardRoom = leaderboardResponseSchema.parse(
+      await (await app.request('/api/leaderboard?scope=room&room=ABCD&difficulty=hard')).json(),
+    );
+    expect(hardRoom.entries.map((e) => e.score)).toEqual([15]);
+    const expert = leaderboardResponseSchema.parse(
+      await (await app.request('/api/leaderboard?difficulty=expert')).json(),
+    );
+    expect(expert.entries).toEqual([]);
+  });
+
   it('GET /api/leaderboard validates the query', async () => {
     const { app } = setup();
+    expect((await app.request('/api/leaderboard?difficulty=insane')).status).toBe(400);
     expect((await app.request('/api/leaderboard?scope=cheat')).status).toBe(400);
     expect((await app.request('/api/leaderboard?limit=500')).status).toBe(400);
     expect((await app.request('/api/leaderboard?scope=room')).status).toBe(400);
