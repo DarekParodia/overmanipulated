@@ -1,7 +1,7 @@
 // The intro's script (S7-99): eleven scenes in order, each with its narrator clip (one per input
 // device where the line names keys or buttons) and what the stage shows. The words live in
 // `pl.intro.voice`; this file only orders them, typesets the subtitles and gives every clip a
-// stable id, which the voice sprite (`voice-sprite.json`, S7-100) and the line export
+// stable id, which the voice sprite (`/assets/voice/intro.json`, S7-100) and the line export
 // (`tools/audio/intro-lines.ts`) are keyed on.
 //
 // Gameplay scenes are "in-engine" (S7-101): the shared sim runs locally on a mini layout and a

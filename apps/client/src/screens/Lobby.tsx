@@ -1,8 +1,10 @@
 // Lobby (design-rules §5): the room code big in a pill, the players as a row of cards, the
 // role picker, the difficulty (S7-25), the level, and one main action — "Gotowy" for guests,
 // "Do składu!" for the host.
-import { MAX_PLAYERS, type Role } from '@redakcja/shared';
+import { getLevel } from '@redakcja/content';
+import { MAX_PLAYERS, type Role, STATION_KINDS } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
+import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -112,7 +114,9 @@ export function Lobby() {
         ? pl.lobbyRoles.allReady
         : null;
   const lobbyError = error && LOBBY_ERRORS.has(error) ? pl.errors[error] : null;
-  const noEditor = !room.players.some((p) => p.role === 'managingEditor');
+  // The detail panel names only the stations of the chosen level (endless: its preview's).
+  const levelStations = getLevel(room.levelId)?.stations ?? STATION_KINDS;
+  const teammates = room.players.filter((p) => p.id !== playerId);
 
   async function copyCode() {
     if (!room) {
@@ -201,7 +205,8 @@ export function Lobby() {
       <RolePasses
         role={me?.role ?? null}
         disabled={!online}
-        showEditorNote={noEditor && room.players.length > 1}
+        levelStations={levelStations}
+        teammates={teammates}
         onChange={(role: Role | null) => act(() => setRole(role))}
       />
 
@@ -253,6 +258,9 @@ export function Lobby() {
           )}
         </div>
       </footer>
+
+      {/* Banner ≥ --space-ad-gap under the footer; nothing without ads or on phones (S7-74). */}
+      <AdSlot placement="lobby" />
     </main>
   );
 }

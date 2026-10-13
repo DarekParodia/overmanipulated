@@ -44,8 +44,12 @@ Rules:
 - No per-frame allocation in particles, tweens or shake; pools are pre-sized.
 - Particle textures share one atlas; sounds use sprites; both are loaded with the level and
   counted in the download budget.
-- Every sound and texture has an entry in `apps/client/public/assets/CREDITS.md`
-  (CC0 / self-made only).
+- Every sound, voice line and texture has an entry in `apps/client/public/assets/CREDITS.md`.
+  Allowed licences: CC0, self-made, or CC BY 4.0 / MIT with the attribution in CREDITS.md (the
+  voice sprite's `licence` enum, `intro/voice-sprite.ts`, enforces this for the intro voice).
+  Never non-commercial or research-only, and that holds for the whole chain of a generated asset:
+  a TTS voice counts its dataset and every checkpoint it was fine-tuned from (S7-100 audit,
+  `docs/audio.md`).
 
 ## Feedback catalogue (starting point)
 
@@ -115,6 +119,11 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
 
 Add a row here when you add a cue, in the same commit.
+
+**Ads have no cues** (S7-74, policy). AdSense forbids drawing attention to ads, so an ad
+appearing, filling, failing or being blocked plays no sound, animation, particles or haptics,
+and no cue may point at a rail. The „Zgody reklamowe” footer link is an ordinary button
+(`ui.click`); Google's consent message is Google's own UI.
 
 Event → cue mapping lives in `fx/event-cues.ts` (pure, unit-tested for every gameplay event
 kind); `net/game-events.ts` adds where it happens (fixture tile centre, folder location or
