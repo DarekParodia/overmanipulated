@@ -152,6 +152,33 @@ function idleManager(): AnimationClip {
   ]);
 }
 
+/** Generalist twirls a pencil in front of the chest, then looks round for the next queue. */
+function idleGeneral(): AnimationClip {
+  const low = armR(0.6, -0.2, -0.3);
+  const twirl = armR(0.6, 0.05, -0.15);
+  return upper('idleGeneral', 3.2, [
+    [0.35, { armR: low, head: head(0, -0.2) }],
+    [0.6, { armR: twirl, head: head(0, -0.18) }],
+    [0.85, { armR: low, head: head(0, -0.2) }],
+    [1.1, { armR: twirl, head: head(0, -0.18) }],
+    [1.5, { armR: low, head: head(0.6, 0), torso: [0, 0.18, 0] }],
+    [2.1, { armR: low, head: head(-0.6, 0), torso: [0, -0.18, 0] }],
+    [2.7, { armR: armR(0.1, -1, 0.1), head: head(0, 0) }],
+  ]);
+}
+
+/** Rescuer shades the eyes with one hand and scans the room from side to side. */
+function idleRescuer(): AnimationClip {
+  const shade = armR(0.45, 0.62, -0.25);
+  return upper('idleRescuer', 3.4, [
+    [0.45, { armR: shade, head: head(0, 0.12) }],
+    [1.05, { armR: shade, head: head(0.55, 0.12), torso: [0, 0.2, 0] }],
+    [1.85, { armR: shade, head: head(-0.55, 0.12), torso: [0, -0.2, 0] }],
+    [2.45, { armR: shade, head: head(0, 0.1), torso: [0, 0, 0] }],
+    [2.95, { armR: armR(0.1, -1, 0.1), head: head(0, 0) }],
+  ]);
+}
+
 // --- Ping emotes: short, readable at phone size ------------------------------------------------
 
 /** needArchive: points at the shelves with a double jab. */
@@ -264,7 +291,42 @@ function cheerManager(): AnimationClip {
   ]);
 }
 
-export const FIDGET_CLIPS = ['idlePhoto', 'idleArchive', 'idleReporter', 'idleManager'] as const;
+/** Generalist gives two thumbs up on both hops. */
+function cheerGeneral(): AnimationClip {
+  const thumbs = { armL: armL(0.6, 0.35, 0.25), armR: armR(0.6, 0.35, 0.25) };
+  const pump = { armL: armL(0.6, 0.6, 0.2), armR: armR(0.6, 0.6, 0.2) };
+  return full('cheerGeneral', 1.5, [
+    [CT[0], { ...thumbs, head: head(0, 0.1) }, hop(0)],
+    [CT[1], { ...pump, head: head(0, 0.2) }, hop(1)],
+    [CT[2], { ...thumbs, head: head(0, 0.15) }, hop(2)],
+    [CT[3], { ...pump, head: head(0, 0.2) }, hop(3)],
+    [CT[4], { ...thumbs, head: head(0, 0.2) }, hop(4)],
+    [CT[5], { ...thumbs, head: head(0, 0.1) }, hop(5)],
+  ]);
+}
+
+/** Rescuer swings an arm as if throwing the ring, then jumps into a V. */
+function cheerRescuer(): AnimationClip {
+  const windUp = armR(-0.6, 0.3, 0.6);
+  const release = armR(0.9, 0.4, -0.1);
+  return full('cheerRescuer', 1.5, [
+    [CT[0], { armR: windUp, torso: [0, -0.25, 0], head: head(-0.2, 0.05) }, hop(0)],
+    [CT[1], { armR: release, torso: [0, 0.25, 0], head: head(0.15, 0.1) }, 0],
+    [CT[2], { armR: release, torso: [0, 0.1, 0], head: head(0, 0.15) }, 0],
+    [CT[3], { armL: V_L, armR: V_R, head: head(0, 0.2) }, hop(3)],
+    [CT[4], { armL: V_L, armR: V_R, head: head(0, 0.25) }, hop(4)],
+    [CT[5], { armL: V_L, armR: V_R, head: head(0, 0.1) }, hop(5)],
+  ]);
+}
+
+export const FIDGET_CLIPS = [
+  'idlePhoto',
+  'idleArchive',
+  'idleReporter',
+  'idleManager',
+  'idleGeneral',
+  'idleRescuer',
+] as const;
 export const EMOTE_CLIPS = ['emoteArchive', 'emoteFake', 'emoteMine'] as const;
 /** Upper-body layer clips: fidgets and ping emotes. */
 export const UPPER_CLIPS = [...FIDGET_CLIPS, ...EMOTE_CLIPS] as const;
@@ -276,6 +338,8 @@ export const CELEBRATION_CLIPS = [
   'cheerArchive',
   'cheerReporter',
   'cheerManager',
+  'cheerGeneral',
+  'cheerRescuer',
 ] as const;
 export type CelebrationClip = (typeof CELEBRATION_CLIPS)[number];
 
@@ -290,6 +354,8 @@ export function roleClips(): RoleClips {
     idleArchive: idleArchive(),
     idleReporter: idleReporter(),
     idleManager: idleManager(),
+    idleGeneral: idleGeneral(),
+    idleRescuer: idleRescuer(),
     emoteArchive: emoteArchive(),
     emoteFake: emoteFake(),
     emoteMine: emoteMine(),
@@ -297,6 +363,8 @@ export function roleClips(): RoleClips {
     cheerArchive: cheerArchive(),
     cheerReporter: cheerReporter(),
     cheerManager: cheerManager(),
+    cheerGeneral: cheerGeneral(),
+    cheerRescuer: cheerRescuer(),
   };
   return cached;
 }

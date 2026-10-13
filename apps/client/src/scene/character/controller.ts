@@ -170,6 +170,10 @@ export function celebrationForRole(role: Role | null): BodyGesture {
       return 'cheerReporter';
     case 'managingEditor':
       return 'cheerManager';
+    case 'generalist':
+      return 'cheerGeneral';
+    case 'rescuer':
+      return 'cheerRescuer';
     default:
       return 'cheer';
   }
@@ -185,6 +189,10 @@ export function fidgetForRole(role: Role | null): UpperClip | null {
       return 'idleReporter';
     case 'managingEditor':
       return 'idleManager';
+    case 'generalist':
+      return 'idleGeneral';
+    case 'rescuer':
+      return 'idleRescuer';
     default:
       return null;
   }

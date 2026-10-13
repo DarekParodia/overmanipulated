@@ -13,7 +13,6 @@ import {
   testFolder,
   testInput,
 } from './__fixtures__/greybox.ts';
-import { GENERALIST, RESCUER, useStandInRoles } from './__fixtures__/stand-in-roles.ts';
 import {
   type AbilityBlockReason,
   type AbilityPreview,
@@ -29,8 +28,6 @@ import type { SimContext, SimFrame } from './frame.ts';
 import { GREYBOX_LAYOUT, parseLayout } from './map.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
 import { drawMinigameSeed, stepStations } from './stations.ts';
-
-useStandInRoles();
 
 function must<T>(value: T | undefined): T {
   if (value === undefined) {
@@ -178,13 +175,19 @@ function ofKind<K extends GameEvent['kind']>(events: readonly GameEvent[], kind:
 
 describe('1. ability state on join', () => {
   it('starts ready, unarmed, without a call; rescues follow ROLE_PERKS', () => {
-    const state = crewOf(['reporter', 'managingEditor', null], 0);
-    for (const id of ['p1', 'p2', 'p3']) {
+    const state = crewOf(['reporter', 'managingEditor', null, 'generalist', 'rescuer'], 0);
+    for (const [id, rescuesLeft] of [
+      ['p1', 0],
+      ['p2', 0],
+      ['p3', 0],
+      ['p4', 0],
+      ['p5', 1],
+    ] as const) {
       expect(state.crew[id]).toMatchObject({
         abilityReadyAtMs: 0,
         abilityArmed: false,
         fieldCall: null,
-        rescuesLeft: 0,
+        rescuesLeft,
       });
     }
   });
@@ -335,12 +338,15 @@ describe('5. a press on the deadline tick', () => {
 });
 
 describe('6. Koło ratunkowe', () => {
-  /** The rescue is keyed on `rescuesLeft`, so any crew member with a charge stands in for it. */
-  function rescuer(folders: readonly Folder[], rescuesLeft = 1, elapsedMs = 30_000) {
-    return withCrew(crewOf(['reporter', 'managingEditor'], elapsedMs, TEST_MAP, folders), 'p1', {
-      rescuesLeft,
-    });
+  /** A Ratownik (p1, one rescue from ROLE_PERKS) and a managing editor (p2). */
+  function rescuer(folders: readonly Folder[], rescuesLeft?: number, elapsedMs = 30_000) {
+    const state = crewOf(['rescuer', 'managingEditor'], elapsedMs, TEST_MAP, folders);
+    return rescuesLeft === undefined ? state : withCrew(state, 'p1', { rescuesLeft });
   }
+
+  it('gives the Ratownik one rescue', () => {
+    expect(rescuer([]).crew.p1?.rescuesLeft).toBe(1);
+  });
 
   it('saves a carried folder at its deadline once', () => {
     const state = rescuer([carriedBy('p1', 'f1', { deadlineMs: 30_000 })]);
@@ -376,9 +382,10 @@ describe('6. Koło ratunkowe', () => {
     expect(run.state.folders.f2?.deadlineMs).toBe(50_000);
   });
 
-  it('does nothing on a table, without rescues or before the deadline', () => {
+  it('does nothing on a table, for another role, without rescues or before the deadline', () => {
     for (const state of [
       rescuer([onTable('f1', { deadlineMs: 30_000 })]),
+      crewOf(['reporter'], 30_000, TEST_MAP, [carriedBy('p1', 'f1', { deadlineMs: 30_000 })]),
       rescuer([carriedBy('p1', 'f1', { deadlineMs: 30_000 })], 0),
       rescuer([carriedBy('p2', 'f1', { deadlineMs: 30_000 })]),
       rescuer([carriedBy('p1', 'f1', { deadlineMs: 30_050 })]),
@@ -620,7 +627,7 @@ describe('8. Telefon z terenu', () => {
 describe('9. Druga szansa', () => {
   /** A generalist at (x, y) and the archive locked out with f1 on it. */
   function lockedArchive(x: number, y: number, facing = FACING_UP) {
-    const base = crewOf([GENERALIST], 10_000, TEST_MAP, [onStation('f1', 'archive-0')]);
+    const base = crewOf(['generalist'], 10_000, TEST_MAP, [onStation('f1', 'archive-0')]);
     return withStation(placed(base, 'p1', x, y, facing), 'archive-0', {
       phase: 'lockout',
       lockoutMs: 3000,
@@ -696,14 +703,14 @@ describe('9. Druga szansa', () => {
     }
 
     it('arms while the player operates a station', () => {
-      const state = inMinigame(GENERALIST, 'archive-0', false);
+      const state = inMinigame('generalist', 'archive-0', false);
       expect(abilityPreview(state, 'p1', GREYBOX_ENV)).toEqual({ kind: 'arm' });
       expect(press(state, ['p1']).state.crew.p1?.abilityArmed).toBe(true);
     });
 
     it('turns a failure into a fresh round for the same operator, without the lockout', () => {
       const run = stationTick(
-        inMinigame(GENERALIST, 'archive-0', true),
+        inMinigame('generalist', 'archive-0', true),
         [],
         [minigameResult('p1', 'archive-0', false)],
       );
@@ -744,7 +751,7 @@ describe('9. Druga szansa', () => {
     });
 
     it('shows the same Kartoteka card again', () => {
-      const state = inMinigame(GENERALIST, 'sourceRegistry-0', true);
+      const state = inMinigame('generalist', 'sourceRegistry-0', true);
       const seed = drawMinigameSeed(state, must(state.folders.f1), 'sourceRegistry');
       const run = stationTick(state, [], [minigameResult('p1', 'sourceRegistry-0', false)]);
       expect(ofKind(run.events, 'minigameStarted')[0]?.seed).toBe(seed);
@@ -753,7 +760,7 @@ describe('9. Druga szansa', () => {
 
     it('keeps the lockout without it, and for an armed Ekspertyza', () => {
       for (const state of [
-        inMinigame(GENERALIST, 'archive-0', false),
+        inMinigame('generalist', 'archive-0', false),
         inMinigame('photoEditor', 'archive-0', true),
       ]) {
         const run = stationTick(state, [], [minigameResult('p1', 'archive-0', false)]);
@@ -780,7 +787,7 @@ describe('9. Druga szansa', () => {
 describe('10. Podaj teczkę', () => {
   /** Ratownik p1 at (2.5, 2.5) carries f1; p3 at (3.5, 2.5) carries f2; p2 stands at (x, y). */
   function passScene(x = 5.5, y = 2.5) {
-    const base = crewOf([RESCUER, null, null], 10_000, TEST_MAP, [
+    const base = crewOf(['rescuer', null, null], 10_000, TEST_MAP, [
       carriedBy('p1', 'f1'),
       carriedBy('p3', 'f2'),
     ]);
@@ -912,7 +919,7 @@ describe('13. ability preview per role', () => {
   });
 
   it('previews Ekspertyza, Druga szansa and Podaj teczkę on a fresh level', () => {
-    const roles = ['photoEditor', 'archivist', GENERALIST, RESCUER] as const;
+    const roles = ['photoEditor', 'archivist', 'generalist', 'rescuer'] as const;
     const greybox = crewOf(roles);
     const expected: Record<string, AbilityPreview> = {
       p1: { kind: 'arm' },
