@@ -3,7 +3,7 @@
 import type { Difficulty, Role, StationKind } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 3;
+export const PROTOCOL_VERSION = 4;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -49,6 +49,11 @@ export const MAX_CLIENT_MESSAGE_BYTES = 4096;
 /** Leaderboard entries older than this are deleted (no long-term storage of student data). */
 export const LEADERBOARD_RETENTION_DAYS = 90;
 export const LEADERBOARD_DEFAULT_LIMIT = 10;
+
+// --- Stage 7: public config (S7-67) ----------------------------------------------------------
+
+/** Longest operator message of the day (MOTD): at most two lines in the menu column at 640 px. */
+export const MOTD_MAX_CHARS = 140;
 
 // --- Level and scoring (design doc, "Punktacja") -------------------------------------------
 

@@ -7,6 +7,7 @@ import {
   TICK_MS,
 } from '@redakcja/shared';
 import { reconnectDelayMs } from './backoff.ts';
+import { useGame } from './game-store.ts';
 import { createPredictor } from './prediction.ts';
 import { createSnapshotBuffer, lerpAngle } from './snapshot-buffer.ts';
 
@@ -23,6 +24,8 @@ function snapshot(tick: number, x: number): SnapshotMessage {
     stations: [],
     desks: [],
     deadlineExtensionUsed: false,
+    nextFolder: { atMs: 3000, sinceMs: 0 },
+    conveyorFull: false,
   };
 }
 
@@ -131,5 +134,29 @@ describe('prediction', () => {
 describe('reconnect backoff', () => {
   it('doubles up to five seconds', () => {
     expect([0, 1, 2, 3, 4, 10].map(reconnectDelayMs)).toEqual([500, 1000, 2000, 4000, 5000, 5000]);
+  });
+});
+
+describe('game store', () => {
+  it('stores the next folder and the conveyor-full flag, keeping an unchanged next folder', () => {
+    useGame.getState().reset();
+    expect(useGame.getState()).toMatchObject({ nextFolder: null, conveyorFull: false });
+    useGame.getState().applySnapshot(snapshot(10, 1));
+    const first = useGame.getState().nextFolder;
+    expect(first).toEqual({ atMs: 3000, sinceMs: 0 });
+    useGame.getState().applySnapshot(snapshot(11, 1));
+    expect(useGame.getState().nextFolder).toBe(first);
+    useGame.getState().applySnapshot({
+      ...snapshot(12, 1),
+      nextFolder: { atMs: 20_000, sinceMs: 3000 },
+      conveyorFull: true,
+    });
+    expect(useGame.getState()).toMatchObject({
+      nextFolder: { atMs: 20_000, sinceMs: 3000 },
+      conveyorFull: true,
+    });
+    useGame.getState().applySnapshot({ ...snapshot(13, 1), nextFolder: null });
+    expect(useGame.getState()).toMatchObject({ nextFolder: null, conveyorFull: false });
+    useGame.getState().reset();
   });
 });

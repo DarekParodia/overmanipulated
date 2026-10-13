@@ -24,6 +24,7 @@ import {
   folderResultSchema,
   folderSchema,
   lossReasonSchema,
+  nextFolderSchema,
   spawnKeySchema,
   stationSchema,
 } from './entities.ts';
@@ -212,6 +213,10 @@ export const snapshotMessageSchema = z.object({
   desks: z.array(deskSchema).max(8),
   /** The managing editor's one deadline extension per level has been used. */
   deadlineExtensionUsed: z.boolean(),
+  /** The next scheduled folder; null once the schedule is used up. Event folders never show. */
+  nextFolder: nextFolderSchema.nullable(),
+  /** A scheduled folder is due but waits, because every conveyor tile holds a folder. */
+  conveyorFull: z.boolean(),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [
@@ -258,6 +263,8 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     stationId: entityId,
     playerId: playerIdSchema,
     folderId: entityId,
+    /** How long the station is now locked: the difficulty-scaled lockout (protocol 4). */
+    lockoutMs: z.number().int().nonnegative(),
   }),
   z.object({
     kind: z.literal('stampApplied'),

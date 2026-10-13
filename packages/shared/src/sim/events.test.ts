@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { CREDIBILITY_START, EVENTS, SCORE } from '../constants.ts';
+import { NORMAL_TUNING, simTuning } from '../difficulty.ts';
 import type { Folder } from '../entities.ts';
 import { folderSchema, stationSchema } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
@@ -18,7 +19,7 @@ import {
   testInput,
 } from './__fixtures__/greybox.ts';
 import type { SimLevel, SimLevelEvent } from './content.ts';
-import { viralShares } from './events.ts';
+import { correctionLoss, correctionRecover, viralShares } from './events.ts';
 import { freeConveyors } from './folders.ts';
 import type { QueuedCommand, SimContext } from './frame.ts';
 import { minigameSeedFor } from './rng.ts';
@@ -42,12 +43,16 @@ const AT_IMAGE_SEARCH = { x: 8.5, y: 2.5 };
 
 type Run = { state: GameState; events: GameEvent[]; ctx: SimContext; seq: number };
 
-function newRun(level: SimLevel, players: Record<string, { x: number; y: number }> = {}): Run {
+function newRun(
+  level: SimLevel,
+  players: Record<string, { x: number; y: number }> = {},
+  ctx: Partial<SimContext> = {},
+): Run {
   let state = createGameState({ map: TEST_MAP, seed: 5 });
   for (const [id, at] of Object.entries(players)) {
     state = addPlayer(state, id, at);
   }
-  return { state, events: [], ctx: testContext({ level }), seq: 0 };
+  return { state, events: [], ctx: testContext({ level, ...ctx }), seq: 0 };
 }
 
 function tick(
@@ -491,6 +496,36 @@ describe('correction', () => {
     expect(run.state.credibility).toBeLessThan(
       CREDIBILITY_START - EVENTS.correctionCredibilityLoss,
     );
+  });
+
+  it('costs 30 credibility on expert and gives 15 back when filed', () => {
+    const run = newRun(levelWith([correction]), { p: AT_DESK }, { tuning: simTuning('expert') });
+    runUntil(run, 1000);
+    expect(run.state.credibility).toBe(70);
+    expect(run.state.folders.f1?.tag).toEqual({ kind: 'correction', recoverCredibility: 15 });
+    putOnDesk(run, 'f1', []);
+    tick(run, [
+      testCommand('p', {
+        kind: 'verdict',
+        folderId: 'f1',
+        verdict: 'publishWithContext',
+        justifyingStampIds: ['whatever'],
+      }),
+    ]);
+    expect(run.state.credibility).toBe(85);
+    // The filing reward is a reward: never scaled.
+    expect(run.state.score).toBe(10);
+  });
+
+  it('scales the loss and the recovery with the penalty factor', () => {
+    expect(correctionLoss(NORMAL_TUNING)).toBe(20);
+    expect(correctionRecover(NORMAL_TUNING)).toBe(10);
+    expect(correctionLoss(simTuning('easy'))).toBe(10);
+    expect(correctionRecover(simTuning('easy'))).toBe(5);
+    expect(correctionLoss(simTuning('hard'))).toBe(25);
+    expect(correctionRecover(simTuning('hard'))).toBe(13);
+    expect(correctionLoss(simTuning('expert'))).toBe(30);
+    expect(correctionRecover(simTuning('expert'))).toBe(15);
   });
 
   it('can end the level when credibility hits zero', () => {

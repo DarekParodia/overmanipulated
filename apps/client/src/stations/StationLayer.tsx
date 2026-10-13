@@ -40,6 +40,9 @@ function StationHost({ playerId }: { playerId: string | null }) {
   // The round the player already finished or left, hidden until the server moves on.
   const [settledRound, setSettledRound] = useState<string | null>(null);
   const [lockoutUntil, setLockoutUntil] = useState(0);
+  // The last non-zero lockout the server announced (this room's difficulty); a local failure
+  // shows it until the server's `minigameFailed` replaces the estimate with the real length.
+  const lastLockoutMs = useRef(MINIGAME_FAIL_LOCKOUT_MS);
   const round = station ? `${station.id}:${station.minigameSeed}` : null;
 
   const startLockout = useCallback((ms: number) => {
@@ -50,10 +53,14 @@ function StationHost({ playerId }: { playerId: string | null }) {
     () =>
       onGameEvent((event) => {
         if (event.kind === 'minigameFailed' && event.playerId === playerId) {
-          startLockout(MINIGAME_FAIL_LOCKOUT_MS);
+          // A lockout-free failure (0) hides the note but is no estimate for the next one.
+          if (event.lockoutMs > 0) {
+            lastLockoutMs.current = event.lockoutMs;
+          }
+          setLockoutUntil(event.lockoutMs > 0 ? performance.now() + event.lockoutMs : 0);
         }
       }),
-    [playerId, startLockout],
+    [playerId],
   );
 
   const phase = station?.phase;
@@ -84,7 +91,7 @@ function StationHost({ playerId }: { playerId: string | null }) {
     (success: boolean) => {
       setSettledRound(round);
       if (!success) {
-        startLockout(MINIGAME_FAIL_LOCKOUT_MS);
+        startLockout(lastLockoutMs.current);
       }
     },
     [round, startLockout],

@@ -4,6 +4,7 @@ import {
   ENDLESS,
   ENDLESS_LEVEL_ID,
   levelOutcome,
+  NORMAL_TUNING,
   parseLayout,
   type SimLevel,
   step,
@@ -154,7 +155,13 @@ describe('endless spawn keys', () => {
   it('names schedule folders s<index> and event folders e<eventIndex>.<waveIndex>', () => {
     const level = generate(1);
     const map = parseLayout(level.layout);
-    const ctx = { dtMs: TICK_MS, map, level, stories: storiesForEndless(level, STORIES) };
+    const ctx = {
+      dtMs: TICK_MS,
+      map,
+      level,
+      stories: storiesForEndless(level, STORIES),
+      tuning: NORMAL_TUNING,
+    };
     let state = createGameState({ map, seed: 1 });
     const seen = new Map<string, string>();
     while (state.elapsedMs < 400_000) {

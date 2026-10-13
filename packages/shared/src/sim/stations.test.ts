@@ -6,6 +6,7 @@ import {
   STATION_WORK_MS,
   TICK_MS,
 } from '../constants.ts';
+import { NORMAL_TUNING, simTuning } from '../difficulty.ts';
 import type { Role } from '../domain.ts';
 import type { Folder } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
@@ -17,10 +18,10 @@ import {
   testFolder,
   testInput,
 } from './__fixtures__/greybox.ts';
-import type { PlayerIntent, QueuedCommand, SimFrame } from './frame.ts';
+import type { PlayerIntent, QueuedCommand, SimContext, SimFrame } from './frame.ts';
 import { minigameSeedFor } from './rng.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
-import { drawMinigameSeed, minigameAttemptKey, stepStations } from './stations.ts';
+import { drawMinigameSeed, minigameAttemptKey, stepStations, workDurationMs } from './stations.ts';
 
 const FACING_UP = -Math.PI / 2;
 /** Floor tiles directly below the stations (row 2), facing up. */
@@ -73,12 +74,13 @@ function tick(
   state: GameState,
   working: string[],
   commands: QueuedCommand[] = [],
+  ctx: SimContext = testContext(),
 ): { state: GameState; events: GameEvent[] } {
   const intents: Record<string, PlayerIntent> = {};
   for (const id of Object.keys(state.players)) {
     intents[id] = intent(working.includes(id));
   }
-  const frame: SimFrame = { ctx: testContext(), intents, commands, events: [] };
+  const frame: SimFrame = { ctx, intents, commands, events: [] };
   return { state: stepStations(state, frame), events: frame.events };
 }
 
@@ -87,11 +89,12 @@ function workUntilMinigame(
   state: GameState,
   working: string[],
   stationId: string,
+  ctx: SimContext = testContext(),
 ): { state: GameState; events: GameEvent[]; ticks: number } {
   let current = state;
   const events: GameEvent[] = [];
   for (let ticks = 1; ticks < 1000; ticks++) {
-    const result = tick(current, working);
+    const result = tick(current, working, [], ctx);
     current = result.state;
     events.push(...result.events);
     if (current.stations[stationId]?.phase === 'minigame') {
@@ -230,6 +233,79 @@ describe('stepStations: progress and duration', () => {
       ['a'],
     ).state.stations['sourceRegistry-0'];
     expect(station?.durationMs).toBe(STATION_WORK_MS.sourceRegistry);
+  });
+});
+
+describe('stepStations: difficulty tuning (Stage 7)', () => {
+  const EASY = simTuning('easy');
+  const EXPERT = simTuning('expert');
+  const registry = (role?: Role) =>
+    setup(
+      [{ id: 'a', spot: 'sourceRegistry', ...(role ? { role } : {}) }],
+      [makeFolder('f1', 'sourceRegistry-0')],
+    );
+
+  it('scales the work time with the difficulty, rounded to whole milliseconds', () => {
+    const state = registry();
+    expect(workDurationMs(state, 'a', 'sourceRegistry', NORMAL_TUNING)).toBe(4000);
+    expect(workDurationMs(state, 'a', 'sourceRegistry', EASY)).toBe(3200);
+    expect(workDurationMs(state, 'a', 'sourceRegistry', EXPERT)).toBe(5000);
+    expect(workDurationMs(state, 'a', 'archive', simTuning('hard'))).toBe(5750);
+  });
+
+  it('stacks the role bonus with the difficulty: a photo editor at image search on expert', () => {
+    const state = setup([{ id: 'a', spot: 'imageSearch', role: 'photoEditor' }]);
+    expect(workDurationMs(state, 'a', 'imageSearch', EXPERT)).toBe(3000);
+  });
+
+  it('starts work with the tuned duration from the context', () => {
+    const expert = tick(registry(), ['a'], [], testContext({ tuning: EXPERT }));
+    expect(expert.state.stations['sourceRegistry-0']?.durationMs).toBe(5000);
+    const easy = tick(registry(), ['a'], [], testContext({ tuning: EASY }));
+    expect(easy.state.stations['sourceRegistry-0']?.durationMs).toBe(3200);
+  });
+
+  it('locks the station for 6 s after a failure on expert and says so in the event', () => {
+    const ctx = testContext({ tuning: EXPERT });
+    const fail = testCommand('a', {
+      kind: 'minigameResult',
+      stationId: 'sourceRegistry-0',
+      success: false,
+    });
+    const inMinigame = workUntilMinigame(registry(), ['a'], 'sourceRegistry-0', ctx).state;
+    let result = tick(inMinigame, ['a'], [fail], ctx);
+    expect(result.events).toEqual([
+      {
+        kind: 'minigameFailed',
+        stationId: 'sourceRegistry-0',
+        playerId: 'a',
+        folderId: 'f1',
+        lockoutMs: 6000,
+      },
+    ]);
+    expect(result.state.stations['sourceRegistry-0']).toMatchObject({
+      phase: 'lockout',
+      lockoutMs: 6000,
+    });
+    for (let i = 0; i < 6000 / TICK_MS - 1; i++) {
+      result = tick(result.state, ['a'], [], ctx);
+    }
+    expect(result.state.stations['sourceRegistry-0']?.phase).toBe('lockout');
+    result = tick(result.state, ['a'], [], ctx);
+    expect(result.state.stations['sourceRegistry-0']?.phase).toBe('idle');
+  });
+
+  it('halves the lockout on easy', () => {
+    const ctx = testContext({ tuning: EASY });
+    const fail = testCommand('a', {
+      kind: 'minigameResult',
+      stationId: 'sourceRegistry-0',
+      success: false,
+    });
+    const inMinigame = workUntilMinigame(registry(), ['a'], 'sourceRegistry-0', ctx).state;
+    const result = tick(inMinigame, ['a'], [fail], ctx);
+    expect(result.events[0]).toMatchObject({ kind: 'minigameFailed', lockoutMs: 1500 });
+    expect(result.state.stations['sourceRegistry-0']?.lockoutMs).toBe(1500);
   });
 });
 
@@ -373,7 +449,13 @@ describe('stepStations: minigame', () => {
     });
     let result = tick(inMinigame(), ['a'], [fail]);
     expect(result.events).toEqual([
-      { kind: 'minigameFailed', stationId: 'imageSearch-0', playerId: 'a', folderId: 'f1' },
+      {
+        kind: 'minigameFailed',
+        stationId: 'imageSearch-0',
+        playerId: 'a',
+        folderId: 'f1',
+        lockoutMs: 3000,
+      },
     ]);
     expect(result.state.stations['imageSearch-0']).toMatchObject({
       phase: 'lockout',

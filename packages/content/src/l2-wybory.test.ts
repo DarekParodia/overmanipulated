@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'bun:test';
-import { addPlayer, createGameState, parseLayout, step, TICK_MS } from '@redakcja/shared';
+import {
+  addPlayer,
+  createGameState,
+  NORMAL_TUNING,
+  parseLayout,
+  step,
+  TICK_MS,
+} from '@redakcja/shared';
 import { maxStoryScore } from './checks.ts';
 import { getLevel, storiesForLevel } from './index.ts';
 
@@ -9,7 +16,7 @@ if (!level) {
 }
 const stories = storiesForLevel(level);
 const map = parseLayout(level.layout);
-const ctx = { dtMs: TICK_MS, map, level, stories };
+const ctx = { dtMs: TICK_MS, map, level, stories, tuning: NORMAL_TUNING };
 
 describe('level 2 — Wybory samorządowe', () => {
   it('is registered with the Archiwum and the three-station layout', () => {

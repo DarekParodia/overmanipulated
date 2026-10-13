@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
+import { DEFAULT_LEVEL_ID, getLevel } from '@redakcja/content';
 import {
   BRIEFING_DURATION_MS,
   PROTOCOL_VERSION,
@@ -229,6 +230,28 @@ describe('ticks and snapshots', () => {
       kind: 'ping',
       playerId: welcomeOf(host).playerId,
       ping: 'mine',
+    });
+  });
+
+  it('announces the next scheduled folder in every snapshot, from the first one on', () => {
+    const { guest } = startedRoom();
+    // The default level, l0-greybox, brings its first folder at 3 s and the second at 20 s.
+    const firstTwo = getLevel(DEFAULT_LEVEL_ID)?.schedule.slice(0, 2);
+    expect(firstTwo?.map((entry) => entry.atS)).toEqual([3, 20]);
+    registry.tick();
+    expect(guest.all('snapshot')).toHaveLength(1);
+    expect(guest.last('snapshot')).toMatchObject({
+      tick: 1,
+      nextFolder: { atMs: 3000, sinceMs: 0 },
+      conveyorFull: false,
+    });
+    while ((guest.last('snapshot')?.elapsedMs ?? 0) < 3000) {
+      registry.tick();
+    }
+    expect(guest.last('snapshot')?.folders).toHaveLength(1);
+    expect(guest.last('snapshot')).toMatchObject({
+      nextFolder: { atMs: 20_000, sinceMs: 3000 },
+      conveyorFull: false,
     });
   });
 

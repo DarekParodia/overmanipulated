@@ -11,6 +11,7 @@ import {
   WRONG_JUSTIFICATION_SCORE_FACTOR,
   WRONG_VERDICT_PENALTY,
 } from '../constants.ts';
+import { NORMAL_TUNING, type SimTuning } from '../difficulty.ts';
 import type { Verdict } from '../domain.ts';
 import {
   type Desk,
@@ -24,12 +25,13 @@ import { countsAsProof, requiredStampsOf, type SimStory } from './content.ts';
 import { endActiveEvent, raidOfFolder } from './events.ts';
 import type { SimFrame } from './frame.ts';
 import { findInteractionTarget } from './map.ts';
-import { applyCredibility } from './scoring.ts';
+import { applyCredibility, scalePenalty } from './scoring.ts';
 import { folderOnFixture, type GameState } from './state.ts';
 
 /**
  * What a verdict earns; the rest of the folder result comes from the folder and the command.
- * `credibilityDelta` is the table value; the state's credibility is clamped when it is applied.
+ * `credibilityDelta` is the table value (a penalty scaled by the difficulty); the state's
+ * credibility is clamped when it is applied.
  */
 export type VerdictEvaluation = Pick<
   FolderResult,
@@ -59,8 +61,21 @@ function correctReward(story: SimStory, verdict: Verdict): Reward {
   return { score: SCORE.correctNormal, credibility: 0, reason: 'correctNormal' };
 }
 
-/** Penalty for a verdict that is not the story's correct one, by what actually happened. */
-function wrongPenalty(story: SimStory, verdict: Verdict): Reward {
+/**
+ * Penalty for a verdict that is not the story's correct one, by what actually happened, at the
+ * difficulty's `penaltyFactor`.
+ */
+function wrongPenalty(story: SimStory, verdict: Verdict, penaltyFactor: number): Reward {
+  const table = tablePenalty(story, verdict);
+  return {
+    score: scalePenalty(table.score, penaltyFactor),
+    credibility: scalePenalty(table.credibility, penaltyFactor),
+    reason: table.reason,
+  };
+}
+
+/** The scoring-table penalty for a wrong verdict, before difficulty scaling. */
+function tablePenalty(story: SimStory, verdict: Verdict): Reward {
   switch (story.truth) {
     case 'false':
     case 'unverifiable':
@@ -96,7 +111,8 @@ export function uniqueCites(citedStampIds: readonly string[]): string[] {
  * "Punktacja"). Cites are deduped. A cite is valid proof only if the stamp justifies the story's
  * verdict and the team collected it; hint-only stamps (the AI scanner) may be valid but never
  * count toward the `requiredStampsOf(story)` proofs.
- * 1. Wrong verdict → `wrong`, the penalty of what actually happened.
+ * 1. Wrong verdict → `wrong`, the penalty of what actually happened, scaled by
+ *    `tuning.penaltyFactor` (rewards are never scaled).
  * 2. Any cite that is not valid proof → `wrongJustification` / `weakProof`, half points.
  * 3. Fewer countable proofs than required → `wrongJustification` / `incompleteProof`, half
  *    points (citing only the AI scanner lands here).
@@ -108,10 +124,11 @@ export function evaluateVerdict(
   verdict: Verdict,
   citedStampIds: readonly string[],
   nowMs: number,
+  tuning: SimTuning = NORMAL_TUNING,
 ): VerdictEvaluation {
   const missedStampIds = story.justifyingStamps.filter((id) => !folder.stamps.includes(id));
   if (verdict !== story.correctVerdict) {
-    const penalty = wrongPenalty(story, verdict);
+    const penalty = wrongPenalty(story, verdict, tuning.penaltyFactor);
     return {
       outcome: 'wrong',
       reason: penalty.reason,
@@ -162,6 +179,7 @@ function evaluateTagged(
   verdict: Verdict,
   citedStampIds: readonly string[],
   nowMs: number,
+  tuning: SimTuning,
 ): VerdictEvaluation {
   const tag = folder.tag;
   if (tag?.kind === 'correction' && verdict === 'publishWithContext') {
@@ -174,7 +192,7 @@ function evaluateTagged(
       missedStampIds: [],
     };
   }
-  const result = evaluateVerdict(story, folder, verdict, citedStampIds, nowMs);
+  const result = evaluateVerdict(story, folder, verdict, citedStampIds, nowMs, tuning);
   if (
     tag?.kind === 'bossCall' &&
     verdict === 'publish' &&
@@ -270,6 +288,7 @@ export function stepDesk(state: GameState, frame: SimFrame): GameState {
           command.verdict,
           command.justifyingStampIds,
           next.elapsedMs,
+          frame.ctx.tuning,
         );
         const result: FolderResult = {
           folderId: folder.id,

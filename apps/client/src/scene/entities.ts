@@ -145,6 +145,15 @@ export function stampMarkCount(folder: Folder): number {
   return Math.min(folder.stamps.length, MAX_STAMP_MARKS);
 }
 
+/**
+ * Lockout time left as a fraction of the whole lockout; without an announced total (e.g. after a
+ * reconnect) the Normal lockout stands in, never less than what is left.
+ */
+export function lockoutFraction(lockoutMs: number, totalMs: number | undefined): number {
+  const total = Math.max(totalMs ?? MINIGAME_FAIL_LOCKOUT_MS, lockoutMs, 1);
+  return clamp01(lockoutMs / total);
+}
+
 export type StationIndicator =
   | { kind: 'none' }
   | { kind: 'working'; fraction: number; operatorId: string | null }
@@ -155,11 +164,13 @@ export type StationIndicator =
 
 /**
  * What to show above a station: a work dial, a "busy" tag, the lockout countdown, or the
- * outage countdown (`outageTotalMs`: the duration the outage announced, if known).
+ * outage countdown (`outageTotalMs`: the duration the outage announced, if known;
+ * `lockoutTotalMs`: the lockout the last `minigameFailed` announced, which the difficulty scales).
  */
 export function stationIndicator(
   station: Station | undefined,
   outageTotalMs?: number,
+  lockoutTotalMs?: number,
 ): StationIndicator {
   if (!station) {
     return { kind: 'none' };
@@ -183,7 +194,7 @@ export function stationIndicator(
     case 'minigame':
       return { kind: 'busy', operatorId: station.operatorId };
     case 'lockout':
-      return { kind: 'lockout', fraction: clamp01(station.lockoutMs / MINIGAME_FAIL_LOCKOUT_MS) };
+      return { kind: 'lockout', fraction: lockoutFraction(station.lockoutMs, lockoutTotalMs) };
   }
 }
 

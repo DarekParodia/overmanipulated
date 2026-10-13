@@ -17,7 +17,7 @@ function stationName(stationId: string | undefined): string {
   return kind ? pl.vocab.stations[kind] : pl.events.badge.down;
 }
 
-/** Routes level events into the event store while the game screen is mounted. */
+/** Routes level events and station lockouts into the event store while the game is on screen. */
 export function useEventFeed(): void {
   useEffect(() => {
     useEvents.getState().reset();

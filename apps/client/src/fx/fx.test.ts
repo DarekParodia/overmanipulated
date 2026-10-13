@@ -227,7 +227,13 @@ const everyEvent: GameplayEvent[] = [
     folderId: 'f1',
     seed: 1,
   },
-  { kind: 'minigameFailed', stationId: 'imageSearch-0', playerId: player, folderId: 'f1' },
+  {
+    kind: 'minigameFailed',
+    stationId: 'imageSearch-0',
+    playerId: player,
+    folderId: 'f1',
+    lockoutMs: 3000,
+  },
   {
     kind: 'stampApplied',
     stationId: 'imageSearch-0',

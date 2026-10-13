@@ -1,6 +1,7 @@
 // Scoring outside the desk: expiry penalties, credibility bounds, level timer, stars and the
 // level end (S2-08). Reads this tick's events (e.g. folderExpired) from `frame.events`. When the
-// level ends, every folder still in play is recorded as `unfinished` (Stage 7).
+// level ends, every folder still in play is recorded as `unfinished` (Stage 7). Penalties scale
+// with the difficulty through `scalePenalty` (Stage 7).
 import { CREDIBILITY, CREDIBILITY_MAX, SCORE } from '../constants.ts';
 import { expiryIsPenalized } from '../domain.ts';
 import { type Folder, type FolderResult, type LevelOutcome, NO_BONUSES } from '../entities.ts';
@@ -8,6 +9,15 @@ import { requiredStampsOf, type SimLevel, type SimStory } from './content.ts';
 import { endActiveEvent, raidOfFolder } from './events.ts';
 import type { SimFrame } from './frame.ts';
 import type { GameState } from './state.ts';
+
+/**
+ * A penalty scaled by a difficulty factor (`tuning.penaltyFactor`), rounded to a whole number
+ * with the halves away from zero: sign × round(|value| × factor), so −25 × 1.5 → −38 and
+ * 5 × 1.5 → 8. Rewards are never scaled.
+ */
+export function scalePenalty(value: number, factor: number): number {
+  return Math.sign(value) * Math.round(Math.abs(value) * factor);
+}
 
 /** Credibility after a change, kept within [0, CREDIBILITY_MAX]. */
 export function applyCredibility(credibility: number, delta: number): number {
@@ -107,8 +117,9 @@ export function stepScoring(state: GameState, frame: SimFrame): GameState {
     }
     const story = frame.ctx.stories[event.storyId];
     const penalized = story ? expiryIsPenalized(story.truth, story.priority) : true;
-    const scoreDelta = penalized ? SCORE.expired : 0;
-    const credibilityDelta = penalized ? CREDIBILITY.expired : 0;
+    const { penaltyFactor } = frame.ctx.tuning;
+    const scoreDelta = penalized ? scalePenalty(SCORE.expired, penaltyFactor) : 0;
+    const credibilityDelta = penalized ? scalePenalty(CREDIBILITY.expired, penaltyFactor) : 0;
     score += scoreDelta;
     credibility = applyCredibility(credibility, credibilityDelta);
     expired.push({

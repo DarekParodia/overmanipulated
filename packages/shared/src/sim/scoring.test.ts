@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'bun:test';
+import { type SimTuning, simTuning } from '../difficulty.ts';
 import { type Folder, folderResultSchema } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
 import { runStep, TEST_MAP, testContext, testFolder } from './__fixtures__/greybox.ts';
 import type { SimFrame } from './frame.ts';
-import { applyCredibility, starsFor, stepScoring } from './scoring.ts';
+import { applyCredibility, scalePenalty, starsFor, stepScoring } from './scoring.ts';
 import { createGameState, type GameState } from './state.ts';
 
-function frameWith(events: GameEvent[]): SimFrame {
-  return { ctx: testContext(), intents: {}, commands: [], events };
+function frameWith(events: GameEvent[], tuning?: SimTuning): SimFrame {
+  return { ctx: testContext(tuning ? { tuning } : {}), intents: {}, commands: [], events };
 }
 
 const expired = (folderId: string, storyId: string, stamps: string[] = []): GameEvent => ({
@@ -83,6 +84,44 @@ describe('stepScoring — expiry', () => {
     const state = base();
     const next = stepScoring(state, frameWith([{ kind: 'gameStarted' }]));
     expect(next).toBe(state);
+  });
+
+  it('takes 8 points and 8 credibility on expert, 3 and 3 on easy', () => {
+    const expert = stepScoring(base(), frameWith([expired('f1', 't-true')], simTuning('expert')));
+    expect(expert.score).toBe(-8);
+    expect(expert.credibility).toBe(92);
+    expect(expert.results[0]).toMatchObject({ scoreDelta: -8, credibilityDelta: -8 });
+    const easy = stepScoring(base(), frameWith([expired('f1', 't-true')], simTuning('easy')));
+    expect(easy.results[0]).toMatchObject({ scoreDelta: -3, credibilityDelta: -3 });
+  });
+
+  it('keeps an unpenalised expiry at zero on expert', () => {
+    const next = stepScoring(
+      base(),
+      frameWith([expired('f1', 't-unverifiable')], simTuning('expert')),
+    );
+    expect(next.results[0]).toMatchObject({
+      reason: 'expiredUnpenalized',
+      scoreDelta: 0,
+      credibilityDelta: 0,
+    });
+  });
+});
+
+describe('scalePenalty', () => {
+  it('rounds a half away from zero on both signs', () => {
+    expect(scalePenalty(5, 1.5)).toBe(8);
+    expect(scalePenalty(-5, 1.5)).toBe(-8);
+    expect(scalePenalty(-25, 1.5)).toBe(-38);
+    expect(scalePenalty(-25, 0.5)).toBe(-13);
+    expect(scalePenalty(-5, 0.5)).toBe(-3);
+  });
+
+  it('keeps whole products, zero and the Normal factor unchanged', () => {
+    expect(scalePenalty(-20, 1.5)).toBe(-30);
+    expect(scalePenalty(-10, 1.25)).toBe(-13);
+    expect(scalePenalty(-20, 1)).toBe(-20);
+    expect(scalePenalty(0, 1.5)).toBe(0);
   });
 });
 
