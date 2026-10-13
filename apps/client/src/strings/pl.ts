@@ -17,7 +17,7 @@ import type {
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { InputDevice as Device } from '../store/app.ts';
-import { pluralPl } from './plural.ts';
+import { listPl, pluralPl } from './plural.ts';
 
 /**
  * Key-cap hints shown under a minigame, per input device. On touch the cap names the gesture
@@ -278,6 +278,10 @@ export const pl = {
       phone: 'Telefon',
       aiScanner: 'Skaner AI',
       dataLibrary: 'Biblioteka danych',
+      geolocation: 'Mapa',
+      transcript: 'Stenogram',
+      crossCheck: 'Inne media',
+      metadata: 'Metadane',
     } satisfies Record<StationKind, string>,
     roles: {
       photoEditor: 'Fotoedytor',
@@ -298,6 +302,10 @@ export const pl = {
       phone: 'Telefon',
       aiScanner: 'Skaner',
       dataLibrary: 'Dane',
+      geolocation: 'Mapa',
+      transcript: 'Stenogram',
+      crossCheck: 'Media',
+      metadata: 'Metadane',
       conveyor: 'Wejście',
       desk: 'Stół',
     } satisfies Record<StationKind | 'conveyor' | 'desk', string>,
@@ -307,9 +315,8 @@ export const pl = {
     passesTitle: 'Wybierz rolę',
     noRole: 'Bez roli',
     noRoleBonus: 'Bez premii',
-    /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor). */
-    fasterAt: (stations: readonly string[], percent: number) =>
-      `${stations.join(' i ')} +${percent}%`,
+    /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor), short station names. */
+    fasterAt: (stations: readonly string[], percent: number) => `${listPl(stations)} +${percent}%`,
     /** Roles whose bonus is not (only) speed get their own line. */
     specialBonuses: {
       reporter: 'Telefon bez kolejki',
@@ -1042,6 +1049,100 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
+      // Stage 7 stations (S7-48): provisional copy; each minigame task (S7-52..S7-55) settles the
+      // steps against its final controls and button labels.
+      geolocation: {
+        purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
+        proves: 'Zdjęcie jest z innego miejsca niż podpis',
+        steps: {
+          keyboard: [
+            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Strzałki wybierają dzielnicę, spacja ją wskazuje',
+            'Q, gdy takiego miejsca nie ma na mapie',
+          ],
+          gamepad: [
+            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Krzyżak wybiera dzielnicę, A ją wskazuje',
+            'Y, gdy takiego miejsca nie ma na mapie',
+          ],
+          touch: [
+            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Stuknij dzielnicę, w której oba stoją',
+            'Nie ma ich na mapie? Stuknij przycisk',
+          ],
+        },
+        realWorld:
+          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic.',
+      },
+      transcript: {
+        purpose: 'Czy wycięty cytat znaczy to samo co całość?',
+        proves: 'Cytat jest wycięty z kontekstu albo zmyślony',
+        steps: {
+          keyboard: [
+            'Strzałki wybierają linię, spacja potwierdza',
+            'Q, gdy cytatu nie ma w zapisie',
+            'Potem oceń, czy cięcie zmienia sens',
+          ],
+          gamepad: [
+            'Krzyżak wybiera linię, A potwierdza',
+            'Y, gdy cytatu nie ma w zapisie',
+            'Potem oceń, czy cięcie zmienia sens',
+          ],
+          touch: [
+            'Stuknij linię, z której pochodzi cytat',
+            'Nie ma go w zapisie? Stuknij przycisk',
+            'Potem oceń, czy cięcie zmienia sens',
+          ],
+        },
+        realWorld:
+          'Tak sprawdza się cytaty: w pełnych stenogramach i nagraniach, a nie we fragmentach wyciętych z całości.',
+      },
+      crossCheck: {
+        purpose: 'Co podają niezależne redakcje i agencje?',
+        proves: 'Niezależne media potwierdzają albo zaprzeczają',
+        steps: {
+          keyboard: [
+            'Licz tylko media z własnym źródłem',
+            'Kopia cudzego wpisu niczego nie potwierdza',
+            '← i → wybierają odpowiedź, spacja potwierdza',
+          ],
+          gamepad: [
+            'Licz tylko media z własnym źródłem',
+            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Krzyżak wybiera odpowiedź, A potwierdza',
+          ],
+          touch: [
+            'Licz tylko media z własnym źródłem',
+            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Stuknij swoją odpowiedź',
+          ],
+        },
+        realWorld:
+          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje.',
+      },
+      metadata: {
+        purpose: 'Kiedy, czym i gdzie powstał plik?',
+        proves: 'Dane pliku pasują do opisu albo mu przeczą',
+        steps: {
+          keyboard: [
+            'Porównaj dane pliku z opisem w teczce',
+            'Strzałki wybierają pole, spacja wskazuje sprzeczność',
+            'Q, gdy wszystko się zgadza',
+          ],
+          gamepad: [
+            'Porównaj dane pliku z opisem w teczce',
+            'Krzyżak wybiera pole, A wskazuje sprzeczność',
+            'Y, gdy wszystko się zgadza',
+          ],
+          touch: [
+            'Porównaj dane pliku z opisem w teczce',
+            'Stuknij pole, które przeczy opisowi',
+            'Brak danych niczego nie dowodzi',
+          ],
+        },
+        realWorld:
+          'Tak czyta się metadane pliku (EXIF): datę, urządzenie i miejsce zdjęcia. Serwisy społecznościowe często je usuwają.',
+      },
     } satisfies Record<StationKind, StationHelp>,
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
@@ -1171,6 +1272,10 @@ export const pl = {
       phone: 'Telefon',
       aiScanner: 'Skaner',
       dataLibrary: 'Dane',
+      geolocation: 'Mapa',
+      transcript: 'Stenogram',
+      crossCheck: 'Inne media',
+      metadata: 'Metadane',
     } satisfies Record<StationKind, string>,
     hint: {
       pickupConveyor: 'Weź teczkę z taśmy',
@@ -1304,6 +1409,8 @@ export const pl = {
         : `Tryb bez końca${best ? `, najlepszy wynik ${best}` : ''}`,
     timer: 'Czas gry',
     tempo: (n: number) => `Tempo ×${n}`,
+    /** The same chip inside the one-row phone pill (S7-11): the icon carries „tempo”. */
+    tempoShort: (n: number) => `×${n}`,
     tempoLabel: (n: number) => `Tempo: ${n} razy szybciej`,
     headline: (score: string) => `Redakcja upadła – wynik: ${score}`,
     lede: 'Spróbujcie jeszcze raz!',
@@ -1331,8 +1438,8 @@ export const pl = {
     rank: (n: number) => `Miejsce ${n}`,
     row: (rank: number, players: string, score: string, time: string) =>
       `${rank}. ${players}: ${score} pkt, ${time}`,
-    listLabel: (scope: 'room' | 'global') =>
-      scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich',
+    listLabel: (scope: 'room' | 'global', difficulty: string) =>
+      `${scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich'}, poziom ${difficulty.toLowerCase()}`,
   },
   /** S5-05 accessibility: captions for audio-only cues and the muted-sound suggestion. */
   a11y: {

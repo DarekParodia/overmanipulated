@@ -76,11 +76,13 @@ export function createApiRoutes(deps: ApiDeps) {
         }
         const entries = getTopEntries(deps.db, {
           limit: query.limit,
+          difficulty: query.difficulty,
           roomCode: query.scope === 'room' ? query.room?.toUpperCase() : undefined,
         }).map((e) => ({
           roomCode: e.roomCode,
           players: e.players,
           score: e.score,
+          difficulty: e.difficulty,
           survivedS: e.survivedS,
           createdAt: e.createdAt.getTime(),
         }));

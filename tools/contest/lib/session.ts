@@ -7,7 +7,7 @@ import type { Browser, BrowserContext, BrowserContextOptions, Page } from '@play
 export type Player = { page: Page; context: BrowserContext; nickname: string; touch: boolean };
 
 export type Profile = {
-  /** Levels (id -> stars) already finished; unlocks the campaign map. */
+  /** Levels (id -> stars) already finished on Normal; unlocks the campaign map. */
   progress?: Record<string, number>;
   tutorialDone?: boolean;
   /** Seeded encyclopedia state (technique id -> story ids), see apps/client/src/encyclopedia. */
@@ -38,7 +38,8 @@ export async function openPlayer(
   await context.addInitScript((p: Profile) => {
     const set = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
     if (p.progress) {
-      set('redakcja.progress.v1', p.progress);
+      // Progress v2 (S7-26): stars per difficulty, then per level.
+      set('redakcja.progress.v2', { normal: p.progress });
     }
     if (p.tutorialDone) {
       localStorage.setItem('redakcja.tutorial.done', '1');

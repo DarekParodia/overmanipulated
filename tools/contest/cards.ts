@@ -1,6 +1,8 @@
 // Printable cards (S6-03 deliverables 3 and 4): the four role cards and sample story folders
 // rendered from real content. Output in docs/contest/cards/: role-cards.html (one A4 page),
 // folders.html (one A4 page per folder) plus a PNG of every card.
+
+import { listPl } from '../../apps/client/src/strings/plural.ts';
 import type { Role, Verdict } from '../../packages/shared/src/index.ts';
 import { ROLE_PERKS, ROLES } from '../../packages/shared/src/index.ts';
 import {
@@ -66,10 +68,10 @@ function bonusLine(role: Role): string {
   const stations = ROLE_PERKS[role].fasterAt.map((kind) => pl.vocab.stations[kind]);
   const percent = Math.round((1 - ROLE_PERKS[role].workFactor) * 100);
   if (role === 'photoEditor' || role === 'archivist') {
-    return `${stations.join(' i ')} ${stations.length > 1 ? 'działają' : 'działa'} o ${percent}% szybciej.`;
+    return `${listPl(stations)} ${stations.length > 1 ? 'działają' : 'działa'} o ${percent}% szybciej.`;
   }
   if (role === 'reporter') {
-    return 'Telefon do źródła bez kolejki.';
+    return `Telefon do źródła bez kolejki. ${listPl(stations)} ${stations.length > 1 ? 'działają' : 'działa'} o ${percent}% szybciej.`;
   }
   return 'Raz na poziom przedłuża termin jednej teczki.';
 }

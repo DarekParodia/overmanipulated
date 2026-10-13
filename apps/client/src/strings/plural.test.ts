@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { pl } from './pl.ts';
-import { pluralPl } from './plural.ts';
+import { listPl, pluralPl } from './plural.ts';
 
 const folders = (n: number) => pluralPl(n, 'teczka', 'teczki', 'teczek');
 
@@ -33,5 +33,20 @@ describe('pluralPl', () => {
     expect(pl.debrief.votes(2)).toBe('2 głosy');
     expect(pl.debrief.votes(5)).toBe('5 głosów');
     expect(pl.debrief.votes(22)).toBe('22 głosy');
+  });
+});
+
+describe('listPl', () => {
+  it('joins with commas and a final „i”', () => {
+    expect(listPl([])).toBe('');
+    expect(listPl(['Lupa'])).toBe('Lupa');
+    expect(listPl(['Archiwum', 'Stenogram'])).toBe('Archiwum i Stenogram');
+    expect(listPl(['Lupa', 'Skaner', 'Mapa', 'Metadane'])).toBe('Lupa, Skaner, Mapa i Metadane');
+  });
+
+  it('builds the lobby speed-bonus line of a role with four stations', () => {
+    expect(pl.lobbyRoles.fasterAt(['Lupa', 'Skaner', 'Mapa', 'Metadane'], 40)).toBe(
+      'Lupa, Skaner, Mapa i Metadane +40%',
+    );
   });
 });

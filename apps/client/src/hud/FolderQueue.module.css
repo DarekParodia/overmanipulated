@@ -1,14 +1,23 @@
 /*
- * Folder queue: up to three chunky cards centred between the HUD pill (left) and the screen
- * tools (right), plus a round "+N" chip for the rest or a dashed ghost card for the next folder.
+ * Folder queue: up to three chunky cards centred between the HUD pill (left) and the menu
+ * button (right), plus a round "+N" chip for the rest or a dashed ghost card for the next folder.
+ * The bottom padding reserves the event tag's overhang, so the measured HUD band
+ * (hud/hud-band.ts) covers a tag before it shows up and never jumps.
  */
 .queue {
+  --queue-overhang: 0.8rem;
+
   position: absolute;
   top: var(--hud-top);
-  left: calc(var(--hud-left) + var(--hud-pill-w) + var(--space-3));
+  /* After the pill's reserved width, or after the pill itself when a long number widens it. */
+  left: max(
+    calc(var(--hud-left) + var(--hud-pill-w) + var(--space-3)),
+    calc(var(--hud-pill-right, 0px) + var(--space-3))
+  );
   right: calc(var(--hud-right) + var(--hud-tools-w) + var(--space-3));
   display: flex;
   justify-content: center;
+  padding-bottom: var(--queue-overhang);
   pointer-events: none;
 }
 
@@ -237,6 +246,10 @@
 /* --- Phones ---------------------------------------------------------------------------------- */
 
 @media (max-height: 500px), (max-width: 760px) {
+  .queue {
+    --queue-overhang: 0.75rem;
+  }
+
   .cards {
     gap: var(--space-2);
   }
@@ -344,7 +357,7 @@
 
 .tag {
   position: absolute;
-  bottom: -0.8rem;
+  bottom: calc(-1 * var(--queue-overhang));
   left: -0.5rem;
   z-index: 1;
   display: inline-flex;
@@ -385,7 +398,6 @@
 
 @media (max-height: 500px), (max-width: 760px) {
   .tag {
-    bottom: -0.75rem;
     left: -0.35rem;
     padding: 0 var(--space-1);
   }

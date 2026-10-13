@@ -26,6 +26,14 @@ describe('icon coverage', () => {
     }
   });
 
+  it('draws all 10 stations, the four Stage 7 ones included (S7-48)', () => {
+    expect(STATION_KINDS).toHaveLength(10);
+    expect(Object.keys(STATION_ICON).sort()).toEqual([...STATION_KINDS].sort());
+    for (const kind of ['geolocation', 'transcript', 'crossCheck', 'metadata']) {
+      expect(known.has(kind)).toBe(true);
+    }
+  });
+
   it('maps every station, level event and ping to an existing icon', () => {
     for (const kind of STATION_KINDS) expect(known.has(STATION_ICON[kind])).toBe(true);
     for (const kind of LEVEL_EVENT_KINDS) expect(known.has(EVENT_ICON[kind])).toBe(true);

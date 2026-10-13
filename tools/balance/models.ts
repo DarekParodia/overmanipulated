@@ -116,6 +116,11 @@ export const MINIGAME_BASE_S: Record<StationKind, number> = {
   phone: 7,
   aiScanner: 6,
   dataLibrary: 10,
+  // Stage 7 stations (S7-48): design estimates until bot data exists (S7-66).
+  geolocation: 10,
+  transcript: 11,
+  crossCheck: 8,
+  metadata: 8,
 };
 
 /** Relative chance of failing, by station (how fiddly the puzzle is). */
@@ -126,6 +131,10 @@ export const MINIGAME_DIFFICULTY: Record<StationKind, number> = {
   phone: 0.8,
   aiScanner: 1.2,
   dataLibrary: 1.2,
+  geolocation: 1.1,
+  transcript: 1.1,
+  crossCheck: 1.2,
+  metadata: 1,
 };
 
 /** Spread of a minigame duration around its mean: uniform in [1 - s, 1 + s]. */

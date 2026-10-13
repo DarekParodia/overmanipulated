@@ -77,6 +77,30 @@ const icons = {
     },
     { d: 'M5 6c0 1.4 3.1 2.5 7 2.5S19 7.4 19 6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5' },
   ],
+  /** Mapa: a folded map (the zigzag edges are its folds) with a pin. */
+  geolocation: [
+    { d: 'M3.5 6.5l5-2 7 2 5-2v13l-5 2-7-2-5 2Z', fill: 'tint' },
+    { d: 'M12 16c-2-2.2-3-3.8-3-5.3a3 3 0 0 1 6 0c0 1.5-1 3.1-3 5.3Z', fill: 'solid' },
+  ],
+  /** Stenogram: a page of the record with one highlighted line. */
+  transcript: [
+    { d: 'M5.5 2.5h13v19h-13Z', fill: 'tint' },
+    { d: 'M8.5 6.5h7M8.5 17.5h4.5' },
+    { d: 'M8.5 10.5h7v2.5h-7Z', fill: 'solid' },
+  ],
+  /** Inne media: two overlapping newspapers. */
+  crossCheck: [
+    { d: 'M3 3.5h11v11H3Z', fill: 'tint' },
+    { d: 'M5.5 6.5h6M5.5 10h2' },
+    { d: 'M10 9.5h11v11H10Z', fill: 'tint' },
+    { d: 'M12.5 13h6M12.5 16.5h6' },
+  ],
+  /** Metadane: a luggage tag with its hole and two data ticks. */
+  metadata: [
+    { d: 'M3.5 12l5-6h12v12h-12Z', fill: 'tint' },
+    { d: 'M7.5 12a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z', fill: 'solid' },
+    { d: 'M13 10h4.5M13 14h4.5' },
+  ],
   conveyor: [
     { d: 'M7.5 13.5V7.5h7v6', fill: 'tint' },
     { d: 'M5.5 13.5h13a2.5 2.5 0 0 1 0 5h-13a2.5 2.5 0 0 1 0-5Z', fill: 'tint' },

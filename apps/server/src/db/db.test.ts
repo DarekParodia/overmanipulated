@@ -1,5 +1,11 @@
+import { Database } from 'bun:sqlite';
 import { describe, expect, it } from 'bun:test';
-import { openDatabase } from './client.ts';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { drizzle } from 'drizzle-orm/bun-sqlite';
+import { migrate } from 'drizzle-orm/bun-sqlite/migrator';
+import { MIGRATIONS_FOLDER, openDatabase } from './client.ts';
 import {
   deleteExpiredBlunderVotes,
   getBlunderTallies,
@@ -10,6 +16,7 @@ import {
   getTopEntries,
   insertLeaderboardEntry,
 } from './queries/leaderboard.ts';
+import * as schema from './schema.ts';
 
 const entry = (score: number, createdAt = new Date(), roomCode = 'ABCD', survivedS = 100) => ({
   roomCode,
@@ -52,6 +59,59 @@ describe('database', () => {
     expect(getTopEntries(db, { roomCode: 'ABCD', limit: 2 }).map((e) => e.score)).toEqual([4, 3]);
     expect(getTopEntries(db, { roomCode: 'WXYZ' }).map((e) => e.score)).toEqual([99]);
     expect(getTopEntries(db, { limit: 1 }).map((e) => e.score)).toEqual([99]);
+  });
+
+  it('stores the difficulty of a run and filters by it', () => {
+    const db = openDatabase(':memory:');
+    insertLeaderboardEntry(db, { ...entry(10), difficulty: 'hard' });
+    insertLeaderboardEntry(db, { ...entry(20), difficulty: 'expert' });
+    insertLeaderboardEntry(db, entry(30));
+    expect(getTopEntries(db, { difficulty: 'hard' }).map((e) => [e.score, e.difficulty])).toEqual([
+      [10, 'hard'],
+    ]);
+    expect(getTopEntries(db, { difficulty: 'normal' }).map((e) => e.score)).toEqual([30]);
+    expect(getTopEntries(db).map((e) => e.difficulty)).toEqual(['normal', 'expert', 'hard']);
+  });
+
+  it('reads rows stored before the difficulty column as normal', () => {
+    // Build the database as the S4-11 server left it (migrations up to 0003), store a run,
+    // then apply the remaining migrations like a deploy would.
+    const before = mkdtempSync(join(tmpdir(), 'redakcja-migrations-'));
+    try {
+      const journal = JSON.parse(
+        readFileSync(join(MIGRATIONS_FOLDER, 'meta', '_journal.json'), 'utf8'),
+      ) as { entries: { tag: string }[] };
+      const old = journal.entries.filter((e) => e.tag < '0004');
+      mkdirSync(join(before, 'meta'));
+      writeFileSync(
+        join(before, 'meta', '_journal.json'),
+        JSON.stringify({ ...journal, entries: old }),
+      );
+      for (const { tag } of old) {
+        copyFileSync(join(MIGRATIONS_FOLDER, `${tag}.sql`), join(before, `${tag}.sql`));
+      }
+      const client = new Database(':memory:', { strict: true });
+      const db = drizzle({ client, schema, casing: 'snake_case' });
+      migrate(db, { migrationsFolder: before });
+      client.run(
+        "insert into leaderboard_entries (room_code, players, score, survived_s, created_at) values ('OLD1', '[\"Ala\"]', 77, 120, 1790000000000)",
+      );
+      migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
+      expect(getTopEntries(db, { difficulty: 'normal' })).toMatchObject([
+        { roomCode: 'OLD1', score: 77, survivedS: 120, difficulty: 'normal' },
+      ]);
+      expect(getTopEntries(db, { difficulty: 'hard' })).toEqual([]);
+    } finally {
+      rmSync(before, { recursive: true, force: true });
+    }
+  });
+
+  it('indexes the leaderboard by difficulty and score', () => {
+    const db = openDatabase(':memory:');
+    const columns = db.$client
+      .query("pragma index_info('leaderboard_difficulty_score_idx')")
+      .all() as { name: string }[];
+    expect(columns.map((c) => c.name)).toEqual(['difficulty', 'score']);
   });
 
   it('deletes entries past the retention window', () => {

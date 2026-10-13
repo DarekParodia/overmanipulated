@@ -17,8 +17,8 @@ const EMPTY_LEVEL = {
 };
 
 describe('protocol version', () => {
-  it('is 5 for the Stage 7 M3 wire (abilities, crew state, stamp source)', () => {
-    expect(PROTOCOL_VERSION).toBe(5);
+  it('is 6 for the Stage 7 M4 wire (ten station kinds)', () => {
+    expect(PROTOCOL_VERSION).toBe(6);
   });
 });
 
@@ -485,6 +485,27 @@ describe('server messages', () => {
     expect(parseServerMessage(withoutNext).ok).toBe(false);
     const { conveyorFull: _full, ...withoutFull } = snapshot;
     expect(parseServerMessage(withoutFull).ok).toBe(false);
+  });
+
+  it('carries the Stage 7 station kinds and rejects unknown ones (S7-48)', () => {
+    const station = {
+      id: 'metadata-0',
+      kind: 'metadata',
+      operatorId: null,
+      phase: 'idle',
+      progressMs: 0,
+      durationMs: 4000,
+      minigameSeed: 0,
+      lockoutMs: 0,
+      outageMs: 0,
+    };
+    const snapshot = { type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL };
+    for (const kind of ['geolocation', 'transcript', 'crossCheck', 'metadata']) {
+      expect(parseServerMessage({ ...snapshot, stations: [{ ...station, kind }] }).ok).toBe(true);
+    }
+    expect(parseServerMessage({ ...snapshot, stations: [{ ...station, kind: 'foo' }] }).ok).toBe(
+      false,
+    );
   });
 
   it('says in every snapshot whether the room is paused', () => {

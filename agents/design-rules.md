@@ -83,14 +83,18 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
 
 ## 5. Layout
 
-- **HUD:** time + points + credibility in one compact pill top-left; folder queue (max 3 cards,
+- **HUD:** time + points + credibility in one compact pill top-left (on phones one low row:
+  clock │ star and points │ shield and credibility with a thin bar under it; endless adds the
+  orange „×N” tempo chip inside the row; numbers stay 30 px); folder queue (max 3 cards,
   fewer when the band between pill and tools is too narrow, "+N" chip for the rest) top-centre;
   one round menu button top-right (three bars; a red dot while offline); nothing else on screen
   during play except the hint bubble and touch controls. A free queue slot may hold one ghost
   card for the next scheduled folder: dashed navy outline, soft fill, no pop shadow, an
   hourglass and the seconds; while the belt is full its band turns orange with the conveyor
   icon and „Taśma pełna”. An empty queue shows the ghost on its side with „Nowa teczka za N s”.
-  Level-event folders are never announced.
+  Level-event folders are never announced. Captions, event banners and verdict toasts start
+  under the measured HUD band (`--hud-band`: the lowest edge of the pill, the queue and the
+  menu button), never at a fixed offset, so nothing covers the HUD at any screen or text size.
 - **In-game menu** (the top-right button, Esc, a pad's Start): one sheet, never a second screen.
   Desktop: a 24 rem panel under the button; phones: a full-height sheet on the right with 48 px
   buttons in two columns. One yellow „Wróć do gry”, then Ustawienia, Pełny ekran, the room code
