@@ -493,5 +493,170 @@
       "realWorld": "Ludzie często ilustrują prawdziwe wydarzenia „podobnymi” zdjęciami z sieci. Informacja może być prawdziwa, a zdjęcie – nie."
     },
     "reviewed": false
+  },
+  {
+    "id": "l1-tecza-nad-portem",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Podwójna tęcza nad portem po nocnej burzy",
+    "body": "Czytelnik przysłał zdjęcie dwóch tęcz nad dźwigami w porcie. Pisze: „Zrobiłem je dziś o 6:40 z falochronu”.",
+    "source": "Zdjęcie od czytelnika",
+    "stamps": [
+      {
+        "id": "l1-tecza-nad-portem-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii zdjęcia. Metadane: dziś, 6:41, okolice falochronu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-tecza-nad-portem-source",
+        "station": "sourceRegistry",
+        "text": "Czytelnik pierwszy raz pisze do redakcji. Brak innych informacji o autorze.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l1-tecza-nad-portem-image"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie zrobione dziś rano w porcie.",
+      "technique": "Brak manipulacji. Nowy, nieznany autor nie oznacza fałszywego zdjęcia.",
+      "tool": "Lupa obrazu: brak starszych kopii, a metadane zgadzają się z czasem i miejscem z podpisu.",
+      "realWorld": "Po burzach redakcje dostają wiele zdjęć od czytelników. Brak historii autora to powód, by sprawdzić zdjęcie, a nie od razu je odrzucić."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-zerwany-dach-hali",
+    "type": "photo",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Wiatr zerwał część dachu hali sportowej na Wydmach",
+    "body": "Na zdjęciu blachy z dachu leżą na boisku obok hali. Ośrodek sportu odwołał dziś wszystkie zajęcia.",
+    "source": "Post na grupie Osiedle Wydmy",
+    "stamps": [
+      {
+        "id": "l1-zerwany-dach-hali-image",
+        "station": "imageSearch",
+        "text": "Najstarsza kopia: dziś, 7:05, u autora posta. Inne dzisiejsze zdjęcia hali pokazują to samo.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-zerwany-dach-hali-source",
+        "station": "sourceRegistry",
+        "text": "Konto anonimowe, założone pół roku temu. Publikuje rzadko.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l1-zerwany-dach-hali-image"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie: wiatr naprawdę uszkodził dach hali, a zajęcia odwołano.",
+      "technique": "Brak manipulacji. Anonimowe konto też może pokazać prawdziwe zdarzenie.",
+      "tool": "Lupa obrazu: zdjęcie pojawiło się pierwszy raz dziś rano, a inne ujęcia z tego dnia pokazują to samo.",
+      "realWorld": "Pierwsze zdjęcia z miejsca zdarzenia często publikują przypadkowi świadkowie. Porównanie z innymi ujęciami pomaga ocenić, czy pokazują to, co opisują."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-rekin-na-ulicy",
+    "type": "photo",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Rekin pływa po zalanej ulicy Portowej!",
+    "body": "Zdjęcie płetwy rekina między zaparkowanymi autami bije rekordy udostępnień. Podpis: „Nie wchodźcie do wody!”",
+    "source": "Konto „Burza Live” na portalu z filmikami",
+    "stamps": [
+      {
+        "id": "l1-rekin-na-ulicy-image",
+        "station": "imageSearch",
+        "text": "Ulica to zdjęcie z powodzi z 2011 r., bez rekina. Rekina wycięto z fotografii przyrodniczej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-rekin-na-ulicy-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone tydzień temu. Publikuje zdjęcia burz z całego świata.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l1-rekin-na-ulicy-image"],
+    "technique": "zmanipulowane-zdjecie",
+    "debrief": {
+      "what": "Fotomontaż: do starego zdjęcia zalanej ulicy ktoś wkleił rekina z innej fotografii.",
+      "technique": "Zmanipulowane zdjęcie: dwa prawdziwe obrazy połączone w jeden. Sensacja i strach sprawiają, że ludzie udostępniają, zanim się zastanowią.",
+      "tool": "Lupa obrazu: znalazła oryginał ulicy bez rekina i osobno zdjęcie samego rekina.",
+      "realWorld": "Wklejone rekiny i inne dzikie zwierzęta pojawiają się w sieci przy prawie każdej powodzi. Wyszukiwanie obrazem odnajduje zdjęcia, z których je złożono."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-zerwany-most",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Burza zerwała most przy parku Nadrzecze!",
+    "body": "Zdjęcie pokazuje most złamany na pół nad rwącą wodą. Autor ostrzega: „Nie jedźcie tędy, nie ma przejazdu!”",
+    "source": "Wiadomość przesyłana w komunikatorze",
+    "stamps": [
+      {
+        "id": "l1-zerwany-most-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie z 2016 r., z powodzi w innym kraju. Most na nim ma inny kształt niż ten przy Nadrzeczu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-zerwany-most-source",
+        "station": "sourceRegistry",
+        "text": "Wiadomość przesłano dalej wiele razy. Nie da się ustalić autora.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l1-zerwany-most-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Most przy Nadrzeczu stoi cały. Zdjęcie przedstawia inny most, zniszczony przez powódź kilka lat temu.",
+      "technique": "Stare zdjęcie z nowym podpisem: prawdziwa katastrofa z innego miejsca podpisana jako lokalna. Ostrzeżenie „nie jedźcie tędy” zachęca do szybkiego przesyłania dalej.",
+      "tool": "Lupa obrazu: zdjęcie było publikowane już w 2016 r., a most na nim wygląda inaczej niż ten w mieście.",
+      "realWorld": "W czasie klęsk żywiołowych w komunikatorach krążą „ostrzeżenia” ze starymi zdjęciami. Mogą wywołać panikę i zablokować drogi służbom."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l1-grad-jak-jajka",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Grad wielkości jajek spadł wczoraj na Stare Miasto",
+    "body": "Zdjęcie dłoni pełnej ogromnych kul gradu. Podpis: „Wczoraj na Starym Mieście”. Synoptycy potwierdzają, że grad padał.",
+    "source": "Fanpage „Pogoda Nowe Brzegi”",
+    "stamps": [
+      {
+        "id": "l1-grad-jak-jajka-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie krąży od 2017 r. Pierwszy raz opublikowano je po burzy w innym regionie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l1-grad-jak-jajka-source",
+        "station": "sourceRegistry",
+        "text": "Fanpage od lat publikuje trafne prognozy. Ma wielu obserwujących.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l1-grad-jak-jajka-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Grad naprawdę spadł, ale był drobny. Zdjęcie ogromnych kul gradu ma kilka lat i pochodzi z innego regionu.",
+      "technique": "Stare zdjęcie z nowym podpisem: prawdziwe zjawisko pokazane na cudzym, bardziej efektownym zdjęciu. Wiarygodny fanpage też może się pomylić.",
+      "tool": "Lupa obrazu: to samo zdjęcie było w sieci już w 2017 r.",
+      "realWorld": "Zdjęcia rekordowego gradu wracają po każdej letniej burzy. Nawet zaufane profile czasem biorą je z sieci bez sprawdzenia."
+    },
+    "reviewed": false
   }
 ]

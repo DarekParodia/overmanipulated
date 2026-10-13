@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { DIFFICULTIES, ENDLESS_LEVEL_ID } from '@redakcja/shared';
+import { BAG_PREVIEW_SEED, DIFFICULTIES, ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { bagContent, FIXTURE_BAG } from './__fixtures__/bag-level.ts';
 import { realContent } from './__fixtures__/broken.ts';
 import { bagDeadlineS, bagSlotTimes, generateBagLevel, starThresholds } from './bag.ts';
@@ -8,7 +8,7 @@ import { LEVEL_FILES } from './files.ts';
 import { getLevel, LEVELS, prepareLevelRun, STORIES } from './index.ts';
 import { levelStoryIds, maxLevelScore, proofCount } from './rules.ts';
 import { applyDifficulty, prepareRun, resolveLevel, runSummary } from './run.ts';
-import { type Level, levelSchema } from './schema.ts';
+import { type Level, levelFileSchema, levelSchema } from './schema.ts';
 
 const { level: bagFile, stories } = bagContent();
 const byId = new Map(stories.map((story) => [story.id, story]));
@@ -127,32 +127,34 @@ describe('bagDeadlineS', () => {
 });
 
 describe('prepareRun and applyDifficulty', () => {
-  const l1 = getLevel('l1-burza');
-  if (!l1) {
-    throw new Error('level 1 missing');
+  // Level 5 keeps its authored schedule until M4 (S7-60).
+  const l5 = getLevel('l5-deepfake');
+  if (!l5) {
+    throw new Error('level 5 missing');
   }
 
   it('leaves a fixed level unchanged on Normal', () => {
-    const run = prepareRun(l1, { seed: 7, difficulty: 'normal' }, LEVELS, STORIES);
-    expect(run.level).toEqual(l1);
-    expect(run.maxScore).toBe(maxLevelScore(l1, new Map(STORIES.map((s) => [s.id, s]))));
+    const run = prepareRun(l5, { seed: 7, difficulty: 'normal' }, LEVELS, STORIES);
+    expect(run.level).toEqual(l5);
+    expect(run.maxScore).toBe(maxLevelScore(l5, new Map(STORIES.map((s) => [s.id, s]))));
+    const eventIds = l5.events.flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId]));
     expect(Object.keys(run.stories).sort()).toEqual(
-      [...new Set(l1.schedule.map((spawn) => spawn.storyId))].sort(),
+      [...new Set([...l5.schedule.map((spawn) => spawn.storyId), ...eventIds])].sort(),
     );
     expect(runSummary(run)).toEqual({
-      folders: l1.schedule.length,
+      folders: l5.schedule.length,
       maxScore: run.maxScore,
-      stars: l1.stars,
+      stars: l5.stars,
     });
   });
 
   it('scales only the deadlines of a fixed level', () => {
-    const easy = applyDifficulty(l1, 'easy');
-    expect(easy.schedule.map((spawn) => spawn.atS)).toEqual(l1.schedule.map((spawn) => spawn.atS));
-    expect(easy.stars).toEqual(l1.stars);
-    expect(l1.schedule[0]?.deadlineS).toBe(55);
-    expect(easy.schedule[0]?.deadlineS).toBe(72);
-    expect(prepareRun(l1, { seed: 1, difficulty: 'easy' }, LEVELS, STORIES).level).toEqual(easy);
+    const easy = applyDifficulty(l5, 'easy');
+    expect(easy.schedule.map((spawn) => spawn.atS)).toEqual(l5.schedule.map((spawn) => spawn.atS));
+    expect(easy.stars).toEqual(l5.stars);
+    expect(l5.schedule[0]?.deadlineS).toBe(60);
+    expect(easy.schedule[0]?.deadlineS).toBe(78);
+    expect(prepareRun(l5, { seed: 1, difficulty: 'easy' }, LEVELS, STORIES).level).toEqual(easy);
   });
 
   it('deals a bag level anew for every seed and difficulty from its preview', () => {
@@ -185,17 +187,36 @@ describe('prepareRun and applyDifficulty', () => {
   });
 
   it('prepares a bundled level by id', () => {
-    const run = prepareLevelRun('l1-burza', { seed: 2, difficulty: 'hard' });
-    expect(run?.level.schedule.map((spawn) => spawn.atS)).toEqual(l1.schedule.map((s) => s.atS));
+    const run = prepareLevelRun('l5-deepfake', { seed: 2, difficulty: 'hard' });
+    expect(run?.level.schedule.map((spawn) => spawn.atS)).toEqual(l5.schedule.map((s) => s.atS));
     expect(prepareLevelRun('l9-nie-ma', { seed: 2, difficulty: 'hard' })).toBeUndefined();
+  });
+
+  it('deals bundled level 1 from its bag: 16 folders on hard, a new deal per seed', () => {
+    const file = levelFileSchema.parse(LEVEL_FILES['levels/l1-burza.json']);
+    const run = prepareLevelRun('l1-burza', { seed: 2, difficulty: 'hard' });
+    expect(run?.level).toEqual(generateBagLevel(file, STORIES, 2, 'hard'));
+    expect(run?.level.schedule).toHaveLength(16);
+    expect(run?.level.schedule[0]?.atS).toBe(4);
+    const other = prepareLevelRun('l1-burza', { seed: 3, difficulty: 'hard' });
+    expect(other?.level.schedule).not.toEqual(run?.level.schedule);
   });
 });
 
 describe('LEVELS', () => {
   it('serves every level with an authored schedule exactly as its file', () => {
-    const files = Object.values(LEVEL_FILES).map((file) => levelSchema.parse(file));
-    const fixed = files.filter((level: Level) => !level.bag);
-    expect(fixed.length).toBe(LEVELS.length);
-    expect(LEVELS).toEqual(fixed);
+    const files = Object.values(LEVEL_FILES).map((file) => levelFileSchema.parse(file));
+    const fixed = files.filter((level) => !level.bag).map((level) => levelSchema.parse(level));
+    expect(LEVELS.filter((level: Level) => !level.bag)).toEqual(fixed);
+  });
+
+  it('serves every bag level as its Normal preview run', () => {
+    const files = Object.values(LEVEL_FILES).map((file) => levelFileSchema.parse(file));
+    const bagged = files.filter((level) => level.bag);
+    expect(bagged.map((level) => level.id)).toContain('l1-burza');
+    expect(LEVELS.map((level) => level.id)).toEqual(files.map((level) => level.id));
+    expect(LEVELS.filter((level) => level.bag)).toEqual(
+      bagged.map((level) => generateBagLevel(level, STORIES, BAG_PREVIEW_SEED, 'normal')),
+    );
   });
 });
