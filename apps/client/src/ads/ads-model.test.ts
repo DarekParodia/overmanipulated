@@ -99,6 +99,13 @@ describe('placements', () => {
     }
   });
 
+  it('gates each placement by viewport (S7-74: the results rail needs 1780×900)', () => {
+    expect(AD_PLACEMENTS.menu.query).toBe('(min-width: 1180px) and (min-height: 680px)');
+    expect(AD_PLACEMENTS.lobby.query).toBe('(min-width: 800px) and (min-height: 600px)');
+    expect(AD_PLACEMENTS.results.query).toBe('(min-width: 1780px) and (min-height: 900px)');
+    expect(AD_PLACEMENTS.spectator.query).toBe('(min-width: 1280px) and (min-height: 720px)');
+  });
+
   it('uses the fixed AdSense unit sizes', () => {
     expect(AD_PLACEMENTS.menu.size).toEqual({ width: 160, height: 600 });
     expect(AD_PLACEMENTS.lobby.size).toEqual({ width: 728, height: 90 });

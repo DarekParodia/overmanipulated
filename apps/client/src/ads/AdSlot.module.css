@@ -31,16 +31,19 @@
 .menu,
 .results {
   position: fixed;
-  top: 50%;
-  translate: 0 -50%;
 }
 
 .menu {
+  top: 50%;
+  translate: 0 -50%;
   left: max(var(--space-4), env(safe-area-inset-left));
 }
 
+/* Bottom-right, so the HUD's round menu button (top-right, dimmed under the results backdrop)
+   stays >= AD_MIN_GAP_PX above the rail; the 900 px height gate in placements.ts guarantees it. */
 .results {
   right: max(var(--space-4), env(safe-area-inset-right));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
 }
 
 .lobby {

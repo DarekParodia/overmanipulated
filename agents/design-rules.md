@@ -130,6 +130,18 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   The main menu may show the operator's message of the day („Komunikat redakcji”) between the
   logo and the card: a white card with a blue (info) or orange (warning) outline and icon and a
   close button. Never yellow: the menu keeps one main action.
+- **Ads** (S7-74, only when the operator enables them): only on the main menu (left rail),
+  the lobby (banner under the footer), the results (bottom-right rail, 1780×900 and up) and the
+  spectator view. Never during play, in the briefing, in station or desk overlays, in dialogs or
+  sheets, and **never on phones** (no placement's viewport gate matches `PHONE_QUERY`). Each ad
+  sits in the white „Reklama” frame (`AdSlot`: `--surface`, `--outline-border`, `--radius-md`)
+  at least `--space-ad-gap` (≥ 150 px, `AD_MIN_GAP_PX`) from any control, fixed-size (no
+  responsive units, no layout shift), not focusable, with no cue, animation or sound, and
+  nothing ever points at it. Without ads, with an ad blocker or when Google has no ad, the frame
+  is gone and nothing replaces it: no empty box, no "turn off your ad blocker". The creative
+  inside the frame is third-party and exempt from the tokens and the one-yellow rule; the frame
+  is not. The main-menu footer (`MenuFooter`) holds minor ghost links such as „Zgody reklamowe”;
+  never yellow.
 - Generous spacing (≥ `--space-4` between groups). If a screen feels crowded, remove things;
   don't shrink them.
 
@@ -174,3 +186,5 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
 - [ ] Only tokens; thick outlines; pop shadows; rounded corners; no gradients/blur/serif/emoji?
 - [ ] Touch targets ≥ 48 px; keyboard and gamepad focus visible?
 - [ ] Screenshot checked on desktop and Pixel 7 landscape?
+- [ ] Ads ≥ 150 px (`--space-ad-gap`) from every control, none in play, none on phones
+      (`e2e/ads.spec.ts` covers every placement)?

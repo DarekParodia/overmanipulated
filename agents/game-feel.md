@@ -120,6 +120,11 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 
 Add a row here when you add a cue, in the same commit.
 
+**Ads have no cues** (S7-74, policy). AdSense forbids drawing attention to ads, so an ad
+appearing, filling, failing or being blocked plays no sound, animation, particles or haptics,
+and no cue may point at a rail. The „Zgody reklamowe” footer link is an ordinary button
+(`ui.click`); Google's consent message is Google's own UI.
+
 Event → cue mapping lives in `fx/event-cues.ts` (pure, unit-tested for every gameplay event
 kind); `net/game-events.ts` adds where it happens (fixture tile centre, folder location or
 player position) and who it is about. State-driven feedback (work loop reconciliation, deadline

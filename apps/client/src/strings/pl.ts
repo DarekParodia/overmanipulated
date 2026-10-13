@@ -73,6 +73,8 @@ export const pl = {
     /** Message of the day (S7-72): the banner's name and its close button. */
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
+    /** Footer link (S7-74): reopens Google's ad consent message. */
+    adConsent: 'Zgody reklamowe',
   },
   /** Ads (S7-73): the frame's label, also its name for screen readers. */
   ads: {
