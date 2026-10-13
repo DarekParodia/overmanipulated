@@ -233,3 +233,35 @@ describe('reduce', () => {
     expect(reduce(state, { type: 'move', dRow: -1, dCol: 0 })[0].cursor.row).toBe(rows - 1);
   });
 });
+
+describe('mistake limit per difficulty (S7-24)', () => {
+  it('allows 3 mistakes on Łatwy, 2 on Normalny and Trudny, 1 on Ekspert', () => {
+    const puzzle = puzzleWith('invented');
+    expect(initialState(puzzle, 'easy').maxMistakes).toBe(3);
+    expect(initialState(puzzle).maxMistakes).toBe(2);
+    expect(initialState(puzzle, 'hard').maxMistakes).toBe(2);
+    expect(initialState(puzzle, 'expert').maxMistakes).toBe(1);
+  });
+
+  it('fails on the first wrong cell on Ekspert', () => {
+    const puzzle = puzzleWith('invented');
+    const [state, effect] = reduce(initialState(puzzle, 'expert'), {
+      type: 'pick',
+      row: 0,
+      col: 0,
+    });
+    expect(effect).toBe('failed');
+    expect(state.mistakes).toBe(1);
+    expect(state.outcome).toBe('failure');
+  });
+
+  it('keeps playing after two wrong cells on Łatwy', () => {
+    const puzzle = puzzleWith('invented');
+    let state = initialState(puzzle, 'easy');
+    state = reduce(state, { type: 'pick', row: 0, col: 0 })[0];
+    state = reduce(state, { type: 'pick', row: 0, col: 1 })[0];
+    expect(state.mistakes).toBe(2);
+    expect(state.outcome).toBe('playing');
+    expect(reduce(state, { type: 'pick', row: 0, col: 2 })[1]).toBe('failed');
+  });
+});

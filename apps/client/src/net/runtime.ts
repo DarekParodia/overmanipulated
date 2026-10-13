@@ -1,15 +1,19 @@
-// Per-match client runtime: fixed 50 ms input ticks (send + predict), snapshot intake
-// (interpolation buffer + reconciliation), and render-time sampling for the scene.
+// Per-match client runtime: fixed 50 ms input ticks (send + predict, plus the role ability
+// press), snapshot intake (interpolation buffer + reconciliation), and render-time sampling for
+// the scene.
 import { DEFAULT_LEVEL_ID, getLevel } from '@redakcja/content';
 import {
   GREYBOX_MAP,
   type InputMessage,
+  type PlayerCommand,
   type PlayerState,
   parseLayout,
   type SnapshotMessage,
   TICK_MS,
   type TileMap,
 } from '@redakcja/shared';
+import { localAbilityPress } from '../abilities/ability-press.ts';
+import { emitCue } from '../fx/feedback.ts';
 import { sampleInput } from '../input/input-manager.ts';
 import { openPingPicker } from '../pings/ping-store.ts';
 import { createPredictor, type Predictor } from './prediction.ts';
@@ -51,6 +55,7 @@ export type GameRuntime = {
 export function createRuntime(
   getLocalId: () => string | null,
   sendInput: (message: InputMessage) => void,
+  sendCommand: (command: PlayerCommand) => void,
 ): GameRuntime {
   let map = mapForLevel(DEFAULT_LEVEL_ID);
   const buffer = createSnapshotBuffer();
@@ -58,6 +63,17 @@ export function createRuntime(
   let seq = 0;
   let accumulator = 0;
   let localKnown = false;
+  /** The server holds the level still (solo menu, S7-10): no input is sent or predicted. */
+  let paused = false;
+
+  /** One role ability press (S7-39): sent, or refused here with the local "denied" cue. */
+  function pressAbility(localId: string | null): void {
+    if (localAbilityPress(localId) === 'send') {
+      sendCommand({ kind: 'useAbility' });
+    } else {
+      emitCue('ability.denied');
+    }
+  }
 
   return {
     get map() {
@@ -69,6 +85,12 @@ export function createRuntime(
     },
 
     onSnapshot(snapshot, receivedAt) {
+      if (paused && !snapshot.paused) {
+        // The server's tick stood still while the clock ran on: learn its offset again, or a
+        // teammate who just joined would be drawn from stale timing.
+        buffer.clear();
+      }
+      paused = snapshot.paused;
       buffer.push(snapshot, receivedAt);
       const localId = getLocalId();
       const mine = snapshot.players.find((p) => p.id === localId);
@@ -90,8 +112,11 @@ export function createRuntime(
         if (sample.ping) {
           openPingPicker(now);
         }
-        if (!localKnown) {
+        if (!localKnown || paused) {
           continue;
+        }
+        if (sample.ability) {
+          pressAbility(localId);
         }
         const input: InputMessage = {
           type: 'input',
@@ -135,6 +160,7 @@ export function createRuntime(
       seq = 0;
       accumulator = 0;
       localKnown = false;
+      paused = false;
     },
   };
 }

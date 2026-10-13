@@ -148,6 +148,9 @@ const icons = {
   // --- Interface ---------------------------------------------------------------------------
   arrow: [{ d: 'M4 12h15M13.5 6.5L19 12l-5.5 5.5' }],
   play: [{ d: 'M7.5 4.5v15l12-7.5Z', fill: 'tint' }],
+  pause: [{ d: 'M6.5 5h3.5v14H6.5ZM14 5h3.5v14H14Z', fill: 'tint' }],
+  /** Three bars: the in-game menu button (S7-10). */
+  menu: [{ d: 'M4.5 6.5h15M4.5 12h15M4.5 17.5h15' }],
   close: [{ d: 'M7 7l10 10M17 7L7 17' }],
   fullscreen: [{ d: 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5' }],
   settings: [

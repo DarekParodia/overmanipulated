@@ -22,7 +22,9 @@ function update(): void {
   if (game.elapsedMs !== anchor.elapsedMs || game.timeLeftMs !== anchor.timeLeftMs) {
     anchor = { elapsedMs: game.elapsedMs, timeLeftMs: game.timeLeftMs, at: now };
   }
-  const ahead = game.levelEnd ? 0 : Math.min(MAX_EXTRAPOLATION_MS, Math.max(0, now - anchor.at));
+  // A paused level (solo menu, S7-10) stands still: no running ahead of the frozen server time.
+  const ahead =
+    game.levelEnd || game.paused ? 0 : Math.min(MAX_EXTRAPOLATION_MS, Math.max(0, now - anchor.at));
   let elapsedMs = anchor.elapsedMs + ahead;
   let timeLeftMs = Math.max(0, anchor.timeLeftMs - ahead);
   // A late snapshot must not make the countdowns tick backwards; a real reset (new level) is

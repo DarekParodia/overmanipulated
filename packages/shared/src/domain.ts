@@ -23,6 +23,24 @@ export const storyTypeSchema = z.enum([
   'article',
 ]);
 export const roleSchema = z.enum(['photoEditor', 'archivist', 'reporter', 'managingEditor']);
+/** A role's active ability (Stage 7, M3); each role has exactly one (`ROLE_PERKS`). */
+export const abilitySchema = z.enum([
+  'expertise',
+  'fieldCall',
+  'extendDeadline',
+  'secondChance',
+  'passFolder',
+]);
+/** Station families (`STATION_FAMILY`); in Stage 7 they only gate Ekspertyza. */
+export const stationFamilySchema = z.enum(['image', 'documents', 'sources']);
+/**
+ * Stages of an ability use, as the `ability` event reports them: armed/disarmed (Ekspertyza and
+ * Druga szansa wait for their trigger), started (Telefon z terenu dialling), done (the effect
+ * applied), cancelled (the call was dropped or its folder is gone).
+ */
+export const abilityStageSchema = z.enum(['armed', 'disarmed', 'started', 'done', 'cancelled']);
+/** What put a stamp on a folder: a solved minigame, Ekspertyza, or Telefon z terenu. */
+export const stampSourceSchema = z.enum(['minigame', 'expertise', 'fieldCall']);
 export const pingKindSchema = z.enum(['needArchive', 'fake', 'mine']);
 /** How a station's stamp bears on the verdict (content metadata, shown in the debrief). */
 export const stampRelevanceSchema = z.enum(['decisive', 'misleading', 'irrelevant']);
@@ -44,6 +62,10 @@ export type Truth = z.infer<typeof truthSchema>;
 export type Priority = z.infer<typeof prioritySchema>;
 export type StoryType = z.infer<typeof storyTypeSchema>;
 export type Role = z.infer<typeof roleSchema>;
+export type Ability = z.infer<typeof abilitySchema>;
+export type StationFamily = z.infer<typeof stationFamilySchema>;
+export type AbilityStage = z.infer<typeof abilityStageSchema>;
+export type StampSource = z.infer<typeof stampSourceSchema>;
 export type LevelEventKind = z.infer<typeof levelEventKindSchema>;
 export type PingKind = z.infer<typeof pingKindSchema>;
 export type StampRelevance = z.infer<typeof stampRelevanceSchema>;
@@ -63,6 +85,8 @@ export const LEVEL_EVENT_KINDS = levelEventKindSchema.options;
 export const STATION_KINDS = stationKindSchema.options;
 export const VERDICTS = verdictSchema.options;
 export const ROLES = roleSchema.options;
+export const ABILITIES = abilitySchema.options;
+export const STATION_FAMILIES = stationFamilySchema.options;
 export const PING_KINDS = pingKindSchema.options;
 /** Easiest first; pickers and per-difficulty tables list them in this order. */
 export const DIFFICULTIES = difficultySchema.options;

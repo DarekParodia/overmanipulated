@@ -1,5 +1,5 @@
 // How many folder cards fit in the queue (design-rules §1.3/§5): at most three, fewer when the
-// band between the HUD pill and the screen tools is too narrow (phones), the rest summed up on a
+// band between the HUD pill and the menu button is too narrow (phones), the rest summed up on a
 // "+N" chip; a free slot may hold the dashed ghost card for the next folder. Pure, so the rules
 // are unit-tested; `useQueueCapacity` measures the real sizes.
 import type { Folder } from '@redakcja/shared';

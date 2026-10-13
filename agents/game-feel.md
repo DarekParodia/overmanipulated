@@ -87,7 +87,16 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `event.correction.start` | `levelEvent` correction start | banner; siren with sweeping beam over the folder, yellow dot trail to the nearest desk | siren (`evcorrection`) | red/yellow alert dots | medium shake, buzz | ●●● |
 | `event.raidResolved` | `raidResolved` | banner "Nalot odparty!" | rising arpeggio (`evclear`) | confetti + glitch squares | small shake, thud | ●●● |
 | `event.end` | other `levelEvent` end | none | paper slap | dust | — | ● |
+| `ability.armed` / `ability.disarmed` | `ability` stage `armed` / `disarmed` (Ekspertyza, Druga szansa waiting for their trigger; S7-36) | — (armed badge lands in S7-42) | placeholder `copy` / soft back (`abpower` in S7-42) | ink puff in player colour / dust | light tick / — | ● |
+| `ability.denied` | local press of R / RB / the ability button with no role or while cooling (client-only, nothing is sent; S7-39) | — (`abilityDenied` chip shake lands in S7-40, none under reduced motion) | soft back (`back`, ui bus) | — | light tick | ● |
+| `ability.expertise` | `ability` expertise `done`: the stamp lands without the minigame | — (`stamp.applied` slams it when the sim emits one) | rising chime (placeholder) | star burst + ink puff | success buzz | ●● |
+| `ability.call.start` / `.done` / `.dropped` | `ability` fieldCall `started` / `done` / `cancelled` (Telefon z terenu) | — / — / `wobble` (call bubble in S7-42) | phone bell `ping3` / quieter `ping3` / fail blips | ink puff / paper bits / smoke wisp | light tick / — / — | ● |
+| `ability.extendDeadline` | `ability` extendDeadline `done` (Przedłużenie; replaces `folder.deadlineExtended` in S7-37) | `hop`, `cardHop` | counter bell (`arrive`) | paper flutter ×6 | success buzz | ● |
+| `ability.secondChance` | `ability` secondChance `done` (Druga szansa: lockout gone, minigame reopens) | — | power-up (`evback`, quiet) | sparks ×6 | light tick | ● |
+| `ability.pass` | `ability` passFolder `done` (Podaj teczkę; the 450 ms arc lands in S7-42) | `hop` | paper rustle | paper flutter ×3 | light tick | ● |
+| `role.rescue` | `folderRescued` (Koło ratunkowe: a folder at its deadline in a Ratownik's hands gets +20 s) | `hop`, `cardHop` | rising arpeggio (`evclear`) | star burst | small shake, success buzz | ●● |
 | `ui.click` / `ui.hover` / `ui.back` | menus; `ui.click` also when the host picks a difficulty (the chip turns blue) and, for guests, when the host changes it (their „Poziom: …” chip pops, S7-25) | button press | click / tick | — | light tick (mobile) | ● |
+| `game.paused` | `paused` rising edge (`fx/gameplay-feedback.ts`): a solo player opened the in-game menu and the server holds the level (S7-10) | the menu sheet slides in (scale-pop on desktop, slide from the right on phones; none under reduced motion) with the „Pauza” chip; the level clock stops; deadline ticks and work loops stop | soft paper slide (`slide`, ui bus, 0.6) | — (DOM sheet; caption skipped: the chip says it) | light tick | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |
 | `sourceRegistry.file` | card filed correctly | „Sprawdzone” stamp slams on the card | stamp thud | — | thud | ● |
@@ -106,7 +115,8 @@ Add a row here when you add a cue, in the same commit.
 Event → cue mapping lives in `fx/event-cues.ts` (pure, unit-tested for every gameplay event
 kind); `net/game-events.ts` adds where it happens (fixture tile centre, folder location or
 player position) and who it is about. State-driven feedback (work loop reconciliation, deadline
-ticker, last-30-s sting, full-belt alert, level-end stingers) lives in `fx/gameplay-feedback.ts`.
+ticker, last-30-s sting, full-belt alert, solo pause, level-end stingers) lives in
+`fx/gameplay-feedback.ts`. Opening and closing the in-game menu use `ui.click` / `ui.back`.
 The next-folder countdown (ghost card, conveyor ring) makes no sound: it runs all level long and
 would only be noise. Animation listeners (`feedback.onAnimation`) receive
 `{ reducedMotion, noFlash }` and must honour them; cues about another player (`remote`) never

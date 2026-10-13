@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test';
-import { radialDeadzone, readGamepad } from './gamepad.ts';
-import { keysToMove } from './keyboard.ts';
+import { PAD, radialDeadzone, readGamepad } from './gamepad.ts';
+import { GAME_KEYS, KEY_BINDINGS, keysToMove } from './keyboard.ts';
+import { createRisingEdge, escapeOpensMenu, startPressed } from './menu-button.ts';
 import { joystickVector, knobOffset } from './touch.ts';
+import { NAV_KEYS } from './ui-nav.ts';
 
 const pad = (axes: number[], pressed: number[] = []) => ({
   axes,
@@ -16,6 +18,17 @@ describe('keyboard', () => {
 
   it('cancels opposite keys', () => {
     expect(keysToMove(new Set(['KeyA', 'KeyD']))).toEqual({ x: 0, y: 0 });
+  });
+
+  it('binds the role ability to R, a game key that moves nothing (S7-39)', () => {
+    expect(KEY_BINDINGS.ability).toEqual(['KeyR']);
+    expect(GAME_KEYS.has('KeyR')).toBe(true);
+    expect(keysToMove(new Set(['KeyR']))).toEqual({ x: 0, y: 0 });
+  });
+
+  it('turns R into the ability intent while an overlay owns the input (S7-39)', () => {
+    expect(NAV_KEYS.KeyR).toBe('ability');
+    expect(NAV_KEYS.KeyQ).toBe('alt');
   });
 });
 
@@ -34,6 +47,13 @@ describe('gamepad', () => {
     const reading = readGamepad(pad([0.9, 0], [13, 0, 2]));
     expect(reading.move).toEqual({ x: 0, y: 1 });
     expect(reading).toMatchObject({ interact: true, work: true, ping: false, active: true });
+  });
+
+  it('reads RB (button 5) as the role ability and counts it as activity (S7-39)', () => {
+    expect(PAD.rb).toBe(5);
+    const reading = readGamepad(pad([0, 0], [5]));
+    expect(reading).toMatchObject({ ability: true, interact: false, ping: false, active: true });
+    expect(readGamepad(pad([0, 0], [4])).ability).toBe(false);
   });
 
   it('reports an idle pad as inactive', () => {
@@ -57,5 +77,35 @@ describe('touch joystick', () => {
   it('keeps the knob on the ring', () => {
     const offset = knobOffset(origin, { x: 100, y: 400 });
     expect(offset.y).toBeCloseTo(56, 5);
+  });
+});
+
+describe('in-game menu keys (S7-10)', () => {
+  const key = {
+    code: 'Escape',
+    repeat: false,
+    captured: false,
+    tutorialActive: false,
+  };
+
+  it('opens the menu with Esc only when nothing else owns it', () => {
+    expect(escapeOpensMenu(key)).toBe(true);
+    // An overlay, the settings or the open menu close on Esc instead.
+    expect(escapeOpensMenu({ ...key, captured: true })).toBe(false);
+    // The tutorial card skips first; the menu ignores that press.
+    expect(escapeOpensMenu({ ...key, tutorialActive: true })).toBe(false);
+    expect(escapeOpensMenu({ ...key, repeat: true })).toBe(false);
+    expect(escapeOpensMenu({ ...key, code: 'KeyE' })).toBe(false);
+  });
+
+  it('reads Start as button 9 and counts only the rising edge', () => {
+    expect(startPressed(pad([0, 0], [9]))).toBe(true);
+    expect(startPressed(pad([0, 0], [8]))).toBe(false);
+    expect(startPressed(null)).toBe(false);
+    const edge = createRisingEdge();
+    expect([true, true, false, true, false].map(edge)).toEqual([true, false, false, true, false]);
+    // Held when the screen mounts: it must be released before it counts.
+    const held = createRisingEdge(true);
+    expect([true, false, true].map(held)).toEqual([false, false, true]);
   });
 });

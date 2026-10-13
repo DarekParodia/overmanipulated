@@ -479,3 +479,45 @@ describe('tutorial skip on a gamepad', () => {
     expect(run([idle, held, ...Array.from({ length: polls }, () => select)])).toBe(false);
   });
 });
+
+describe('bag station first (S7-24)', () => {
+  test('a dealt folder names its bag station first among the proving stations', () => {
+    const step = nextStep(
+      input({ folders: [folder('f', carried, { bagStation: 'sourceRegistry' })] }),
+    );
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0', 'archive-0']);
+    expect(step.text).toBe('Zanieś do: Kartoteka / Archiwum');
+  });
+
+  test('a bag station that proves nothing for the story changes nothing', () => {
+    const step = nextStep(
+      input({ folders: [folder('f', carried, { bagStation: 'imageSearch' })] }),
+    );
+    expect(step.targetFixtureIds).toEqual(['archive-0', 'sourceRegistry-0']);
+    expect(step.text).toBe('Zanieś do: Archiwum / Kartoteka');
+  });
+
+  test('a busy bag station is not suggested while another proving station is free', () => {
+    const step = nextStep(
+      input({
+        folders: [
+          folder('f', carried, { bagStation: 'sourceRegistry' }),
+          folder('other', at('sourceRegistry-0')),
+        ],
+      }),
+    );
+    expect(step.targetFixtureIds).toEqual(['archive-0']);
+  });
+
+  test('a stamped bag station drops out; the next proof is suggested', () => {
+    const two: StoryStamps = { ...story, requiredStamps: 2 };
+    const step = nextStep(
+      input({
+        story: () => two,
+        folders: [folder('f', carried, { bagStation: 'archive', stamps: ['s-archive'] })],
+      }),
+    );
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
+  });
+});

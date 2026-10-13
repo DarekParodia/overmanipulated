@@ -15,6 +15,7 @@ import {
   type PlayerCommand,
   type PlayerInput,
   type Rng,
+  ROLE_PERKS,
   raidOfFolder,
   type SimContext,
   type SimStory,
@@ -561,7 +562,7 @@ export class Bot {
       1000 *
       this.profile.minigameSpeed *
       (1 + MINIGAME_SPREAD * (this.rng.next() * 2 - 1));
-    if (kind === 'phone' && role !== 'reporter') {
+    if (kind === 'phone' && !(role && ROLE_PERKS[role].skipsPhoneQueue)) {
       durationMs += 2500 + this.rng.next() * 2000; // the queue (PHONE_QUEUE_MIN/MAX_MS)
     }
     const failChance = Math.min(0.9, this.profile.minigameFailChance * MINIGAME_DIFFICULTY[kind]);

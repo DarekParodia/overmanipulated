@@ -3,7 +3,7 @@
 .frame {
   position: absolute;
   z-index: 30;
-  /* Below the screen tools, their room chip and the folder queue (7 rem cards), which stay
+  /* Below the menu button and the folder queue (7 rem cards), which stay
      visible and reachable. */
   top: max(8rem, env(safe-area-inset-top));
   bottom: max(var(--space-4), env(safe-area-inset-bottom));

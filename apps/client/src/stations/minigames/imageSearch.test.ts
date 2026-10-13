@@ -119,6 +119,25 @@ describe('image search play', () => {
     expect(pick(second.state, puzzle, puzzle.answer).outcome).toBe('ignored');
   });
 
+  it('fails on the first wrong pick on Ekspert (S7-24)', () => {
+    const start = initialPlay('expert');
+    expect(start.maxMistakes).toBe(1);
+    const first = pick(start, puzzle, firstWrong);
+    expect(first.outcome).toBe('fail');
+    expect(first.state.mistakes).toBe(1);
+    expect(first.state.failed).toBe(true);
+  });
+
+  it('allows 3 wrong picks on Łatwy, 2 on Normalny and Trudny (S7-24)', () => {
+    expect(initialPlay('easy').maxMistakes).toBe(3);
+    expect(initialPlay().maxMistakes).toBe(2);
+    expect(initialPlay('hard').maxMistakes).toBe(2);
+    const first = pick(initialPlay('easy'), puzzle, firstWrong);
+    const second = pick(first.state, puzzle, secondWrong);
+    expect(second.outcome).toBe('miss');
+    expect(second.state.failed).toBe(false);
+  });
+
   it('cycles through the fragments', () => {
     let state = initialPlay();
     for (let i = 0; i < puzzle.fragments.length; i++) state = nextFragment(state, puzzle);

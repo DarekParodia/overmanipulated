@@ -42,6 +42,8 @@ agents/             Working rules for agents
 | `bun run build` | Production build of the client |
 | `bun run db:generate` | Generate a Drizzle migration after changing `apps/server/src/db/schema.ts` |
 | `bun run db:studio` | Browse the local SQLite database |
+| `bun run config:check -- <path>` | Validate a server `config.json` (defaults filled in, `ADS_ENABLED` applied) before it goes live |
+| `bun run config:schema` | Regenerate `config/config.schema.json` after changing `apps/server/src/config.ts` |
 | `bun run test:e2e` | Playwright multiplayer tests, desktop + mobile (starts server and preview itself) |
 | `bun run check` | lint + design lint + typecheck + test + validate — **must pass before every push** |
 | `docker compose up --build` | Production-like stack (Caddy + server), see `docs/deploy.md` |
