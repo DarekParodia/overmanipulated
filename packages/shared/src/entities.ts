@@ -141,6 +141,16 @@ export const folderResultSchema = z.object({
 /** Why a level was lost: credibility ran out, or time ran out without a positive score. */
 export const lossReasonSchema = z.enum(['credibility', 'score']);
 
+/**
+ * The next folder the level schedule brings (S7-08): the level time it is due and the level
+ * time the previous scheduled folder was due (0 before the first), so the HUD can count down
+ * and fill a ring between the two. Level-event folders are never announced.
+ */
+export const nextFolderSchema = z.object({
+  atMs: finite.nonnegative(),
+  sinceMs: finite.nonnegative(),
+});
+
 export const levelOutcomeSchema = z.object({
   won: z.boolean(),
   stars: z.number().int().min(0).max(3),
@@ -160,6 +170,7 @@ export type FolderBonuses = z.infer<typeof folderBonusesSchema>;
 export type FolderResult = z.infer<typeof folderResultSchema>;
 export type LossReason = z.infer<typeof lossReasonSchema>;
 export type LevelOutcome = z.infer<typeof levelOutcomeSchema>;
+export type NextFolder = z.infer<typeof nextFolderSchema>;
 
 /** A result without any bonus points (frozen: results share it). */
 export const NO_BONUSES: Readonly<FolderBonuses> = Object.freeze({

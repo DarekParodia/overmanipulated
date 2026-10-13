@@ -11,6 +11,8 @@ const EMPTY_LEVEL = {
   stations: [],
   desks: [],
   deadlineExtensionUsed: false,
+  nextFolder: { atMs: 3000, sinceMs: 0 },
+  conveyorFull: false,
 };
 
 describe('protocol version', () => {
@@ -246,6 +248,19 @@ describe('server messages', () => {
     expect(parseServerMessage({ ...end, lossReason: 'time' }).ok).toBe(false);
     const { lossReason: _dropped, ...withoutReason } = end;
     expect(parseServerMessage(withoutReason).ok).toBe(false);
+  });
+
+  it('carries the next scheduled folder and the conveyor-full flag in every snapshot', () => {
+    const snapshot = { type: 'snapshot', tick: 1, players: [], ...EMPTY_LEVEL };
+    expect(parseServerMessage(snapshot).ok).toBe(true);
+    expect(parseServerMessage({ ...snapshot, nextFolder: null, conveyorFull: true }).ok).toBe(true);
+    expect(parseServerMessage({ ...snapshot, nextFolder: { atMs: 3000 } }).ok).toBe(false);
+    const beforeStart = { ...snapshot, nextFolder: { atMs: -1, sinceMs: 0 } };
+    expect(parseServerMessage(beforeStart).ok).toBe(false);
+    const { nextFolder: _next, ...withoutNext } = snapshot;
+    expect(parseServerMessage(withoutNext).ok).toBe(false);
+    const { conveyorFull: _full, ...withoutFull } = snapshot;
+    expect(parseServerMessage(withoutFull).ok).toBe(false);
   });
 
   it('rejects a snapshot with more than four players', () => {

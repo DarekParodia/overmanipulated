@@ -3,7 +3,7 @@ import type { Folder, FolderLocation } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
 import { runStep, TEST_LEVEL, TEST_MAP, testContext, testInput } from './__fixtures__/greybox.ts';
 import type { SimLevel } from './content.ts';
-import { stepFolders } from './folders.ts';
+import { conveyorBlocked, nextScheduledSpawn, stepFolders } from './folders.ts';
 import type { PlayerIntent, SimContext, SimFrame } from './frame.ts';
 import { addPlayer, carriedFolder, createGameState, type GameState } from './state.ts';
 import type { PlayerInput } from './step.ts';
@@ -345,6 +345,95 @@ describe('stepFolders: spawning', () => {
     expect(events).toEqual([
       { kind: 'folderSpawned', folderId: 'f1', storyId: 't-false', fixtureId: 'conveyor-0' },
     ]);
+  });
+});
+
+describe('nextScheduledSpawn and conveyorBlocked', () => {
+  const at = (elapsedMs: number, state = createGameState({ map: TEST_MAP })) => ({
+    ...state,
+    elapsedMs,
+  });
+  const fullBelt = (elapsedMs: number) =>
+    withFolders(
+      at(elapsedMs),
+      folder('f1', onFixture('conveyor-0')),
+      folder('f2', onFixture('conveyor-1')),
+      folder('f3', onFixture('conveyor-2')),
+      folder('f4', onFixture('conveyor-3')),
+    );
+
+  it('walks TEST_LEVEL: 1000 → 5000 → 10000 → null, each since the previous spawn', () => {
+    const ctx = testContext();
+    const start = createGameState({ map: TEST_MAP });
+    expect(nextScheduledSpawn(start, ctx)).toEqual({ atMs: 1000, sinceMs: 0 });
+    const first = runFolders(at(1000, start), [], ctx).state;
+    expect(nextScheduledSpawn(first, ctx)).toEqual({ atMs: 5000, sinceMs: 1000 });
+    const second = runFolders(at(5000, first), [], ctx).state;
+    expect(nextScheduledSpawn(second, ctx)).toEqual({ atMs: 10_000, sinceMs: 5000 });
+    const third = runFolders(at(10_000, second), [], ctx).state;
+    expect(third.nextSpawnIndex).toBe(3);
+    expect(nextScheduledSpawn(third, ctx)).toBeNull();
+  });
+
+  it('skips entries whose story is missing, as spawning does', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [
+        { atS: 1, storyId: 'missing', deadlineS: 30 },
+        { atS: 2.5, storyId: 't-false', deadlineS: 30 },
+        { atS: 3, storyId: 'missing', deadlineS: 30 },
+        { atS: 4, storyId: 't-true', deadlineS: 30 },
+        { atS: 6, storyId: 'missing', deadlineS: 30 },
+      ],
+    };
+    const ctx = testContext({ level });
+    const start = createGameState({ map: TEST_MAP });
+    expect(nextScheduledSpawn(start, ctx)).toEqual({ atMs: 2500, sinceMs: 0 });
+    expect(nextScheduledSpawn({ ...start, nextSpawnIndex: 2 }, ctx)).toEqual({
+      atMs: 4000,
+      sinceMs: 2500,
+    });
+    expect(nextScheduledSpawn({ ...start, nextSpawnIndex: 4 }, ctx)).toBeNull();
+  });
+
+  it('never announces level-event folders', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [{ atS: 10, storyId: 't-true', deadlineS: 60 }],
+      events: [{ kind: 'viral', atS: 2, storyId: 't-false', deadlineS: 30 }],
+    };
+    const ctx = testContext({ level });
+    let state = createGameState({ map: TEST_MAP });
+    expect(nextScheduledSpawn(state, ctx)).toEqual({ atMs: 10_000, sinceMs: 0 });
+    while (state.elapsedMs < 2000) {
+      state = runStep(state, {}, [], ctx).state;
+    }
+    expect(Object.values(state.folders).map((f) => f.storyId)).toEqual(['t-false']);
+    expect(nextScheduledSpawn(state, ctx)).toEqual({ atMs: 10_000, sinceMs: 0 });
+    const eventsOnly = testContext({ level: { ...level, schedule: [] } });
+    expect(nextScheduledSpawn(state, eventsOnly)).toBeNull();
+  });
+
+  it('keeps announcing a held entry with its due time while the belt is full', () => {
+    const ctx = testContext();
+    const held = runFolders({ ...fullBelt(1000), nextFolderNumber: 5 }, [], ctx).state;
+    expect(held.nextSpawnIndex).toBe(0);
+    expect(nextScheduledSpawn(held, ctx)).toEqual({ atMs: 1000, sinceMs: 0 });
+    expect(conveyorBlocked(held, ctx)).toBe(true);
+  });
+
+  it('is blocked only when every conveyor tile is full and an entry is due', () => {
+    const ctx = testContext();
+    expect(conveyorBlocked(fullBelt(1000), ctx)).toBe(true);
+    // Full belt, nothing due yet.
+    expect(conveyorBlocked(fullBelt(999), ctx)).toBe(false);
+    // Due, but one tile is free (the next tick spawns onto it).
+    const { f4: _free, ...three } = fullBelt(1000).folders;
+    expect(conveyorBlocked({ ...fullBelt(1000), folders: three }, ctx)).toBe(false);
+    // Full belt, schedule used up.
+    expect(conveyorBlocked({ ...fullBelt(60_000), nextSpawnIndex: 3 }, ctx)).toBe(false);
+    // Empty belt at the start.
+    expect(conveyorBlocked(at(0), ctx)).toBe(false);
   });
 });
 
