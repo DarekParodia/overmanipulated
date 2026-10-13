@@ -5,6 +5,7 @@ import type {
   FolderBonuses,
   FolderOutcome,
   FolderReason,
+  LossReason,
   PingKind,
   Priority,
   Role,
@@ -12,6 +13,7 @@ import type {
   StoryType,
   Verdict,
 } from '@redakcja/shared';
+import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import { pluralPl } from './plural.ts';
 
@@ -1013,9 +1015,52 @@ export const pl = {
   results: {
     wonHeadline: 'Wydanie gotowe!',
     lostHeadline: 'Wydanie przepadło',
-    wonLede: 'Gazeta idzie do druku.',
-    lostLede: 'Za dużo wpadek i spóźnień.',
+    /** Under the headline: why the level was won or lost (S7-06). */
+    lede: {
+      won: 'Gazeta idzie do druku.',
+      credibility: 'Wiarygodność spadła do zera.',
+      score: 'Wynik nie przekroczył zera.',
+    } satisfies Record<'won' | LossReason, string>,
     stars: (n: number) => `${n} z 3 gwiazdek`,
+    /** Captions under the three stars: what each one takes. */
+    starRule: {
+      one: 'wynik ponad 0',
+      from: (points: number) => `od\u00a0${points}\u00a0pkt`,
+    },
+    /** The progress line under the stars. */
+    toNext: (missing: number) => `brakuje ${missing}\u00a0pkt`,
+    toNextLabel: (stars: number, missing: number) =>
+      `Do ${stars} gwiazdek brakuje ${missing}\u00a0pkt`,
+    allStars: 'Komplet gwiazdek!',
+    starsNeedWin: 'Gwiazdki są tylko za wygraną',
+    thresholdsWhyOpen: 'Skąd te progi?',
+    thresholdsWhy: (max: number, two: number, three: number) =>
+      `Progi liczymy od najlepszego wyniku możliwego w tym wydaniu (${max}\u00a0pkt): dwie gwiazdki od ${two}%, trzy od ${three}%.`,
+    /** The 'Za co punkty' table: one row per outcome or bonus. */
+    totals: {
+      title: 'Za co punkty',
+      what: 'Za co',
+      count: 'Teczki',
+      points: 'Punkty',
+      credibility: 'Wiarygodność',
+      times: (n: number) => `×${n}`,
+      rows: {
+        correct: 'Dobre werdykty',
+        correction: 'Sprostowania',
+        speed: 'Premia za tempo',
+        proofs: 'Premia za dowody',
+        bossCall: 'Szef dzwonił',
+        weakProof: 'Słabe dowody',
+        wrong: 'Błędne werdykty',
+        expired: 'Przepadłe teczki',
+        unfinished: 'Nie zdążyliście',
+        other: 'Inne',
+      } satisfies Record<TotalsRowId, string>,
+      total: 'Razem',
+      note: (max: number) => `Pasek nie spada poniżej 0 i nie rośnie ponad ${max}.`,
+    },
+    /** Phones: the Kolegium's first page. */
+    summaryPage: 'Podsumowanie',
     score: 'Punkty',
     credibility: 'Wiarygodność',
     scoreDelta: (delta: string) => `${delta} pkt`,

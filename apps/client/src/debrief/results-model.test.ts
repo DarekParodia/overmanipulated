@@ -10,6 +10,7 @@ import {
   kolegiumCards,
   lossReasonOf,
   resultTotals,
+  revealedByKind,
   revealPlan,
   starProgress,
 } from './results-model.ts';
@@ -244,6 +245,24 @@ describe('reveal plan', () => {
     expect(revealPlan({ stars: 0, rows: 0, marks: 2, progress: false })).toEqual([
       { atMs: 520, kind: 'mark', index: 0 },
       { atMs: 900, kind: 'mark', index: 1 },
+    ]);
+  });
+
+  test('counts the shown steps of each kind', () => {
+    const plan = revealPlan({ stars: 2, rows: 3, marks: 2 });
+    expect(revealedByKind(plan, 0)).toEqual({ star: 0, progress: 0, row: 0, mark: 0 });
+    expect(revealedByKind(plan, 4)).toEqual({ star: 2, progress: 1, row: 1, mark: 0 });
+    expect(revealedByKind(plan, Number.POSITIVE_INFINITY)).toEqual({
+      star: 2,
+      progress: 1,
+      row: 3,
+      mark: 2,
+    });
+  });
+
+  test('phones: stars, the progress line and the rows, no marks', () => {
+    expect(revealPlan({ stars: 1, rows: 6, marks: 0 }).map((s) => s.atMs)).toEqual([
+      520, 1200, 1500, 1640, 1780, 1920, 2060, 2200,
     ]);
   });
 

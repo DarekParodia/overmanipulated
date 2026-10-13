@@ -58,6 +58,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Do następnej gwiazdki | `starProgress` (`StarProgress`) | Next star and missing points of a won level, plus thresholds as shares of `maxScore` |
 | Karta Kolegium | `kolegiumCards` (`KolegiumCard`) | One debrief card per folder (campaign, versus); in endless one per story with `count` and summed points |
 | Kolejność odsłaniania | `revealPlan` (`RevealStep`) | Results reveal timing: stars → progress line → totals rows → Kolegium marks |
+| Podsumowanie (wyniki) | `ResultsSummary` (`summaryPage`) | Results summary: stars with what each takes (`starRule`), the progress line (`toNext` / `allStars` / `starsNeedWin`), „Skąd te progi?” and the „Za co punkty” table; the left column on desktop, the Kolegium's first page on phones |
 | Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced. Shown as the dashed ghost card in a free queue slot (`queueView` ghost `'next'`, `pl.hud.next`) and as the conveyor sign's blue ring with „za N s” (`conveyorIndicator` kind `'incoming'`) |
 | Taśma pełna | `conveyorFull` (`conveyorBlocked`) | Snapshot flag: a scheduled folder is due but waits, because every conveyor tile holds a folder. The ghost card (`'full'`) and the conveyor sign („Pełna”, kind `'full'`) turn orange; cue `folder.beltFull` on the rising edge |
 | Status prawdziwości | `truth` | |
