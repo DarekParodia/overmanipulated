@@ -1,5 +1,4 @@
-# Production-like stack: Caddy (TLS, static client, reverse proxy) + Bun game server.
-# Usage: DOMAIN=gra.example.pl docker compose up -d --build   (see docs/deploy.md)
+
 services:
   server:
     build:
@@ -7,12 +6,12 @@ services:
       target: server
     restart: unless-stopped
     environment:
-      PORT: 3000
+      PORT: "3000"
       DATABASE_PATH: /data/redakcja.sqlite
     volumes:
       - db:/data
     expose:
-      - '3000'
+      - "3000"
 
   web:
     build:
@@ -22,17 +21,9 @@ services:
     depends_on:
       server:
         condition: service_healthy
-    environment:
-      DOMAIN: ${DOMAIN:-localhost}
     ports:
-      - '80:80'
-      - '443:443'
-      - '443:443/udp'
-    volumes:
-      - caddy-data:/data
-      - caddy-config:/config
+      # Only the host's local reverse proxy can access this port.
+      - "0.0.0.0:8080:80"
 
 volumes:
   db:
-  caddy-data:
-  caddy-config:
