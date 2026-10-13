@@ -23,7 +23,21 @@ describe('REST routes', () => {
       db: 'ok',
       rooms: 0,
       protocolVersion: PROTOCOL_VERSION,
+      config: { source: 'defaults', revision: 0 },
     });
+  });
+
+  it('GET /api/health reports where the running config came from and its revision', async () => {
+    const db = openDatabase(':memory:');
+    const registry = createRoomRegistry({ hub: createFakeHub().hub });
+    const app = createApp({
+      db,
+      registry,
+      devLatencyMs: 0,
+      configMeta: () => ({ source: 'file', revision: 3 }),
+    });
+    const body = await (await app.request('/health')).json();
+    expect(body).toMatchObject({ status: 'ok', config: { source: 'file', revision: 3 } });
   });
 
   it('GET /health is an alias for container checks', async () => {

@@ -1,0 +1,26 @@
+{
+  "$schema": "./config.schema.json",
+  "site": {
+    "publicOrigin": "https://bronsie.drkp.dev",
+    "operator": {}
+  },
+  "features": { "roomBrowser": false, "versus": true, "spectators": true, "intro": true },
+  "motd": null,
+  "rooms": { "maxRooms": 300, "defaultDifficulty": "normal" },
+  "ads": {
+    "enabled": false,
+    "verification": false,
+    "mode": "limited",
+    "client": "ca-pub-0000000000000000",
+    "slots": {
+      "menu": "1111111111",
+      "lobby": "2222222222",
+      "results": "3333333333",
+      "spectator": "4444444444"
+    },
+    "domains": ["bronsie.drkp.dev"],
+    "ageTreatment": "teen",
+    "adsTxt": []
+  },
+  "csp": { "extra": {}, "adsExtra": {} }
+}

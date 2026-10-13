@@ -6,3 +6,5 @@ test-results
 playwright-report
 data
 **/*.sqlite*
+# Mounted at runtime (CONFIG_PATH), never baked into an image.
+config/config.json
