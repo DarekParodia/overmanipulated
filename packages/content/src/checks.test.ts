@@ -322,7 +322,17 @@ describe('validate CLI', () => {
       'l4-woda-z-kranu-phone',
       'l6-frekwencja-w-poludnie-archive',
     ]);
-    expect(out).toContain('0 error(s), 6 warning(s)');
+    // New l4 stories wait for the bag pool (S7-32 writes them, S7-33 converts the level).
+    const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([
+      'l4-tlumy-na-sorze',
+      'l4-zimna-woda-po-obiedzie',
+      'l4-ratownik-o-kaskach',
+      'l4-basen-zamkniety',
+      'l4-sobotnie-szczepienia',
+    ]);
+    const warnings = decisiveNotJustifying.length + notScheduled.length;
+    expect(out).toContain(`0 error(s), ${warnings} warning(s)`);
     expect(result.exitCode).toBe(0);
   });
 
