@@ -1,14 +1,17 @@
 // Intro line export for the voiceover (S7-99): prints every narrator clip as JSON on stdout,
-// `{ [clipId]: { subtitle, tts } }`, in scene order. Writes no file. The voice generator
-// (`tools/audio/synth_voice.py`, S7-100) reads this output, speaks `tts` and keys the voice
-// sprite on the clip ids; the sync test compares the sprite against `subtitle`.
+// `{ [clipId]: { subtitle, tts, textSha1 } }`, in scene order. Writes no file. The voice generator
+// (`tools/audio/synth_voice.py`, S7-100) reads this output, speaks `tts`, keys the voice sprite on
+// the clip ids and copies `textSha1` into it; the sync test (`intro/voice-sync.test.ts`) recomputes
+// it from the subtitle, so a changed line shows up as a stale clip.
 //
 //   bun tools/audio/intro-lines.ts
 //
 // `tts` is the subtitle as a TTS engine should read it: non-breaking spaces become plain spaces,
 // the Polish quotes go, and the key and button names are respelled as they are said
 // (`PRONOUNCE`), since a lone capital letter is read unreliably.
+import { createHash } from 'node:crypto';
 import { INTRO_CLIPS } from '../../apps/client/src/intro/intro-script.ts';
+import { voiceText } from '../../apps/client/src/intro/voice-sprite.ts';
 
 /**
  * Respellings, applied in order to whole phrases of a subtitle (after the spaces and quotes are
@@ -36,12 +39,24 @@ export function ttsText(subtitle: string): string {
   return text;
 }
 
-export type IntroLine = { subtitle: string; tts: string };
+/** sha1 (hex) of the subtitle's words (`voiceText`): the voice sprite's `textSha1`. */
+export function voiceTextSha1(subtitle: string): string {
+  return createHash('sha1').update(voiceText(subtitle), 'utf8').digest('hex');
+}
+
+export type IntroLine = { subtitle: string; tts: string; textSha1: string };
 
 /** Every clip, keyed by id, in scene order. */
 export function introLines(): Record<string, IntroLine> {
   return Object.fromEntries(
-    INTRO_CLIPS.map((clip) => [clip.id, { subtitle: clip.subtitle, tts: ttsText(clip.subtitle) }]),
+    INTRO_CLIPS.map((clip) => [
+      clip.id,
+      {
+        subtitle: clip.subtitle,
+        tts: ttsText(clip.subtitle),
+        textSha1: voiceTextSha1(clip.subtitle),
+      },
+    ]),
   );
 }
 

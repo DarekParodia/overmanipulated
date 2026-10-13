@@ -34,9 +34,23 @@ Measured (production build, mp3 = worst case):
 
 | Route | Raw | gzip | brotli |
 | --- | --- | --- | --- |
-| Menu (first screen) | 1.09 MB | 542 KB | 510 KB |
-| Game (added by first match) | 1.61 MB | 839 KB | 790 KB |
-| **First load, both** | **2.70 MB** | **1.35 MB** | **1.27 MB** |
+| Menu (first screen) | 1.31 MB | 573 KB | 528 KB |
+| Game (added by first match) | 1.64 MB | 814 KB | 760 KB |
+| **First load, both** | **2.95 MB** | **1.35 MB** | **1.26 MB** |
+
+Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
+level music pair is l4's (the figure counts only the largest pair).
+
+### Game route against `gameMax`
+
+Stage 7 adds four minigames, role abilities, versus and the spectate screen to the game chunk,
+so the game route is recorded against the 1.6 MB gzip guard (`BUDGET.gameMax`) at each step. Past
+90 % of the guard (1.44 MB) the registry (`stations/minigames/index.ts`) lazy-loads the minigame
+components per station kind with `React.lazy`.
+
+| Task | Game route gzip | Share of `gameMax` | Game chunk gzip |
+| --- | --- | --- | --- |
+| S7-56 (all ten minigames) | 814 KB | 51 % | 301 KB |
 
 Real transfer in headless Chromium (webm audio, brotli estimate, whole flow menu, lobby, briefing,
 match): menu 434 KB, everything 1.7 MB brotli. The 10 MB limit is met about seven times over.

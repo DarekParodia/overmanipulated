@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import { join } from 'node:path';
 import { INTRO_CLIPS } from '../../apps/client/src/intro/intro-script.ts';
-import { introLines, PRONOUNCE, ttsText } from './intro-lines.ts';
+import { introLines, PRONOUNCE, ttsText, voiceTextSha1 } from './intro-lines.ts';
 
 describe('ttsText', () => {
   it('drops non-breaking spaces and Polish quotes, and respells key names', () => {
@@ -14,6 +14,20 @@ describe('ttsText', () => {
     expect(ttsText('Zdolność włączasz przyciskiem RB, a\u00a0potem…')).toBe(
       'Zdolność włączasz przyciskiem er be, a potem…',
     );
+  });
+});
+
+describe('voiceTextSha1', () => {
+  it('hashes the words, not the typographic spacing', () => {
+    // printf 'a b' | sha1sum
+    expect(voiceTextSha1('a b')).toBe('7dbde93504122a707f849f2c12bdd9de71b41929');
+    expect(voiceTextSha1('a\u00a0b')).toBe('7dbde93504122a707f849f2c12bdd9de71b41929');
+    expect(voiceTextSha1(' a \u202f  b\n')).toBe('7dbde93504122a707f849f2c12bdd9de71b41929');
+    expect(voiceTextSha1('a c')).not.toBe('7dbde93504122a707f849f2c12bdd9de71b41929');
+  });
+
+  it('treats composed and decomposed Polish letters alike (NFC)', () => {
+    expect(voiceTextSha1('z\u0307')).toBe(voiceTextSha1('\u017c'));
   });
 });
 
@@ -30,6 +44,8 @@ describe('intro line export', () => {
       subtitle:
         'Każdy może wybrać rolę. Rola daje premię i\u00a0zdolność, na przykład Ekspertyzę. Zdolność włączasz klawiszem R, a\u00a0potem musi się odnowić.',
       tts: 'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz klawiszem er, a potem musi się odnowić.',
+      // sha1 of the subtitle with plain spaces (printf '…' | sha1sum).
+      textSha1: 'c88fd2c298946d021ddb285e81eb1f04e28d1fcb',
     });
   });
 
