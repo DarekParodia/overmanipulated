@@ -1,6 +1,6 @@
 // Feedback driven by game state rather than single events: the station work loop (kept in step
-// with station phases), the deadline ticker, the last-30-seconds sting and the level-end
-// stingers. Also mounts the hit-stop and loop outputs of the feedback bus.
+// with station phases), the deadline ticker, the last-30-seconds sting, the full-belt alert and
+// the level-end stingers. Also mounts the hit-stop and loop outputs of the feedback bus.
 import { ENDLESS_LEVEL_ID, LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
 import { useGame } from '../net/game-store.ts';
 import { renderState } from '../scene/render-state.ts';
@@ -25,6 +25,11 @@ export function crossedLastSeconds(previousMs: number, currentMs: number): boole
     currentMs > 0 &&
     previousMs - currentMs <= MAX_TIMER_STEP_MS
   );
+}
+
+/** True when the belt just filled up and holds a scheduled folder back (S7-09). */
+export function beltJustFilled(previous: boolean, current: boolean): boolean {
+  return current && !previous;
 }
 
 export function startGameplayFeedback(): () => void {
@@ -87,6 +92,13 @@ export function startGameplayFeedback(): () => void {
       crossedLastSeconds(previous.timeLeftMs, state.timeLeftMs)
     ) {
       emitCue('level.lastSeconds');
+    }
+    if (
+      !state.levelEnd &&
+      useApp.getState().screen === 'game' &&
+      beltJustFilled(previous.conveyorFull, state.conveyorFull)
+    ) {
+      emitCue('folder.beltFull');
     }
 
     // Keep work loops in step with station phases (a lost event never leaves a loop running).

@@ -69,13 +69,57 @@ function input(partial: Partial<NextStepInput>): NextStepInput {
     targetFixtureId: null,
     device: 'keyboard',
     story: (id) => (id === 'story' ? story : undefined),
+    next: { kind: 'none' },
     ...partial,
   };
 }
 
 describe('nextStep', () => {
   test('nothing anywhere: wait', () => {
-    expect(nextStep(input({})).kind).toBe('wait');
+    expect(nextStep(input({}))).toEqual({
+      kind: 'wait',
+      text: 'Czekaj na nową teczkę',
+      targetFixtureIds: [],
+    });
+  });
+
+  test('nothing anywhere: says in whole seconds when the next folder comes', () => {
+    expect(nextStep(input({ next: { kind: 'in', ms: 12_000 } }))).toEqual({
+      kind: 'wait',
+      text: 'Czekaj – teczka za\u00a012\u00a0s',
+      targetFixtureIds: [],
+    });
+    expect(nextStep(input({ next: { kind: 'in', ms: 400 } })).text).toBe(
+      'Czekaj – teczka za\u00a01\u00a0s',
+    );
+    // Due now: it arrives with the next snapshot.
+    expect(nextStep(input({ next: { kind: 'in', ms: 0 } })).text).toBe('Czekaj na nową teczkę');
+  });
+
+  test('a full belt: take a folder off the conveyor', () => {
+    const step = nextStep(
+      input({
+        folders: [
+          folder('late', at('conveyor-0'), { deadlineMs: 90_000 }),
+          folder('soon', at('conveyor-1'), { deadlineMs: 30_000 }),
+        ],
+        next: { kind: 'full' },
+      }),
+    );
+    expect(step).toEqual({
+      kind: 'pickup',
+      text: 'Taśma pełna – zabierz teczkę',
+      targetFixtureIds: ['conveyor-1'],
+    });
+  });
+
+  test("a full belt does not hide a folder's event hint", () => {
+    const viral = folder('v', at('conveyor-0'), {
+      tag: { kind: 'viral' },
+    });
+    expect(nextStep(input({ folders: [viral], next: { kind: 'full' } })).text).toBe(
+      pl.events.hint.viral,
+    );
   });
 
   test('a folder dropped on the floor still needs picking up', () => {

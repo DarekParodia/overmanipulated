@@ -116,6 +116,30 @@
   display: inline;
 }
 
+/*
+ * The conveyor (S7-09): the ring fills blue towards the next scheduled folder and the pill
+ * counts down ("za 12 s"); while the belt is full the ring is orange and the pill says "Pełna".
+ */
+.nameIncoming,
+.nameFull {
+  display: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.sign[data-state="incoming"] .nameUp,
+.sign[data-state="full"] .nameUp {
+  display: none;
+}
+
+.sign[data-state="incoming"] .nameIncoming,
+.sign[data-state="full"] .nameFull {
+  display: inline;
+}
+
+.sign[data-state="full"] .name {
+  background: var(--orange);
+}
+
 .name {
   padding: 0 10px;
   border: var(--stroke) solid var(--outline);

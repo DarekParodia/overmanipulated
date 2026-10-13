@@ -10,7 +10,7 @@ import { type Cue, cueIds, cues } from './cues.ts';
 import { TICK_FAST_MS, TICK_SLOW_MS, tickIntervalMs, urgentTimeLeft } from './deadline-ticker.ts';
 import { cueForEvent, type GameplayEvent, wrongVerdictCue } from './event-cues.ts';
 import { createFeedback, resolveCue } from './feedback.ts';
-import { crossedLastSeconds } from './gameplay-feedback.ts';
+import { beltJustFilled, crossedLastSeconds } from './gameplay-feedback.ts';
 import { createPool, scaleAt, spawn, stepPool } from './particles/pool.ts';
 import { particleCapacity, particlePresets } from './particles/presets.ts';
 import { createHitStop, HIT_STOP_SCALE, timeScaleAt, triggerHitStop } from './time-scale.ts';
@@ -464,5 +464,22 @@ describe('level timer', () => {
     expect(crossedLastSeconds(40_000, 0)).toBe(false);
     // Resuming after a reconnect at 12 s left is not a fresh crossing.
     expect(crossedLastSeconds(45_000, 12_000)).toBe(false);
+  });
+});
+
+describe('full belt', () => {
+  it('alerts once, when the belt fills up', () => {
+    expect(beltJustFilled(false, true)).toBe(true);
+    expect(beltJustFilled(true, true)).toBe(false);
+    expect(beltJustFilled(true, false)).toBe(false);
+    expect(beltJustFilled(false, false)).toBe(false);
+  });
+
+  it('is a quiet ui-bus alert with a light tick', () => {
+    expect(cues['folder.beltFull']).toEqual({
+      severity: 1,
+      sound: { ids: ['hmm'], bus: 'ui', volume: 0.6 },
+      haptic: 'tick',
+    });
   });
 });

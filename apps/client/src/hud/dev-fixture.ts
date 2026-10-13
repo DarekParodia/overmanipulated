@@ -16,8 +16,17 @@ import { registerHudStory } from './story-lookup.ts';
 type VerdictEvent = Extract<GameEvent, { kind: 'verdictResult' }>;
 
 export type HudDevApi = {
-  /** Loads folders, score, credibility and timers; snapshots then only advance the clock. */
-  play(options?: { timeLeftMs?: number; score?: number; credibility?: number }): void;
+  /**
+   * Loads folders, score, credibility and timers; snapshots then only advance the clock.
+   * `folders` keeps only the first N fixture folders (fewer than three leave a slot for the
+   * next-folder ghost card).
+   */
+  play(options?: {
+    timeLeftMs?: number;
+    score?: number;
+    credibility?: number;
+    folders?: number;
+  }): void;
   set(patch: {
     score?: number;
     credibility?: number;
@@ -148,7 +157,7 @@ export function installHudDevFixture(): (() => void) | undefined {
         timeLeftMs: options.timeLeftMs ?? 95_000,
         score: options.score ?? 145,
         credibility: options.credibility ?? 70,
-        folders: fixtureFolders(useApp.getState().playerId ?? 'p-dev'),
+        folders: fixtureFolders(useApp.getState().playerId ?? 'p-dev').slice(0, options.folders),
         nextFolder: FIXTURE_NEXT_FOLDER,
         conveyorFull: false,
         levelEnd: null,

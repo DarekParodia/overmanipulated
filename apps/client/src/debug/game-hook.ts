@@ -49,11 +49,10 @@ export function installGameHook(): void {
   installed = true;
   let pinned: Pinned = {};
   const applySnapshot = useGame.getState().applySnapshot;
+  // One store update per snapshot, pinned fields included: a pinned flag never flips back for
+  // a moment, so state-driven cues (e.g. the full-belt alert) fire once, not on every snapshot.
   const wrapped: GameStore['applySnapshot'] = (snapshot) => {
-    applySnapshot(snapshot);
-    if (Object.keys(pinned).length > 0) {
-      useGame.setState(pinned);
-    }
+    applySnapshot({ ...snapshot, ...pinned });
   };
   const reset = useGame.getState().reset;
   useGame.setState({
