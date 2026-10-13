@@ -27,6 +27,7 @@ import {
 import {
   checkBag,
   checkEndlessDecks,
+  checkLayout,
   checkRegistration,
   ENDLESS_ISSUE_FILE,
   formatIssue,
@@ -36,6 +37,7 @@ import {
   validateContent,
   validateTechniques,
 } from './checks.ts';
+import { ENDLESS_LAYOUT } from './endless.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { LEVELS, STORIES } from './index.ts';
 import { levelFileSchema } from './schema.ts';
@@ -442,6 +444,80 @@ describe('registration', () => {
         message: 'registers "levels/gone.json", which does not exist',
       },
     ]);
+  });
+});
+
+describe('layout checks (checkLayout, S7-50)', () => {
+  type Found = { path: string; severity: string; message: string };
+  const layoutIssues = (layout: readonly string[]): Found[] => {
+    const found: Found[] = [];
+    checkLayout(layout, (path, severity, message) =>
+      found.push({ path: path.join('.'), severity, message }),
+    );
+    return found;
+  };
+
+  it('passes every campaign level and the endless room', () => {
+    for (const level of LEVELS) {
+      expect({ id: level.id, issues: layoutIssues(level.layout) }).toEqual({
+        id: level.id,
+        issues: [],
+      });
+    }
+    expect(layoutIssues(ENDLESS_LAYOUT)).toEqual([]);
+  });
+
+  it('warns once for same-row stations 2 columns apart and accepts 3', () => {
+    const base = realContent().level.layout;
+    const close = base.map((row, y) => (y === 1 ? '#CCCC...I.A.....R..#' : row));
+    expect(layoutIssues(close)).toEqual([
+      {
+        path: 'layout.1',
+        severity: 'warning',
+        message:
+          'station signs overlap on phones: imageSearch-0 and archive-0 are 2 columns apart; keep at least 3',
+      },
+    ]);
+    const apart = base.map((row, y) => (y === 1 ? '#CCCC...I..A....R..#' : row));
+    expect(layoutIssues(apart)).toEqual([]);
+  });
+
+  it('ignores stations in different rows and the same column', () => {
+    const base = realContent().level.layout;
+    const stacked = base.map((row, y) =>
+      y === 1 ? '#CCCC...I.......R..#' : y === 2 ? '#.......A..........#' : row,
+    );
+    expect(layoutIssues(stacked)).toEqual([]);
+  });
+
+  it('reports one error for a walled-off fixture and one for a walled-off spawn', () => {
+    const base = realContent().level.layout;
+    const walled = base.map(
+      (row, y) =>
+        ({
+          6: '#...............=..#',
+          7: '#..3....=DD=...=4=.#',
+          8: '#.=.....====....=..#',
+          9: '#=T=.............T.#',
+          10: '#.=................#',
+        })[y] ?? row,
+    );
+    expect(layoutIssues(walled)).toEqual([
+      {
+        path: 'layout.7',
+        severity: 'error',
+        message: 'spawn 4 at column 16 cannot be reached from spawn 1',
+      },
+      {
+        path: 'layout.9',
+        severity: 'error',
+        message: 'table-2 at column 2 cannot be reached from spawn 1',
+      },
+    ]);
+  });
+
+  it('skips a layout that does not parse (the schema reports it)', () => {
+    expect(layoutIssues(['###', '#?#', '###'])).toEqual([]);
   });
 });
 
