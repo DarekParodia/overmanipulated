@@ -44,8 +44,12 @@ Rules:
 - No per-frame allocation in particles, tweens or shake; pools are pre-sized.
 - Particle textures share one atlas; sounds use sprites; both are loaded with the level and
   counted in the download budget.
-- Every sound and texture has an entry in `apps/client/public/assets/CREDITS.md`
-  (CC0 / self-made only).
+- Every sound, voice line and texture has an entry in `apps/client/public/assets/CREDITS.md`.
+  Allowed licences: CC0, self-made, or CC BY 4.0 / MIT with the attribution in CREDITS.md (the
+  voice sprite's `licence` enum, `intro/voice-sprite.ts`, enforces this for the intro voice).
+  Never non-commercial or research-only, and that holds for the whole chain of a generated asset:
+  a TTS voice counts its dataset and every checkpoint it was fine-tuned from (S7-100 audit,
+  `docs/audio.md`).
 
 ## Feedback catalogue (starting point)
 

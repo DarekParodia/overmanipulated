@@ -264,6 +264,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Czas bez głosu | fallback timing (`fallbackMs`, `sceneDurationMs`, `introReducer`) | A scene without a voice lasts 400 ms per word, 2.5–12 s; with a voice it moves on 450 ms after the clip ends (at the latest the clip + 1.5 s) |
 | Wprowadzenie obejrzane | intro seen flag (`redakcja.intro.seen.v1`, `introSeen`, `markIntroSeen`, `shouldAutoplayIntro`) | Set on finishing or skipping; the game starting mid-intro does not set it |
 | Tekst dla lektora | TTS text (`ttsText`, `PRONOUNCE`, `tools/audio/intro-lines.ts`) | A subtitle as the voice says it: plain spaces, no quotes, key names respelled („klawiszem er”) |
+| Sprite lektora | voice sprite (`VoiceSprite`, `voiceSpriteSchema`, `loadVoiceSprite`, `loadIntroVoice`; `intro/voice-sprite.ts`) | `/assets/voice/intro.json` beside `intro.{webm,mp3}`: per clip `startMs`, `durationMs`, `textSha1`; written by `tools/audio/synth_voice.py`; optional (no sprite → subtitles and fallback timing) |
+| Licencja głosu | voice licence (`VOICE_LICENCES`) | `CC0-1.0`, `CC-BY-4.0`, `MIT` or `self-recorded-CC0` (a volunteer recording released under CC0); nothing non-commercial can ship |
+| Nagranie lektora | voice recording (`synth_voice.py --recordings DIR`) | One take per clip, `DIR/<clipId>.wav`, released under CC0 by the volunteer; replaces TTS with one command |
 
 ## Server config and ads (Stage 7)
 
