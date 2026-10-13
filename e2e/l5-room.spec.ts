@@ -15,6 +15,7 @@ import {
   openPlayer,
   PHONE,
   type Player,
+  skipStationHelp,
   trackContext,
 } from './helpers.ts';
 
@@ -118,6 +119,9 @@ test('level 5 runs in the 24×14 room with Stenogram and Metadane in two tabs', 
       : { ...PHONE, viewport: { width: 640, height: 360 } };
   const host = await openHost(browser, options);
   const guest = await openPlayer(browser, 'Łukasz', options);
+  // Both tabs open stations straight on their minigames (no first-use help card, S7-95).
+  await skipStationHelp(host.page);
+  await skipStationHelp(guest.page);
   await host.page.getByRole('button', { name: 'Otwórz pokój' }).click();
   const code = host.page.getByTestId('room-code');
   await expect(code).toHaveText(/^[A-Z]{4}$/);
