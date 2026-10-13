@@ -556,7 +556,7 @@ User decisions from the feedback Q&A (2026-10-13), binding for this stage:
 - [ ] **S7-62 — l6 new stories for imageSearch and archive.** *Depends on:* S7-61. [Details](design/stage7/tasks.md#s7-62)
 - [ ] **S7-63 — l6 phone and dataLibrary stories, multi-stamp picks, conversion to the bag.** *Depends on:* S7-62, S7-18. [Details](design/stage7/tasks.md#s7-63)
 - [ ] **S7-64 — Endless mode with all 10 stations.** *Depends on:* S7-56, S7-22, S7-60, S7-63, S7-50. [Details](design/stage7/tasks.md#s7-64)
-- [ ] **S7-65 — Technique cards for the new stations.** *Depends on:* S7-57, S7-58. [Details](design/stage7/tasks.md#s7-65)
+- [x] **S7-65 — Technique cards for the new stations.** *Depends on:* S7-57, S7-58. [Details](design/stage7/tasks.md#s7-65)
 - [ ] **S7-66 — M4 balance, performance and contest pass.** *Depends on:* S7-60, S7-63, S7-64, S7-49, S7-46. [Details](design/stage7/tasks.md#s7-66)
 
 ### M5 — Config, ads, shell

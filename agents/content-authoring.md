@@ -136,6 +136,10 @@ just saw. None of the four stations is hint-only.
   wpisu.”
 - A decisive stamp from any of them belongs in `justifyingStamps` (the validator warns
   otherwise), so add one only where the station really settles the story.
+- Encyclopedia cards (`techniques/techniques.json`) list at most 4 stations, most useful first,
+  and the `detect` text names each Stage 7 station it lists (S7-65). A new technique id for an
+  existing trick goes into that card's `aliases` (e.g. `zdjecie-z-innego-miejsca` on
+  `stare-zdjecie-nowy-podpis`), not onto a new card.
 
 ## Automated checks (`bun run validate:content`)
 
