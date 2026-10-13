@@ -10,7 +10,7 @@ import {
 } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 6;
+export const PROTOCOL_VERSION = 7;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -20,7 +20,10 @@ export const TICK_MS = 1000 / TICK_RATE_HZ;
 
 // --- Rooms ---------------------------------------------------------------------------------
 
-export const MAX_PLAYERS = 4;
+/** Players in one newsroom (one sim): a co-op room, or one versus team (S7-77). */
+export const MAX_TEAM_PLAYERS = 4;
+/** The per-sim cap (snapshot players, crew, spawns); an alias of `MAX_TEAM_PLAYERS`. */
+export const MAX_PLAYERS = MAX_TEAM_PLAYERS;
 export const ROOM_CODE_LENGTH = 4;
 /** Letters only, without the easily confused I and O. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -30,6 +33,33 @@ export const NICKNAME_MIN_LENGTH = 1;
 export const NICKNAME_MAX_LENGTH = 16;
 /** Number of distinct player colours; colour index is assigned per room slot. */
 export const PLAYER_COLOR_COUNT = 4;
+
+// --- Stage 7: rooms, versus, spectators (S7-77) -----------------------------------------------
+
+/** Newsrooms in one room: 1 in co-op, 2 in versus (team 0 Kurier, team 1 Głos). */
+export const MAX_TEAMS = 2;
+/** Players in one room across both teams (4v4). */
+export const MAX_ROOM_PLAYERS = MAX_TEAMS * MAX_TEAM_PLAYERS;
+/** Spectators (Widownia) in one room, on top of the players. */
+export const MAX_SPECTATORS = 8;
+/** A room's display name, after trimming. */
+export const ROOM_NAME_MAX_LENGTH = 24;
+/** The room browser's search text, after trimming. */
+export const ROOM_SEARCH_MAX_LENGTH = 24;
+/** Public rooms `GET /api/rooms` returns at most. */
+export const ROOM_LIST_MAX = 50;
+/** The browser-scoped client id sent on join (kick cooldown), in characters. */
+export const CLIENT_ID_LENGTH = { min: 16, max: 64 } as const;
+/** Spectators get every 2nd snapshot of each team (10 Hz at 20 Hz ticks). */
+export const SPECTATOR_SNAPSHOT_INTERVAL_TICKS = 2;
+/** Spectators get live match stats every 20 ticks (1 Hz). */
+export const SPECTATOR_STATS_INTERVAL_TICKS = 20;
+export const VERSUS = {
+  /** Endless has no natural end: a versus endless match lasts this long. */
+  endlessDurationS: 600,
+  /** The lead-change cue fires at most this often. */
+  leadCueCooldownMs: 5000,
+} as const;
 
 // --- Movement ------------------------------------------------------------------------------
 
@@ -237,6 +267,23 @@ export const MINIGAME_TIME_LIMIT_MS = 20_000;
  * Kartoteka shows the same card again. Elsewhere every retry gets a fresh puzzle.
  */
 export const MINIGAME_STABLE_SEED_STATIONS: readonly StationKind[] = ['sourceRegistry'];
+/**
+ * Versus only (S7-77, enforced from S7-80): a minigame success reported sooner than this after the
+ * minigame opened counts as a failure. Each value sits below a quick classmate's honest solve
+ * (the phone allows for the reporter, who skips the queue), so only scripted answers trip it.
+ */
+export const MINIGAME_MIN_SOLVE_MS = {
+  imageSearch: 1200,
+  archive: 1500,
+  sourceRegistry: 1200,
+  phone: 1000,
+  aiScanner: 600,
+  dataLibrary: 1000,
+  geolocation: 1000,
+  transcript: 1200,
+  crossCheck: 1200,
+  metadata: 1000,
+} as const satisfies Record<StationKind, number>;
 
 // --- Stage 7: difficulty (S7-16) -------------------------------------------------------------
 // Pure helpers that apply a preset live in `difficulty.ts`. Normal is the identity: every factor
@@ -264,7 +311,7 @@ export type DifficultyPreset = {
   readonly revealOnFail: boolean;
 };
 
-/** Difficulty presets; provisional until the balance-bot pass (S7-35) retunes them. */
+/** Difficulty presets, checked by the balance pass (S7-35, docs/balance.md "Difficulties"). */
 export const DIFFICULTY = {
   easy: {
     deadlineFactor: 1.3,
@@ -467,7 +514,7 @@ export const ENDLESS = {
   firstSpawnS: 4,
   startIntervalS: 18,
   minIntervalS: 7,
-  intervalFactorPerMinute: 0.9,
+  intervalFactorPerMinute: 0.88,
   /** Each interval is randomised by up to this fraction either way. */
   intervalJitter: 0.15,
   startDeadlineS: 80,

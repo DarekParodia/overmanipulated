@@ -17,7 +17,7 @@ const MIN_TARGET = 48;
  */
 const EDGE_SLACK = 3;
 
-/** No story has a stamp for the four new stations before S7-57/S7-58; the puzzle rolls one. */
+/** A story without a stamp for the four new stations, so each puzzle rolls its outcome. */
 const OVERLAY_STORY = 'l0-zalany-rynek';
 
 /** The test id of the button that gives `answer`. */

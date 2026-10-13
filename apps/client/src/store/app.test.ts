@@ -13,6 +13,11 @@ const ROOM: RoomStateMessage = {
   blunderVotes: [],
   difficulty: 'hard',
   run: { folders: 15, maxScore: 375, stars: { two: 205, three: 320 } },
+  mode: 'coop',
+  visibility: 'private',
+  name: null,
+  spectatorsAllowed: false,
+  spectators: [],
 };
 
 beforeEach(() => {

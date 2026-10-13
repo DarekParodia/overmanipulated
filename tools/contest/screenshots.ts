@@ -267,9 +267,9 @@ const FIXTURE_REASON = {
 } as const;
 
 /**
- * A story with a stamp for the station, from l6 when it has one. A station no story stamps yet
- * (the four Stage 7 stations before S7-57/S7-58) shows an l6 story: its minigame then rolls the
- * puzzle's outcome from the seed.
+ * A story with a stamp for the station, from l6 when it has one, else from any level (l5 stamps
+ * Stenogram and Metadane). A station no story stamps yet (Mapa and Inne media before S7-58) shows
+ * an l6 story: its minigame then rolls the puzzle's outcome from the seed.
  */
 function storyForStation(kind: StationKind) {
   const stamped = (s: (typeof STORIES)[number]) => s.stamps.some((st) => st.station === kind);

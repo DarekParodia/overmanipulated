@@ -22,6 +22,7 @@ import {
   createGameState,
   crewSnapshot,
   DEFAULT_DIFFICULTY,
+  DEFAULT_FEATURE_FLAGS,
   type Difficulty,
   ENDLESS,
   ENDLESS_LEVEL_ID,
@@ -43,7 +44,9 @@ import {
   type QueuedCommand,
   RECONNECT_GRACE_MS,
   type Role,
+  type RoomMode,
   type RoomPhase,
+  type RoomVisibility,
   type RunSummary,
   removePlayer as removeSimPlayer,
   type ServerMessage,
@@ -105,6 +108,14 @@ type Room = {
   blunderVotes: Map<string, { storyId: string; rowId: number | null }>;
   /** A solo player has the in-game menu open: the level is not stepped (S7-10). */
   paused: boolean;
+  /**
+   * Room settings on the wire since protocol 7 (S7-77). Every room is co-op, private, unnamed and
+   * without a Widownia until the lobby actions that change them land (S7-80..S7-82).
+   */
+  mode: RoomMode;
+  visibility: RoomVisibility;
+  name: string | null;
+  spectatorsAllowed: boolean;
 };
 
 /**
@@ -250,6 +261,8 @@ export function createRoomRegistry(options: RegistryOptions) {
         connected: p.connection !== null,
         role: p.role,
         ready: p.ready,
+        // One newsroom until versus teams land (S7-80).
+        team: 0,
       })),
       // Clients count the briefing down locally from `endsInMs`; it is re-sent with every
       // roomState (skip, join, reconnect), so there is no periodic broadcast.
@@ -265,6 +278,12 @@ export function createRoomRegistry(options: RegistryOptions) {
       })),
       difficulty: room.difficulty,
       run: room.run ? { ...room.run.summary } : null,
+      mode: room.mode,
+      visibility: room.visibility,
+      name: room.name,
+      spectatorsAllowed: room.spectatorsAllowed,
+      // Spectators join from S7-81.
+      spectators: [],
     });
   }
 
@@ -329,6 +348,11 @@ export function createRoomRegistry(options: RegistryOptions) {
       return;
     }
 
+    if (message.as === 'spectator') {
+      rejectSpectatorJoin(connection, message);
+      return;
+    }
+
     if (message.reconnectToken !== undefined) {
       const membership = tokens.get(message.reconnectToken);
       const room = membership ? rooms.get(membership.roomCode) : undefined;
@@ -378,6 +402,10 @@ export function createRoomRegistry(options: RegistryOptions) {
         briefing: null,
         blunderVotes: new Map(),
         paused: false,
+        mode: 'coop',
+        visibility: 'private',
+        name: null,
+        spectatorsAllowed: false,
       };
       rooms.set(code, room);
       const player = addToRoom(room, message.nickname, connection);
@@ -403,6 +431,25 @@ export function createRoomRegistry(options: RegistryOptions) {
     log.info('player joined', { room: room.code, player: player.id });
     broadcastEvent(room, { kind: 'playerJoined', playerId: player.id });
     broadcastRoomState(room);
+  }
+
+  /**
+   * Spectating is on the wire since protocol 7 but not served yet (S7-81): with the flag off, or
+   * when creating a room as a spectator, the feature is unavailable; an existing room's Widownia
+   * is always closed until the host can open it.
+   */
+  function rejectSpectatorJoin(connection: Connection, message: JoinMessage): void {
+    const spectatorsOn =
+      options.settings?.().features.spectators ?? DEFAULT_FEATURE_FLAGS.spectators;
+    if (!spectatorsOn || message.roomCode === undefined) {
+      sendError(connection, 'featureDisabled', 'spectators are not available');
+      return;
+    }
+    if (!rooms.has(message.roomCode)) {
+      sendError(connection, 'roomNotFound');
+      return;
+    }
+    sendError(connection, 'spectatorsOff');
   }
 
   function handleMessage(connection: Connection, message: ClientMessage): void {
@@ -529,6 +576,17 @@ export function createRoomRegistry(options: RegistryOptions) {
         // Like a level change: nobody stays ready for a difficulty they have not seen.
         resetReady(room);
         broadcastRoomState(room);
+        return;
+      case 'setMode':
+      case 'setTeam':
+      case 'setSpectator':
+      case 'setVisibility':
+      case 'setRoomName':
+      case 'setSpectatorsAllowed':
+      case 'kick':
+      case 'transferHost':
+        // On the wire since protocol 7 (S7-77); served from S7-80..S7-82. Ignored until then,
+        // like any action that does not apply.
         return;
       case 'backToLobby':
         if (player.id !== room.hostId) {
@@ -920,6 +978,10 @@ export function createRoomRegistry(options: RegistryOptions) {
         levelId: room.level.id,
         paused: room.paused,
         difficulty: room.difficulty,
+        mode: room.mode,
+        visibility: room.visibility,
+        name: room.name,
+        spectatorsAllowed: room.spectatorsAllowed,
         /** The dealt run with its seed (the seed never goes on the wire). */
         run: room.run ? { seed: room.run.seed, summary: { ...room.run.summary } } : null,
         game: room.game,
