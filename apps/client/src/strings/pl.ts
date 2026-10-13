@@ -1757,6 +1757,63 @@ export const pl = {
       done: 'Super! Tak trzymaj!',
     },
   },
+  /**
+   * The intro (S7-99): the player's buttons and the narrator's script. The narrator is the
+   * editor-in-chief; each line is both the subtitle (typeset at render) and the voiceover text
+   * (`tools/audio/intro-lines.ts` respells key names for the TTS). One sentence is one subtitle
+   * chunk and must fit two lines at 640×360 (intro/intro-script.test.ts). The scenes, their
+   * order and the scripted input tracks are in `intro/intro-script.ts`.
+   */
+  intro: {
+    label: 'Wprowadzenie',
+    skip: 'Pomiń',
+    next: 'Dalej',
+    prev: 'Wstecz',
+    pause: 'Pauza',
+    resume: 'Wznów',
+    /** „Dalej” on the last scene. */
+    finish: 'Do roboty!',
+    /** The chip shown while the browser still blocks audio; subtitles run on regardless. */
+    soundLocked: 'Stuknij, by włączyć głos',
+    scene: (n: number, total: number) => `Scena ${n} z ${total}`,
+    voice: {
+      welcome:
+        'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
+      folders:
+        'Każda teczka to zgłoszenie: prawda, fałszywka albo prawda bez kontekstu. Karta „Następna teczka” pokazuje, za ile sekund wpadnie kolejna.',
+      pickup: {
+        keyboard: 'Chodzisz klawiszami W, A, S i D. Podejdź do taśmy i weź teczkę klawiszem E.',
+        gamepad: 'Chodzisz lewą gałką. Podejdź do taśmy i weź teczkę przyciskiem A.',
+        touch:
+          'Chodzisz, przesuwając kciukiem po lewej stronie ekranu. Przy taśmie wciśnij przycisk „Podnieś”.',
+      } satisfies Record<Device, string>,
+      work: {
+        keyboard:
+          'Zanieś teczkę na stanowisko i przytrzymaj spację. Potem rozwiąż krótkie zadanie.',
+        gamepad:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk X. Potem rozwiąż krótkie zadanie.',
+        touch:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk „Pracuj”. Potem rozwiąż krótkie zadanie.',
+      } satisfies Record<Device, string>,
+      stations:
+        'Każde stanowisko sprawdza co innego, na przykład Lupa szuka starszych kopii zdjęcia. Dobrze rozwiązane zadanie daje pieczątkę: to twój dowód.',
+      desk: 'Z dowodami idź do stołu redakcyjnego. Najpierw wskaż dowód, potem werdykt: Publikuj, Odrzuć albo Z kontekstem.',
+      proof:
+        'Liczy się dowód, który naprawdę rozstrzyga. Słaby dowód to tylko połowa punktów, nawet przy dobrym werdykcie. Trudniejsze teczki wymagają dwóch albo trzech dowodów.',
+      credibility:
+        'Pilnuj terminów i wiarygodności gazety. Spóźnienie kosztuje, ale fałszywka w druku kosztuje najwięcej. Gdy wiarygodność spadnie do zera, wydanie przepada.',
+      roles: {
+        keyboard:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz klawiszem R, a potem musi się odnowić.',
+        gamepad:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz przyciskiem RB, a potem musi się odnowić.',
+        touch:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz czwartym przyciskiem po prawej, a potem musi się odnowić.',
+      } satisfies Record<Device, string>,
+      team: 'Rozmawiajcie i dzielcie się pracą. Fioletowy dymek podpowie, co dalej.',
+      end: 'Po wydaniu Kolegium wyjaśni każdą teczkę i pokaże, za co są punkty i gwiazdki. Do roboty!',
+    },
+  },
   /** Editorial briefing before a level (S3-03). */
   briefing: {
     label: 'Briefing redakcyjny',

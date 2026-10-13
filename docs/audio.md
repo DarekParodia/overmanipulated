@@ -107,9 +107,13 @@ uses the bus: the intro subtitles every line, so voice lines are not cues and ne
 - `applyVoiceVolume(settings)` runs from `initAudio`'s settings subscription, so moving the slider
   reaches a line that is playing.
 
-The audio files, the voice sprite json, their loudness window and size budget, and the licence
-notes come with S7-100. Until then `loadVoice` resolves false and the intro runs on subtitles and
-fallback timing alone.
+The lines come from the intro script (S7-99, `apps/client/src/intro/intro-script.ts`, words in
+`pl.intro.voice`): 17 clips, ids such as `welcome` or `pickup.touch`.
+`bun tools/audio/intro-lines.ts` prints them as JSON (`{clipId: {subtitle, tts}}`) for the
+generator; `tts` is the subtitle with plain spaces, no quotes and the key names respelled
+(`PRONOUNCE`). The audio files, the voice sprite json, their loudness window and size budget, and
+the licence notes come with S7-100. Until then `loadVoice` resolves false and the intro runs on
+subtitles and fallback timing alone.
 
 ## Budget
 

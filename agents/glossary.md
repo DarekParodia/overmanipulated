@@ -252,6 +252,14 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Audio bus | `AudioBus`: `music` / `sfx` / `ui` / `voice` | Each bus has its own volume slider; effective volume is `busVolume(settings, bus)` (`fx/audio/mix.ts`) |
 | Lektor (intro voiceover) | `voice` bus, `voiceVolume`, `fx/audio/voice.ts` (`loadVoice`, `playVoice`, `voiceStatus`) | Narrator lines of the intro; its own slider 'Lektor'; dips the music to `DUCK_TUNING.voiceDepth` (0.3); silent and skipped when muted, not loaded or locked |
 | Music duck | `Ducker`, `musicDucker`, `DUCK_TUNING` (`fx/audio/duck.ts`) | Short dip of the music bus under a stinger (`depth` 0.45) or a voice line (`voiceDepth` 0.3); the lowest active depth wins |
+| Wprowadzenie (intro) | `intro` (`apps/client/src/intro/`, `pl.intro`) | The narrated walk-through of the game (60–90 s): autoplays once per browser in the training lobby, replayable from „Jak grać?” and the settings |
+| Scena wprowadzenia | intro scene (`IntroScene`, `INTRO_SCENES`, `IntroSceneId`) | One of 11 steps (`welcome` … `end`); its stage is UI-kit art (`kit`) or the live sim (`engine`) |
+| Klip lektora | intro clip (`IntroClip`, `INTRO_CLIPS`, `IntroClipId`) | One narrator line: 8 shared plus 3 × 3 device variants (`pickup.touch`) = 17; the id keys the voice sprite and the line export |
+| Ścieżka sterowania sceny | scripted input track (`IntroTrackId`) | The inputs that drive the local sim in a gameplay scene: `conveyorArrivals`, `pickUpFolder`, `holdWork`, `earnStamp`, `citeAndVerdict` |
+| Napisy lektora | subtitles (`subtitleChunks`, `SubtitleChunk`) | Always on; one sentence per chunk, timed by its share of characters, at most 2 lines at 640×360 (`INTRO_SUBTITLE_LINE_CHARS`) |
+| Czas bez głosu | fallback timing (`fallbackMs`, `sceneDurationMs`, `introReducer`) | A scene without a voice lasts 400 ms per word, 2.5–12 s; with a voice it moves on 450 ms after the clip ends (at the latest the clip + 1.5 s) |
+| Wprowadzenie obejrzane | intro seen flag (`redakcja.intro.seen.v1`, `introSeen`, `markIntroSeen`, `shouldAutoplayIntro`) | Set on finishing or skipping; the game starting mid-intro does not set it |
+| Tekst dla lektora | TTS text (`ttsText`, `PRONOUNCE`, `tools/audio/intro-lines.ts`) | A subtitle as the voice says it: plain spaces, no quotes, key names respelled („klawiszem er”) |
 
 ## Server config and ads (Stage 7)
 
