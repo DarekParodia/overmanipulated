@@ -536,6 +536,13 @@ export const pl = {
     seconds: (s: number) => `${s} s`,
     noFolder: 'Brak teczki na stanowisku.',
     unknownStory: 'Nieznana teczka.',
+    /**
+     * Role abilities around the overlay (S7-41). The header's Ekspertyza button shows
+     * `touch.ability.expertise` (accessible name from `vocab.abilities`) and the lockout plate's
+     * line `vocab.abilities.secondChance`; this is the button while the press is on its way
+     * (the overlay closes when the stamp lands).
+     */
+    expertiseSending: 'Ekspertyza…',
   },
   desk: {
     title: 'Stół redakcyjny',

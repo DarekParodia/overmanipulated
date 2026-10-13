@@ -51,6 +51,11 @@ export type GameRuntime = {
   frame(now: number, dtMs: number): Map<string, RenderedPlayer>;
   /** Clears all match state; `levelId` selects the map for the next match. */
   reset(levelId?: string): void;
+  /**
+   * One role ability press from an overlay that captures the input (R / RB as the nav intent
+   * `ability`, S7-41): sent, or refused here with the "denied" cue, like a press in the world.
+   */
+  pressAbility(): void;
 };
 
 export function createRuntime(
@@ -87,6 +92,12 @@ export function createRuntime(
     buffer,
     get predictor() {
       return predictor;
+    },
+
+    pressAbility() {
+      if (localKnown && !paused) {
+        pressAbility(getLocalId());
+      }
     },
 
     onSnapshot(snapshot, receivedAt) {
