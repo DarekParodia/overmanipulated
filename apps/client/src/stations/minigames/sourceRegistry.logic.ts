@@ -27,6 +27,8 @@ export type CardField = {
 };
 
 export type SourceCard = {
+  /** Minigame seed the card was built from; a retry of the same card has the same seed. */
+  seed: number;
   kind: CardKind;
   /** Printed index-card number, for the look only. */
   number: number;
@@ -104,7 +106,7 @@ export function generateCard(seed: number, story: Story, stamp: Stamp | undefine
       flagged,
     };
   });
-  return { kind, number: 100 + rng.int(9900), fields };
+  return { seed, kind, number: 100 + rng.int(9900), fields };
 }
 
 // --- Rules -------------------------------------------------------------------------------
@@ -123,7 +125,12 @@ export type GameState = {
   /** The last filing missed a warning sign. */
   missing: boolean;
   outcome: Outcome;
+  /** The player has seen this card before (S7-14): it came back after a failure or a cancel. */
+  retry: boolean;
 };
+
+/** What the player left on a card that comes back (the retry memory, retry-memory.ts). */
+export type RememberedCard = { seed: number; circled: readonly boolean[] };
 
 export type Action =
   | { type: 'move'; delta: number }
@@ -143,15 +150,23 @@ export type Effect =
   | 'failed'
   | 'blocked';
 
-export function initialState(card: SourceCard): GameState {
+/**
+ * A fresh round of `card`. When the player left this very card earlier (`remembered` has the
+ * same seed), the warning signs they circled stay circled; a circle on a clean field never
+ * lasts (it is struck at once), so only flagged fields are restored. Mistakes and struck fields
+ * start fresh: the retry has its own mistake budget.
+ */
+export function initialState(card: SourceCard, remembered?: RememberedCard): GameState {
+  const memory = remembered?.seed === card.seed ? remembered : undefined;
   return {
     card,
     cursor: 0,
-    circled: card.fields.map(() => false),
+    circled: card.fields.map((field, i) => field.flagged && memory?.circled[i] === true),
     struck: card.fields.map(() => false),
     mistakes: 0,
     missing: false,
     outcome: 'playing',
+    retry: memory !== undefined,
   };
 }
 
