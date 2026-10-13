@@ -515,7 +515,7 @@ User decisions from the feedback Q&A (2026-10-13), binding for this stage:
 - [ ] **S7-27 — Content l0 Makieta: 7 new stories and conversion to the bag.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-27)
 - [ ] **S7-28 — Content l1 Burza: 5 imageSearch-only stories and conversion to the bag.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-28)
 - [ ] **S7-29 — Content l2 Wybory: 3 imageSearch-only stories and conversion to the bag.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-29)
-- [ ] **S7-30 — Content l3 Afera part 1: 6 stories (imageSearch 4, sourceRegistry 2).** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-30)
+- [x] **S7-30 — Content l3 Afera part 1: 6 stories (imageSearch 4, sourceRegistry 2).** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-30)
 - [ ] **S7-31 — Content l3 Afera part 2: 4 archive-only stories and conversion to the bag.** *Depends on:* S7-30. [Details](design/stage7/tasks.md#s7-31)
 - [ ] **S7-32 — Content l4 Zdrowie part 1: 5 stories (archive 4, phone 1).** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-32)
 - [ ] **S7-33 — Content l4 Zdrowie part 2: 4 stories, decisive-stamp cleanup, multi-stamp picks, conversion to the bag.** *Depends on:* S7-32, S7-18. [Details](design/stage7/tasks.md#s7-33)

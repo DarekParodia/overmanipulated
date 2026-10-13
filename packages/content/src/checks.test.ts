@@ -322,7 +322,17 @@ describe('validate CLI', () => {
       'l4-woda-z-kranu-phone',
       'l6-frekwencja-w-poludnie-archive',
     ]);
-    expect(out).toContain('0 error(s), 6 warning(s)');
+    // S7-30 writes l3 stories that S7-31 puts into the l3 bag pool.
+    const unscheduled = [...out.matchAll(/story "([^"]+)" is not scheduled/g)];
+    expect(unscheduled.map((match) => match[1])).toEqual([
+      'l3-zalana-sala',
+      'l3-dyrektor-na-plazy',
+      'l3-pusta-stolowka',
+      'l3-pracownia-robotyki',
+      'l3-psycholog-z-sieci',
+      'l3-zajecia-przed-matura',
+    ]);
+    expect(out).toContain('0 error(s), 12 warning(s)');
     expect(result.exitCode).toBe(0);
   });
 

@@ -824,5 +824,275 @@
       "realWorld": "Podrobione wpisy „na pożegnanie” krążą przy niemal każdej aferze. Najszybciej obalić je, pytając osobę, której rzekomo dotyczą."
     },
     "reviewed": false
+  },
+  {
+    "id": "l3-zalana-sala",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Zalana sala gimnastyczna w LO nr 3. Dyrekcja ukrywa awarię!",
+    "body": "Zdjęcie: woda po kostki na parkiecie sali. Autor pisze, że dyrektor kazał uczniom milczeć.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-zalana-sala-image",
+        "station": "imageSearch",
+        "text": "To zdjęcie krąży w sieci od 2018 r. jako hala sportowa w innym mieście.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-zalana-sala-source",
+        "station": "sourceRegistry",
+        "text": "Konto założone w tym miesiącu, publikuje głównie memy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-zalana-sala-archive",
+        "station": "archive",
+        "text": "W 2021 r. szkoła remontowała dach nad salą gimnastyczną.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-zalana-sala-phone",
+        "station": "phone",
+        "text": "Woźny: „Ja nic nie wiem, proszę pytać w sekretariacie”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-zalana-sala-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Stare zdjęcie zalanej hali z innego miasta, opisane jako sala w LO nr 3.",
+      "technique": "Stare zdjęcie, nowy podpis: prawdziwy kadr z innego miejsca i czasu dostaje świeży opis, który pasuje do gorącej afery.",
+      "tool": "Lupa obrazu znalazła najstarszą kopię zdjęcia z 2018 r. razem z pierwotnym opisem.",
+      "realWorld": "Przy każdej awarii, burzy czy pożarze w sieci wracają stare zdjęcia z innych miejsc. Wyszukiwanie obrazem pokazuje, kiedy kadr pojawił się po raz pierwszy."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-dyrektor-na-plazy",
+    "type": "photo",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dyrektor Wrzosek na plaży, a uczniowie bez lekcji!",
+    "body": "Zdjęcie: dyrektor na leżaku pod palmą. Podpis: „Tak wygląda jego zwolnienie lekarskie”.",
+    "source": "Anonimowy profil „Prawda o LO3”",
+    "stamps": [
+      {
+        "id": "l3-dyrektor-na-plazy-image",
+        "station": "imageSearch",
+        "text": "Oryginał to zdjęcie turysty z bloga podróżniczego. Twarz dyrektora wklejono.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-dyrektor-na-plazy-source",
+        "station": "sourceRegistry",
+        "text": "Profil anonimowy, wcześniej wrzucał głównie memy o szkole.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-dyrektor-na-plazy-archive",
+        "station": "archive",
+        "text": "Brak wzmianek o urlopie dyrektora w archiwum lokalnej prasy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-dyrektor-na-plazy-phone",
+        "station": "phone",
+        "text": "Sekretariat: „Nie udzielamy informacji o nieobecnościach pracowników”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-dyrektor-na-plazy-image"],
+    "technique": "tania-podrobka",
+    "debrief": {
+      "what": "Fotomontaż: twarz dyrektora wklejona w cudze zdjęcie z wakacji.",
+      "technique": "Tania podróbka: wystarczy prosty program do zdjęć, żeby wkleić twarz w cudzy kadr. Krzykliwy podpis odwraca uwagę od krzywych krawędzi i niepasującego światła.",
+      "tool": "Lupa obrazu odnalazła oryginał na blogu podróżniczym, z twarzą innego turysty.",
+      "realWorld": "Fotomontaże z osobami publicznymi w kompromitujących sytuacjach to stały element sporów w sieci. Wyszukiwanie obrazem często od razu pokazuje oryginał."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-pusta-stolowka",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Pusta stołówka w LO nr 3. Uczniowie bojkotują dyrektora!",
+    "body": "Zdjęcie: puste stoły i krzesła w szkolnej stołówce. Autor: „Nikt już tu nie je, tak protestujemy”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-pusta-stolowka-image",
+        "station": "imageSearch",
+        "text": "Pełny kadr z profilu szkoły: zegar wskazuje 7:40, stołówka otwiera się o 11:30.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-pusta-stolowka-source",
+        "station": "sourceRegistry",
+        "text": "Autor to uczeń szkoły, konto prywatne od kilku lat.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-pusta-stolowka-archive",
+        "station": "archive",
+        "text": "Brak wcześniejszych publikacji tego zdjęcia w archiwum prasy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-pusta-stolowka-phone",
+        "station": "phone",
+        "text": "Kucharka: „Ja tylko gotuję, proszę pytać w sekretariacie”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-pusta-stolowka-image"],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe, ale przycięte zdjęcie: stołówka rano, przed otwarciem, a nie w czasie bojkotu.",
+      "technique": "Wyrwane z kontekstu: kadr jest autentyczny, ale odcięto zegar na ścianie. Bez niego zwykły poranek wygląda jak protest.",
+      "tool": "Lupa obrazu znalazła pełne zdjęcie na profilu szkoły, z godziną na zegarze.",
+      "realWorld": "Przycięcie zdjęcia to najtańsza manipulacja: niczego nie trzeba podrabiać. Pytaj, co było poza kadrem, i szukaj pełnej wersji."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-pracownia-robotyki",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "LO nr 3 otwiera pracownię robotyki. Zobaczcie zdjęcia",
+    "body": "Zdjęcie: uczniowie przy stołach z ramionami robotów. Wpis udostępnia mama jednej z uczennic.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l3-pracownia-robotyki-image",
+        "station": "imageSearch",
+        "text": "Najstarsza kopia: profil szkoły, wczoraj. Brak wcześniejszych wersji zdjęcia.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-pracownia-robotyki-source",
+        "station": "sourceRegistry",
+        "text": "Autorka to prywatna osoba, konto bez historii publikacji.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-pracownia-robotyki-archive",
+        "station": "archive",
+        "text": "W 2022 r. szkoła przegrała konkurs na grant na pracownię.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-pracownia-robotyki-phone",
+        "station": "phone",
+        "text": "Sekretariat: „Dyrektora nie ma, proszę dzwonić jutro”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-pracownia-robotyki-image"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja: szkoła sama opublikowała to zdjęcie dzień wcześniej.",
+      "technique": "Brak manipulacji. Udostępnienie przez prywatną osobę nie czyni wiadomości fałszywą, a dawna porażka w konkursie nie wyklucza nowej pracowni.",
+      "tool": "Lupa obrazu pokazała, że zdjęcie pochodzi z oficjalnego profilu szkoły.",
+      "realWorld": "Wiele prawdziwych wiadomości dociera do nas z drugiej ręki. Wyszukiwanie obrazem pozwala dojść do pierwszej publikacji i ocenić ją u źródła."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-psycholog-z-sieci",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Psycholog ostrzega: dyrektor Wrzosek ma cechy tyrana",
+    "body": "„Ekspert” ocenia dyrektora na podstawie jednego nagrania. Wpis ma tysiące udostępnień i link do płatnego kursu.",
+    "source": "Profil „Dr Psycholog Radzi”",
+    "stamps": [
+      {
+        "id": "l3-psycholog-z-sieci-image",
+        "station": "imageSearch",
+        "text": "Grafika z wpisu jest nowa, brak wcześniejszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-psycholog-z-sieci-source",
+        "station": "sourceRegistry",
+        "text": "Autor nie figuruje w rejestrze psychologów. Tytuł „dr” nie ma pokrycia.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-psycholog-z-sieci-archive",
+        "station": "archive",
+        "text": "Archiwum prasy: dyrektor kieruje szkołą od 2017 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-psycholog-z-sieci-phone",
+        "station": "phone",
+        "text": "Szkoła: „Nie komentujemy wpisów w sieci”.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l3-psycholog-z-sieci-source"],
+    "technique": "falszywy-ekspert",
+    "debrief": {
+      "what": "Wpis fałszywego eksperta: autor nie jest psychologiem i sprzedaje kursy.",
+      "technique": "Fałszywy ekspert: tytuł i pewny ton dodają wpisowi powagi. Prawdziwy specjalista nie stawia diagnozy na podstawie jednego nagrania w sieci.",
+      "tool": "Kartoteka źródeł sprawdziła rejestr zawodowy: autora w nim nie ma.",
+      "realWorld": "„Eksperci” z mediów społecznościowych często używają tytułów, których nie mają, żeby sprzedać kurs lub zdobyć zasięgi. Zawody zaufania publicznego mają rejestry, które każdy może sprawdzić."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l3-zajecia-przed-matura",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Bezpłatne zajęcia przed maturą w LO nr 3 od listopada",
+    "body": "Lokalny portal pisze, że nauczyciele poprowadzą dodatkowe zajęcia z matematyki i polskiego po lekcjach.",
+    "source": "Portal „Kurier Nowobrzeski”",
+    "stamps": [
+      {
+        "id": "l3-zajecia-przed-matura-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie klasy z artykułu jest nowe, brak wcześniejszych kopii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l3-zajecia-przed-matura-source",
+        "station": "sourceRegistry",
+        "text": "Portal w rejestrze prasy, autorka podpisana. Ten sam komunikat jest na stronie szkoły.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l3-zajecia-przed-matura-archive",
+        "station": "archive",
+        "text": "Rok temu podobne zajęcia odwołano po dwóch tygodniach.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l3-zajecia-przed-matura-phone",
+        "station": "phone",
+        "text": "Nauczycielka matematyki: „Nic nie wiem, jestem na zwolnieniu”.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l3-zajecia-przed-matura-source"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja z rzetelnego portalu, zgodna z komunikatem szkoły.",
+      "technique": "Brak manipulacji. Wiadomość ma podpisaną autorkę, wydawcę w rejestrze prasy i potwierdzenie na oficjalnej stronie.",
+      "tool": "Kartoteka źródeł: portal jest w rejestrze prasy, a szkoła podała to samo na swojej stronie.",
+      "realWorld": "Czytanie w poprzek: zamiast oceniać tekst po wyglądzie, sprawdzasz, kto go wydał i czy inne źródła mówią to samo. To szybsze niż analiza samego tekstu."
+    },
+    "reviewed": false
   }
 ]
