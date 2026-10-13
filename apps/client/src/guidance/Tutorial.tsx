@@ -3,7 +3,7 @@
 // card never takes input except for its skip button, so the game keeps running underneath.
 // It can also be skipped without the pointer: Esc on the keyboard, B twice or a held
 // Back/Select on a gamepad (buttons the game itself does not use).
-import { type ReactNode, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { firstGamepad } from '../input/gamepad-access.ts';
 import { isInputCaptured } from '../input/ui-nav.ts';
@@ -11,7 +11,7 @@ import { type InputDevice, useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
-import { Icon } from '../ui/icons/Icon.tsx';
+import { Illustration, Key, PadButton } from './ControlsArt.tsx';
 import styles from './Guidance.module.css';
 import { placementFor } from './placement.ts';
 import { useGuidance } from './store.ts';
@@ -41,93 +41,6 @@ function stepText(id: TutorialStepId, device: InputDevice): string {
       return tutorial.minigame;
     case 'verdict':
       return tutorial.verdict;
-  }
-}
-
-/** A drawn key cap, gamepad button or touch button label. */
-function Key({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
-  return <span className={`${styles.key} ${wide ? styles.keyWide : ''}`}>{children}</span>;
-}
-
-function PadButton({ children }: { children: ReactNode }) {
-  return <span className={styles.padButton}>{children}</span>;
-}
-
-function TouchButton({ children }: { children: ReactNode }) {
-  return <span className={styles.touchButton}>{children}</span>;
-}
-
-/** The control to press, drawn the way the player sees it on their device. */
-function Control({ action, device }: { action: 'interact' | 'work'; device: InputDevice }) {
-  if (device === 'gamepad') {
-    return <PadButton>{action === 'interact' ? 'A' : 'X'}</PadButton>;
-  }
-  if (device === 'touch') {
-    return <TouchButton>{action === 'interact' ? pl.touch.interact : pl.touch.work}</TouchButton>;
-  }
-  return action === 'interact' ? <Key>E</Key> : <Key wide>Spacja</Key>;
-}
-
-function Illustration({ id, device }: { id: TutorialStepId | 'done'; device: InputDevice }) {
-  switch (id) {
-    case 'move':
-      if (device === 'keyboard') {
-        return (
-          <span className={styles.wasd}>
-            <Key>W</Key>
-            <span className={styles.wasdRow}>
-              <Key>A</Key>
-              <Key>S</Key>
-              <Key>D</Key>
-            </span>
-          </span>
-        );
-      }
-      return (
-        <span className={styles.stick}>
-          <span className={styles.stickKnob} />
-        </span>
-      );
-    case 'pickup':
-      return (
-        <span className={styles.pair}>
-          <Icon name="article" size={40} />
-          <Control action="interact" device={device} />
-        </span>
-      );
-    case 'work':
-      return (
-        <span className={styles.pair}>
-          <Icon name="clock" size={40} />
-          <Control action="work" device={device} />
-        </span>
-      );
-    case 'minigame':
-      return (
-        <span className={styles.pair}>
-          <Icon name="photo" size={44} />
-        </span>
-      );
-    case 'verdict':
-      return (
-        <span className={styles.verdicts}>
-          <span className={`${styles.verdict} ${styles.publish}`}>
-            <Icon name="publish" size={30} />
-          </span>
-          <span className={`${styles.verdict} ${styles.context}`}>
-            <Icon name="publishWithContext" size={30} />
-          </span>
-          <span className={`${styles.verdict} ${styles.reject}`}>
-            <Icon name="reject" size={30} />
-          </span>
-        </span>
-      );
-    case 'done':
-      return (
-        <span className={`${styles.verdict} ${styles.publish} ${styles.doneMark}`}>
-          <Icon name="publish" size={44} />
-        </span>
-      );
   }
 }
 
@@ -195,11 +108,13 @@ function SkipKeys({ device }: { device: InputDevice }) {
       {pl.guidance.tutorial.skipOr}
       {device === 'gamepad' ? (
         <>
-          <PadButton>B</PadButton>
-          <PadButton>B</PadButton>
+          <PadButton size="sm">B</PadButton>
+          <PadButton size="sm">B</PadButton>
         </>
       ) : (
-        <Key wide>Esc</Key>
+        <Key wide size="sm">
+          Esc
+        </Key>
       )}
     </span>
   );

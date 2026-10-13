@@ -3,7 +3,14 @@
 // minigame bench, to review against agents/design-rules.md on desktop and phone.
 
 import { TECHNIQUES } from '@redakcja/content';
-import { LEVEL_EVENT_KINDS, PING_KINDS, ROLES, STATION_KINDS, VERDICTS } from '@redakcja/shared';
+import {
+  LEVEL_EVENT_KINDS,
+  PING_KINDS,
+  ROLES,
+  STATION_KINDS,
+  type StationKind,
+  VERDICTS,
+} from '@redakcja/shared';
 import { useState } from 'react';
 import { cardIcon } from '../encyclopedia/card-icons.ts';
 import { EVENT_ICON } from '../events/event-model.ts';
@@ -11,6 +18,8 @@ import { emitCue } from '../fx/feedback.ts';
 import { PING_ICON } from '../pings/PingPicker.tsx';
 import { STATION_ICON } from '../stations/kit.tsx';
 import { MinigameBench } from '../stations/minigames/MinigameBench.tsx';
+import { StationHelpCard, type StationHelpVariant } from '../stations/StationHelpCard.tsx';
+import { type InputDevice, useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { formatNumber, typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
@@ -104,6 +113,44 @@ function buildIconGroups(): IconGroup[] {
 const iconGroups = buildIconGroups();
 
 const typeScale = ['3xl', '2xl', 'xl', 'lg', 'md', 'sm'];
+
+const DEVICES: readonly InputDevice[] = ['keyboard', 'gamepad', 'touch'];
+const HELP_VARIANTS: readonly StationHelpVariant[] = ['inPlay', 'full'];
+
+/** Both station help card variants (S7-94) for any station and device. */
+function StationHelpSection() {
+  const s = pl.styleguide;
+  const inputDevice = useApp((state) => state.inputDevice);
+  const [kind, setKind] = useState<StationKind>('imageSearch');
+  const [device, setDevice] = useState<InputDevice>(inputDevice);
+  return (
+    <section className={`panel ${styles.section}`} id="station-help">
+      <h2>{s.stationHelp}</h2>
+      <div className={styles.row}>
+        {STATION_KINDS.map((k) => (
+          <Button key={k} onClick={() => setKind(k)} aria-pressed={k === kind}>
+            {pl.vocab.stations[k]}
+          </Button>
+        ))}
+      </div>
+      <div className={styles.row}>
+        {DEVICES.map((d) => (
+          <Button key={d} onClick={() => setDevice(d)} aria-pressed={d === device}>
+            {pl.settings.devices[d]}
+          </Button>
+        ))}
+      </div>
+      <div className={styles.helpCards}>
+        {HELP_VARIANTS.map((variant) => (
+          <div key={variant} className={styles.helpCard} data-testid={`station-help-${variant}`}>
+            <h3>{s.stationHelpVariants[variant]}</h3>
+            <StationHelpCard kind={kind} device={device} variant={variant} onClose={() => {}} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export function Styleguide() {
   const [slamKey, setSlamKey] = useState(0);
@@ -276,6 +323,8 @@ export function Styleguide() {
           </Button>
         </div>
       </section>
+
+      <StationHelpSection />
 
       <section className={`panel ${styles.section}`} id="minigames">
         <h2>{s.minigames}</h2>

@@ -29,7 +29,7 @@ import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { useGame } from '../net/game-store.ts';
 import { backToLobby, leaveRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
-import { useEndlessBest } from '../store/progress.ts';
+import { endlessBestOn, useEndlessBest } from '../store/progress.ts';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
@@ -49,7 +49,9 @@ type EndlessTab = 'debrief' | 'room' | 'global';
  * mounts the effect twice, and says whether it is a new record.
  */
 function useEndlessRun(levelEnd: LevelEndMessage, roomCode: string | null, enabled: boolean) {
-  const best = useEndlessBest((s) => s.best);
+  // The run's own difficulty: every difficulty keeps its own best (S7-26).
+  const { difficulty } = levelEnd;
+  const best = useEndlessBest((s) => endlessBestOn(s.best, difficulty));
   const [newRecord, setNewRecord] = useState(false);
   const recorded = useRef(false);
   const survivedS = survivedSeconds(
@@ -64,11 +66,11 @@ function useEndlessRun(levelEnd: LevelEndMessage, roomCode: string | null, enabl
       return;
     }
     recorded.current = true;
-    if (useEndlessBest.getState().record({ score, survivedS })) {
+    if (useEndlessBest.getState().record(difficulty, { score, survivedS })) {
       setNewRecord(true);
       emitCue('endless.record');
     }
-  }, [enabled, score, survivedS]);
+  }, [enabled, difficulty, score, survivedS]);
   const own: OwnRun | null = roomCode ? { roomCode, score, survivedS } : null;
   return { survivedS, best, newRecord, own };
 }
@@ -359,7 +361,13 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
           </h2>
           {!showCards ? (
             <div className={styles.board}>
-              <LeaderboardList key={tab} scope={tab} roomCode={roomCode} own={run.own} />
+              <LeaderboardList
+                key={tab}
+                scope={tab}
+                difficulty={levelEnd.difficulty}
+                roomCode={roomCode}
+                own={run.own}
+              />
             </div>
           ) : (
             <Kolegium

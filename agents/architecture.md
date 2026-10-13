@@ -48,6 +48,15 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   - `GET /ws`: WebSocket upgrade for the game protocol.
   - `/api/*`: REST endpoints (leaderboard, content preview for the supervisor, room stats, and
     `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`).
+    An unknown `/api/*` path is a JSON 404, never HTML.
+  - Mounted last (`routes/shell.ts`): `/`, SPA paths and `/index.html` render the **HTML shell**
+    from the built client `index.html` (`shell/`): a per-request CSP nonce replaces Vite's
+    `CSP_NONCE_PLACEHOLDER`, the head gains the public config as JSON and, on ad hosts, the
+    AdSense verification meta tag. The CSP comes from `shell/csp.ts`: the base policy (identical
+    to the Caddyfile's, guarded by `tools/deploy/caddyfile.test.ts`) or, only where ads run for the
+    request host, Google's strict nonce + `'strict-dynamic'` policy in script-src. `/ads.txt`
+    serves `ads.adsTxt`. Reserved prefixes (`/api`, `/ws`, `/health`, `/assets`) and file-like
+    paths 404. Without a client build (dev) the shell is off and those paths 404.
 - REST input is validated with `@hono/zod-validator` and the shared Zod schemas. The app exports
   `type AppType = typeof routes` so the client calls REST through Hono's typed RPC client (`hc`)
   and never hand-writes `fetch` URLs or response types.

@@ -2,16 +2,20 @@
 // network sees). Usage:
 //   bun run smoke -- https://gra.example.pl [--insecure] [--strict]
 //
-// Checks, in order: /api/health and /health, the HTML page and every script/stylesheet it links,
-// response headers (warnings; failures with --strict), then a full game flow over `wss://…/ws`:
-// heartbeat, create room, second player joins by code, ready, start, skip the briefing and
-// receive live snapshots that acknowledge our input. Exit code 1 if any check fails.
-// --insecure accepts a self-signed certificate (Caddy's local CA on https://localhost).
+// Checks, in order: /api/health, /health, /api/config, the HTML page and every script/stylesheet
+// it links, response headers (warnings; failures with --strict), the HTML shell the game server
+// renders (embedded config, CSP mode, nonce rotation), /ads.txt, /prywatnosc and the manifest,
+// then a full game flow over `wss://…/ws`: heartbeat, create room, second player joins by code,
+// ready, start, skip the briefing and receive live snapshots that acknowledge our input. Exit
+// code 1 if any check fails. --insecure accepts a self-signed certificate.
 import {
   type ClientMessage,
   encodeMessage,
   PROTOCOL_VERSION,
+  PUBLIC_CONFIG_ELEMENT_ID,
+  type PublicConfig,
   parseServerMessage,
+  publicConfigSchema,
   type ServerMessage,
 } from '../../packages/shared/src/index.ts';
 
@@ -133,6 +137,63 @@ export function linkedAssets(html: string): string[] {
   return [...urls];
 }
 
+/**
+ * Whether a static file came back whole: 200, or a 206 whose Content-Range covers the whole file.
+ * Caddy 2.10's `precompressed br` answers a request without a Range header with such a 206;
+ * browsers use the body like a 200.
+ */
+export function isWholeFile(response: Pick<Response, 'status' | 'headers'>): boolean {
+  if (response.status === 200) {
+    return true;
+  }
+  const range = /^bytes 0-(\d+)\/(\d+)$/.exec(response.headers.get('content-range') ?? '');
+  return response.status === 206 && range !== null && Number(range[1]) + 1 === Number(range[2]);
+}
+
+/** The value of one CSP directive (`'self' wss:`), or undefined when the policy has none. */
+export function cspDirective(csp: string, name: string): string | undefined {
+  for (const part of csp.split(';')) {
+    const [directive, ...sources] = part.trim().split(/\s+/);
+    if (directive?.toLowerCase() === name) {
+      return sources.join(' ');
+    }
+  }
+  return undefined;
+}
+
+export type EmbeddedConfig =
+  | { kind: 'missing' }
+  | { kind: 'invalid'; error: string }
+  | { kind: 'ok'; config: PublicConfig };
+
+/**
+ * The public config the game server embeds in the HTML shell
+ * (`<script id="redakcja-config" type="application/json">`). Missing on the static fallback page
+ * Caddy serves while the game server is down.
+ */
+export function embeddedConfig(html: string): EmbeddedConfig {
+  const match = new RegExp(
+    `<script\\b[^>]*\\bid="${PUBLIC_CONFIG_ELEMENT_ID}"[^>]*>([\\s\\S]*?)</script>`,
+  ).exec(html);
+  if (match?.[1] === undefined) {
+    return { kind: 'missing' };
+  }
+  try {
+    const parsed = publicConfigSchema.safeParse(JSON.parse(match[1]));
+    return parsed.success
+      ? { kind: 'ok', config: parsed.data }
+      : { kind: 'invalid', error: parsed.error.issues[0]?.message ?? 'schema mismatch' };
+  } catch (error) {
+    return { kind: 'invalid', error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+/** The `nonce` attribute of the page's module script (the client entry), or null. */
+export function moduleScriptNonce(html: string): string | null {
+  const tag = /<script\b[^>]*\btype="module"[^>]*>/.exec(html)?.[0];
+  return (tag && /\bnonce="([^"]*)"/.exec(tag)?.[1]) || null;
+}
+
 export async function runSmoke(
   baseUrl: string,
   options: SmokeOptions = {},
@@ -197,10 +258,27 @@ export async function runSmoke(
     return 'ok';
   });
 
+  let apiConfig: PublicConfig | null = null;
+  await check('GET /api/config', async () => {
+    const response = await get('/api/config');
+    if (response.status !== 200) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const parsed = publicConfigSchema.safeParse(await response.json());
+    if (!parsed.success) {
+      throw new Error(`not a public config: ${parsed.error.issues[0]?.message ?? 'schema'}`);
+    }
+    apiConfig = parsed.data;
+    return `ads ${parsed.data.ads.enabled ? 'on' : 'off'}, revision ${parsed.data.revision}`;
+  });
+
   let assets: string[] = [];
+  const page: { html: string; headers: Headers | null } = { html: '', headers: null };
   await check('GET / (HTML)', async () => {
     const response = await get('/');
     const html = await response.text();
+    page.html = html;
+    page.headers = response.headers;
     if (response.status !== 200 || !(response.headers.get('content-type') ?? '').includes('html')) {
       throw new Error(`HTTP ${response.status}, ${response.headers.get('content-type')}`);
     }
@@ -237,7 +315,7 @@ export async function runSmoke(
     let bytes = 0;
     for (const asset of assets) {
       const response = await get(asset);
-      if (response.status !== 200) {
+      if (!isWholeFile(response)) {
         throw new Error(`${asset}: HTTP ${response.status}`);
       }
       const body = await response.arrayBuffer();
@@ -266,6 +344,120 @@ export async function runSmoke(
     const encoding = response.headers.get('content-encoding');
     await response.arrayBuffer();
     return encoding ? `content-encoding: ${encoding}` : { warn: 'scripts are sent uncompressed' };
+  });
+
+  // --- Pages the game server renders (S7-70, S7-71) -----------------------------------------
+  const shell = embeddedConfig(page.html);
+  await check('HTML shell: embedded config and CSP mode', async () => {
+    if (!page.headers) {
+      throw new Error('no page to inspect');
+    }
+    if (shell.kind === 'missing') {
+      return { warn: 'HTML shell not rendered by the game server (static fallback?)' };
+    }
+    if (shell.kind === 'invalid') {
+      throw new Error(`embedded config is not a public config: ${shell.error}`);
+    }
+    const csp = page.headers.get('content-security-policy') ?? '';
+    const scriptSrc = cspDirective(csp, 'script-src') ?? '';
+    const adsOn = shell.config.ads.enabled;
+    if (apiConfig && apiConfig.ads.enabled !== adsOn) {
+      throw new Error(`embedded config says ads ${adsOn ? 'on' : 'off'}, /api/config disagrees`);
+    }
+    if (scriptSrc.includes("'strict-dynamic'")) {
+      if (!adsOn) {
+        throw new Error('ads CSP (strict-dynamic) but the embedded config has ads off');
+      }
+      const nonce = moduleScriptNonce(page.html);
+      if (!nonce || !scriptSrc.split(' ').includes(`'nonce-${nonce}'`)) {
+        throw new Error("script-src names no 'nonce-…' matching the module script");
+      }
+      if ((page.headers.get('referrer-policy') ?? 'no-referrer') === 'no-referrer') {
+        return { warn: 'ads mode with Referrer-Policy no-referrer: consent message will not show' };
+      }
+      return 'ads mode: nonce policy matches the page';
+    }
+    if (adsOn) {
+      throw new Error('embedded config has ads on but the CSP is not the ads (nonce) policy');
+    }
+    if (!scriptSrc.split(' ').includes("'self'") || scriptSrc.includes("'unsafe-eval'")) {
+      throw new Error(
+        `base mode needs script-src 'self' without 'unsafe-eval', got "${scriptSrc}"`,
+      );
+    }
+    return "base mode: script-src 'self'";
+  });
+
+  await check('HTML shell nonce changes per request', async () => {
+    if (shell.kind !== 'ok') {
+      return { warn: 'no server-rendered shell to compare' };
+    }
+    const first = moduleScriptNonce(page.html);
+    const response = await get('/');
+    const second = moduleScriptNonce(await response.text());
+    if (!first || !second) {
+      if (shell.config.ads.enabled) {
+        throw new Error('ads mode but the module script has no nonce');
+      }
+      return {
+        warn: 'module script has no nonce: the build lacks the placeholder, ads cannot run',
+      };
+    }
+    if (first === second) {
+      throw new Error('same nonce twice: cached shell');
+    }
+    return 'fresh nonce';
+  });
+
+  await check('GET /ads.txt', async () => {
+    const response = await get('/ads.txt');
+    const body = await response.text();
+    if (response.status === 404) {
+      return 'not configured (404)';
+    }
+    const type = response.headers.get('content-type') ?? '';
+    if (/<html|<!doctype/i.test(body) || type.includes('html')) {
+      throw new Error('HTML instead of ads.txt: the SPA fallback swallowed /ads.txt');
+    }
+    if (response.status !== 200 || !type.startsWith('text/plain')) {
+      throw new Error(`HTTP ${response.status}, ${type}`);
+    }
+    const lines = body.split('\n').filter((line) => line.trim() !== '').length;
+    return `${lines} line(s), text/plain`;
+  });
+
+  await check('GET /prywatnosc', async () => {
+    const response = await get('/prywatnosc');
+    const html = await response.text();
+    const type = response.headers.get('content-type') ?? '';
+    if (response.status !== 200 || !type.includes('html')) {
+      throw new Error(`HTTP ${response.status}, ${type}`);
+    }
+    if (/<h1\b/.test(html)) {
+      return 'privacy page';
+    }
+    // Until the privacy page route lands (S7-75) the path renders the HTML shell.
+    if (embeddedConfig(html).kind !== 'missing') {
+      return 'HTML shell (privacy page route not deployed yet)';
+    }
+    throw new Error('HTML without a heading or the game shell');
+  });
+
+  await check('GET /manifest.webmanifest', async () => {
+    const response = await get('/manifest.webmanifest');
+    const body = await response.text();
+    const type = response.headers.get('content-type') ?? '';
+    if (!isWholeFile(response) || type.includes('html') || /<html|<!doctype/i.test(body)) {
+      throw new Error(`HTTP ${response.status}, ${type}: not the static manifest`);
+    }
+    const cache = response.headers.get('cache-control') ?? '';
+    if (!cache.includes('no-cache')) {
+      return { warn: `Cache-Control is "${cache}", expected no-cache` };
+    }
+    if (!type.startsWith('application/manifest+json')) {
+      return { warn: `Content-Type is "${type}", expected application/manifest+json` };
+    }
+    return `${type.split(';')[0]}, no-cache`;
   });
 
   // --- Game flow over the WebSocket ---------------------------------------------------------

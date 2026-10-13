@@ -128,6 +128,16 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
+
+| Polish | English | Notes |
+| --- | --- | --- |
+| Problem na stanowisku | `problemFromStamp(story, stamp)` | Whether a station's puzzle shows a problem: decisive stamp → the story is untrue; misleading → the story is true; irrelevant → no; no stamp → `null` (the minigame rolls its own chance). Shared by every minigame from S7-52 |
+| Opis w teczce / Dane pliku | `MetadataPuzzle.claim` / `MetadataPuzzle.file` | Metadane: what the folder says about a file (when, device, editing, place) / the file's own four fields (`METADATA_FIELD_IDS`: `taken`, `device`, `software`, `place`) |
+| Sprzeczność | `contradiction` (`MetadataOutcome`) | Exactly one file field contradicts the description |
+| Zgadza się | `consistent` (`MetadataOutcome`; answer `matches`) | No field contradicts the description |
+| Dane usunięte (Brak danych) | `stripped` (`MetadataOutcome`; answer `noData`) | A social site stripped the file data; missing data proves nothing. An irrelevant Metadane stamp always means this |
+
 ## Roles (`RoleId`)
 
 Passives and abilities live in `ROLE_PERKS` (`RolePerk`, S7-36): `fasterAt` × `workFactor` is the
@@ -147,11 +157,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Zdolność (roli) | ability (`abilitySchema`, `ABILITY`, `abilityOf`) | A role's active power, sent as the target-free `useAbility` command; the server resolves the target |
 | Odnowienie | cooldown (`ABILITY[a].cooldownMs`, `abilityReadyAtMs`) | Time until the ability is ready again; starts when the effect happens, not when armed |
 | Uzbrojona | armed (`abilityArmed`, stage `armed`) | Ekspertyza and Druga szansa wait for their trigger; a second press disarms |
-| Ekspertyza | `expertise` | The next minigame at a station of the role's family is solved at once |
+| Ekspertyza | `expertise` (`expertiseCovers`) | Solves the running minigame at a station of the role's family at once; armed, it stamps when the next covered hold ends instead of opening the minigame. Stamps with `via: 'expertise'` |
 | Telefon z terenu | `fieldCall` (`FieldCall`) | The carried folder gets its phone stamp after a call while walking |
 | Przedłużenie | `extendDeadline` (`pickExtendTarget`, `extendFolders`) | +20 s for an auto-picked folder: the carried one, else the one on the operated desk, else the most urgent; a botRaid wave moves together. Recorded in `extendedMs`; the speed bonus ignores the added time |
-| Druga szansa | `secondChance` | A failed minigame reopens without the lockout |
-| Podaj teczkę | `passFolder` | The carried folder goes to the nearest free teammate |
+| Druga szansa | `secondChance` | At a locked station (faced, or nearest within 2.5 tiles) the minigame reopens at once for the presser; armed, the next failed minigame reopens for the same operator. No lockout and no re-hold |
+| Podaj teczkę | `passFolder` (`pickPassTarget`) | The carried folder goes at once to the nearest free teammate within 6 tiles: connected (not in `SimContext.absent`), empty-handed, at no station or desk; ties by join order |
 | Koło ratunkowe | `rescue` (passive; `rescuesLeft`, `RESCUE_ADD_MS`, `folderRescued`) | A folder that reaches its deadline in the rescuer's hands gets +20 s, once per level |
 | Podgląd zdolności | ability preview (`abilityPreview`, `AbilityPreview`, `AbilityView`, `AbilityEnv`) | What a press would do now (`none`, `calling`, `armed`, `cooling`, `blocked`, `arm`, `now` with its target); one function for the sim, the HUD and the bots |
 | Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |
@@ -224,7 +234,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Virtual joystick | `touchJoystick` | Touch movement control |
 | Input device | `inputDevice`: `keyboard` / `gamepad` / `touch` | Last used device drives prompts |
 | Key hints | `KeyHints` (`pl.minigames.<kind>.keys`) | Key-cap chips under a minigame for the device in use; on touch they name the gesture („Stuknij”, „Przesuń”) or the button |
-| Station help (Pomoc stanowiska) | `stationHelp` (`pl.stationHelp.kinds[kind]`) | Per station: `purpose`, `proves`, 2–3 `steps` per device, `realWorld`; one source for the help card, practice, lobby details and contest legends |
+| Station help (Pomoc stanowiska) | `stationHelp` (`pl.stationHelp.kinds[kind]`) | Per station: `purpose`, `proves`, 2–3 `steps` per device, `realWorld`; one source for the help card (`StationHelpCard`, variants `inPlay` / `full`), practice, lobby details and contest legends |
 | Polish plural | `pluralPl(n, one, few, many)` | Polish noun form for a count (`strings/plural.ts`) |
 | Audio bus | `AudioBus`: `music` / `sfx` / `ui` / `voice` | Each bus has its own volume slider; effective volume is `busVolume(settings, bus)` (`fx/audio/mix.ts`) |
 | Lektor (intro voiceover) | `voice` bus, `voiceVolume`, `fx/audio/voice.ts` (`loadVoice`, `playVoice`, `voiceStatus`) | Narrator lines of the intro; its own slider 'Lektor'; dips the music to `DUCK_TUNING.voiceDepth` (0.3); silent and skipped when muted, not loaded or locked |
@@ -243,6 +253,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Reklamy niespersonalizowane | ads mode `nonPersonalized` | May use cookies, so they need consent; adults only (`ageTreatment: 'unspecified'`). Personalised ads are never offered |
 | Domena / host | `normalizeHost`, `hostAllowed`, `hostnameSchema` | Bare lower-case host without port; ad domains match exactly, never a parent or wildcard |
 | Znacznik nonce CSP | `CSP_NONCE_PLACEHOLDER` | Placeholder Vite writes into the built `index.html`; the HTML shell swaps in a per-request nonce |
+| Powłoka HTML | HTML shell (`renderShell`, `createShellRoutes`, `ShellAssets`) | The built `index.html` the game server renders per request (`apps/server/src/shell/`): nonce, embedded public config, verification meta tag, per-host CSP |
+| Strona zapasowa | static fallback (Caddyfile `handle_errors 502 503 504`) | The static `index.html` of the web image that Caddy serves while the game server is down: menu without the embedded config, base CSP, `no-store`; never for `/ads.txt` or the API |
+| Tryb CSP (bazowy / reklamowy) | `CspMode` (`base` / `ads`) | `base`: the strict same-origin policy, identical to the Caddyfile's; `ads`: nonce + `'strict-dynamic'` in script-src and `Referrer-Policy: strict-origin-when-cross-origin`, only on hosts where ads run |
 | Konfiguracja serwera | `serverConfig` (`serverConfigSchema`, `ServerConfig`, `config/config.json`) | Operator's product settings in `apps/server/src/config.ts`: `site`, `features`, `motd`, `rooms`, `ads`, `csp`. Strict (unknown keys refused); an invalid file stops the start and never replaces a running config |
 | Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |
 | Zgoda na reklamy | `ads.signOff` (`{by, date}`) | Supervisor or legal sign-off recorded in config.json; `ads.enabled: true` is refused without it, also when forced by `ADS_ENABLED` |

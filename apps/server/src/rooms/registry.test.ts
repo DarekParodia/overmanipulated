@@ -8,7 +8,7 @@ import {
 } from '@redakcja/shared';
 import { createFakeHub, type FakeConnection } from '../__fixtures__/fake-transport.ts';
 import { generateRoomCode } from './codes.ts';
-import { createRoomRegistry, type RoomRegistry } from './registry.ts';
+import { absentPlayerIds, createRoomRegistry, type RoomRegistry } from './registry.ts';
 
 let time = 0;
 let fake: ReturnType<typeof createFakeHub>;
@@ -409,6 +409,12 @@ describe('pausing from the in-game menu (S7-10)', () => {
 });
 
 describe('disconnects and reconnects', () => {
+  it('lists the dropped players as absent for Podaj teczkę (S7-38)', () => {
+    const connected = { id: 'p1', connection: {} };
+    expect(absentPlayerIds([connected, { id: 'p2', connection: {} }])).toBeUndefined();
+    expect(absentPlayerIds([connected, { id: 'p2', connection: null }])).toEqual(new Set(['p2']));
+  });
+
   it('keeps the slot for the grace period and restores it with the token', () => {
     const host = join('Ala');
     const { roomCode, reconnectToken, playerId } = welcomeOf(host);

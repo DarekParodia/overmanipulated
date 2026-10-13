@@ -33,3 +33,10 @@ export const OPERATOR_NAME_MAX_CHARS = 120;
 export const OPERATOR_LINE_MAX_CHARS = 200;
 /** Longest `ads.signOff.by` (who signed off on ads: supervisor or legal reviewer). */
 export const AD_SIGN_OFF_BY_MAX_CHARS = 120;
+
+// --- HTML shell (S7-70) --------------------------------------------------------------------
+
+/** Random bytes in each per-request CSP nonce (128 bits; 24 base64 characters). */
+export const CSP_NONCE_BYTES = 16;
+/** How long browsers and crawlers may cache `/ads.txt` (seconds); a config reload shows within it. */
+export const ADS_TXT_MAX_AGE_S = 300;

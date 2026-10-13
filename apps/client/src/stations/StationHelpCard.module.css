@@ -1,0 +1,321 @@
+/* Station help card (StationHelpCard.tsx). Purple = help (design-rules §3): the header and the
+   controls drawing. The body scrolls on short screens; the note and „Rozumiem” always show. */
+
+.card {
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 40rem;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface);
+  color: var(--text);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--pop-lg);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--purple);
+  color: var(--text-on-dark);
+  border-bottom: var(--stroke) solid var(--outline);
+}
+
+.badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  background: var(--surface);
+  color: var(--outline);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.headings {
+  display: grid;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.name {
+  margin: 0;
+  color: var(--text-on-dark);
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.purpose {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+/* Steps on the left, the drawing on the right; stacked when the card is narrow. */
+.how {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.steps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.number {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  background: var(--purple);
+  color: var(--text-on-dark);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.drawing {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 8rem;
+  max-width: 16rem;
+  padding: var(--space-3);
+  background: var(--purple);
+  color: var(--text-on-dark);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+}
+
+.control {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+
+.label {
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  text-align: center;
+}
+
+/* Each control presses down in turn, like a finger working the station. */
+.press {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  animation: press 2400ms var(--ease-out) infinite both;
+}
+
+.control:nth-child(2) .press {
+  animation-delay: 600ms;
+}
+
+.control:nth-child(3) .press {
+  animation-delay: 1200ms;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  background: var(--surface);
+  color: var(--outline);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+@keyframes press {
+  0%,
+  30%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  10% {
+    transform: translateY(0.2rem) scale(0.92);
+  }
+  18% {
+    transform: translateY(-0.1rem) scale(1.04);
+  }
+}
+
+/* Reduced motion (OS or in-game setting): a still drawing, no pop. */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .press {
+    animation: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .card,
+:root[data-reduced-motion="true"] .press {
+  animation: none;
+}
+
+.proof,
+.realWorld {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.proof strong {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.realWorld {
+  font-weight: 600;
+  line-height: var(--leading-body);
+}
+
+.footer {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--stroke) solid var(--outline);
+}
+
+.note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--text-soft);
+  font-weight: 800;
+  font-size: var(--text-sm);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+/* Narrow cards (phones, the overlay on small laptops): the drawing goes under the steps. */
+@container (max-width: 30rem) {
+  .how {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .drawing {
+    max-width: none;
+  }
+}
+
+/* Short landscape phones (640×360): slimmer header and body so the steps and button fit. */
+@media (max-height: 480px) {
+  .header {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .badge {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .name {
+    font-size: var(--text-lg);
+  }
+
+  .body {
+    gap: var(--space-2);
+    padding: var(--space-3);
+  }
+
+  .purpose {
+    font-size: var(--text-lg);
+  }
+
+  .drawing {
+    min-width: 0;
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .footer {
+    padding: var(--space-2) var(--space-3);
+  }
+}

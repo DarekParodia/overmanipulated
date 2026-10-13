@@ -1,10 +1,17 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+// Direct path, not the package: vite.config must not load zod or the rest of @redakcja/shared.
+import { CSP_NONCE_PLACEHOLDER } from '../../packages/shared/src/csp-nonce.ts';
 
 const serverTarget = process.env.GAME_SERVER ?? 'localhost:3000';
 
 export default defineConfig({
   plugins: [react()],
+  // Every <script> and <link> Vite writes into index.html gets nonce="<placeholder>" (plus a
+  // <meta property="csp-nonce"> its preload helper copies onto lazy chunks). The game server's
+  // HTML shell swaps in a fresh nonce per request (S7-70); vite dev and preview send no CSP, so
+  // the literal placeholder is harmless there.
+  html: { cspNonce: CSP_NONCE_PLACEHOLDER },
   server: {
     port: 5173,
     host: true,

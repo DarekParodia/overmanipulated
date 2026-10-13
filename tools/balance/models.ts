@@ -1,7 +1,7 @@
 // Human behaviour models for the balance bots. Every number here is an ASSUMPTION about how
 // students play, chosen to be plausible, not measured. Replace them with data from the playtests
 // (docs/playtests, S3-09) and re-run `bun run balance`; docs/balance.md explains the limits.
-import type { StationKind } from '../../packages/shared/src/index.ts';
+import type { Difficulty, StationKind } from '../../packages/shared/src/index.ts';
 
 export type Range = readonly [min: number, max: number];
 
@@ -141,3 +141,24 @@ export const MINIGAME_DIFFICULTY: Record<StationKind, number> = {
 export const MINIGAME_SPREAD = 0.3;
 /** A failing attempt ends this share of the way through a normal one (mistakes come early). */
 export const MINIGAME_FAIL_AT = 0.6;
+
+/**
+ * How much more often a minigame attempt fails on each difficulty: Easy allows an extra mistake
+ * and more time, Expert one mistake less and less time (DIFFICULTY in constants.ts). The bot's
+ * time cap follows the real limit (`minigameTimeLimitMs`); this factor models the rest.
+ */
+export const DIFFICULTY_FAIL_FACTOR: Record<Difficulty, number> = {
+  easy: 0.75,
+  normal: 1,
+  hard: 1.15,
+  expert: 1.4,
+};
+
+/**
+ * A retry at a station that keeps its puzzle (MINIGAME_STABLE_SEED_STATIONS: the Kartoteka shows
+ * the same card again) fails this much less often: the player has seen the card once.
+ */
+export const RETRY_FAIL_FACTOR = 0.5;
+
+/** No attempt fails more often than this, whatever the factors multiply to. */
+export const MAX_FAIL_CHANCE = 0.9;

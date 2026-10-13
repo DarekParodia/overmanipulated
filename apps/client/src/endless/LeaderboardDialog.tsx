@@ -1,5 +1,7 @@
-// The leaderboard as a modal sheet, opened from the lobby: room tab and global tab, one yellow
-// „Gotowe” closes it (Esc and the round close button too).
+// The leaderboard as a modal sheet, opened from the lobby: room tab and global tab, difficulty
+// tabs that open on the room's difficulty (S7-26), one yellow „Gotowe” closes it (Esc and the
+// round close button too).
+import type { Difficulty } from '@redakcja/shared';
 import { useEffect, useRef } from 'react';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
@@ -10,10 +12,13 @@ import styles from './LeaderboardDialog.module.css';
 export function LeaderboardDialog({
   open,
   roomCode,
+  difficulty,
   onClose,
 }: {
   open: boolean;
   roomCode: string;
+  /** The room's difficulty: the list the dialog opens on. */
+  difficulty: Difficulty;
   onClose(): void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -50,7 +55,7 @@ export function LeaderboardDialog({
             icon={<Icon name="reject" size={24} label={pl.leaderboard.close} />}
           />
         </header>
-        {open && <Leaderboard roomCode={roomCode} />}
+        {open && <Leaderboard roomCode={roomCode} initialDifficulty={difficulty} />}
         <footer className={styles.footer}>
           <Button type="submit" variant="primary" big>
             {pl.leaderboard.done}
