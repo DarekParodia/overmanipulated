@@ -1,0 +1,2 @@
+ALTER TABLE `leaderboard_entries` ADD `difficulty` text DEFAULT 'normal' NOT NULL;--> statement-breakpoint
+CREATE INDEX `leaderboard_difficulty_score_idx` ON `leaderboard_entries` (`difficulty`,`score`);

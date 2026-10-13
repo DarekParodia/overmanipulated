@@ -18,7 +18,7 @@ zbierać jak najmniej danych: **bez kont, bez e-maili, bez śledzenia.**
 | Dane | Po co | Jak długo |
 | --- | --- | --- |
 | Pseudonim gracza | Pokazanie go w pokoju, na biurku i w tablicy wyników | Tylko na czas rozgrywki. Do bazy trafia wyłącznie po zakończeniu przebiegu w trybie bez końca (patrz niżej) |
-| Wynik drużyny w trybie bez końca: kod pokoju, pseudonimy graczy, liczba punktów, czas przetrwania, data | Tablica wyników (globalna i klasowa) | **90 dni**, potem automatyczne usunięcie (sprawdzane co godzinę) |
+| Wynik drużyny w trybie bez końca: kod pokoju, pseudonimy graczy, liczba punktów, poziom trudności, czas przetrwania, data | Tablica wyników (globalna i klasowa, osobna dla każdego poziomu trudności) | **90 dni**, potem automatyczne usunięcie (sprawdzane co godzinę) |
 | Głosy „Wpadka dnia” po omówieniu poziomu: który poziom i która wiadomość zmyliła | Statystyki dla nauczyciela. Głos nie jest powiązany z pseudonimem | **90 dni** |
 | Stan gry w trakcie poziomu (pozycje, teczki, punkty) | Działanie rozgrywki | Tylko w pamięci serwera. Znika po zamknięciu pokoju, nigdy nie trafia do bazy |
 | Adres IP | Ochrona serwera przed nadużyciami (limit prób dołączania do pokoi) | Tylko chwilowo w pamięci serwera; **nie jest zapisywany** w bazie ani w logach |
@@ -34,7 +34,8 @@ pokazuje wyniki z wielu klas). Dlatego pseudonim nie powinien zdradzać tożsamo
 Gra zapisuje w przeglądarce (pamięć lokalna, nie ciasteczka), na urządzeniu ucznia:
 
 - ostatnio użyty pseudonim, ustawienia gry (np. dźwięk, animacje),
-- postęp: najlepsze wyniki poziomów, odblokowane karty w Encyklopedii manipulacji,
+- postęp: najlepsze wyniki poziomów i trybu bez końca (osobno dla każdego poziomu trudności),
+  odblokowane karty w Encyklopedii manipulacji,
 - tymczasowy znak pozwalający wrócić do pokoju po chwilowej utracie połączenia.
 
 Te dane nigdy nie opuszczają urządzenia, poza pseudonimem wysyłanym do pokoju. Można je

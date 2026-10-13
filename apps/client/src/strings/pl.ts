@@ -1438,8 +1438,8 @@ export const pl = {
     rank: (n: number) => `Miejsce ${n}`,
     row: (rank: number, players: string, score: string, time: string) =>
       `${rank}. ${players}: ${score} pkt, ${time}`,
-    listLabel: (scope: 'room' | 'global') =>
-      scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich',
+    listLabel: (scope: 'room' | 'global', difficulty: string) =>
+      `${scope === 'room' ? 'Wyniki w tym pokoju' : 'Najlepsze wyniki wszystkich'}, poziom ${difficulty.toLowerCase()}`,
   },
   /** S5-05 accessibility: captions for audio-only cues and the muted-sound suggestion. */
   a11y: {

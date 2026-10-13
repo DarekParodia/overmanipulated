@@ -121,7 +121,7 @@ function handleMessage(message: ServerMessage): void {
       return;
     case 'levelEnd':
       useGame.getState().setLevelEnd(message);
-      useProgress.getState().record(message.levelId, message.stars);
+      useProgress.getState().record(message.levelId, message.difficulty, message.stars);
       return;
     case 'event': {
       const { event } = message;
