@@ -103,7 +103,11 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   rescues left hangs on the ring. Folder cards carry the ability marks: an hourglass „+20” chip
   on the top-right corner after Przedłużenie or Koło ratunkowe, a lifebuoy on the top-left corner
   while a Ratownik with the rescue left carries the folder, and a dashed blue outline on the card
-  the player's ready press would act on. Captions, event banners and verdict toasts start
+  the player's ready press would act on. In a minigame the player's Ekspertyza covers, the
+  overlay header shows a white „Ekspert” pill (green bolt, key cap) between the time bar and
+  the back key, icon-only 48 px on phones (S7-41); the lockout plate adds a blue
+  „[R] Druga szansa” line while that press would reopen the station (a hint: hidden with hints
+  off and on Ekspert). Captions, event banners and verdict toasts start
   under the measured HUD band (`--hud-band`: the lowest edge of the pill, the queue and the
   menu button), never at a fixed offset, so nothing covers the HUD at any screen or text size.
 - **In-game menu** (the top-right button, Esc, a pad's Start): one sheet, never a second screen.
@@ -117,7 +121,12 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   the main action at the bottom. Desktop: right half, scene visible. Phone: full width, close
   button always reachable.
 - **Menus:** content in one centred column ≤ 560 px wide on the sky background; the game logo on
-  top. Lobby: player cards in a row, big "Gotowy" toggle, one yellow start button.
+  top. Lobby: player cards in a row, big "Gotowy" toggle, one yellow start button. The role
+  picker (S7-44) is 7 compact passes (icon + name; 7 columns on desktop, 4 below 1100 px, 4
+  compact passes on landscape phones, 2 at ≤ 560 px) with the teammates' player marks, and one
+  white detail panel under them: „Premia” with the level's station chips, „Zdolność” with the key
+  cap (R / RB / „Przycisk”), what it does and „co 60 s”, plus a lock note when a perk does
+  nothing on the chosen level. Never yellow; selection stays the blue ring and ✓ badge.
   The main menu may show the operator's message of the day („Komunikat redakcji”) between the
   logo and the card: a white card with a blue (info) or orange (warning) outline and icon and a
   close button. Never yellow: the menu keeps one main action.

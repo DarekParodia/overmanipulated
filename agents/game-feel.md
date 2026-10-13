@@ -44,8 +44,12 @@ Rules:
 - No per-frame allocation in particles, tweens or shake; pools are pre-sized.
 - Particle textures share one atlas; sounds use sprites; both are loaded with the level and
   counted in the download budget.
-- Every sound and texture has an entry in `apps/client/public/assets/CREDITS.md`
-  (CC0 / self-made only).
+- Every sound, voice line and texture has an entry in `apps/client/public/assets/CREDITS.md`.
+  Allowed licences: CC0, self-made, or CC BY 4.0 / MIT with the attribution in CREDITS.md (the
+  voice sprite's `licence` enum, `intro/voice-sprite.ts`, enforces this for the intro voice).
+  Never non-commercial or research-only, and that holds for the whole chain of a generated asset:
+  a TTS voice counts its dataset and every checkpoint it was fine-tuned from (S7-100 audit,
+  `docs/audio.md`).
 
 ## Feedback catalogue (starting point)
 
@@ -106,6 +110,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `metadata.right` / `metadata.mistake` | Metadane minigame (S7-52): the contradicting field, „Zgadza się” or „Brak danych” picked right / a wrong pick | the contradicting field gets a red ✗ mark and pops, or every field gets a ✓ (for „Brak danych” the result banner explains that stripped data proves nothing) / the pick is struck through and the panel nudges (none under reduced motion) | stamp thud / back | — (DOM overlay, no world position; caption skipped: own action) | thud / error | ● |
 | `geolocation.found` / `geolocation.miss` | Mapa minigame (S7-55): the district whose two landmarks stand in the photo, or „Nie ma na mapie”, picked right / a wrong pick | a pin drops onto the found district (the button gets a thick outline) / the pick is struck through with a red pencil line and the map nudges (none under reduced motion) | stamp thud / back | — (DOM overlay, no world position; caption skipped: own action) | thud / error | ● |
 | `transcript.find` / `transcript.right` / `transcript.miss` | Stenogram minigame (S7-53): the clip's line picked in the record / the round solved (the right „Sens ten sam” or „Sens zmieniony”, or „Nie ma w zapisie”) / a wrong line, button or judgement | a yellow highlighter sweeps the found line, the cut words get an orange underline / a „Sprawdzone” banner with the reason / the pick is struck through in red and the record nudges (sweep and nudge off under reduced motion) | click / stamp thud / back | — (DOM overlay, no world position; caption skipped: own action) | tick / thud / error | ● |
+| `crossCheck.right` / `crossCheck.wrong` | Inne media minigame (S7-54): the right answer („Potwierdzają”, „Zaprzeczają”, „Za mało źródeł”) / a wrong answer (one fails the round) | the result banner pops; the cards that count lift, copies get a red „kopia” stamp, satire and anonymous cards fade (the reveal only on success or when the difficulty allows it) / the answer is struck through and the answers row nudges (none under reduced motion) | stamp thud / back | — (DOM overlay, no world position; caption skipped: own action) | thud / error | ● |
 | `ambience.phone` / `printer` / `fax` / `typing` | random, quiet, never two at once (`fx/audio/ambience.ts`); skipped while a station or desk overlay is open | idle scene props (fans, clock, glowing monitors, paper stacks) live in `scene/Ambience.tsx` | distant phone / printer / fax / typing on the `sfx` bus, room tone ducks under overlays | dust motes (high preset) | — | ● |
 | `ability.extendDeadline` / `role.rescue` HUD | `cardHop` | the extended folder's queue card hops | — | — | — | ● |
 | `briefing.intro` / `briefing.land` / `briefing.ready` | briefing card appears / lands on the desk / "Gotowy!" pressed | newspaper spins and drops in, squashes on landing (fade under reduced motion; tap skips) | paper slide / paper slap / stamp | — | — / thud / tick | ● → ●● |

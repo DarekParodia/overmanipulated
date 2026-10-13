@@ -17,6 +17,8 @@ const MINIGAMES = [
   { kind: 'transcript', root: 'transcript', storyId: 'l5-nagranie-podatek' },
   // No Mapa stamp before S7-58 either.
   { kind: 'geolocation', root: 'geolocation', storyId: 'l5-nagranie-podatek' },
+  // No story carries an Inne media stamp before S7-58 either.
+  { kind: 'crossCheck', root: 'cross-check', storyId: 'l0-zalany-rynek' },
 ] as const;
 
 const HIDE_PERF = '[data-testid="perf-overlay"] { display: none !important; }';
@@ -29,7 +31,7 @@ type Hook = {
 // S7-15: the key hints under every minigame follow the device in use; on touch they name the
 // gesture or button. Phones are checked at the smallest supported landscape size, 640×360.
 test('every minigame shows key hints for the device in use', async ({ browser }, testInfo) => {
-  // Nine overlays and nine screenshots of a software-rendered WebGL page.
+  // Ten overlays and ten screenshots of a software-rendered WebGL page.
   test.slow();
   const touch = testInfo.project.name !== 'desktop';
   const options = touch ? { ...PHONE, viewport: { width: 640, height: 360 } } : DESKTOP;

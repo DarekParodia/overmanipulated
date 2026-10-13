@@ -2,14 +2,20 @@
 // receipt; TypeScript types are inferred from them (AGENTS.md rule 5).
 import { z } from 'zod';
 import {
+  CLIENT_ID_LENGTH,
   ENDLESS,
   MAX_PLAYERS,
   MAX_REQUIRED_STAMPS,
+  MAX_ROOM_PLAYERS,
+  MAX_SPECTATORS,
+  MAX_TEAM_PLAYERS,
+  MAX_TEAMS,
   NICKNAME_MAX_LENGTH,
   NICKNAME_MIN_LENGTH,
   PLAYER_COLOR_COUNT,
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
+  ROOM_NAME_MAX_LENGTH,
 } from './constants.ts';
 import {
   abilitySchema,
@@ -54,6 +60,41 @@ const entityId = z.string().min(1).max(64);
 export const levelIdSchema = z.string().min(1).max(64);
 export const reconnectTokenSchema = z.string().min(16).max(64);
 
+/**
+ * Opaque random id a browser keeps in localStorage and sends on join (S7-77), so a kick cooldown
+ * can follow a browser rather than an IP a whole class shares.
+ */
+export const clientIdSchema = z
+  .string()
+  .min(CLIENT_ID_LENGTH.min)
+  .max(CLIENT_ID_LENGTH.max)
+  .regex(/^[A-Za-z0-9_-]+$/);
+
+/** Razem (one shared newsroom) or Na punkty (two newsrooms race on the same run). */
+export const roomModeSchema = z.enum(['coop', 'versus']);
+/** Private rooms are reached by code only; public ones show in the room browser. */
+export const roomVisibilitySchema = z.enum(['private', 'public']);
+/** A room member plays, or watches from the Widownia. */
+export const memberKindSchema = z.enum(['player', 'spectator']);
+/** 0 = Kurier, 1 = Głos. A co-op room has team 0 only. */
+export const teamIndexSchema = z
+  .number()
+  .int()
+  .min(0)
+  .max(MAX_TEAMS - 1);
+/**
+ * A room's display name: trimmed, no control characters. The shared name filter (S7-78) is
+ * applied by the server, which answers `invalidName`, not by this schema.
+ */
+export const roomNameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(ROOM_NAME_MAX_LENGTH)
+  .regex(/^[^\p{Cc}\p{Cf}]+$/u);
+/** How a versus match was decided. */
+export const versusEndReasonSchema = z.enum(['score', 'credibility', 'forfeit', 'draw']);
+
 const unitAxis = z.number().min(-1).max(1);
 const finite = z.number().finite();
 
@@ -76,6 +117,10 @@ export const joinMessageSchema = z.object({
   roomCode: roomCodeSchema.optional(),
   /** Present when resuming a slot after a disconnect. */
   reconnectToken: reconnectTokenSchema.optional(),
+  /** Join as a player (the default when omitted) or as a spectator (S7-77). */
+  as: memberKindSchema.optional(),
+  /** The browser's stable client id (kick cooldown); old clients omit it. */
+  clientId: clientIdSchema.optional(),
 });
 
 export const lobbyActionSchema = z.discriminatedUnion('kind', [
@@ -99,6 +144,30 @@ export const lobbyActionSchema = z.discriminatedUnion('kind', [
    * with exactly one connected player and no spectators; anyone joining clears it.
    */
   z.object({ kind: z.literal('setPaused'), paused: z.boolean() }),
+  /** Host only, lobby only: Razem or Na punkty (S7-80). */
+  z.object({ kind: z.literal('setMode'), mode: roomModeSchema }),
+  /** Versus, lobby or results: move yourself, or (host) another player, to a team (S7-80). */
+  z.object({
+    kind: z.literal('setTeam'),
+    team: teamIndexSchema,
+    playerId: playerIdSchema.optional(),
+  }),
+  /** Lobby or results: move yourself, or (host) another member, to or from the Widownia (S7-81). */
+  z.object({
+    kind: z.literal('setSpectator'),
+    spectator: z.boolean(),
+    playerId: playerIdSchema.optional(),
+  }),
+  /** Host only, any phase: list the room in the room browser or not (S7-82). */
+  z.object({ kind: z.literal('setVisibility'), visibility: roomVisibilitySchema }),
+  /** Host only, any phase: name the room; null clears the name (S7-82). */
+  z.object({ kind: z.literal('setRoomName'), name: roomNameSchema.nullable() }),
+  /** Host only: let spectators join (Widownia), off by default (S7-81). */
+  z.object({ kind: z.literal('setSpectatorsAllowed'), allowed: z.boolean() }),
+  /** Host only, never yourself: remove a member from the room (S7-82). */
+  z.object({ kind: z.literal('kick'), playerId: playerIdSchema }),
+  /** Host only: hand the host role to another connected member (S7-82). */
+  z.object({ kind: z.literal('transferHost'), playerId: playerIdSchema }),
 ]);
 
 export const lobbyMessageSchema = z.object({
@@ -166,7 +235,7 @@ export const briefingStateSchema = z.object({
   /** Time left before the level starts by itself. */
   endsInMs: finite,
   /** Players who pressed "ready" on the briefing. */
-  skippedBy: z.array(playerIdSchema).max(MAX_PLAYERS),
+  skippedBy: z.array(playerIdSchema).max(MAX_ROOM_PLAYERS),
 });
 
 export const blunderVoteSchema = z.object({ playerId: playerIdSchema, storyId: entityId });
@@ -182,6 +251,15 @@ export const lobbyPlayerSchema = z.object({
   connected: z.boolean(),
   role: roleSchema.nullable(),
   ready: z.boolean(),
+  /** The player's newsroom; always 0 in co-op (S7-77). */
+  team: teamIndexSchema,
+});
+
+/** A member watching from the Widownia (S7-77). */
+export const lobbySpectatorSchema = z.object({
+  id: playerIdSchema,
+  nickname: nicknameSchema,
+  connected: z.boolean(),
 });
 
 export const welcomeMessageSchema = z.object({
@@ -213,15 +291,38 @@ export const roomStateMessageSchema = z.object({
   hostId: playerIdSchema,
   phase: roomPhaseSchema,
   levelId: levelIdSchema,
-  players: z.array(lobbyPlayerSchema).max(MAX_PLAYERS),
+  /** Players of every team, in join order (up to 4 per team). */
+  players: z.array(lobbyPlayerSchema).max(MAX_ROOM_PLAYERS),
   /** Set while `phase === 'briefing'`. */
   briefing: briefingStateSchema.nullable(),
   /** Blunder-of-the-day votes cast on the results screen (one per player). */
-  blunderVotes: z.array(blunderVoteSchema).max(MAX_PLAYERS),
+  blunderVotes: z.array(blunderVoteSchema).max(MAX_ROOM_PLAYERS),
   /** The room's difficulty (host picks it in the lobby; it persists across level changes). */
   difficulty: difficultySchema,
   /** The run dealt at the briefing, kept through play and results; null in the lobby. */
   run: runSummarySchema.nullable(),
+  /** Razem or Na punkty (S7-77); a new room is co-op. */
+  mode: roomModeSchema,
+  /** A new room is private. */
+  visibility: roomVisibilitySchema,
+  /** The host's name for the room, or null. */
+  name: roomNameSchema.nullable(),
+  /** Widownia: whether spectators may join; off by default. */
+  spectatorsAllowed: z.boolean(),
+  spectators: z.array(lobbySpectatorSchema).max(MAX_SPECTATORS),
+});
+
+/** One newsroom's standing, for the rival chip, the spectator scoreboard and versus results. */
+export const teamScoreSchema = z.object({
+  team: teamIndexSchema,
+  score: z.number().int(),
+  credibility: z.number().int(),
+  /** Folders closed with a verdict. */
+  resolved: z.number().int().nonnegative(),
+  /** Folders that ran out of time. */
+  expired: z.number().int().nonnegative(),
+  /** Connected players of the team. */
+  connected: z.number().int().min(0).max(MAX_TEAM_PLAYERS),
 });
 
 export const playerSnapshotSchema = z.object({
@@ -257,6 +358,10 @@ export const snapshotMessageSchema = z.object({
   crew: z.array(crewSnapshotSchema).max(MAX_PLAYERS),
   /** A solo player has the in-game menu open: the room is not stepped (S7-10). */
   paused: z.boolean(),
+  /** Which newsroom this snapshot shows (S7-77). */
+  team: teamIndexSchema.optional(),
+  /** Versus only: both teams' standings. */
+  scoreboard: z.array(teamScoreSchema).max(MAX_TEAMS).optional(),
 });
 
 export const gameEventSchema = z.discriminatedUnion('kind', [
@@ -377,6 +482,80 @@ export const eventMessageSchema = z.object({
   type: z.literal('event'),
   tick: z.number().int().nonnegative(),
   event: gameEventSchema,
+  /** Which newsroom the event happened in (S7-77). */
+  team: teamIndexSchema.optional(),
+});
+
+/**
+ * The spectator view of a closed folder in versus while the rival newsroom still has the same
+ * spawn key in play (S7-77): who closed it and how, never the verdict, outcome, reason or points.
+ * Strict, so a result field can never ride along.
+ */
+export const verdictMaskedEventSchema = z.strictObject({
+  kind: z.literal('verdictMasked'),
+  /** Who gave the verdict; null when the folder expired. */
+  playerId: playerIdSchema.nullable(),
+  folderId: entityId,
+  spawnKey: spawnKeySchema,
+  closedBy: z.enum(['verdict', 'expired']),
+});
+
+/** A held result, released once both newsrooms closed its spawn key or the level ended. */
+export const verdictRevealedEventSchema = z.object({
+  kind: z.literal('verdictRevealed'),
+  result: folderResultSchema.extend({
+    /** Who gave the verdict; null when the folder expired. */
+    playerId: playerIdSchema.nullable(),
+  }),
+});
+
+/** What the spectator topic carries as events: game events, plus the embargo's two kinds. */
+export const spectatorEventSchema = z.discriminatedUnion('kind', [
+  ...gameEventSchema.options,
+  verdictMaskedEventSchema,
+  verdictRevealedEventSchema,
+]);
+
+/** Spectators only (players never receive it): one team's event after the versus embargo. */
+export const spectatorEventMessageSchema = z.object({
+  type: z.literal('spectatorEvent'),
+  tick: z.number().int().nonnegative(),
+  team: teamIndexSchema,
+  event: spectatorEventSchema,
+});
+
+/** One player's live match counters (S7-77), kept by the server's stats accumulator. */
+export const playerStatsSchema = z.object({
+  playerId: playerIdSchema,
+  team: teamIndexSchema,
+  /** Verdicts given. */
+  verdicts: z.number().int().nonnegative(),
+  /** Verdicts with outcome `correct`. */
+  correct: z.number().int().nonnegative(),
+  /** Verdicts with outcome `wrong`. */
+  wrong: z.number().int().nonnegative(),
+  stamps: z.number().int().nonnegative(),
+  minigameFails: z.number().int().nonnegative(),
+  /** Abilities used to the end (stage `done`). */
+  abilities: z.number().int().nonnegative(),
+});
+
+/** Spectators only, at 1 Hz: every player's counters and every team's standing. */
+export const matchStatsMessageSchema = z.object({
+  type: z.literal('matchStats'),
+  tick: z.number().int().nonnegative(),
+  players: z.array(playerStatsSchema).max(MAX_ROOM_PLAYERS),
+  teams: z.array(teamScoreSchema).min(1).max(MAX_TEAMS),
+});
+
+/** How a versus match ended, sent with each team's `levelEnd`. */
+export const versusSummarySchema = z.object({
+  /** null on a draw. */
+  winnerTeam: teamIndexSchema.nullable(),
+  reason: versusEndReasonSchema,
+  teams: z.array(teamScoreSchema).length(MAX_TEAMS),
+  /** The rival newsroom's results; each carries the spawn key that pairs it with one of ours. */
+  rivalResults: z.array(folderResultSchema).max(ENDLESS.maxResultsSent),
 });
 
 export const errorCodeSchema = z.enum([
@@ -390,6 +569,17 @@ export const errorCodeSchema = z.enum([
   'notInRoom',
   'notReady',
   'unknownLevel',
+  // Stage 7, M6 (S7-77)
+  'teamFull',
+  'spectatorsFull',
+  'spectatorsOff',
+  'matchInProgress',
+  'teamEmpty',
+  'kicked',
+  'kickCooldown',
+  'invalidTarget',
+  'invalidName',
+  'featureDisabled',
 ]);
 
 export const errorMessageSchema = z.object({
@@ -418,6 +608,12 @@ export const levelEndMessageSchema = z.object({
   maxScore: z.number().int().nonnegative().nullable(),
   /** Endless runs only: whole seconds the newsroom survived (also stored on the leaderboard). */
   survivedS: z.number().int().nonnegative().optional(),
+  /** The newsroom this result belongs to (S7-77). */
+  team: teamIndexSchema.optional(),
+  /** Every player's match counters. */
+  stats: z.array(playerStatsSchema).max(MAX_ROOM_PLAYERS).optional(),
+  /** Versus only; `won` then means this team won the match. */
+  versus: versusSummarySchema.optional(),
 });
 
 export const heartbeatAckMessageSchema = z.object({
@@ -433,11 +629,26 @@ export const serverMessageSchema = z.discriminatedUnion('type', [
   errorMessageSchema,
   levelEndMessageSchema,
   heartbeatAckMessageSchema,
+  spectatorEventMessageSchema,
+  matchStatsMessageSchema,
 ]);
 
 // --- Types ---------------------------------------------------------------------------------
 
 export type RoomCode = z.infer<typeof roomCodeSchema>;
+export type ClientId = z.infer<typeof clientIdSchema>;
+export type RoomMode = z.infer<typeof roomModeSchema>;
+export type RoomVisibility = z.infer<typeof roomVisibilitySchema>;
+export type MemberKind = z.infer<typeof memberKindSchema>;
+export type TeamIndex = z.infer<typeof teamIndexSchema>;
+export type VersusEndReason = z.infer<typeof versusEndReasonSchema>;
+export type LobbySpectator = z.infer<typeof lobbySpectatorSchema>;
+export type TeamScore = z.infer<typeof teamScoreSchema>;
+export type SpectatorEvent = z.infer<typeof spectatorEventSchema>;
+export type SpectatorEventMessage = z.infer<typeof spectatorEventMessageSchema>;
+export type PlayerStats = z.infer<typeof playerStatsSchema>;
+export type MatchStatsMessage = z.infer<typeof matchStatsMessageSchema>;
+export type VersusSummary = z.infer<typeof versusSummarySchema>;
 export type MoveVector = z.infer<typeof moveVectorSchema>;
 export type InputActions = z.infer<typeof inputActionsSchema>;
 export type JoinMessage = z.infer<typeof joinMessageSchema>;
