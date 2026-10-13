@@ -297,6 +297,21 @@ const icons = {
     { d: 'M12 6.5c2-1.5 5-2 8.5-1.5v13.5c-3.5-.5-6.5 0-8.5 1.5Z', fill: 'tint' },
     { d: 'M12 6.5V20M6.5 9c1.5-.2 3-.1 4 .4M17.5 9c-1.5-.2-3-.1-4 .4' },
   ],
+  // --- S7-40 abilities ---------------------------------------------------------------------
+  /** A round arrow coming back to the start (Druga szansa). */
+  retry: [{ d: 'M19 12a7 7 0 1 1-2.05-4.95' }, { d: 'M17 3v4.2h-4.2' }],
+  /** A folder thrown along an arc (Podaj teczkę). */
+  pass: [
+    { d: 'M3.5 15h6.5v5.5H3.5Z', fill: 'tint' },
+    { d: 'M7 11.5C9 7 13.5 5 19.5 6.5' },
+    { d: 'M16 3.5l3.5 3-3 3.5' },
+  ],
+  /** A lifebuoy (Koło ratunkowe). */
+  lifebuoy: [
+    { d: 'M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0-17 0Z', fill: 'tint' },
+    { d: 'M8.5 12a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0Z' },
+    { d: 'M6 6l3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5' },
+  ],
   // --- S7-25 difficulty --------------------------------------------------------------------
   /** A dial with its needle: the room's difficulty (lobby picker and chips). */
   gauge: [

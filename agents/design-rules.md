@@ -18,10 +18,10 @@ blocks you, raise it in the plan's *Open questions*; don't quietly break it.
 2. **Show, don't write.** Icon + one short word beats a sentence. Instructions are at most one
    line (≤ 8 words). Explanations belong in the tutorial or the debrief, never in the middle of
    play.
-3. **Big numbers, few numbers.** The HUD shows only time, points, credibility and up to 3 folders;
-   a free queue slot may hold one dashed ghost card counting down to the next folder (or „Taśma
-   pełna”). Level-event folders are not telegraphed. Anything else is hidden or moved to the
-   results screen.
+3. **Big numbers, few numbers.** The HUD shows only time, points, credibility, up to 3 folders
+   and the player's own role chip (ability icon, cooldown ring, key); a free queue slot may hold
+   one dashed ghost card counting down to the next folder (or „Taśma pełna”). Level-event
+   folders are not telegraphed. Anything else is hidden or moved to the results screen.
 4. **Colour = meaning, always the same meaning** (see §3). Never use a meaning colour for
    decoration.
 5. **Never colour alone.** Every state also has an icon or shape (priority flags, ✓/✗ marks,
@@ -92,7 +92,18 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   card for the next scheduled folder: dashed navy outline, soft fill, no pop shadow, an
   hourglass and the seconds; while the belt is full its band turns orange with the conveyor
   icon and „Taśma pełna”. An empty queue shows the ghost on its side with „Nowa teczka za N s”.
-  Level-event folders are never announced. Captions, event banners and verdict toasts start
+  Level-event folders are never announced. **Role chip** (S7-40): bottom-left on keyboard and
+  gamepad, a white pill with a 64 px ring (the ability icon, or the seconds while it cools down
+  or a field call runs), the key cap (R / RB), the ability's one-word name and one status line
+  („Gotowa”, the target's name, „Uzbrojona”, „Dzwonię…” or the reason it cannot act). Ready is
+  green, armed blue, a call orange, cooling and blocked grey — never yellow, so the screen keeps
+  one yellow action. The hint bubble keeps the chip's width free on both sides. On touch the 4th
+  thumb button is the chip (same ring, icon and word, in the empty cell above „Pracuj”); no
+  chip shows on touch, and without a role neither shows. A Ratownik's lifebuoy badge with the
+  rescues left hangs on the ring. Folder cards carry the ability marks: an hourglass „+20” chip
+  on the top-right corner after Przedłużenie or Koło ratunkowe, a lifebuoy on the top-left corner
+  while a Ratownik with the rescue left carries the folder, and a dashed blue outline on the card
+  the player's ready press would act on. Captions, event banners and verdict toasts start
   under the measured HUD band (`--hud-band`: the lowest edge of the pill, the queue and the
   menu button), never at a fixed offset, so nothing covers the HUD at any screen or text size.
 - **In-game menu** (the top-right button, Esc, a pad's Start): one sheet, never a second screen.
@@ -107,6 +118,9 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   button always reachable.
 - **Menus:** content in one centred column ≤ 560 px wide on the sky background; the game logo on
   top. Lobby: player cards in a row, big "Gotowy" toggle, one yellow start button.
+  The main menu may show the operator's message of the day („Komunikat redakcji”) between the
+  logo and the card: a white card with a blue (info) or orange (warning) outline and icon and a
+  close button. Never yellow: the menu keeps one main action.
 - Generous spacing (≥ `--space-4` between groups). If a screen feels crowded, remove things;
   don't shrink them.
 

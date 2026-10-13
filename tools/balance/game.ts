@@ -1,28 +1,30 @@
 // Runs one full level with bots through the real `step()` from @redakcja/shared. Deterministic:
-// the same setup always gives the same result (the sim RNG and every bot RNG derive from `seed`).
-import { maxLevelScore } from '../../packages/content/src/checks.ts';
-import {
-  generateEndlessLevel,
-  storiesForEndless,
-  storiesForLevel,
-} from '../../packages/content/src/index.ts';
-import type { Level, Story } from '../../packages/content/src/schema.ts';
+// the same setup always gives the same result (the sim RNG and every bot RNG derive from `seed`,
+// and the run is dealt by `prepareRun` with the same seed, S7-34).
+import type { PreparedRun } from '../../packages/content/src/index.ts';
 import {
   addPlayer,
   createGameState,
+  type Difficulty,
+  ENDLESS_LEVEL_ID,
+  folderOnFixture,
   type GameEvent,
+  type GameState,
   type LevelEventKind,
-  NORMAL_TUNING,
   type PlayerInput,
   parseLayout,
   type QueuedCommand,
   type Role,
   type SimContext,
   type SimLevel,
+  type SimTuning,
+  type StationKind,
   type StoryBook,
+  simTuning,
   spawnPoint,
   step,
   TICK_MS,
+  type TileMap,
 } from '../../packages/shared/src/index.ts';
 import { Bot, Team } from './bot.ts';
 import { PROFILES, type ProfileId, type SkillProfile } from './models.ts';
@@ -35,27 +37,37 @@ export const ROLES_BY_CREW: Record<number, readonly Role[]> = {
   4: ['photoEditor', 'archivist', 'reporter', 'managingEditor'],
 };
 
+export type StarPair = { two: number; three: number };
+
 export type Scenario = {
-  level: SimLevel & Pick<Level, 'id'>;
-  /** The content level, for the maximum score; absent for generated endless levels. */
-  contentLevel?: Level;
+  level: SimLevel & { id: string };
   stories: StoryBook;
   crew: readonly SkillProfile[];
   seed: number;
+  difficulty: Difficulty;
+  /** The tuning the sim applies on this difficulty (`simTuning`). */
+  tuning: SimTuning;
+  /** Best possible score of this run (`prepareRun`). */
+  maxScore: number;
+  /** The run's star thresholds; null for endless (no stars). */
+  stars: StarPair | null;
   /** Stop a run that lasts longer than this many level seconds (endless). */
   capS?: number;
 };
 
 export type RunResult = {
   levelId: string;
+  difficulty: Difficulty;
   crew: string;
   crewSize: number;
   seed: number;
   won: boolean;
   /** 0 when lost; endless runs have no stars. */
   stars: number;
+  /** The run's star thresholds (bag levels deal their own per seed); null for endless. */
+  thresholds: StarPair | null;
   score: number;
-  /** Best possible score of the level (0 when unknown). */
+  /** Best possible score of the run. */
   maxScore: number;
   /** Level time at the end, in seconds. */
   endedAtS: number;
@@ -74,12 +86,17 @@ export type RunResult = {
   /** Level events that started, by kind. */
   events: Partial<Record<LevelEventKind, number>>;
   firstVerdictS: number | null;
+  /**
+   * Share of the run's ticks in which each of the level's stations had a folder on it or an
+   * operator at it (any fixture of that kind).
+   */
+  stationBusyShare: Partial<Record<StationKind, number>>;
 };
 
 const TRAIL_POINTS = 10;
 
 export function runGame(scenario: Scenario): RunResult {
-  const { level, stories, crew, seed } = scenario;
+  const { level, stories, crew, seed, difficulty } = scenario;
   const map = parseLayout(level.layout);
   const roles = ROLES_BY_CREW[crew.length] ?? ROLES_BY_CREW[4] ?? [];
   let state = createGameState({ map, seed: seed * 2 + 1 });
@@ -88,10 +105,10 @@ export function runGame(scenario: Scenario): RunResult {
   crew.forEach((profile, index) => {
     const id = `p${index + 1}`;
     state = addPlayer(state, id, spawnPoint(map, index), roles[index] ?? null);
-    bots.push(new Bot(id, profile, team, seed * 1009 + index * 7919 + 13));
+    bots.push(new Bot(id, profile, team, seed * 1009 + index * 7919 + 13, difficulty));
   });
-  // Normal until the harness runs per difficulty (S7-34).
-  const ctx: SimContext = { dtMs: TICK_MS, map, level, stories, tuning: NORMAL_TUNING };
+  const ctx: SimContext = { dtMs: TICK_MS, map, level, stories, tuning: scenario.tuning };
+  const load = stationLoad(map, level.stations);
 
   const endless = level.endless === true;
   const capMs = (scenario.capS ?? level.durationS) * 1000;
@@ -123,6 +140,7 @@ export function runGame(scenario: Scenario): RunResult {
       tally(event);
     }
     credibilityMin = Math.min(credibilityMin, state.credibility);
+    load.sample(state);
     while (state.elapsedMs >= nextSample) {
       trail.push(state.credibility);
       nextSample += sampleEveryMs;
@@ -161,18 +179,17 @@ export function runGame(scenario: Scenario): RunResult {
     trail.push(finalCred);
   }
   const expired = state.results.filter((r) => r.outcome === 'expired').length;
-  const maxScore = scenario.contentLevel
-    ? maxLevelScore(scenario.contentLevel, storyMap(stories))
-    : 0;
   return {
     levelId: level.id,
+    difficulty,
     crew: crewLabel(crew),
     crewSize: crew.length,
     seed,
     won: ended ? ended.won : capped,
     stars: ended?.stars ?? 0,
+    thresholds: scenario.stars,
     score: state.score,
-    maxScore,
+    maxScore: scenario.maxScore,
     endedAtS: state.elapsedMs / 1000,
     capped,
     credibilityMin,
@@ -187,11 +204,45 @@ export function runGame(scenario: Scenario): RunResult {
     minigameFailures,
     events,
     firstVerdictS: firstVerdictMs === null ? null : firstVerdictMs / 1000,
+    stationBusyShare: load.shares(),
   };
 }
 
-function storyMap(stories: StoryBook) {
-  return new Map(Object.entries(stories) as [string, Story][]) as ReadonlyMap<string, Story>;
+/** Counts, tick by tick, how often each station kind of the level is occupied. */
+export function stationLoad(
+  map: TileMap,
+  stations: readonly StationKind[],
+): {
+  sample(state: GameState): void;
+  shares(): Partial<Record<StationKind, number>>;
+} {
+  const fixturesByKind = new Map(
+    stations.map((kind) => [kind, map.fixtures.filter((f) => f.station === kind).map((f) => f.id)]),
+  );
+  const busy = new Map(stations.map((kind) => [kind, 0]));
+  let ticks = 0;
+  return {
+    sample(state) {
+      ticks++;
+      for (const [kind, ids] of fixturesByKind) {
+        const occupied = ids.some(
+          (id) =>
+            folderOnFixture(state, id) !== undefined ||
+            (state.stations[id]?.operatorId ?? null) !== null,
+        );
+        if (occupied) {
+          busy.set(kind, (busy.get(kind) ?? 0) + 1);
+        }
+      }
+    },
+    shares() {
+      const out: Partial<Record<StationKind, number>> = {};
+      for (const [kind, count] of busy) {
+        out[kind] = ticks === 0 ? 0 : count / ticks;
+      }
+      return out;
+    },
+  };
 }
 
 /** `average` for a uniform crew, `rookie+average+expert` for a mixed one. */
@@ -204,25 +255,26 @@ export function uniformCrew(profile: ProfileId, size: number): SkillProfile[] {
   return Array.from({ length: size }, () => PROFILES[profile]);
 }
 
-/** A campaign level as a scenario. */
-export function levelScenario(level: Level, crew: readonly SkillProfile[], seed: number): Scenario {
-  return {
-    level,
-    contentLevel: level,
-    stories: storiesForLevel(level),
-    crew,
-    seed,
-  };
-}
-
-/** A generated endless level (the seed also seeds the schedule). */
-export function endlessScenario(
-  levels: readonly Level[],
-  stories: Parameters<typeof generateEndlessLevel>[2],
+/**
+ * A prepared run (`prepareRun` / `prepareLevelRun`: a dealt bag level, a generated endless level
+ * or an authored level with scaled deadlines) as a scenario for one crew and seed.
+ */
+export function runScenario(
+  run: PreparedRun,
   crew: readonly SkillProfile[],
   seed: number,
-  capS: number,
+  capS?: number,
 ): Scenario {
-  const level = generateEndlessLevel(seed, levels, stories);
-  return { level, stories: storiesForEndless(level, stories), crew, seed, capS };
+  const stars = run.level.id === ENDLESS_LEVEL_ID ? null : { ...run.level.stars };
+  return {
+    level: run.level,
+    stories: run.stories,
+    crew,
+    seed,
+    difficulty: run.difficulty,
+    tuning: simTuning(run.difficulty),
+    maxScore: run.maxScore,
+    stars,
+    ...(capS === undefined ? {} : { capS }),
+  };
 }

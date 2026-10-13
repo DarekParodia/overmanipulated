@@ -55,8 +55,9 @@
   bottom: max(var(--space-4), env(safe-area-inset-bottom));
   display: grid;
   grid-template-columns: auto auto;
+  /* The empty cell above „Pracuj” holds the role ability button (S7-40) when there is a role. */
   grid-template-areas:
-    ". ping"
+    "ability ping"
     "work interact";
   align-items: end;
   gap: var(--space-3);
@@ -136,6 +137,6 @@
   left: max(var(--space-4), env(safe-area-inset-left));
   transform-origin: left bottom;
   grid-template-areas:
-    "ping ."
+    "ping ability"
     "interact work";
 }

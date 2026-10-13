@@ -1,9 +1,11 @@
 // Gameplay HUD (design-rules §5): one compact pill top-left with the level timer, points and
-// credibility; the folder queue top-centre; verdict toasts under it; the results panel at the
-// end of a level. Room code and ping live in the in-game menu sheet (GameMenu, S7-10). On phones
-// the pill is one row (S7-11); the pill and the queue mark the measured HUD band (hud-band.ts).
+// credibility; the folder queue top-centre; verdict toasts under it; the role ability chip
+// bottom-left on keyboard and gamepad (S7-40); the results panel at the end of a level. Room
+// code and ping live in the in-game menu sheet (GameMenu, S7-10). On phones the pill is one row
+// (S7-11); the pill and the queue mark the measured HUD band (hud-band.ts).
 import { ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { useEffect } from 'react';
+import { AbilityChip } from '../abilities/AbilityChip.tsx';
 import { EventBanners } from '../events/EventBanners.tsx';
 import { useGame } from '../net/game-store.ts';
 import { useApp } from '../store/app.ts';
@@ -34,6 +36,7 @@ export function Hud() {
       <FolderQueue />
       <VerdictToasts />
       <EventBanners />
+      <AbilityChip />
       {levelEnd && <ResultsPlate levelEnd={levelEnd} />}
     </div>
   );

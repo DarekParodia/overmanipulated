@@ -13,7 +13,9 @@ const MINIGAMES = [
   { kind: 'dataLibrary', root: 'data-library', storyId: 'l4-dziewiec-na-dziesiec' },
   // No story carries a Metadane stamp before S7-57; the puzzle then rolls its own outcome.
   { kind: 'metadata', root: 'metadata', storyId: 'l5-nagranie-podatek' },
-  // No story carries a Mapa stamp before S7-58 either.
+  // Likewise no Stenogram stamp before S7-57.
+  { kind: 'transcript', root: 'transcript', storyId: 'l5-nagranie-podatek' },
+  // No Mapa stamp before S7-58 either.
   { kind: 'geolocation', root: 'geolocation', storyId: 'l5-nagranie-podatek' },
 ] as const;
 
@@ -27,7 +29,7 @@ type Hook = {
 // S7-15: the key hints under every minigame follow the device in use; on touch they name the
 // gesture or button. Phones are checked at the smallest supported landscape size, 640×360.
 test('every minigame shows key hints for the device in use', async ({ browser }, testInfo) => {
-  // Eight overlays and eight screenshots of a software-rendered WebGL page.
+  // Nine overlays and nine screenshots of a software-rendered WebGL page.
   test.slow();
   const touch = testInfo.project.name !== 'desktop';
   const options = touch ? { ...PHONE, viewport: { width: 640, height: 360 } } : DESKTOP;
@@ -36,6 +38,9 @@ test('every minigame shows key hints for the device in use', async ({ browser },
   await createRoom(player);
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();
+  // Software WebGL at about 1 fps under load lets a minigame clock run out before its hints are
+  // read; the overlay needs no scene (as in difficulty-rules.spec.ts and transcript.spec.ts).
+  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
 
   for (const { kind, root, storyId } of MINIGAMES) {
     // Open the station overlay locally: a station this player operates in the minigame phase,

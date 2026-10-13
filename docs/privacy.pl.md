@@ -36,7 +36,8 @@ Gra zapisuje w przeglądarce (pamięć lokalna, nie ciasteczka), na urządzeniu 
 - ostatnio użyty pseudonim, ustawienia gry (np. dźwięk, animacje),
 - postęp: najlepsze wyniki poziomów i trybu bez końca (osobno dla każdego poziomu trudności),
   odblokowane karty w Encyklopedii manipulacji,
-- tymczasowy znak pozwalający wrócić do pokoju po chwilowej utracie połączenia.
+- tymczasowy znak pozwalający wrócić do pokoju po chwilowej utracie połączenia,
+- oznaczenie zamkniętego komunikatu redakcji, żeby ten sam komunikat nie pokazywał się znowu.
 
 Te dane nigdy nie opuszczają urządzenia, poza pseudonimem wysyłanym do pokoju. Można je
 usunąć, czyszcząc dane witryny w przeglądarce.
