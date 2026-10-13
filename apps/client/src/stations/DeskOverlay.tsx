@@ -1,11 +1,19 @@
-// Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick one collected
-// stamp as the evidence (sent as a one-element cite list). 2: press one of three big verdict
-// buttons. After the server's verdict the sheet shows the outcome until dismissed (S7-04): ✓ / ✗,
-// the title by reason, points, credibility and bonus chips, then at most two short lines from
+// Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick the collected
+// stamps cited as evidence: one for most stories, N for a multi-stamp folder (S7-19, numbered
+// ticks in the order picked, a k/N chip, an amber line when the folder holds fewer stamps than
+// N; `desk-model.ts`). 2: press one of three big verdict buttons. After the server's verdict
+// the sheet shows the outcome until dismissed (S7-04): ✓ / ✗, the title by reason, points,
+// credibility and bonus chips (the multi-stamp one included), then at most two short lines from
 // `desk-result-model.ts` (the proof, or the right verdict and the deciding station). The
 // managing editor also gets the level's one "+20 s" deadline extension here (S4-04 groundwork).
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
-import type { Folder, FolderBonuses, GameEvent, Verdict } from '@redakcja/shared';
+import {
+  type Folder,
+  type FolderBonuses,
+  type GameEvent,
+  requiredStampsOf,
+  type Verdict,
+} from '@redakcja/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { correctionStampId } from '../events/event-model.ts';
 import { emitCue } from '../fx/feedback.ts';
@@ -21,6 +29,7 @@ import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import { VerdictStamp } from '../ui/VerdictStamp.tsx';
 import styles from './DeskOverlay.module.css';
 import { DEADLINE_EXTENSION_S, mayExtendDeadline } from './deadline-extension.ts';
+import { evidenceShortfall, toggleEvidence, verdictReady } from './desk-model.ts';
 import {
   type DeskResultLine,
   deskResultChips,
@@ -41,7 +50,7 @@ export type DeskOverlayProps = {
   pending: boolean;
   /** The server's answer; switches the sheet to the outcome view. */
   result: VerdictResultEvent | null;
-  /** `justifyingStampIds`: the cited proof, at least one stamp id. */
+  /** `justifyingStampIds`: the cited proofs in the order picked, 1 to N stamp ids. */
   onVerdict(verdict: Verdict, justifyingStampIds: string[]): void;
   onClose(): void;
   onDismissResult(): void;
@@ -141,7 +150,11 @@ function CorrectionView({ folder, story, pending, onVerdict, onClose }: DeskOver
 function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlayProps) {
   const device = useApp((s) => s.inputDevice);
   const collected = collectedStamps(folder, story);
-  const [chosen, setChosen] = useState<string | null>(null);
+  const required = story ? requiredStampsOf(story) : 1;
+  const many = required >= 2;
+  const [chosen, setChosen] = useState<readonly string[]>([]);
+  // The last blocked pick (a stamp beyond N): its row nudges and a line says what to do.
+  const [blocked, setBlocked] = useState<{ id: string; serial: number } | null>(null);
   const extension = useDeadlineExtension(folder.id);
   const grid: FocusGrid = [
     extension.state === 'available' ? [EXTEND] : [],
@@ -150,16 +163,27 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
     [CLOSE],
   ];
   const [focus, setFocus] = useState<string | null>(() => collected[0]?.id ?? CLOSE);
-  const canVerdict = chosen !== null && !pending;
-  const choose = (stampId: string) => {
-    setChosen(stampId);
-    emitCue('desk.justify');
+  const ready = verdictReady(chosen, required, collected.length);
+  const canVerdict = ready && !pending;
+  const shortfall = many && evidenceShortfall(required, collected.length);
+  /** Picks or unpicks a stamp; true when the pick just became complete. */
+  const toggle = (stampId: string): boolean => {
+    const next = toggleEvidence(chosen, stampId, required);
+    if (next.blocked) {
+      emitCue('ui.back');
+      setBlocked((last) => ({ id: stampId, serial: (last?.serial ?? 0) + 1 }));
+      return false;
+    }
+    setBlocked(null);
+    setChosen(next.selected);
+    emitCue(next.removed ? 'desk.unjustify' : 'desk.justify');
+    return !next.removed && verdictReady(next.selected, required, collected.length);
   };
   const decide = (verdict: Verdict) => {
-    if (chosen === null || pending) {
+    if (!canVerdict) {
       return;
     }
-    onVerdict(verdict, [chosen]);
+    onVerdict(verdict, [...chosen]);
   };
 
   useNavIntent((intent: NavIntent) => {
@@ -190,8 +214,8 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
       } else {
         emitCue('ui.hover');
       }
-    } else if (focus !== null) {
-      choose(focus);
+    } else if (focus !== null && toggle(focus)) {
+      // One proof: straight to the verdicts. Several: once the pick is complete.
       setFocus(verdictKey('publish'));
     }
   });
@@ -238,11 +262,17 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
   const empty = collected.length === 0;
   const hint = empty
     ? pl.desk.noStamps
-    : chosen === null
-      ? pl.desk.pickStamp
-      : pending
-        ? pl.desk.sending
-        : pl.desk.pickVerdict;
+    : pending
+      ? pl.desk.sending
+      : blocked
+        ? pl.desk.deselectFirst
+        : ready
+          ? pl.desk.pickVerdict
+          : many
+            ? pl.desk.evidenceStatus(chosen.length, required)
+            : pl.desk.pickStamp;
+  const nudge = (stampId: string) =>
+    blocked?.id === stampId ? (blocked.serial % 2 ? styles.nudgeA : styles.nudgeB) : '';
 
   return (
     <OverlayFrame
@@ -286,46 +316,71 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
             </div>
           ) : (
             <>
-              <Step n={1} state={chosen === null ? 'active' : 'done'}>
-                {pl.desk.stepEvidence}
+              <Step n={1} state={ready ? 'done' : 'active'}>
+                {many ? pl.desk.stepEvidenceMany(required) : pl.desk.stepEvidence}
+                {many && (
+                  <span className={styles.count} data-testid="desk-evidence-count">
+                    {pl.desk.evidenceCount(chosen.length, required)}
+                  </span>
+                )}
               </Step>
+              {shortfall && (
+                <p className={styles.shortfall} data-testid="desk-too-few">
+                  <Icon name="stamp" size={20} className={`${styles.noteGlyph}`} />
+                  <span>{typeset(pl.desk.tooFewProofs)}</span>
+                </p>
+              )}
+              {blocked && (
+                <p className={styles.blocked} data-testid="desk-deselect-first">
+                  <Icon name="stamp" size={20} className={`${styles.noteGlyph}`} />
+                  <span>{typeset(pl.desk.deselectFirst)}</span>
+                </p>
+              )}
               <ul className={styles.stamps}>
-                {collected.map((stamp) => (
-                  <li key={stamp.id}>
-                    <button
-                      type="button"
-                      className={`${styles.stamp} ${chosen === stamp.id ? styles.chosen : ''} ${focused(stamp.id)}`}
-                      aria-pressed={chosen === stamp.id}
-                      data-testid={`desk-stamp-${stamp.id}`}
-                      ref={(element) => {
-                        if (element) {
-                          stampRefs.current.set(stamp.id, element);
-                        } else {
-                          stampRefs.current.delete(stamp.id);
-                        }
-                      }}
-                      onClick={() => {
-                        choose(stamp.id);
-                        setFocus(stamp.id);
-                      }}
-                    >
-                      <span className={styles.stampIcon}>
-                        <Icon name={STATION_ICON[stamp.station]} size={26} />
-                      </span>
-                      <span className={styles.stampText}>
-                        <span className={styles.stampStation}>
-                          {pl.vocab.stations[stamp.station]}
+                {collected.map((stamp) => {
+                  const order = chosen.indexOf(stamp.id);
+                  const picked = order >= 0;
+                  return (
+                    <li key={stamp.id}>
+                      <button
+                        type="button"
+                        className={`${styles.stamp} ${picked ? styles.chosen : ''} ${focused(stamp.id)} ${nudge(stamp.id)}`}
+                        aria-pressed={picked}
+                        data-testid={`desk-stamp-${stamp.id}`}
+                        ref={(element) => {
+                          if (element) {
+                            stampRefs.current.set(stamp.id, element);
+                          } else {
+                            stampRefs.current.delete(stamp.id);
+                          }
+                        }}
+                        onClick={() => {
+                          toggle(stamp.id);
+                          setFocus(stamp.id);
+                        }}
+                      >
+                        <span className={styles.stampIcon}>
+                          <Icon name={STATION_ICON[stamp.station]} size={26} />
                         </span>
-                        <span>{typeset(stamp.text)}</span>
-                      </span>
-                      {chosen === stamp.id && (
-                        <span className={styles.tick} aria-hidden="true">
-                          <Icon name="publish" size={20} className={`${styles.tickIcon}`} />
+                        <span className={styles.stampText}>
+                          <span className={styles.stampStation}>
+                            {pl.vocab.stations[stamp.station]}
+                          </span>
+                          <span>{typeset(stamp.text)}</span>
                         </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
+                        {picked && (
+                          <span className={styles.tick} aria-hidden="true">
+                            {many ? (
+                              <span className={styles.tickNo}>{order + 1}</span>
+                            ) : (
+                              <Icon name="publish" size={20} className={`${styles.tickIcon}`} />
+                            )}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </>
           )}
@@ -333,7 +388,7 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
 
         {!empty && (
           <div className={styles.decide} ref={decideRef}>
-            <Step n={2} state={chosen === null ? 'waiting' : 'active'}>
+            <Step n={2} state={ready ? 'active' : 'waiting'}>
               {pending ? pl.desk.sending : pl.desk.stepVerdict}
             </Step>
             <fieldset className={styles.verdicts} disabled={!canVerdict}>

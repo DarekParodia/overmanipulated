@@ -1,14 +1,16 @@
 // "What next" for the local player (agents/design-rules.md §1.6): one short line and the
 // fixtures it points at. Pure: everything comes in as arguments, so every case is unit-tested.
 // It never reveals a story's truth or verdict; it only points at stations whose stamp the
-// folder still lacks (the ones whose stamp proves a verdict first) and at the desk once such a
-// proof is collected (the hint-only AI scanner never is one).
+// folder still lacks (the ones whose stamp proves a verdict first) and at the desk once the
+// folder holds as many proofs as its story needs (`requiredStamps`, S7-19; the hint-only AI
+// scanner never is one).
 import {
   countsAsProof,
   type Desk,
   type Fixture,
   type Folder,
   type ProofStory,
+  requiredStampsOf,
   type StationKind,
   type TileMap,
 } from '@redakcja/shared';
@@ -32,7 +34,7 @@ export type NextStepKind =
   | 'minigame'
   /** The station in front of the player is locked after a failed minigame but holds a folder. */
   | 'lockout'
-  /** Carrying a folder with a justifying stamp: take it to a desk. */
+  /** Carrying a folder with all the proofs it needs: take it to a desk. */
   | 'toDesk'
   /** At a desk with a folder on it: hold work to open the verdict sheet. */
   | 'openDesk'
@@ -48,8 +50,11 @@ export type NextStep = {
   targetFixtureIds: string[];
 };
 
-/** What next-step needs to know about a story: its stamps and which of them justify. */
-export type StoryStamps = ProofStory;
+/**
+ * What next-step needs to know about a story: its stamps, which of them justify, and how many
+ * proofs a verdict must cite (absent means 1).
+ */
+export type StoryStamps = ProofStory & { requiredStamps?: number };
 
 export type NextStepInput = {
   playerId: string | null;
@@ -109,12 +114,20 @@ function byDeadline(a: Folder, b: Folder): number {
   return a.deadlineMs - b.deadlineMs;
 }
 
+/** Distinct stamps on the folder that prove the story's verdict (never the AI scanner). */
+export function justifyingCount(folder: Folder, story: StoryStamps | undefined): number {
+  if (!story) {
+    return 0;
+  }
+  return new Set(folder.stamps.filter((id) => countsAsProof(story, id))).size;
+}
+
 /**
- * Whether the folder carries at least one stamp that proves its verdict. The hint-only AI
- * scanner never does: citing it alone earns half points at the desk.
+ * Whether the folder carries as many proofs as its story needs: one for most stories, N for a
+ * multi-stamp folder. The hint-only AI scanner never counts: citing it alone earns half points.
  */
-export function hasJustifyingStamp(folder: Folder, story: StoryStamps | undefined): boolean {
-  return story ? folder.stamps.some((id) => countsAsProof(story, id)) : false;
+export function hasEnoughProofs(folder: Folder, story: StoryStamps | undefined): boolean {
+  return story !== undefined && justifyingCount(folder, story) >= requiredStampsOf(story);
 }
 
 /** The stamp a station of `kind` would add to the folder, if it still lacks it. */
@@ -181,7 +194,7 @@ function carryingStep(input: NextStepInput, folder: Folder): NextStep {
       ? step('dropHere', guidance.hint.dropHere[input.device], [target])
       : step('toDesk', guidance.hint.toDesk, desks);
   }
-  const visit = hasJustifyingStamp(folder, story) ? [] : stationsToVisit(folder, story, input);
+  const visit = hasEnoughProofs(folder, story) ? [] : stationsToVisit(folder, story, input);
   if (visit.length === 0) {
     const desks = deskTargets(input);
     if (targetFree && desks.includes(target)) {

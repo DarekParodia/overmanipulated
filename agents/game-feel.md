@@ -74,6 +74,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `minigame.success` / `fail` | minigame result | card flip / wobble | success ding / fail buzz | sparkle / smoke wisp | — | ● |
 | `station.open` / `desk.open` | minigame sheet / desk folder opens | sheet slides in | paper slide | — | light tick (mobile) | ● |
 | `desk.justify` | justifying stamp picked on the desk | slip pulled out, tab appears | click | — | light tick (mobile) | ● |
+| `desk.unjustify` | evidence stamp deselected on the desk (multi-stamp pick, S7-19) | slip pushed back, numbered tick goes | soft back | — | light tick (mobile) | ● |
 | `credibility.low` | credibility < 30 | — | heartbeat layer | vignette | — | ●● |
 | `level.lastSeconds` | timer crosses 30 s left | `timerPulse` (steady under no-flash) | clock strike over a low pulse; music → pressure layer (music unit) | timer pulses (HUD) | light tick | ●● |
 | `level.win` / `level.lose` | `levelEnd` message | `cheer` / `slump` | win / lose stinger; all loops stop | confetti / falling papers at the local player | thud / buzz | ●●● |

@@ -39,6 +39,8 @@ const FIXTURE_NEXT_FOLDER: NextFolder = { atMs: 140_000, sinceMs: 120_000 };
 const FIXTURE_STARS = { two: 120, three: 190 };
 const FIXTURE_MAX_SCORE = 240;
 const URGENT_STORY = 'l0-dev-pilny-komunikat';
+/** A multi-stamp story (S7-19) so the folder card's evidence chip shows "1/2". */
+const MULTI_STORY = 'l0-dev-dwa-dowody';
 
 function fixtureFolders(playerId: string): Folder[] {
   const at = FIXTURE_ELAPSED_MS;
@@ -64,9 +66,8 @@ function fixtureFolders(playerId: string): Folder[] {
     folder('f-2', 'l0-zalany-rynek', { kind: 'carried', playerId }, 21_000, [
       'l0-zalany-rynek-image',
     ]),
-    folder('f-3', 'l0-nocny-autobus', { kind: 'fixture', fixtureId: 'archive-0' }, 48_000, [
-      'l0-nocny-autobus-source',
-      'l0-nocny-autobus-archive',
+    folder('f-3', MULTI_STORY, { kind: 'fixture', fixtureId: 'archive-0' }, 48_000, [
+      `${MULTI_STORY}-archive`,
     ]),
     folder('f-4', 'l0-zalany-rynek', { kind: 'fixture', fixtureId: 'desk-0' }, 75_000, [
       'l0-zalany-rynek-image',
@@ -119,6 +120,18 @@ export function installHudDevFixture(): (() => void) | undefined {
     type: 'post',
     priority: 'urgent',
     truth: 'false',
+  });
+  registerHudStory(MULTI_STORY, {
+    headline: 'Dwa raporty o korkach na moście',
+    type: 'article',
+    priority: 'important',
+    truth: 'false',
+    requiredStamps: 2,
+    stamps: [
+      { id: `${MULTI_STORY}-archive`, station: 'archive', text: 'Raport z 2019 r.' },
+      { id: `${MULTI_STORY}-source`, station: 'sourceRegistry', text: 'Konto założone wczoraj' },
+    ],
+    justifyingStamps: [`${MULTI_STORY}-archive`, `${MULTI_STORY}-source`],
   });
   const original = useGame.getState().applySnapshot;
   let serverElapsed: number | null = null;

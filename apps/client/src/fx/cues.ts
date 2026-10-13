@@ -337,6 +337,12 @@ export const cues = {
     sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
     haptic: 'tick',
   },
+  // S7-19: a cited stamp taken back out of a multi-stamp pick.
+  'desk.unjustify': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', volume: 0.7 },
+    haptic: 'tick',
+  },
   // --- Pings (S2-11). Placeholder sounds until the sound pass adds one per ping type. ------
   'ping.open': { severity: 1, sound: { ids: ['hover'], bus: 'ui', volume: 0.7 }, haptic: 'tick' },
   'ping.send': { severity: 1, sound: { ids: ['click'], bus: 'ui', rateJitter: 0.04 } },
