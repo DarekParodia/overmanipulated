@@ -540,7 +540,7 @@ User decisions from the feedback Q&A (2026-10-13), binding for this stage:
 ### M4 — New stations
 
 - [ ] **S7-48 — Station kinds contract and every compile-enforced map (protocol v6).** *Depends on:* S7-36, S7-15, S7-21. [Details](design/stage7/tasks.md#s7-48)
-- [ ] **S7-49 — Fit the sun light and shadow box to the room.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-49)
+- [x] **S7-49 — Fit the sun light and shadow box to the room.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-49)
 - [ ] **S7-50 — Layout validation: station sign spacing and reachability.** *Depends on:* S7-21. [Details](design/stage7/tasks.md#s7-50)
 - [ ] **S7-51 — 3D models for Mapa, Stenogram, Inne media, Metadane.** *Depends on:* S7-48. [Details](design/stage7/tasks.md#s7-51)
 - [ ] **S7-52 — Minigame evidence helpers and the Metadane minigame.** *Depends on:* S7-48, S7-24. [Details](design/stage7/tasks.md#s7-52)
