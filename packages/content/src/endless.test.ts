@@ -1,18 +1,23 @@
 import { describe, expect, it } from 'bun:test';
 import {
   createGameState,
+  DIFFICULTIES,
+  type Difficulty,
   ENDLESS,
   ENDLESS_LEVEL_ID,
   levelOutcome,
   NORMAL_TUNING,
   parseLayout,
   type SimLevel,
+  scaledDeadlineS,
   step,
   TICK_MS,
 } from '@redakcja/shared';
+import { bagStations, decidingStations } from './bag.ts';
 import {
   ENDLESS_STATIONS,
   endlessDeadlineS,
+  endlessDecks,
   endlessIntervalS,
   endlessStoryPool,
   generateEndlessLevel,
@@ -21,12 +26,86 @@ import {
 import { getLevel, LEVELS, STORIES } from './index.ts';
 import type { Story } from './schema.ts';
 
-const generate = (seed: number) => generateEndlessLevel(seed, LEVELS, STORIES);
+const generate = (seed: number, difficulty?: Difficulty) =>
+  generateEndlessLevel(seed, LEVELS, STORIES, difficulty);
 
 describe('generateEndlessLevel', () => {
-  it('is deterministic per seed and differs between seeds', () => {
-    expect(generate(7)).toEqual(generate(7));
+  it('is deterministic per seed and difficulty and differs between seeds', () => {
+    for (const difficulty of DIFFICULTIES) {
+      expect(generate(7, difficulty)).toEqual(generate(7, difficulty));
+    }
+    expect(generate(7)).toEqual(generate(7, 'normal'));
     expect(generate(7).schedule).not.toEqual(generate(8).schedule);
+    expect(generate(7, 'easy').schedule).not.toEqual(generate(7, 'expert').schedule);
+  });
+
+  it('scales the first deadline by the difficulty: 104 / 80 / 68 / 60', () => {
+    const first = (difficulty: Difficulty) => generate(4, difficulty).schedule[0]?.deadlineS;
+    expect(first('easy')).toBe(104);
+    expect(first('normal')).toBe(80);
+    expect(first('hard')).toBe(68);
+    expect(first('expert')).toBe(60);
+  });
+
+  it('packs more folders into the hour on a harder difficulty', () => {
+    const length = (difficulty: Difficulty) => generate(4, difficulty).schedule.length;
+    expect(length('easy')).toBeLessThan(length('normal'));
+    expect(length('normal')).toBeLessThan(length('hard'));
+    expect(length('hard')).toBeLessThan(length('expert'));
+    for (const difficulty of DIFFICULTIES) {
+      const { schedule } = generate(4, difficulty);
+      expect(schedule[0]?.atS).toBe(ENDLESS.firstSpawnS);
+      expect(schedule.at(-1)?.atS ?? Number.POSITIVE_INFINITY).toBeLessThan(
+        ENDLESS.scheduleLengthS,
+      );
+      for (const spawn of schedule) {
+        expect(spawn.deadlineS).toBe(scaledDeadlineS(endlessDeadlineS(spawn.atS), difficulty));
+      }
+    }
+  });
+
+  it('deals the same stations and stories on every difficulty; only timing changes', () => {
+    const dealt = (difficulty: Difficulty) =>
+      generate(9, difficulty).schedule.map((spawn) => `${spawn.station}:${spawn.storyId}`);
+    const easy = dealt('easy');
+    expect(easy.length).toBeGreaterThan(100);
+    for (const difficulty of DIFFICULTIES) {
+      expect(dealt(difficulty).slice(0, easy.length)).toEqual(easy);
+    }
+  });
+
+  it('deals whole shuffled rounds over the stations that decide a pool story', () => {
+    const pool = endlessStoryPool(LEVELS, STORIES);
+    const stations = bagStations(pool, ENDLESS_STATIONS);
+    expect(stations).toEqual(['imageSearch', 'archive', 'sourceRegistry', 'phone', 'dataLibrary']);
+    const { schedule } = generate(6);
+    const byId = new Map(pool.map((story) => [story.id, story]));
+    for (const spawn of schedule) {
+      const story = byId.get(spawn.storyId);
+      if (!story || !spawn.station) {
+        throw new Error(`entry ${spawn.storyId} has no pool story or station`);
+      }
+      expect(decidingStations(story, ENDLESS_STATIONS)).toContain(spawn.station);
+    }
+    for (let round = 0; round + stations.length <= schedule.length; round += stations.length) {
+      const dealt = schedule.slice(round, round + stations.length).map((spawn) => spawn.station);
+      expect([...dealt].sort()).toEqual([...stations].sort());
+    }
+  });
+
+  it('scales event deadlines on their own stream, keeping event times and kinds', () => {
+    const normal = generate(2).events;
+    for (const difficulty of DIFFICULTIES) {
+      const events = generate(2, difficulty).events;
+      expect(events.map((e) => `${e.kind}@${e.atS}`)).toEqual(
+        normal.map((e) => `${e.kind}@${e.atS}`),
+      );
+      for (const event of events) {
+        if (event.kind !== 'outage') {
+          expect(event.deadlineS).toBe(scaledDeadlineS(endlessDeadlineS(event.atS), difficulty));
+        }
+      }
+    }
   });
 
   it('returns an endless level with a huge duration and a layout holding all six stations', () => {
@@ -94,13 +173,25 @@ describe('generateEndlessLevel', () => {
     }
   });
 
-  it('never repeats a story back to back and uses the whole pool', () => {
-    const { schedule } = generate(11);
-    for (let i = 1; i < schedule.length; i++) {
-      expect(schedule[i]?.storyId).not.toBe(schedule[i - 1]?.storyId);
+  it('never repeats a story back to back on any difficulty', () => {
+    for (const seed of [1, 11, 42]) {
+      for (const difficulty of DIFFICULTIES) {
+        const { schedule } = generate(seed, difficulty);
+        for (let i = 1; i < schedule.length; i++) {
+          expect(schedule[i]?.storyId).not.toBe(schedule[i - 1]?.storyId);
+        }
+      }
     }
+  });
+
+  it('puts every pool story into some station deck, and deals from every deck', () => {
     const pool = endlessStoryPool(LEVELS, STORIES);
-    expect(new Set(schedule.map((s) => s.storyId)).size).toBe(pool.length);
+    const decks = endlessDecks(pool);
+    const inDecks = new Set([...decks.values()].flat().map((story) => story.id));
+    expect([...inDecks].sort()).toEqual(pool.map((story) => story.id).sort());
+    expect(new Set(generate(11).schedule.map((spawn) => spawn.station))).toEqual(
+      new Set(decks.keys()),
+    );
   });
 
   it('sprinkles sorted events of several kinds from the start delay on', () => {
@@ -122,9 +213,11 @@ describe('generateEndlessLevel', () => {
       ...LEVELS.find((l) => l.id === 'l1-burza'),
       id: 'l3-test',
       schedule: extra.map((s, i) => ({ atS: i, storyId: s.id, deadlineS: 30 })),
+      // Level 1 deals from a bag; the test level schedules its stories instead.
+      bag: undefined,
     } as (typeof LEVELS)[number];
     const pool = endlessStoryPool([...LEVELS, l3], [...STORIES, ...extra]);
-    expect(pool.some((s) => s.id.startsWith('l3-'))).toBe(true);
+    expect(pool.map((s) => s.id)).toEqual(expect.arrayContaining(extra.map((s) => s.id)));
     expect(pool.some((s) => s.id.startsWith('l0-'))).toBe(false);
     const numbers = pool.map((s) => Number(/^l(\d+)-/.exec(s.id)?.[1]));
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
@@ -150,6 +243,68 @@ describe('generateEndlessLevel', () => {
       requiredStamps: 2,
     };
     expect(poolWith(proven)).toContain(original.id);
+  });
+
+  it('builds a deck per deciding station; a flex story sits in each of its decks', () => {
+    const [one, two, three] = STORIES.filter((story) => story.id.startsWith('l1-'));
+    if (!one || !two || !three) {
+      throw new Error('level 1 needs three stories');
+    }
+    const only = (story: Story, station: Story['stamps'][number]['station']): Story => ({
+      ...story,
+      stamps: [{ id: `${story.id}-x`, station, text: 'x', relevance: 'decisive' }],
+      justifyingStamps: [`${story.id}-x`],
+      requiredStamps: 1,
+    });
+    const flex: Story = {
+      ...three,
+      stamps: [
+        { id: 'f-phone', station: 'phone', text: 'x', relevance: 'decisive' },
+        { id: 'f-ai', station: 'aiScanner', text: 'x', relevance: 'decisive' },
+        { id: 'f-archive', station: 'archive', text: 'x', relevance: 'decisive' },
+      ],
+      justifyingStamps: ['f-phone', 'f-ai', 'f-archive'],
+      requiredStamps: 1,
+    };
+    const decks = endlessDecks([only(one, 'phone'), only(two, 'dataLibrary'), flex]);
+    expect([...decks].map(([station, deck]) => [station, deck.map((s) => s.id)])).toEqual([
+      ['archive', [three.id]],
+      ['phone', [one.id, three.id]],
+      ['dataLibrary', [two.id]],
+    ]);
+  });
+
+  it('redraws from the deck on a repeat, and lets the next station take a one-story deck slot', () => {
+    const [one, two] = STORIES.filter((story) => story.id.startsWith('l1-'));
+    if (!one || !two) {
+      throw new Error('level 1 needs two stories');
+    }
+    const at = (story: Story, stations: Story['stamps'][number]['station'][]): Story => ({
+      ...story,
+      stamps: stations.map((station) => ({
+        id: `${story.id}-${station}`,
+        station,
+        text: 'x',
+        relevance: 'decisive' as const,
+      })),
+      justifyingStamps: stations.map((station) => `${story.id}-${station}`),
+      requiredStamps: 1,
+    });
+    // Archive's deck holds only the flex story, so the phone deck must redraw after it.
+    const tiny = [at(one, ['phone']), at(two, ['phone', 'archive'])];
+    for (const seed of [1, 2, 3]) {
+      const { schedule } = generateEndlessLevel(seed, [], tiny, 'expert');
+      expect(schedule.length).toBeGreaterThan(100);
+      for (let i = 1; i < schedule.length; i++) {
+        expect(schedule[i]?.storyId).not.toBe(schedule[i - 1]?.storyId);
+      }
+    }
+    // A single story cannot avoid repeating; the generator still finishes the schedule.
+    const single = generateEndlessLevel(1, [], [at(one, ['phone'])]);
+    expect(single.schedule.length).toBeGreaterThan(100);
+    expect(new Set(single.schedule.map((spawn) => `${spawn.station}:${spawn.storyId}`))).toEqual(
+      new Set([`phone:${one.id}`]),
+    );
   });
 
   it('getLevel serves a preview of the endless level', () => {
