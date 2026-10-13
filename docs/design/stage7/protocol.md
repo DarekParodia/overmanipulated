@@ -22,7 +22,7 @@ M1 → v3 (bumped by S7-03)
 - Commands: verdict.justifyingStampId becomes justifyingStampIds: array(entityId).min(1).max(3).
 - Events: verdictResult = folderResultSchema.extend({kind, playerId, verdict}), with verdict non-null. justifyingStampId and speedBonus are removed (use bonuses.speed > 0).
 - snapshot:
-  - += nextFolder {atMs, sinceMs} | null (scheduled spawns only; level events are not telegraphed);
+  - += nextFolder {atMs, sinceMs} | null (scheduled spawns only; level events are not telegraphed) (S7-08);
   - += conveyorFull: boolean (S7-08);
   - += paused: boolean (S7-10).
 - Lobby actions: += {kind: 'setPaused', paused}. Accepted only in the playing phase of a co-op room with exactly one connected player and no spectators. It is cleared automatically when anyone else joins (S7-10).

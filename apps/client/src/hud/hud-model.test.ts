@@ -9,6 +9,7 @@ import {
   isDeadlineWarning,
   locationKind,
   locationLabel,
+  nextFolderState,
   pushToast,
   type StoryInfo,
   sortQueue,
@@ -69,6 +70,28 @@ describe('queue', () => {
     expect(kind({ kind: 'fixture', fixtureId: 'desk-0' })).toBe('desk');
     expect(kind(onConveyor)).toBe('waiting');
     expect(kind({ kind: 'floor', x: 1, y: 2 })).toBe('waiting');
+  });
+});
+
+describe('next folder', () => {
+  const next = { atMs: 20_000, sinceMs: 3000 };
+
+  test('counts down to the next scheduled folder', () => {
+    expect(nextFolderState(next, false, 12_500)).toEqual({ kind: 'in', ms: 7500 });
+    expect(nextFolderState(next, false, 3000)).toEqual({ kind: 'in', ms: 17_000 });
+  });
+
+  test('never counts below zero when the clock runs past the due time', () => {
+    expect(nextFolderState(next, false, 20_000)).toEqual({ kind: 'in', ms: 0 });
+    expect(nextFolderState(next, false, 20_250)).toEqual({ kind: 'in', ms: 0 });
+  });
+
+  test('says the belt is full while a due folder waits', () => {
+    expect(nextFolderState(next, true, 21_000)).toEqual({ kind: 'full' });
+  });
+
+  test('says nothing once the schedule is used up', () => {
+    expect(nextFolderState(null, false, 200_000)).toEqual({ kind: 'none' });
   });
 });
 

@@ -1,17 +1,25 @@
 // Dev-only handle for driving gameplay UI and visuals without server gameplay (?debug only).
-// - `inject({ folders, stations, desks })` sets that state and keeps it pinned over incoming
-//   snapshots until `release()` (snapshots still update the clock, score and timer).
-// - `holdSnapshots()` pins whatever folders/stations/desks are in the store right now.
+// - `inject({ folders, stations, desks, nextFolder, conveyorFull })` sets that state and keeps it
+//   pinned over incoming snapshots until `release()` (snapshots still update the clock, score
+//   and timer).
+// - `holdSnapshots()` pins whatever folders/stations/desks and next-folder state are in the store
+//   right now.
 // - `setState()` / `getState()` reach the game store directly; `emit()` replays a gameplay event
 //   as if it came from the server; `send()` sends a real command to the server;
 //   `map()` / `localPlayerId()` describe this client.
-import type { Desk, Folder, PlayerCommand, Station, TileMap } from '@redakcja/shared';
+import type { Desk, Folder, NextFolder, PlayerCommand, Station, TileMap } from '@redakcja/shared';
 import { type GameplayEvent, handleGameEvent } from '../net/game-events.ts';
 import { type GameStore, useGame } from '../net/game-store.ts';
 import { runtime, sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 
-type Pinned = Partial<{ folders: Folder[]; stations: Station[]; desks: Desk[] }>;
+type Pinned = Partial<{
+  folders: Folder[];
+  stations: Station[];
+  desks: Desk[];
+  nextFolder: NextFolder | null;
+  conveyorFull: boolean;
+}>;
 
 export type GameHook = {
   store: typeof useGame;
@@ -69,8 +77,14 @@ export function installGameHook(): void {
       useGame.setState(state);
     },
     holdSnapshots() {
-      const { folders, stations, desks } = useGame.getState();
-      pinned = { folders: [...folders], stations: [...stations], desks: [...desks] };
+      const { folders, stations, desks, nextFolder, conveyorFull } = useGame.getState();
+      pinned = {
+        folders: [...folders],
+        stations: [...stations],
+        desks: [...desks],
+        nextFolder,
+        conveyorFull,
+      };
     },
     release() {
       pinned = {};
