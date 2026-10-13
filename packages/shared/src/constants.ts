@@ -3,7 +3,7 @@
 import type { Role, StationKind } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -79,6 +79,8 @@ export const CREDIBILITY = {
 export const SPEED_BONUS_REMAINING_FRACTION = 0.5;
 /** A correct verdict justified by a stamp that does not justify it earns this share of points. */
 export const WRONG_JUSTIFICATION_SCORE_FACTOR = 0.5;
+/** Most distinct justifying stamps a story can require, and a verdict can cite (Stage 7). */
+export const MAX_REQUIRED_STAMPS = 3;
 
 // --- Folders, stations, desk ---------------------------------------------------------------
 

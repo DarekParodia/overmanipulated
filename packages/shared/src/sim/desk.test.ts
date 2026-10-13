@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import type { Priority, Truth, Verdict } from '../domain.ts';
 import { correctVerdictFor } from '../domain.ts';
-import type { Folder } from '../entities.ts';
-import type { GameEvent } from '../protocol.ts';
+import type { Folder, FolderReason, FolderResult } from '../entities.ts';
+import { type GameEvent, gameEventSchema } from '../protocol.ts';
 import {
   runStep,
   TEST_MAP,
@@ -11,7 +11,7 @@ import {
   testContext,
   testInput,
 } from './__fixtures__/greybox.ts';
-import type { SimStory } from './content.ts';
+import { countsAsProof, type SimStory } from './content.ts';
 import { canExtendDeadline, evaluateVerdict, stepDesk } from './desk.ts';
 import type { QueuedCommand, SimFrame } from './frame.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
@@ -91,8 +91,15 @@ function kinds(events: GameEvent[]): string[] {
 
 describe('evaluateVerdict — scoring table', () => {
   it('gives +10 for a correct verdict on a normal story', () => {
-    const r = evaluateVerdict(story('true', 'normal'), collected(), 'publish', 's-image', 40_000);
-    expect(r).toMatchObject({ outcome: 'correct', scoreDelta: 10, credibilityDelta: 0 });
+    const r = evaluateVerdict(story('true', 'normal'), collected(), 'publish', ['s-image'], 40_000);
+    expect(r).toEqual({
+      outcome: 'correct',
+      reason: 'correctNormal',
+      scoreDelta: 10,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    });
   });
 
   it('gives +20 and +5 credibility for a correct verdict on an important story', () => {
@@ -100,14 +107,19 @@ describe('evaluateVerdict — scoring table', () => {
       story('false', 'important'),
       collected(),
       'reject',
-      's-image',
+      ['s-image'],
       40_000,
     );
-    expect(r).toMatchObject({ outcome: 'correct', scoreDelta: 20, credibilityDelta: 5 });
+    expect(r).toMatchObject({
+      outcome: 'correct',
+      reason: 'correctImportant',
+      scoreDelta: 20,
+      credibilityDelta: 5,
+    });
   });
 
   it('gives +20 and +5 credibility for a correct verdict on an urgent story', () => {
-    const r = evaluateVerdict(story('true', 'urgent'), collected(), 'publish', 's-image', 40_000);
+    const r = evaluateVerdict(story('true', 'urgent'), collected(), 'publish', ['s-image'], 40_000);
     expect(r).toMatchObject({ outcome: 'correct', scoreDelta: 20, credibilityDelta: 5 });
   });
 
@@ -117,70 +129,94 @@ describe('evaluateVerdict — scoring table', () => {
         story('misleading', priority),
         collected(),
         'publishWithContext',
-        's-image',
+        ['s-image'],
         40_000,
       );
-      expect(r).toMatchObject({ outcome: 'correct', scoreDelta: 30, credibilityDelta: 5 });
+      expect(r).toMatchObject({
+        outcome: 'correct',
+        reason: 'correctWithContext',
+        scoreDelta: 30,
+        credibilityDelta: 5,
+      });
     }
   });
 
   it('adds a +5 speed bonus when more than half of the folder time is left', () => {
     const f = collected({ spawnedAtMs: 10_000, deadlineMs: 70_000 });
-    const fast = evaluateVerdict(story('true', 'normal'), f, 'publish', 's-image', 39_999);
-    expect(fast).toMatchObject({ scoreDelta: 15, speedBonus: true });
+    const fast = evaluateVerdict(story('true', 'normal'), f, 'publish', ['s-image'], 39_999);
+    expect(fast).toMatchObject({
+      scoreDelta: 15,
+      bonuses: { speed: 5, multiStamp: 0, bossCall: 0 },
+    });
     // Exactly half left is not "more than half".
-    const boundary = evaluateVerdict(story('true', 'normal'), f, 'publish', 's-image', 40_000);
-    expect(boundary).toMatchObject({ scoreDelta: 10, speedBonus: false });
+    const boundary = evaluateVerdict(story('true', 'normal'), f, 'publish', ['s-image'], 40_000);
+    expect(boundary).toMatchObject({ scoreDelta: 10, bonuses: { speed: 0 } });
   });
 
   it('takes 20 points and 25 credibility for a published fake', () => {
-    const r = evaluateVerdict(story('false', 'normal'), collected(), 'publish', 's-image', 0);
-    expect(r).toMatchObject({ outcome: 'wrong', scoreDelta: -20, credibilityDelta: -25 });
+    const r = evaluateVerdict(story('false', 'normal'), collected(), 'publish', ['s-image'], 0);
+    expect(r).toMatchObject({
+      outcome: 'wrong',
+      reason: 'publishedFake',
+      scoreDelta: -20,
+      credibilityDelta: -25,
+    });
   });
 
   it('takes 10 points and 10 credibility for a rejected true story', () => {
-    const r = evaluateVerdict(story('true', 'normal'), collected(), 'reject', 's-image', 0);
-    expect(r).toMatchObject({ outcome: 'wrong', scoreDelta: -10, credibilityDelta: -10 });
+    const r = evaluateVerdict(story('true', 'normal'), collected(), 'reject', ['s-image'], 0);
+    expect(r).toMatchObject({
+      outcome: 'wrong',
+      reason: 'rejectedTrue',
+      scoreDelta: -10,
+      credibilityDelta: -10,
+    });
   });
 
   it('never pays a speed bonus for a wrong verdict', () => {
-    const r = evaluateVerdict(story('true', 'normal'), collected(), 'reject', 's-image', 0);
-    expect(r.speedBonus).toBe(false);
+    const r = evaluateVerdict(story('true', 'normal'), collected(), 'reject', ['s-image'], 0);
+    expect(r.bonuses).toEqual({ speed: 0, multiStamp: 0, bossCall: 0 });
   });
 });
 
 describe('evaluateVerdict — truth × priority × verdict matrix', () => {
-  type Row = [Truth, Verdict, string, number, number];
-  // [truth, verdict, outcome, score (normal priority, no speed bonus), credibility]
+  type Row = [Truth, Verdict, string, FolderReason, number, number];
+  // [truth, verdict, outcome, reason (normal priority), score (no speed bonus), credibility]
   const rows: Row[] = [
-    ['true', 'publish', 'correct', 10, 0],
-    ['true', 'reject', 'wrong', -10, -10],
-    ['true', 'publishWithContext', 'wrong', -5, 0],
-    ['false', 'publish', 'wrong', -20, -25],
-    ['false', 'reject', 'correct', 10, 0],
-    ['false', 'publishWithContext', 'wrong', -20, -25],
-    ['misleading', 'publish', 'wrong', -10, -10],
-    ['misleading', 'reject', 'wrong', -5, 0],
-    ['misleading', 'publishWithContext', 'correct', 30, 5],
-    ['satire', 'publish', 'wrong', -10, -10],
-    ['satire', 'reject', 'wrong', -5, 0],
-    ['satire', 'publishWithContext', 'correct', 30, 5],
-    ['unverifiable', 'publish', 'wrong', -20, -25],
-    ['unverifiable', 'reject', 'correct', 10, 0],
-    ['unverifiable', 'publishWithContext', 'wrong', -20, -25],
+    ['true', 'publish', 'correct', 'correctNormal', 10, 0],
+    ['true', 'reject', 'wrong', 'rejectedTrue', -10, -10],
+    ['true', 'publishWithContext', 'wrong', 'contextOnTrue', -5, 0],
+    ['false', 'publish', 'wrong', 'publishedFake', -20, -25],
+    ['false', 'reject', 'correct', 'correctNormal', 10, 0],
+    ['false', 'publishWithContext', 'wrong', 'publishedFake', -20, -25],
+    ['misleading', 'publish', 'wrong', 'publishedWithoutContext', -10, -10],
+    ['misleading', 'reject', 'wrong', 'rejectedContextStory', -5, 0],
+    ['misleading', 'publishWithContext', 'correct', 'correctWithContext', 30, 5],
+    ['satire', 'publish', 'wrong', 'publishedWithoutContext', -10, -10],
+    ['satire', 'reject', 'wrong', 'rejectedContextStory', -5, 0],
+    ['satire', 'publishWithContext', 'correct', 'correctWithContext', 30, 5],
+    ['unverifiable', 'publish', 'wrong', 'publishedFake', -20, -25],
+    ['unverifiable', 'reject', 'correct', 'correctNormal', 10, 0],
+    ['unverifiable', 'publishWithContext', 'wrong', 'publishedFake', -20, -25],
   ];
   const priorities: Priority[] = ['normal', 'important', 'urgent'];
-  for (const [truth, verdict, outcome, score, credibility] of rows) {
+  for (const [truth, verdict, outcome, reason, score, credibility] of rows) {
     for (const priority of priorities) {
       it(`${truth} / ${priority} / ${verdict} → ${outcome}`, () => {
         // Half the time is used up: no speed bonus.
-        const r = evaluateVerdict(story(truth, priority), collected(), verdict, 's-image', 30_000);
-        const raisedByPriority =
-          outcome === 'correct' && verdict !== 'publishWithContext' && priority !== 'normal';
+        const r = evaluateVerdict(
+          story(truth, priority),
+          collected(),
+          verdict,
+          ['s-image'],
+          30_000,
+        );
+        const raisedByPriority = reason === 'correctNormal' && priority !== 'normal';
         expect(r.outcome).toBe(outcome as typeof r.outcome);
+        expect(r.reason).toBe(raisedByPriority ? 'correctImportant' : reason);
         expect(r.scoreDelta).toBe(raisedByPriority ? 20 : score);
         expect(r.credibilityDelta).toBe(raisedByPriority ? 5 : credibility);
-        expect(r.speedBonus).toBe(false);
+        expect(r.bonuses.speed).toBe(0);
       });
     }
   }
@@ -189,25 +225,147 @@ describe('evaluateVerdict — truth × priority × verdict matrix', () => {
 describe('evaluateVerdict — justification', () => {
   it('halves the points and gives no credibility for a non-justifying stamp', () => {
     const f = collected({ stamps: ['s-image', 's-archive'] });
-    const r = evaluateVerdict(story('false', 'urgent'), f, 'reject', 's-archive', 0);
-    expect(r).toMatchObject({
+    const r = evaluateVerdict(story('false', 'urgent'), f, 'reject', ['s-archive'], 0);
+    expect(r).toEqual({
       outcome: 'wrongJustification',
+      reason: 'weakProof',
       scoreDelta: 10,
       credibilityDelta: 0,
-      speedBonus: false,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
     });
   });
 
   it('treats an uncollected justifying stamp as a wrong justification and reports it missed', () => {
     const f = collected({ stamps: ['s-archive'] });
-    const r = evaluateVerdict(story('misleading', 'normal'), f, 'publishWithContext', 's-image', 0);
-    expect(r).toMatchObject({ outcome: 'wrongJustification', scoreDelta: 15, credibilityDelta: 0 });
+    const r = evaluateVerdict(
+      story('misleading', 'normal'),
+      f,
+      'publishWithContext',
+      ['s-image'],
+      0,
+    );
+    expect(r).toMatchObject({
+      outcome: 'wrongJustification',
+      reason: 'weakProof',
+      scoreDelta: 15,
+      credibilityDelta: 0,
+    });
     expect(r.missedStampIds).toEqual(['s-image']);
   });
 
   it('applies the full wrong-verdict penalty regardless of the justification', () => {
-    const r = evaluateVerdict(story('false', 'normal'), collected(), 'publish', 's-archive', 0);
+    const r = evaluateVerdict(story('false', 'normal'), collected(), 'publish', ['s-archive'], 0);
     expect(r).toMatchObject({ outcome: 'wrong', scoreDelta: -20, credibilityDelta: -25 });
+  });
+});
+
+describe('evaluateVerdict — cited proof (Stage 7)', () => {
+  /** Two thirds of the folder time used: no speed bonus muddies the points. */
+  const LATE = 40_000;
+  /** A normal story with the given justifying stamps; every stamp below exists on it. */
+  function proofStory(truth: Truth, justifyingStamps: string[]): SimStory {
+    return {
+      ...story(truth, 'normal'),
+      stamps: [
+        { id: 's-image', station: 'imageSearch', relevance: 'decisive' },
+        { id: 's-archive', station: 'archive', relevance: 'decisive' },
+        { id: 's-source', station: 'sourceRegistry', relevance: 'irrelevant' },
+        { id: 's-ai', station: 'aiScanner', relevance: 'decisive' },
+        { id: 's-phone', station: 'phone', relevance: 'decisive' },
+      ],
+      justifyingStamps,
+    };
+  }
+
+  it('reports nothing missed after a correct verdict, even with a justifying stamp left unchecked', () => {
+    const twoJustifying = proofStory('false', ['s-image', 's-archive']);
+    const f = collected({ stamps: ['s-image'] });
+    const r = evaluateVerdict(twoJustifying, f, 'reject', ['s-image'], LATE);
+    expect(r).toEqual({
+      outcome: 'correct',
+      reason: 'correctNormal',
+      scoreDelta: 10,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    });
+    // Errors still name what the folder lacked.
+    const wrong = evaluateVerdict(twoJustifying, f, 'publish', ['s-image'], LATE);
+    expect(wrong.missedStampIds).toEqual(['s-archive']);
+  });
+
+  it('calls the proof weak when any cited stamp is not valid proof', () => {
+    const f = collected({ stamps: ['s-image'] });
+    const r = evaluateVerdict(
+      proofStory('false', ['s-image']),
+      f,
+      'reject',
+      ['s-image', 's-source'],
+      LATE,
+    );
+    expect(r).toEqual({
+      outcome: 'wrongJustification',
+      reason: 'weakProof',
+      scoreDelta: 5,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    });
+  });
+
+  it('never counts the hint-only AI scanner as proof', () => {
+    const scanned = proofStory('true', ['s-ai', 's-phone']);
+    const f = collected({ stamps: ['s-ai', 's-phone'] });
+    const aiOnly = evaluateVerdict(scanned, f, 'publish', ['s-ai'], LATE);
+    expect(aiOnly).toEqual({
+      outcome: 'wrongJustification',
+      reason: 'incompleteProof',
+      scoreDelta: 5,
+      credibilityDelta: 0,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    });
+    const withPhone = evaluateVerdict(scanned, f, 'publish', ['s-ai', 's-phone'], LATE);
+    expect(withPhone).toMatchObject({
+      outcome: 'correct',
+      reason: 'correctNormal',
+      scoreDelta: 10,
+    });
+  });
+
+  it('asks for as many countable proofs as the story requires', () => {
+    const twoProofs = { ...proofStory('false', ['s-image', 's-archive']), requiredStamps: 2 };
+    const f = collected({ stamps: ['s-image', 's-archive'] });
+    expect(evaluateVerdict(twoProofs, f, 'reject', ['s-image'], LATE)).toMatchObject({
+      outcome: 'wrongJustification',
+      reason: 'incompleteProof',
+      scoreDelta: 5,
+    });
+    expect(evaluateVerdict(twoProofs, f, 'reject', ['s-image', 's-archive'], LATE)).toMatchObject({
+      outcome: 'correct',
+      scoreDelta: 10,
+    });
+  });
+
+  it('counts only justifying stamps from stations that are not hint-only as proof', () => {
+    const scanned = proofStory('true', ['s-ai', 's-phone']);
+    expect(countsAsProof(scanned, 's-phone')).toBe(true);
+    expect(countsAsProof(scanned, 's-ai')).toBe(false);
+    expect(countsAsProof(scanned, 's-image')).toBe(false);
+    expect(countsAsProof(scanned, 'unknown')).toBe(false);
+  });
+
+  it('counts a stamp cited twice once', () => {
+    const f = collected({ stamps: ['s-image'] });
+    const r = evaluateVerdict(
+      proofStory('false', ['s-image']),
+      f,
+      'reject',
+      ['s-image', 's-image'],
+      LATE,
+    );
+    expect(r).toMatchObject({ outcome: 'correct', reason: 'correctNormal', scoreDelta: 10 });
   });
 });
 
@@ -283,7 +441,7 @@ describe('stepDesk — opening and closing', () => {
 
 describe('stepDesk — verdicts', () => {
   const verdict = (v: Verdict, stampId = 't-true-image', folderId = 'f1') =>
-    testCommand('p1', { kind: 'verdict', folderId, verdict: v, justifyingStampId: stampId });
+    testCommand('p1', { kind: 'verdict', folderId, verdict: v, justifyingStampIds: [stampId] });
 
   it('resolves the folder, frees the desk and records the result', () => {
     const state = { ...withOperator(deskState()), elapsedMs: 40_000 };
@@ -292,33 +450,42 @@ describe('stepDesk — verdicts', () => {
     expect(next.folders).toEqual({});
     expect(next.desks['desk-0']?.operatorId).toBeNull();
     expect(next.score).toBe(10);
-    expect(next.results).toEqual([
-      {
-        folderId: 'f1',
-        storyId: 't-true',
-        outcome: 'correct',
-        verdict: 'publish',
-        scoreDelta: 10,
-        credibilityDelta: 0,
-        missedStampIds: [],
-      },
-    ]);
+    const result: FolderResult & { verdict: Verdict } = {
+      folderId: 'f1',
+      storyId: 't-true',
+      outcome: 'correct',
+      reason: 'correctNormal',
+      verdict: 'publish',
+      scoreDelta: 10,
+      credibilityDelta: 0,
+      justifyingStampIds: ['t-true-image'],
+      requiredStamps: 1,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    };
+    expect(next.results).toEqual([result]);
     expect(frame.events).toEqual([
-      {
-        kind: 'verdictResult',
-        folderId: 'f1',
-        storyId: 't-true',
-        playerId: 'p1',
-        verdict: 'publish',
-        justifyingStampId: 't-true-image',
-        outcome: 'correct',
-        scoreDelta: 10,
-        credibilityDelta: 0,
-        speedBonus: false,
-        missedStampIds: [],
-      },
+      { kind: 'verdictResult', ...result, playerId: 'p1' },
       { kind: 'deskClosed', deskId: 'desk-0', playerId: 'p1' },
     ]);
+    // What the sim emits is what the wire accepts.
+    expect(gameEventSchema.safeParse(frame.events[0]).success).toBe(true);
+  });
+
+  it('records each cited stamp once and the proofs the story required', () => {
+    const state = withOperator(deskState());
+    const cites = testCommand('p1', {
+      kind: 'verdict',
+      folderId: 'f1',
+      verdict: 'publish',
+      justifyingStampIds: ['t-true-image', 't-true-image'],
+    });
+    const next = stepDesk(state, frameFor(state, [cites]));
+    expect(next.results[0]).toMatchObject({
+      outcome: 'correct',
+      justifyingStampIds: ['t-true-image'],
+      requiredStamps: 1,
+    });
   });
 
   it('applies the credibility loss of a wrong verdict', () => {
@@ -326,6 +493,7 @@ describe('stepDesk — verdicts', () => {
     const next = stepDesk(state, frameFor(state, [verdict('publish', 't-false-image')]));
     expect(next.score).toBe(-20);
     expect(next.credibility).toBe(75);
+    expect(next.results[0]).toMatchObject({ outcome: 'wrong', reason: 'publishedFake' });
     expect(next.results[0]?.missedStampIds).toEqual(['t-false-image']);
   });
 
@@ -430,11 +598,15 @@ describe('desk scenario via step', () => {
         kind: 'verdict',
         folderId: 'f1',
         verdict: 'publish',
-        justifyingStampId: 't-true-image',
+        justifyingStampIds: ['t-true-image'],
       }),
     ]);
     const result = decided.events.find((e) => e.kind === 'verdictResult');
-    expect(result).toMatchObject({ outcome: 'correct', scoreDelta: 15, speedBonus: true });
+    expect(result).toMatchObject({
+      outcome: 'correct',
+      scoreDelta: 15,
+      bonuses: { speed: 5, multiStamp: 0, bossCall: 0 },
+    });
     expect(decided.state.score).toBe(15);
     expect(decided.state.desks['desk-0']?.operatorId).toBeNull();
     expect(decided.state.folders.f1).toBeUndefined();

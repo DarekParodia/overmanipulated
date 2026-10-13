@@ -1,6 +1,7 @@
 // Gameplay entities as they live in the simulation state and travel in snapshots. One schema per
 // entity; the simulation's TypeScript types are inferred from these (AGENTS.md rule 5).
 import { z } from 'zod';
+import { MAX_REQUIRED_STAMPS } from './constants.ts';
 import { stationKindSchema, verdictSchema } from './domain.ts';
 
 const finite = z.number().finite();
@@ -74,27 +75,77 @@ export const deskSchema = z.object({
 
 export const folderOutcomeSchema = z.enum([
   'correct',
-  /** Correct verdict, but the chosen stamp does not justify it. */
+  /** Correct verdict, but the cited stamps are not (enough) proof (`reason` says which). */
   'wrongJustification',
   'wrong',
   'expired',
+  /** The level ended while the folder was still in play. */
+  'unfinished',
 ]);
+
+/**
+ * Why a folder ended the way it did; one value per branch of the scoring rules (desk.ts,
+ * scoring.ts). Each reason belongs to exactly one outcome:
+ * - correct: correctNormal, correctImportant, correctWithContext, correctionFiled;
+ * - wrongJustification: weakProof (a cited stamp is not valid proof), incompleteProof (too few
+ *   countable proofs, e.g. only the hint-only AI scanner);
+ * - wrong: publishedFake, rejectedTrue, contextOnTrue, publishedWithoutContext,
+ *   rejectedContextStory;
+ * - expired: expired, expiredUnpenalized;
+ * - unfinished: unfinished.
+ */
+export const folderReasonSchema = z.enum([
+  'correctNormal',
+  'correctImportant',
+  'correctWithContext',
+  'correctionFiled',
+  'weakProof',
+  'incompleteProof',
+  'publishedFake',
+  'rejectedTrue',
+  'contextOnTrue',
+  'publishedWithoutContext',
+  'rejectedContextStory',
+  'expired',
+  'expiredUnpenalized',
+  'unfinished',
+]);
+
+const bonusPoints = z.number().int().nonnegative();
+
+/** Points on top of the base points; `scoreDelta − speed − multiStamp − bossCall` is the base. */
+export const folderBonusesSchema = z.object({
+  speed: bonusPoints,
+  multiStamp: bonusPoints,
+  bossCall: bonusPoints,
+});
 
 /** One folder's fate, collected for the level summary (Kolegium redakcyjne). */
 export const folderResultSchema = z.object({
   folderId: id,
   storyId: id,
   outcome: folderOutcomeSchema,
+  reason: folderReasonSchema,
   verdict: verdictSchema.nullable(),
   scoreDelta: z.number().int(),
   credibilityDelta: z.number().int(),
-  /** Justifying stamps the team did not collect. */
+  /** Stamps cited at the desk, without duplicates; [] without a verdict. */
+  justifyingStampIds: z.array(id).max(MAX_REQUIRED_STAMPS),
+  /** Distinct proofs the story required. */
+  requiredStamps: z.number().int().min(1).max(MAX_REQUIRED_STAMPS),
+  bonuses: folderBonusesSchema,
+  /** Justifying stamps the folder lacked; filled for every outcome except `correct` ([]). */
   missedStampIds: z.array(id).max(16),
 });
+
+/** Why a level was lost: credibility ran out, or time ran out without a positive score. */
+export const lossReasonSchema = z.enum(['credibility', 'score']);
 
 export const levelOutcomeSchema = z.object({
   won: z.boolean(),
   stars: z.number().int().min(0).max(3),
+  /** null when the level was won. */
+  lossReason: lossReasonSchema.nullable(),
 });
 
 export type FolderTag = z.infer<typeof folderTagSchema>;
@@ -104,5 +155,15 @@ export type StationPhase = z.infer<typeof stationPhaseSchema>;
 export type Station = z.infer<typeof stationSchema>;
 export type Desk = z.infer<typeof deskSchema>;
 export type FolderOutcome = z.infer<typeof folderOutcomeSchema>;
+export type FolderReason = z.infer<typeof folderReasonSchema>;
+export type FolderBonuses = z.infer<typeof folderBonusesSchema>;
 export type FolderResult = z.infer<typeof folderResultSchema>;
+export type LossReason = z.infer<typeof lossReasonSchema>;
 export type LevelOutcome = z.infer<typeof levelOutcomeSchema>;
+
+/** A result without any bonus points (frozen: results share it). */
+export const NO_BONUSES: Readonly<FolderBonuses> = Object.freeze({
+  speed: 0,
+  multiStamp: 0,
+  bossCall: 0,
+});

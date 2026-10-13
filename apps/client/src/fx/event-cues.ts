@@ -43,6 +43,8 @@ export function verdictCue(event: VerdictEvent, truth: Truth | undefined): CueId
     case 'wrong':
       return wrongVerdictCue(event.verdict, truth);
     case 'expired':
+    case 'unfinished':
+      // Neither comes as a verdict; mapped so the switch covers every outcome.
       return 'folder.expired';
   }
 }

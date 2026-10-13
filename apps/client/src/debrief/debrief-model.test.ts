@@ -15,9 +15,13 @@ function result(folderId: string, storyId: string, patch: Partial<FolderResult> 
     folderId,
     storyId,
     outcome: 'correct',
+    reason: 'correctNormal',
     verdict: 'publish',
     scoreDelta: 10,
     credibilityDelta: 0,
+    justifyingStampIds: [`${storyId}-image`],
+    requiredStamps: 1,
+    bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
     missedStampIds: [],
     ...patch,
   } satisfies FolderResult;
@@ -50,7 +54,10 @@ describe('debrief cards', () => {
 
   test('keeps one card per story, from its first folder', () => {
     const cards = debriefCards(
-      [result('f3', 'l1-a', { outcome: 'wrong' }), result('f1', 'l1-a')],
+      [
+        result('f3', 'l1-a', { outcome: 'wrong', reason: 'publishedWithoutContext' }),
+        result('f1', 'l1-a'),
+      ],
       lookup,
     );
     expect(cards).toHaveLength(1);
@@ -62,7 +69,11 @@ describe('debrief cards', () => {
       [
         result('f1', 'l1-a', {
           outcome: 'expired',
+          reason: 'expired',
           verdict: null,
+          scoreDelta: -5,
+          credibilityDelta: -5,
+          justifyingStampIds: [],
           missedStampIds: ['l1-a-image', 'unknown'],
         }),
       ],

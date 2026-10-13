@@ -165,13 +165,14 @@ export function verdictToast(
     wrongJustification: 'caution',
     wrong: 'bad',
     expired: 'bad',
+    unfinished: 'caution',
   };
   const title =
     event.outcome === 'correct'
       ? pl.hud.toast.correct
       : event.outcome === 'wrongJustification'
         ? pl.hud.toast.wrongJustification
-        : event.outcome === 'expired'
+        : event.outcome === 'expired' || event.outcome === 'unfinished'
           ? pl.hud.toast.expired
           : wrongTitle(event.verdict);
   return {
@@ -182,7 +183,11 @@ export function verdictToast(
     credibilityDelta: event.credibilityDelta,
     tone: toneByOutcome[event.outcome],
     mark:
-      event.outcome === 'wrong' ? 'reject' : event.outcome === 'expired' ? 'expired' : 'publish',
+      event.outcome === 'wrong'
+        ? 'reject'
+        : event.outcome === 'expired' || event.outcome === 'unfinished'
+          ? 'expired'
+          : 'publish',
   };
 }
 

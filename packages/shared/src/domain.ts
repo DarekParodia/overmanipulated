@@ -46,6 +46,16 @@ export type LevelEventKind = z.infer<typeof levelEventKindSchema>;
 export type PingKind = z.infer<typeof pingKindSchema>;
 export type StampRelevance = z.infer<typeof stampRelevanceSchema>;
 
+/**
+ * Stations whose stamp is only a hint (design doc: "AI is only a hint"). Such a stamp may be
+ * listed among a story's justifying stamps, but it never counts toward the proof a verdict needs.
+ */
+export const HINT_ONLY_STATIONS = ['aiScanner'] as const satisfies readonly StationKind[];
+
+export function isHintOnly(kind: StationKind): boolean {
+  return (HINT_ONLY_STATIONS as readonly StationKind[]).includes(kind);
+}
+
 export const LEVEL_EVENT_KINDS = levelEventKindSchema.options;
 export const STATION_KINDS = stationKindSchema.options;
 export const VERDICTS = verdictSchema.options;

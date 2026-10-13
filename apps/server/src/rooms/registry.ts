@@ -7,6 +7,7 @@ import {
   getLevel,
   LEVELS,
   type Level,
+  maxLevelScore,
   STORIES,
   type Story,
   storiesForEndless,
@@ -724,7 +725,7 @@ export function createRoomRegistry(options: RegistryOptions) {
 
   function endLevel(room: Room): void {
     const { game } = room;
-    const outcome = game.ended ?? { won: false, stars: 0 };
+    const outcome = game.ended ?? { won: false, stars: 0, lossReason: null };
     room.phase = 'results';
     log.info('level ended', { room: room.code, level: room.level.id, ...outcome });
     const endless = room.level.id === ENDLESS_LEVEL_ID;
@@ -740,6 +741,9 @@ export function createRoomRegistry(options: RegistryOptions) {
       score: game.score,
       credibility: game.credibility,
       results: game.results.slice(-ENDLESS.maxResultsSent),
+      lossReason: outcome.lossReason,
+      starThresholds: endless ? null : room.level.stars,
+      maxScore: endless ? null : maxLevelScore(room.level, new Map(Object.entries(room.stories))),
       ...(endless ? { survivedS } : {}),
     });
     broadcastRoomState(room);

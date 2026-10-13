@@ -64,7 +64,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `desk.open` / `desk.close` | `deskOpened` / `deskClosed` | `deskOpen` / `deskClose` | drawer knock / soft back | dust | — | ● |
 | `verdict.correct` | correct verdict | `cheer`, `scorePop` (value = score delta) | rising chime | confetti in verdict colour (blue / red / ochre) | light tick | ●● |
 | `verdict.contextCorrect` | correct "publish with context" | `cheer`, `scorePop` | fanfare | bigger ochre burst + paper bits | small shake, thud | ●●● |
-| `verdict.wrongJustification` | right verdict, wrong stamp | `shrug`, `scorePop` | unsure two-note dip | ink puff in verdict colour | light tick | ●● |
+| `verdict.wrongJustification` | right verdict, weak or too little proof (reason `weakProof` / `incompleteProof`, e.g. only the AI scanner cited) | `shrug`, `scorePop` | unsure two-note dip | ink puff in verdict colour | light tick | ●● |
 | `verdict.fakePublished` | false / unverifiable published, or misleading / satire published without context | `facepalm`, `credibilityCrack`, `scorePop` | alarm sting | red ink splash + paper bits | strong shake, long buzz | ●●● |
 | `verdict.truthRejected` | publishable story rejected | `shrug`, `credibilityCrack`, `scorePop` | low sting | grey ash | medium shake, thud | ●● |
 | `verdict.wrong` | needless context on a true story | `shrug`, `scorePop` | low sting (quieter) | grey ash | small shake | ●● |

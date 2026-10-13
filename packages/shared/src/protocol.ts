@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   ENDLESS,
   MAX_PLAYERS,
+  MAX_REQUIRED_STAMPS,
   NICKNAME_MAX_LENGTH,
   NICKNAME_MIN_LENGTH,
   PLAYER_COLOR_COUNT,
@@ -20,9 +21,9 @@ import {
 import {
   deskSchema,
   folderLocationSchema,
-  folderOutcomeSchema,
   folderResultSchema,
   folderSchema,
+  lossReasonSchema,
   stationSchema,
 } from './entities.ts';
 
@@ -106,12 +107,12 @@ export const inputMessageSchema = z.object({
 export const playerCommandSchema = z.discriminatedUnion('kind', [
   /** Outcome of the station minigame the sender is operating. */
   z.object({ kind: z.literal('minigameResult'), stationId: entityId, success: z.boolean() }),
-  /** Verdict for the folder on the desk the sender has open. */
+  /** Verdict for the folder on the desk the sender has open, citing the stamps that prove it. */
   z.object({
     kind: z.literal('verdict'),
     folderId: entityId,
     verdict: verdictSchema,
-    justifyingStampId: entityId,
+    justifyingStampIds: z.array(entityId).min(1).max(MAX_REQUIRED_STAMPS),
   }),
   /** Close the station minigame or desk sheet without a result. */
   z.object({ kind: z.literal('cancel') }),
@@ -269,18 +270,11 @@ export const gameEventSchema = z.discriminatedUnion('kind', [
     folderId: entityId,
   }),
   z.object({ kind: z.literal('deskClosed'), deskId: entityId, playerId: playerIdSchema }),
-  z.object({
+  /** The folder's result as it goes into the level summary, plus who gave the verdict. */
+  folderResultSchema.extend({
     kind: z.literal('verdictResult'),
-    folderId: entityId,
-    storyId: entityId,
     playerId: playerIdSchema,
     verdict: verdictSchema,
-    justifyingStampId: entityId,
-    outcome: folderOutcomeSchema,
-    scoreDelta: z.number().int(),
-    credibilityDelta: z.number().int(),
-    speedBonus: z.boolean(),
-    missedStampIds: z.array(entityId).max(16),
   }),
   z.object({ kind: z.literal('ping'), playerId: playerIdSchema, ping: pingKindSchema }),
   /** A level event starts or ends (S4-05). `folderIds` are the folders it concerns. */
@@ -327,6 +321,11 @@ export const errorMessageSchema = z.object({
   detail: z.string().max(200).optional(),
 });
 
+export const starThresholdsSchema = z.object({
+  two: z.number().int().nonnegative(),
+  three: z.number().int().nonnegative(),
+});
+
 /** Sent once when the level ends; the room moves to the `results` phase. */
 export const levelEndMessageSchema = z.object({
   type: z.literal('levelEnd'),
@@ -336,6 +335,12 @@ export const levelEndMessageSchema = z.object({
   score: z.number().int(),
   credibility: z.number().int(),
   results: z.array(folderResultSchema).max(ENDLESS.maxResultsSent),
+  /** Why the level was lost; null when it was won. An endless run always ends on credibility. */
+  lossReason: lossReasonSchema.nullable(),
+  /** The level's two- and three-star scores; null in endless (no stars). */
+  starThresholds: starThresholdsSchema.nullable(),
+  /** The best score a perfect team could reach on this level; null in endless. */
+  maxScore: z.number().int().nonnegative().nullable(),
   /** Endless runs only: whole seconds the newsroom survived (also stored on the leaderboard). */
   survivedS: z.number().int().nonnegative().optional(),
 });
@@ -379,6 +384,7 @@ export type GameEvent = z.infer<typeof gameEventSchema>;
 export type EventMessage = z.infer<typeof eventMessageSchema>;
 export type ErrorCode = z.infer<typeof errorCodeSchema>;
 export type ErrorMessage = z.infer<typeof errorMessageSchema>;
+export type StarThresholds = z.infer<typeof starThresholdsSchema>;
 export type LevelEndMessage = z.infer<typeof levelEndMessageSchema>;
 export type ServerMessage = z.infer<typeof serverMessageSchema>;
 

@@ -5,6 +5,7 @@
 import {
   canExtendDeadline,
   carriedFolder,
+  countsAsProof,
   createRng,
   type Folder,
   folderOnFixture,
@@ -311,7 +312,7 @@ export class Bot {
           kind: 'verdict',
           folderId: folder.id,
           verdict: call.verdict,
-          justifyingStampId: call.stampId,
+          justifyingStampIds: [call.stampId],
         });
         out.work = false;
         // The folder disappears next tick; the bot is free again after a reaction delay.
@@ -540,7 +541,10 @@ export class Bot {
     }
     let stampId = 'none';
     if (holdsJustifying && this.rng.next() >= this.profile.wrongJustification) {
-      stampId = (justifying[this.rng.int(justifying.length)] as { id: string }).id;
+      // The AI scanner is only a hint: cite real proof whenever the folder has some.
+      const proof = justifying.filter((s) => countsAsProof(story, s.id));
+      const pick = proof.length > 0 ? proof : justifying;
+      stampId = (pick[this.rng.int(pick.length)] as { id: string }).id;
     } else if (held.length > 0) {
       const wrong = held.filter((s) => !story.justifyingStamps.includes(s.id));
       const pool = wrong.length > 0 ? wrong : held;

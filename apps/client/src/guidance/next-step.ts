@@ -1,9 +1,17 @@
 // "What next" for the local player (agents/design-rules.md §1.6): one short line and the
 // fixtures it points at. Pure: everything comes in as arguments, so every case is unit-tested.
 // It never reveals a story's truth or verdict; it only points at stations whose stamp the
-// folder still lacks (the ones that can justify a verdict first) and at the desk once a
-// justifying stamp is collected.
-import type { Desk, Fixture, Folder, StationKind, TileMap } from '@redakcja/shared';
+// folder still lacks (the ones whose stamp proves a verdict first) and at the desk once such a
+// proof is collected (the hint-only AI scanner never is one).
+import {
+  countsAsProof,
+  type Desk,
+  type Fixture,
+  type Folder,
+  type ProofStory,
+  type StationKind,
+  type TileMap,
+} from '@redakcja/shared';
 import type { InputDevice } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 
@@ -41,10 +49,7 @@ export type NextStep = {
 };
 
 /** What next-step needs to know about a story: its stamps and which of them justify. */
-export type StoryStamps = {
-  stamps: readonly { id: string; station: StationKind }[];
-  justifyingStamps: readonly string[];
-};
+export type StoryStamps = ProofStory;
 
 export type NextStepInput = {
   playerId: string | null;
@@ -104,9 +109,12 @@ function byDeadline(a: Folder, b: Folder): number {
   return a.deadlineMs - b.deadlineMs;
 }
 
-/** Whether the folder carries at least one stamp that can justify its verdict. */
+/**
+ * Whether the folder carries at least one stamp that proves its verdict. The hint-only AI
+ * scanner never does: citing it alone earns half points at the desk.
+ */
 export function hasJustifyingStamp(folder: Folder, story: StoryStamps | undefined): boolean {
-  return story ? story.justifyingStamps.some((id) => folder.stamps.includes(id)) : false;
+  return story ? folder.stamps.some((id) => countsAsProof(story, id)) : false;
 }
 
 /** The stamp a station of `kind` would add to the folder, if it still lacks it. */
@@ -117,7 +125,8 @@ function missingStamp(folder: Folder, story: StoryStamps | undefined, kind: Stat
 
 /**
  * Stations worth visiting with this folder: the level's stations whose stamp it still lacks,
- * the ones that can justify a verdict first, free ones (no folder on them, not locked) first.
+ * the ones whose stamp would prove the verdict first, free ones (no folder on them, not locked)
+ * first.
  */
 export function stationsToVisit(
   folder: Folder,
@@ -129,7 +138,7 @@ export function stationsToVisit(
   );
   const justifying = unchecked.filter((f) => {
     const stamp = f.station ? missingStamp(folder, story, f.station) : undefined;
-    return stamp !== undefined && (story?.justifyingStamps.includes(stamp.id) ?? false);
+    return stamp !== undefined && story !== undefined && countsAsProof(story, stamp.id);
   });
   const pool = justifying.length > 0 ? justifying : unchecked;
   const free = pool.filter((f) => !folderOn(input.folders, f.id) && !isLocked(input, f.id));

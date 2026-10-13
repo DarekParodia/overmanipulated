@@ -21,13 +21,15 @@ const TONE = {
   wrongJustification: styles.caution,
   wrong: styles.bad,
   expired: styles.bad,
-} as const;
+  unfinished: styles.caution,
+} as const satisfies Record<Card['outcome'], string | undefined>;
 
 const MARK = {
   correct: 'publish',
   wrongJustification: 'publish',
   wrong: 'reject',
   expired: 'expired',
+  unfinished: 'expired',
 } as const satisfies Record<Card['outcome'], IconName>;
 
 const SECTIONS = [

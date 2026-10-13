@@ -124,6 +124,9 @@ describe('endless mode in a room', () => {
       score: 230,
       credibility: 0,
       survivedS: 754,
+      lossReason: 'credibility',
+      starThresholds: null,
+      maxScore: null,
     });
     expect(guest.last('levelEnd')?.survivedS).toBe(754);
     expect(stored).toEqual([
@@ -163,7 +166,12 @@ describe('endless mode in a room', () => {
     patch = { credibility: 0 };
     registry.tick();
     const end = host.last('levelEnd');
-    expect(end).toBeDefined();
+    expect(end).toMatchObject({
+      levelId: 'l0-greybox',
+      lossReason: 'credibility',
+      starThresholds: { two: 120, three: 190 },
+      maxScore: 240,
+    });
     expect(end && 'survivedS' in end).toBe(false);
     expect(stored).toEqual([]);
   });

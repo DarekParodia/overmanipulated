@@ -1,6 +1,6 @@
 # Stage 7 — protocol ledger
 
-PROTOCOL_VERSION ledger. Current value: 2.
+PROTOCOL_VERSION ledger. Current value: 3 (S7-03).
 
 Rules
 - At most one bump per milestone. A milestone is a deployment unit.
@@ -20,7 +20,7 @@ M1 → v3 (bumped by S7-03)
   - folderSchema += spawnKey: string matching /^(s\d+|e\d+\.\d+)$/.
   - folderResultSchema += spawnKey.
 - Commands: verdict.justifyingStampId becomes justifyingStampIds: array(entityId).min(1).max(3).
-- Events: verdictResult = folderResultSchema.extend({kind, playerId}). justifyingStampId and speedBonus are removed (use bonuses.speed > 0).
+- Events: verdictResult = folderResultSchema.extend({kind, playerId, verdict}), with verdict non-null. justifyingStampId and speedBonus are removed (use bonuses.speed > 0).
 - snapshot:
   - += nextFolder {atMs, sinceMs} | null (scheduled spawns only; level events are not telegraphed);
   - += conveyorFull: boolean (S7-08);

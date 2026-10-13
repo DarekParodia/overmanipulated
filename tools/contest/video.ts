@@ -139,21 +139,33 @@ export async function main() {
             levelId: 'l1-burza',
             won: true,
             stars: 2,
-            score: 140,
+            // Two stars on l1 need 205 (starThresholds below).
+            score: 215,
             credibility: 90,
             results: stories.map((s, i) => ({
               folderId: `v${i}`,
               storyId: s.id,
               outcome: i === 3 ? 'expired' : 'correct',
+              reason: i === 3 ? 'expired' : 'correctImportant',
               verdict: i === 3 ? null : s.verdict,
               scoreDelta: i === 3 ? -5 : 20,
               credibilityDelta: i === 3 ? -5 : 5,
+              justifyingStampIds: i === 3 ? [] : s.proof,
+              requiredStamps: 1,
+              bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
               missedStampIds: [],
             })),
+            lossReason: null,
+            starThresholds: { two: 205, three: 320 },
+            maxScore: 375,
           },
         });
       },
-      l1.map((s) => ({ id: s.id, verdict: s.correctVerdict })),
+      l1.map((s) => ({
+        id: s.id,
+        verdict: s.correctVerdict,
+        proof: s.justifyingStamps.slice(0, 1),
+      })),
     );
     await host.page.waitForTimeout(5000);
     await host.page.mouse.wheel(0, 700);

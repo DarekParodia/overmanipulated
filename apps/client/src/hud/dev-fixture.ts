@@ -21,6 +21,9 @@ export type HudDevApi = {
 };
 
 const FIXTURE_ELAPSED_MS = 120_000;
+/** The l0 greybox level's star thresholds and best possible score. */
+const FIXTURE_STARS = { two: 120, three: 190 };
+const FIXTURE_MAX_SCORE = 240;
 const URGENT_STORY = 'l0-dev-pilny-komunikat';
 
 function fixtureFolders(playerId: string): Folder[] {
@@ -63,24 +66,30 @@ function fixtureResults(): FolderResult[] {
     folderId: string,
     storyId: string,
     outcome: FolderResult['outcome'],
+    reason: FolderResult['reason'],
     verdict: FolderResult['verdict'],
     scoreDelta: number,
     credibilityDelta: number,
+    speed = 0,
   ): FolderResult => ({
     folderId,
     storyId,
     outcome,
+    reason,
     verdict,
     scoreDelta,
     credibilityDelta,
+    justifyingStampIds: verdict === null ? [] : [`${storyId}-image`],
+    requiredStamps: 1,
+    bonuses: { speed, multiStamp: 0, bossCall: 0 },
     missedStampIds: [],
   });
   return [
-    result('f-1', 'l0-zalany-rynek', 'correct', 'reject', 25, 5),
-    result('f-2', 'l0-nocny-autobus', 'correct', 'publish', 15, 0),
-    result('f-3', URGENT_STORY, 'wrong', 'publish', -20, -25),
-    result('f-4', 'l0-nocny-autobus', 'wrongJustification', 'publish', 5, 0),
-    result('f-5', 'l0-zalany-rynek', 'expired', null, -5, -5),
+    result('f-1', 'l0-zalany-rynek', 'correct', 'correctImportant', 'reject', 25, 5, 5),
+    result('f-2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 15, 0, 5),
+    result('f-3', URGENT_STORY, 'wrong', 'publishedFake', 'publish', -20, -25),
+    result('f-4', 'l0-nocny-autobus', 'wrongJustification', 'weakProof', 'publish', 5, 0),
+    result('f-5', 'l0-zalany-rynek', 'expired', 'expired', null, -5, -5),
   ];
 }
 
@@ -136,11 +145,13 @@ export function installHudDevFixture(): (() => void) | undefined {
         storyId: 'l0-zalany-rynek',
         playerId: useApp.getState().playerId ?? 'p-dev',
         verdict: 'reject',
-        justifyingStampId: 'l0-zalany-rynek-image',
         outcome: 'correct',
+        reason: 'correctImportant',
         scoreDelta: 25,
         credibilityDelta: 5,
-        speedBonus: true,
+        justifyingStampIds: ['l0-zalany-rynek-image'],
+        requiredStamps: 1,
+        bonuses: { speed: 5, multiStamp: 0, bossCall: 0 },
         missedStampIds: [],
         ...patch,
       };
@@ -159,6 +170,9 @@ export function installHudDevFixture(): (() => void) | undefined {
         score: state.score,
         credibility: state.credibility,
         results: fixtureResults(),
+        lossReason: won ? null : 'score',
+        starThresholds: FIXTURE_STARS,
+        maxScore: FIXTURE_MAX_SCORE,
       };
       state.setLevelEnd(message);
     },
