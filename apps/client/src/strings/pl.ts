@@ -66,6 +66,9 @@ export const pl = {
     needByline: 'Najpierw wpisz podpis.',
     needCode: 'Kod ma cztery litery.',
     pressDown: 'Serwer gry nie odpowiada.',
+    /** Message of the day (S7-72): the banner's name and its close button. */
+    motdLabel: 'Komunikat redakcji',
+    motdClose: 'Zamknij komunikat',
   },
   lobby: {
     codeLabel: 'Kod pokoju',

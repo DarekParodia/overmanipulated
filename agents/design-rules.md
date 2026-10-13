@@ -107,6 +107,9 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   button always reachable.
 - **Menus:** content in one centred column ≤ 560 px wide on the sky background; the game logo on
   top. Lobby: player cards in a row, big "Gotowy" toggle, one yellow start button.
+  The main menu may show the operator's message of the day („Komunikat redakcji”) between the
+  logo and the card: a white card with a blue (info) or orange (warning) outline and icon and a
+  close button. Never yellow: the menu keeps one main action.
 - Generous spacing (≥ `--space-4` between groups). If a screen feels crowded, remove things;
   don't shrink them.
 
