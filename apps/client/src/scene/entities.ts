@@ -8,6 +8,7 @@ import {
   type NextFolder,
   type Priority,
   type Station,
+  type StationKind,
   type StoryType,
 } from '@redakcja/shared';
 import { outageFraction, outageSeconds } from '../events/event-model.ts';
@@ -24,7 +25,11 @@ export const SURFACE_HEIGHT = {
   phone: 0.76,
   aiScanner: 0.76,
   dataLibrary: 0.76,
-} as const;
+  geolocation: 0.76,
+  transcript: 0.76,
+  crossCheck: 0.76,
+  metadata: 0.76,
+} as const satisfies Record<StationKind | 'conveyor' | 'table' | 'desk', number>;
 
 export function surfaceHeight(fixture: Fixture): number {
   if (fixture.kind === 'station') {

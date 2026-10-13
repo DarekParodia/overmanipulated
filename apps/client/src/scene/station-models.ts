@@ -6,6 +6,8 @@
 //   phone          telephone switchboard: jacks and patch cords            ("Telefon")
 //   aiScanner      slate terminal with an eye screen, gantry, scan corners ("Skaner AI")
 //   dataLibrary    data shelf: rows of colourful books, LEDs               ("Biblioteka danych")
+// The four Stage 7 stations (geolocation "Mapa", transcript "Stenogram", crossCheck "Inne media",
+// metadata "Metadane") use a temporary plain desk with an accent panel until S7-51 models them.
 // The station sign (StationIndicators) floats over the top of each model, so the identifying
 // art lives on the FRONT faces, below the sign, and tall parts are kept few and wide. Bodies are
 // pale grey-blue on a blue plinth so stations stand out from the orange-brown decoration. Each
@@ -281,6 +283,19 @@ function dataLibrary(detail: boolean): Item[] {
   return items;
 }
 
+/**
+ * Temporary model for a Stage 7 station (S7-48): the standard desk with a coloured front panel
+ * and a matching back board, so the kind reads apart until its own model lands (S7-51).
+ */
+function plainStation(accent: string): (detail: boolean) => Item[] {
+  return () => [
+    ...deskBody(),
+    bxd(accent, 0.6, 0.36, 0.03, { y: 0.4, z: FRONT + 0.01 }),
+    bx(colors.surfaceSunk, 0.88, 0.4, 0.06, { y: 1.0, z: -0.45 }),
+    bxd(accent, 0.7, 0.14, 0.04, { y: 1.03, z: -0.41 }),
+  ];
+}
+
 const BUILDERS: Record<StationKind, (detail: boolean) => Item[]> = {
   imageSearch,
   archive,
@@ -288,6 +303,10 @@ const BUILDERS: Record<StationKind, (detail: boolean) => Item[]> = {
   phone,
   aiScanner,
   dataLibrary,
+  geolocation: plainStation(colors.green),
+  transcript: plainStation(colors.yellowDark),
+  crossCheck: plainStation(colors.orange),
+  metadata: plainStation(colors.blueDark),
 };
 
 /** The merged, outlined model of one station kind (one draw call). */

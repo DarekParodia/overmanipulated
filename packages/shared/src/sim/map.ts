@@ -44,6 +44,10 @@ const FIXTURE_CHARS: Record<string, { kind: FixtureKind; station?: StationKind }
   P: { kind: 'station', station: 'phone' },
   S: { kind: 'station', station: 'aiScanner' },
   L: { kind: 'station', station: 'dataLibrary' },
+  G: { kind: 'station', station: 'geolocation' },
+  Q: { kind: 'station', station: 'transcript' },
+  X: { kind: 'station', station: 'crossCheck' },
+  E: { kind: 'station', station: 'metadata' },
 };
 
 /**
@@ -52,7 +56,8 @@ const FIXTURE_CHARS: Record<string, { kind: FixtureKind; station?: StationKind }
  *   `1`–`4` floor with the spawn point for that player slot,
  *   fixtures (solid): `C` conveyor, `D` editorial desk, `T` table (put-down surface),
  *   stations `I` image search, `A` archive, `R` source registry, `P` phone, `S` AI scanner,
- *   `L` data library.
+ *   `L` data library, `G` geolocation (Mapa), `Q` transcript (Stenogram, Q for quote),
+ *   `X` cross-check (Inne media), `E` metadata (Metadane, E for EXIF).
  */
 export function parseLayout(rows: readonly string[]): TileMap {
   const height = rows.length;

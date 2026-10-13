@@ -4,6 +4,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { levelStoryIds } from '../../packages/content/src/rules.ts';
+import type { StationKind } from '../../packages/shared/src/domain.ts';
 
 // --- Data model (a loose view of the files; the Zod schemas in packages/content are the law) ---
 
@@ -126,7 +127,11 @@ export const STATION_PL: Record<string, string> = {
   phone: 'Telefon',
   aiScanner: 'Skaner AI',
   dataLibrary: 'Biblioteka danych',
-};
+  geolocation: 'Mapa',
+  transcript: 'Stenogram',
+  crossCheck: 'Inne media',
+  metadata: 'Metadane',
+} satisfies Record<StationKind, string>;
 export const RELEVANCE_PL: Record<string, string> = {
   decisive: 'rozstrzygająca',
   misleading: 'zwodnicza',

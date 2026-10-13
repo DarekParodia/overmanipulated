@@ -105,7 +105,11 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | statystyka | `statistic` |
 | artykuł | `article` |
 
-## Stations (`StationId`)
+## Stations (`StationKind`)
+
+`stationKindSchema` / `STATION_KINDS`. Layout letters in `sim/map.ts`: `I A R P S L` and, from
+Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint name
+`pl.guidance.stationShort`.
 
 | Polish | English | Real-world analogue |
 | --- | --- | --- |
@@ -115,6 +119,10 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Telefon | `phone` | Contacting the original source |
 | Skaner AI | `aiScanner` | AI/edit detectors |
 | Biblioteka danych | `dataLibrary` | Official statistics, source reports |
+| Mapa | `geolocation` (letter `G`) | Geolocation with maps and street imagery |
+| Stenogram | `transcript` (letter `Q`, for quote) | Full transcripts and recordings of statements |
+| Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
+| Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
 ## Roles (`RoleId`)
 
@@ -123,9 +131,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 
 | Polish | English | Bonus (passive) | Ability |
 | --- | --- | --- | --- |
-| Fotoedytor | `photoEditor` | `imageSearch` and `aiScanner` 40% faster | Ekspertyza (`image` family) |
-| Archiwista | `archivist` | `archive` 40% faster | Ekspertyza (`documents` family) |
-| Reporter | `reporter` | `phone` 40% faster; skips the `phone` queue | Telefon z terenu |
+| Fotoedytor | `photoEditor` | `imageSearch`, `aiScanner`, `geolocation` and `metadata` 40% faster | Ekspertyza (`image` family) |
+| Archiwista | `archivist` | `archive` and `transcript` 40% faster | Ekspertyza (`documents` family) |
+| Reporter | `reporter` | `phone` and `crossCheck` 40% faster; skips the `phone` queue | Telefon z terenu |
 | Redaktor prowadzący | `managingEditor` | Extends one folder's deadline per level (until S7-37) | Przedłużenie |
 
 ## Abilities (`Ability`, Stage 7)
@@ -151,9 +159,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 
 | Polish | English | Stations |
 | --- | --- | --- |
-| Obraz | `image` | `imageSearch`, `aiScanner` |
-| Dokumenty | `documents` | `archive`, `dataLibrary` |
-| Źródła | `sources` | `sourceRegistry`, `phone` |
+| Obraz | `image` | `imageSearch`, `aiScanner`, `geolocation`, `metadata` |
+| Dokumenty | `documents` | `archive`, `dataLibrary`, `transcript` |
+| Źródła | `sources` | `sourceRegistry`, `phone`, `crossCheck` |
 
 ## Random events (`EventKind`)
 

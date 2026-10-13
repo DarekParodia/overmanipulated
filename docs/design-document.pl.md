@@ -38,9 +38,9 @@ Zespół wygrywa poziom, jeśli przed końcem czasu zdobędzie co najmniej 1 gwi
 
 | Rola | Premia | Typowe zadanie |
 | --- | --- | --- |
-| Fotoedytor | Analiza obrazu 40% szybciej | Wyszukiwanie obrazem, wykrywanie edycji i AI |
-| Archiwista | Archiwum i kalendarz 40% szybciej | Sprawdzanie dat, starych wersji stron, kontekstu |
-| Reporter | Telefon do źródła bez kolejki | Dotarcie do źródła pierwotnego i świadków |
+| Fotoedytor | Analiza obrazu 40% szybciej (Lupa obrazu, Skaner AI, Mapa, Metadane) | Wyszukiwanie obrazem, wykrywanie edycji i AI |
+| Archiwista | Archiwum i Stenogram 40% szybciej | Sprawdzanie dat, starych wersji stron, kontekstu |
+| Reporter | Telefon do źródła bez kolejki; Telefon i Inne media 40% szybciej | Dotarcie do źródła pierwotnego i świadków |
 | Redaktor prowadzący | Może przedłużyć termin jednego zgłoszenia na poziom | Decyzje na stole redakcyjnym, koordynacja |
 
 Przy 3 graczach rolę Redaktora prowadzącego przejmuje dowolny gracz przy stole redakcyjnym, bez premii.
@@ -67,6 +67,10 @@ WASD lub strzałki to ruch, E to podniesienie i odłożenie teczki, Spacja to pr
 | Telefon | Źródło pierwotne, świadek, ekspert | Wybranie właściwego numeru, potem czekanie w kolejce | Kontakt ze źródłem, oryginalny raport |
 | Skaner AI | Ślady generowania lub edycji | Odczyt wyniku w procentach, z marginesem błędu | Detektory AI, analiza artefaktów |
 | Biblioteka danych | Czy statystyka zgadza się ze źródłem | Porównanie liczby z oryginalną tabelą | GUS, Eurostat, raporty źródłowe |
+| Mapa | Gdzie zrobiono zdjęcie | Dopasowanie miejsc ze zdjęcia do mapy | Geolokalizacja: mapy i zdjęcia ulic |
+| Stenogram | Czy cytat nie jest wycięty | Odszukanie cytatu w pełnym zapisie | Stenogramy, pełne nagrania |
+| Inne media | Co podają niezależne redakcje | Odróżnianie relacji od kopii | SIFT „find better coverage”, agencje |
+| Metadane | Kiedy, czym i gdzie powstał plik | Porównanie danych pliku z opisem | Odczyt EXIF |
 
 ### Werdykty
 

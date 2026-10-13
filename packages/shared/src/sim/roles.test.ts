@@ -31,6 +31,18 @@ describe('role passives (ROLE_PERKS)', () => {
     expect(work('p3', 'phone')).toBe(3600);
   });
 
+  it('speeds each role up at the Stage 7 stations of its craft (S7-48)', () => {
+    expect(work('p1', 'geolocation')).toBe(2400);
+    expect(work('p1', 'metadata')).toBe(2400);
+    expect(work('p2', 'transcript')).toBe(3000);
+    expect(work('p3', 'crossCheck')).toBe(2400);
+    expect(work('p1', 'transcript')).toBe(5000);
+    expect(work('p2', 'crossCheck')).toBe(4000);
+    expect(work('p3', 'geolocation')).toBe(4000);
+    expect(work('p4', 'metadata')).toBe(4000);
+    expect(work('p5', 'transcript')).toBe(5000);
+  });
+
   it('gives no bonus outside the role’s own stations', () => {
     expect(work('p3', 'sourceRegistry')).toBe(4000);
     expect(work('p2', 'dataLibrary')).toBe(5000);
@@ -63,13 +75,22 @@ describe('role abilities', () => {
     expect(expertiseCovers('archivist', 'dataLibrary')).toBe(true);
     expect(expertiseCovers('archivist', 'phone')).toBe(false);
     expect(expertiseCovers('reporter', 'phone')).toBe(false);
+    expect(expertiseCovers('photoEditor', 'geolocation')).toBe(true);
+    expect(expertiseCovers('photoEditor', 'metadata')).toBe(true);
+    expect(expertiseCovers('archivist', 'transcript')).toBe(true);
+    expect(expertiseCovers('archivist', 'crossCheck')).toBe(false);
     expect(expertiseCovers(null, 'imageSearch')).toBe(false);
   });
 
   it('lists the stations of each family', () => {
-    expect(familyStations('image')).toEqual(['imageSearch', 'aiScanner']);
-    expect(familyStations('documents')).toEqual(['archive', 'dataLibrary']);
-    expect(familyStations('sources')).toEqual(['sourceRegistry', 'phone']);
+    expect(familyStations('image')).toEqual([
+      'imageSearch',
+      'aiScanner',
+      'geolocation',
+      'metadata',
+    ]);
+    expect(familyStations('documents')).toEqual(['archive', 'dataLibrary', 'transcript']);
+    expect(familyStations('sources')).toEqual(['sourceRegistry', 'phone', 'crossCheck']);
   });
 });
 
