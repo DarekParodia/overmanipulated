@@ -2,7 +2,14 @@ import { describe, expect, it } from 'bun:test';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { correctVerdictFor, DIFFICULTIES, EVENTS, parseLayout } from '@redakcja/shared';
+import {
+  BAG_OPENING_SLOTS,
+  correctVerdictFor,
+  DIFFICULTIES,
+  EVENTS,
+  parseLayout,
+  STAR_SHARES,
+} from '@redakcja/shared';
 import {
   type BagContent,
   bagContent,
@@ -21,6 +28,7 @@ import {
 import {
   checkBag,
   checkEndlessDecks,
+  checkLayout,
   checkRegistration,
   ENDLESS_ISSUE_FILE,
   formatIssue,
@@ -30,9 +38,10 @@ import {
   validateContent,
   validateTechniques,
 } from './checks.ts';
+import { ENDLESS_LAYOUT } from './endless.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { LEVELS, STORIES } from './index.ts';
-import { levelFileSchema } from './schema.ts';
+import { type LevelBag, type LevelFile, levelFileSchema } from './schema.ts';
 
 const packageRoot = resolve(import.meta.dir, '..');
 
@@ -170,43 +179,85 @@ describe('multi-stamp stories (S7-18)', () => {
   });
 });
 
-describe('greybox content', () => {
-  const level = LEVELS.find((l) => l.id === 'l0-greybox');
-  const scheduled = STORIES.filter((s) => level?.schedule.some((spawn) => spawn.storyId === s.id));
+describe('greybox content (S7-27: a station bag)', () => {
+  const file = levelFileSchema.parse(LEVEL_FILES['levels/l0-greybox.json']);
+  const pool = STORIES.filter((s) => file.bag?.pool.includes(s.id));
+  const stations = file.stations;
 
-  it('schedules at least 8 stories that cover every truth value and priority', () => {
-    expect(scheduled.length).toBeGreaterThanOrEqual(8);
-    expect(new Set(scheduled.map((s) => s.truth))).toEqual(
+  it('deals from a bag of 17 stories that cover every truth value and priority', () => {
+    expect(file.schedule).toBeUndefined();
+    expect(file.bag).toMatchObject({
+      firstAtS: 3,
+      gapS: 18,
+      lastSpawnS: 175,
+      deadlineS: { normal: 75, important: 90, urgent: 50 },
+      starShares: { two: 0.5, three: 0.8 },
+    });
+    expect(pool).toHaveLength(17);
+    expect(new Set(pool.map((s) => s.truth))).toEqual(
       new Set(['true', 'false', 'misleading', 'satire', 'unverifiable']),
     );
-    expect(new Set(scheduled.map((s) => s.priority))).toEqual(
+    expect(new Set(pool.map((s) => s.priority))).toEqual(
       new Set(['normal', 'important', 'urgent']),
     );
-    const unverifiable = scheduled.filter((s) => s.truth === 'unverifiable');
+    const unverifiable = pool.filter((s) => s.truth === 'unverifiable');
     expect(unverifiable.some((s) => s.priority === 'urgent')).toBe(true);
     expect(unverifiable.some((s) => s.priority !== 'urgent')).toBe(true);
-    expect(new Set(scheduled.map((s) => s.type)).size).toBeGreaterThanOrEqual(5);
+    expect(new Set(pool.map((s) => s.type)).size).toBeGreaterThanOrEqual(5);
+    expect(pool.filter((s) => s.truth === 'true')).toHaveLength(6);
   });
 
-  it('gives every story one stamp per level station and a matching verdict', () => {
-    for (const story of scheduled) {
-      const stations: string[] = story.stamps.map((s) => s.station).sort();
-      expect(stations).toEqual(['archive', 'imageSearch', 'sourceRegistry']);
+  it('gives every story one stamp per level station, a matching verdict and one proof', () => {
+    for (const story of pool) {
+      const kinds: string[] = story.stamps.map((s) => s.station).sort();
+      expect(kinds).toEqual(['archive', 'imageSearch', 'sourceRegistry']);
       expect(story.correctVerdict).toBe(correctVerdictFor(story.truth, story.priority));
+      expect(story.requiredStamps).toBe(1);
       expect(story.reviewed).toBe(false);
     }
   });
 
-  it('sets star thresholds near 50% and 80% of the maximum score', () => {
+  it('pins at least ⌈10 Normal folders / 3 stations⌉ = 4 stories to every station', () => {
+    expect(bagSlotTimes(bagOfFile(file), 'normal')).toHaveLength(10);
+    expect(Object.fromEntries(pinnedCounts(pool, stations))).toEqual({
+      imageSearch: 4,
+      archive: 4,
+      sourceRegistry: 5,
+    });
+  });
+
+  it('deals 8 / 10 / 11 / 12 distinct folders on easy / normal / hard / expert', () => {
+    const counts = DIFFICULTIES.map((difficulty) => {
+      const run = generateBagLevel(file, STORIES, 7, difficulty);
+      const ids = run.schedule.map((spawn) => spawn.storyId);
+      expect(new Set(ids).size).toBe(ids.length);
+      return ids.length;
+    });
+    expect(counts).toEqual([8, 10, 11, 12]);
+  });
+
+  it('opens the preview with single-proof, non-urgent folders and stars at 50% / 80%', () => {
+    const level = LEVELS.find((l) => l.id === 'l0-greybox');
     if (!level) {
       throw new Error('greybox level missing');
     }
+    expect(level.schedule.slice(0, 2).map((spawn) => spawn.atS)).toEqual([3, 21]);
+    for (const spawn of level.schedule.slice(0, BAG_OPENING_SLOTS)) {
+      expect(pool.find((s) => s.id === spawn.storyId)?.priority).not.toBe('urgent');
+    }
     const max = maxLevelScore(level, new Map(STORIES.map((s) => [s.id, s])));
-    expect(max).toBe(240);
-    expect(level.stars.two / max).toBeCloseTo(0.5, 1);
-    expect(level.stars.three / max).toBeCloseTo(0.8, 1);
+    expect(level.stars).toEqual(starThresholds(max, { two: 0.5, three: 0.8 }));
+    expect({ max, stars: level.stars }).toEqual({ max: 240, stars: { two: 120, three: 190 } });
   });
 });
+
+/** The bag of a level file that must have one. */
+function bagOfFile(file: LevelFile): LevelBag {
+  if (!file.bag) {
+    throw new Error(`${file.id} has no bag`);
+  }
+  return file.bag;
+}
 
 describe('level 1 content', () => {
   const file = levelFileSchema.parse(LEVEL_FILES['levels/l1-burza.json']);
@@ -301,23 +352,94 @@ describe('level 1 content', () => {
 });
 
 describe('level 2 content', () => {
-  const level = LEVELS.find((l) => l.id === 'l2-wybory');
+  const file = levelFileSchema.parse(LEVEL_FILES['levels/l2-wybory.json']);
   const byId = new Map(STORIES.map((s) => [s.id, s]));
+  const pool = (file.bag?.pool ?? []).flatMap((id) => byId.get(id) ?? []);
+  const newStories = ['l2-debata-w-liceum', 'l2-plaza-w-kampanii', 'l2-wycinka-w-parku'];
 
   it('is registered with the Archiwum and the three-station layout', () => {
-    if (!level) {
-      throw new Error('level 2 missing');
-    }
-    expect(level.stations).toEqual(['imageSearch', 'archive', 'sourceRegistry']);
-    expect(parseLayout(level.layout).spawns).toHaveLength(4);
-    expect(level.events).toEqual([]);
+    expect(file.stations).toEqual(['imageSearch', 'archive', 'sourceRegistry']);
+    expect(parseLayout(file.layout).spawns).toHaveLength(4);
+    expect(file.events).toEqual([]);
   });
 
-  it('uses publishWithContext for at least a quarter of its folders', () => {
-    const scheduled = level?.schedule.map((spawn) => byId.get(spawn.storyId)) ?? [];
-    const withContext = scheduled.filter((s) => s?.correctVerdict === 'publishWithContext');
-    expect(scheduled.length).toBeGreaterThan(0);
-    expect(withContext.length / scheduled.length).toBeGreaterThanOrEqual(0.25);
+  it('deals from a bag of 18 stories, 6 of them true', () => {
+    expect(file.schedule).toBeUndefined();
+    expect(file.stars).toBeUndefined();
+    expect(file.bag).toEqual({
+      pool: file.bag?.pool ?? [],
+      firstAtS: 4,
+      gapS: 24,
+      lastSpawnS: 340,
+      deadlineS: { normal: 55, important: 60, urgent: 45 },
+    });
+    expect(pool).toHaveLength(18);
+    expect(pool.map((s) => s.id)).toEqual(expect.arrayContaining(newStories));
+    // Every level 2 story is dealt from the pool, so none stays unscheduled.
+    const levelStories = STORIES.filter((s) => s.id.startsWith('l2-')).map((s) => s.id);
+    expect(new Set(file.bag?.pool)).toEqual(new Set(levelStories));
+    expect(pool.filter((s) => s.truth === 'true')).toHaveLength(6);
+    for (const story of pool) {
+      const stations: string[] = story.stamps.map((s) => s.station).sort();
+      expect(stations).toEqual(['archive', 'imageSearch', 'sourceRegistry']);
+      expect(story.correctVerdict).toBe(correctVerdictFor(story.truth, story.priority));
+    }
+  });
+
+  it('uses publishWithContext for at least a quarter of its pool (6 of 18)', () => {
+    const withContext = pool.filter((s) => s.correctVerdict === 'publishWithContext');
+    expect(withContext).toHaveLength(6);
+    expect(withContext.length / pool.length).toBeGreaterThanOrEqual(0.25);
+  });
+
+  it('pins the three new photo stories to the image search, at least 5 per station', () => {
+    for (const id of newStories) {
+      const story = byId.get(id);
+      if (!story) {
+        throw new Error(`story ${id} missing`);
+      }
+      expect(story.type).toBe('photo');
+      expect(story.reviewed).toBe(false);
+      expect(decidingStations(story, file.stations)).toEqual(['imageSearch']);
+      expect(isPinned(story, file.stations)).toBe(true);
+    }
+    expect(pinnedCounts(pool, file.stations)).toEqual(
+      new Map([
+        ['imageSearch', 5],
+        ['archive', 5],
+        ['sourceRegistry', 6],
+      ]),
+    );
+  });
+
+  it('passes the bag checks with no issue: 12, 15, 16 and 18 folders by difficulty', () => {
+    const bag = file.bag;
+    if (!bag) {
+      throw new Error('level 2 has no bag');
+    }
+    expect(DIFFICULTIES.map((d) => bagSlotTimes(bag, d).length)).toEqual([12, 15, 16, 18]);
+    const issues: string[] = [];
+    checkBag({ ...file, bag }, byId, (path, severity, message) =>
+      issues.push(`${severity} ${path.join('.')}: ${message}`),
+    );
+    expect(issues).toEqual([]);
+  });
+
+  it('ends every dealt folder with the level and takes the stars from the default shares', () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of [0, 1, 7, 0xffffffff]) {
+        const level = generateBagLevel(file, STORIES, seed, difficulty);
+        const ids = level.schedule.map((spawn) => spawn.storyId);
+        expect(new Set(ids).size).toBe(ids.length);
+        for (const spawn of level.schedule) {
+          expect(spawn.atS + spawn.deadlineS).toBeLessThanOrEqual(file.durationS);
+        }
+        expect(level.stars).toEqual(starThresholds(maxLevelScore(level, byId), STAR_SHARES));
+      }
+    }
+    const preview = LEVELS.find((l) => l.id === 'l2-wybory');
+    expect(preview?.schedule).toHaveLength(15);
+    expect(preview?.stars).toEqual({ two: 210, three: 310 });
   });
 });
 
@@ -365,6 +487,80 @@ describe('registration', () => {
         message: 'registers "levels/gone.json", which does not exist',
       },
     ]);
+  });
+});
+
+describe('layout checks (checkLayout, S7-50)', () => {
+  type Found = { path: string; severity: string; message: string };
+  const layoutIssues = (layout: readonly string[]): Found[] => {
+    const found: Found[] = [];
+    checkLayout(layout, (path, severity, message) =>
+      found.push({ path: path.join('.'), severity, message }),
+    );
+    return found;
+  };
+
+  it('passes every campaign level and the endless room', () => {
+    for (const level of LEVELS) {
+      expect({ id: level.id, issues: layoutIssues(level.layout) }).toEqual({
+        id: level.id,
+        issues: [],
+      });
+    }
+    expect(layoutIssues(ENDLESS_LAYOUT)).toEqual([]);
+  });
+
+  it('warns once for same-row stations 2 columns apart and accepts 3', () => {
+    const base = realContent().level.layout;
+    const close = base.map((row, y) => (y === 1 ? '#CCCC...I.A.....R..#' : row));
+    expect(layoutIssues(close)).toEqual([
+      {
+        path: 'layout.1',
+        severity: 'warning',
+        message:
+          'station signs overlap on phones: imageSearch-0 and archive-0 are 2 columns apart; keep at least 3',
+      },
+    ]);
+    const apart = base.map((row, y) => (y === 1 ? '#CCCC...I..A....R..#' : row));
+    expect(layoutIssues(apart)).toEqual([]);
+  });
+
+  it('ignores stations in different rows and the same column', () => {
+    const base = realContent().level.layout;
+    const stacked = base.map((row, y) =>
+      y === 1 ? '#CCCC...I.......R..#' : y === 2 ? '#.......A..........#' : row,
+    );
+    expect(layoutIssues(stacked)).toEqual([]);
+  });
+
+  it('reports one error for a walled-off fixture and one for a walled-off spawn', () => {
+    const base = realContent().level.layout;
+    const walled = base.map(
+      (row, y) =>
+        ({
+          6: '#...............=..#',
+          7: '#..3....=DD=...=4=.#',
+          8: '#.=.....====....=..#',
+          9: '#=T=.............T.#',
+          10: '#.=................#',
+        })[y] ?? row,
+    );
+    expect(layoutIssues(walled)).toEqual([
+      {
+        path: 'layout.7',
+        severity: 'error',
+        message: 'spawn 4 at column 16 cannot be reached from spawn 1',
+      },
+      {
+        path: 'layout.9',
+        severity: 'error',
+        message: 'table-2 at column 2 cannot be reached from spawn 1',
+      },
+    ]);
+  });
+
+  it('skips a layout that does not parse (the schema reports it)', () => {
+    expect(layoutIssues(['###', '#?#', '###'])).toEqual([]);
   });
 });
 
@@ -420,35 +616,23 @@ describe('validate CLI', () => {
   it('passes on the real content', () => {
     const result = run();
     const out = result.stdout.toString();
-    // Decisive stamps that do not justify (S7-21 warning); S7-33 cleans up l4, S7-58 l6.
+    // Decisive stamps that do not justify (S7-21 warning); S7-33 cleaned up l4, S7-58 cleans l6.
     const decisiveNotJustifying = [...out.matchAll(/decisive stamp "([^"]+)" does not justify/g)];
     expect(decisiveNotJustifying.map((match) => match[1])).toEqual([
-      'l4-ankieta-uczniow-phone',
-      'l4-raport-pielegniarek-phone',
-      'l4-darmowe-badania-wzroku-archive',
-      'l4-darmowe-badania-wzroku-data',
-      'l4-woda-z-kranu-phone',
       'l6-frekwencja-w-poludnie-archive',
     ]);
-    // New stories wait for their level's bag pool: S7-32 writes l4 stories and S7-33 converts
-    // the level; S7-30 writes l3 stories and S7-31 puts them into the l3 pool.
+    // New stories wait for their level's bag pool: since S7-31 and S7-33 every l3 and l4 story
+    // is in its level's pool.
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([
-      'l4-tlumy-na-sorze',
-      'l4-zimna-woda-po-obiedzie',
-      'l4-ratownik-o-kaskach',
-      'l4-basen-zamkniety',
-      'l4-sobotnie-szczepienia',
-    ]);
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([
-      'l3-zalana-sala',
-      'l3-dyrektor-na-plazy',
-      'l3-pusta-stolowka',
-      'l3-pracownia-robotyki',
-      'l3-psycholog-z-sieci',
-      'l3-zajecia-przed-matura',
-    ]);
-    const warnings = decisiveNotJustifying.length + notScheduled.length;
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([]);
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([]);
+    // l0's last Normal slot window (175 s + 90 s) runs past its 240 s; the generator clamps it.
+    const deadlineFit = [...out.matchAll(/warning (levels\/\S+) bag\.lastSpawnS: /g)];
+    expect(deadlineFit.map((match) => match[1])).toEqual(['levels/l0-greybox.json']);
+    expect(out).toContain(
+      'warning levels/l0-greybox.json bag.lastSpawnS: a folder at 175 s needs up to 90 s, past the level end at 240 s; late folders get less time',
+    );
+    const warnings = decisiveNotJustifying.length + notScheduled.length + deadlineFit.length;
     expect(out).toContain(`0 error(s), ${warnings} warning(s)`);
     expect(result.exitCode).toBe(0);
   });

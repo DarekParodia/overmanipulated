@@ -314,3 +314,15 @@ export function revealPlan(p: {
   }
   return steps;
 }
+
+/** How many steps of each kind a reveal has shown, given how many steps it has shown in all. */
+export function revealedByKind(
+  plan: readonly RevealStep[],
+  revealed: number,
+): Record<RevealStepKind, number> {
+  const shown: Record<RevealStepKind, number> = { star: 0, progress: 0, row: 0, mark: 0 };
+  for (const step of plan.slice(0, Math.max(0, revealed))) {
+    shown[step.kind] += 1;
+  }
+  return shown;
+}

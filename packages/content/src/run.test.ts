@@ -204,16 +204,18 @@ describe('prepareRun and applyDifficulty', () => {
 });
 
 describe('LEVELS', () => {
+  const files = Object.values(LEVEL_FILES).map((file) => levelFileSchema.parse(file));
+
   it('serves every level with an authored schedule exactly as its file', () => {
-    const files = Object.values(LEVEL_FILES).map((file) => levelFileSchema.parse(file));
     const fixed = files.filter((level) => !level.bag).map((level) => levelSchema.parse(level));
     expect(LEVELS.filter((level: Level) => !level.bag)).toEqual(fixed);
   });
 
   it('serves every bag level as its Normal preview run', () => {
-    const files = Object.values(LEVEL_FILES).map((file) => levelFileSchema.parse(file));
     const bagged = files.filter((level) => level.bag);
-    expect(bagged.map((level) => level.id)).toContain('l1-burza');
+    expect(bagged.map((level) => level.id)).toEqual(
+      expect.arrayContaining(['l0-greybox', 'l1-burza']),
+    );
     expect(LEVELS.map((level) => level.id)).toEqual(files.map((level) => level.id));
     expect(LEVELS.filter((level) => level.bag)).toEqual(
       bagged.map((level) => generateBagLevel(level, STORIES, BAG_PREVIEW_SEED, 'normal')),

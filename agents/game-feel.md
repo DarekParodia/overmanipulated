@@ -98,6 +98,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `folder.deadlineExtended` HUD | `cardHop` | the folder's queue card hops | — | — | — | ● |
 | `briefing.intro` / `briefing.land` / `briefing.ready` | briefing card appears / lands on the desk / "Gotowy!" pressed | newspaper spins and drops in, squashes on landing (fade under reduced motion; tap skips) | paper slide / paper slap / stamp | — | — / thud / tick | ● → ●● |
 | `debrief.star` / `debrief.mark` | results reveal: each earned star, then each Kolegium card's outcome mark (skippable by any tap/key; off with reduced motion) | star pop / mark slams on like a stamp | chime / stamp thud | — (DOM) | tick | ●● / ● |
+| `debrief.row` | results reveal: each row of the „Za co punkty” totals table, after the stars and the progress line (skippable by any tap/key; off with reduced motion) | row slides in, its points count up from 0 (`useRolledNumber`) | soft tick (`tick`, ui bus) | — (DOM) | tick | ● |
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
 
 Add a row here when you add a cue, in the same commit.

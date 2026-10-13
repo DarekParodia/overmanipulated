@@ -1,8 +1,8 @@
 // The Kolegium: the level's folders as debrief cards (one per story in endless). Desktop shows a
 // scrollable list (the current card has a blue outline); phones show one card at a time, paged
-// from the footer or by swiping. Votes go to the server; this player's own vote shows at once
-// (optimistic).
-import { useEffect, useMemo, useRef, useState } from 'react';
+// from the footer or by swiping, after an optional lead page (the results summary, S7-06).
+// Votes go to the server; this player's own vote shows at once (optimistic).
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { voteBlunder } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
@@ -15,6 +15,7 @@ import {
   voteConfirmed,
   votersByStory,
 } from './debrief-model.ts';
+import { useSwipe } from './use-swipe.ts';
 
 const NO_VOTES: never[] = [];
 
@@ -52,6 +53,7 @@ export function useBlunderVotes() {
 export type KolegiumProps = {
   cards: readonly Card[];
   paged: boolean;
+  /** The current card; -1 is the lead page (phones only). */
   current: number;
   onCurrent(index: number): void;
   /** Cards whose verdict mark is shown (the reveal slams them on one by one). */
@@ -59,6 +61,8 @@ export type KolegiumProps = {
   instant: boolean;
   voteKey: string | null;
   votes: ReturnType<typeof useBlunderVotes>;
+  /** Phones: a page shown before the first card (index -1), e.g. the results summary. */
+  lead?: ReactNode;
 };
 
 export function Kolegium({
@@ -70,8 +74,13 @@ export function Kolegium({
   instant,
   voteKey,
   votes,
+  lead,
 }: KolegiumProps) {
   const list = useRef<HTMLOListElement>(null);
+  const first = paged && lead !== undefined ? -1 : 0;
+  const turn = (direction: -1 | 1) =>
+    onCurrent(Math.max(first, Math.min(cards.length - 1, current + direction)));
+  const leadSwipe = useSwipe(turn);
 
   // Keyboard / gamepad moves keep the current card in view on the desktop list.
   // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the current card changes
@@ -83,6 +92,22 @@ export function Kolegium({
       ?.querySelector<HTMLElement>('[data-current]')
       ?.scrollIntoView({ block: 'nearest', behavior: instant ? 'auto' : 'smooth' });
   }, [current, paged, instant]);
+
+  if (paged && first < 0 && current < 0) {
+    return (
+      <div className={styles.page} aria-live="polite">
+        <div
+          key="lead"
+          className={styles.lead}
+          onPointerDown={leadSwipe.onPointerDown}
+          onPointerUp={leadSwipe.onPointerUp}
+          onPointerCancel={leadSwipe.onPointerCancel}
+        >
+          {lead}
+        </div>
+      </div>
+    );
+  }
 
   if (cards.length === 0) {
     return <p className={styles.empty}>{pl.results.noFolders}</p>;
@@ -103,12 +128,7 @@ export function Kolegium({
         votes.vote(card.storyId);
       }}
       onSelect={() => onCurrent(index)}
-      {...(paged
-        ? {
-            onSwipe: (direction: -1 | 1) =>
-              onCurrent(Math.max(0, Math.min(cards.length - 1, current + direction))),
-          }
-        : {})}
+      {...(paged ? { onSwipe: turn } : {})}
     />
   );
 

@@ -43,6 +43,11 @@
   animation: none;
 }
 
+/* The lead page (the results summary on phones) turns by swiping like a card. */
+.lead {
+  touch-action: pan-y;
+}
+
 .empty {
   margin: 0;
   font-family: var(--font-body);

@@ -444,6 +444,12 @@ export const cues = {
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.75, rateJitter: 0.06 },
     haptic: 'tick',
   },
+  // S7-06: each row of the 'Za co punkty' table ticks in as its points count up.
+  'debrief.row': {
+    severity: 1,
+    sound: { ids: ['tick'], bus: 'ui', volume: 0.5, rateJitter: 0.04 },
+    haptic: 'tick',
+  },
   'debrief.vote': {
     severity: 1,
     sound: { ids: ['place'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },

@@ -388,5 +388,278 @@
       "realWorld": "Plotki o odwołanych wydarzeniach często krążą w lokalnych grupach. Pewna jest dopiero informacja od organizatora."
     },
     "reviewed": false
+  },
+  {
+    "id": "l0-dzik-w-galerii",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Dzik spaceruje po galerii handlowej przy ulicy Portowej",
+    "body": "Zdjęcie dzika między sklepami obiega grupy mieszkańców. Podpis: „Dziś rano, galeria przy Portowej. Uważajcie!”.",
+    "source": "Post na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l0-dzik-w-galerii-image",
+        "station": "imageSearch",
+        "text": "To samo zdjęcie krąży w sieci od 2017 r., opisane jako galeria w innym mieście.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-dzik-w-galerii-archive",
+        "station": "archive",
+        "text": "W archiwum brak tekstów o dzikach w centrum miasta.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-dzik-w-galerii-source",
+        "station": "sourceRegistry",
+        "text": "Autorka postu jest na grupie od 4 lat; zwykle pisze o korkach.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-dzik-w-galerii-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie dzika, ale sprzed lat i z innego miasta. W galerii przy Portowej żadnego dzika nie było.",
+      "technique": "Stare zdjęcie z nowym podpisem: autentyczny obraz dostaje nowe miejsce i nową datę.",
+      "tool": "Wyszukiwanie obrazem znalazło wcześniejsze publikacje tego samego zdjęcia.",
+      "realWorld": "Zdjęcia dzikich zwierząt w miastach wracają w sieci co kilka miesięcy, za każdym razem z innym miastem w podpisie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-tecza-nad-latarnia",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Podwójna tęcza nad latarnią morską – zdjęcie czytelniczki",
+    "body": "Czytelniczka przysłała zdjęcie zrobione wczoraj po burzy z Bulwaru Latarników. Pyta, czy pokażemy je w galerii dnia.",
+    "source": "Mail od czytelniczki",
+    "stamps": [
+      {
+        "id": "l0-tecza-nad-latarnia-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii zdjęcia. Metadane: wczoraj, 19:12, Bulwar Latarników.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-tecza-nad-latarnia-archive",
+        "station": "archive",
+        "text": "Archiwum: latarnię odnowiono 2 lata temu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-tecza-nad-latarnia-source",
+        "station": "sourceRegistry",
+        "text": "Nadawczyni nie ma wpisu w kartotece; to jej pierwszy mail do redakcji.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-tecza-nad-latarnia-image"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie od czytelniczki.",
+      "technique": "Brak manipulacji. Ładne zdjęcie też bywa po prostu prawdziwe.",
+      "tool": "Wyszukiwanie obrazem nie znalazło starszych kopii, a metadane zgadzają się z miejscem i czasem.",
+      "realWorld": "Redakcje często publikują zdjęcia od czytelników. Najpierw sprawdzają, czy zdjęcie nie krążyło już w sieci i czy zgadza się data."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-rekin-w-porcie",
+    "type": "photo",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Rekin przy nabrzeżu! Mieszkańcy chcą zamknięcia kąpieliska",
+    "body": "Zdjęcie płetwy rekina tuż przy Plaży Miejskiej udostępniono już tysiące razy. Ludzie pytają, czy można dziś pływać.",
+    "source": "Konto „Portowe Newsy”",
+    "stamps": [
+      {
+        "id": "l0-rekin-w-porcie-image",
+        "station": "imageSearch",
+        "text": "Płetwę wklejono z darmowego zdjęcia z banku grafik. Nabrzeże pochodzi z innego zdjęcia.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-rekin-w-porcie-archive",
+        "station": "archive",
+        "text": "Archiwum: kąpielisko otwarto w tym sezonie 1 lipca.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-rekin-w-porcie-source",
+        "station": "sourceRegistry",
+        "text": "Konto „Portowe Newsy” działa od 3 lat i zwykle wrzuca prawdziwe zdjęcia z portu.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l0-rekin-w-porcie-image"],
+    "technique": "tania-podrobka",
+    "debrief": {
+      "what": "Fotomontaż: płetwę rekina wklejono w zdjęcie nabrzeża. Żadnego rekina w porcie nie było.",
+      "technique": "Tania podróbka: dwa prawdziwe zdjęcia sklejone prostym montażem, bez sztucznej inteligencji.",
+      "tool": "Wyszukiwanie obrazem znalazło oba zdjęcia, z których powstał montaż.",
+      "realWorld": "Po burzach i powodziach w sieci regularnie krąży montaż rekina płynącego zalaną ulicą. Zaufane konto też może udostępnić podróbkę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-tlum-na-skateparku",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Tłumy na otwarciu skateparku – ratusz chwali się zdjęciem",
+    "body": "Na zdjęciu z otwarcia skateparku na Nadrzeczu widać ciasny tłum. Ratusz pisze: „Przyszło całe miasto!”.",
+    "source": "Komunikat prasowy ratusza",
+    "stamps": [
+      {
+        "id": "l0-tlum-na-skateparku-image",
+        "station": "imageSearch",
+        "text": "Pełna wersja zdjęcia jest u fotografa: tłum stoi tylko przy scenie, dalej jest prawie pusto.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-tlum-na-skateparku-archive",
+        "station": "archive",
+        "text": "Archiwum: budowę skateparku ogłoszono w zeszłym roku.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l0-tlum-na-skateparku-source",
+        "station": "sourceRegistry",
+        "text": "Komunikat wysłano z oficjalnego adresu ratusza.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l0-tlum-na-skateparku-image"],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie z otwarcia, ale przycięte tak, by kilkadziesiąt osób wyglądało jak tłum.",
+      "technique": "Wyrwane z kontekstu: kadr jest prawdziwy, ale bez reszty zdjęcia zmienia sens.",
+      "tool": "Wyszukiwanie obrazem doprowadziło do pełnej wersji zdjęcia u fotografa.",
+      "realWorld": "Instytucje i organizatorzy chętnie pokazują najlepszy kadr. Warto zobaczyć całe zdjęcie, zanim napisze się o „tłumach”."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-stary-komunikat",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Ratusz: od jutra ulica Rybacka zamknięta na pół roku",
+    "body": "Zrzut ekranu komunikatu krąży po grupach kierowców. Ludzie pytają, którędy dojechać do szkoły i przychodni.",
+    "source": "Zrzut ekranu z komunikatora",
+    "stamps": [
+      {
+        "id": "l0-stary-komunikat-archive",
+        "station": "archive",
+        "text": "Archiwum: ten komunikat ratusz wydał 2 lata temu. Remont Rybackiej skończył się w ubiegłym roku.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-stary-komunikat-source",
+        "station": "sourceRegistry",
+        "text": "Treść zgadza się ze starym wpisem na oficjalnej stronie ratusza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l0-stary-komunikat-image",
+        "station": "imageSearch",
+        "text": "Zrzut ekranu nie ma wcześniejszych kopii w sieci.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-stary-komunikat-archive"],
+    "technique": "wyrwane-z-kontekstu",
+    "debrief": {
+      "what": "Prawdziwy komunikat ratusza, ale sprzed dwóch lat. Ulica Rybacka jest dziś otwarta.",
+      "technique": "Wyrwane z kontekstu: stara wiadomość bez daty udaje bieżącą.",
+      "tool": "Archiwum pokazało, kiedy naprawdę wydano komunikat i że remont już się skończył.",
+      "realWorld": "Stare komunikaty o utrudnieniach, zbiórkach czy zaginięciach krążą latami, bo zrzut ekranu gubi datę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-jubileusz-liceum",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Liceum nad Zatoką kończy sto lat – jubileusz w sobotę",
+    "body": "Uczeń przysłał zaproszenie: w sobotę szkoła otwiera drzwi dla absolwentów i pokazuje stare kroniki.",
+    "source": "Mail od ucznia",
+    "stamps": [
+      {
+        "id": "l0-jubileusz-liceum-archive",
+        "station": "archive",
+        "text": "Archiwum: notatka sprzed stu lat o otwarciu liceum przy ulicy Zatokowej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-jubileusz-liceum-source",
+        "station": "sourceRegistry",
+        "text": "Szkoła nie opublikowała jeszcze zaproszenia na swojej stronie.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l0-jubileusz-liceum-image",
+        "station": "imageSearch",
+        "text": "Zaproszenie nie zawiera zdjęć.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-jubileusz-liceum-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa informacja: archiwum potwierdza datę otwarcia szkoły.",
+      "technique": "Brak manipulacji. Brak komunikatu na stronie nie znaczy, że wiadomość jest fałszywa.",
+      "tool": "Archiwum: stara notatka o otwarciu liceum potwierdziła rocznicę.",
+      "realWorld": "Rocznice łatwo sprawdzić w archiwach gazet i szkolnych kronikach. To szybki sposób, by potwierdzić lokalną wiadomość."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l0-kradzieze-rowerow",
+    "type": "statistic",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Dwa razy więcej kradzieży rowerów niż rok temu!",
+    "body": "Stowarzyszenie z Nadrzecza podaje: w tym roku 24 zgłoszone kradzieże rowerów, rok temu 12. „Rowerem po mieście już się nie da” – piszą.",
+    "source": "Post stowarzyszenia „Bezpieczne Nadrzecze”",
+    "stamps": [
+      {
+        "id": "l0-kradzieze-rowerow-archive",
+        "station": "archive",
+        "text": "Archiwum: rok temu w mieście jeździło 2 tys. rowerów, dziś 4 tys. Na 1000 rowerów kradzieży jest tyle samo.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l0-kradzieze-rowerow-source",
+        "station": "sourceRegistry",
+        "text": "Liczby 24 i 12 zgadzają się z danymi policji.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l0-kradzieze-rowerow-image",
+        "station": "imageSearch",
+        "text": "Wykres w poście nie ma wcześniejszych kopii w sieci.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l0-kradzieze-rowerow-archive"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Liczby są prawdziwe, ale rowerów w mieście też przybyło dwa razy. Ryzyko kradzieży się nie zmieniło.",
+      "technique": "Kłamliwa statystyka: same liczby, bez porównania z tym, ile jest rowerów, straszą wzrostem.",
+      "tool": "Archiwum pokazało, że liczba rowerów w mieście też się podwoiła.",
+      "realWorld": "Wzrost liczby zdarzeń trzeba porównać z tym, ilu jest ludzi, aut czy rowerów. Bez tego nawet prawdziwe dane wprowadzają w błąd."
+    },
+    "reviewed": false
   }
 ]

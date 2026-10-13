@@ -122,6 +122,9 @@ Errors fail the command, warnings are printed but pass. Rules beyond the Zod sch
 - `botRaid` `count` must not exceed the number of conveyor tiles (`C`) in the layout.
 - `outage` stations must be in the level's `stations` (and so placed in the layout).
 - Two events of the same kind must be at least 10 s apart.
+- Layout reachability: walking over floor tiles (4 neighbours) from spawn 1 must reach every
+  other spawn and a floor tile next to every fixture (conveyor, desk, table, station). Checked
+  for every level and for the endless room (reported under `endless`).
 - `stars.three` must not exceed the maximum score (schedule plus events: viral/bossCall/botRaid
   stories score like scheduled ones, a true `bossCall` adds the bonus, a correction adds
   `correctionScore`).
@@ -139,5 +142,7 @@ Errors fail the command, warnings are printed but pass. Rules beyond the Zod sch
   station that decides no pool story (it stays idle); `lastSpawnS` plus the longest Normal
   deadline (with the multi-stamp extra) past `durationS` (late folders are cut); `starShares`
   outside the star aim ranges.
+- Layout: two stations on the same row less than `STATION_SIGN_MIN_GAP_COLUMNS` (3) columns
+  apart, because their signs overlap on a 640×360 phone.
 - Endless: a non-hint endless station whose deck holds fewer than `ENDLESS_MIN_DECK` stories
   (reported under `endless`, only when a campaign level feeds the endless pool).

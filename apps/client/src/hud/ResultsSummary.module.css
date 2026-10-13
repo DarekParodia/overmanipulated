@@ -1,0 +1,369 @@
+/*
+ * Results summary (S7-06): stars with their captions, the progress line, the thresholds
+ * explainer and the 'Za co punkty' table. Desktop: the results panel's left column. Phones: the
+ * Kolegium's first page, a compact card that scrolls on its own if the table runs long.
+ */
+.summary {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Phones: the lede, the progress line, the star rule and the explainer on the left, the table on
+   the right; at 640×360 about 165 px of height are free, which six rows and the total fill. */
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 13.5rem) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+}
+
+.pageSide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.lede {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+/* --- Stars ----------------------------------------------------------------------------------- */
+
+.stars {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.starCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.column .starCell svg {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+/* The middle star sits a little higher, like a podium. */
+.column .starCell:nth-child(2) svg {
+  width: 4.25rem;
+  height: 4.25rem;
+  margin-bottom: var(--space-1);
+}
+
+.starCaption {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-tight);
+  color: var(--text-soft);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.starEarned .starCaption {
+  color: var(--text);
+}
+
+.page .stars {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.page .starCell {
+  flex-direction: row;
+  gap: var(--space-2);
+}
+
+.glyphs {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+}
+
+/* Room for three small stars, so the captions line up. */
+.page .starCell .glyphs {
+  min-width: 3rem;
+}
+
+/* --- Progress line --------------------------------------------------------------------------- */
+
+.progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3) 0;
+  background: var(--surface-soft);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  --icon-fill: var(--surface-sunk);
+}
+
+.page .progress {
+  justify-content: flex-start;
+  border-radius: var(--radius-md);
+}
+
+/* --- Thresholds explainer -------------------------------------------------------------------- */
+
+.why {
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.why summary {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--blue-dark);
+  cursor: pointer;
+  list-style: none;
+  --icon-fill: var(--blue);
+}
+
+/* A 48 px tall hit area around the 32 px line, without taking room from the table. */
+.why summary::after {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--space-2)) calc(-1 * var(--space-2));
+}
+
+.why summary::-webkit-details-marker {
+  display: none;
+}
+
+.why summary:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.why p {
+  margin: 0;
+}
+
+/* --- Totals table ---------------------------------------------------------------------------- */
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.page .totals {
+  min-width: 0;
+}
+
+.tableTitle {
+  padding-bottom: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 2px var(--space-1) 0;
+  line-height: var(--leading-body);
+  border-bottom: 2px solid var(--surface-sunk);
+  white-space: nowrap;
+}
+
+.table th {
+  font-weight: 700;
+  text-align: left;
+}
+
+.rowName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  --icon-fill: var(--surface-soft);
+}
+
+.count {
+  color: var(--text-soft);
+  text-align: right;
+}
+
+.points,
+.credibility {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-align: right;
+}
+
+.table tfoot th,
+.table tfoot td {
+  border-bottom: none;
+  border-top: var(--stroke) solid var(--outline);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+}
+
+.shield {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.up {
+  color: var(--green-dark);
+}
+
+.down {
+  color: var(--red-dark);
+}
+
+.note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+/* --- Reveal ---------------------------------------------------------------------------------- */
+
+.hidden {
+  visibility: hidden;
+}
+
+.shown {
+  animation: row-in var(--motion-base) var(--ease-out) both;
+}
+
+@keyframes row-in {
+  from {
+    transform: translateX(-0.75rem);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.instant .shown {
+  animation: none;
+}
+
+:root[data-reduced-motion="true"] .shown {
+  animation: none;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --- Phones ---------------------------------------------------------------------------------- */
+
+@media (max-height: 500px), (max-width: 760px) {
+  .tableTitle {
+    font-size: var(--text-md);
+  }
+
+  .progress {
+    font-size: var(--text-sm);
+    padding: 2px var(--space-3) 0;
+  }
+
+  .table th,
+  .table td {
+    padding: 1px var(--space-1);
+  }
+
+  /* Tight rows told apart by a soft band instead of a rule, so six rows and the total fit. */
+  .page .table tbody th,
+  .page .table tbody td {
+    padding: 2px var(--space-1) 1px;
+    line-height: var(--leading-tight);
+    border-bottom: none;
+  }
+
+  .page .table tbody tr:nth-child(odd) {
+    background: var(--surface-soft);
+  }
+
+  .page .rowName svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  /* Flex boxes, not inline ones, so the icons do not stretch the tight line boxes. */
+  .page .rowName,
+  .page .shield {
+    display: flex;
+  }
+
+  .page .shield {
+    justify-content: flex-end;
+  }
+
+  .page .tableTitle {
+    padding-bottom: 2px;
+  }
+
+  .page .table tfoot th,
+  .page .table tfoot td {
+    line-height: var(--leading-tight);
+    padding-top: var(--space-1);
+  }
+}
+
+/* Portrait phones: one column. */
+@media (max-width: 560px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
