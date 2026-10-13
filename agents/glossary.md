@@ -269,5 +269,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |
 | Zgoda na reklamy | `ads.signOff` (`{by, date}`) | Supervisor or legal sign-off recorded in config.json; `ads.enabled: true` is refused without it, also when forced by `ADS_ENABLED` |
 | Ustawienia pokoi | `RoomSettings` (`RegistryOptions.settings()`, `roomSettings`) | `maxRooms`, `defaultDifficulty` and the feature flags, read by the registry at every room creation, so a reload applies to the next room |
+| Ładowarka reklam | `ensureAdSense`, `AdLoaderState` (`idle` / `loading` / `ready` / `blocked`), `useAdLoader` (`apps/client/src/ads/adsense.ts`) | Injects Google's script once, when the first `AdSlot` mounts; the request flags (`AD_QUEUE_FLAGS`) are on the queue first. An error or `ADS_LOAD_TIMEOUT_MS` without a load means `blocked`: no ads, no message |
+| Ramka reklamy | `AdSlot` (`placement`) | The white "Reklama" frame around one fixed-size unit (`AD_PLACEMENTS`); renders nothing on phones, with ads off, without a unit for the placement or when the loader is blocked. No cue, never focusable |
+| Ekran reklamowy | `adEligible({screen, levelEnded, spectating})`, `AD_ELIGIBLE_SCREENS` | Main menu, lobby, results of a finished level, spectator view; nowhere else |
+| Wstrzymanie reklam | `useAdRequestPause`, `setAdRequestsPaused` (`pauseAdRequests`) | Pause guard mounted in `App`: ad requests are paused on every screen that is not an ad screen |
+| Odstęp od reklamy | `--space-ad-gap` (9.5rem), `AD_MIN_GAP_PX` (150) | Clear space between an ad and any control (AdSense game-page guidance) |
+| Znacznik wieku zgody | `data-tag-for-under-age-of-consent` (TFUA), `data-tag-for-age-treatment` (TFAT) | Per-unit tags from `adRequestAttributes`: TFUA in `limited` mode (Google serves limited ads), TFAT `1` child / `2` teen |
 
 Missing a term? Add it here in the same commit that introduces it.

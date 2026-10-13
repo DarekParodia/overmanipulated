@@ -73,6 +73,10 @@ export const pl = {
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
   },
+  /** Ads (S7-73): the frame's label, also its name for screen readers. */
+  ads: {
+    label: 'Reklama',
+  },
   lobby: {
     codeLabel: 'Kod pokoju',
     copy: 'Skopiuj kod',
