@@ -547,8 +547,8 @@ describe('difficulty and the dealt run (S7-23)', () => {
     expect(seedOf(0.25)).toBe(536_870_911);
     expect(registry.inspect(code)?.run).toEqual({ seed: 536_870_911, summary });
     expect(host.last('roomState')?.run).toEqual(summary);
-    // Trudny deals 16 slots on l1 (the bag's timing, whatever the pool holds).
-    expect(summary.folders).toBe(16);
+    // Trudny deals 18 slots on l1 (the bag's timing, whatever the pool holds).
+    expect(summary.folders).toBe(18);
     // The run seed stays on the server: it would spoil the folder sequence.
     expect(JSON.stringify(host.last('roomState'))).not.toContain('536870911');
 

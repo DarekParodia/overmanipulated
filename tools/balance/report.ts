@@ -189,32 +189,37 @@ export function endlessTable(rows: readonly Summary[]): string {
   return [head, ...body].join('\n');
 }
 
+/** Crew sizes the station-load table and the duplicate-station check look at (3–4 players). */
+export const LOAD_CREW_SIZES: readonly number[] = [3, 4];
+
 /**
- * Markdown table of station load: the mean busy share of each station for the average crew of
- * three, one row per level and difficulty, with the spread (busiest / least busy station).
+ * Markdown table of station load: the mean busy share of each station for the average crews of
+ * three and four, one row per level, difficulty and crew size, with the spread (busiest / least
+ * busy station).
  */
 export function stationLoadTable(summaries: readonly Summary[]): string {
   const rows = summaries
-    .filter((s) => s.crew === 'average' && s.crewSize === 3)
+    .filter((s) => s.crew === 'average' && LOAD_CREW_SIZES.includes(s.crewSize))
     .sort(
       (a, b) =>
         // Campaign levels by id, endless last (as in the per-level sections).
         Number(a.levelId === ENDLESS_LEVEL_ID) - Number(b.levelId === ENDLESS_LEVEL_ID) ||
         a.levelId.localeCompare(b.levelId) ||
-        DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty),
+        DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty) ||
+        a.crewSize - b.crewSize,
     );
   const kinds = STATION_KINDS.filter((kind) =>
     rows.some((s) => s.stationBusyShare[kind] !== undefined),
   );
   const head =
-    `| Level | Difficulty | ${kinds.join(' | ')} | Spread (max / min) |\n` +
-    `| --- | --- | ${kinds.map(() => '---').join(' | ')} | --- |`;
+    `| Level | Difficulty | Crew | ${kinds.join(' | ')} | Spread (max / min) |\n` +
+    `| --- | --- | --- | ${kinds.map(() => '---').join(' | ')} | --- |`;
   const body = rows.map((s) => {
     const cells = kinds.map((kind) => {
       const share = s.stationBusyShare[kind];
       return share === undefined ? '-' : pct(share);
     });
-    return `| ${s.levelId} | ${s.difficulty} | ${cells.join(' | ')} | ${f1(loadSpread(s))} |`;
+    return `| ${s.levelId} | ${s.difficulty} | ×${s.crewSize} | ${cells.join(' | ')} | ${f1(loadSpread(s))} |`;
   });
   return [head, ...body].join('\n');
 }
@@ -234,6 +239,29 @@ export function loadSpread(summary: Pick<Summary, 'stationBusyShare'>): number {
 /** Floor for the least busy station in `loadSpread`. */
 const MIN_BUSY_SHARE = 0.01;
 
+/**
+ * Duplicate-station rule (S7-35, user decision 2): a station dominates a crew when it is busy for
+ * more than this share of the level...
+ */
+export const DOMINANT_BUSY_SHARE = 0.5;
+/** ...and more than this many times as long as the least busy station (`loadSpread`). */
+export const DOMINANT_SPREAD = 2;
+
+/** The busiest station of a summary when it dominates (see DOMINANT_*), else undefined. */
+export function dominantStation(
+  summary: Pick<Summary, 'stationBusyShare'>,
+): StationKind | undefined {
+  const entries = Object.entries(summary.stationBusyShare) as [StationKind, number][];
+  const busiest = entries.reduce<[StationKind, number] | undefined>(
+    (best, entry) => (best === undefined || entry[1] > best[1] ? entry : best),
+    undefined,
+  );
+  if (!busiest || busiest[1] <= DOMINANT_BUSY_SHARE || loadSpread(summary) <= DOMINANT_SPREAD) {
+    return undefined;
+  }
+  return busiest[0];
+}
+
 // --- Intent checks ---------------------------------------------------------------------------
 
 export type Check = { name: string; ok: boolean; detail: string };
@@ -252,9 +280,13 @@ export function intentChecks(
   const summaries = all.filter((s) => s.difficulty === 'normal');
   const find: Find = (levelId, crew, size = 3) =>
     summaries.find((s) => s.levelId === levelId && s.crew === crew && s.crewSize === size);
-  const checks: Check[] = [...monotonicChecks(all)];
+  const checks: Check[] = [...monotonicChecks(all), ...difficultyChecks(all)];
   const add = (name: string, ok: boolean, detail: string) => checks.push({ name, ok, detail });
 
+  const l0Rookie = find('l0-greybox', 'rookie');
+  if (l0Rookie) {
+    add('L0 (tutorial): rookies win >= 80%', l0Rookie.winRate >= 0.8, pct(l0Rookie.winRate));
+  }
   const l1 = (crew: string) => find('l1-burza', crew);
   const rookie = l1('rookie');
   const average = l1('average');
@@ -324,6 +356,22 @@ export function intentChecks(
       `${pct(two)} / ${pct(three)} (${level.stars.two} / ${level.stars.three} of ${level.maxScore})`,
     );
   }
+  const loads = summaries.filter(
+    (s) => s.crew === 'average' && LOAD_CREW_SIZES.includes(s.crewSize),
+  );
+  if (loads.length > 0) {
+    const dominated = loads.flatMap((s) => {
+      const station = dominantStation(s);
+      return station === undefined ? [] : [`${s.levelId} ×${s.crewSize} ${station}`];
+    });
+    add(
+      `No station dominates (busy > ${pct(DOMINANT_BUSY_SHARE)} and > ${DOMINANT_SPREAD}× the least busy, average ×3/×4); else duplicate it`,
+      dominated.length === 0,
+      dominated.length === 0
+        ? `busiest ${pct(Math.max(...loads.flatMap((s) => Object.values(s.stationBusyShare))))}`
+        : dominated.join(', '),
+    );
+  }
   const endless = find('endless', 'average');
   if (endless) {
     add(
@@ -336,13 +384,28 @@ export function intentChecks(
 }
 
 /**
- * The per-difficulty intent (S7-34): on every level run on two or more difficulties, the average
- * crew of three never wins more often on a harder difficulty than on an easier one.
+ * The per-difficulty ladder (S7-34, S7-35): on every level run on two or more difficulties, the
+ * average crew of three never does better on a harder difficulty than on an easier one. Campaign:
+ * neither its win rate nor its score share (of the run's best) rises; endless: its median
+ * survival does not rise (every endless run is "lost").
  */
 export function monotonicChecks(summaries: readonly Summary[]): Check[] {
   const rows = summaries.filter((s) => s.crew === 'average' && s.crewSize === 3);
   const levelIds = [...new Set(rows.map((s) => s.levelId))];
   const checks: Check[] = [];
+  const ladderCheck = (
+    name: string,
+    ladder: readonly Summary[],
+    value: (s: Summary) => number,
+    show: (v: number) => string,
+  ): Check => ({
+    name,
+    ok: ladder.every((s, i) => {
+      const before = ladder[i - 1];
+      return before === undefined || value(s) <= value(before);
+    }),
+    detail: ladder.map((s) => `${s.difficulty} ${show(value(s))}`).join(' >= '),
+  });
   for (const levelId of levelIds) {
     const ladder = DIFFICULTIES.flatMap((difficulty) =>
       rows.filter((s) => s.levelId === levelId && s.difficulty === difficulty),
@@ -350,12 +413,97 @@ export function monotonicChecks(summaries: readonly Summary[]): Check[] {
     if (ladder.length < 2) {
       continue;
     }
-    checks.push({
-      name: `${levelId}: average x3 win rate does not rise from easy to expert`,
-      ok: ladder.every((s, i) => i === 0 || s.winRate <= (ladder[i - 1]?.winRate ?? 1)),
-      detail: ladder.map((s) => `${s.difficulty} ${pct(s.winRate)}`).join(' >= '),
-    });
+    if (levelId === ENDLESS_LEVEL_ID) {
+      checks.push(
+        ladderCheck(
+          `${levelId}: average x3 median survival does not rise from easy to expert`,
+          ladder,
+          (s) => s.lastedMin.p50,
+          (v) => `${f1(v)} min`,
+        ),
+      );
+      continue;
+    }
+    checks.push(
+      ladderCheck(
+        `${levelId}: average x3 win rate does not rise from easy to expert`,
+        ladder,
+        (s) => s.winRate,
+        pct,
+      ),
+      ladderCheck(
+        `${levelId}: average x3 score share does not rise from easy to expert`,
+        ladder,
+        (s) => s.scoreShare,
+        pct,
+      ),
+    );
   }
+  return checks;
+}
+
+/** Per-difficulty targets (S7-35, docs/balance.md "Intent"), over the campaign levels run. */
+export const DIFFICULTY_TARGETS = {
+  /** Easy: a first-time crew (rookies ×3) wins every level at least this often. */
+  easyRookieWin: 0.8,
+  /** Hard: the average crew of three still wins every level at least this often. */
+  hardAverageWin: 0.8,
+  /** Expert: the expert crew of three reaches two or more stars at least this often... */
+  expertExpertTwoStars: 0.8,
+  /** ...and the average crew of three still wins at least this often. */
+  expertAverageWin: 0.5,
+} as const;
+
+/** The DIFFICULTY_TARGETS as checks; a difficulty that was not run is skipped. */
+export function difficultyChecks(summaries: readonly Summary[]): Check[] {
+  const campaign = summaries.filter((s) => s.levelId !== ENDLESS_LEVEL_ID && s.crewSize === 3);
+  const checks: Check[] = [];
+  const target = (
+    name: string,
+    difficulty: Difficulty,
+    crew: string,
+    value: (s: Summary) => number,
+    min: number,
+  ) => {
+    const rows = campaign.filter((s) => s.difficulty === difficulty && s.crew === crew);
+    if (rows.length === 0) {
+      return;
+    }
+    checks.push({
+      name,
+      ok: rows.every((s) => value(s) >= min),
+      detail: rows.map((s) => `${s.levelId.slice(0, 2)} ${pct(value(s))}`).join(', '),
+    });
+  };
+  const t = DIFFICULTY_TARGETS;
+  target(
+    `Easy: rookies x3 win >= ${pct(t.easyRookieWin)} everywhere`,
+    'easy',
+    'rookie',
+    (s) => s.winRate,
+    t.easyRookieWin,
+  );
+  target(
+    `Hard: average x3 wins >= ${pct(t.hardAverageWin)} everywhere`,
+    'hard',
+    'average',
+    (s) => s.winRate,
+    t.hardAverageWin,
+  );
+  target(
+    `Expert: expert x3 reaches 2+ stars in >= ${pct(t.expertExpertTwoStars)} everywhere`,
+    'expert',
+    'expert',
+    (s) => s.stars[2] + s.stars[3],
+    t.expertExpertTwoStars,
+  );
+  target(
+    `Expert: average x3 wins >= ${pct(t.expertAverageWin)} everywhere`,
+    'expert',
+    'average',
+    (s) => s.winRate,
+    t.expertAverageWin,
+  );
   return checks;
 }
 

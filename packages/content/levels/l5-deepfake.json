@@ -4,26 +4,36 @@
   "topic": "Nagranie burmistrza",
   "briefingPoints": [
     "Skaner AI: tylko podpowiedź, może się mylić.",
-    "Telefon i Archiwum rozstrzygają sprawę.",
-    "Szef krzyczy „publikuj”? Najpierw sprawdź."
+    "Stenogram: czy cięcie zmienia sens?",
+    "Metadane: kiedy i czym zrobiono plik."
   ],
-  "briefing": "W Nowych Brzegach krążą nagrania i zdjęcia burmistrza. Skaner AI ocenia, czy materiał wygenerował program, ale to tylko szacunek z marginesem błędu. Prawdziwe źródło potwierdzą Telefon, Archiwum i Kartoteka. Uwaga: szef będzie żądał natychmiastowej publikacji!",
+  "briefing": "W Nowych Brzegach krążą nagrania i zdjęcia burmistrza. Skaner AI ocenia, czy materiał wygenerował program, ale to tylko szacunek z marginesem błędu. Nowy Stenogram porówna cytat z pełnym zapisem wypowiedzi, a Metadane pokażą, kiedy i czym zrobiono plik. Źródło potwierdzą też Telefon, Archiwum i Kartoteka. Uwaga: szef będzie żądał natychmiastowej publikacji!",
   "durationS": 420,
   "layout": [
-    "####################",
-    "#CCCCC.=I=.=S=.=R=.#",
-    "#..................#",
-    "#.T...1......2...T.#",
-    "#..................#",
-    "#......T=DD=T......#",
-    "#.==....====....==.#",
-    "#..................#",
-    "#...3..........4...#",
-    "#..................#",
-    "#..=A=......=P=....#",
-    "####################"
+    "########################",
+    "#CCCCC..=I==S==R==Q=...#",
+    "#......................#",
+    "#..T...1........2...T..#",
+    "#......................#",
+    "#........T=DD=T........#",
+    "#..==.....====.....==..#",
+    "#......................#",
+    "#....3............4....#",
+    "#......................#",
+    "#..=A=....=P=....=E=...#",
+    "#......................#",
+    "#.==................==.#",
+    "########################"
   ],
-  "stations": ["imageSearch", "aiScanner", "sourceRegistry", "phone", "archive"],
+  "stations": [
+    "imageSearch",
+    "aiScanner",
+    "sourceRegistry",
+    "phone",
+    "archive",
+    "transcript",
+    "metadata"
+  ],
   "schedule": [
     {
       "atS": 4,

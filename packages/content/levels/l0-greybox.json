@@ -39,11 +39,11 @@
       "l0-kradzieze-rowerow"
     ],
     "firstAtS": 3,
-    "gapS": 18,
-    "lastSpawnS": 175,
+    "gapS": 22,
+    "lastSpawnS": 165,
     "deadlineS": {
       "normal": 75,
-      "important": 90,
+      "important": 75,
       "urgent": 50
     },
     "starShares": {
