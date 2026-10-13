@@ -19,6 +19,9 @@ COPY packages packages
 COPY apps/client apps/client
 COPY apps/server apps/server
 RUN cd apps/client && bunx vite build
+# Brotli copies of js/css/html for Caddy's `precompressed br` (no per-request compression cost).
+COPY tools/deploy tools/deploy
+RUN bun tools/deploy/precompress.ts apps/client/dist
 
 FROM oven/bun:${BUN_VERSION} AS server-deps
 WORKDIR /app
@@ -48,3 +51,7 @@ CMD ["bun", "apps/server/src/index.ts"]
 FROM caddy:2-alpine AS web
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/apps/client/dist /srv
+# Caddy's admin API listens on localhost:2019 inside the container; answering means the config
+# loaded. (A request through :443 would need a certificate for "localhost".)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
+  CMD wget -q -O /dev/null http://localhost:2019/config/ || exit 1
