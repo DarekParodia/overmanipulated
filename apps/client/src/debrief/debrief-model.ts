@@ -1,15 +1,14 @@
-// Pure helpers behind the debrief (Kolegium): one card per story in order of arrival, and the
-// blunder-of-the-day vote tallies with this player's optimistic vote. Free of React and of the
-// content module so they are unit-tested directly.
-import {
-  type BlunderVote,
-  type FolderOutcome,
-  type FolderReason,
-  type FolderResult,
-  isHintOnly,
-  type LobbyPlayer,
-  type StationKind,
-  type Verdict,
+// Pure helpers behind the debrief (Kolegium): the card and story shapes (the cards themselves
+// come from `kolegiumCards` in results-model.ts) and the blunder-of-the-day vote tallies with
+// this player's optimistic vote. Free of React and of the content module so they are
+// unit-tested directly.
+import type {
+  BlunderVote,
+  FolderOutcome,
+  FolderReason,
+  LobbyPlayer,
+  StationKind,
+  Verdict,
 } from '@redakcja/shared';
 
 /** Story facts the debrief needs; a subset of the content `Story`. */
@@ -39,56 +38,6 @@ export type DebriefCard = {
   /** Deciding proof nobody checked; hint-only stamps (the AI scanner) are never proof. */
   missedStamps: MissedStamp[];
 };
-
-/** Folder ids are `f<n>` in spawn order; anything else sorts after them, in list order. */
-function arrivalNumber(folderId: string): number {
-  const match = /^f(\d+)$/.exec(folderId);
-  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
-}
-
-/**
- * One card per story, in the order the folders arrived (results come in resolution order).
- * A story that came twice keeps its first folder.
- */
-export function debriefCards(
-  results: readonly FolderResult[],
-  lookup: DebriefStoryLookup,
-): DebriefCard[] {
-  const ordered = results
-    .map((result, index) => ({ result, index }))
-    .sort(
-      (a, b) =>
-        arrivalNumber(a.result.folderId) - arrivalNumber(b.result.folderId) || a.index - b.index,
-    );
-  const seen = new Set<string>();
-  const cards: DebriefCard[] = [];
-  for (const { result } of ordered) {
-    if (seen.has(result.storyId)) {
-      continue;
-    }
-    seen.add(result.storyId);
-    const story = lookup(result.storyId);
-    const stamps = story?.stamps ?? [];
-    cards.push({
-      storyId: result.storyId,
-      folderId: result.folderId,
-      headline: story?.headline ?? null,
-      outcome: result.outcome,
-      reason: result.reason,
-      verdict: result.verdict,
-      correctVerdict: story?.correctVerdict ?? null,
-      scoreDelta: result.scoreDelta,
-      debrief: story?.debrief ?? null,
-      missedStamps: result.missedStampIds.flatMap((id) => {
-        const stamp = stamps.find((s) => s.id === id);
-        return stamp && !isHintOnly(stamp.station)
-          ? [{ id: stamp.id, station: stamp.station, text: stamp.text }]
-          : [];
-      }),
-    });
-  }
-  return cards;
-}
 
 /**
  * The votes to show: the server's, with this player's pending vote in place of their server

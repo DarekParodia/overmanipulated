@@ -101,12 +101,14 @@ function fixtureResults(): FolderResult[] {
     bonuses: { speed, multiStamp: 0, bossCall: 0 },
     missedStampIds: [],
   });
+  // The results design fixture (S7-05): its totals add up to 15 points.
   return [
     result('f-1', 'l0-zalany-rynek', 'correct', 'correctImportant', 'reject', 25, 5, 5),
-    result('f-2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 15, 0, 5),
+    result('f-2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 10, 0),
     result('f-3', URGENT_STORY, 'wrong', 'publishedFake', 'publish', -20, -25),
     result('f-4', 'l0-nocny-autobus', 'wrongJustification', 'weakProof', 'publish', 5, 0),
     result('f-5', 'l0-zalany-rynek', 'expired', 'expired', null, -5, -5),
+    result('f-6', 'l0-nocny-autobus', 'unfinished', 'unfinished', null, 0, 0),
   ];
 }
 
@@ -190,15 +192,17 @@ export function installHudDevFixture(): (() => void) | undefined {
     },
     end(won, stars) {
       const state = useGame.getState();
+      const results = fixtureResults();
       const message: LevelEndMessage = {
         type: 'levelEnd',
         levelId: 'l0-greybox',
         won,
         stars,
-        score: state.score,
+        // The results' own sum, so the totals need no 'Inne' row.
+        score: results.reduce((sum, result) => sum + result.scoreDelta, 0),
         credibility: state.credibility,
-        results: fixtureResults(),
-        lossReason: won ? null : 'score',
+        results,
+        lossReason: won ? null : state.credibility <= 0 ? 'credibility' : 'score',
         starThresholds: FIXTURE_STARS,
         maxScore: FIXTURE_MAX_SCORE,
       };

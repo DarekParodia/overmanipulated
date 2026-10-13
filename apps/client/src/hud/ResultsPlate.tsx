@@ -1,13 +1,13 @@
 // Results screen at the end of a level: a big won/lost headline on a green or red ribbon, three
-// big stars, points and credibility, and the Kolegium — one debrief card per story with the
-// blunder-of-the-day vote. Stars and verdict marks reveal one by one with sound (any tap or key
-// finishes the reveal). The host's yellow button takes the team back to the newsroom; guests
-// see a waiting line.
+// big stars, points and credibility, and the Kolegium — one debrief card per folder (per story
+// in endless) with the blunder-of-the-day vote. Stars and verdict marks reveal one by one with
+// sound (any tap or key finishes the reveal). The host's yellow button takes the team back to
+// the newsroom; guests see a waiting line.
 import { getStory } from '@redakcja/content';
 import { ENDLESS_LEVEL_ID, type LevelEndMessage } from '@redakcja/shared';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
-import { debriefCards } from '../debrief/debrief-model.ts';
 import { Kolegium, useBlunderVotes } from '../debrief/Kolegium.tsx';
+import { kolegiumCards } from '../debrief/results-model.ts';
 import { PHONE_QUERY, useMediaQuery } from '../debrief/use-media-query.ts';
 import { revealTimes, useReveal } from '../debrief/use-reveal.ts';
 import { NewCardChip, useNewCards } from '../encyclopedia/NewCardChip.tsx';
@@ -76,10 +76,14 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
   const reducedMotion = useSettings((s) => s.reducedMotion);
   const paged = useMediaQuery(PHONE_QUERY);
   const footer = useRef<HTMLElement>(null);
-  const cards = useMemo(() => debriefCards(levelEnd.results, debriefStory), [levelEnd.results]);
+  const endless = levelEnd.levelId === ENDLESS_LEVEL_ID;
+  // One card per folder, so card points add up to the score; endless groups them per story.
+  const cards = useMemo(
+    () => kolegiumCards(levelEnd.results, debriefStory, endless ? 'story' : 'folder'),
+    [levelEnd.results, endless],
+  );
   const [current, setCurrent] = useState(0);
   const votes = useBlunderVotes();
-  const endless = levelEnd.levelId === ENDLESS_LEVEL_ID;
   const roomCode = useApp((s) => s.room?.roomCode ?? null);
   const run = useEndlessRun(levelEnd, roomCode, endless);
   const [tab, setTab] = useState<EndlessTab>('debrief');

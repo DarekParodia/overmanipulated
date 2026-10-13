@@ -1,103 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import type { FolderResult } from '@redakcja/shared';
 import {
   blunderLeader,
-  type DebriefStory,
-  debriefCards,
   effectiveVotes,
   stepCard,
   voteConfirmed,
   votersByStory,
 } from './debrief-model.ts';
-
-function result(folderId: string, storyId: string, patch: Partial<FolderResult> = {}) {
-  return {
-    folderId,
-    spawnKey: `s${folderId.slice(1)}`,
-    storyId,
-    outcome: 'correct',
-    reason: 'correctNormal',
-    verdict: 'publish',
-    scoreDelta: 10,
-    credibilityDelta: 0,
-    justifyingStampIds: [`${storyId}-image`],
-    requiredStamps: 1,
-    bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
-    missedStampIds: [],
-    ...patch,
-  } satisfies FolderResult;
-}
-
-const stories: Record<string, DebriefStory> = {
-  'l1-a': {
-    headline: 'Rynek pod wodą',
-    correctVerdict: 'publishWithContext',
-    stamps: [
-      { id: 'l1-a-image', station: 'imageSearch', text: 'Zdjęcie z 2019 r.' },
-      { id: 'l1-a-source', station: 'sourceRegistry', text: 'Konto aktywne od lat.' },
-      { id: 'l1-a-ai', station: 'aiScanner', text: 'Skaner: 70–90% AI.' },
-    ],
-    debrief: {
-      what: 'Stare zdjęcie.',
-      technique: 'Nowy podpis.',
-      tool: 'Lupa.',
-      realWorld: 'Po burzach.',
-    },
-  },
-  'l1-b': { headline: 'Nocny autobus', correctVerdict: 'publish' },
-};
-const lookup = (id: string) => stories[id];
-
-describe('debrief cards', () => {
-  test('orders cards by folder arrival, not by resolution', () => {
-    const cards = debriefCards([result('f10', 'l1-b'), result('f2', 'l1-a')], lookup);
-    expect(cards.map((c) => c.storyId)).toEqual(['l1-a', 'l1-b']);
-  });
-
-  test('keeps one card per story, from its first folder', () => {
-    const cards = debriefCards(
-      [
-        result('f3', 'l1-a', { outcome: 'wrong', reason: 'publishedWithoutContext' }),
-        result('f1', 'l1-a'),
-      ],
-      lookup,
-    );
-    expect(cards).toHaveLength(1);
-    expect(cards[0]?.folderId).toBe('f1');
-  });
-
-  test('carries the reason, the correct verdict, the debrief and the missed proof texts', () => {
-    const [card] = debriefCards(
-      [
-        result('f1', 'l1-a', {
-          outcome: 'expired',
-          reason: 'expired',
-          verdict: null,
-          scoreDelta: -5,
-          credibilityDelta: -5,
-          justifyingStampIds: [],
-          missedStampIds: ['l1-a-image', 'l1-a-ai', 'unknown'],
-        }),
-      ],
-      lookup,
-    );
-    expect(card?.reason).toBe('expired');
-    expect(card?.verdict).toBeNull();
-    expect(card?.correctVerdict).toBe('publishWithContext');
-    expect(card?.debrief?.technique).toBe('Nowy podpis.');
-    // The AI scanner's stamp is a hint, never the deciding proof.
-    expect(card?.missedStamps).toEqual([
-      { id: 'l1-a-image', station: 'imageSearch', text: 'Zdjęcie z 2019 r.' },
-    ]);
-  });
-
-  test('still shows a card for a story the content does not know', () => {
-    const [card] = debriefCards([result('f1', 'l9-missing')], lookup);
-    expect(card?.headline).toBeNull();
-    expect(card?.debrief).toBeNull();
-    expect(card?.correctVerdict).toBeNull();
-  });
-});
 
 describe('blunder votes', () => {
   const players = [
