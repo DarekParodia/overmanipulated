@@ -527,11 +527,6 @@ export const pl = {
       } satisfies Record<keyof FolderBonuses, string>,
     },
     unknownStory: 'Nieznana teczka.',
-    /** The managing editor's one deadline extension per level. */
-    extend: 'Przedłuż termin',
-    extendAmount: (s: number) => `+${s}\u00a0s`,
-    extendLabel: (s: number) => `Przedłuż termin o\u00a0${s}\u00a0s`,
-    extended: (s: number) => `Termin +${s}\u00a0s!`,
   },
   minigames: {
     /** Shared by every minigame. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { NORMAL_TUNING } from '../difficulty.ts';
-import { runStep, TEST_MAP, testCommand, testFolder, testInput } from './__fixtures__/greybox.ts';
+import { TEST_MAP } from './__fixtures__/greybox.ts';
 import {
   abilityOf,
   crewSnapshot,
@@ -97,25 +97,5 @@ describe('crew ability state', () => {
       { id: 'p1', abilityReadyAtMs: 0, abilityArmed: false, fieldCall: null, rescuesLeft: 0 },
       { id: 'p2', abilityReadyAtMs: 0, abilityArmed: false, fieldCall: null, rescuesLeft: 0 },
     ]);
-  });
-});
-
-describe('useAbility before stepAbilities (S7-36)', () => {
-  it('is ignored by the simulation', () => {
-    const base = crewOf('managingEditor', 'photoEditor');
-    const state = {
-      ...base,
-      elapsedMs: 5000,
-      folders: { f1: testFolder('f1', { location: { kind: 'carried', playerId: 'p1' } }) },
-    };
-    const inputs = { p1: [testInput(0)], p2: [testInput(0)] };
-    const pressed = runStep(state, inputs, [
-      testCommand('p1', { kind: 'useAbility' }),
-      testCommand('p2', { kind: 'useAbility' }),
-    ]);
-    const idle = runStep(state, inputs);
-    expect(pressed.state).toEqual(idle.state);
-    expect(pressed.events).toEqual(idle.events);
-    expect(pressed.events.some((e) => e.kind === 'ability')).toBe(false);
   });
 });

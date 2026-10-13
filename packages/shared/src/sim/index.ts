@@ -1,3 +1,4 @@
+export * from './abilities.ts';
 export * from './content.ts';
 export * from './desk.ts';
 export * from './events.ts';

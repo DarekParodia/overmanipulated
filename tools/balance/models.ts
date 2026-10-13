@@ -36,8 +36,8 @@ export type SkillProfile = {
   recogniseCorrection: number;
   /** Chance of obeying a boss call at once, without checking the folder. */
   obeyBoss: number;
-  /** Chance of using the deadline extension in an emergency (when allowed to). */
-  usesExtension: number;
+  /** Chance that the bot uses its role ability (Przedłużenie in an emergency, S7-37). */
+  usesAbility: number;
   /** Failed attempts at one station before giving up on it. */
   maxStationFailures: number;
 };
@@ -59,7 +59,7 @@ export const ROOKIE: SkillProfile = {
   patience: 3,
   recogniseCorrection: 0.5,
   obeyBoss: 0.4,
-  usesExtension: 0,
+  usesAbility: 0,
   maxStationFailures: 3,
 };
 
@@ -80,7 +80,7 @@ export const AVERAGE: SkillProfile = {
   patience: 4,
   recogniseCorrection: 0.9,
   obeyBoss: 0.1,
-  usesExtension: 0.5,
+  usesAbility: 0.5,
   maxStationFailures: 4,
 };
 
@@ -101,7 +101,7 @@ export const EXPERT: SkillProfile = {
   patience: 6,
   recogniseCorrection: 1,
   obeyBoss: 0,
-  usesExtension: 1,
+  usesAbility: 1,
   maxStationFailures: 5,
 };
 
