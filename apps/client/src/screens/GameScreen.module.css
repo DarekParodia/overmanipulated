@@ -1,4 +1,7 @@
 .screen {
+  /* The role ability chip's widest size (abilities/AbilityChip); the guidance dock keeps it free. */
+  --ability-chip-w: 16rem;
+
   position: fixed;
   inset: 0;
   overflow: hidden;

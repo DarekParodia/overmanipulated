@@ -25,12 +25,24 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
+      // Phone-only checks (S7-12).
+      testIgnore: /phone-layout\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 }, launchOptions },
     },
     {
       name: 'mobile',
       use: {
         ...devices['Pixel 7 landscape'],
+        launchOptions,
+      },
+    },
+    {
+      // The smallest supported phone (S7-12): the phone layout checks at 640×360.
+      name: 'phone-small',
+      testMatch: /phone-layout\.spec\.ts/,
+      use: {
+        ...devices['Pixel 7 landscape'],
+        viewport: { width: 640, height: 360 },
         launchOptions,
       },
     },

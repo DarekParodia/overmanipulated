@@ -38,6 +38,9 @@ export function surfaceHeight(fixture: Fixture): number {
   return SURFACE_HEIGHT[fixture.kind];
 }
 
+/** Height of a sign's foot above its fixture's surface; the sign rises from there. */
+export const SIGN_ABOVE = 0.45;
+
 /** Folder held in front of the carrier: distance from the body centre and height. */
 export const CARRY_REACH = 0.6;
 export const CARRY_HEIGHT = 0.82;

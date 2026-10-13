@@ -86,9 +86,13 @@ function fixtureFolders(playerId: string): Folder[] {
   });
   return [
     folder('f-1', URGENT_STORY, { kind: 'fixture', fixtureId: 'conveyor-0' }, 7_400, []),
-    folder('f-2', 'l0-zalany-rynek', { kind: 'carried', playerId }, 21_000, [
-      'l0-zalany-rynek-image',
-    ]),
+    // Przedłużenie gave the carried folder 20 s (S7-40: the card's hourglass "+20" chip).
+    {
+      ...folder('f-2', 'l0-zalany-rynek', { kind: 'carried', playerId }, 21_000, [
+        'l0-zalany-rynek-image',
+      ]),
+      extendedMs: 20_000,
+    },
     folder('f-3', MULTI_STORY, { kind: 'fixture', fixtureId: 'archive-0' }, 48_000, [
       `${MULTI_STORY}-archive`,
     ]),

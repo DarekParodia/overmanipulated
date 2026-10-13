@@ -1,0 +1,80 @@
+/*
+ * The fourth thumb button (S7-40): as big as the ping button, round, with the ability ring as
+ * its edge. Grid area `ability` in TouchControls (top-left; top-right when mirrored).
+ */
+.button {
+  grid-area: ability;
+  justify-self: center;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 4.25rem;
+  height: 4.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  --face: var(--surface);
+  background: var(--face);
+  box-shadow: var(--pop-lg);
+  color: var(--outline);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.button:active {
+  transform: translateY(5px);
+  box-shadow: var(--pop-pressed);
+}
+
+/* The ring is the button's edge; icon and label (or the seconds) sit inside it. */
+.ring {
+  --ring-size: 100%;
+}
+
+.label {
+  /* A long word (Ekspert, Szansa) crosses the ring's inner edge: the face colour behind it keeps
+     the letters clear of the ring. */
+  position: relative;
+  padding-inline: 0.15em;
+  border-radius: var(--radius-pill);
+  background: var(--face);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.seconds {
+  padding-top: 0.12em; /* Baloo sits high in its box */
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nothing to do now: the face fades back, the button still answers a press. */
+.blocked .ring,
+.cooling .ring {
+  color: var(--text-soft);
+}
+
+.blocked {
+  --face: var(--surface-sunk);
+}
+
+/* Koło ratunkowe hangs off the button's top edge. */
+.rescue {
+  position: absolute;
+  top: calc(-1 * var(--space-3));
+  left: 50%;
+  translate: -50% 0;
+}
+
+:root[data-reduced-motion="true"] .button {
+  transition: none;
+}

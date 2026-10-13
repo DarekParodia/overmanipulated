@@ -84,6 +84,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Tryb nieskończony | `endlessMode` | |
 | Pokój, kod pokoju | `room`, `roomCode` | |
 | Pas HUD | `hudBand` (`hud/hud-band.ts`: `bandBottom`, `useHudBand`, `useHudBandMeasure`; CSS `--hud-band`, `--hud-pill-right`) | How far down the top-of-screen HUD reaches: the lowest edge of the elements marked `data-hud-band` (pill, folder queue, menu button, endless tempo chip) that start in the upper half of the screen, capped at `HUD_BAND_MAX_SHARE` of its height. Captions, event banners and verdict toasts start under it; the follow camera frames the room below it (S7-12) |
+| Kadr kamery (cała redakcja / za graczem) | `framing` (`scene/camera-framing.ts`: `computeFraming`, `placeCamera`; fit mode / follow mode) | How the angled camera frames the room: the whole room when its tiles would be at least `MIN_TILE_PX` (40 px), otherwise it follows the local player, clamped to the room and framed under the HUD band with a view offset of half the band (S7-12) |
 | Menu gry | `gameMenu` (`hud/GameMenu.tsx`, `GameMenuButton.tsx`, `useGameMenu`, `pl.gameMenu`) | The in-game menu: one top-right button (Esc, Start) opening a sheet with „Wróć do gry”, settings, fullscreen, room code and „Wyjdź z redakcji” (two presses within `LEAVE_CONFIRM_MS`). Replaces the tool buttons and the room chip |
 | Pauza | `paused` (snapshot, `GameStore.paused`), lobby action `setPaused` | A solo player's open menu holds the level: the registry skips stepping the room. Only while playing with exactly one connected player; anyone joining or reconnecting clears it. With teammates the menu shows „Gra trwa dalej” and nothing pauses |
 | Gospodarz | `host` | |
@@ -127,7 +128,7 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`):
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -136,6 +137,11 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`):
 | Sprzeczność | `contradiction` (`MetadataOutcome`) | Exactly one file field contradicts the description |
 | Zgadza się | `consistent` (`MetadataOutcome`; answer `matches`) | No field contradicts the description |
 | Dane usunięte (Brak danych) | `stripped` (`MetadataOutcome`; answer `noData`) | A social site stripped the file data; missing data proves nothing. An irrelevant Metadane stamp always means this |
+| Cytat w teczce / Pełny zapis | `TranscriptPuzzle.clip` / `TranscriptPuzzle.lines` | Stenogram: the quote in the folder / the full record of what was said (`TRANSCRIPT_LINES` numbered lines, with a setting chip) |
+| Skrót (Sens ten sam) | `fair` (`TranscriptVariant`; judgement `same`) | The clip leaves out only filler; the meaning holds |
+| Wycięty cytat (Sens zmieniony) | `cut` (`TranscriptVariant`; judgement `changed`) | The left-out words were the point; the cut flips the meaning. The cut words are `cutWords(line, clip)` |
+| Nie ma w zapisie | `absent` (`TranscriptVariant`; action `notInTranscript`) | Nobody said the clip; a decoy line shares its words but says something else |
+| Szukanie / Ocena | `Phase`: `find` / `judge` | Stenogram's two phases: find the clip's line, then judge the cut |
 
 ## Roles (`RoleId`)
 
@@ -165,7 +171,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Podgląd zdolności | ability preview (`abilityPreview`, `AbilityPreview`, `AbilityView`, `AbilityEnv`) | What a press would do now (`none`, `calling`, `armed`, `cooling`, `blocked`, `arm`, `now` with its target); one function for the sim, the HUD and the bots |
 | Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |
 | Stan zdolności załogi | crew ability state (`AbilityState`, `snapshot.crew`, `crewSnapshot`) | `abilityReadyAtMs`, `abilityArmed`, `fieldCall`, `rescuesLeft` per player |
-| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue (no role, cooling) |
+| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue when the shared preview says it does nothing (no role, cooling, blocked, a call running) |
+| Żeton zdolności | ability chip (`AbilityChip`, `abilityChipModel`, `data-testid="hud-ability"`) | Bottom-left HUD chip on keyboard and gamepad: ring, key cap, one-word name, status (`ready`, `armed`, `calling`, `cooling`, `blocked`) |
+| Przycisk zdolności | ability button (`AbilityButton`, grid area `ability`, `data-testid="touch-ability"`) | The 4th thumb button on touch; same ring and states as the chip, shown only with a role |
+| Cel zdolności | ability target (`AbilityTarget`, `abilityTargetFolder`, `abilityTargetName`, `data-ability-target`) | What a ready press would act on: the folder card gets a dashed blue outline, a teammate or station is named on the chip |
+| Pierścień postępu | progress ring (`ui/ProgressRing`, `RingTone`) | The round fill shared by the work prompt and the ability chip / button |
 | Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
 
 ## Station families (`StationFamily`, Stage 7)

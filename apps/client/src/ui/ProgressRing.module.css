@@ -1,0 +1,88 @@
+/*
+ * Progress ring (S7-40, extracted from the station work prompt): a thick track with a fill that
+ * runs clockwise from the top, a navy outline inside and out, and an icon or a number in the
+ * middle. The tone says what the ring measures; the content and the state words carry it too.
+ */
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  /* Callers size the ring with `--ring-size` on their own class. */
+  width: var(--ring-size, 4.5rem);
+  height: var(--ring-size, 4.5rem);
+  border-radius: var(--radius-pill);
+}
+
+.ring > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.track,
+.fill {
+  fill: none;
+  stroke-width: 9;
+}
+
+.track {
+  stroke: var(--surface-sunk);
+}
+
+.fill {
+  stroke: var(--green);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 80ms linear;
+}
+
+/* Ready and armed rings are full: no cap peeks out at the top. */
+.full .fill {
+  stroke-linecap: butt;
+}
+
+/* Nothing done yet: no round cap dot at the top. */
+.empty .fill {
+  visibility: hidden;
+}
+
+.cooling .fill {
+  stroke: var(--outline);
+}
+
+.armed .fill {
+  stroke: var(--blue);
+}
+
+.call .fill {
+  stroke: var(--orange);
+}
+
+/* The outline around the ring, drawn over the track for the cartoon edge. */
+.ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.ring::after {
+  content: "";
+  position: absolute;
+  inset: calc(9 / 64 * 100% + 1px);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.content {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+:root[data-reduced-motion="true"] .fill {
+  transition: none;
+}

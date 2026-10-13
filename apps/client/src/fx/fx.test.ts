@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { type Folder, gameEventSchema } from '@redakcja/shared';
+import { type CrewSnapshot, type Folder, gameEventSchema } from '@redakcja/shared';
 import { loadSettings } from '../store/settings.ts';
 import { animateCharacter, createAnimator } from './animation/procedural.ts';
 import { stepSpring } from './animation/spring.ts';
@@ -10,7 +10,12 @@ import { type Cue, type CueId, cueIds, cues } from './cues.ts';
 import { TICK_FAST_MS, TICK_SLOW_MS, tickIntervalMs, urgentTimeLeft } from './deadline-ticker.ts';
 import { cueForEvent, type GameplayEvent, wrongVerdictCue } from './event-cues.ts';
 import { createFeedback, resolveCue } from './feedback.ts';
-import { beltJustFilled, crossedLastSeconds, justPaused } from './gameplay-feedback.ts';
+import {
+  abilityJustReady,
+  beltJustFilled,
+  crossedLastSeconds,
+  justPaused,
+} from './gameplay-feedback.ts';
 import { createPool, scaleAt, spawn, stepPool } from './particles/pool.ts';
 import { particleCapacity, particlePresets } from './particles/presets.ts';
 import { createHitStop, HIT_STOP_SCALE, timeScaleAt, triggerHitStop } from './time-scale.ts';
@@ -596,5 +601,57 @@ describe('solo pause (S7-10)', () => {
       sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
       haptic: 'tick',
     });
+  });
+});
+
+describe('role ability ready (S7-40)', () => {
+  const member = (abilityReadyAtMs: number, extra: Partial<CrewSnapshot> = {}): CrewSnapshot => ({
+    id: 'p1',
+    abilityReadyAtMs,
+    abilityArmed: false,
+    fieldCall: null,
+    rescuesLeft: 0,
+    ...extra,
+  });
+
+  it('fires once, on the snapshot where the cooldown runs out', () => {
+    expect(
+      abilityJustReady(
+        { member: member(70_000), elapsedMs: 69_950 },
+        { member: member(70_000), elapsedMs: 70_000 },
+      ),
+    ).toBe(true);
+    // Still cooling, already ready, or a cooldown that just started: no cue.
+    expect(
+      abilityJustReady(
+        { member: member(70_000), elapsedMs: 69_900 },
+        { member: member(70_000), elapsedMs: 69_950 },
+      ),
+    ).toBe(false);
+    expect(
+      abilityJustReady(
+        { member: member(70_000), elapsedMs: 70_000 },
+        { member: member(70_000), elapsedMs: 70_050 },
+      ),
+    ).toBe(false);
+    expect(
+      abilityJustReady(
+        { member: member(0), elapsedMs: 10_000 },
+        { member: member(70_050), elapsedMs: 10_050 },
+      ),
+    ).toBe(false);
+    expect(
+      abilityJustReady({ member: undefined, elapsedMs: 0 }, { member: member(0), elapsedMs: 50 }),
+    ).toBe(false);
+  });
+
+  it('is a quiet ui-bus tick with the chip bump; a denied press shakes the chip', () => {
+    expect(cues['ability.ready']).toEqual({
+      severity: 1,
+      sound: { ids: ['tick'], bus: 'ui', volume: 0.6 },
+      haptic: 'tick',
+      animation: 'abilityReady',
+    });
+    expect(cues['ability.denied'].animation).toBe('abilityDenied');
   });
 });
