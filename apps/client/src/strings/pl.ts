@@ -74,6 +74,10 @@ export const pl = {
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
   },
+  /** Ads (S7-73): the frame's label, also its name for screen readers. */
+  ads: {
+    label: 'Reklama',
+  },
   lobby: {
     codeLabel: 'Kod pokoju',
     copy: 'Skopiuj kod',
@@ -555,6 +559,13 @@ export const pl = {
     seconds: (s: number) => `${s} s`,
     noFolder: 'Brak teczki na stanowisku.',
     unknownStory: 'Nieznana teczka.',
+    /**
+     * Role abilities around the overlay (S7-41). The header's Ekspertyza button shows
+     * `touch.ability.expertise` (accessible name from `vocab.abilities`) and the lockout plate's
+     * line `vocab.abilities.secondChance`; this is the button while the press is on its way
+     * (the overlay closes when the stamp lands).
+     */
+    expertiseSending: 'Ekspertyza…',
   },
   desk: {
     title: 'Stół redakcyjny',
@@ -1326,6 +1337,77 @@ export const pl = {
         'Dziękuję, przejdźmy do głosowania.',
       ],
     },
+    /**
+     * Inne media (S7-54): what other outlets say about the folder's claim. Only agencies and
+     * newsrooms with their own reporter count; copies of someone else's post, satire and
+     * anonymous groups do not. Every outlet is invented (Nowe Brzegi); no real brands.
+     */
+    crossCheck: {
+      task: 'Co mówią niezależne media?',
+      claimTitle: 'W teczce',
+      cardsTitle: 'Inne media',
+      /** The kind badge on a coverage card. */
+      kinds: {
+        agency: 'agencja',
+        newsroom: 'redakcja',
+        satire: 'satyra',
+        anonymous: 'anonim',
+        junk: 'portal-klon',
+      },
+      /** The stance chip: a copy looks exactly like a confirmation. */
+      stances: { confirms: 'pisze to samo', echoes: 'pisze to samo', denies: 'zaprzecza' },
+      /** The source line: own reporter, a copied post, none named, or made up for a joke. */
+      sources: {
+        own: 'własny reporter',
+        unnamed: 'bez źródła',
+        invented: 'wymyślone',
+        copied: (via: string) => `za: ${via}`,
+      },
+      /** What a copy took the claim from. */
+      vias: ['post z grupy', 'wpis w sieci', 'film z sieci', 'inny portal'],
+      /** The stamp a copied card (an echo) gets after the round; satire and anonymous fade. */
+      copy: 'kopia',
+      card: (outlet: string, kind: string, stance: string, source: string) =>
+        `${outlet} (${kind}): ${stance}, ${source}`,
+      answers: {
+        confirmed: 'Potwierdzają',
+        denied: 'Zaprzeczają',
+        unconfirmed: 'Za mało źródeł',
+      },
+      right: 'Trafione!',
+      wrong: 'Pudło!',
+      /** Shown after the round: what the independent coverage says. */
+      reasons: {
+        confirmed: 'Co najmniej dwa niezależne źródła to potwierdzają.',
+        denied: 'Niezależne źródło temu zaprzecza.',
+        unconfirmed: 'Za mało niezależnych źródeł, by potwierdzić.',
+      },
+      keys: {
+        keyboard: [
+          { keys: ['←', '→'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+        ],
+        touch: [{ keys: ['Stuknij'], label: 'odpowiedź' }],
+      } satisfies KeyHints,
+      /** Invented outlets of Nowe Brzegi, per kind. */
+      outlets: {
+        agency: ['Agencja Nadrzecze', 'Agencja Fala'],
+        newsroom: [
+          'Radio Nadrzecze',
+          'Kurier Nowobrzeski',
+          'TV Brzegi',
+          'Gazeta Portowa',
+          'Tygodnik Błonia',
+        ],
+        satire: ['Brzeski Szpikulec', 'Kurier Absurdu'],
+        anonymous: ['Grupa „Nowe Brzegi Info”', 'Grupa „Plotki z Portu”'],
+        junk: ['nb-prawda24.top', 'szok-brzegi24.top'],
+      },
+    },
   },
   /** Station help (S7-15): what each station checks and how to work it on every device. */
   stationHelp: {
@@ -1477,9 +1559,8 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
-      // Stage 7 stations (S7-48): provisional copy for Inne media; its minigame task (S7-54)
-      // settles the steps against its final controls and button labels. Metadane (S7-52),
-      // Stenogram (S7-53) and Mapa (S7-55) are final.
+      // Stage 7 stations (S7-48): Metadane (S7-52), Stenogram (S7-53), Inne media (S7-54) and
+      // Mapa (S7-55) are final, settled against each minigame's controls and button labels.
       geolocation: {
         purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
         proves: 'Zdjęcie jest z innego miejsca niż podpis',
@@ -1531,23 +1612,23 @@ export const pl = {
         proves: 'Niezależne media potwierdzają albo zaprzeczają',
         steps: {
           keyboard: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             '← i → wybierają odpowiedź, spacja potwierdza',
           ],
           gamepad: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Krzyżak wybiera odpowiedź, A potwierdza',
           ],
           touch: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Stuknij swoją odpowiedź',
           ],
         },
         realWorld:
-          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje.',
+          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje. Kopia cudzego wpisu niczego nie potwierdza.',
       },
       metadata: {
         purpose: 'Kiedy, czym i gdzie powstał plik?',

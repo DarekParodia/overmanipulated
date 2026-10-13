@@ -128,7 +128,7 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`, `geolocation.logic.ts`):
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`, `geolocation.logic.ts`, `crossCheck.logic.ts`):
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -144,6 +144,10 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, 
 | Szukanie / Ocena | `Phase`: `find` / `judge` | Stenogram's two phases: find the clip's line, then judge the cut |
 | Podpis / Dzielnica / Obiekt | `GeoPuzzle.claimed` / `MapTile` (`district`) / `Landmark` | Mapa: the district the photo's caption names / one of the 12 districts of the town map (`GEOLOCATION_MAP`, 4×3), each with a unique pair of landmarks / one of the ten landmark glyphs (`LANDMARKS`, `landmarks.tsx`), told apart by shape alone |
 | Zgodne miejsce / Inna dzielnica / Inne miasto (Nie ma na mapie) | `match` / `otherDistrict` / `otherTown` (`GeoOutcome`; answer `NOT_HERE` for `otherTown`) | Mapa: the photo is from the captioned district / from another district on the map / from off the map; an off-map photo shares one landmark with a district (a decoy) |
+| Relacja (agencja, redakcja, satyra, anonim, portal-klon) | `CoverageCard` (`OutletKind`: `agency`, `newsroom`, `satire`, `anonymous`, `junk`) | Inne media: what another outlet says about the folder's claim, with its stance (`confirms`, `denies`, `echoes`) and source line |
+| Kopia (pisze to samo, za: …) | `echoes` (`Stance`) | Repeats someone else's post: looks exactly like a confirmation, counts for nothing; gets the „kopia” stamp after the round |
+| Niezależne źródło | `isIndependent(card)` | An agency or newsroom card with its own reporter (not an echo). Only these count |
+| Potwierdzają / Zaprzeczają / Za mało źródeł | `confirmed` / `denied` / `unconfirmed` (`Conclusion`, `conclude(cards)`) | Any independent denial → denied; ≥ `CROSS_CHECK_CONFIRMATIONS` (2) independent confirmations → confirmed; else unconfirmed |
 
 ## Roles (`RoleId`)
 
@@ -281,5 +285,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |
 | Zgoda na reklamy | `ads.signOff` (`{by, date}`) | Supervisor or legal sign-off recorded in config.json; `ads.enabled: true` is refused without it, also when forced by `ADS_ENABLED` |
 | Ustawienia pokoi | `RoomSettings` (`RegistryOptions.settings()`, `roomSettings`) | `maxRooms`, `defaultDifficulty` and the feature flags, read by the registry at every room creation, so a reload applies to the next room |
+| Ładowarka reklam | `ensureAdSense`, `AdLoaderState` (`idle` / `loading` / `ready` / `blocked`), `useAdLoader` (`apps/client/src/ads/adsense.ts`) | Injects Google's script once, when the first `AdSlot` mounts; the request flags (`AD_QUEUE_FLAGS`) are on the queue first. An error or `ADS_LOAD_TIMEOUT_MS` without a load means `blocked`: no ads, no message |
+| Ramka reklamy | `AdSlot` (`placement`) | The white "Reklama" frame around one fixed-size unit (`AD_PLACEMENTS`); renders nothing on phones, with ads off, without a unit for the placement or when the loader is blocked. No cue, never focusable |
+| Ekran reklamowy | `adEligible({screen, levelEnded, spectating})`, `AD_ELIGIBLE_SCREENS` | Main menu, lobby, results of a finished level, spectator view; nowhere else |
+| Wstrzymanie reklam | `useAdRequestPause`, `setAdRequestsPaused` (`pauseAdRequests`) | Pause guard mounted in `App`: ad requests are paused on every screen that is not an ad screen |
+| Odstęp od reklamy | `--space-ad-gap` (9.5rem), `AD_MIN_GAP_PX` (150) | Clear space between an ad and any control (AdSense game-page guidance) |
+| Znacznik wieku zgody | `data-tag-for-under-age-of-consent` (TFUA), `data-tag-for-age-treatment` (TFAT) | Per-unit tags from `adRequestAttributes`: TFUA in `limited` mode (Google serves limited ads), TFAT `1` child / `2` teen |
 
 Missing a term? Add it here in the same commit that introduces it.
