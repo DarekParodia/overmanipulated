@@ -45,6 +45,12 @@
   padding: var(--space-5);
 }
 
+/* Minor links (MenuFooter): the card's column, close under it. */
+.footer {
+  width: min(100%, 30rem);
+  margin-top: calc(var(--space-4) - var(--space-7));
+}
+
 /* "albo dołącz" between two short outline bars. */
 .or {
   display: grid;
@@ -108,6 +114,11 @@
   .card {
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
+  }
+  /* Under both columns, in the scroll flow. */
+  .footer {
+    grid-column: 1 / -1;
+    margin-top: 0;
   }
   /* Across both columns above them (wide lines keep the message short), and below the corner
      buttons, which sit top-left here. */

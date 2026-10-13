@@ -122,14 +122,15 @@ just saw. None of the four stations is hint-only.
   text says so: „Serwis usunął metadane – nic z nich nie wynika.” A decisive stamp on an untrue
   story shows the field that contradicts the description. The puzzle takes that field from the
   story's technique when it implies one (`TECHNIQUE_FIELD` in `metadata.logic.ts`: an old photo
-  under a new caption → the date, an AI image → the device) and from the seed otherwise, so name
-  a field only when the technique fixes it („Dane pliku: zdjęcie zrobiono lata temu…”) and
-  otherwise say only that the data contradict the description; never quote an exact date or
-  device, the puzzle draws them from its own pools. A real file (any story that is not `false`)
-  only ever contradicts on time or place, never as „generated” or „photomontage”. A decisive
-  stamp may be the only proof of a true story only when the claim is about the time, place or
-  device of the shot. A `misleading` stamp gives a harmless reason for a wrong time or place on
-  a true story, or says the data match on an untrue one (metadata are easy to edit).
+  under a new caption → the date, an AI image → the device, a deepfake video → the editing
+  program) and from the seed otherwise, so name a field only when the technique fixes it („Dane
+  pliku: zdjęcie zrobiono lata temu…”) and otherwise say only that the data contradict the
+  description; never quote an exact date or device, the puzzle draws them from its own pools. A
+  real file (any story that is not `false`) only ever contradicts on time or place, never as
+  „generated” or „photomontage”. A decisive stamp may be the only proof of a true story only
+  when the claim is about the time, place or device of the shot. A `misleading` stamp gives a
+  harmless reason for a wrong time or place on a true story, or says the data match on an
+  untrue one (metadata are easy to edit).
 - **Mapa** (`geolocation`) is decisive only for photos and video with a place claim.
 - **Inne media** (`crossCheck`): `irrelevant` and `misleading` stamps read as „no independent
   coverage”, e.g. „Nikt jeszcze o tym nie pisze.” or „Trzy portale to powtarzają – same kopie

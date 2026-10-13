@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { parseLayout, type StationKind } from '@redakcja/shared';
-import { decidingStations } from './bag.ts';
+import { decidingStations, isPinned, pinnedCounts } from './bag.ts';
 import { checkLayout, validateContent } from './checks.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { getLevel, STORIES } from './index.ts';
@@ -8,6 +8,17 @@ import type { Story } from './schema.ts';
 
 // S7-57: level 5 moves to a 24×14 room with Stenogram and Metadane, every l5 story gets a stamp
 // for both, and four stories are retargeted to them.
+// S7-59: seven new stories, each pinned to one station, for the S7-60 bag pool.
+const PINNED: readonly [string, StationKind][] = [
+  ['l5-cytat-z-sesji', 'transcript'],
+  ['l5-wywiad-skrocony', 'transcript'],
+  ['l5-zdjecie-czytelnika', 'metadata'],
+  ['l5-film-z-montazu', 'metadata'],
+  ['l5-drzemka-na-sesji', 'metadata'],
+  ['l5-burmistrz-morsuje', 'archive'],
+  ['l5-falszywy-profil-urzedu', 'sourceRegistry'],
+];
+const NEW_IDS = new Set(PINNED.map(([id]) => id));
 const level = getLevel('l5-deepfake');
 const stations = level?.stations ?? [];
 const l5Stories = STORIES.filter((story) => story.id.startsWith('l5-'));
@@ -71,19 +82,24 @@ describe('l5 Głęboka podróbka room (S7-57)', () => {
     ]);
   });
 
-  it('validates the level and its stories without errors or warnings', () => {
+  it('validates the level and its stories without errors or other warnings', () => {
     const issues = validateContent(
       [{ file: 'levels/l5-deepfake.json', data: LEVEL_FILES['levels/l5-deepfake.json'] }],
       [{ file: 'stories/l5-deepfake.json', data: STORY_FILES['stories/l5-deepfake.json'] }],
     );
-    // Endless deck warnings depend on the whole campaign, not on this level.
-    expect(issues.filter((issue) => issue.file !== 'endless')).toEqual([]);
+    // Endless deck warnings depend on the whole campaign, not on this level. The S7-59 stories
+    // wait for the S7-60 bag pool, so they are not scheduled yet.
+    expect(
+      issues
+        .filter((issue) => issue.file !== 'endless')
+        .map((issue) => `${issue.severity}: ${issue.message}`),
+    ).toEqual(PINNED.map(([id]) => `warning: story "${id}" is not scheduled in any level`));
   });
 });
 
 describe('l5 Stenogram and Metadane stamps (S7-57)', () => {
-  it('covers all 17 l5 stories, each with one stamp per level station', () => {
-    expect(l5Stories).toHaveLength(17);
+  it('covers all 24 l5 stories, each with one stamp per level station', () => {
+    expect(l5Stories).toHaveLength(24);
     for (const s of l5Stories) {
       expect({ id: s.id, stations: s.stamps.map((stamp) => stamp.station).sort() }).toEqual({
         id: s.id,
@@ -124,7 +140,7 @@ describe('l5 Stenogram and Metadane stamps (S7-57)', () => {
       'l5-zdjecie-sprzed-lat',
     ]);
     for (const s of l5Stories) {
-      if (retargeted.has(s.id)) {
+      if (retargeted.has(s.id) || NEW_IDS.has(s.id)) {
         continue;
       }
       const deciding = decidingStations(s, stations);
@@ -161,5 +177,64 @@ describe('l5 Stenogram and Metadane stamps (S7-57)', () => {
         });
       }
     }
+  });
+});
+
+describe('l5 new stories (S7-59)', () => {
+  // The bag pool S7-60 deals from: every l5 story that no level event spawns.
+  const eventIds = new Set(
+    (level?.events ?? []).flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId])),
+  );
+  const pool = l5Stories.filter((s) => !eventIds.has(s.id));
+
+  for (const [id, station] of PINNED) {
+    it(`pins ${id} to ${station}`, () => {
+      const s = story(id);
+      expect(s.reviewed).toBe(false);
+      expect(s.requiredStamps).toBe(1);
+      expect(s.stamps.map((stamp) => stamp.station)).toEqual(stations);
+      expect(decidingStations(s, stations)).toEqual([station]);
+      expect(isPinned(s, stations)).toBe(true);
+      // Only the proof looks decisive, so no other station promises more than it gives.
+      expect(
+        s.stamps.filter((stamp) => stamp.relevance === 'decisive').map((x) => x.station),
+      ).toEqual([station]);
+    });
+  }
+
+  it('follows the cluster C table: types, truths and techniques', () => {
+    expect(
+      PINNED.map(([id]) => {
+        const s = story(id);
+        return [id, s.type, s.truth, s.priority, s.technique];
+      }),
+    ).toEqual([
+      ['l5-cytat-z-sesji', 'quote', 'false', 'important', 'zmyslony-cytat'],
+      ['l5-wywiad-skrocony', 'recording', 'misleading', 'important', 'tania-podrobka-wyciecie'],
+      ['l5-zdjecie-czytelnika', 'photo', 'true', 'important', 'none'],
+      ['l5-film-z-montazu', 'recording', 'false', 'urgent', 'deepfake-wideo'],
+      ['l5-drzemka-na-sesji', 'photo', 'misleading', 'normal', 'zdjecie-w-zlym-czasie'],
+      ['l5-burmistrz-morsuje', 'recording', 'true', 'normal', 'none'],
+      ['l5-falszywy-profil-urzedu', 'post', 'false', 'urgent', 'podszywanie-sie-pod-instytucje'],
+    ]);
+    // The deepfake's AI scanner stamp misleads: the Metadane are the proof.
+    expect(stampOf(story('l5-film-z-montazu'), 'aiScanner')?.relevance).toBe('misleading');
+  });
+
+  it('keeps about a third of the new stories true', () => {
+    expect(PINNED.filter(([id]) => story(id).truth === 'true')).toHaveLength(2);
+    expect(pool).toHaveLength(22);
+    expect(pool.filter((s) => s.truth === 'true')).toHaveLength(7);
+  });
+
+  it('gives the l5 pool at least 3 pinned stories on Stenogram, Metadane, archive and registry', () => {
+    expect(Object.fromEntries(pinnedCounts(pool, stations))).toEqual({
+      imageSearch: 2,
+      sourceRegistry: 3,
+      phone: 4,
+      archive: 3,
+      transcript: 3,
+      metadata: 3,
+    });
   });
 });
