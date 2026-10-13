@@ -150,6 +150,20 @@
   border-radius: var(--radius-md);
 }
 
+/* Both station help card variants side by side; stacked on phones. */
+.helpCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+  align-items: start;
+  gap: var(--space-5);
+}
+
+.helpCard {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
 @media (max-width: 600px) {
   .typeRow {
     grid-template-columns: 1fr;

@@ -17,6 +17,7 @@ import {
   type StoryType,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
+import { pick, problemFromStamp, shuffled } from './evidence.ts';
 
 export type CardKind = keyof typeof pl.minigames.sourceRegistry.fields;
 
@@ -56,36 +57,7 @@ const KIND_BY_STORY_TYPE: Record<StoryType, CardKind> = {
  * Without a stamp the card is random.
  */
 export function cardHasFlags(story: Story, stamp: Stamp | undefined, rng: Rng): boolean {
-  if (!stamp) {
-    return rng.next() >= SOURCE_REGISTRY_CLEAN_CHANCE;
-  }
-  const isTrue = story.truth === 'true';
-  switch (stamp.relevance) {
-    case 'decisive':
-      return !isTrue;
-    case 'misleading':
-      return isTrue;
-    case 'irrelevant':
-      return false;
-  }
-}
-
-function pick<T>(rng: Rng, items: readonly T[]): T {
-  const item = items[rng.int(items.length)];
-  if (item === undefined) {
-    throw new Error('empty pool');
-  }
-  return item;
-}
-
-/** Fisher–Yates on a copy. */
-function shuffled<T>(rng: Rng, items: readonly T[]): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = rng.int(i + 1);
-    [out[i], out[j]] = [out[j] as T, out[i] as T];
-  }
-  return out;
+  return problemFromStamp(story, stamp) ?? rng.next() >= SOURCE_REGISTRY_CLEAN_CHANCE;
 }
 
 /** Same seed, story and stamp → same card. */
