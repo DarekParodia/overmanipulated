@@ -23,7 +23,8 @@
     "test:e2e": "playwright test",
     "smoke": "bun tools/smoke/smoke.ts",
     "review:export": "bun tools/content/review-export.ts",
-    "review:apply": "bun tools/content/review-apply.ts"
+    "review:apply": "bun tools/content/review-apply.ts",
+    "contest:build": "bun tools/contest/build.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
