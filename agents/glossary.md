@@ -133,6 +133,9 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | No-flash mode | `noFlash` | Setting; no blinking/strobing |
 | Virtual joystick | `touchJoystick` | Touch movement control |
 | Input device | `inputDevice`: `keyboard` / `gamepad` / `touch` | Last used device drives prompts |
+| Key hints | `KeyHints` (`pl.minigames.<kind>.keys`) | Key-cap chips under a minigame for the device in use; on touch they name the gesture („Stuknij”, „Przesuń”) or the button |
+| Station help (Pomoc stanowiska) | `stationHelp` (`pl.stationHelp.kinds[kind]`) | Per station: `purpose`, `proves`, 2–3 `steps` per device, `realWorld`; one source for the help card, practice, lobby details and contest legends |
+| Polish plural | `pluralPl(n, one, few, many)` | Polish noun form for a count (`strings/plural.ts`) |
 
 ## Server config and ads (Stage 7)
 
