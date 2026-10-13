@@ -28,77 +28,77 @@
     {
       "atS": 4,
       "storyId": "l2-debata-w-ratuszu",
-      "deadlineS": 75
+      "deadlineS": 60
     },
     {
       "atS": 28,
       "storyId": "l2-cytat-o-liceach",
-      "deadlineS": 80
+      "deadlineS": 60
     },
     {
       "atS": 52,
       "storyId": "l2-podatki-wyrwane-z-kontekstu",
-      "deadlineS": 85
+      "deadlineS": 65
     },
     {
       "atS": 76,
       "storyId": "l2-sondaz-bez-pracowni",
-      "deadlineS": 80
+      "deadlineS": 60
     },
     {
       "atS": 100,
       "storyId": "l2-ankieta-na-stu-osobach",
-      "deadlineS": 80
+      "deadlineS": 60
     },
     {
       "atS": 124,
       "storyId": "l2-wiec-na-rynku",
-      "deadlineS": 80
+      "deadlineS": 60
     },
     {
       "atS": 148,
       "storyId": "l2-puste-krzesla",
-      "deadlineS": 80
+      "deadlineS": 60
     },
     {
       "atS": 172,
       "storyId": "l2-sciezki-rowerowe",
-      "deadlineS": 75
+      "deadlineS": 60
     },
     {
       "atS": 196,
       "storyId": "l2-uciety-wywiad",
-      "deadlineS": 80
+      "deadlineS": 60
     },
     {
       "atS": 220,
       "storyId": "l2-metro-do-brzegow",
-      "deadlineS": 75
+      "deadlineS": 60
     },
     {
       "atS": 244,
       "storyId": "l2-sondaz-pracowni",
-      "deadlineS": 60
+      "deadlineS": 45
     },
     {
       "atS": 268,
       "storyId": "l2-nagranie-z-parkingu",
-      "deadlineS": 60
+      "deadlineS": 45
     },
     {
       "atS": 292,
       "storyId": "l2-rezygnacja-kandydata",
-      "deadlineS": 60
+      "deadlineS": 45
     },
     {
       "atS": 316,
       "storyId": "l2-frekwencja-wyborcza",
-      "deadlineS": 60
+      "deadlineS": 45
     },
     {
       "atS": 340,
       "storyId": "l2-przerobione-banery",
-      "deadlineS": 70
+      "deadlineS": 55
     }
   ],
   "stars": {
