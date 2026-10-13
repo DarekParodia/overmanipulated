@@ -14,3 +14,22 @@ export const JOINS_PER_MINUTE_PER_IP = 120;
 export const ROOMS_PER_MINUTE_PER_IP = 20;
 /** Rooms alive at once; keeps memory bounded on a small VPS. */
 export const MAX_ROOMS = 300;
+
+// --- config.json (S7-68) -------------------------------------------------------------------
+
+/** Highest `rooms.maxRooms` config.json may set; a typo of an extra zero stays bounded. */
+export const MAX_ROOMS_CEILING = 5000;
+/** Quiet time after the last file event before config.json is re-read (atomic saves, partial writes). */
+export const CONFIG_RELOAD_DEBOUNCE_MS = 250;
+/** Most host names in `ads.domains`. */
+export const AD_DOMAINS_MAX = 16;
+/** Most lines in `ads.adsTxt`, and the longest line. */
+export const ADS_TXT_MAX_LINES = 100;
+export const ADS_TXT_LINE_MAX_CHARS = 300;
+/** Most sources one CSP directive may gain from `csp.extra` or `csp.adsExtra`. */
+export const CSP_EXTRA_MAX_SOURCES = 20;
+/** Longest operator name and longest contact or hosting line (privacy page variables). */
+export const OPERATOR_NAME_MAX_CHARS = 120;
+export const OPERATOR_LINE_MAX_CHARS = 200;
+/** Longest `ads.signOff.by` (who signed off on ads: supervisor or legal reviewer). */
+export const AD_SIGN_OFF_BY_MAX_CHARS = 120;

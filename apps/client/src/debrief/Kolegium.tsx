@@ -1,4 +1,5 @@
-// The Kolegium: the level's folders as debrief cards (one per story in endless). Desktop shows a
+// The Kolegium: the level's folders as debrief cards (one per story in endless, the folders still
+// in play at the end last). Desktop shows a
 // scrollable list (the current card has a blue outline); phones show one card at a time, paged
 // from the footer or by swiping, after an optional lead page (the results summary, S7-06).
 // Votes go to the server; this player's own vote shows at once (optimistic).
@@ -8,13 +9,8 @@ import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import styles from './Debrief.module.css';
 import { DebriefCard } from './DebriefCard.tsx';
-import {
-  blunderLeader,
-  type DebriefCard as Card,
-  effectiveVotes,
-  voteConfirmed,
-  votersByStory,
-} from './debrief-model.ts';
+import { blunderLeader, effectiveVotes, voteConfirmed, votersByStory } from './debrief-model.ts';
+import type { KolegiumCard as Card } from './results-model.ts';
 import { useSwipe } from './use-swipe.ts';
 
 const NO_VOTES: never[] = [];

@@ -1,7 +1,8 @@
 // Styleguide test bench: plays any registered minigame with a sample story and a chosen seed,
-// outside a match, so minigames can be built and screenshotted without the full game loop.
+// outside a match, so minigames can be built and screenshotted without the full game loop. It
+// plays on Normal (the difficulty defaults: full mistake limit, the answer shown on a failure).
 import { STORIES } from '@redakcja/content';
-import { MINIGAME_TIME_LIMIT_MS, type StationKind } from '@redakcja/shared';
+import { DEFAULT_DIFFICULTY, type StationKind } from '@redakcja/shared';
 import { useEffect, useState } from 'react';
 import { attachInput } from '../../input/input-manager.ts';
 import { useInputCapture } from '../../input/ui-nav.ts';
@@ -9,6 +10,7 @@ import { useApp } from '../../store/app.ts';
 import { pl } from '../../strings/pl.ts';
 import { Button } from '../../ui/Button.tsx';
 import { minigameFor, minigames } from './index.ts';
+import { roundRules } from './rules.ts';
 
 export function MinigameBench() {
   const kinds = Object.keys(minigames) as StationKind[];
@@ -22,6 +24,7 @@ export function MinigameBench() {
   const device = useApp((s) => s.inputDevice);
   const story = STORIES[storyIndex % Math.max(STORIES.length, 1)];
   const Game = minigameFor(kind);
+  const rules = roundRules(kind, DEFAULT_DIFFICULTY);
   useInputCapture(result === null);
   // Outside a match nothing else listens to the keyboard; the bench needs it for nav intents.
   useEffect(() => attachInput(), []);
@@ -63,11 +66,15 @@ export function MinigameBench() {
         <Game
           key={`${kind}-${story.id}-${round}-${reporter}`}
           seed={round}
+          folderId="bench"
+          difficulty={rules.difficulty}
+          timeLimitMs={rules.timeLimitMs}
+          revealOnFail={rules.revealOnFail}
           story={story}
           stamp={story.stamps.find((s) => s.station === kind)}
           device={device}
           skipsQueue={reporter}
-          timeUsed={Math.min(1, (now - startedAt) / MINIGAME_TIME_LIMIT_MS)}
+          timeUsed={Math.min(1, (now - startedAt) / rules.timeLimitMs)}
           onDone={(success) => setResult((r) => r ?? success)}
         />
       ) : (

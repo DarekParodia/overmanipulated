@@ -1,8 +1,9 @@
 // Archive minigame (S2-05): a drawer of dated cards. The player scrolls the drawer with
 // momentum and pulls the card under the yellow frame; only the earliest card with the searched
 // topic is right (the "first appearance" check an archivist does with dated editions or web
-// archive snapshots). Two wrong cards close the drawer. Pure rules live in archive.logic.ts.
-import { ARCHIVE_MAX_MISTAKES, MINIGAME_TIME_LIMIT_MS } from '@redakcja/shared';
+// archive snapshots). Two wrong cards close the drawer (the room's difficulty moves the limit,
+// S7-24); the drawer then glides to the first mention and marks it, unless the difficulty hides
+// the answer (Ekspert). Pure rules live in archive.logic.ts.
 import {
   type PointerEvent as ReactPointerEvent,
   useEffect,
@@ -14,6 +15,7 @@ import { emitCue } from '../../fx/feedback.ts';
 import { PAD, radialDeadzone } from '../../input/gamepad.ts';
 import { firstGamepad } from '../../input/gamepad-access.ts';
 import { type NavIntent, useNavIntent } from '../../input/ui-nav.ts';
+import { useSettings } from '../../store/settings.ts';
 import { pl } from '../../strings/pl.ts';
 import { formatDate, typeset } from '../../strings/typography.ts';
 import { Button } from '../../ui/Button.tsx';
@@ -23,9 +25,11 @@ import {
   type ArchiveCard,
   centeredIndex,
   createArchivePuzzle,
-  evaluateStop,
+  initialPulls,
   isCoasting,
   nudge,
+  type PullState,
+  pullCard,
   releaseVelocity,
   SCROLL,
   type ScrollState,
@@ -40,6 +44,8 @@ const t = pl.minigames.archive;
 /** How long the "found" / "drawer closed" moment shows before reporting the result. */
 const FOUND_HOLD_MS = 1100;
 const FAILED_HOLD_MS = 900;
+/** The same moment when the drawer also glides to the right card: long enough to read it. */
+const FAILED_ANSWER_HOLD_MS = 1600;
 /** The result is reported at least this long before the time limit runs out. */
 const REPORT_MARGIN_MS = 250;
 /** A pointer that moves less than this and lifts quickly is a tap, not a drag. */
@@ -76,13 +82,23 @@ function cardIndexAt(target: EventTarget | null): number | null {
   return Number.isInteger(index) ? index : null;
 }
 
-export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps) {
+export function Archive({
+  seed,
+  stamp,
+  device,
+  difficulty,
+  timeLimitMs,
+  revealOnFail,
+  timeUsed,
+  onDone,
+}: MinigameProps) {
   const puzzle = useMemo(() => createArchivePuzzle(seed, t.topics.length), [seed]);
   const count = puzzle.cards.length;
 
   const [phase, setPhase] = useState<Phase>('browsing');
   const [centered, setCentered] = useState(puzzle.startIndex);
-  const [rejected, setRejected] = useState<ReadonlySet<number>>(() => new Set());
+  const [pulls, setPulls] = useState<PullState>(() => initialPulls(difficulty));
+  const rejected = pulls.rejected;
 
   const scroll = useRef<ScrollState>({ pos: puzzle.startIndex, vel: 0, target: null });
   const drag = useRef<Drag | null>(null);
@@ -92,7 +108,7 @@ export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps
   const drawerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const phaseRef = useRef<Phase>('browsing');
-  const rejectedRef = useRef(rejected);
+  const pullsRef = useRef(pulls);
   const pending = useRef<{ timer: number; success: boolean } | null>(null);
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
@@ -113,7 +129,7 @@ export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps
   const finish = (success: boolean, hold: number) => {
     phaseRef.current = success ? 'found' : 'failed';
     setPhase(phaseRef.current);
-    const left = (1 - timeUsedRef.current) * MINIGAME_TIME_LIMIT_MS - REPORT_MARGIN_MS;
+    const left = (1 - timeUsedRef.current) * timeLimitMs - REPORT_MARGIN_MS;
     const delay = Math.max(0, Math.min(hold, left));
     pending.current = { timer: window.setTimeout(report, delay), success };
   };
@@ -133,7 +149,7 @@ export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps
       return;
     }
     const index = s.target ?? centeredIndex(s, count);
-    const outcome = evaluateStop(puzzle, index, rejectedRef.current);
+    const { state, outcome } = pullCard(puzzle, pullsRef.current, index);
     if (outcome === 'repeat') {
       emitCue('ui.back');
       return;
@@ -144,12 +160,18 @@ export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps
       finish(true, FOUND_HOLD_MS);
       return;
     }
-    const next = new Set(rejectedRef.current).add(index);
-    rejectedRef.current = next;
-    setRejected(next);
+    pullsRef.current = state;
+    setPulls(state);
     emitCue('archive.miss');
-    if (next.size >= ARCHIVE_MAX_MISTAKES) {
-      finish(false, FAILED_HOLD_MS);
+    if (outcome === 'closed') {
+      if (revealOnFail) {
+        // Reduced motion shows the first mention at once instead of gliding to it.
+        const target = puzzle.targetIndex;
+        scroll.current = useSettings.getState().reducedMotion
+          ? { pos: target, vel: 0, target }
+          : seek(scroll.current, target, count);
+      }
+      finish(false, revealOnFail ? FAILED_ANSWER_HOLD_MS : FAILED_HOLD_MS);
     }
   };
 
@@ -248,7 +270,10 @@ export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps
       if (index !== lastIndex) {
         lastIndex = index;
         setCentered(index);
-        emitCue('archive.tick');
+        // The glide to the revealed card after a failure passes cards silently.
+        if (phaseRef.current !== 'failed') {
+          emitCue('archive.tick');
+        }
       }
       frame = requestAnimationFrame(tick);
     };
@@ -336,7 +361,7 @@ export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps
 
   return (
     <div className={styles.root} data-testid="archive-minigame">
-      <TaskLine aside={<Mistakes used={rejected.size} max={ARCHIVE_MAX_MISTAKES} />}>
+      <TaskLine aside={<Mistakes used={rejected.size} max={pulls.maxMistakes} />}>
         {typeset(t.task)}{' '}
         <span className={styles.topic} data-testid="archive-topic">
           „{t.topics[puzzle.topic]}”
@@ -356,14 +381,16 @@ export function Archive({ seed, stamp, device, timeUsed, onDone }: MinigameProps
         <div ref={trackRef} className={styles.track}>
           {puzzle.cards.map((card, index) => {
             const isFound = phase === 'found' && index === puzzle.targetIndex;
+            const isRevealed = revealOnFail && phase === 'failed' && index === puzzle.targetIndex;
             const isRejected = rejected.has(index);
             return (
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: the drawer never reorders
                 key={index}
                 // A card is rejected once; the shake plays when the class first appears.
-                className={`${styles.card} ${isRejected ? styles.wobble : ''} ${isFound ? styles.found : ''}`}
+                className={`${styles.card} ${isRejected ? styles.wobble : ''} ${isFound ? styles.found : ''} ${isRevealed ? styles.revealed : ''}`}
                 data-index={index}
+                data-revealed={isRevealed || undefined}
                 data-centered={index === centered}
                 data-rejected={isRejected}
                 data-testid={`archive-card-${index}`}

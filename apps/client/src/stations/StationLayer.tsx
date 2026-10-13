@@ -2,7 +2,7 @@
 // with its work prompt and lockout note (S2-03), and the editorial desk sheet (S2-07). Which
 // overlay is open follows the server: the station or desk the local player operates.
 import { getStory } from '@redakcja/content';
-import { type Folder, MINIGAME_FAIL_LOCKOUT_MS, type Verdict } from '@redakcja/shared';
+import { type Difficulty, type Folder, failLockoutMs, type Verdict } from '@redakcja/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { installGameHook } from '../debug/game-hook.ts';
 import { stationIsDown } from '../events/event-model.ts';
@@ -43,9 +43,18 @@ function StationHost({ playerId }: { playerId: string | null }) {
   // The round the player already finished or left, hidden until the server moves on.
   const [settledRound, setSettledRound] = useState<string | null>(null);
   const [lockoutUntil, setLockoutUntil] = useState(0);
-  // The last non-zero lockout the server announced (this room's difficulty); a local failure
-  // shows it until the server's `minigameFailed` replaces the estimate with the real length.
-  const lastLockoutMs = useRef(MINIGAME_FAIL_LOCKOUT_MS);
+  const difficulty = useApp((s) => s.difficulty);
+  // A local failure shows an estimate until the server's `minigameFailed` replaces it with the
+  // real length: the room's difficulty lockout (`failLockoutMs`, S7-24), then the last non-zero
+  // lockout the server announced on that difficulty.
+  const announced = useRef<{ difficulty: Difficulty; ms: number } | null>(null);
+  const estimateLockoutMs = useCallback(
+    () =>
+      announced.current?.difficulty === difficulty
+        ? announced.current.ms
+        : failLockoutMs(difficulty),
+    [difficulty],
+  );
   const round = station ? `${station.id}:${station.minigameSeed}` : null;
 
   const startLockout = useCallback((ms: number) => {
@@ -58,7 +67,7 @@ function StationHost({ playerId }: { playerId: string | null }) {
         if (event.kind === 'minigameFailed' && event.playerId === playerId) {
           // A lockout-free failure (0) hides the note but is no estimate for the next one.
           if (event.lockoutMs > 0) {
-            lastLockoutMs.current = event.lockoutMs;
+            announced.current = { difficulty: useApp.getState().difficulty, ms: event.lockoutMs };
           }
           setLockoutUntil(event.lockoutMs > 0 ? performance.now() + event.lockoutMs : 0);
         }
@@ -94,10 +103,10 @@ function StationHost({ playerId }: { playerId: string | null }) {
     (success: boolean) => {
       setSettledRound(round);
       if (!success) {
-        startLockout(lastLockoutMs.current);
+        startLockout(estimateLockoutMs());
       }
     },
-    [round, startLockout],
+    [round, startLockout, estimateLockoutMs],
   );
   const onClose = useCallback(() => setSettledRound(round), [round]);
 

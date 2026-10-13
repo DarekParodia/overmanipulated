@@ -13,6 +13,7 @@ import type {
   StoryType,
   Verdict,
 } from '@redakcja/shared';
+import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import { pluralPl } from './plural.ts';
@@ -403,6 +404,41 @@ export const pl = {
       expired: 'Przepadła',
       unfinished: 'Nie zdążyliście',
     } satisfies Record<FolderOutcome, string>,
+    /**
+     * The Kolegium's one-line reason under a card's title (S7-07); the debrief may be longer
+     * than 8 words. `base` is the points without bonuses, already signed by `formatDelta`.
+     */
+    why: {
+      correctNormal: (base: string) => `Trafny werdykt: ${base} pkt`,
+      correctImportant: (base: string) => `Ważna teczka, trafny werdykt: ${base} pkt`,
+      correctWithContext: (base: string) => `Kontekst w punkt: ${base} pkt`,
+      correctionFiled: (base: string) =>
+        `Sprostowanie opublikowane: ${base} pkt i odzyskana wiarygodność`,
+      weakProof: () => 'Werdykt dobry, ale wskazany dowód nic nie rozstrzygał: połowa punktów',
+      incompleteProof: () => 'Werdykt dobry, ale za mało dowodów: połowa punktów',
+      publishedFake: () => 'Fałszywka trafiła do druku: najwyższa kara',
+      rejectedTrue: () => 'Odrzuciliście prawdziwą wiadomość',
+      contextOnTrue: () => 'Prawdziwa wiadomość nie potrzebowała kontekstu',
+      publishedWithoutContext: () => 'Ta wiadomość wymagała kontekstu, a poszła bez niego',
+      rejectedContextStory: () => 'Wystarczyło opublikować z kontekstem',
+      expired: () => 'Termin minął: kara za spóźnienie',
+      expiredUnpenalized: () => 'Termin minął bez kary: niepilna, niepotwierdzalna teczka',
+      unfinished: () => 'Teczka została na koniec wydania: 0 pkt',
+    } satisfies Record<FolderReason, (base: string) => string>,
+    /** `incompleteProof` with the counts: fewer proofs cited than the story required. */
+    whyTooFew: (have: number, need: number) =>
+      `Za mało dowodów (${have} z ${need}): połowa punktów`,
+    /** `incompleteProof` citing only hint-only stamps: „Skaner AI to tylko wskazówka…”. */
+    whyHintOnly: (stations: readonly string[]) =>
+      `${stations.join(' i ')} to tylko wskazówka: połowa punktów`,
+    /** A story grouped in endless: its folders per outcome, e.g. „Dobrze ×2”. */
+    whyGroup: (group: string, n: number) => `${group} ×${n}`,
+    /** Bonus suffixes after the reason, joined with „ · ”. */
+    bonus: {
+      speed: (n: string) => `tempo ${n}`,
+      multiStamp: (n: string) => `dowody ${n}`,
+      bossCall: (n: string) => `szef ${n}`,
+    } satisfies Record<keyof FolderBonuses, (n: string) => string>,
   },
   /** Station overlay and work progress (S2-03). */
   station: {
@@ -1211,9 +1247,17 @@ export const pl = {
       tool: 'Co to wykryło',
       realWorld: 'Gdzie to się zdarza',
     },
-    /** The story's deciding proof; until S7-07 only the proofs nobody checked are listed. */
+    /** The story's deciding proof on a folder that did not end well, with where each one was. */
     proofTitle: 'Dowód, który rozstrzygał',
-    proofMissing: 'nie sprawdzono',
+    proofStatus: {
+      cited: 'wskazany',
+      collected: 'w teczce',
+      missing: 'nie sprawdzono',
+    } satisfies Record<ProofStatus, string>,
+    /** Endless: a story that came back, grouped on one card. */
+    repeats: (n: number) => `×${n}`,
+    repeatsLabel: (n: number) =>
+      `${n} ${pluralPl(n, 'teczka', 'teczki', 'teczek')} z tą wiadomością`,
     vote: 'Wpadka dnia?',
     voted: 'Twój głos',
     leader: 'Wpadka dnia!',

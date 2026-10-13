@@ -1,7 +1,9 @@
 // AI scanner minigame („Skaner AI”, S4-02). A gauge shows how likely the material is machine
 // made, with a shaded error margin ("78 % ± 15 %"). The player reads it and answers „Raczej
 // prawdziwe”, „Nie wiem” or „Raczej AI”: a margin that still covers 50 % means „Nie wiem” is the
-// right answer. Reading and rules are pure, in aiScanner.logic.ts.
+// right answer. Reading and rules are pure, in aiScanner.logic.ts. A wrong answer fails at once
+// on every difficulty (`mistakeLimit(1, d)` is 1); the failure banner names the right reading
+// unless the difficulty hides the answer (Ekspert).
 import { AI_SCANNER_THRESHOLD } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
 import type { CueId } from '../../fx/cues.ts';
@@ -45,7 +47,7 @@ const EFFECT_CUES: Record<ScannerEffect, CueId> = {
   failure: 'aiScanner.wrong',
 };
 
-export function AiScanner({ seed, story, device, onDone }: MinigameProps) {
+export function AiScanner({ seed, story, device, revealOnFail, onDone }: MinigameProps) {
   const [state, setState] = useState(() => initialState(generateReading(seed, story)));
   const [scanned, setScanned] = useState(false);
   const stateRef = useRef(state);
@@ -167,13 +169,15 @@ export function AiScanner({ seed, story, device, onDone }: MinigameProps) {
             title={outcome === 'success' ? t.success : t.failure}
             testId="scanner-verdict"
           >
-            <p>
-              {typeset(
-                outcome === 'success'
-                  ? t.done[kind]
-                  : `${t.failed[kind]} · ${t.answers[correctAnswer(reading)]}`,
-              )}
-            </p>
+            {(outcome === 'success' || revealOnFail) && (
+              <p>
+                {typeset(
+                  outcome === 'success'
+                    ? t.done[kind]
+                    : `${t.failed[kind]} · ${t.answers[correctAnswer(reading)]}`,
+                )}
+              </p>
+            )}
           </OutcomeBanner>
         </div>
       )}

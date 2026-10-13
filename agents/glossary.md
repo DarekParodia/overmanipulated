@@ -62,7 +62,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Rozgrywka (przygotowana) | prepared run (`prepareRun`, `prepareLevelRun`, `PreparedRun`) | The level a room plays for one run seed and difficulty: dealt schedule, deadlines, stars, stories, `maxScore` |
 | Ziarno rozgrywki | run seed (`RunOptions.seed`) | Picks the dealt stations and stories; drawn by the server per briefing, separate from the sim seed |
 | Podsumowanie rozgrywki | run summary (`runSummary`, `RunSummary`) | `{folders, maxScore, stars}` of a prepared run; stars null in endless; `roomState.run` from the briefing through the results, null in the lobby |
-| Stanowisko z worka (teczki) | bag station (`folder.bagStation`, schedule entry `station`) | The station the bag slot designated for a dealt folder, copied from its schedule entry at spawn; absent on event folders and authored schedules |
+| Stanowisko z worka (teczki) | bag station (`folder.bagStation`, schedule entry `station`) | The station the bag slot designated for a dealt folder, copied from its schedule entry at spawn; absent on event folders and authored schedules. Guidance names it first among the stations it would suggest anyway (S7-24) |
 | Rozdanie z worka | `generateBagLevel` (`bagDeadlineS`) | One run of a bag level: slot times, station sequence, matched stories, scaled and clamped deadlines, stars from the run maximum |
 | Skalowanie terminów | `scaledDeadlineS`, `applyDifficulty` | Deadline × `deadlineFactor`, rounded to whole seconds (Normal unchanged); `applyDifficulty` scales a fixed schedule's deadlines only |
 | Historie poziomu | `levelStoryIds` | The pool of a bag level, otherwise the scheduled ids; never event stories |
@@ -70,7 +70,9 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
 | Za co punkty (podsumowanie punktów) | `resultTotals` (`TotalsRow`) | Results-screen totals: outcome rows with base points and credibility (`correct`, `correction`, `weakProof`, `wrong`, `expired`, `unfinished`), bonus rows (`speed`, `proofs` = multi-stamp, `bossCall`), and an `other` row („Inne”) for results the server capped; Σ rows = Σ `scoreDelta` |
 | Do następnej gwiazdki | `starProgress` (`StarProgress`) | Next star and missing points of a won level, plus thresholds as shares of `maxScore` |
-| Karta Kolegium | `kolegiumCards` (`KolegiumCard`) | One debrief card per folder (campaign, versus); in endless one per story with `count` and summed points |
+| Karta Kolegium | `kolegiumCards` (`KolegiumCard`) | One debrief card per folder (campaign, versus); in endless one per story with `count` („×N”), `tally` per outcome and summed points. Folders still in play at the end (`unfinished`) come last, with the hourglass |
+| Uzasadnienie wyniku (karta Kolegium) | `cardWhy` (`pl.outcome.why`) | The Kolegium card's one-line reason: why the folder ended that way, its base points and the bonus suffixes („tempo”, „dowody”, „szef”); a grouped endless card lists its folders per outcome |
+| Dowód, który rozstrzygał | `proof` (`ProofRow`, `ProofStatus`) | Kolegium section on a folder that did not end `correct`: the story's justifying, non-hint stamps with where each was — „wskazany” (`cited`), „w teczce” (`collected`), „nie sprawdzono” (`missing`) |
 | Kolejność odsłaniania | `revealPlan` (`RevealStep`) | Results reveal timing: stars → progress line → totals rows → Kolegium marks |
 | Podsumowanie (wyniki) | `ResultsSummary` (`summaryPage`) | Results summary: stars with what each takes (`starRule`), the progress line (`toNext` / `allStars` / `starsNeedWin`), „Skąd te progi?” and the „Za co punkty” table; the left column on desktop, the Kolegium's first page on phones |
 | Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced. Shown as the dashed ghost card in a free queue slot (`queueView` ghost `'next'`, `pl.hud.next`) and as the conveyor sign's blue ring with „za N s” (`conveyorIndicator` kind `'incoming'`) |
@@ -179,6 +181,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Skalowanie kar | `scalePenalty` (`penaltyFactor`) | Wrong-verdict, expiry and correction penalties × the factor, halves rounded away from zero; rewards are never scaled |
 | Utrata / odzysk przy sprostowaniu | `correctionLoss` / `correctionRecover` | Credibility a correction costs (scaled) and the share of it a filed correction gives back |
 | Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
+| Zasady rundy minigry | round rules (`roundRules`, `RoundRules`) | What the room's difficulty gives one minigame round on the client: `difficulty` (for the mistake limit), `timeLimitMs` and `revealOnFail`; passed in `MinigameProps` |
+| Pokazanie odpowiedzi po porażce | answer reveal (`revealOnFail`, `revealsOnFail`) | A failed round shows the right answer (cell, result, card or reading); off on Ekspert and at stations that keep their card (`MINIGAME_STABLE_SEED_STATIONS`) |
+| Podpowiedzi (efektywne) | effective hints (`effectiveHints`, `useEffectiveHints`) | The „co dalej” hints the game shows: the player setting AND `DIFFICULTY[d].hints`, so none on Ekspert; drives the hint bubble, scene markers and the evidence badge; the tutorial is unaffected |
 
 ## Screens (`ScreenId`)
 
@@ -225,5 +230,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Reklamy niespersonalizowane | ads mode `nonPersonalized` | May use cookies, so they need consent; adults only (`ageTreatment: 'unspecified'`). Personalised ads are never offered |
 | Domena / host | `normalizeHost`, `hostAllowed`, `hostnameSchema` | Bare lower-case host without port; ad domains match exactly, never a parent or wildcard |
 | Znacznik nonce CSP | `CSP_NONCE_PLACEHOLDER` | Placeholder Vite writes into the built `index.html`; the HTML shell swaps in a per-request nonce |
+| Konfiguracja serwera | `serverConfig` (`serverConfigSchema`, `ServerConfig`, `config/config.json`) | Operator's product settings in `apps/server/src/config.ts`: `site`, `features`, `motd`, `rooms`, `ads`, `csp`. Strict (unknown keys refused); an invalid file stops the start and never replaces a running config |
+| Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |
+| Zgoda na reklamy | `ads.signOff` (`{by, date}`) | Supervisor or legal sign-off recorded in config.json; `ads.enabled: true` is refused without it, also when forced by `ADS_ENABLED` |
+| Ustawienia pokoi | `RoomSettings` (`RegistryOptions.settings()`, `roomSettings`) | `maxRooms`, `defaultDifficulty` and the feature flags, read by the registry at every room creation, so a reload applies to the next room |
 
 Missing a term? Add it here in the same commit that introduces it.

@@ -3,8 +3,8 @@
 // puts the card back. Rules and puzzle
 // generation are pure, in sourceRegistry.logic.ts.
 // The card stays the same for a folder after a failure or a cancel (S7-13), so the circles are
-// kept in the retry memory until the card is filed and a failure reveals nothing (S7-14).
-import { SOURCE_REGISTRY_MAX_MISTAKES } from '@redakcja/shared';
+// kept in the retry memory until the card is filed and a failure reveals nothing (S7-14), on
+// every difficulty (`revealsOnFail` is false for a station that keeps its card).
 import { useEffect, useRef, useState } from 'react';
 import type { CueId } from '../../fx/cues.ts';
 import { emitCue } from '../../fx/feedback.ts';
@@ -48,11 +48,11 @@ const NUDGE: Keyframe[] = [
   { transform: 'translateX(0)' },
 ];
 
-export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameProps) {
+export function SourceRegistry({ seed, story, stamp, device, difficulty, onDone }: MinigameProps) {
   // The puzzle is fixed for the lifetime of this round (the overlay remounts per round), so
   // rendering and rules both read `state.card`. A card that comes back keeps its circles.
   const [state, setState] = useState(() =>
-    initialState(generateCard(seed, story, stamp), recallCard(seed)),
+    initialState(generateCard(seed, story, stamp), recallCard(seed), difficulty),
   );
   const { card } = state;
   const stateRef = useRef(state);
@@ -109,13 +109,7 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
   return (
     <div className={styles.root} data-testid="source-registry">
       <TaskLine
-        aside={
-          <Mistakes
-            used={state.mistakes}
-            max={SOURCE_REGISTRY_MAX_MISTAKES}
-            testId="source-mistakes"
-          />
-        }
+        aside={<Mistakes used={state.mistakes} max={state.maxMistakes} testId="source-mistakes" />}
       >
         {typeset(state.retry ? t.retryTask : t.task)}
       </TaskLine>

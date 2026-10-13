@@ -5,9 +5,12 @@
 // (recoloured, reshaped, removed, or a different scene altogether). Same seed → same puzzle.
 import {
   createRng,
+  DEFAULT_DIFFICULTY,
+  type Difficulty,
   IMAGE_SEARCH_FRAGMENTS,
   IMAGE_SEARCH_MAX_MISTAKES,
   IMAGE_SEARCH_RESULTS,
+  mistakeLimit,
   type Rng,
 } from '@redakcja/shared';
 
@@ -382,6 +385,8 @@ export type PlayState = {
   /** Fragment shown in the loupe (position in `puzzle.fragments`). */
   fragment: number;
   mistakes: number;
+  /** Wrong picks that fail the round on this difficulty (`mistakeLimit`, S7-24). */
+  maxMistakes: number;
   /** Results already picked wrongly, in pick order. */
   ruledOut: readonly number[];
   solved: boolean;
@@ -390,8 +395,16 @@ export type PlayState = {
 
 export type PickOutcome = 'match' | 'miss' | 'fail' | 'ignored';
 
-export function initialPlay(): PlayState {
-  return { cursor: 0, fragment: 0, mistakes: 0, ruledOut: [], solved: false, failed: false };
+export function initialPlay(difficulty: Difficulty = DEFAULT_DIFFICULTY): PlayState {
+  return {
+    cursor: 0,
+    fragment: 0,
+    mistakes: 0,
+    maxMistakes: mistakeLimit(IMAGE_SEARCH_MAX_MISTAKES, difficulty),
+    ruledOut: [],
+    solved: false,
+    failed: false,
+  };
 }
 
 export function isOver(state: PlayState): boolean {
@@ -415,7 +428,7 @@ export function pick(
     return { state: { ...state, cursor: index, solved: true }, outcome: 'match' };
   }
   const mistakes = state.mistakes + 1;
-  const failed = mistakes >= IMAGE_SEARCH_MAX_MISTAKES;
+  const failed = mistakes >= state.maxMistakes;
   return {
     state: { ...state, cursor: index, mistakes, ruledOut: [...state.ruledOut, index], failed },
     outcome: failed ? 'fail' : 'miss',
