@@ -62,6 +62,7 @@ build are gone, so such a tab shows the load error; reloading fixes it.
 | --- | --- | --- | --- |
 | `DOMAIN` | `.env` → web | `localhost` | Public host name for TLS |
 | `LOG_LEVEL` | `.env` → server | `info` | `silent` disables server logs |
+| `TRUSTED_PROXIES` | `.env` → web | `private_ranges` | Addresses of the external TLS proxy whose `X-Forwarded-For` Caddy believes (IPs or CIDR ranges, space-separated). Set it to the proxy's `IP/32` when the proxy runs on another machine; see "Client address" |
 | `PORT` | server | `3000` | Internal HTTP/WS port (set by compose) |
 | `DATABASE_PATH` | server | `/data/redakcja.sqlite` | SQLite file (set by compose) |
 | `BRIEFING_MS` | server | `18000` | Briefing length before a level auto-starts (tests shorten it) |
@@ -84,6 +85,7 @@ Retention (90 days) and the limits below are constants in the code, not environm
 | CSP | `default-src 'self'`; `script-src 'self'`; `style-src 'self' 'unsafe-inline'` (React inline style attributes); `img-src 'self' data: blob:`; `font-src 'self'`; `media-src 'self' blob: data:`; `connect-src 'self' wss://<host>` (the explicit `wss://` entry is for older Safari that does not match `'self'` against WebSocket URLs); `object-src 'none'`. Verified with a real Chromium session (menu, lobby, briefing, playing level, audio, WebGL) against this exact policy: no violations | Browser console |
 | Request size | `/ws`, `/api/*` request bodies capped at 8 KB | |
 | Upstream health | Caddy probes `/health` every 5 s and stops routing to an unhealthy server (503) until it recovers | |
+| Client address | `trusted_proxies` (from `TRUSTED_PROXIES`) with `trusted_proxies_strict`; `header_up X-Real-IP {client_ip}` on every proxied request | See "Client address" |
 | Access logs | Off on purpose: no IP addresses are written. Errors still go to the container log | See "Debugging with access logs" |
 
 If you add an external origin (analytics, CDN, fonts) the CSP must be extended in the
@@ -105,8 +107,29 @@ numbers are generous: they stop scripts, not students.
 | Players per room | 4 | `roomFull` |
 | Every message | validated with Zod | `invalidMessage` |
 
-The client address is the first `X-Forwarded-For` entry, which Caddy sets itself (it replaces
-any value sent by the browser).
+### Client address
+
+The per-address limits need the player's own address, not the proxy's. The external TLS proxy
+reports it in `X-Forwarded-For`. Caddy believes that header only on connections from an address
+in `TRUSTED_PROXIES` (global `servers { trusted_proxies … }` in the `Caddyfile`), reads it right
+to left (`trusted_proxies_strict`: entries a browser forged in front of the proxy's own are
+skipped) and sends the result to the game server as `X-Real-IP`
+(`header_up X-Real-IP {client_ip}`), overwriting any value the browser sent. The game server
+reads only `X-Real-IP`, falling back to the socket address in dev and tests
+(`apps/server/src/client-address.ts`); it never reads `X-Forwarded-For`.
+
+- **Default `private_ranges`:** the TLS proxy runs on the same host and reaches the published
+  port 8080 from a private address (the docker bridge).
+- **Proxy on another machine:** set `TRUSTED_PROXIES=<proxy IP>/32` in `.env`, then
+  `docker compose up -d`.
+- **Wrong setting:** Caddy ignores the header and every player gets the proxy's address. The
+  limits still work but act site-wide, so a busy lesson can hit "too many requests". Never trust
+  a wider range than the proxy: anyone inside it could pick their own address.
+- **Firewall port 8080:** only the proxy may reach it. A connection that Docker relays itself
+  (`docker-proxy`, rootless Docker) arrives from a private bridge address, which the default
+  trusts, so a direct visitor could pick their own address.
+- **Check:** switch access logs on for a minute (see "Debugging with access logs"); the
+  `client_ip` field must show browser addresses, not the proxy's.
 
 ## Data, backups and retention
 

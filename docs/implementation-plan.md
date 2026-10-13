@@ -484,7 +484,7 @@ User decisions from the feedback Q&A (2026-10-13), binding for this stage:
 ### M1 — Quick wins
 
 - [x] **S7-01 — Stage 7 plan scaffold, protocol ledger and shared naming decisions.** *Depends on:* —. [Details](design/stage7/tasks.md#s7-01)
-- [ ] **S7-02 — Real client IP behind the external TLS proxy.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-02)
+- [x] **S7-02 — Real client IP behind the external TLS proxy.** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-02)
 - [ ] **S7-03 — Folder result and verdict contract v3 (reasons, bonuses, unfinished, loss reason, cite array, hint-only rule, Zabrakło data fix).** *Depends on:* S7-01. [Details](design/stage7/tasks.md#s7-03)
 - [ ] **S7-04 — Desk result screen and one outcome vocabulary.** *Depends on:* S7-03. [Details](design/stage7/tasks.md#s7-04)
 - [ ] **S7-05 — Results model: totals, star progress, loss reason, per-folder cards, reveal plan.** *Depends on:* S7-03. [Details](design/stage7/tasks.md#s7-05)
@@ -671,6 +671,7 @@ User decisions from the feedback Q&A (2026-10-13), binding for this stage:
 | 2026-10-13 | A station *decides* a story when the story has a justifying, non-hint stamp from it (`decidingStations`); aiScanner is hint-only and its stamp never counts toward the proof count | One rule for the bag, validation, pinned counts and guidance; matches the design doc ("AI is only a hint") |
 | 2026-10-13 | `folder.spawnKey` (`s<scheduleIndex>` / `e<eventIndex>.<wave>`) is the folder identity across versus teams; minigame seeds, rival matching and the spectator embargo key on it | Folder ids diverge between teams when belts fill differently |
 | 2026-10-13 | Run generation order: run seed → slot times → station sequence (bag) → story matching → deadlines × difficulty → star thresholds; at spawn + (N−1) × 20 s; tuning every tick; abilities at runtime. The run seed is separate from the sim seed | Deterministic, composable transforms; both versus teams share one run |
+| 2026-10-13 | Client address for the per-address limits (S7-02): Caddy believes `X-Forwarded-For` only from `TRUSTED_PROXIES` (default `private_ranges`; `trusted_proxies_strict`, `client_ip_headers X-Forwarded-For`) and sends `{client_ip}` as `X-Real-IP`; the server reads `X-Real-IP`, else the socket address, else `'unknown'` (`apps/server/src/client-address.ts`) and never `X-Forwarded-For` | Without trusted proxies Caddy replaced the header with the TLS proxy's address, so the per-IP join and room limits were site-wide; a browser-supplied `X-Forwarded-For` entry must never pick the limiter key |
 
 ---
 

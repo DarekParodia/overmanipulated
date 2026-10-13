@@ -3,6 +3,20 @@
 # and is published on host port 8080 for that proxy; the proxy must forward WebSocket upgrades
 # and the original Host header.
 # Access logs are off on purpose (no IP addresses stored); see docs/deploy.md to switch them on.
+{
+	servers {
+		# Client address for the game server's per-address limits. The external TLS proxy reports
+		# the browser address in X-Forwarded-For; Caddy believes that header only from the
+		# addresses below (default: private ranges, i.e. a proxy on the same host reaching Caddy
+		# over the docker bridge; set TRUSTED_PROXIES to the proxy's IP/32 when it runs
+		# elsewhere). Strict mode reads the header right to left, so a value forged by the
+		# browser in front of the proxy's own entry is ignored. The result is {client_ip}.
+		trusted_proxies static {$TRUSTED_PROXIES:private_ranges}
+		trusted_proxies_strict
+		client_ip_headers X-Forwarded-For
+	}
+}
+
 :80 {
 	encode zstd gzip
 
@@ -31,6 +45,9 @@
 			max_size 8KB
 		}
 		reverse_proxy server:3000 {
+			# The only address header the game server reads; set here, so a value sent by the
+			# browser is always overwritten.
+			header_up X-Real-IP {client_ip}
 			transport http {
 				dial_timeout 3s
 				response_header_timeout 15s

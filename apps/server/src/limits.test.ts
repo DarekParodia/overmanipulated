@@ -77,30 +77,42 @@ describe('socket limits', () => {
     expect(await closed).toBe(1008);
   });
 
+  /** Creates a room on a fresh socket and returns the reply type (`welcome` or `error`). */
+  async function createRoom(headers: Record<string, string>): Promise<string> {
+    const socket = await open(headers);
+    const reply = new Promise<ServerMessage>((resolve) =>
+      socket.addEventListener('message', (event) => {
+        const parsed = parseServerMessage(String(event.data));
+        if (parsed.ok && (parsed.message.type === 'welcome' || parsed.message.type === 'error')) {
+          resolve(parsed.message);
+        }
+      }),
+    );
+    socket.send(
+      encodeMessage({ type: 'join', protocolVersion: PROTOCOL_VERSION, nickname: 'Ala' }),
+    );
+    const message = await reply;
+    socket.close(1000);
+    return message.type;
+  }
+
   it('limits room creation per client address, not globally', async () => {
-    const attempt = async (address: string) => {
-      const socket = await open({ 'x-forwarded-for': address });
-      const reply = new Promise<ServerMessage>((resolve) =>
-        socket.addEventListener('message', (event) => {
-          const parsed = parseServerMessage(String(event.data));
-          if (parsed.ok && (parsed.message.type === 'welcome' || parsed.message.type === 'error')) {
-            resolve(parsed.message);
-          }
-        }),
-      );
-      socket.send(
-        encodeMessage({ type: 'join', protocolVersion: PROTOCOL_VERSION, nickname: 'Ala' }),
-      );
-      const message = await reply;
-      socket.close(1000);
-      return message.type;
-    };
     const results: string[] = [];
     for (let i = 0; i < 21; i++) {
-      results.push(await attempt('203.0.113.7'));
+      results.push(await createRoom({ 'x-real-ip': '203.0.113.7' }));
     }
     expect(results.slice(0, 20).every((type) => type === 'welcome')).toBe(true);
     expect(results[20]).toBe('error');
-    expect(await attempt('203.0.113.8')).toBe('welcome');
+    expect(await createRoom({ 'x-real-ip': '203.0.113.8' })).toBe('welcome');
+  });
+
+  it('ignores X-Forwarded-For: a forged value does not change the limiter key', async () => {
+    // No X-Real-IP, so every socket is keyed by its own (local) address.
+    const results: string[] = [];
+    for (let i = 0; i < 21; i++) {
+      results.push(await createRoom({ 'x-forwarded-for': `198.51.100.${i + 1}` }));
+    }
+    expect(results.slice(0, 20).every((type) => type === 'welcome')).toBe(true);
+    expect(results[20]).toBe('error');
   });
 });

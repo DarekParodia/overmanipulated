@@ -45,6 +45,10 @@ services:
     depends_on:
       server:
         condition: service_healthy
+    environment:
+      # Addresses of the external TLS proxy whose X-Forwarded-For Caddy believes (Caddyfile
+      # `trusted_proxies`). private_ranges fits a proxy on this host; see docs/deploy.md.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-private_ranges}
     ports:
       # The external reverse proxy (TLS) connects here. Bound on all interfaces as requested on
       # the caddy branch: firewall port 8080 so only that proxy can reach it.
