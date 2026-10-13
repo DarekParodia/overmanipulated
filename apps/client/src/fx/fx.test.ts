@@ -215,7 +215,7 @@ const everyEvent: GameplayEvent[] = [
     location: { kind: 'fixture', fixtureId: 'table-0' },
   },
   { kind: 'deadlineWarning', folderId: 'f1' },
-  { kind: 'folderExpired', folderId: 'f1', storyId: 's1', stamps: [] },
+  { kind: 'folderExpired', folderId: 'f1', spawnKey: 's0', storyId: 's1', stamps: [] },
   { kind: 'deadlineExtended', folderId: 'f1', playerId: player },
   { kind: 'workStarted', stationId: 'imageSearch-0', playerId: player },
   { kind: 'workCancelled', stationId: 'imageSearch-0', playerId: player },
@@ -227,7 +227,13 @@ const everyEvent: GameplayEvent[] = [
     folderId: 'f1',
     seed: 1,
   },
-  { kind: 'minigameFailed', stationId: 'imageSearch-0', playerId: player, folderId: 'f1' },
+  {
+    kind: 'minigameFailed',
+    stationId: 'imageSearch-0',
+    playerId: player,
+    folderId: 'f1',
+    lockoutMs: 3000,
+  },
   {
     kind: 'stampApplied',
     stationId: 'imageSearch-0',
@@ -240,6 +246,7 @@ const everyEvent: GameplayEvent[] = [
   {
     kind: 'verdictResult',
     folderId: 'f1',
+    spawnKey: 's0',
     storyId: 's1',
     playerId: player,
     verdict: 'publish',
@@ -424,6 +431,7 @@ describe('loop manager', () => {
 describe('deadline ticker', () => {
   const folder = (deadlineMs: number, warned: boolean): Folder => ({
     id: `f${deadlineMs}`,
+    spawnKey: 's0',
     storyId: 's',
     location: { kind: 'floor', x: 1, y: 1 },
     stamps: [],

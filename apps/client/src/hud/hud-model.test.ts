@@ -17,7 +17,16 @@ import {
 } from './hud-model.ts';
 
 function folder(id: string, deadlineMs: number, location: Folder['location']): Folder {
-  return { id, storyId: 's', location, stamps: [], spawnedAtMs: 0, deadlineMs, warned: false };
+  return {
+    id,
+    spawnKey: 's0',
+    storyId: 's',
+    location,
+    stamps: [],
+    spawnedAtMs: 0,
+    deadlineMs,
+    warned: false,
+  };
 }
 
 const onConveyor = { kind: 'fixture', fixtureId: 'conveyor-0' } as const;

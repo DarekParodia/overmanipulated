@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'bun:test';
 import type { Folder, FolderLocation } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
-import { runStep, TEST_LEVEL, TEST_MAP, testContext, testInput } from './__fixtures__/greybox.ts';
+import {
+  runStep,
+  TEST_LEVEL,
+  TEST_MAP,
+  testContext,
+  testFolder,
+  testInput,
+} from './__fixtures__/greybox.ts';
 import type { SimLevel } from './content.ts';
 import { conveyorBlocked, nextScheduledSpawn, stepFolders } from './folders.ts';
 import type { PlayerIntent, SimContext, SimFrame } from './frame.ts';
@@ -37,16 +44,7 @@ function withPlayers(spots: Record<string, Spot>, state = createGameState({ map:
 }
 
 function folder(id: string, location: FolderLocation, overrides: Partial<Folder> = {}): Folder {
-  return {
-    id,
-    storyId: 't-true',
-    location,
-    stamps: [],
-    spawnedAtMs: 0,
-    deadlineMs: 60_000,
-    warned: false,
-    ...overrides,
-  };
+  return testFolder(id, { location, ...overrides });
 }
 
 function withFolders(state: GameState, ...folders: Folder[]): GameState {
@@ -286,6 +284,7 @@ describe('stepFolders: spawning', () => {
     const { state, events } = runFolders(at(1000), [], testContext());
     expect(state.folders.f1).toEqual({
       id: 'f1',
+      spawnKey: 's0',
       storyId: 't-true',
       location: onFixture('conveyor-0'),
       stamps: [],
@@ -308,6 +307,10 @@ describe('stepFolders: spawning', () => {
     expect(state.folders.f12?.location).toEqual(onFixture('conveyor-3'));
     expect(state.folders.f12?.deadlineMs).toBe(55_000);
     expect(state.nextSpawnIndex).toBe(3);
+    // Spawn keys follow the schedule index, not the folder number.
+    expect(
+      [state.folders.f10, state.folders.f11, state.folders.f12].map((f) => f?.spawnKey),
+    ).toEqual(['s0', 's1', 's2']);
   });
 
   it('waits for a free conveyor tile instead of skipping the spawn', () => {
@@ -328,8 +331,9 @@ describe('stepFolders: spawning', () => {
     expect(events).toEqual([
       { kind: 'folderSpawned', folderId: 'f5', storyId: 't-true', fixtureId: 'conveyor-2' },
     ]);
-    // The deadline counts from the actual arrival.
+    // The deadline counts from the actual arrival; the key still names the schedule entry.
     expect(state.folders.f5?.deadlineMs).toBe(63_000);
+    expect(state.folders.f5?.spawnKey).toBe('s0');
   });
 
   it('skips schedule entries whose story is unknown', () => {
@@ -345,6 +349,8 @@ describe('stepFolders: spawning', () => {
     expect(events).toEqual([
       { kind: 'folderSpawned', folderId: 'f1', storyId: 't-false', fixtureId: 'conveyor-0' },
     ]);
+    // The skipped entry keeps its index: the folder is the schedule's second entry.
+    expect(state.folders.f1?.spawnKey).toBe('s1');
   });
 });
 
@@ -462,7 +468,7 @@ describe('stepFolders: deadlines', () => {
       const { state: next, events } = runFolders(state);
       expect(next.folders.f1).toBeUndefined();
       expect(events).toEqual([
-        { kind: 'folderExpired', folderId: 'f1', storyId: 't-false', stamps: [] },
+        { kind: 'folderExpired', folderId: 'f1', spawnKey: 's1', storyId: 't-false', stamps: [] },
       ]);
       expect(next.score).toBe(state.score);
       expect(next.credibility).toBe(state.credibility);

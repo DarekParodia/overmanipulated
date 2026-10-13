@@ -28,7 +28,10 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   `step(state, inputs, dtMs, rng) → { state, events }` and
   `applyVerdict(state, playerId, verdict) → { state, events }`.
 - **Deterministic**: no `Date.now()`, `performance.now()`, `Math.random()`, timers, I/O, DOM or
-  three.js. Time is passed in as `dtMs`; randomness comes from a seeded RNG passed in.
+  three.js. Time is passed in as `dtMs`; randomness comes from the match seed in the state
+  (`GameState.seed`). Minigame seeds are derived from it per folder `spawnKey`, station kind and
+  attempt (`minigameSeedFor`), never drawn from a running RNG, so they do not depend on the
+  order in which stations are used (S7-13).
 - Time is measured in **ticks / milliseconds as integers**, never wall-clock dates.
 - The client runs the same movement code for prediction of the local player only. Everything
   else on the client is display of server state.

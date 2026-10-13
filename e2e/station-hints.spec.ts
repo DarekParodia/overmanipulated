@@ -57,6 +57,7 @@ test('every minigame shows key hints for the device in use', async ({ browser },
           folders: [
             {
               id: `f-${kind}`,
+              spawnKey: 's0',
               storyId,
               location: { kind: 'fixture', fixtureId: id },
               stamps: [],

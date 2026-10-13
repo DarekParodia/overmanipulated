@@ -8,6 +8,11 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | --- | --- | --- |
 | Zgłoszenie | `story` | Content unit: the claim/material to verify (data) |
 | Teczka | `folder` | In-world object carrying one story; has position, holder, stamps, deadline |
+| Klucz teczki | `spawnKey` | Where a folder came from: `s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`. The same in every newsroom of a match, unlike the per-sim folder id `f<n>` |
+| Ziarno rozgrywki | `seed` (`GameState.seed`) | Constant for one level run; minigame seeds are derived from it |
+| Ziarno minigry | `minigameSeed` (`minigameSeedFor`, `drawMinigameSeed`) | Derived from (seed, spawnKey, station kind, attempt); the client builds the puzzle from it |
+| Podejście | `attempt` (`minigameAttempts`, key `spawnKey:kind`) | Minigame rounds of one station kind on one folder that ended without a stamp (failure or cancel) |
+| Ta sama karta | stable-seed station (`MINIGAME_STABLE_SEED_STATIONS`) | `sourceRegistry`: attempts are not counted, so a retry shows the same Kartoteka card |
 | Pieczątka | `stamp` | Result of a station on a folder |
 | Stanowisko | `station` | Verification workstation with a minigame |
 | Stół redakcyjny | `editorialDesk` (`desk`) | Where verdicts are made |
@@ -107,7 +112,9 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Ustawienia poziomu trudności | `DifficultyPreset` | Factors for deadlines, spawn gap, work time, lockout, penalties and minigame time; extra mistakes; hints; answer reveal |
 | Strojenie symulacji | `SimTuning` (`simTuning`, `NORMAL_TUNING`) | The preset part the simulation applies: work time, lockout, penalties |
 | Limit pomyłek | `mistakeLimit` | Mistakes a minigame allows on a difficulty; never below `MINIGAME_MIN_MISTAKES` |
-| Blokada stanowiska | lockout (`failLockoutMs`) | How long a failed minigame blocks its station |
+| Blokada stanowiska | lockout (`failLockoutMs`, `tunedLockoutMs`) | How long a failed minigame blocks its station; announced in `minigameFailed.lockoutMs` |
+| Skalowanie kar | `scalePenalty` (`penaltyFactor`) | Wrong-verdict, expiry and correction penalties × the factor, halves rounded away from zero; rewards are never scaled |
+| Utrata / odzysk przy sprostowaniu | `correctionLoss` / `correctionRecover` | Credibility a correction costs (scaled) and the share of it a filed correction gives back |
 | Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
 
 ## Screens (`ScreenId`)

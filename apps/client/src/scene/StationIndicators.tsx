@@ -114,9 +114,11 @@ function indicatorFor(sign: Sign): StationIndicator {
     return desk?.operatorId ? { kind: 'busy', operatorId: desk.operatorId } : { kind: 'none' };
   }
   const station: Station | undefined = state.stations.find((s) => s.id === sign.fixtureIds[0]);
+  const events = useEvents.getState();
   return stationIndicator(
     station,
-    station ? useEvents.getState().outageTotals[station.id] : undefined,
+    station ? events.outageTotals[station.id] : undefined,
+    station ? events.lockoutTotals[station.id] : undefined,
   );
 }
 

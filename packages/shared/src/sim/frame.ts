@@ -1,4 +1,5 @@
 // What every gameplay subsystem receives for one tick, besides the state.
+import type { SimTuning } from '../difficulty.ts';
 import type { GameEvent, PlayerCommand } from '../protocol.ts';
 import type { SimLevel, StoryBook } from './content.ts';
 import type { TileMap } from './map.ts';
@@ -10,6 +11,11 @@ export type SimContext = {
   map: TileMap;
   level: SimLevel;
   stories: StoryBook;
+  /**
+   * The room's difficulty as the simulation applies it (work time, lockout, penalties); the
+   * server derives it every tick, `NORMAL_TUNING` plays the authored values unchanged.
+   */
+  tuning: SimTuning;
 };
 
 /** One player's intent this tick, condensed from the inputs applied this tick. */

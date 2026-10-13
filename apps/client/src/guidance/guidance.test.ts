@@ -39,6 +39,7 @@ const ME = 'p1';
 function folder(id: string, location: Folder['location'], extra: Partial<Folder> = {}): Folder {
   return {
     id,
+    spawnKey: 's0',
     storyId: 'story',
     location,
     stamps: [],

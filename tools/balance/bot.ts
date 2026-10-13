@@ -450,7 +450,7 @@ export class Bot {
     const cost = (kind: StationKind): number => {
       const fixture = ctx.map.fixtures.find((f) => f.station === kind);
       const walk = fixture ? walkSeconds(distanceTo(ctx.map, fixture.id, me)) : 99;
-      return walk + workDurationMs(state, this.playerId, kind) / 1000;
+      return walk + workDurationMs(state, this.playerId, kind, ctx.tuning) / 1000;
     };
     const ordered = mem.informed
       ? [

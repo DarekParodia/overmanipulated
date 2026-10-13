@@ -41,6 +41,7 @@ function checkDeadlines(state: GameState, frame: SimFrame): GameState {
       frame.events.push({
         kind: 'folderExpired',
         folderId: folder.id,
+        spawnKey: folder.spawnKey,
         storyId: folder.storyId,
         stamps: [...folder.stamps],
       });
@@ -56,7 +57,8 @@ function checkDeadlines(state: GameState, frame: SimFrame): GameState {
 /**
  * Spawns every due schedule entry onto the first free conveyor tile. When the conveyor is full
  * the entry waits (and holds back later ones) until a tile frees up; it is never skipped.
- * Entries whose story is missing from the story book are skipped.
+ * Entries whose story is missing from the story book are skipped. Each folder's spawn key is
+ * `s<scheduleIndex>`, so it is the same in every newsroom whatever their belts look like.
  */
 function spawnFolders(state: GameState, frame: SimFrame): GameState {
   const { schedule } = frame.ctx.level;
@@ -74,7 +76,7 @@ function spawnFolders(state: GameState, frame: SimFrame): GameState {
     if (!free) {
       break;
     }
-    next = spawnFolderAt(next, frame, free, entry);
+    next = spawnFolderAt(next, frame, free, { ...entry, spawnKey: `s${next.nextSpawnIndex}` });
     next = { ...next, nextSpawnIndex: next.nextSpawnIndex + 1 };
   }
   return next;
@@ -87,16 +89,18 @@ export function freeConveyors(state: GameState, map: TileMap): Fixture[] {
 
 /**
  * Puts a new folder on a conveyor tile (the caller picked a free one) and emits `folderSpawned`.
- * Shared by the level schedule and by level events; `tag` marks event folders.
+ * Shared by the level schedule and by level events; `tag` marks event folders and `spawnKey`
+ * names where the folder came from (`s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`).
  */
 export function spawnFolderAt(
   state: GameState,
   frame: SimFrame,
   tile: Fixture,
-  spec: { storyId: string; deadlineS: number; tag?: FolderTag },
+  spec: { spawnKey: string; storyId: string; deadlineS: number; tag?: FolderTag },
 ): GameState {
   const folder: Folder = {
     id: `f${state.nextFolderNumber}`,
+    spawnKey: spec.spawnKey,
     storyId: spec.storyId,
     location: { kind: 'fixture', fixtureId: tile.id },
     stamps: [],

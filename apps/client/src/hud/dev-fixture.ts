@@ -50,6 +50,8 @@ function fixtureFolders(playerId: string): Folder[] {
     stamps: string[],
   ): Folder => ({
     id,
+    // `f-3` was the schedule's third folder (s2).
+    spawnKey: `s${Number(id.slice(2)) - 1}`,
     storyId,
     location,
     stamps,
@@ -87,6 +89,7 @@ function fixtureResults(): FolderResult[] {
     speed = 0,
   ): FolderResult => ({
     folderId,
+    spawnKey: `s${Number(folderId.slice(2)) - 1}`,
     storyId,
     outcome,
     reason,
@@ -155,9 +158,11 @@ export function installHudDevFixture(): (() => void) | undefined {
       useGame.setState(patch);
     },
     verdict(patch = {}) {
+      const n = serial++;
       const event: VerdictEvent = {
         kind: 'verdictResult',
-        folderId: `dev-${serial++}`,
+        folderId: `dev-${n}`,
+        spawnKey: `s${n}`,
         storyId: 'l0-zalany-rynek',
         playerId: useApp.getState().playerId ?? 'p-dev',
         verdict: 'reject',
@@ -174,7 +179,14 @@ export function installHudDevFixture(): (() => void) | undefined {
       handleGameEvent(event satisfies GameplayEvent);
     },
     expire(storyId = 'l0-nocny-autobus') {
-      handleGameEvent({ kind: 'folderExpired', folderId: `dev-${serial++}`, storyId, stamps: [] });
+      const n = serial++;
+      handleGameEvent({
+        kind: 'folderExpired',
+        folderId: `dev-${n}`,
+        spawnKey: `s${n}`,
+        storyId,
+        stamps: [],
+      });
     },
     end(won, stars) {
       const state = useGame.getState();

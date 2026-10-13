@@ -2,21 +2,57 @@
 // Emits: workStarted, workCancelled, minigameStarted, minigameFailed, stampApplied, and the end
 // of an outage levelEvent (S4-08: a station with outageMs > 0 accepts no work).
 // Consumes commands: minigameResult, cancel (when operating a station).
+// Work time and lockout length follow the difficulty (`ctx.tuning`, Stage 7).
+// Minigame seeds are derived per folder spawn key, station kind and attempt (S7-13).
 import {
-  MINIGAME_FAIL_LOCKOUT_MS,
+  MINIGAME_STABLE_SEED_STATIONS,
   ROLE_STATIONS,
   ROLE_WORK_TIME_FACTOR,
   STATION_WORK_MS,
 } from '../constants.ts';
+import { type SimTuning, tunedLockoutMs } from '../difficulty.ts';
 import type { StationKind } from '../domain.ts';
 import type { Folder, Station } from '../entities.ts';
 import type { QueuedCommand, SimFrame } from './frame.ts';
 import { findInteractionTarget } from './map.ts';
-import { nextInt } from './rng.ts';
+import { minigameSeedFor } from './rng.ts';
 import { folderOnFixture, type GameState } from './state.ts';
 
-/** Upper bound (exclusive) for minigame seeds: any non-negative 31-bit integer. */
-const MINIGAME_SEED_MAX = 2 ** 31 - 1;
+/** Key of `GameState.minigameAttempts` for the minigame of `kind` on one folder. */
+export function minigameAttemptKey(spawnKey: string, kind: StationKind): string {
+  return `${spawnKey}:${kind}`;
+}
+
+/**
+ * The seed of the next minigame round at a station of `kind` on `folder`: derived from the match
+ * seed, the folder's spawn key, the kind and how many rounds there ended without a stamp. Pure,
+ * so every newsroom of a match gets the same puzzle for the same folder and attempt.
+ */
+export function drawMinigameSeed(
+  state: Pick<GameState, 'seed' | 'minigameAttempts'>,
+  folder: Pick<Folder, 'spawnKey'>,
+  kind: StationKind,
+): number {
+  const attempt = state.minigameAttempts[minigameAttemptKey(folder.spawnKey, kind)] ?? 0;
+  return minigameSeedFor(state.seed, folder.spawnKey, kind, attempt);
+}
+
+/**
+ * Counts a minigame round that ended without a stamp (failed or cancelled), so the next round on
+ * this folder gets a fresh puzzle; MINIGAME_STABLE_SEED_STATIONS keep theirs (the Kartoteka
+ * shows the same card again).
+ */
+function countUnstampedRound(
+  attempts: Record<string, number>,
+  folder: Folder,
+  kind: StationKind,
+): Record<string, number> {
+  if (MINIGAME_STABLE_SEED_STATIONS.includes(kind)) {
+    return attempts;
+  }
+  const key = minigameAttemptKey(folder.spawnKey, kind);
+  return { ...attempts, [key]: (attempts[key] ?? 0) + 1 };
+}
 
 function idleStation(station: Station): Station {
   return {
@@ -47,12 +83,20 @@ function stampFor(frame: SimFrame, folder: Folder, kind: StationKind): string | 
   return frame.ctx.stories[folder.storyId]?.stamps.find((s) => s.station === kind)?.id;
 }
 
-/** Work time at a station of `kind` for a player, with the role bonus applied. */
-export function workDurationMs(state: GameState, playerId: string, kind: StationKind): number {
+/**
+ * Work time at a station of `kind` for a player: the role bonus and the difficulty's work-time
+ * factor applied, rounded to whole milliseconds.
+ */
+export function workDurationMs(
+  state: GameState,
+  playerId: string,
+  kind: StationKind,
+  tuning: SimTuning,
+): number {
   const role = state.crew[playerId]?.role ?? null;
   const roleStations: readonly StationKind[] = role ? ROLE_STATIONS[role] : [];
   const factor = roleStations.includes(kind) ? ROLE_WORK_TIME_FACTOR : 1;
-  return STATION_WORK_MS[kind] * factor;
+  return Math.round(STATION_WORK_MS[kind] * factor * tuning.workTimeFactor);
 }
 
 /** The first command from the operator that concerns this station, if any. */
@@ -77,7 +121,7 @@ function operatorCommand(
 
 export function stepStations(state: GameState, frame: SimFrame): GameState {
   const { dtMs } = frame.ctx;
-  let rng = state.rng;
+  let attempts = state.minigameAttempts;
   let folders = state.folders;
   const stations: Record<string, Station> = {};
   // Operators as of the stations already processed this tick plus the ones still to come.
@@ -101,6 +145,9 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
       if (operatorId !== null) {
         operators.delete(operatorId);
         frame.events.push({ kind: 'workCancelled', stationId, playerId: operatorId });
+        if (station.phase === 'minigame' && folder) {
+          attempts = countUnstampedRound(attempts, folder, station.kind);
+        }
       }
       if (outageMs === 0) {
         frame.events.push({
@@ -141,7 +188,7 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           operatorId: candidate,
           phase: 'working',
           progressMs: 0,
-          durationMs: workDurationMs(state, candidate, station.kind),
+          durationMs: workDurationMs(state, candidate, station.kind, frame.ctx.tuning),
           lockoutMs: 0,
         };
         frame.events.push({ kind: 'workStarted', stationId, playerId: candidate });
@@ -173,8 +220,11 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           next = { ...station, progressMs };
           break;
         }
-        const [seed, rngNext] = nextInt(rng, MINIGAME_SEED_MAX);
-        rng = rngNext;
+        const seed = drawMinigameSeed(
+          { seed: state.seed, minigameAttempts: attempts },
+          folder,
+          station.kind,
+        );
         next = { ...station, progressMs, phase: 'minigame', minigameSeed: seed };
         frame.events.push({
           kind: 'minigameStarted',
@@ -209,6 +259,7 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           next = idleStation(station);
           operators.delete(operatorId);
           frame.events.push({ kind: 'workCancelled', stationId, playerId: operatorId });
+          attempts = countUnstampedRound(attempts, folder, station.kind);
           break;
         }
         if (command.kind !== 'minigameResult') {
@@ -231,17 +282,16 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           }
           next = idleStation(station);
         } else {
-          next = {
-            ...idleStation(station),
-            phase: 'lockout',
-            lockoutMs: MINIGAME_FAIL_LOCKOUT_MS,
-          };
+          const lockoutMs = tunedLockoutMs(frame.ctx.tuning);
+          next = { ...idleStation(station), phase: 'lockout', lockoutMs };
           frame.events.push({
             kind: 'minigameFailed',
             stationId,
             playerId: operatorId,
             folderId: folder.id,
+            lockoutMs,
           });
+          attempts = countUnstampedRound(attempts, folder, station.kind);
         }
         operators.delete(operatorId);
         break;
@@ -260,8 +310,8 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
     stations[stationId] = next;
   }
 
-  if (!changed && folders === state.folders && rng === state.rng) {
+  if (!changed && folders === state.folders && attempts === state.minigameAttempts) {
     return state;
   }
-  return { ...state, rng, folders, stations };
+  return { ...state, minigameAttempts: attempts, folders, stations };
 }

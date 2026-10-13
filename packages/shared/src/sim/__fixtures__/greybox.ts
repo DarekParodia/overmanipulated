@@ -1,6 +1,8 @@
 // Test fixtures for gameplay subsystems: the greybox level with a short schedule and one story
 // per truth value. Plain data, independent of the content package.
 import { TICK_MS } from '../../constants.ts';
+import { NORMAL_TUNING } from '../../difficulty.ts';
+import type { Folder } from '../../entities.ts';
 import type { PlayerCommand } from '../../protocol.ts';
 import type { SimLevel, SimStory, StoryBook } from '../content.ts';
 import type { QueuedCommand, SimContext } from '../frame.ts';
@@ -53,8 +55,35 @@ export const TEST_LEVEL: SimLevel = {
   stars: { two: 30, three: 60 },
 };
 
+/** The test level on Normal; `overrides` replace any field (e.g. `tuning: simTuning('expert')`). */
 export function testContext(overrides: Partial<SimContext> = {}): SimContext {
-  return { dtMs: TICK_MS, map: TEST_MAP, level: TEST_LEVEL, stories: TEST_STORIES, ...overrides };
+  return {
+    dtMs: TICK_MS,
+    map: TEST_MAP,
+    level: TEST_LEVEL,
+    stories: TEST_STORIES,
+    tuning: NORMAL_TUNING,
+    ...overrides,
+  };
+}
+
+/**
+ * A folder for tests: `t-true` on the first conveyor tile, no stamps, 60 s to go. Its spawn key
+ * defaults to `s<digits of the id>` (`f3` → `s3`, `x0` → `s0`), so hand-made folders with
+ * different ids also differ in their key, as spawned ones do.
+ */
+export function testFolder(id: string, patch: Partial<Folder> = {}): Folder {
+  return {
+    id,
+    spawnKey: `s${/\d+/.exec(id)?.[0] ?? '0'}`,
+    storyId: 't-true',
+    location: { kind: 'fixture', fixtureId: 'conveyor-0' },
+    stamps: [],
+    spawnedAtMs: 0,
+    deadlineMs: 60_000,
+    warned: false,
+    ...patch,
+  };
 }
 
 const NO_ACTIONS = { interact: false, work: false };
