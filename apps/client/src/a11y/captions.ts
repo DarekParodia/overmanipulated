@@ -110,6 +110,7 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'station.open': skip('own-action'),
   'minigame.success': skip('own-action'),
   'desk.justify': skip('own-action'),
+  'desk.unjustify': skip('own-action'),
   'ping.open': skip('own-action'),
   'ping.send': skip('own-action'),
   'sourceRegistry.circle': skip('own-action'),

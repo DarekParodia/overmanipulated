@@ -9,6 +9,7 @@ import {
 } from '@redakcja/shared';
 import { pl } from '../strings/pl.ts';
 import {
+  evidenceBadge,
   expiredToast,
   formatClock,
   formatCountdown,
@@ -218,5 +219,76 @@ describe('toasts', () => {
       list = pushToast(list, expiredToast({ folderId: `f${i}`, storyId: 's' }, story, i), 3);
     }
     expect(list.map((t) => t.id)).toEqual(['f4:4', 'f3:3', 'f2:2']);
+  });
+});
+
+describe('evidence badge', () => {
+  // Proofs from the archive and the registry; the AI scanner justifies but is only a hint.
+  const multi: StoryInfo = {
+    ...story,
+    requiredStamps: 2,
+    stamps: [
+      { id: 'm-image', station: 'imageSearch', text: '' },
+      { id: 'm-ai', station: 'aiScanner', text: '' },
+      { id: 'm-archive', station: 'archive', text: '' },
+      { id: 'm-registry', station: 'sourceRegistry', text: '' },
+    ],
+    justifyingStamps: ['m-ai', 'm-archive', 'm-registry'],
+  };
+  const stamped = (stamps: string[]) => ({ stamps });
+
+  test('none on a one-proof folder or an unknown story', () => {
+    expect(evidenceBadge(stamped(['m-archive']), story, true)).toBeNull();
+    expect(evidenceBadge(stamped([]), { ...multi, requiredStamps: 1 }, true)).toBeNull();
+    expect(evidenceBadge(stamped([]), undefined, true)).toBeNull();
+  });
+
+  test('hints on: proofs on the folder out of N, capped at N', () => {
+    expect(evidenceBadge(stamped([]), multi, true)).toEqual({ have: 0, need: 2 });
+    expect(evidenceBadge(stamped(['m-image', 'm-archive']), multi, true)).toEqual({
+      have: 1,
+      need: 2,
+    });
+    expect(evidenceBadge(stamped(['m-archive', 'm-registry']), multi, true)).toEqual({
+      have: 2,
+      need: 2,
+    });
+    expect(
+      evidenceBadge(stamped(['m-archive', 'm-registry']), { ...multi, requiredStamps: 1 }, true),
+    ).toBeNull();
+  });
+
+  test('the AI scanner and repeated ids never count', () => {
+    expect(evidenceBadge(stamped(['m-ai', 'm-archive', 'm-archive']), multi, true)).toEqual({
+      have: 1,
+      need: 2,
+    });
+  });
+
+  test('capped at N when the folder holds more proofs', () => {
+    const three: StoryInfo = {
+      ...multi,
+      stamps: [...(multi.stamps ?? []), { id: 'm-phone', station: 'phone', text: '' }],
+      justifyingStamps: ['m-archive', 'm-registry', 'm-phone'],
+    };
+    expect(evidenceBadge(stamped(['m-archive', 'm-registry', 'm-phone']), three, true)).toEqual({
+      have: 2,
+      need: 2,
+    });
+  });
+
+  test('hints off: only N, so nothing tells which stamps decide', () => {
+    expect(evidenceBadge(stamped(['m-archive']), multi, false)).toEqual({ have: null, need: 2 });
+    expect(evidenceBadge(stamped([]), { ...multi, requiredStamps: 3 }, false)).toEqual({
+      have: null,
+      need: 3,
+    });
+  });
+
+  test('a story without stamp facts counts no proof', () => {
+    expect(evidenceBadge(stamped(['m-archive']), { ...story, requiredStamps: 2 }, true)).toEqual({
+      have: 0,
+      need: 2,
+    });
   });
 });

@@ -41,6 +41,10 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Stanowisko-podpowiedź | hint-only station (`HINT_ONLY_STATIONS`, `isHintOnly`) | `aiScanner`: its stamp may justify, but never counts as proof (`countsAsProof`) |
 | Stanowisko rozstrzygające (Rozstrzyga) | deciding station (`decidingStations`, S7-20) | A station on the level's map with a justifying, non-hint stamp of the story; the desk result names it after „Rozstrzyga:” |
 | Linie wyniku werdyktu | `deskResultLines` (`DeskResultLine`) | At most two lines under the desk result: `proof`, `weakProof`, `tooFewProofs`, `hintOnly`, `decidedBy`, `correctVerdict`, `proofInFolder`, `notChecked`; the same on every difficulty |
+| Wybór dowodów | evidence pick (`toggleEvidence`, `verdictReady`, `evidenceShortfall` in `stations/desk-model.ts`) | Stamps cited at the desk: one replaces the other for a one-proof story; up to N toggled, in order, for a multi-stamp folder; the verdict opens at `min(N, collected)` |
+| Za mało dowodów (na stole) | `evidenceShortfall` | The folder holds fewer stamps than its story needs proofs; the desk shows an amber line and still allows the verdict |
+| Znaczek dowodów | evidence badge (`evidenceBadge`) | Chip on a multi-stamp folder card: „k/N” proofs with hints on, „×N” without |
+| Zebrane dowody | `justifyingCount` (`hasEnoughProofs`) | Distinct stamps on a folder that count as proof; guidance sends the folder to the desk once it reaches `requiredStamps` |
 | Powód porażki | `lossReason` (`credibility` / `score`) | Why a level was lost; null when won |
 | Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
 | Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |
