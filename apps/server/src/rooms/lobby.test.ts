@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   BRIEFING_DURATION_MS,
   type FolderResult,
+  type LevelOutcome,
   type LobbyAction,
   PROTOCOL_VERSION,
   RECONNECT_GRACE_MS,
@@ -15,21 +16,30 @@ const RESULT: FolderResult = {
   folderId: 'f1',
   storyId: 's1',
   outcome: 'correct',
+  reason: 'correctImportant',
   verdict: 'publish',
   scoreDelta: 100,
   credibilityDelta: 5,
+  justifyingStampIds: ['s1-image'],
+  requiredStamps: 1,
+  bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
   missedStampIds: [],
 };
+
+const WON: LevelOutcome = { won: true, stars: 2, lossReason: null };
 
 let time = 0;
 let fake: ReturnType<typeof createFakeHub>;
 let registry: RoomRegistry;
 /** When set, the injected step ends the level on the next tick. */
 let endNextTick = false;
+/** How the injected step ends the level. */
+let endOutcome: LevelOutcome = WON;
 
 beforeEach(() => {
   time = 0;
   endNextTick = false;
+  endOutcome = WON;
   fake = createFakeHub();
   registry = createRoomRegistry({
     hub: fake.hub,
@@ -47,7 +57,7 @@ beforeEach(() => {
           score: 340,
           credibility: 72,
           results: [RESULT],
-          ended: { won: true, stars: 2 },
+          ended: endOutcome,
         },
       };
     },
@@ -321,6 +331,9 @@ describe('results and back to lobby', () => {
         score: 340,
         credibility: 72,
         results: [RESULT],
+        lossReason: null,
+        starThresholds: { two: 120, three: 190 },
+        maxScore: 240,
       });
       expect(connection.last('roomState')?.phase).toBe('results');
     }
@@ -329,6 +342,21 @@ describe('results and back to lobby', () => {
     registry.tick();
     expect(host.all('snapshot')).toHaveLength(snapshots);
     expect(host.all('levelEnd')).toHaveLength(1);
+  });
+
+  it("sends why the level was lost, the level's star thresholds and its best score", () => {
+    const host = join('Ala');
+    lobby(host, { kind: 'selectLevel', levelId: 'l1-burza' });
+    endOutcome = { won: false, stars: 0, lossReason: 'credibility' };
+    playToResults(host);
+    expect(host.last('levelEnd')).toMatchObject({
+      levelId: 'l1-burza',
+      won: false,
+      stars: 0,
+      lossReason: 'credibility',
+      starThresholds: { two: 205, three: 320 },
+      maxScore: 375,
+    });
   });
 
   it('only the host goes back to the lobby; the finished run is dropped', () => {

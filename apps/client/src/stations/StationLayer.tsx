@@ -137,7 +137,7 @@ function DeskHost({ playerId }: { playerId: string | null }) {
                 id: event.folderId,
                 storyId: event.storyId,
                 location: { kind: 'fixture', fixtureId: 'desk' },
-                stamps: [event.justifyingStampId],
+                stamps: [...event.justifyingStampIds],
                 spawnedAtMs: 0,
                 deadlineMs: 0,
                 warned: false,
@@ -171,12 +171,12 @@ function DeskHost({ playerId }: { playerId: string | null }) {
     }
   }, [atDesk]);
 
-  const onVerdict = (verdict: Verdict, justifyingStampId: string) => {
+  const onVerdict = (verdict: Verdict, justifyingStampIds: string[]) => {
     if (!folder || pending !== null) {
       return;
     }
     setPending(folder.id);
-    sendCommand({ kind: 'verdict', folderId: folder.id, verdict, justifyingStampId });
+    sendCommand({ kind: 'verdict', folderId: folder.id, verdict, justifyingStampIds });
   };
   const onClose = () => {
     setDismissed(session);

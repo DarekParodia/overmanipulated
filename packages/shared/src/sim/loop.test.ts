@@ -97,11 +97,16 @@ describe('stage 2 loop', () => {
         kind: 'verdict',
         folderId: 'f1',
         verdict: 'publish',
-        justifyingStampId: 't-true-image',
+        justifyingStampIds: ['t-true-image'],
       }),
     ]);
     const verdict = run.events.find((e) => e.kind === 'verdictResult');
-    expect(verdict).toMatchObject({ outcome: 'correct', scoreDelta: 15, speedBonus: true });
+    expect(verdict).toMatchObject({
+      outcome: 'correct',
+      reason: 'correctNormal',
+      scoreDelta: 15,
+      bonuses: { speed: 5, multiStamp: 0, bossCall: 0 },
+    });
     expect(run.state.score).toBe(15);
     expect(run.state.folders.f1).toBeUndefined();
     expect(run.state.results).toHaveLength(1);
@@ -114,6 +119,6 @@ describe('stage 2 loop', () => {
     for (let i = 0; i < 25 && !state.ended; i++) {
       state = runStep(state, {}, [], ctx).state;
     }
-    expect(state.ended).toEqual({ won: true, stars: 2 });
+    expect(state.ended).toEqual({ won: true, stars: 2, lossReason: null });
   });
 });

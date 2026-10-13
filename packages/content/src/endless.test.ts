@@ -143,6 +143,7 @@ describe('endless outcome', () => {
     expect(levelOutcome({ ...state, credibility: 0, score: 250 }, level)).toEqual({
       won: false,
       stars: 0,
+      lossReason: 'credibility',
     });
   });
 });

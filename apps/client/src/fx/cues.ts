@@ -249,6 +249,7 @@ export const cues = {
     haptic: 'success',
     animation: ['cheer', 'scorePop'],
   },
+  /** Right verdict on weak or too little proof (`weakProof` / `incompleteProof`). */
   'verdict.wrongJustification': {
     severity: 2,
     sound: { ids: ['hmm'], bus: 'sfx', volume: 0.75 },

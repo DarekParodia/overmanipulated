@@ -231,10 +231,20 @@ const S = {
   ),
 };
 
+/** Folder-result fields the screenshot fixtures share (protocol v3). */
 const outcomeBase = {
-  speedBonus: false,
+  requiredStamps: 1,
+  bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
   missedStampIds: [] as string[],
 };
+
+/** The reason each fixture outcome stands for (+20/+5, −20/−25, half points, −5/−5). */
+const FIXTURE_REASON = {
+  correct: 'correctImportant',
+  wrongJustification: 'weakProof',
+  wrong: 'publishedFake',
+  expired: 'expired',
+} as const;
 
 function storyForStation(kind: StationKind) {
   const inSix = STORIES.find(
@@ -502,8 +512,9 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
         storyId: deskStory.id,
         playerId: me,
         verdict: deskStory.correctVerdict,
-        justifyingStampId: decisive?.id ?? stampIds[0],
+        justifyingStampIds: [decisive?.id ?? stampIds[0]],
         outcome: 'correct',
+        reason: FIXTURE_REASON.correct,
         scoreDelta: 20,
         credibilityDelta: 5,
         ...outcomeBase,
@@ -521,11 +532,12 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
         storyId: deskStory.id,
         playerId: me,
         verdict: 'publish',
-        justifyingStampId: stampIds[0],
+        justifyingStampIds: [stampIds[0]],
         outcome: 'wrong',
+        reason: FIXTURE_REASON.wrong,
         scoreDelta: -20,
         credibilityDelta: -25,
-        speedBonus: false,
+        ...outcomeBase,
         missedStampIds: deskStory.justifyingStamps,
       });
       await take(six.page, S.deskResultBad, 900);
@@ -627,17 +639,24 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
             levelId: 'l1-burza',
             won: true,
             stars: 2,
-            score: 185,
+            // Two stars on l1 need 205 (starThresholds below).
+            score: 215,
             credibility: 85,
             results,
+            lossReason: null,
+            starThresholds: { two: 205, three: 320 },
+            maxScore: 375,
           },
         });
       },
       {
         results: l1Stories.map((s, i) => ({
+          ...outcomeBase,
           folderId: `r${i}`,
           storyId: s.id,
           outcome: outcomes[i],
+          reason: FIXTURE_REASON[outcomes[i] ?? 'correct'],
+          justifyingStampIds: outcomes[i] === 'expired' ? [] : s.justifyingStamps.slice(0, 1),
           verdict:
             outcomes[i] === 'expired'
               ? null
@@ -680,9 +699,12 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
     const results = STORIES.filter((s) => s.id.startsWith('l3-'))
       .slice(0, 4)
       .map((s, i) => ({
+        ...outcomeBase,
         folderId: `e${i}`,
         storyId: s.id,
         outcome: i === 3 ? 'wrong' : 'correct',
+        reason: i === 3 ? FIXTURE_REASON.wrong : FIXTURE_REASON.correct,
+        justifyingStampIds: s.justifyingStamps.slice(0, 1),
         verdict: i === 3 ? 'publish' : s.correctVerdict,
         scoreDelta: i === 3 ? -20 : 20,
         credibilityDelta: i === 3 ? -25 : 5,
@@ -698,6 +720,9 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
           score: 640,
           credibility: 0,
           results: r,
+          lossReason: 'credibility',
+          starThresholds: null,
+          maxScore: null,
           survivedS: 212,
         },
       });

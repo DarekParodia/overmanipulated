@@ -13,6 +13,12 @@ const EMPTY_LEVEL = {
   deadlineExtensionUsed: false,
 };
 
+describe('protocol version', () => {
+  it('is 3 for the Stage 7 M1 wire (verdict cites, folder result reasons, level end)', () => {
+    expect(PROTOCOL_VERSION).toBe(3);
+  });
+});
+
 describe('client messages', () => {
   it('accepts a join that creates a room', () => {
     const result = parseClientMessage({
@@ -77,20 +83,35 @@ describe('client messages', () => {
       parseClientMessage({ type: 'lobby', action: { kind: 'setRole', role: 'boss' } }).ok,
     ).toBe(false);
     expect(
+      parseClientMessage({ type: 'command', command: { kind: 'verdict', folderId: 'f1' } }).ok,
+    ).toBe(false);
+    expect(parseClientMessage({ type: 'heartbeat', clientTime: 123.4 }).ok).toBe(true);
+  });
+
+  it('accepts a verdict citing one to three stamps, and nothing else', () => {
+    const verdict = (justifyingStampIds: unknown) =>
       parseClientMessage({
         type: 'command',
         command: {
           kind: 'verdict',
           folderId: 'f1',
           verdict: 'publishWithContext',
-          justifyingStampId: 's1',
+          justifyingStampIds,
         },
-      }).ok,
-    ).toBe(true);
+      }).ok;
+    expect(verdict(['s1'])).toBe(true);
+    expect(verdict(['s1', 's2'])).toBe(true);
+    expect(verdict(['s1', 's2', 's3'])).toBe(true);
+    expect(verdict([])).toBe(false);
+    expect(verdict(['s1', 's2', 's3', 's4'])).toBe(false);
+    expect(verdict('s1')).toBe(false);
+    // The pre-v3 single stamp field is gone.
     expect(
-      parseClientMessage({ type: 'command', command: { kind: 'verdict', folderId: 'f1' } }).ok,
+      parseClientMessage({
+        type: 'command',
+        command: { kind: 'verdict', folderId: 'f1', verdict: 'reject', justifyingStampId: 's1' },
+      }).ok,
     ).toBe(false);
-    expect(parseClientMessage({ type: 'heartbeat', clientTime: 123.4 }).ok).toBe(true);
   });
 
   it('rejects unknown types and malformed JSON', () => {
@@ -153,6 +174,9 @@ describe('server messages', () => {
         score: 40,
         credibility: 90,
         results: [],
+        lossReason: null,
+        starThresholds: { two: 120, three: 190 },
+        maxScore: 240,
       },
       { type: 'event', tick: 3, event: { kind: 'playerJoined', playerId: 'p1' } },
       { type: 'error', code: 'roomFull' },
@@ -161,6 +185,67 @@ describe('server messages', () => {
     for (const message of messages) {
       expect(parseServerMessage(message).ok).toBe(true);
     }
+  });
+
+  it('carries a verdict result as a folder result with the deciding player', () => {
+    const verdictResult = {
+      kind: 'verdictResult',
+      folderId: 'f1',
+      storyId: 'l1-story',
+      playerId: 'p1',
+      outcome: 'wrongJustification',
+      reason: 'incompleteProof',
+      verdict: 'publish',
+      scoreDelta: 5,
+      credibilityDelta: 0,
+      justifyingStampIds: ['l1-story-ai'],
+      requiredStamps: 1,
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    };
+    const parse = (event: unknown) => parseServerMessage({ type: 'event', tick: 4, event }).ok;
+    expect(parse(verdictResult)).toBe(true);
+    expect(parse({ ...verdictResult, reason: 'lucky' })).toBe(false);
+    expect(parse({ ...verdictResult, verdict: null })).toBe(false);
+    expect(parse({ ...verdictResult, justifyingStampIds: ['a', 'b', 'c', 'd'] })).toBe(false);
+    expect(parse({ ...verdictResult, requiredStamps: 0 })).toBe(false);
+    expect(parse({ ...verdictResult, bonuses: { speed: -5, multiStamp: 0, bossCall: 0 } })).toBe(
+      false,
+    );
+  });
+
+  it('accepts an endless levelEnd with an unfinished folder and no thresholds', () => {
+    const end = {
+      type: 'levelEnd',
+      levelId: 'endless',
+      won: false,
+      stars: 0,
+      score: 120,
+      credibility: 0,
+      results: [
+        {
+          folderId: 'f9',
+          storyId: 'l3-story',
+          outcome: 'unfinished',
+          reason: 'unfinished',
+          verdict: null,
+          scoreDelta: 0,
+          credibilityDelta: 0,
+          justifyingStampIds: [],
+          requiredStamps: 1,
+          bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+          missedStampIds: ['l3-story-image'],
+        },
+      ],
+      lossReason: 'credibility',
+      starThresholds: null,
+      maxScore: null,
+      survivedS: 312,
+    };
+    expect(parseServerMessage(end).ok).toBe(true);
+    expect(parseServerMessage({ ...end, lossReason: 'time' }).ok).toBe(false);
+    const { lossReason: _dropped, ...withoutReason } = end;
+    expect(parseServerMessage(withoutReason).ok).toBe(false);
   });
 
   it('rejects a snapshot with more than four players', () => {

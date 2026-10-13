@@ -89,7 +89,7 @@ function putOnDesk(run: Run, folderId: string, stamps: string[] = ['t-true-image
 }
 
 const verdict = (folderId: string, v: 'publish' | 'reject' | 'publishWithContext') =>
-  testCommand('p', { kind: 'verdict', folderId, verdict: v, justifyingStampId: 't-true-image' });
+  testCommand('p', { kind: 'verdict', folderId, verdict: v, justifyingStampIds: ['t-true-image'] });
 
 describe('viralShares', () => {
   it('grows exponentially from the start value and is 0 for untagged folders', () => {
@@ -174,7 +174,11 @@ describe('bossCall', () => {
     putOnDesk(run, 'f1');
     const events = tick(run, [verdict('f1', 'publish')]);
     const result = events.find((e) => e.kind === 'verdictResult');
-    expect(result).toMatchObject({ outcome: 'correct' });
+    expect(result).toMatchObject({
+      outcome: 'correct',
+      reason: 'correctNormal',
+      bonuses: { speed: SCORE.speedBonus, multiStamp: 0, bossCall: EVENTS.bossCallBonusScore },
+    });
     // Correct publish of a normal story: 10 points (+ speed bonus 5) + the boss bonus.
     expect(run.state.score).toBe(
       (result?.kind === 'verdictResult' ? result.scoreDelta : -1) as number,
@@ -475,7 +479,7 @@ describe('correction', () => {
         kind: 'verdict',
         folderId: 'f1',
         verdict: 'publishWithContext',
-        justifyingStampId: 'whatever',
+        justifyingStampIds: ['whatever'],
       }),
     ]);
     expect(run.state.credibility).toBe(
@@ -484,6 +488,13 @@ describe('correction', () => {
     expect(run.state.score).toBe(EVENTS.correctionScore);
     expect(levelEvents(events, 'end')).toHaveLength(1);
     expect(run.state.results).toHaveLength(1);
+    expect(run.state.results[0]).toMatchObject({
+      outcome: 'correct',
+      reason: 'correctionFiled',
+      justifyingStampIds: ['whatever'],
+      bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
+      missedStampIds: [],
+    });
   });
 
   it('expires like any folder and ends the event', () => {
@@ -500,7 +511,7 @@ describe('correction', () => {
     const run = newRun(levelWith([correction]));
     run.state = { ...run.state, credibility: 10 };
     runUntil(run, 1100);
-    expect(run.state.ended).toEqual({ won: false, stars: 0 });
+    expect(run.state.ended).toEqual({ won: false, stars: 0, lossReason: 'credibility' });
   });
 });
 
@@ -611,7 +622,7 @@ describe('scripted scenario', () => {
         kind: 'verdict',
         folderId: fix?.id as string,
         verdict: 'publishWithContext',
-        justifyingStampId: 'x',
+        justifyingStampIds: ['x'],
       }),
     ]);
     expect(run.state.nextEventIndex).toBe(5);

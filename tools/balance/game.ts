@@ -176,7 +176,8 @@ export function runGame(scenario: Scenario): RunResult {
     credibilityMin,
     trail,
     spawned: state.nextFolderNumber - 1,
-    resolved: state.results.length,
+    // Folders still in play at the end are recorded as unfinished; they were never resolved.
+    resolved: state.results.filter((r) => r.outcome !== 'unfinished').length,
     expired,
     correct,
     wrongJustification,

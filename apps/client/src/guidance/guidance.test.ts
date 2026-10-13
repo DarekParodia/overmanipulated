@@ -136,6 +136,18 @@ describe('nextStep', () => {
     expect(step.kind).toBe('toStation');
   });
 
+  test('the hint-only AI scanner is no proof: the folder goes to a station that proves it', () => {
+    const scanned: StoryStamps = {
+      stamps: [...story.stamps, { id: 's-ai', station: 'aiScanner' }],
+      justifyingStamps: ['s-ai', 's-registry'],
+    };
+    const step = nextStep(
+      input({ folders: [folder('f', carried, { stamps: ['s-ai'] })], story: () => scanned }),
+    );
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
+  });
+
   test('a story with no justifying station in the level falls back to unchecked ones', () => {
     const only: StoryStamps = {
       stamps: [

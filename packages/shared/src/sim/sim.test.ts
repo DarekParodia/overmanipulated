@@ -159,7 +159,7 @@ describe('step', () => {
   });
 
   it('does not change an ended level', () => {
-    const ended = { ...twoPlayers, ended: { won: true, stars: 1 } };
+    const ended = { ...twoPlayers, ended: { won: true, stars: 1, lossReason: null } };
     expect(step(ended, { a: [input(1, 1, 0)] }, [], ctx).state).toBe(ended);
   });
 

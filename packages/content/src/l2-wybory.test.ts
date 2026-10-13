@@ -63,7 +63,7 @@ describe('level 2 — Wybory samorządowe', () => {
               kind: 'verdict',
               folderId: folder.id,
               verdict: story.correctVerdict,
-              justifyingStampId: stampId,
+              justifyingStampIds: [stampId],
             },
           },
         ],

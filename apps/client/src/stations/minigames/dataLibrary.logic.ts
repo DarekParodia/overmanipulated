@@ -11,11 +11,10 @@ import {
   DATA_LIBRARY_MAX_MISTAKES,
   DATA_LIBRARY_ROWS,
   DATA_LIBRARY_YEARS,
+  type Rng,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 import { cardHasFlags } from './sourceRegistry.logic.ts';
-
-type Rng = ReturnType<typeof createRng>;
 
 export type MismatchKind = 'wrongYear' | 'wrongRow' | 'wrongUnit' | 'cherryPick' | 'invented';
 export type Verdict = 'match' | MismatchKind;

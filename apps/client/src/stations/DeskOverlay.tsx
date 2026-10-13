@@ -1,7 +1,8 @@
 // Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick one collected
-// stamp as the evidence. 2: press one of three big verdict buttons. After the server's verdict
-// the sheet shows the outcome (✓ / ✗, points, what was missed) until dismissed. The managing
-// editor also gets the level's one "+20 s" deadline extension here (S4-04 groundwork).
+// stamp as the evidence (sent as a one-element cite list). 2: press one of three big verdict
+// buttons. After the server's verdict the sheet shows the outcome (✓ / ✗, points, what was
+// missed) until dismissed. The managing editor also gets the level's one "+20 s" deadline
+// extension here (S4-04 groundwork).
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
 import type { Folder, GameEvent, Verdict } from '@redakcja/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -33,7 +34,8 @@ export type DeskOverlayProps = {
   pending: boolean;
   /** The server's answer; switches the sheet to the outcome view. */
   result: VerdictResultEvent | null;
-  onVerdict(verdict: Verdict, justifyingStampId: string): void;
+  /** `justifyingStampIds`: the cited proof, at least one stamp id. */
+  onVerdict(verdict: Verdict, justifyingStampIds: string[]): void;
   onClose(): void;
   onDismissResult(): void;
 };
@@ -74,7 +76,7 @@ function CorrectionView({ folder, story, pending, onVerdict, onClose }: DeskOver
   const canSend = stampId !== null && !pending;
   const send = () => {
     if (stampId !== null && canSend) {
-      onVerdict('publishWithContext', stampId);
+      onVerdict('publishWithContext', [stampId]);
     }
   };
 
@@ -150,7 +152,7 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
     if (chosen === null || pending) {
       return;
     }
-    onVerdict(verdict, chosen);
+    onVerdict(verdict, [chosen]);
   };
 
   useNavIntent((intent: NavIntent) => {
@@ -511,7 +513,7 @@ function ResultView({
           <span className={styles.delta}>
             {pl.desk.credibility(signed(result.credibilityDelta))}
           </span>
-          {result.speedBonus && (
+          {result.bonuses.speed > 0 && (
             <span className={styles.delta}>
               <Icon name="clock" size={20} />
               {pl.desk.speedBonus}

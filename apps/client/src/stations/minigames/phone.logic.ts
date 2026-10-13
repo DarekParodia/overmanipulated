@@ -9,6 +9,7 @@ import {
   PHONE_HOLD_BEAT_MS,
   PHONE_QUEUE_MAX_MS,
   PHONE_QUEUE_MIN_MS,
+  type Rng,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 
@@ -23,8 +24,6 @@ export type PhonePuzzle = {
   /** How long the queue lasts when the player does not skip it. */
   queueMs: number;
 };
-
-type Rng = ReturnType<typeof createRng>;
 
 function shuffled<T>(rng: Rng, items: readonly T[]): T[] {
   const out = [...items];

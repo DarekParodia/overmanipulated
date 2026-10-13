@@ -12,64 +12,101 @@ import {
   WRONG_VERDICT_PENALTY,
 } from '../constants.ts';
 import type { Verdict } from '../domain.ts';
-import type { Desk, Folder, FolderOutcome } from '../entities.ts';
-import type { SimStory } from './content.ts';
+import {
+  type Desk,
+  type Folder,
+  type FolderOutcome,
+  type FolderReason,
+  type FolderResult,
+  NO_BONUSES,
+} from '../entities.ts';
+import { countsAsProof, requiredStampsOf, type SimStory } from './content.ts';
 import { endActiveEvent, raidOfFolder } from './events.ts';
 import type { SimFrame } from './frame.ts';
 import { findInteractionTarget } from './map.ts';
 import { applyCredibility } from './scoring.ts';
 import { folderOnFixture, type GameState } from './state.ts';
 
-export type VerdictEvaluation = {
-  outcome: Exclude<FolderOutcome, 'expired'>;
-  scoreDelta: number;
-  /** The table value; the state's credibility is clamped when it is applied. */
-  credibilityDelta: number;
-  speedBonus: boolean;
-  /** Justifying stamps the folder does not carry. */
-  missedStampIds: string[];
+/**
+ * What a verdict earns; the rest of the folder result comes from the folder and the command.
+ * `credibilityDelta` is the table value; the state's credibility is clamped when it is applied.
+ */
+export type VerdictEvaluation = Pick<
+  FolderResult,
+  'reason' | 'scoreDelta' | 'credibilityDelta' | 'bonuses' | 'missedStampIds'
+> & {
+  outcome: Exclude<FolderOutcome, 'expired' | 'unfinished'>;
 };
 
+type Reward = { score: number; credibility: number; reason: FolderReason };
+
 /** Points and credibility for a correct verdict, before speed bonus and justification. */
-function correctReward(story: SimStory, verdict: Verdict): { score: number; credibility: number } {
+function correctReward(story: SimStory, verdict: Verdict): Reward {
   if (verdict === 'publishWithContext') {
-    return { score: SCORE.correctWithContext, credibility: CREDIBILITY.correctWithContext };
+    return {
+      score: SCORE.correctWithContext,
+      credibility: CREDIBILITY.correctWithContext,
+      reason: 'correctWithContext',
+    };
   }
   if (story.priority === 'important' || story.priority === 'urgent') {
-    return { score: SCORE.correctImportant, credibility: CREDIBILITY.correctImportant };
+    return {
+      score: SCORE.correctImportant,
+      credibility: CREDIBILITY.correctImportant,
+      reason: 'correctImportant',
+    };
   }
-  return { score: SCORE.correctNormal, credibility: 0 };
+  return { score: SCORE.correctNormal, credibility: 0, reason: 'correctNormal' };
 }
 
 /** Penalty for a verdict that is not the story's correct one, by what actually happened. */
-function wrongPenalty(story: SimStory, verdict: Verdict): { score: number; credibility: number } {
+function wrongPenalty(story: SimStory, verdict: Verdict): Reward {
   switch (story.truth) {
     case 'false':
     case 'unverifiable':
       // Any kind of publication puts a fake (or an unchecked claim) in front of readers.
-      return { score: SCORE.publishedFake, credibility: CREDIBILITY.publishedFake };
+      return {
+        score: SCORE.publishedFake,
+        credibility: CREDIBILITY.publishedFake,
+        reason: 'publishedFake',
+      };
     case 'true':
       return verdict === 'reject'
-        ? { score: SCORE.rejectedTrue, credibility: CREDIBILITY.rejectedTrue }
-        : WRONG_VERDICT_PENALTY.contextOnTrue;
+        ? {
+            score: SCORE.rejectedTrue,
+            credibility: CREDIBILITY.rejectedTrue,
+            reason: 'rejectedTrue',
+          }
+        : { ...WRONG_VERDICT_PENALTY.contextOnTrue, reason: 'contextOnTrue' };
     case 'misleading':
     case 'satire':
       return verdict === 'publish'
-        ? WRONG_VERDICT_PENALTY.publishedWithoutContext
-        : WRONG_VERDICT_PENALTY.rejectedContextStory;
+        ? { ...WRONG_VERDICT_PENALTY.publishedWithoutContext, reason: 'publishedWithoutContext' }
+        : { ...WRONG_VERDICT_PENALTY.rejectedContextStory, reason: 'rejectedContextStory' };
   }
+}
+
+/** The cited stamp ids without duplicates, in citing order. */
+export function uniqueCites(citedStampIds: readonly string[]): string[] {
+  return [...new Set(citedStampIds)];
 }
 
 /**
  * Evaluates a verdict on a folder at level time `nowMs` (design doc, "Werdykty" and
- * "Punktacja"). The justification is valid only if the stamp justifies the story's verdict and
- * the team actually collected it.
+ * "Punktacja"). Cites are deduped. A cite is valid proof only if the stamp justifies the story's
+ * verdict and the team collected it; hint-only stamps (the AI scanner) may be valid but never
+ * count toward the `requiredStampsOf(story)` proofs.
+ * 1. Wrong verdict → `wrong`, the penalty of what actually happened.
+ * 2. Any cite that is not valid proof → `wrongJustification` / `weakProof`, half points.
+ * 3. Fewer countable proofs than required → `wrongJustification` / `incompleteProof`, half
+ *    points (citing only the AI scanner lands here).
+ * 4. Otherwise `correct`, with the speed bonus; nothing is reported missed.
  */
 export function evaluateVerdict(
   story: SimStory,
   folder: Folder,
   verdict: Verdict,
-  justifyingStampId: string,
+  citedStampIds: readonly string[],
   nowMs: number,
 ): VerdictEvaluation {
   const missedStampIds = story.justifyingStamps.filter((id) => !folder.stamps.includes(id));
@@ -77,32 +114,40 @@ export function evaluateVerdict(
     const penalty = wrongPenalty(story, verdict);
     return {
       outcome: 'wrong',
+      reason: penalty.reason,
       scoreDelta: penalty.score,
       credibilityDelta: penalty.credibility,
-      speedBonus: false,
+      bonuses: NO_BONUSES,
       missedStampIds,
     };
   }
   const reward = correctReward(story, verdict);
-  const justified =
-    story.justifyingStamps.includes(justifyingStampId) && folder.stamps.includes(justifyingStampId);
-  if (!justified) {
+  const cited = uniqueCites(citedStampIds);
+  const valid = cited.filter(
+    (id) => story.justifyingStamps.includes(id) && folder.stamps.includes(id),
+  );
+  const countable = valid.filter((id) => countsAsProof(story, id));
+  if (valid.length < cited.length || countable.length < requiredStampsOf(story)) {
     return {
       outcome: 'wrongJustification',
+      reason: valid.length < cited.length ? 'weakProof' : 'incompleteProof',
       scoreDelta: Math.round(reward.score * WRONG_JUSTIFICATION_SCORE_FACTOR),
       credibilityDelta: 0,
-      speedBonus: false,
+      bonuses: NO_BONUSES,
       missedStampIds,
     };
   }
   const totalMs = folder.deadlineMs - folder.spawnedAtMs;
-  const speedBonus = folder.deadlineMs - nowMs > totalMs * SPEED_BONUS_REMAINING_FRACTION;
+  const fast = folder.deadlineMs - nowMs > totalMs * SPEED_BONUS_REMAINING_FRACTION;
+  const speed = fast ? SCORE.speedBonus : 0;
   return {
     outcome: 'correct',
-    scoreDelta: reward.score + (speedBonus ? SCORE.speedBonus : 0),
+    reason: reward.reason,
+    scoreDelta: reward.score + speed,
     credibilityDelta: reward.credibility,
-    speedBonus,
-    missedStampIds,
+    // The multi-stamp bonus arrives with multi-stamp folders (S7-18).
+    bonuses: { speed, multiStamp: 0, bossCall: 0 },
+    missedStampIds: [],
   };
 }
 
@@ -115,27 +160,32 @@ function evaluateTagged(
   story: SimStory,
   folder: Folder,
   verdict: Verdict,
-  justifyingStampId: string,
+  citedStampIds: readonly string[],
   nowMs: number,
 ): VerdictEvaluation {
   const tag = folder.tag;
   if (tag?.kind === 'correction' && verdict === 'publishWithContext') {
     return {
       outcome: 'correct',
+      reason: 'correctionFiled',
       scoreDelta: EVENTS.correctionScore,
       credibilityDelta: tag.recoverCredibility,
-      speedBonus: false,
+      bonuses: NO_BONUSES,
       missedStampIds: [],
     };
   }
-  const result = evaluateVerdict(story, folder, verdict, justifyingStampId, nowMs);
+  const result = evaluateVerdict(story, folder, verdict, citedStampIds, nowMs);
   if (
     tag?.kind === 'bossCall' &&
     verdict === 'publish' &&
     story.truth === 'true' &&
     nowMs <= tag.untilMs
   ) {
-    return { ...result, scoreDelta: result.scoreDelta + EVENTS.bossCallBonusScore };
+    return {
+      ...result,
+      scoreDelta: result.scoreDelta + EVENTS.bossCallBonusScore,
+      bonuses: { ...result.bonuses, bossCall: EVENTS.bossCallBonusScore },
+    };
   }
   return result;
 }
@@ -214,44 +264,34 @@ export function stepDesk(state: GameState, frame: SimFrame): GameState {
         if (!desk || !folder || !story || folder.id !== command.folderId) {
           break;
         }
-        const result = evaluateTagged(
+        const evaluation = evaluateTagged(
           story,
           folder,
           command.verdict,
-          command.justifyingStampId,
+          command.justifyingStampIds,
           next.elapsedMs,
         );
+        const result: FolderResult = {
+          folderId: folder.id,
+          storyId: story.id,
+          ...evaluation,
+          verdict: command.verdict,
+          justifyingStampIds: uniqueCites(command.justifyingStampIds),
+          requiredStamps: requiredStampsOf(story),
+        };
         const { [folder.id]: _removed, ...folders } = next.folders;
         next = {
           ...next,
           folders,
           score: next.score + result.scoreDelta,
           credibility: applyCredibility(next.credibility, result.credibilityDelta),
-          results: [
-            ...next.results,
-            {
-              folderId: folder.id,
-              storyId: story.id,
-              outcome: result.outcome,
-              verdict: command.verdict,
-              scoreDelta: result.scoreDelta,
-              credibilityDelta: result.credibilityDelta,
-              missedStampIds: result.missedStampIds,
-            },
-          ],
+          results: [...next.results, result],
         };
         frame.events.push({
           kind: 'verdictResult',
-          folderId: folder.id,
-          storyId: story.id,
-          playerId,
+          ...result,
           verdict: command.verdict,
-          justifyingStampId: command.justifyingStampId,
-          outcome: result.outcome,
-          scoreDelta: result.scoreDelta,
-          credibilityDelta: result.credibilityDelta,
-          speedBonus: result.speedBonus,
-          missedStampIds: result.missedStampIds,
+          playerId,
         });
         next = resolveRaid(next, frame, folder);
         close(desk.id, playerId);

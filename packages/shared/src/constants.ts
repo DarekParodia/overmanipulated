@@ -1,9 +1,9 @@
 // Balance and engine constants shared by client and server.
 // Change values here, never inline (AGENTS.md rule 6).
-import type { Role, StationKind } from './domain.ts';
+import type { Difficulty, Role, StationKind } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 3;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -61,6 +61,8 @@ export const SCORE = {
   correctImportant: 20,
   correctWithContext: 30,
   speedBonus: 5,
+  /** Paid once per proof beyond the first on a fully proven multi-stamp folder (Stage 7). */
+  multiStampBonus: 10,
   publishedFake: -20,
   rejectedTrue: -10,
   expired: -5,
@@ -79,6 +81,12 @@ export const CREDIBILITY = {
 export const SPEED_BONUS_REMAINING_FRACTION = 0.5;
 /** A correct verdict justified by a stamp that does not justify it earns this share of points. */
 export const WRONG_JUSTIFICATION_SCORE_FACTOR = 0.5;
+/** Most distinct justifying stamps a story can require, and a verdict can cite (Stage 7). */
+export const MAX_REQUIRED_STAMPS = 3;
+/** Extra folder time per proof beyond the first, added when a multi-stamp folder spawns. */
+export const MULTI_STAMP_EXTRA_DEADLINE_MS = 20_000;
+/** Campaign level number from which stories may require more than one proof (earlier: warning). */
+export const MULTI_STAMP_FIRST_LEVEL = 4;
 
 // --- Folders, stations, desk ---------------------------------------------------------------
 
@@ -112,6 +120,85 @@ export const ROLE_STATIONS = {
 export const MINIGAME_FAIL_LOCKOUT_MS = 3000;
 /** Client-side time limit for one minigame attempt; running out counts as a failure. */
 export const MINIGAME_TIME_LIMIT_MS = 20_000;
+
+// --- Stage 7: difficulty (S7-16) -------------------------------------------------------------
+// Pure helpers that apply a preset live in `difficulty.ts`. Normal is the identity: every factor
+// is 1, so Normal plays exactly like the authored levels. Rewards are never scaled.
+
+/** One difficulty's tuning. Factors multiply the Normal value; read through `difficulty.ts`. */
+export type DifficultyPreset = {
+  /** Folder time (`deadlineS`) of scheduled and event folders. */
+  readonly deadlineFactor: number;
+  /** Time between scheduled folders, so a smaller factor means more folders per level. */
+  readonly spawnGapFactor: number;
+  /** Hold-to-work time at a station. */
+  readonly workTimeFactor: number;
+  /** Station lockout after a failed minigame. */
+  readonly lockoutFactor: number;
+  /** Score and credibility penalties (wrong verdicts, expiry, corrections). */
+  readonly penaltyFactor: number;
+  /** Time limit of one minigame attempt. */
+  readonly minigameTimeFactor: number;
+  /** Added to the mistake limit of minigames that allow more than one mistake. */
+  readonly extraMistakes: number;
+  /** Whether the "what next" hints may show (the player's setting must allow them too). */
+  readonly hints: boolean;
+  /** Whether a failed minigame reveals its answer. */
+  readonly revealOnFail: boolean;
+};
+
+/** Difficulty presets; provisional until the balance-bot pass (S7-35) retunes them. */
+export const DIFFICULTY = {
+  easy: {
+    deadlineFactor: 1.3,
+    spawnGapFactor: 1.2,
+    workTimeFactor: 0.8,
+    lockoutFactor: 0.5,
+    penaltyFactor: 0.5,
+    minigameTimeFactor: 1.5,
+    extraMistakes: 1,
+    hints: true,
+    revealOnFail: true,
+  },
+  normal: {
+    deadlineFactor: 1,
+    spawnGapFactor: 1,
+    workTimeFactor: 1,
+    lockoutFactor: 1,
+    penaltyFactor: 1,
+    minigameTimeFactor: 1,
+    extraMistakes: 0,
+    hints: true,
+    revealOnFail: true,
+  },
+  hard: {
+    deadlineFactor: 0.85,
+    spawnGapFactor: 0.9,
+    workTimeFactor: 1.15,
+    lockoutFactor: 1.5,
+    penaltyFactor: 1.25,
+    minigameTimeFactor: 0.85,
+    extraMistakes: 0,
+    hints: true,
+    revealOnFail: true,
+  },
+  expert: {
+    deadlineFactor: 0.75,
+    spawnGapFactor: 0.8,
+    workTimeFactor: 1.25,
+    lockoutFactor: 2,
+    penaltyFactor: 1.5,
+    minigameTimeFactor: 0.75,
+    extraMistakes: -1,
+    hints: false,
+    revealOnFail: false,
+  },
+} as const satisfies Record<Difficulty, DifficultyPreset>;
+
+/** New rooms start here; the room keeps its difficulty across level changes. */
+export const DEFAULT_DIFFICULTY: Difficulty = 'normal';
+/** A difficulty never lowers a minigame's mistake limit below this. */
+export const MINIGAME_MIN_MISTAKES = 1;
 
 // --- Pings ---------------------------------------------------------------------------------
 
@@ -152,6 +239,24 @@ export const CONTENT_TRUE_STORY_SHARE = { min: 0.25, max: 0.45 } as const;
 export const CONTENT_TWO_STARS_SHARE = { min: 0.35, max: 0.65 } as const;
 /** Three-star threshold as a share of the level's maximum score (≈ 80%). */
 export const CONTENT_THREE_STARS_SHARE = { min: 0.65, max: 0.95 } as const;
+
+// --- Stage 7: station bag and star shares (S7-16) --------------------------------------------
+
+/**
+ * Star thresholds of a generated run, as shares of its maximum score (balance intent 55 % / 80 %);
+ * a level's `starShares` may override them within the CONTENT_*_STARS_SHARE ranges.
+ */
+export const STAR_SHARES = { two: 0.55, three: 0.8 } as const;
+/** Star thresholds are rounded to a multiple of this many points. */
+export const STAR_THRESHOLD_STEP = 5;
+/** Chance that a bag slot tries stories decidable at several stations before single-station ones. */
+export const BAG_FLEX_CHANCE = 0.3;
+/** The first this many folders of a run prefer single-proof, non-urgent stories. */
+export const BAG_OPENING_SLOTS = 2;
+/** Multi-stamp stories are drawn only from this slot index (0-based) on. */
+export const BAG_MULTI_STAMP_MIN_SLOT = 4;
+/** Floor of a bag folder's deadline after difficulty scaling and the fit-the-level clamp (s). */
+export const BAG_MIN_DEADLINE_S = 30;
 
 // --- S2-11 Pings (client picker) -----------------------------------------------------------
 
@@ -261,6 +366,8 @@ export const ENDLESS = {
   /** `levelEnd.results` keeps at most this many (the latest) entries in a long run. */
   maxResultsSent: 512,
 } as const;
+/** Endless: every station deck should hold at least this many stories (fewer → validator warning). */
+export const ENDLESS_MIN_DECK = 4;
 // --- S4-01: phone station minigame ------------------------------------------------------------
 
 /** Numbers in the phone book the player picks from. */

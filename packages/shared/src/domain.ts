@@ -26,6 +26,8 @@ export const roleSchema = z.enum(['photoEditor', 'archivist', 'reporter', 'manag
 export const pingKindSchema = z.enum(['needArchive', 'fake', 'mine']);
 /** How a station's stamp bears on the verdict (content metadata, shown in the debrief). */
 export const stampRelevanceSchema = z.enum(['decisive', 'misleading', 'irrelevant']);
+/** Room difficulty (Stage 7): picks one preset from `DIFFICULTY` in constants.ts. */
+export const difficultySchema = z.enum(['easy', 'normal', 'hard', 'expert']);
 
 /** Random level events (design doc, "Zdarzenia losowe"); scheduled from level data. */
 export const levelEventKindSchema = z.enum([
@@ -45,12 +47,25 @@ export type Role = z.infer<typeof roleSchema>;
 export type LevelEventKind = z.infer<typeof levelEventKindSchema>;
 export type PingKind = z.infer<typeof pingKindSchema>;
 export type StampRelevance = z.infer<typeof stampRelevanceSchema>;
+export type Difficulty = z.infer<typeof difficultySchema>;
+
+/**
+ * Stations whose stamp is only a hint (design doc: "AI is only a hint"). Such a stamp may be
+ * listed among a story's justifying stamps, but it never counts toward the proof a verdict needs.
+ */
+export const HINT_ONLY_STATIONS = ['aiScanner'] as const satisfies readonly StationKind[];
+
+export function isHintOnly(kind: StationKind): boolean {
+  return (HINT_ONLY_STATIONS as readonly StationKind[]).includes(kind);
+}
 
 export const LEVEL_EVENT_KINDS = levelEventKindSchema.options;
 export const STATION_KINDS = stationKindSchema.options;
 export const VERDICTS = verdictSchema.options;
 export const ROLES = roleSchema.options;
 export const PING_KINDS = pingKindSchema.options;
+/** Easiest first; pickers and per-difficulty tables list them in this order. */
+export const DIFFICULTIES = difficultySchema.options;
 
 /**
  * The verdict a story must get (agents/content-authoring.md, "Truth → verdict").

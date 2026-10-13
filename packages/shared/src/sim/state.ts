@@ -60,7 +60,7 @@ export type GameState = {
   credibility: number;
   /** The managing editor's one deadline extension per level. */
   deadlineExtensionUsed: boolean;
-  /** Every resolved folder, for the level summary. */
+  /** Every resolved folder, then the ones still in play when the level ended (`unfinished`). */
   results: FolderResult[];
   /** Set once when the level is over; the server then sends `levelEnd`. */
   ended: LevelOutcome | null;
