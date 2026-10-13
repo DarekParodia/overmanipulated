@@ -164,14 +164,19 @@ test('the queue fits between the pill and the tools on a 640×360 phone', async 
   await startSolo(player);
 
   const queue = page.getByTestId('hud-queue');
-  for (const count of [0, 2, 5]) {
+  for (const count of [0, 1, 2, 5]) {
     await pin(page, count, false);
     if (count === 0) {
       // The empty queue's wide ghost carries the words; it must fit the band as well.
       await expect(page.getByTestId('hud-next')).toHaveText(/^Nowa teczka za\s\d+\ss$/);
-    } else if (count === 2) {
-      await expect(queue.locator('[data-folder]')).toHaveCount(2);
+    } else if (count === 1) {
+      await expect(queue.locator('[data-folder]')).toHaveCount(1);
       await expect(page.getByTestId('hud-next')).toBeVisible();
+    } else if (count === 2) {
+      // Beside the one-row pill (S7-11) 640 px holds two cards: no third slot for the ghost.
+      await expect(queue.locator('[data-folder]')).toHaveCount(2);
+      await expect(page.getByTestId('hud-next')).toHaveCount(0);
+      await expect(page.locator('[data-more]')).toHaveCount(0);
     } else {
       await expect(queue.locator('[data-folder]').first()).toBeVisible();
       // Every folder is either a card or counted on the chip.

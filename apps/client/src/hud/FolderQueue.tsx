@@ -58,6 +58,7 @@ export function FolderQueue() {
       className={styles.queue}
       aria-label={pl.hud.queueLabel}
       data-testid="hud-queue"
+      data-hud-band
     >
       {queue.length === 0 && view.ghost === null ? (
         <p className={styles.empty}>
