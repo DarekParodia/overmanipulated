@@ -3,7 +3,9 @@
 // landscape size, 640×360. Each round reads the right target from the root's `data-answer`, so
 // it does not depend on the authored pools. The two rounds are pinned to a meaning-changing cut
 // and an invented quote (asserted through `data-variant`), so both the find → judge path and
-// the absent path always run; a new Stenogram stamp on either story (S7-57) must keep that.
+// the absent path always run. Both stories are greybox stories without a Stenogram stamp, so the
+// variant comes from the seed; a Stenogram stamp on either one must keep it. (Since S7-57 every
+// level-5 story has a Stenogram stamp, and none of them is decisive on a false story.)
 import { expect, type Page, test } from '@playwright/test';
 import { closePlayers, createRoom, DESKTOP, openPlayer, PHONE } from './helpers.ts';
 
@@ -92,7 +94,7 @@ test('Stenogram: find the clip, judge the cut or answer „Nie ma w zapisie”',
 
   const rounds = [
     { seed: 1, storyId: 'l0-zalany-rynek', variant: 'cut', wrongFirst: true },
-    { seed: 2, storyId: 'l5-nagranie-podatek', variant: 'absent', wrongFirst: false },
+    { seed: 2, storyId: 'l0-cytat-kandydatki', variant: 'absent', wrongFirst: false },
   ];
   for (const { seed, storyId, variant, wrongFirst } of rounds) {
     await openTranscript(page, seed, storyId);

@@ -74,6 +74,10 @@ export const pl = {
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
   },
+  /** Ads (S7-73): the frame's label, also its name for screen readers. */
+  ads: {
+    label: 'Reklama',
+  },
   lobby: {
     codeLabel: 'Kod pokoju',
     copy: 'Skopiuj kod',
@@ -149,6 +153,16 @@ export const pl = {
     notInRoom: 'Nie jesteś w żadnej redakcji.',
     notReady: 'Nie wszyscy są gotowi.',
     unknownLevel: 'Nie ma takiego wydania.',
+    teamFull: 'Ta redakcja ma już komplet.',
+    spectatorsFull: 'Na widowni nie ma już miejsc.',
+    spectatorsOff: 'Ta redakcja nie wpuszcza widowni.',
+    matchInProgress: 'Pojedynek trwa. Możesz go oglądać.',
+    teamEmpty: 'Każda redakcja potrzebuje gracza.',
+    kicked: 'Gospodarz usunął cię z pokoju.',
+    kickCooldown: 'Gospodarz niedawno cię usunął. Wróć później.',
+    invalidTarget: 'Tej osoby nie ma już w pokoju.',
+    invalidName: 'Ta nazwa nie przejdzie. Wybierz inną.',
+    featureDisabled: 'Ta opcja jest wyłączona na serwerze.',
     connectionLost: 'Zerwane połączenie z redakcją.',
   } satisfies Record<ErrorCode | 'connectionLost', string>,
   settings: {
@@ -567,6 +581,13 @@ export const pl = {
     seconds: (s: number) => `${s} s`,
     noFolder: 'Brak teczki na stanowisku.',
     unknownStory: 'Nieznana teczka.',
+    /**
+     * Role abilities around the overlay (S7-41). The header's Ekspertyza button shows
+     * `touch.ability.expertise` (accessible name from `vocab.abilities`) and the lockout plate's
+     * line `vocab.abilities.secondChance`; this is the button while the press is on its way
+     * (the overlay closes when the stamp lands).
+     */
+    expertiseSending: 'Ekspertyza…',
   },
   desk: {
     title: 'Stół redakcyjny',
@@ -1338,6 +1359,77 @@ export const pl = {
         'Dziękuję, przejdźmy do głosowania.',
       ],
     },
+    /**
+     * Inne media (S7-54): what other outlets say about the folder's claim. Only agencies and
+     * newsrooms with their own reporter count; copies of someone else's post, satire and
+     * anonymous groups do not. Every outlet is invented (Nowe Brzegi); no real brands.
+     */
+    crossCheck: {
+      task: 'Co mówią niezależne media?',
+      claimTitle: 'W teczce',
+      cardsTitle: 'Inne media',
+      /** The kind badge on a coverage card. */
+      kinds: {
+        agency: 'agencja',
+        newsroom: 'redakcja',
+        satire: 'satyra',
+        anonymous: 'anonim',
+        junk: 'portal-klon',
+      },
+      /** The stance chip: a copy looks exactly like a confirmation. */
+      stances: { confirms: 'pisze to samo', echoes: 'pisze to samo', denies: 'zaprzecza' },
+      /** The source line: own reporter, a copied post, none named, or made up for a joke. */
+      sources: {
+        own: 'własny reporter',
+        unnamed: 'bez źródła',
+        invented: 'wymyślone',
+        copied: (via: string) => `za: ${via}`,
+      },
+      /** What a copy took the claim from. */
+      vias: ['post z grupy', 'wpis w sieci', 'film z sieci', 'inny portal'],
+      /** The stamp a copied card (an echo) gets after the round; satire and anonymous fade. */
+      copy: 'kopia',
+      card: (outlet: string, kind: string, stance: string, source: string) =>
+        `${outlet} (${kind}): ${stance}, ${source}`,
+      answers: {
+        confirmed: 'Potwierdzają',
+        denied: 'Zaprzeczają',
+        unconfirmed: 'Za mało źródeł',
+      },
+      right: 'Trafione!',
+      wrong: 'Pudło!',
+      /** Shown after the round: what the independent coverage says. */
+      reasons: {
+        confirmed: 'Co najmniej dwa niezależne źródła to potwierdzają.',
+        denied: 'Niezależne źródło temu zaprzecza.',
+        unconfirmed: 'Za mało niezależnych źródeł, by potwierdzić.',
+      },
+      keys: {
+        keyboard: [
+          { keys: ['←', '→'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'potwierdź' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'potwierdź' },
+        ],
+        touch: [{ keys: ['Stuknij'], label: 'odpowiedź' }],
+      } satisfies KeyHints,
+      /** Invented outlets of Nowe Brzegi, per kind. */
+      outlets: {
+        agency: ['Agencja Nadrzecze', 'Agencja Fala'],
+        newsroom: [
+          'Radio Nadrzecze',
+          'Kurier Nowobrzeski',
+          'TV Brzegi',
+          'Gazeta Portowa',
+          'Tygodnik Błonia',
+        ],
+        satire: ['Brzeski Szpikulec', 'Kurier Absurdu'],
+        anonymous: ['Grupa „Nowe Brzegi Info”', 'Grupa „Plotki z Portu”'],
+        junk: ['nb-prawda24.top', 'szok-brzegi24.top'],
+      },
+    },
   },
   /** Station help (S7-15): what each station checks and how to work it on every device. */
   stationHelp: {
@@ -1489,9 +1581,8 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
-      // Stage 7 stations (S7-48): provisional copy for Inne media; its minigame task (S7-54)
-      // settles the steps against its final controls and button labels. Metadane (S7-52),
-      // Stenogram (S7-53) and Mapa (S7-55) are final.
+      // Stage 7 stations (S7-48): Metadane (S7-52), Stenogram (S7-53), Inne media (S7-54) and
+      // Mapa (S7-55) are final, settled against each minigame's controls and button labels.
       geolocation: {
         purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
         proves: 'Zdjęcie jest z innego miejsca niż podpis',
@@ -1543,23 +1634,23 @@ export const pl = {
         proves: 'Niezależne media potwierdzają albo zaprzeczają',
         steps: {
           keyboard: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             '← i → wybierają odpowiedź, spacja potwierdza',
           ],
           gamepad: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Krzyżak wybiera odpowiedź, A potwierdza',
           ],
           touch: [
-            'Licz tylko media z własnym źródłem',
-            'Kopia cudzego wpisu niczego nie potwierdza',
+            'Licz tylko media z własnym reporterem',
+            'Mniej niż dwa? „Za mało źródeł”',
             'Stuknij swoją odpowiedź',
           ],
         },
         realWorld:
-          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje.',
+          'Tak działa czytanie w poprzek: zamiast ufać jednej stronie, sprawdza się, co podają agencje i inne redakcje. Kopia cudzego wpisu niczego nie potwierdza.',
       },
       metadata: {
         purpose: 'Kiedy, czym i gdzie powstał plik?',
@@ -1767,6 +1858,63 @@ export const pl = {
       minigame: 'Rozwiąż zadanie na stanowisku',
       verdict: 'Zanieś teczkę na stół, wybierz werdykt',
       done: 'Super! Tak trzymaj!',
+    },
+  },
+  /**
+   * The intro (S7-99): the player's buttons and the narrator's script. The narrator is the
+   * editor-in-chief; each line is both the subtitle (typeset at render) and the voiceover text
+   * (`tools/audio/intro-lines.ts` respells key names for the TTS). One sentence is one subtitle
+   * chunk and must fit two lines at 640×360 (intro/intro-script.test.ts). The scenes, their
+   * order and the scripted input tracks are in `intro/intro-script.ts`.
+   */
+  intro: {
+    label: 'Wprowadzenie',
+    skip: 'Pomiń',
+    next: 'Dalej',
+    prev: 'Wstecz',
+    pause: 'Pauza',
+    resume: 'Wznów',
+    /** „Dalej” on the last scene. */
+    finish: 'Do roboty!',
+    /** The chip shown while the browser still blocks audio; subtitles run on regardless. */
+    soundLocked: 'Stuknij, by włączyć głos',
+    scene: (n: number, total: number) => `Scena ${n} z ${total}`,
+    voice: {
+      welcome:
+        'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
+      folders:
+        'Każda teczka to zgłoszenie: prawda, fałszywka albo prawda bez kontekstu. Karta „Następna teczka” pokazuje, za ile sekund wpadnie kolejna.',
+      pickup: {
+        keyboard: 'Chodzisz klawiszami W, A, S i D. Podejdź do taśmy i weź teczkę klawiszem E.',
+        gamepad: 'Chodzisz lewą gałką. Podejdź do taśmy i weź teczkę przyciskiem A.',
+        touch:
+          'Chodzisz, przesuwając kciukiem po lewej stronie ekranu. Przy taśmie wciśnij przycisk „Podnieś”.',
+      } satisfies Record<Device, string>,
+      work: {
+        keyboard:
+          'Zanieś teczkę na stanowisko i przytrzymaj spację. Potem rozwiąż krótkie zadanie.',
+        gamepad:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk X. Potem rozwiąż krótkie zadanie.',
+        touch:
+          'Zanieś teczkę na stanowisko i przytrzymaj przycisk „Pracuj”. Potem rozwiąż krótkie zadanie.',
+      } satisfies Record<Device, string>,
+      stations:
+        'Każde stanowisko sprawdza co innego, na przykład Lupa szuka starszych kopii zdjęcia. Dobrze rozwiązane zadanie daje pieczątkę: to twój dowód.',
+      desk: 'Z dowodami idź do stołu redakcyjnego. Najpierw wskaż dowód, potem werdykt: Publikuj, Odrzuć albo Z kontekstem.',
+      proof:
+        'Liczy się dowód, który naprawdę rozstrzyga. Słaby dowód to tylko połowa punktów, nawet przy dobrym werdykcie. Trudniejsze teczki wymagają dwóch albo trzech dowodów.',
+      credibility:
+        'Pilnuj terminów i wiarygodności gazety. Spóźnienie kosztuje, ale fałszywka w druku kosztuje najwięcej. Gdy wiarygodność spadnie do zera, wydanie przepada.',
+      roles: {
+        keyboard:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz klawiszem R, a potem musi się odnowić.',
+        gamepad:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz przyciskiem RB, a potem musi się odnowić.',
+        touch:
+          'Każdy może wybrać rolę. Rola daje premię i zdolność, na przykład Ekspertyzę. Zdolność włączasz czwartym przyciskiem po prawej, a potem musi się odnowić.',
+      } satisfies Record<Device, string>,
+      team: 'Rozmawiajcie i dzielcie się pracą. Fioletowy dymek podpowie, co dalej.',
+      end: 'Po wydaniu Kolegium wyjaśni każdą teczkę i pokaże, za co są punkty i gwiazdki. Do roboty!',
     },
   },
   /** Editorial briefing before a level (S3-03). */

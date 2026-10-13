@@ -153,6 +153,8 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'transcript.find': skip('own-action'),
   'transcript.right': skip('own-action'),
   'transcript.miss': skip('own-action'),
+  'crossCheck.right': skip('own-action'),
+  'crossCheck.wrong': skip('own-action'),
   'endless.tempo': chip('clock', t.tempoUp, 'warn'),
   'endless.over': skip('visual-elsewhere'),
   'endless.record': chip('trophy', t.record, 'good'),

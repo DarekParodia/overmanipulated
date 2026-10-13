@@ -32,7 +32,7 @@ Zespół wygrywa poziom, jeśli przed końcem czasu zdobędzie co najmniej 1 gwi
 
 1. Jeden gracz zakłada pokój i dostaje 4-literowy kod. Pozostali wpisują go na stronie gry. Nie trzeba zakładać konta, wystarczy pseudonim.
 2. Każdy wybiera rolę. Role dają premię, ale nie blokują żadnego stanowiska, więc zespół może grać w dowolnym składzie.
-3. Gospodarz wybiera poziom z kampanii. Przed startem gracze widzą krótkie „briefing redakcyjny”: temat dnia i nowe mechaniki.
+3. Gospodarz wybiera poziom z kampanii i poziom trudności (patrz „Poziomy trudności”). Przed startem gracze widzą krótki „briefing redakcyjny”: temat dnia, nowe mechaniki, liczbę teczek w tym rozdaniu i progi gwiazdek.
 
 ### Role
 
@@ -51,10 +51,10 @@ WASD lub strzałki to ruch, E to podniesienie i odłożenie teczki, Spacja to pr
 
 ### Pętla rozgrywki
 
-1. **Zgłoszenie wpada.** Na taśmie przy wejściu pojawia się teczka. Ma typ (zdjęcie, cytat, post, nagranie, statystyka, artykuł), wagę (zwykły / ważny / pilny) i licznik czasu.
+1. **Zgłoszenie wpada.** Na taśmie przy wejściu pojawia się teczka. Ma typ (zdjęcie, cytat, post, nagranie, statystyka, artykuł), wagę (zwykły / ważny / pilny) i licznik czasu. Teczki rozdaje worek stanowisk (patrz „Kampania”), więc każde stanowisko poziomu dostaje podobną porcję pracy.
 2. **Gracz podnosi teczkę i niesie ją na stanowisko.** Każde stanowisko to minigra trwająca 3–8 sekund (patrz niżej). Po ukończeniu na teczce pojawia się pieczątka z wynikiem, np. „Zdjęcie znalezione w sieci w 2019 r.”.
-3. **Zbieranie dowodów.** Do pewnego werdyktu potrzebne są zwykle 2–3 pieczątki. Nie każde stanowisko pomaga przy każdym typie materiału. Zły dobór narzędzia kosztuje czas, a nie punkty.
-4. **Stół redakcyjny.** Gracz kładzie teczkę na stole i wybiera werdykt: Publikuj, Odrzuć albo Publikuj z kontekstem. Przy werdykcie musi wskazać pieczątkę, która go uzasadnia. To blokuje zgadywanie.
+3. **Zbieranie dowodów.** Pieczątka jest dowodem, gdy rozstrzyga sprawę i uzasadnia właściwy werdykt. Zwykła teczka potrzebuje jednego dowodu. Od poziomu 4 zdarzają się teczki z kilkoma dowodami: wymagają 2–3 dowodów z różnych stanowisk, mają na karcie znaczek „k/N” (ile dowodów już jest, ile trzeba) i dostają 20 sekund więcej na każdy dowód ponad pierwszy. Skaner AI daje tylko wskazówkę: jego pieczątka nigdy nie liczy się jako dowód. Nie każde stanowisko pomaga przy każdym typie materiału. Zły dobór narzędzia kosztuje czas, a nie punkty.
+4. **Stół redakcyjny.** Gracz kładzie teczkę na stole i wybiera werdykt: Publikuj, Odrzuć albo Publikuj z kontekstem. Przy werdykcie wskazuje tyle pieczątek, ile dowodów wymaga teczka (zwykle jedną). To blokuje zgadywanie.
 5. **Wynik.** Gra natychmiast pokazuje efekt. Przy błędzie pokazuje też, co dokładnie przeoczono.
 
 ### Stanowiska weryfikacji
@@ -86,13 +86,38 @@ WASD lub strzałki to ruch, E to podniesienie i odłożenie teczki, Spacja to pr
 | Trafny werdykt, materiał ważny lub pilny | +20 | +5 |
 | Trafny werdykt „Publikuj z kontekstem” | +30 | +5 |
 | Premia za tempo (ponad połowa czasu w zapasie) | +5 | bez zmian |
+| Premia za dowody (teczka z kilkoma dowodami, wszystkie wskazane) | +10 za każdy dowód ponad pierwszy | bez zmian |
+| Trafny werdykt ze słabym dowodem (wskazana pieczątka niczego nie rozstrzyga) | połowa punktów, bez premii | bez zmian |
+| Trafny werdykt z niepełnym dowodem (za mało dowodów albo sam Skaner AI) | połowa punktów, bez premii | bez zmian |
 | Opublikowana fałszywka | −20 | −25 |
 | Odrzucony prawdziwy materiał | −10 | −10 |
+| Materiał mylący lub satyra opublikowane bez kontekstu | −10 | −10 |
+| Odrzucony materiał mylący lub satyra | −5 | bez zmian |
+| Zbędny kontekst przy prawdziwym materiale | −5 | bez zmian |
 | Przeterminowane zgłoszenie (nikt nie zdążył) | −5 | −5 |
 
-Wiarygodność startuje od 100. Gdy spadnie do 0, redakcja traci zaufanie czytelników i poziom kończy się porażką. Kara za opublikowaną fałszywkę jest celowo największa, a kara za przeterminowanie najmniejsza. Gra uczy w ten sposób, że lepiej się spóźnić niż podać nieprawdę.
+Wiarygodność startuje od 100. Gdy spadnie do 0, redakcja traci zaufanie czytelników i poziom kończy się porażką. Kara za opublikowaną fałszywkę jest celowo największa, a kara za przeterminowanie najmniejsza. Gra uczy w ten sposób, że lepiej się spóźnić niż podać nieprawdę. Kary (punkty i Wiarygodność) rosną z poziomem trudności, nagrody nigdy się nie zmieniają.
 
-Gwiazdki: 1 gwiazdka za przetrwanie z dodatnim wynikiem, 2 i 3 gwiazdki za progi punktowe ustalone dla każdego poziomu.
+**Skaner AI to tylko wskazówka.** Detektor podaje prawdopodobieństwo, a nie dowód. Jego pieczątkę można wskazać przy werdykcie, ale nie liczy się do wymaganych dowodów: werdykt oparty tylko na skanerze daje połowę punktów i komunikat „Skaner AI to tylko wskazówka”. Sprawę rozstrzyga inne stanowisko, np. Telefon do źródła albo Archiwum.
+
+Gwiazdki: 1 gwiazdka za przetrwanie z dodatnim wynikiem. Progi 2 i 3 gwiazdek gra liczy dla każdego rozdania osobno: 55% i 80% najlepszego wyniku możliwego w tej rozgrywce, zaokrąglone do 5 punktów. Poziom może je przesunąć (Pierwszy dzień: 55% i 85%, Makieta: 50% i 80%). Briefing i ekran wyników pokazują progi.
+
+### Poziomy trudności
+
+Gospodarz wybiera poziom trudności w poczekalni, przed briefingiem. Nowy pokój zaczyna od „Normalnego”, a wybór zostaje przy zmianie poziomu i powtórce. Postęp kampanii i tablica wyników trybu nieskończonego liczą się osobno dla każdego poziomu trudności.
+
+| | Łatwy | Normalny | Trudny | Ekspert |
+| --- | --- | --- | --- | --- |
+| Czas na teczkę | ×1,3 | ×1 | ×0,85 | ×0,75 |
+| Odstęp między teczkami (mniejszy = więcej teczek) | ×1,2 | ×1 | ×0,9 | ×0,8 |
+| Praca na stanowisku | ×0,8 | ×1 | ×1,15 | ×1,25 |
+| Blokada po nieudanej minigrze | ×0,5 | ×1 | ×1,5 | ×2 |
+| Kary (punkty i Wiarygodność) | ×0,5 | ×1 | ×1,25 | ×1,5 |
+| Czas na minigrę | ×1,5 | ×1 | ×0,85 | ×0,75 |
+| Dopuszczalne pomyłki w minigrach, które pozwalają na więcej niż jedną | +1 | bez zmian | bez zmian | −1 (co najmniej 1) |
+| Podpowiedzi „co dalej” i odpowiedź po nieudanej minigrze | tak | tak | tak | nie |
+
+Nagrody są takie same na każdym poziomie trudności, więc najlepszy możliwy wynik rośnie tylko z liczbą teczek, a progi gwiazdek idą za nim. Symulacja z botami (docs/balance.md) pokazuje zamierzoną drabinkę: na „Łatwym” debiutanci wygrywają każdy poziom, na „Normalnym” trzy gwiazdki to głównie sprawna drużyna, na „Trudnym” przeciętna drużyna nadal wygrywa, ale rzadko ma więcej niż dwie gwiazdki, a „Ekspert” zostawia trzy gwiazdki najlepszym.
 
 ### Zdarzenia losowe
 
@@ -120,10 +145,14 @@ Gra ma kampanię z 6 poziomów i tryb nieskończony. Akcja toczy się w fikcyjny
 | 2. Wybory samorządowe | Kampania na prezydenta miasta | Archiwum, werdykt „z kontekstem” | Zmyślony cytat, wyrwanie z kontekstu, fałszywy sondaż |
 | 3. Afera w szkole | Viral o dyrektorze liceum | Telefon do źródła, zdarzenie „To już wszędzie jest!” | Plotka bez źródła, screen bez linku, presja społeczna |
 | 4. Zdrowie | Nowy suplement i „cudowne badanie” | Biblioteka danych | Zmanipulowana statystyka, fałszywy ekspert, korelacja jako przyczyna |
-| 5. Głęboka podróbka | Nagranie burmistrza | Skaner AI, zdarzenie „Telefon od szefa” | Deepfake audio i wideo, obraz z AI |
+| 5. Głęboka podróbka | Nagranie burmistrza | Skaner AI, Stenogram, Metadane, zdarzenie „Telefon od szefa”; większa sala (24×14) | Deepfake audio i wideo, obraz z AI, wycięty cytat |
 | 6. Atak | Skoordynowana kampania przed referendum | Nalot botów, sprostowania | Sieć botów, astroturfing, hashtag tworzony sztucznie |
 
-Tryb nieskończony losuje zgłoszenia ze wszystkich poziomów i przyspiesza z każdą minutą. Ma tablicę wyników dla pokoju.
+Przed kampanią jest poziom 0 „Makieta”: próbny dyżur z samouczkiem.
+
+**Worek stanowisk.** Kolejność teczek nie jest stała. Każdy poziom ma pulę historii, a gra przy każdym briefingu rozdaje je na nowo: stanowiska, które rozstrzygają historie z puli, idą na zmianę pełnymi, przetasowanymi rundami, a do każdego miejsca na taśmie trafia inna historia, którą wskazane stanowisko rozstrzyga. Dzięki temu nie tworzy się kolejka do jednego stanowiska, a powtórka poziomu to nowe rozdanie. Dwie pierwsze teczki są zawsze proste (jeden dowód, bez pilnych), a teczki z kilkoma dowodami pojawiają się najwcześniej jako piąte. Przewodnik „co dalej” kieruje najpierw do stanowiska, które wskazał worek. Poziomy 5 i 6 mają jeszcze stałą kolejność teczek; dołączą do worka razem z nowymi stanowiskami.
+
+Tryb nieskończony rozdaje zgłoszenia ze wszystkich poziomów tym samym workiem (każde stanowisko ma swoją talię historii) i przyspiesza z każdą minutą. Ma tablicę wyników dla pokoju.
 
 ### Rodzaje materiałów
 

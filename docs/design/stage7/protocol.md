@@ -1,6 +1,6 @@
 # Stage 7 — protocol ledger
 
-PROTOCOL_VERSION ledger. Current value: 6 (S7-48).
+PROTOCOL_VERSION ledger. Current value: 7 (S7-77).
 
 Rules
 - At most one bump per milestone. A milestone is a deployment unit.
@@ -76,7 +76,7 @@ M5 → no WebSocket bump
 - Client IP (already in M1): Caddy sets X-Real-IP from {client_ip}.
 
 M6 → v7 (bumped by S7-77)
-- Primitives: roomMode (coop | versus), roomVisibility, memberKind, teamIndex (0..1), roomName (trimmed, 1..24, no control characters, passes the shared name filter), versusEndReason (score | credibility | forfeit | draw), clientId (opaque random id from localStorage, 16..64 chars).
+- Primitives: roomMode (coop | versus), roomVisibility, memberKind, teamIndex (0..1), roomName (trimmed, 1..24, no control characters; the shared name filter is applied by the server, which answers invalidName), versusEndReason (score | credibility | forfeit | draw), clientId (opaque random id from localStorage, 16..64 chars of [A-Za-z0-9_-]).
 - join += as? ('player' when omitted) and clientId?.
 - Lobby actions: setMode, setTeam {team, playerId?}, setSpectator {spectator, playerId?}, setVisibility, setRoomName {name | null}, setSpectatorsAllowed {allowed}, kick {playerId}, transferHost {playerId}.
 - roomState:
@@ -86,7 +86,7 @@ M6 → v7 (bumped by S7-77)
   - MAX_PLAYERS stays 4 per sim.
 - New teamScoreSchema. snapshot += team?, scoreboard?. The event message += team?.
 - Spectator-only messages:
-  - spectatorEvent {team, event: spectatorEventSchema}, where spectatorEventSchema = gameEventSchema ∪ verdictMasked {kind, playerId, folderId, spawnKey, closedBy: 'verdict' | 'expired'} ∪ verdictRevealed {result: folderResult & {playerId}}.
+  - spectatorEvent {tick, team, event: spectatorEventSchema}, where spectatorEventSchema = gameEventSchema ∪ verdictMasked {kind, playerId | null, folderId, spawnKey, closedBy: 'verdict' | 'expired'} (strict: no other field) ∪ verdictRevealed {result: folderResult & {playerId | null}}. playerId is null for an expiry.
   - In versus, verdictResult (and the reason of an expiry) for a spawnKey reaches spectators only as verdictMasked until both teams have closed that key or the level ends. Players never receive spectatorEvent.
   - New playerStatsSchema and matchStats {tick, players[], teams[]}, at 1 Hz to spectators.
 - levelEnd += team?, stats?, versus? {winnerTeam | null, reason, teams[2], rivalResults[] keyed by spawnKey}.

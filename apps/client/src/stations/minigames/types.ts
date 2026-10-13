@@ -42,4 +42,5 @@ export type MinigameProps = {
 
 export type Minigame = ComponentType<MinigameProps>;
 
-export type MinigameRegistry = Partial<Record<StationKind, Minigame>>;
+/** One minigame per station kind: a new kind without its minigame does not compile (S7-56). */
+export type MinigameRegistry = Record<StationKind, Minigame>;

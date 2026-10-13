@@ -3,6 +3,67 @@
   font-weight: 700;
 }
 
+/* The minigame while a sent Ekspertyza waits for its stamp: greyed out, no more taps. */
+.sending {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* The header's Ekspertyza button (S7-41): a white secondary pill (the minigame keeps the one
+   yellow action) with the ability icon in the ready green, the name and the key cap. */
+.expertise {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: var(--space-1);
+  min-height: 3.5rem;
+  padding: 0 var(--space-2) 0 var(--space-3);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.expertise svg {
+  color: var(--green-dark);
+  stroke-width: 3;
+}
+
+.expertise:hover:not(:disabled) {
+  background: var(--surface-soft);
+}
+
+.expertise:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.expertise:disabled {
+  cursor: default;
+  box-shadow: var(--pop-pressed);
+  transform: translateY(3px);
+}
+
+.expertiseText {
+  padding-top: 0.1em;
+}
+
+.expertiseKey {
+  display: inline-flex;
+}
+
 /* Small panel at the bottom centre while working or locked out. */
 .plate {
   position: absolute;
@@ -54,6 +115,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The lockout plate's Druga szansa line: the press that reopens the station now. */
+.second {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-md);
+  color: var(--blue-dark);
+}
+
 @keyframes pop {
   from {
     transform: translateX(-50%) scale(0.8);
@@ -76,6 +146,19 @@
 
   .plateText {
     font-size: var(--text-lg);
+  }
+
+  /* Icon only, 48 px: the header is short on phones. */
+  .expertise {
+    justify-content: center;
+    width: 3rem;
+    min-height: 3rem;
+    padding: 0;
+  }
+
+  .expertiseText,
+  .expertiseKey {
+    display: none;
   }
 }
 

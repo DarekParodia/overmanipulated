@@ -4,6 +4,7 @@
 //   --levels a,b       level ids (default l1..l6 and endless)
 //   --no-endless       skip endless
 //   --difficulty a,b   difficulties (easy, normal, hard, expert; default normal)
+//   --crew-sizes a,b   only the matrix crews of these sizes (default: all, sizes 2-4)
 //   --workers N        worker threads (default: cores, max 8; 1 = in-process)
 //   --json FILE        also write every run result as JSON
 //   --md               print markdown headings (for docs/balance.md)
@@ -18,7 +19,7 @@ import {
   ENDLESS_LEVEL_ID,
 } from '../../packages/shared/src/index.ts';
 import type { RunResult } from './game.ts';
-import { buildMatrix, type Job, runJob } from './jobs.ts';
+import { buildMatrix, crewsOfSizes, type Job, runJob } from './jobs.ts';
 import {
   campaignTable,
   endlessTable,
@@ -42,12 +43,14 @@ const includeEndless =
 const asked = (option('difficulty') ?? 'normal').split(',').map((d) => difficultySchema.parse(d));
 // In ladder order whatever the order on the command line, each difficulty once.
 const difficulties: Difficulty[] = DIFFICULTIES.filter((d) => asked.includes(d));
+const crewSizes = option('crew-sizes')?.split(',').map(Number);
 const jobs = buildMatrix({
   levels: levels.filter((id) => id !== ENDLESS_LEVEL_ID),
   seeds: Number(option('seeds') ?? 50),
   endlessSeeds: Number(option('endless-seeds') ?? 24),
   includeEndless,
   difficulties,
+  ...(crewSizes ? { crews: crewsOfSizes(crewSizes) } : {}),
 });
 
 async function runAll(all: Job[], workers: number): Promise<RunResult[]> {
@@ -144,8 +147,8 @@ for (const levelId of shown) {
 }
 out.push(
   md
-    ? '#### Station load (average ×3, share of level time busy)\n'
-    : '== Station load (average ×3, share of level time busy)',
+    ? '#### Station load (average ×3 and ×4, share of level time busy)\n'
+    : '== Station load (average ×3 and ×4, share of level time busy)',
 );
 out.push(stationLoadTable(summaries), '');
 out.push(md ? '#### Intent checks\n' : '== Intent checks');
