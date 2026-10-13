@@ -649,11 +649,9 @@ describe('validate CLI', () => {
   it('passes on the real content', () => {
     const result = run();
     const out = result.stdout.toString();
-    // Decisive stamps that do not justify (S7-21 warning); S7-33 cleaned up l4, S7-58 cleans l6.
+    // Decisive stamps that do not justify (S7-21 warning): S7-33 cleaned up l4, S7-58 cleaned l6.
     const decisiveNotJustifying = [...out.matchAll(/decisive stamp "([^"]+)" does not justify/g)];
-    expect(decisiveNotJustifying.map((match) => match[1])).toEqual([
-      'l6-frekwencja-w-poludnie-archive',
-    ]);
+    expect(decisiveNotJustifying.map((match) => match[1])).toEqual([]);
     // New stories wait for their level's bag pool: since S7-31 and S7-33 every l3 and l4 story
     // is in its level's pool.
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
