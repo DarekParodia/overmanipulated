@@ -212,11 +212,16 @@ describe('endless mode in a room', () => {
     patch = { credibility: 0 };
     registry.tick();
     const end = host.last('levelEnd');
+    // l0 deals from a bag: the thresholds and best score are the dealt run's (S7-23).
+    const run = registry.inspect(codeOf(host))?.run?.summary;
+    if (!run?.stars) {
+      throw new Error('a campaign run has star thresholds');
+    }
     expect(end).toMatchObject({
       levelId: 'l0-greybox',
       lossReason: 'credibility',
-      starThresholds: { two: 120, three: 190 },
-      maxScore: 240,
+      starThresholds: run.stars,
+      maxScore: run.maxScore,
     });
     expect(end && 'survivedS' in end).toBe(false);
     expect(stored).toEqual([]);

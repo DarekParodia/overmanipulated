@@ -328,8 +328,13 @@ describe('roles', () => {
 
 describe('results and back to lobby', () => {
   it('sends levelEnd and moves the room to results when the level ends', () => {
-    const { host, b, c } = threePlayerRoom();
+    const { host, b, c, code } = threePlayerRoom();
     playToResults(host, b, c);
+    // l0 deals from a bag, so the thresholds and best score are the dealt run's (S7-23).
+    const run = registry.inspect(code)?.run?.summary;
+    if (!run?.stars) {
+      throw new Error('a campaign run has star thresholds');
+    }
     for (const connection of [host, b, c]) {
       expect(connection.last('levelEnd')).toEqual({
         type: 'levelEnd',
@@ -341,8 +346,8 @@ describe('results and back to lobby', () => {
         credibility: 72,
         results: [RESULT],
         lossReason: null,
-        starThresholds: { two: 120, three: 190 },
-        maxScore: 240,
+        starThresholds: run.stars,
+        maxScore: run.maxScore,
       });
       expect(connection.last('roomState')?.phase).toBe('results');
     }
