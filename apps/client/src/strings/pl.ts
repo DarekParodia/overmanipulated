@@ -305,6 +305,8 @@ export const pl = {
       archivist: 'Archiwista',
       reporter: 'Reporter',
       managingEditor: 'Redaktor prowadzący',
+      generalist: 'Wszechstronny',
+      rescuer: 'Ratownik',
     } satisfies Record<Role, string>,
     /** Role abilities (S7-36, glossary): the HUD chip's accessible name and the help texts. */
     abilities: {
@@ -342,6 +344,19 @@ export const pl = {
     noRoleBonus: 'Bez premii',
     /** Speed bonus line built from ROLE_PERKS (fasterAt and workFactor), short station names. */
     fasterAt: (stations: readonly string[], percent: number) => `${listPl(stations)} +${percent}%`,
+    /** Speed bonus line of a role that is faster at every station (Wszechstronny). */
+    everywhereFaster: (percent: number) => `Wszędzie +${percent}%`,
+    /** Bonus line of a role with Koło ratunkowe (Ratownik), from RESCUE_ADD_MS. */
+    rescuePassive: (seconds: number) => `Raz ratuje teczkę (+${seconds}\u00a0s)`,
+    /** What each role's ability does, in a few words (lobby detail panel, tutorial; S7-44/45). */
+    abilityWhat: {
+      photoEditor: 'zadanie przy obrazie od razu',
+      archivist: 'zadanie przy dokumentach od razu',
+      reporter: 'pieczątka Telefonu bez chodzenia',
+      managingEditor: `+${ABILITY.extendDeadline.addMs / 1000}\u00a0s dla teczki w\u00a0ręce lub najpilniejszej`,
+      generalist: 'po pudle od razu jeszcze raz',
+      rescuer: 'rzut do najbliższej wolnej osoby',
+    } satisfies Record<Role, string>,
     /** Roles whose bonus is not (only) speed get their own line. */
     specialBonuses: {
       reporter: 'Telefon bez kolejki',

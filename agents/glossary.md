@@ -156,6 +156,8 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Archiwista | `archivist` | `archive` and `transcript` 40% faster | Ekspertyza (`documents` family) |
 | Reporter | `reporter` | `phone` and `crossCheck` 40% faster; skips the `phone` queue | Telefon z terenu |
 | Redaktor prowadzący | `managingEditor` | — | Przedłużenie |
+| Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
+| Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
 
 ## Abilities (`Ability`, Stage 7)
 

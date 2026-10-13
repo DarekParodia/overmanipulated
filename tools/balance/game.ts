@@ -29,9 +29,12 @@ import {
 import { Bot, Team } from './bot.ts';
 import { PROFILES, type ProfileId, type SkillProfile } from './models.ts';
 
-/** Roles by crew size, in join order (design doc: roles give a bonus, none blocks a station). */
+/**
+ * Roles by crew size, in join order (design doc: roles give a bonus, none blocks a station). A
+ * solo player is Wszechstronny: 20% faster at every station (S7-43).
+ */
 export const ROLES_BY_CREW: Record<number, readonly Role[]> = {
-  1: ['photoEditor'],
+  1: ['generalist'],
   2: ['photoEditor', 'archivist'],
   3: ['photoEditor', 'archivist', 'reporter'],
   4: ['photoEditor', 'archivist', 'reporter', 'managingEditor'],
