@@ -96,10 +96,15 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
   const paged = useMediaQuery(PHONE_QUERY);
   const footer = useRef<HTMLElement>(null);
   const endless = levelEnd.levelId === ENDLESS_LEVEL_ID;
+  // The level's stations as the game left them: proof from a station the level lacks is left
+  // out of the Kolegium's proof section.
+  const [levelStations] = useState(() => useGame.getState().stations.map((s) => s.kind));
   // One card per folder, so card points add up to the score; endless groups them per story.
+  // The folders still in play at the end come last.
   const cards = useMemo(
-    () => kolegiumCards(levelEnd.results, debriefStory, endless ? 'story' : 'folder'),
-    [levelEnd.results, endless],
+    () =>
+      kolegiumCards(levelEnd.results, debriefStory, endless ? 'story' : 'folder', levelStations),
+    [levelEnd.results, endless, levelStations],
   );
   const totals = useMemo(
     () => resultTotals(levelEnd.results, levelEnd.score),

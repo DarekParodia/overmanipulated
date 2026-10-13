@@ -8,12 +8,22 @@ import {
 } from '@redakcja/shared';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import type { ConfigMeta, ServerConfig } from '../config.ts';
 import { type Db, isDatabaseHealthy } from '../db/client.ts';
 import { getBlunderTallies } from '../db/queries/blunder-votes.ts';
 import { getTopEntries } from '../db/queries/leaderboard.ts';
 import type { RoomRegistry } from '../rooms/registry.ts';
 
-export type ApiDeps = { db: Db; registry: RoomRegistry };
+export type ApiDeps = {
+  db: Db;
+  registry: RoomRegistry;
+  /** Running config.json (S7-68); absent in tests that build the app directly (defaults). */
+  config?: () => ServerConfig;
+  /** Where the running config came from and how often it was reloaded with changes. */
+  configMeta?: () => ConfigMeta;
+};
+
+const DEFAULT_CONFIG_META: ConfigMeta = { source: 'defaults', revision: 0 };
 
 /** Supervisor view of the debrief votes: which stories fooled the class most (S3-02). */
 const blunderStatsQuerySchema = z.object({ levelId: levelIdSchema });
@@ -25,6 +35,8 @@ export function healthStatus(deps: ApiDeps) {
     db: dbOk ? ('ok' as const) : ('error' as const),
     rooms: deps.registry.roomCount,
     protocolVersion: PROTOCOL_VERSION,
+    // Lets an operator confirm a reload took effect; neither value is sensitive.
+    config: deps.configMeta?.() ?? DEFAULT_CONFIG_META,
   };
 }
 

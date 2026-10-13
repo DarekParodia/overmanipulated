@@ -15,3 +15,5 @@ playwright-report/
 data/
 /test-results/
 /playwright-report/
+# Operator config of a deployment (see config/config.example.json); never committed.
+/config/config.json

@@ -245,7 +245,7 @@
   display: grid;
   grid-template-columns: auto auto;
   grid-template-areas:
-    ". ping"
+    "ability ping"
     "work interact";
   align-items: end;
   gap: var(--space-2);
@@ -257,7 +257,7 @@
 
 .stageMirrored .pvButtons {
   grid-template-areas:
-    "ping ."
+    "ping ability"
     "interact work";
   transform-origin: left bottom;
 }
@@ -287,6 +287,14 @@
 
 .pvPing {
   grid-area: ping;
+  justify-self: center;
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
+/* The role ability (S7-39): the same size as ping, in the cell the real controls reuse. */
+.pvAbility {
+  grid-area: ability;
   justify-self: center;
   width: 2.1rem;
   height: 2.1rem;

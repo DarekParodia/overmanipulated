@@ -62,6 +62,7 @@ let leaving = false;
 export const runtime = createRuntime(
   () => useApp.getState().playerId,
   (message) => send(message),
+  (command) => send({ type: 'command', command }),
 );
 
 function send(message: ClientMessage): void {

@@ -16,12 +16,19 @@ export type DebriefStory = {
   headline: string;
   correctVerdict?: Verdict;
   stamps?: readonly { id: string; station: StationKind; text: string }[];
+  /** The stamps that prove the verdict; without them the cited and missed ones stand in. */
+  justifyingStamps?: readonly string[];
   debrief?: { what: string; technique: string; tool: string; realWorld: string };
 };
 
 export type DebriefStoryLookup = (storyId: string) => DebriefStory | undefined;
 
-export type MissedStamp = { id: string; station: StationKind; text: string };
+/** Where a deciding proof was when the folder closed: cited at the desk, only in the folder, or
+ * never collected. */
+export type ProofStatus = 'cited' | 'collected' | 'missing';
+
+/** One row of 'Dowód, który rozstrzygał': a justifying, non-hint stamp of the story. */
+export type ProofRow = { id: string; station: StationKind; text: string; status: ProofStatus };
 
 export type DebriefCard = {
   storyId: string;
@@ -35,8 +42,12 @@ export type DebriefCard = {
   correctVerdict: Verdict | null;
   scoreDelta: number;
   debrief: DebriefStory['debrief'] | null;
-  /** Deciding proof nobody checked; hint-only stamps (the AI scanner) are never proof. */
-  missedStamps: MissedStamp[];
+  /**
+   * The story's deciding proof and where each one was, for a folder that did not end `correct`;
+   * null for a correct one (the section is hidden). Hint-only stamps (the AI scanner) are never
+   * proof, and a stamp from a station the level does not have is left out unless it was used.
+   */
+  proof: ProofRow[] | null;
 };
 
 /**

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import {
   avatarPositions,
   closePlayers,
@@ -14,6 +14,61 @@ import {
 } from './helpers.ts';
 
 test.afterEach(closePlayers);
+
+type RunLine = { folders: number; maxScore: number; stars: { two: number; three: number } | null };
+type RoomStateFrame = { type: 'roomState'; phase: string; difficulty: string; run: RunLine | null };
+
+/** Every `roomState` the page receives from the game server, oldest first. */
+function recordRoomStates(page: Page): RoomStateFrame[] {
+  const seen: RoomStateFrame[] = [];
+  page.on('websocket', (socket) => {
+    socket.on('framereceived', ({ payload }) => {
+      if (typeof payload !== 'string') {
+        return;
+      }
+      const message = JSON.parse(payload) as { type?: string };
+      if (message.type === 'roomState') {
+        seen.push(message as RoomStateFrame);
+      }
+    });
+  });
+  return seen;
+}
+
+type BriefingRunText = Record<'difficulty' | 'folders' | 'two' | 'three' | 'rule', string>;
+
+/**
+ * Keeps what the briefing's run line says the moment it renders: the e2e server's briefing lasts
+ * only 1.5 s, so polling for it later could miss it.
+ */
+async function recordBriefingRun(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const store = window as unknown as { __briefingRun?: unknown };
+    const read = (id: string, attribute?: string) => {
+      const element = document.querySelector(`[data-testid="${id}"]`);
+      return (attribute ? element?.getAttribute(attribute) : element?.textContent) ?? '';
+    };
+    const observer = new MutationObserver(() => {
+      if (document.querySelector('[data-testid="briefing-run"]')) {
+        store.__briefingRun = {
+          difficulty: read('briefing-difficulty'),
+          folders: read('briefing-folders'),
+          two: read('briefing-stars-2', 'aria-label'),
+          three: read('briefing-stars-3', 'aria-label'),
+          rule: read('briefing-rule'),
+        };
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
+}
+
+async function briefingRunText(page: Page): Promise<BriefingRunText | null> {
+  return page.evaluate(
+    () => ((window as unknown as { __briefingRun?: unknown }).__briefingRun ?? null) as never,
+  );
+}
 
 test('players create and join a room, start, and see each other move', async ({
   browser,
@@ -171,4 +226,67 @@ test('joining an unknown room shows a Polish error', async ({ browser }, testInf
   await player.page.getByLabel('Kod pokoju').fill('ZZZZ');
   await player.page.getByRole('button', { name: 'Dołącz' }).click();
   await expect(player.page.getByRole('alert')).toHaveText('Nie ma redakcji z takim kodem.');
+});
+
+test('the host picks Trudny, the guest sees it, and the briefing shows the dealt run', async ({
+  browser,
+}, testInfo) => {
+  const options = testInfo.project.name === 'mobile' ? PHONE : DESKTOP;
+  const host = await openPlayer(browser, 'Zośka', options);
+  const guest = await openPlayer(browser, 'Łukasz', options);
+  const hostFrames = recordRoomStates(host.page);
+  const code = await createRoom(host);
+  await joinRoom(guest, code);
+  const lobbyFolders = async () =>
+    Number.parseInt((await guest.page.getByTestId('level-folders').textContent()) ?? '', 10);
+  await expect(guest.page.getByTestId('difficulty-chip')).toHaveText('Poziom: Normalny');
+  const normalFolders = await lobbyFolders();
+
+  const hard = host.page.getByRole('radio', { name: 'Trudny' });
+  if (options === DESKTOP) {
+    // Keyboard (and the pad, through the same menu intents): right from Normalny, then confirm.
+    await host.page.getByRole('radio', { name: 'Normalny' }).focus();
+    await host.page.keyboard.press('ArrowRight');
+    await expect(hard).toBeFocused();
+    await host.page.keyboard.press('Enter');
+  } else {
+    await host.page.locator('label').filter({ has: hard }).click();
+  }
+  await expect(hard).toBeChecked();
+  await expect(guest.page.getByTestId('difficulty-chip')).toHaveText('Poziom: Trudny');
+  // Trudny packs the bag's slots tighter: the guest's level card counts more folders at once.
+  await expect.poll(lobbyFolders).toBeGreaterThan(normalFolders);
+  const hardFolders = await lobbyFolders();
+
+  // A new difficulty resets ready, so the guest signs again before the host can start.
+  const start = host.page.getByRole('button', { name: 'Do składu!' });
+  await expect(start).toBeDisabled();
+  await setReady(guest, true);
+  for (const player of [host, guest]) {
+    await recordBriefingRun(player.page);
+  }
+  await start.click();
+  // The briefing has rendered its run line for both (the level itself is covered above).
+  for (const player of [host, guest]) {
+    await expect.poll(() => briefingRunText(player.page)).not.toBeNull();
+  }
+
+  const dealt = hostFrames.find((frame) => frame.phase === 'briefing' && frame.run !== null);
+  const run = dealt?.run;
+  const stars = run?.stars;
+  if (!dealt || !run || !stars) {
+    throw new Error('no dealt run in the briefing');
+  }
+  expect(dealt.difficulty).toBe('hard');
+  // The lobby named the very count the run dealt.
+  expect(run.folders).toBe(hardFolders);
+  for (const player of [host, guest]) {
+    const shown = await briefingRunText(player.page);
+    expect(shown?.difficulty).toBe('Trudny');
+    expect(shown?.folders).toMatch(new RegExp(`^${run.folders} tecz`));
+    expect(shown?.two).toBe(`2 gwiazdki od ${stars.two}\u00a0pkt`);
+    expect(shown?.three).toBe(`3 gwiazdki od ${stars.three}\u00a0pkt`);
+    expect(shown?.rule).toContain(`${run.maxScore}\u00a0pkt`);
+    expect(shown?.rule).toContain(`${Math.round((stars.two / run.maxScore) * 100)}\u00a0%`);
+  }
 });

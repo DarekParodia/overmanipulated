@@ -3,7 +3,9 @@
 // It never reveals a story's truth or verdict; it only points at stations whose stamp the
 // folder still lacks (the ones whose stamp proves a verdict first) and at the desk once the
 // folder holds as many proofs as its story needs (`requiredStamps`, S7-19; the hint-only AI
-// scanner never is one).
+// scanner never is one). A dealt folder's bag station (`folder.bagStation`, S7-24) comes first
+// among the stations it would point at anyway, so flex stories spread over the stations the bag
+// planned instead of drifting back to the busiest one.
 import {
   countsAsProof,
   type Desk,
@@ -143,7 +145,7 @@ function missingStamp(folder: Folder, story: StoryStamps | undefined, kind: Stat
 /**
  * Stations worth visiting with this folder: the level's stations whose stamp it still lacks,
  * the ones whose stamp would prove the verdict first, free ones (no folder on them, not locked)
- * first.
+ * first, and among those the folder's bag station first.
  */
 export function stationsToVisit(
   folder: Folder,
@@ -159,7 +161,16 @@ export function stationsToVisit(
   });
   const pool = justifying.length > 0 ? justifying : unchecked;
   const free = pool.filter((f) => !folderOn(input.folders, f.id) && !isLocked(input, f.id));
-  return free.length > 0 ? free : pool;
+  return bagStationFirst(free.length > 0 ? free : pool, folder.bagStation);
+}
+
+/** The fixtures of the folder's bag station first, the rest in their order (a stable sort). */
+function bagStationFirst(fixtures: Fixture[], bagStation: StationKind | undefined): Fixture[] {
+  if (bagStation === undefined) {
+    return fixtures;
+  }
+  const rank = (f: Fixture) => (f.station === bagStation ? 0 : 1);
+  return [...fixtures].sort((a, b) => rank(a) - rank(b));
 }
 
 /** The station is locked after a failed minigame or down in an outage: nothing to do there. */

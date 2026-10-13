@@ -633,6 +633,15 @@ export const cues = {
     sound: { ids: ['back'], bus: 'sfx', volume: 0.4 },
     particles: { preset: 'dust', count: 2 },
   },
+  /**
+   * A local ability press with nothing to do: no role, or the ability is still cooling (S7-39).
+   * Only the presser hears it; the HUD chip shake (`abilityDenied`) arrives with S7-40.
+   */
+  'ability.denied': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui' },
+    haptic: 'tick',
+  },
   /** Ekspertyza solved the station's task: the stamp lands without a minigame. */
   'ability.expertise': {
     severity: 2,
