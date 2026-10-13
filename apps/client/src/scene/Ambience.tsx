@@ -19,7 +19,7 @@ import { runtime } from '../net/session.ts';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { type AmbienceLayout, ambienceLayout, type PropTile } from './ambience-layout.ts';
-import { ELEVATION } from './CameraRig.tsx';
+import { ELEVATION } from './camera-framing.ts';
 import { box, cylinder, merge, mergePainted, ring, useGeometries } from './geometry.ts';
 import { useQuality } from './quality.ts';
 import { renderState } from './render-state.ts';
