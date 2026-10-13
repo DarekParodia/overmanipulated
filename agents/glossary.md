@@ -279,5 +279,8 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Wstrzymanie reklam | `useAdRequestPause`, `setAdRequestsPaused` (`pauseAdRequests`) | Pause guard mounted in `App`: ad requests are paused on every screen that is not an ad screen |
 | Odstęp od reklamy | `--space-ad-gap` (9.5rem), `AD_MIN_GAP_PX` (150) | Clear space between an ad and any control (AdSense game-page guidance) |
 | Znacznik wieku zgody | `data-tag-for-under-age-of-consent` (TFUA), `data-tag-for-age-treatment` (TFAT) | Per-unit tags from `adRequestAttributes`: TFUA in `limited` mode (Google serves limited ads), TFAT `1` child / `2` teen |
+| Zgody reklamowe | `adConsent` (`pl.menu.adConsent`, `openConsentSettings`) | The footer link that reopens Google's consent message (`googlefc.showRevocationMessage`), required by AdSense; shown only while the ad loader is `ready` |
+| Stopka menu | `MenuFooter` (`screens/menu/MenuFooter.tsx`) | Row of minor ghost-button links under the main-menu card, never yellow; renders nothing while it has no link |
+| Strażnik reklam (e2e) | ad guard (`guardAdRequests`, `trackContext(context, { ads })` in `e2e/helpers.ts`) | Every e2e context without an ads config fails its test (in `closePlayers`) if it sends a request to a Google ad host; `openPlayer` and `trackContext` apply it, `guardAdRequests(page.context())` covers Playwright's own `page` fixture; only `ads.spec.ts` opts out |
 
 Missing a term? Add it here in the same commit that introduces it.
