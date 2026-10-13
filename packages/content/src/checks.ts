@@ -8,6 +8,7 @@ import {
   CONTENT_TWO_STARS_SHARE,
   createRng,
   DIFFICULTIES,
+  ENDLESS_MIN_DECK,
   isHintOnly,
   MULTI_STAMP_FIRST_LEVEL,
   multiStampExtraMs,
@@ -17,7 +18,14 @@ import {
 } from '@redakcja/shared';
 import type { z } from 'zod';
 import { bagSlotTimes, bagStations, matchStories, pinnedCounts } from './bag.ts';
-import { levelNumberOf, levelStoryIds, maxLevelScore, proofCount } from './rules.ts';
+import { ENDLESS_STATIONS, endlessDecks, endlessStoryPool } from './endless.ts';
+import {
+  levelNumberOf,
+  levelStoryIds,
+  maxLevelScore,
+  proofCount,
+  type StoryIdSource,
+} from './rules.ts';
 import {
   type LevelBag,
   type LevelFile,
@@ -111,6 +119,7 @@ export function validateContent(
   // --- Levels ---
   const storiesById = new Map([...stories].map(([id, located]) => [id, located.story]));
   const levelIds = new Set<string>();
+  const parsedLevels: LevelFile[] = [];
   const used = new Set<string>();
   /** Stations of every (parsed) level that schedules, pools or spawns the story. */
   const hostStations = new Map<string, Set<StationKind>>();
@@ -137,6 +146,7 @@ export function validateContent(
       continue;
     }
     levelIds.add(level.id);
+    parsedLevels.push(level);
     checkTypography(level.title, ['title'], (path, severity, message) =>
       add(severity, file, path, message),
     );
@@ -179,7 +189,47 @@ export function validateContent(
       add('warning', file, [index, 'id'], `story "${id}" is not scheduled in any level`);
     }
   }
+
+  checkEndlessDecks(parsedLevels, [...storiesById.values()], (path, severity, message) =>
+    add(severity, ENDLESS_ISSUE_FILE, path, message),
+  );
   return issues;
+}
+
+/** Where endless deck issues are filed: they come from all campaign levels, not one file. */
+export const ENDLESS_ISSUE_FILE = 'endless';
+
+/**
+ * Endless deals each station's folders from its own deck (S7-22): the pool stories the station
+ * decides. A non-hint endless station whose deck holds fewer than ENDLESS_MIN_DECK stories repeats
+ * them often, so it is reported. Skipped while no campaign level (above the level 0 greybox)
+ * schedules or pools stories, because endless then has no campaign pool to deal from.
+ */
+export function checkEndlessDecks(
+  levels: readonly (StoryIdSource & { readonly id: string })[],
+  stories: readonly Story[],
+  report: Report,
+): void {
+  const campaign = levels.filter(
+    (level) => (levelNumberOf(level.id) ?? 0) !== 0 && levelStoryIds(level).length > 0,
+  );
+  if (campaign.length === 0) {
+    return;
+  }
+  const decks = endlessDecks(endlessStoryPool(campaign, stories));
+  for (const station of ENDLESS_STATIONS) {
+    if (isHintOnly(station)) {
+      continue;
+    }
+    const size = decks.get(station)?.length ?? 0;
+    if (size < ENDLESS_MIN_DECK) {
+      report(
+        ['decks', station],
+        'warning',
+        `endless deck of station ${station} holds ${size} stories; aim for at least ${ENDLESS_MIN_DECK} (add stories decided at ${station} to a campaign level)`,
+      );
+    }
+  }
 }
 
 function rawStoryIds(data: unknown): string[] {

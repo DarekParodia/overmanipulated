@@ -11,7 +11,9 @@ import {
 } from './__fixtures__/bag-level.ts';
 import { BROKEN_CASES, realContent, toFiles } from './__fixtures__/broken.ts';
 import {
+  checkEndlessDecks,
   checkRegistration,
+  ENDLESS_ISSUE_FILE,
   formatIssue,
   maxLevelScore,
   maxStoryScore,
@@ -79,7 +81,9 @@ describe('campaign level rules', () => {
       [{ file: 'levels/l1-burza.json', data: rest }],
       [{ file: 'stories/l1-burza.json', data: l1Stories }],
     );
-    expect(issues.map((i) => [i.severity, i.path])).toEqual([
+    // Level 1 alone leaves most endless decks empty; that warning has its own tests.
+    const ownIssues = issues.filter((issue) => issue.file !== ENDLESS_ISSUE_FILE);
+    expect(ownIssues.map((i) => [i.severity, i.path])).toEqual([
       ['warning', 'topic'],
       ['warning', 'briefingPoints'],
     ]);
@@ -301,6 +305,51 @@ describe('registration', () => {
         path: '',
         message: 'registers "levels/gone.json", which does not exist',
       },
+    ]);
+  });
+});
+
+describe('endless decks (checkEndlessDecks)', () => {
+  const deckIssues = (levels: Parameters<typeof checkEndlessDecks>[0]) => {
+    const issues: [string, string, string][] = [];
+    checkEndlessDecks(levels, STORIES, (path, severity, message) =>
+      issues.push([path.join('.'), severity, message]),
+    );
+    return issues;
+  };
+
+  it('accepts the real campaign: every endless deck holds at least ENDLESS_MIN_DECK stories', () => {
+    expect(deckIssues(LEVELS)).toEqual([]);
+  });
+
+  it('warns about every thin non-hint deck when only level 1 feeds endless', () => {
+    const l1 = LEVELS.find((level) => level.id === 'l1-burza');
+    if (!l1) {
+      throw new Error('level 1 missing');
+    }
+    const thin = (station: string): [string, string, string] => [
+      `decks.${station}`,
+      'warning',
+      `endless deck of station ${station} holds 0 stories; aim for at least 4 (add stories decided at ${station} to a campaign level)`,
+    ];
+    expect(deckIssues([l1])).toEqual([thin('archive'), thin('phone'), thin('dataLibrary')]);
+  });
+
+  it('skips content without a campaign level (the greybox alone feeds no endless pool)', () => {
+    expect(deckIssues(LEVELS.filter((level) => level.id === 'l0-greybox'))).toEqual([]);
+    expect(deckIssues([])).toEqual([]);
+  });
+
+  it('files the deck warnings under the endless pseudo-file in validateContent', () => {
+    const l1 = LEVEL_FILES['levels/l1-burza.json'];
+    const issues = validateContent(
+      [{ file: 'levels/l1-burza.json', data: l1 }],
+      [{ file: 'stories/l1-burza.json', data: STORY_FILES['stories/l1-burza.json'] }],
+    );
+    expect(issues.filter((issue) => issue.file === ENDLESS_ISSUE_FILE).map((i) => i.path)).toEqual([
+      'decks.archive',
+      'decks.phone',
+      'decks.dataLibrary',
     ]);
   });
 });

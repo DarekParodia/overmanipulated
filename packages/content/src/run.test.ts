@@ -3,6 +3,7 @@ import { DIFFICULTIES, ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { bagContent, FIXTURE_BAG } from './__fixtures__/bag-level.ts';
 import { realContent } from './__fixtures__/broken.ts';
 import { bagDeadlineS, bagSlotTimes, generateBagLevel, starThresholds } from './bag.ts';
+import { generateEndlessLevel } from './endless.ts';
 import { LEVEL_FILES } from './files.ts';
 import { getLevel, LEVELS, prepareLevelRun, STORIES } from './index.ts';
 import { levelStoryIds, maxLevelScore, proofCount } from './rules.ts';
@@ -168,7 +169,7 @@ describe('prepareRun and applyDifficulty', () => {
     expect(levelStoryIds(preview)).toEqual(bagFile.bag?.pool ?? []);
   });
 
-  it('generates endless per seed with scaled deadlines and no stars', () => {
+  it('generates endless per seed and difficulty with scaled deadlines and no stars', () => {
     const endless = getLevel(ENDLESS_LEVEL_ID);
     if (!endless) {
       throw new Error('endless preview missing');
@@ -177,6 +178,8 @@ describe('prepareRun and applyDifficulty', () => {
     const expert = prepareRun(endless, { seed: 3, difficulty: 'expert' }, LEVELS, STORIES);
     expect(normal.level.schedule[0]?.deadlineS).toBe(80);
     expect(expert.level.schedule[0]?.deadlineS).toBe(60);
+    expect(expert.level).toEqual(generateEndlessLevel(3, LEVELS, STORIES, 'expert'));
+    expect(runSummary(expert).folders).toBeGreaterThan(runSummary(normal).folders);
     expect(runSummary(expert).stars).toBeNull();
     expect('endless' in expert.level && expert.level.endless).toBe(true);
   });

@@ -82,6 +82,11 @@ has no `stars`). Event stories always stay in `events`, never in the pool.
   and multi-stamp stories come from slot `BAG_MULTI_STAMP_MIN_SLOT` on, whenever the pool allows.
 - **Coverage.** The pool must give every slot a distinct story on every difficulty, for every
   way the last partial round can fall; the validator names the station that runs short.
+- **Endless** deals the same way from every campaign level's stories (schedule or pool, the
+  greybox left out): shuffled rounds over the endless stations that decide a story, and each slot
+  draws from its station's *deck* (the stories that station decides; a flex story sits in several
+  decks), never the previous folder's story. Keep every non-hint endless deck at
+  `ENDLESS_MIN_DECK` stories or more, so a station does not repeat itself.
 
 ## Writing guidance
 
@@ -134,3 +139,5 @@ Errors fail the command, warnings are printed but pass. Rules beyond the Zod sch
   station that decides no pool story (it stays idle); `lastSpawnS` plus the longest Normal
   deadline (with the multi-stamp extra) past `durationS` (late folders are cut); `starShares`
   outside the star aim ranges.
+- Endless: a non-hint endless station whose deck holds fewer than `ENDLESS_MIN_DECK` stories
+  (reported under `endless`, only when a campaign level feeds the endless pool).
