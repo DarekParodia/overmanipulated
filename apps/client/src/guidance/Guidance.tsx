@@ -55,6 +55,9 @@ function HintBubble() {
   if (!enabled || !step || BUSY_KINDS.has(step.kind)) {
     return null;
   }
+  // The wait hint counts down to the next folder (S7-09): it pops in once, not every second,
+  // and screen readers get the static line instead of an announcement per second.
+  const ticking = step.kind === 'wait';
   return (
     <p
       className={styles.bubble}
@@ -67,9 +70,14 @@ function HintBubble() {
         <Icon name={HINT_ICONS[step.kind]} size={28} />
       </span>
       {/* Keyed so each new hint pops in. */}
-      <span key={step.text} className={styles.bubbleText}>
+      <span
+        key={ticking ? step.kind : step.text}
+        className={styles.bubbleText}
+        aria-hidden={ticking || undefined}
+      >
         {typeset(step.text)}
       </span>
+      {ticking && <span className="visually-hidden">{pl.guidance.hint.wait}</span>}
     </p>
   );
 }

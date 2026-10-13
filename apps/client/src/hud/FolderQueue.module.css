@@ -1,6 +1,6 @@
 /*
  * Folder queue: up to three chunky cards centred between the HUD pill (left) and the screen
- * tools (right), plus a round "+N" chip for the rest.
+ * tools (right), plus a round "+N" chip for the rest or a dashed ghost card for the next folder.
  */
 .queue {
   position: absolute;
@@ -136,6 +136,71 @@
   line-height: 1;
 }
 
+/*
+ * --- Ghost card (S7-09): the next scheduled folder in a free slot ----------------------------
+ * Dashed outline, no pop shadow and a soft fill (legible over any part of the scene): a slot
+ * waiting for a card. While a due folder waits for a free conveyor tile the band turns orange
+ * and shows the conveyor, so the state is never colour alone.
+ */
+.ghost {
+  background: var(--surface-soft);
+  border-style: dashed;
+  box-shadow: none;
+  color: var(--text-soft);
+}
+
+.ghost .band {
+  justify-content: center;
+  border-bottom-style: dashed;
+  background: var(--surface-sunk);
+  color: var(--text-soft);
+}
+
+.ghostFull {
+  color: var(--text);
+}
+
+.ghostFull .band {
+  background: var(--orange);
+  color: var(--outline);
+}
+
+.ghostText {
+  margin: 0;
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: 1.1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ghostFull .ghostText {
+  font-size: var(--text-md);
+  line-height: var(--leading-tight);
+}
+
+/* Empty queue: one low ghost on its side (band left, the words right), like the old pill. */
+.ghostWide {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.ghostWide .band {
+  border-bottom-style: none;
+  border-right: var(--stroke) dashed var(--outline);
+  border-radius: calc(var(--radius-md) - var(--stroke)) 0 0 calc(var(--radius-md) - var(--stroke));
+}
+
+.ghostWide .ghostText {
+  align-self: center;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-md);
+  white-space: nowrap;
+}
+
 /* --- Deadline warning (< 10 s): red card, gentle shake --------------------------------------- */
 
 .warn {
@@ -240,6 +305,38 @@
   .empty {
     font-size: var(--text-sm);
     padding: var(--space-1) var(--space-3);
+  }
+
+  /* Ghost on its side: the hourglass (or conveyor) on the band, the seconds on the right. */
+  .ghost .band {
+    border-bottom-style: none;
+    border-right-style: dashed;
+  }
+
+  .ghostText {
+    align-self: center;
+    min-width: 2.2em;
+    padding: 0.18em var(--space-1) 0;
+    font-size: var(--text-lg);
+    line-height: 1;
+  }
+
+  /* 'Taśma pełna' on two short lines keeps the ghost as narrow as a folder card. */
+  .ghostFull .ghostText {
+    width: min-content;
+    padding: 0 var(--space-1);
+    font-size: var(--text-sm);
+    line-height: var(--leading-tight);
+  }
+
+  .ghostWide .band {
+    border-radius: calc(var(--radius-sm) - var(--stroke)) 0 0 calc(var(--radius-sm) - var(--stroke));
+  }
+
+  .ghostWide .ghostText {
+    padding: 0.18em var(--space-3) 0;
+    font-size: var(--text-sm);
+    line-height: 1.2;
   }
 }
 
