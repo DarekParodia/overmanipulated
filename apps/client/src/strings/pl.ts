@@ -19,6 +19,7 @@ import type {
 import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
+import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import { listPl, pluralPl } from './plural.ts';
 
@@ -968,6 +969,72 @@ export const pl = {
       ],
     },
     /**
+     * Mapa (S7-55): the folder's photo shows two landmarks and its caption names a district; the
+     * town map shows each district's two landmarks. All districts are invented parts of Nowe
+     * Brzegi; the landmarks are generic shapes, no real buildings.
+     */
+    geolocation: {
+      task: 'Znajdź na mapie miejsce ze zdjęcia',
+      /** The caption chip on the photo: where the folder says it was taken. */
+      caption: (district: string) => `Podpis: ${district}`,
+      notHere: 'Nie ma na mapie',
+      right: 'Namierzone!',
+      wrong: 'Pudło!',
+      /** Shown after the round: where the photo was really taken. */
+      reasons: {
+        match: () => 'Zdjęcie z miejsca z podpisu.',
+        otherDistrict: (claimed: string, actual: string) => `To nie ${claimed} – to ${actual}.`,
+        otherTown: () => 'Tych miejsc nie ma w Nowych Brzegach.',
+      } satisfies Record<GeoOutcome, (claimed: string, actual: string) => string>,
+      /** Screen-reader names: the photo and one district tile. */
+      photoLabel: (a: string, b: string) => `Zdjęcie: ${a} i ${b}`,
+      tileLabel: (district: string, a: string, b: string) => `${district}: ${a} i ${b}`,
+      keys: {
+        keyboard: [
+          { keys: ['Strzałki'], label: 'wybierz' },
+          { keys: ['Spacja'], label: 'tu!' },
+          { keys: ['Q'], label: 'nie ma na mapie' },
+        ],
+        gamepad: [
+          { keys: ['Krzyżak'], label: 'wybierz' },
+          { keys: ['A'], label: 'tu!' },
+          { keys: ['Y'], label: 'nie ma na mapie' },
+        ],
+        touch: [
+          { keys: ['Stuknij'], label: 'dzielnicę' },
+          { keys: ['Nie ma na mapie'], label: 'inne miasto' },
+        ],
+      } satisfies KeyHints,
+      /** Twelve invented districts of Nowe Brzegi, each ≤ 9 characters to fit a map tile. */
+      districts: [
+        'Rynek',
+        'Port',
+        'Dworzec',
+        'Lipowa',
+        'Klonowa',
+        'Młyny',
+        'Zatoka',
+        'Wzgórze',
+        'Park',
+        'Nadrzecze',
+        'Stocznia',
+        'Błonia',
+      ],
+      /** Landmark names, for screen readers (the glyphs carry the meaning on screen). */
+      landmarks: {
+        clockTower: 'wieża zegarowa',
+        archBridge: 'most łukowy',
+        fountain: 'fontanna',
+        tramStop: 'przystanek tramwajowy',
+        twinChurch: 'kościół z dwiema wieżami',
+        waterTower: 'wieża ciśnień',
+        portCrane: 'dźwig portowy',
+        windmill: 'wiatrak',
+        lighthouse: 'latarnia morska',
+        monument: 'pomnik',
+      } satisfies Record<Landmark, string>,
+    },
+    /**
      * Metadane (S7-52): the folder's description of a file next to the file's own data. One
      * field contradicts the description, none does, or a social site stripped the data.
      * All places, devices and programs are invented; no real brands or towns.
@@ -1399,31 +1466,31 @@ export const pl = {
         realWorld:
           'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
       },
-      // Stage 7 stations (S7-48): provisional copy for Mapa and Inne media; each minigame task
-      // (S7-54, S7-55) settles the steps against its final controls and button labels. Metadane
-      // (S7-52) and Stenogram (S7-53) are final.
+      // Stage 7 stations (S7-48): provisional copy for Inne media; its minigame task (S7-54)
+      // settles the steps against its final controls and button labels. Metadane (S7-52),
+      // Stenogram (S7-53) and Mapa (S7-55) are final.
       geolocation: {
         purpose: 'Gdzie naprawdę zrobiono to zdjęcie?',
         proves: 'Zdjęcie jest z innego miejsca niż podpis',
         steps: {
           keyboard: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
             'Strzałki wybierają dzielnicę, spacja ją wskazuje',
-            'Q, gdy takiego miejsca nie ma na mapie',
+            'Nie ma obu? Q – „Nie ma na mapie”',
           ],
           gamepad: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
             'Krzyżak wybiera dzielnicę, A ją wskazuje',
-            'Y, gdy takiego miejsca nie ma na mapie',
+            'Nie ma obu? Y – „Nie ma na mapie”',
           ],
           touch: [
-            'Znajdź na zdjęciu dwa charakterystyczne miejsca',
-            'Stuknij dzielnicę, w której oba stoją',
-            'Nie ma ich na mapie? Stuknij przycisk',
+            'Znajdź dzielnicę z oboma obiektami ze zdjęcia',
+            'Stuknij dzielnicę, w której stoją oba',
+            'Nie ma obu? Stuknij „Nie ma na mapie”',
           ],
         },
         realWorld:
-          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic.',
+          'Tak działa geolokalizacja: szczegóły zdjęcia porównuje się z mapami i zdjęciami ulic. Podpis może kłamać, widok nie.',
       },
       transcript: {
         purpose: 'Czy wycięty cytat znaczy to samo co całość?',

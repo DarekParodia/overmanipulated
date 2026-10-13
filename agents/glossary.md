@@ -128,7 +128,7 @@ Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint n
 | Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
 | Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`):
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`, `geolocation.logic.ts`):
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -142,6 +142,8 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, 
 | Wycięty cytat (Sens zmieniony) | `cut` (`TranscriptVariant`; judgement `changed`) | The left-out words were the point; the cut flips the meaning. The cut words are `cutWords(line, clip)` |
 | Nie ma w zapisie | `absent` (`TranscriptVariant`; action `notInTranscript`) | Nobody said the clip; a decoy line shares its words but says something else |
 | Szukanie / Ocena | `Phase`: `find` / `judge` | Stenogram's two phases: find the clip's line, then judge the cut |
+| Podpis / Dzielnica / Obiekt | `GeoPuzzle.claimed` / `MapTile` (`district`) / `Landmark` | Mapa: the district the photo's caption names / one of the 12 districts of the town map (`GEOLOCATION_MAP`, 4×3), each with a unique pair of landmarks / one of the ten landmark glyphs (`LANDMARKS`, `landmarks.tsx`), told apart by shape alone |
+| Zgodne miejsce / Inna dzielnica / Inne miasto (Nie ma na mapie) | `match` / `otherDistrict` / `otherTown` (`GeoOutcome`; answer `NOT_HERE` for `otherTown`) | Mapa: the photo is from the captioned district / from another district on the map / from off the map; an off-map photo shares one landmark with a district (a decoy) |
 
 ## Roles (`RoleId`)
 

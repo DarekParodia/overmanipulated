@@ -148,6 +148,8 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'dataLibrary.mistake': skip('own-action'),
   'metadata.right': skip('own-action'),
   'metadata.mistake': skip('own-action'),
+  'geolocation.found': skip('own-action'),
+  'geolocation.miss': skip('own-action'),
   'transcript.find': skip('own-action'),
   'transcript.right': skip('own-action'),
   'transcript.miss': skip('own-action'),

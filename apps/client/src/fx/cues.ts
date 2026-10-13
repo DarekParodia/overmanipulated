@@ -558,6 +558,18 @@ export const cues = {
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
     haptic: 'error',
   },
+  // S7-55 Mapa minigame: the district (or „Nie ma na mapie”) found and pinned, or a wrong pick
+  // struck through with a red pencil line. DOM overlay only, so no particles.
+  'geolocation.found': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'geolocation.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
   // S4-11 endless mode: the tempo steps up each minute; the run ends friendly, not as a failure.
   'endless.tempo': {
     severity: 2,
