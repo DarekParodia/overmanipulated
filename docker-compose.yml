@@ -2,7 +2,8 @@
 # TLS is terminated by an external reverse proxy that forwards to port 8080 (see docs/deploy.md).
 # Usage: docker compose up -d --build
 # Sized for a small VPS (1 vCPU / 1 GB RAM): a 4-player room is a few MB, the limits only cap
-# runaway behaviour.
+# runaway behaviour. No pids_limit: hosts without the cgroup pids controller (LXC, some VPS
+# kernels) refuse to start containers that set it.
 
 x-logging: &logging
   driver: json-file
@@ -29,7 +30,6 @@ services:
       - "3000"
     mem_limit: 384m
     cpus: 1.0
-    pids_limit: 128
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -52,7 +52,6 @@ services:
       - "0.0.0.0:8080:80"
     mem_limit: 128m
     cpus: 0.5
-    pids_limit: 128
     security_opt:
       - no-new-privileges:true
     logging: *logging
