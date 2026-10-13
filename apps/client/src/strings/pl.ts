@@ -11,10 +11,33 @@ import type {
   Verdict,
 } from '@redakcja/shared';
 import type { InputDevice as Device } from '../store/app.ts';
+import { pluralPl } from './plural.ts';
 
-/** Key-cap hints shown under a minigame, per input device (empty: no hint). */
+/**
+ * Key-cap hints shown under a minigame, per input device. On touch the cap names the gesture
+ * („Stuknij”, „Przesuń”) or the on-screen button to press.
+ */
 export type KeyHint = { keys: readonly string[]; label: string };
 type KeyHints = Record<Device, readonly KeyHint[]>;
+
+/** Two or three short steps (each ≤ 8 words) for one input device. */
+export type StationHelpSteps = readonly [string, string] | readonly [string, string, string];
+
+/**
+ * How one station works (S7-15): the single source for the station help card, the practice
+ * round, the lobby level details and the contest materials. Every line but `realWorld` is read
+ * during play, so it stays within 8 words (strings/station-help.test.ts).
+ */
+export type StationHelp = {
+  /** The question the station answers. */
+  purpose: string;
+  /** What its stamp proves, read after `stationHelp.proofLabel`. */
+  proves: string;
+  /** What to do, for the device in use. */
+  steps: Record<Device, StationHelpSteps>;
+  /** The real-world tool or habit behind the station; longer, shown outside play only. */
+  realWorld: string;
+};
 
 export const pl = {
   masthead: {
@@ -277,7 +300,7 @@ export const pl = {
     levelHostOnly: 'Poziom wybiera gospodarz.',
     levelMinutes: (minutes: number) => `${minutes} min`,
     levelFolders: (folders: number) =>
-      `${folders} ${folders === 1 ? 'teczka' : folders % 10 >= 2 && folders % 10 <= 4 && (folders % 100 < 12 || folders % 100 > 14) ? 'teczki' : 'teczek'}`,
+      `${folders} ${pluralPl(folders, 'teczka', 'teczki', 'teczek')}`,
     startOffline: 'Brak połączenia z serwerem.',
     startWaiting: (names: readonly string[]) => `Czekamy na: ${names.join(', ')}.`,
     allReady: 'Wszyscy gotowi!',
@@ -393,7 +416,10 @@ export const pl = {
           { keys: ['A'], label: 'sprawdź' },
           { keys: ['Y'], label: 'lupa' },
         ],
-        touch: [],
+        touch: [
+          { keys: ['Stuknij'], label: 'wynik' },
+          { keys: ['Przeciągnij'], label: 'lupę' },
+        ],
       } satisfies KeyHints,
     },
     archive: {
@@ -428,7 +454,10 @@ export const pl = {
           { keys: ['Krzyżak'], label: 'przewijaj' },
           { keys: ['A'], label: 'stop / wyjmij' },
         ],
-        touch: [],
+        touch: [
+          { keys: ['Przesuń'], label: 'przewijaj' },
+          { keys: ['Stuknij'], label: 'stop / wyjmij' },
+        ],
       } satisfies KeyHints,
     },
     sourceRegistry: {
@@ -454,7 +483,10 @@ export const pl = {
           { keys: ['A'], label: 'zakreśl' },
           { keys: ['Y'], label: 'odłóż' },
         ],
-        touch: [],
+        touch: [
+          { keys: ['Stuknij'], label: 'zakreśl' },
+          { keys: ['Odłóż kartę'], label: 'gotowe' },
+        ],
       } satisfies KeyHints,
       /**
        * Card fields. Each has a label, believable values (`clean`) and warning signs
@@ -592,7 +624,7 @@ export const pl = {
           { keys: ['Krzyżak'], label: 'wybierz' },
           { keys: ['A'], label: 'dzwoń' },
         ],
-        touch: [],
+        touch: [{ keys: ['Stuknij'], label: 'numer' }],
       } satisfies KeyHints,
       /** Invented contacts of Nowe Brzegi used as wrong numbers next to the story's own source. */
       decoys: [
@@ -640,7 +672,7 @@ export const pl = {
           { keys: ['Krzyżak'], label: 'wybierz' },
           { keys: ['A'], label: 'potwierdź' },
         ],
-        touch: [],
+        touch: [{ keys: ['Stuknij'], label: 'odpowiedź' }],
       } satisfies KeyHints,
     },
     dataLibrary: {
@@ -674,7 +706,10 @@ export const pl = {
           { keys: ['A'], label: 'potwierdź' },
           { keys: ['Y'], label: 'nie pasuje' },
         ],
-        touch: [],
+        touch: [
+          { keys: ['Stuknij'], label: 'komórkę' },
+          { keys: ['Nie pasuje'], label: 'zgłoś' },
+        ],
       } satisfies KeyHints,
       /**
        * Original tables. All invented: Nowe Brzegi, no real institutions. `unit` is what the
@@ -719,6 +754,151 @@ export const pl = {
         },
       ],
     },
+  },
+  /** Station help (S7-15): what each station checks and how to work it on every device. */
+  stationHelp: {
+    title: 'Jak to działa?',
+    proofLabel: 'Dowód:',
+    kinds: {
+      imageSearch: {
+        purpose: 'Czy to zdjęcie krążyło już wcześniej?',
+        proves: 'Zdjęcie jest starsze albo z innego miejsca',
+        steps: {
+          keyboard: [
+            'Porównaj kółka na zdjęciu z wynikami',
+            'Q przełącza lupę na inne kółko',
+            'Strzałki wybierają wynik, spacja go sprawdza',
+          ],
+          gamepad: [
+            'Porównaj kółka na zdjęciu z wynikami',
+            'Y przełącza lupę na inne kółko',
+            'Krzyżak wybiera wynik, A go sprawdza',
+          ],
+          touch: [
+            'Porównaj kółka na zdjęciu z wynikami',
+            'Stuknij lupę, by zobaczyć inne kółko',
+            'Stuknij wynik albo przeciągnij na niego lupę',
+          ],
+        },
+        realWorld:
+          'Tak działa wyszukiwanie obrazem wstecz: wyszukiwarka pokazuje, gdzie i kiedy zdjęcie pojawiło się wcześniej.',
+      },
+      archive: {
+        purpose: 'Kiedy po raz pierwszy o tym napisano?',
+        proves: 'Data pierwszej wzmianki o sprawie',
+        steps: {
+          keyboard: [
+            'Starsze karty leżą w szufladzie po lewej',
+            '← i → przewijają, spacja zatrzymuje',
+            'Spacją wyjmij najstarszą kartę z hasłem',
+          ],
+          gamepad: [
+            'Starsze karty leżą w szufladzie po lewej',
+            'Krzyżak przewija, A zatrzymuje szufladę',
+            'A wyjmuje najstarszą kartę z hasłem',
+          ],
+          touch: [
+            'Starsze karty leżą w szufladzie po lewej',
+            'Przesuń szufladę palcem, stuknij, by zatrzymać',
+            'Stuknij „Wyjmij” przy najstarszej karcie z hasłem',
+          ],
+        },
+        realWorld:
+          'Tak działają archiwa gazet i stron internetowych: pokazują, kiedy coś pojawiło się po raz pierwszy.',
+      },
+      sourceRegistry: {
+        purpose: 'Kto naprawdę stoi za kontem lub stroną?',
+        proves: 'Źródło jest wiarygodne albo podejrzane',
+        steps: {
+          keyboard: [
+            'Szukaj podejrzanych pól; czasem nie ma żadnego',
+            'W i S wybierają, E zakreśla pole',
+            'Q odkłada kartę, gdy skończysz',
+          ],
+          gamepad: [
+            'Szukaj podejrzanych pól; czasem nie ma żadnego',
+            'Krzyżak wybiera, A zakreśla pole',
+            'Y odkłada kartę, gdy skończysz',
+          ],
+          touch: [
+            'Szukaj podejrzanych pól; czasem nie ma żadnego',
+            'Stuknij podejrzane pole, by je zakreślić',
+            'Stuknij „Odłóż kartę”, gdy skończysz',
+          ],
+        },
+        realWorld:
+          'Tak sprawdza się źródła: wiek konta, właściciela domeny i to, co piszą o nich inni.',
+      },
+      phone: {
+        purpose: 'Co mówi o tym samo źródło?',
+        proves: 'Źródło potwierdza albo zaprzecza',
+        steps: {
+          keyboard: [
+            'Znajdź w książce numer do źródła',
+            'W i S wybierają, E dzwoni',
+            'Poczekaj w kolejce; reporter nie czeka',
+          ],
+          gamepad: [
+            'Znajdź w książce numer do źródła',
+            'Krzyżak wybiera numer, A dzwoni',
+            'Poczekaj w kolejce; reporter nie czeka',
+          ],
+          touch: [
+            'Znajdź w książce numer do źródła',
+            'Stuknij numer, by zadzwonić',
+            'Poczekaj w kolejce; reporter nie czeka',
+          ],
+        },
+        realWorld:
+          'Tak dziennikarze docierają do źródła: dzwonią do świadka, urzędu albo autora raportu i pytają wprost.',
+      },
+      aiScanner: {
+        purpose: 'Czy ten materiał zrobiła maszyna?',
+        proves: 'Tylko wskazówka, nigdy jedyny dowód',
+        steps: {
+          keyboard: [
+            'Odczytaj wynik i margines błędu',
+            'Margines sięga 50\u00a0%? Wybierz „Nie wiem”',
+            'A i D wybierają, E potwierdza',
+          ],
+          gamepad: [
+            'Odczytaj wynik i margines błędu',
+            'Margines sięga 50\u00a0%? Wybierz „Nie wiem”',
+            'Krzyżak wybiera, A potwierdza',
+          ],
+          touch: [
+            'Odczytaj wynik i margines błędu',
+            'Margines sięga 50\u00a0%? Wybierz „Nie wiem”',
+            'Stuknij swoją odpowiedź',
+          ],
+        },
+        realWorld:
+          'Tak działają detektory treści z AI: podają prawdopodobieństwo, a nie pewność, i często się mylą.',
+      },
+      dataLibrary: {
+        purpose: 'Czy liczba zgadza się z tabelą?',
+        proves: 'Liczba jest prawdziwa albo zmieniona',
+        steps: {
+          keyboard: [
+            'Porównaj liczbę z artykułu z tabelą',
+            'Uważaj na rok, wiersz i jednostkę',
+            'Spacja wybiera komórkę, Q zgłasza „Nie pasuje”',
+          ],
+          gamepad: [
+            'Porównaj liczbę z artykułu z tabelą',
+            'Uważaj na rok, wiersz i jednostkę',
+            'A wybiera komórkę, Y zgłasza „Nie pasuje”',
+          ],
+          touch: [
+            'Porównaj liczbę z artykułu z tabelą',
+            'Uważaj na rok, wiersz i jednostkę',
+            'Stuknij komórkę albo „Nie pasuje”',
+          ],
+        },
+        realWorld:
+          'Tak sprawdza się statystyki: u źródła, w oryginalnych tabelach urzędów i raportach badaczy.',
+      },
+    } satisfies Record<StationKind, StationHelp>,
   },
   /** Ping picker (S2-11). Ping labels live in `vocab.pings`. */
   pings: {
@@ -885,12 +1065,7 @@ export const pl = {
   debrief: {
     title: 'Kolegium',
     cardsLabel: 'Teczki tego wydania',
-    count: (n: number) =>
-      n === 1
-        ? '1 teczka'
-        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
-          ? `${n} teczki`
-          : `${n} teczek`,
+    count: (n: number) => `${n} ${pluralPl(n, 'teczka', 'teczki', 'teczek')}`,
     untitled: 'Teczka bez tytułu',
     yourVerdict: 'Wasz werdykt',
     correctVerdict: 'Właściwy',
@@ -905,12 +1080,7 @@ export const pl = {
     vote: 'Wpadka dnia?',
     voted: 'Twój głos',
     leader: 'Wpadka dnia!',
-    votes: (n: number) =>
-      n === 1
-        ? '1 głos'
-        : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14)
-          ? `${n} głosy`
-          : `${n} głosów`,
+    votes: (n: number) => `${n} ${pluralPl(n, 'głos', 'głosy', 'głosów')}`,
     voteFor: (headline: string) => `Wpadka dnia: ${headline}`,
     prev: 'Poprzednia teczka',
     next: 'Następna teczka',

@@ -25,7 +25,7 @@ export function KeyCap({ children }: { children: ReactNode }) {
   return <kbd className={styles.keyCap}>{children}</kbd>;
 }
 
-/** Key hints for the device in use; nothing on touch (the controls are on screen). */
+/** Key hints for the device in use; on touch they name the gesture or the button to press. */
 export function KeyHints({
   hints,
   device,
@@ -38,7 +38,7 @@ export function KeyHints({
     return null;
   }
   return (
-    <ul className={styles.keyHints} aria-hidden="true">
+    <ul className={styles.keyHints} aria-hidden="true" data-testid="key-hints" data-device={device}>
       {list.map((hint) => (
         <li key={hint.label}>
           {hint.keys.map((key) => (

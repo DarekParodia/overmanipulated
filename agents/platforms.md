@@ -29,6 +29,8 @@ game may require a specific device.
 | Minigames, desk, menus | Keys / mouse | D-pad + buttons | Tap, drag, swipe |
 
 - The **last used device** decides which prompts are shown (key caps, pad glyphs or touch icons).
+  Minigame key hints exist for all three devices; on touch the chip names the gesture
+  („Stuknij”, „Przesuń”, „Przeciągnij”) or the on-screen button (`pl.minigames.<kind>.keys`).
 - Touch targets ≥ 44×44 CSS px, with spacing; controls semi-transparent and never covering the
   folder queue or the player's character.
 - Hold actions must tolerate a finger sliding slightly off the button.
