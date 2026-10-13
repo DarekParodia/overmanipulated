@@ -3,6 +3,7 @@
 // gameplay events and the player's first steps into tutorial signals.
 import { getStory } from '@redakcja/content';
 import { useEffect } from 'react';
+import { nextFolderState } from '../hud/hud-model.ts';
 import { onGameEvent } from '../net/game-events.ts';
 import { useGame } from '../net/game-store.ts';
 import { runtime } from '../net/session.ts';
@@ -29,6 +30,7 @@ export function liveNextStep(): NextStep {
     targetFixtureId: highlightState.targetId,
     device: app.inputDevice,
     story: getStory,
+    next: nextFolderState(game.nextFolder, game.conveyorFull, game.elapsedMs),
   });
 }
 

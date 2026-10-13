@@ -2,6 +2,8 @@
 // behind the story; the player marks the warning signs (or none, if the source checks out) and
 // puts the card back. Rules and puzzle
 // generation are pure, in sourceRegistry.logic.ts.
+// The card stays the same for a folder after a failure or a cancel (S7-13), so the circles are
+// kept in the retry memory until the card is filed and a failure reveals nothing (S7-14).
 import { SOURCE_REGISTRY_MAX_MISTAKES } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
 import type { CueId } from '../../fx/cues.ts';
@@ -11,6 +13,7 @@ import { useSettings } from '../../store/settings.ts';
 import { pl } from '../../strings/pl.ts';
 import { typeset } from '../../strings/typography.ts';
 import { KeyHints, Mistakes, OutcomeBanner, TaskLine } from '../kit.tsx';
+import { recallCard, useRetryMemory } from './retry-memory.ts';
 import styles from './SourceRegistry.module.css';
 import {
   type Action,
@@ -47,8 +50,10 @@ const NUDGE: Keyframe[] = [
 
 export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameProps) {
   // The puzzle is fixed for the lifetime of this round (the overlay remounts per round), so
-  // rendering and rules both read `state.card`.
-  const [state, setState] = useState(() => initialState(generateCard(seed, story, stamp)));
+  // rendering and rules both read `state.card`. A card that comes back keeps its circles.
+  const [state, setState] = useState(() =>
+    initialState(generateCard(seed, story, stamp), recallCard(seed)),
+  );
   const { card } = state;
   const stateRef = useRef(state);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -57,12 +62,18 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
   const reducedMotion = useSettings((s) => s.reducedMotion);
 
   const dispatch = (action: Action) => {
-    const [next, effect] = reduce(stateRef.current, action);
-    if (next === stateRef.current) {
+    const previous = stateRef.current;
+    const [next, effect] = reduce(previous, action);
+    if (next === previous) {
       return;
     }
     stateRef.current = next;
     setState(next);
+    if (next.outcome === 'success') {
+      useRetryMemory.getState().forget(seed);
+    } else if (next.circled !== previous.circled) {
+      useRetryMemory.getState().rememberCircled(seed, next.circled);
+    }
     if (effect) {
       emitCue(EFFECT_CUES[effect]);
     }
@@ -94,7 +105,6 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
   const showCursor = device !== 'touch' && playing;
   const circledCount = state.circled.filter(Boolean).length;
   const fileIndex = card.fields.length;
-  const anyMissed = card.fields.some((field, i) => field.flagged && !state.circled[i]);
 
   return (
     <div className={styles.root} data-testid="source-registry">
@@ -107,7 +117,7 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
           />
         }
       >
-        {typeset(t.task)}
+        {typeset(state.retry ? t.retryTask : t.task)}
       </TaskLine>
 
       <div className={styles.card} ref={cardRef} data-outcome={outcome}>
@@ -122,7 +132,6 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
           {card.fields.map((field, i) => {
             const circled = state.circled[i] ?? false;
             const struck = state.struck[i] ?? false;
-            const missed = outcome === 'failure' && field.flagged && !circled;
             return (
               <li key={field.slot}>
                 <button
@@ -132,7 +141,6 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
                   data-focused={showCursor && state.cursor === i}
                   data-circled={circled}
                   data-struck={struck}
-                  data-missed={missed}
                   aria-pressed={circled}
                   disabled={!playing}
                   // Keep DOM focus off the rows so Space/Enter only act through nav intents.
@@ -141,7 +149,7 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
                 >
                   <span className={styles.fieldLabel}>{field.label}</span>
                   <span className={styles.fieldValue}>{typeset(field.value)}</span>
-                  {(circled || missed) && (
+                  {circled && (
                     <span className={styles.flag} aria-hidden="true">
                       !
                     </span>
@@ -177,11 +185,14 @@ export function SourceRegistry({ seed, story, stamp, device, onDone }: MinigameP
             title={outcome === 'success' ? t.filed : t.failed}
             testId="source-verdict"
           >
-            {outcome === 'success' ? (
-              <p>{typeset(stamp?.text ?? (circledCount ? t.flagged : t.clean))}</p>
-            ) : (
-              anyMissed && <p>{t.revealed}</p>
-            )}
+            {/* No answer on a failure: the same card comes back after the lockout (S7-14). */}
+            <p>
+              {typeset(
+                outcome === 'success'
+                  ? (stamp?.text ?? (circledCount ? t.flagged : t.clean))
+                  : t.failedSameCard,
+              )}
+            </p>
           </OutcomeBanner>
         </div>
       )}

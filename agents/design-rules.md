@@ -18,8 +18,10 @@ blocks you, raise it in the plan's *Open questions*; don't quietly break it.
 2. **Show, don't write.** Icon + one short word beats a sentence. Instructions are at most one
    line (≤ 8 words). Explanations belong in the tutorial or the debrief, never in the middle of
    play.
-3. **Big numbers, few numbers.** The HUD shows only time, points, credibility and up to 3 folders.
-   Anything else is hidden or moved to the results screen.
+3. **Big numbers, few numbers.** The HUD shows only time, points, credibility and up to 3 folders;
+   a free queue slot may hold one dashed ghost card counting down to the next folder (or „Taśma
+   pełna”). Level-event folders are not telegraphed. Anything else is hidden or moved to the
+   results screen.
 4. **Colour = meaning, always the same meaning** (see §3). Never use a meaning colour for
    decoration.
 5. **Never colour alone.** Every state also has an icon or shape (priority flags, ✓/✗ marks,
@@ -80,8 +82,12 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
 ## 5. Layout
 
 - **HUD:** time + points + credibility in one compact pill top-left; folder queue (max 3 cards,
-  "+N" chip for the rest) top-centre; tool buttons top-right; nothing else on screen during play
-  except the hint bubble and touch controls.
+  fewer when the band between pill and tools is too narrow, "+N" chip for the rest) top-centre;
+  tool buttons top-right; nothing else on screen during play except the hint bubble and touch
+  controls. A free queue slot may hold one ghost card for the next scheduled folder: dashed navy
+  outline, soft fill, no pop shadow, an hourglass and the seconds; while the belt is full its
+  band turns orange with the conveyor icon and „Taśma pełna”. An empty queue shows the ghost on
+  its side with „Nowa teczka za N s”. Level-event folders are never announced.
 - **Overlays** (stations, desk): one panel, title with icon at the top, the task in the middle,
   the main action at the bottom. Desktop: right half, scene visible. Phone: full width, close
   button always reachable.

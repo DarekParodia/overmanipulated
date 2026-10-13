@@ -2,8 +2,9 @@
 // ("Wejście") and each editorial desk run ("Stół") gets a floating white badge with its icon
 // and a one-word name. The badge doubles as the station dial: a chunky ring around it fills
 // green while someone works, shows the operator's colour during a minigame or at a busy desk,
-// and drains red under a cross during a lockout. DOM in one layer over the canvas: no draw
-// calls, crisp text.
+// and drains red under a cross during a lockout. The conveyor's ring fills blue towards the next
+// scheduled folder ("za N s") and turns orange while the belt is full ("Pełna", S7-09). DOM in
+// one layer over the canvas: no draw calls, crisp text.
 
 import { useFrame } from '@react-three/fiber';
 import type { Fixture, Station } from '@redakcja/shared';
@@ -17,7 +18,12 @@ import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { playerColorVar } from '../ui/tokens.ts';
-import { type StationIndicator, stationIndicator, surfaceHeight } from './entities.ts';
+import {
+  conveyorIndicator,
+  type StationIndicator,
+  stationIndicator,
+  surfaceHeight,
+} from './entities.ts';
 import { screenTransform, useOverlay } from './overlay.ts';
 import styles from './StationIndicators.module.css';
 
@@ -105,10 +111,13 @@ function collectSigns(): Sign[] {
 }
 
 function indicatorFor(sign: Sign): StationIndicator {
+  const state = useGame.getState();
+  if (sign.kind === 'conveyor') {
+    return conveyorIndicator(state.nextFolder, state.elapsedMs, state.conveyorFull);
+  }
   if (sign.fixtureIds.length === 0) {
     return { kind: 'none' };
   }
-  const state = useGame.getState();
   if (sign.kind === 'desk') {
     const desk = state.desks.find((d) => sign.fixtureIds.includes(d.id) && d.operatorId);
     return desk?.operatorId ? { kind: 'busy', operatorId: desk.operatorId } : { kind: 'none' };
@@ -134,8 +143,11 @@ function ringColor(indicator: StationIndicator, players: RoomPlayers): string {
   if (indicator.kind === 'lockout') {
     return 'var(--red)';
   }
-  if (indicator.kind === 'down') {
+  if (indicator.kind === 'down' || indicator.kind === 'full') {
     return 'var(--orange)';
+  }
+  if (indicator.kind === 'incoming') {
+    return 'var(--blue)';
   }
   if (indicator.kind === 'working') {
     return 'var(--green)';
@@ -154,9 +166,13 @@ type SignHandle = {
   ring: SVGCircleElement | null;
   /** Seconds left of an outage, written into the name pill while the station is down. */
   seconds: HTMLSpanElement | null;
+  /** Conveyor only: "za N s" until the next scheduled folder, written into the name pill. */
+  incoming: HTMLSpanElement | null;
   shown: {
     /** Outage seconds last written. */
     secondsLeft: number;
+    /** Seconds to the next folder last written. */
+    incomingSeconds: number;
     kind: StationIndicator['kind'];
     fraction: number;
     offset: string;
@@ -195,6 +211,7 @@ function SignBadge({ handle }: { handle: SignHandle }) {
           };
         }}
         className={styles.sign}
+        data-testid="station-sign"
         data-kind={sign.kind}
         data-state="none"
       >
@@ -232,6 +249,23 @@ function SignBadge({ handle }: { handle: SignHandle }) {
         </span>
         <span className={styles.name}>
           <span className={styles.nameUp}>{pl.vocab.signs[sign.kind]}</span>
+          {sign.kind === 'conveyor' && (
+            <>
+              <span
+                className={styles.nameIncoming}
+                ref={(element) => {
+                  handle.incoming = element;
+                  handle.shown = { ...handle.shown, incomingSeconds: -1 };
+                  return () => {
+                    if (handle.incoming === element) {
+                      handle.incoming = null;
+                    }
+                  };
+                }}
+              />
+              <span className={styles.nameFull}>{pl.hud.next.signFull}</span>
+            </>
+          )}
           <span className={styles.nameDown}>
             {pl.events.badge.down}{' '}
             <span
@@ -260,10 +294,18 @@ function updateSign(handle: SignHandle, delta: number, players: RoomPlayers): vo
   }
   const indicator = indicatorFor(handle.sign);
   const current = handle.shown;
-  const target = indicator.kind === 'busy' || indicator.kind === 'none' ? 1 : indicator.fraction;
+  const target = 'fraction' in indicator ? indicator.fraction : 1;
   if (indicator.kind === 'down' && handle.seconds && current.secondsLeft !== indicator.seconds) {
     current.secondsLeft = indicator.seconds;
     handle.seconds.textContent = String(indicator.seconds);
+  }
+  if (
+    indicator.kind === 'incoming' &&
+    handle.incoming &&
+    current.incomingSeconds !== indicator.seconds
+  ) {
+    current.incomingSeconds = indicator.seconds;
+    handle.incoming.textContent = pl.hud.next.sign(indicator.seconds);
   }
   if (indicator.kind !== current.kind) {
     current.kind = indicator.kind;
@@ -304,8 +346,10 @@ export function StationIndicators() {
           element: null,
           ring: null,
           seconds: null,
+          incoming: null,
           shown: {
             secondsLeft: -1,
+            incomingSeconds: -1,
             kind: 'none',
             fraction: 1,
             offset: '',

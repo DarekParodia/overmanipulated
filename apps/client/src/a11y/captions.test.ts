@@ -70,6 +70,14 @@ describe('caption table', () => {
     expect(captionFor('ui.click', false)).toBeNull();
   });
 
+  it('says the belt is full in words (S7-09)', () => {
+    expect(captionFor('folder.beltFull', false)).toEqual({
+      icon: 'conveyor',
+      text: 'Taśma pełna',
+      tone: 'warn',
+    });
+  });
+
   it('keeps muted-by-design decorative cues out of the stack', () => {
     expect(captionFor('ambience.phone', false)).toBeNull();
     expect(captionFor('player.step', false)).toBeNull();

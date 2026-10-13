@@ -313,6 +313,18 @@ export const pl = {
     queueLabel: 'Teczki do sprawdzenia',
     queueEmpty: 'Czekamy na teczki',
     queueMore: (n: number) => `Jeszcze ${n} w kolejce`,
+    /** The next scheduled folder (S7-09): ghost card in the queue and the conveyor sign. */
+    next: {
+      label: 'Następna teczka',
+      in: (s: number) => `${s}\u00a0s`,
+      full: 'Taśma pełna',
+      /** Empty queue: the ghost card says it in words. */
+      emptyIn: (s: number) => `Nowa teczka za\u00a0${s}\u00a0s`,
+      none: 'To już wszystkie teczki',
+      /** Second line of the conveyor sign's name pill. */
+      sign: (s: number) => `za\u00a0${s}\u00a0s`,
+      signFull: 'Pełna',
+    },
     timer: 'Czas do końca',
     score: 'Punkty',
     credibility: 'Wiarygodność',
@@ -505,13 +517,16 @@ export const pl = {
     sourceRegistry: {
       kinds: { account: 'Konto', website: 'Strona' },
       task: 'Zakreśl podejrzane wpisy, potem odłóż kartę',
+      /** Task line when the same card comes back after a failure or a cancel (S7-14). */
+      retryTask: 'Ta sama karta: dokończ zakreślanie',
       file: 'Odłóż kartę',
       marked: (n: number) => (n === 0 ? 'Nic nie zakreślone' : `Zakreślone: ${n}`),
       notThis: 'W porządku',
       missing: 'Czegoś brakuje!',
-      revealed: 'Przerywane: tego szukaliśmy',
       filed: 'Sprawdzone!',
       failed: 'Źle zakreślone',
+      /** Under „Źle zakreślone”: no answer is shown, the card comes back after the lockout. */
+      failedSameCard: 'Karta na ciebie poczeka.',
       clean: 'Źródło w porządku',
       flagged: 'Źródło podejrzane',
       keys: {
@@ -1050,6 +1065,10 @@ export const pl = {
       openDesk: (key: string) => `Werdykt: trzymaj ${key}`,
       verdict: 'Wybierz werdykt',
       wait: 'Czekaj na nową teczkę',
+      /** Nothing to do, the next scheduled folder is this many seconds away. */
+      waitIn: (s: number) => `Czekaj – teczka za\u00a0${s}\u00a0s`,
+      /** A scheduled folder waits for a free conveyor tile. */
+      conveyorFull: 'Taśma pełna – zabierz teczkę',
     },
     bubbleLabel: 'Podpowiedź',
     tutorial: {
@@ -1198,6 +1217,7 @@ export const pl = {
       raidResolved: 'Boty odparte',
       tempoUp: 'Tempo rośnie',
       record: 'Nowy rekord',
+      beltFull: 'Taśma pełna',
     },
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---

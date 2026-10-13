@@ -13,6 +13,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Ziarno minigry | `minigameSeed` (`minigameSeedFor`, `drawMinigameSeed`) | Derived from (seed, spawnKey, station kind, attempt); the client builds the puzzle from it |
 | Podejście | `attempt` (`minigameAttempts`, key `spawnKey:kind`) | Minigame rounds of one station kind on one folder that ended without a stamp (failure or cancel) |
 | Ta sama karta | stable-seed station (`MINIGAME_STABLE_SEED_STATIONS`) | `sourceRegistry`: attempts are not counted, so a retry shows the same Kartoteka card |
+| Pamięć karty | retry memory (`useRetryMemory`, `stations/minigames/retry-memory.ts`) | Client only, per minigame seed: the circled fields and, after a cancel, the clock left (`remainingMs`, at least `KARTOTEKA_RESUME_MIN_MS`); reset on `gameStarted` |
 | Pieczątka | `stamp` | Result of a station on a folder |
 | Stanowisko | `station` | Verification workstation with a minigame |
 | Stół redakcyjny | `editorialDesk` (`desk`) | Where verdicts are made |
@@ -62,8 +63,12 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Historie poziomu | `levelStoryIds` | The pool of a bag level, otherwise the scheduled ids; never event stories |
 | Talia stanowiska (tryb nieskończony) | station deck | Endless stories one station can decide; should hold at least `ENDLESS_MIN_DECK` |
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
-| Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced |
-| Taśma pełna | `conveyorFull` (`conveyorBlocked`) | Snapshot flag: a scheduled folder is due but waits, because every conveyor tile holds a folder |
+| Za co punkty (podsumowanie punktów) | `resultTotals` (`TotalsRow`) | Results-screen totals: outcome rows with base points and credibility (`correct`, `correction`, `weakProof`, `wrong`, `expired`, `unfinished`), bonus rows (`speed`, `proofs` = multi-stamp, `bossCall`), and an `other` row („Inne”) for results the server capped; Σ rows = Σ `scoreDelta` |
+| Do następnej gwiazdki | `starProgress` (`StarProgress`) | Next star and missing points of a won level, plus thresholds as shares of `maxScore` |
+| Karta Kolegium | `kolegiumCards` (`KolegiumCard`) | One debrief card per folder (campaign, versus); in endless one per story with `count` and summed points |
+| Kolejność odsłaniania | `revealPlan` (`RevealStep`) | Results reveal timing: stars → progress line → totals rows → Kolegium marks |
+| Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced. Shown as the dashed ghost card in a free queue slot (`queueView` ghost `'next'`, `pl.hud.next`) and as the conveyor sign's blue ring with „za N s” (`conveyorIndicator` kind `'incoming'`) |
+| Taśma pełna | `conveyorFull` (`conveyorBlocked`) | Snapshot flag: a scheduled folder is due but waits, because every conveyor tile holds a folder. The ghost card (`'full'`) and the conveyor sign („Pełna”, kind `'full'`) turn orange; cue `folder.beltFull` on the rising edge |
 | Status prawdziwości | `truth` | |
 | Prawda / Fałsz / Zwodnicze / Satyra / Niepotwierdzalne | `true` / `false` / `misleading` / `satire` / `unverifiable` | |
 | Poziom | `level` | |
