@@ -341,6 +341,14 @@ export const pl = {
       floor: 'na podłodze',
     },
     untitled: 'Teczka bez opisu',
+    /**
+     * Evidence badge on a multi-stamp folder card (S7-19): "have/N" with hints on, "×N" without;
+     * these are the badge's accessible names.
+     */
+    evidenceHave: (have: number, need: number) => `Dowody: ${have} z ${need}`,
+    evidenceNeed: (need: number) => `Wymaga ${need} dowodów`,
+    evidenceShortHave: (have: number, need: number) => `${have}/${need}`,
+    evidenceShortNeed: (need: number) => `×${need}`,
     /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
       credibility: (delta: string) => `wiarygodność ${delta}`,
@@ -400,6 +408,14 @@ export const pl = {
     deadline: 'Termin',
     overdue: 'Po terminie',
     stepEvidence: 'Wybierz dowód',
+    /** Multi-stamp folders (S7-19): the step heading, its count chip and the status line. */
+    stepEvidenceMany: (n: number) => `Wybierz ${n} ${pluralPl(n, 'dowód', 'dowody', 'dowodów')}`,
+    evidenceCount: (k: number, n: number) => `${k}/${n}`,
+    evidenceStatus: (k: number, n: number) => `Wybrano ${k} z ${n} dowodów`,
+    /** Amber line when the folder holds fewer stamps than the story needs proofs. */
+    tooFewProofs: 'Za mało dowodów: połowa punktów',
+    /** A pick beyond N is blocked. */
+    deselectFirst: 'Najpierw odznacz jeden dowód',
     stepVerdict: 'Wybierz werdykt',
     pickStamp: 'Stuknij pieczątkę – to twój dowód',
     pickVerdict: 'Teraz werdykt!',

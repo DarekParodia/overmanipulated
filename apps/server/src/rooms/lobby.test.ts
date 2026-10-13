@@ -347,16 +347,16 @@ describe('results and back to lobby', () => {
 
   it("sends why the level was lost, the level's star thresholds and its best score", () => {
     const host = join('Ala');
-    lobby(host, { kind: 'selectLevel', levelId: 'l1-burza' });
+    lobby(host, { kind: 'selectLevel', levelId: 'l5-deepfake' });
     endOutcome = { won: false, stars: 0, lossReason: 'credibility' };
     playToResults(host);
     expect(host.last('levelEnd')).toMatchObject({
-      levelId: 'l1-burza',
+      levelId: 'l5-deepfake',
       won: false,
       stars: 0,
       lossReason: 'credibility',
-      starThresholds: { two: 205, three: 320 },
-      maxScore: 375,
+      starThresholds: { two: 240, three: 350 },
+      maxScore: 435,
     });
   });
 

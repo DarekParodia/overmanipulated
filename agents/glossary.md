@@ -41,6 +41,10 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Stanowisko-podpowiedź | hint-only station (`HINT_ONLY_STATIONS`, `isHintOnly`) | `aiScanner`: its stamp may justify, but never counts as proof (`countsAsProof`) |
 | Stanowisko rozstrzygające (Rozstrzyga) | deciding station (`decidingStations`, S7-20) | A station on the level's map with a justifying, non-hint stamp of the story; the desk result names it after „Rozstrzyga:” |
 | Linie wyniku werdyktu | `deskResultLines` (`DeskResultLine`) | At most two lines under the desk result: `proof`, `weakProof`, `tooFewProofs`, `hintOnly`, `decidedBy`, `correctVerdict`, `proofInFolder`, `notChecked`; the same on every difficulty |
+| Wybór dowodów | evidence pick (`toggleEvidence`, `verdictReady`, `evidenceShortfall` in `stations/desk-model.ts`) | Stamps cited at the desk: one replaces the other for a one-proof story; up to N toggled, in order, for a multi-stamp folder; the verdict opens at `min(N, collected)` |
+| Za mało dowodów (na stole) | `evidenceShortfall` | The folder holds fewer stamps than its story needs proofs; the desk shows an amber line and still allows the verdict |
+| Znaczek dowodów | evidence badge (`evidenceBadge`) | Chip on a multi-stamp folder card: „k/N” proofs with hints on, „×N” without |
+| Zebrane dowody | `justifyingCount` (`hasEnoughProofs`) | Distinct stamps on a folder that count as proof; guidance sends the folder to the desk once it reaches `requiredStamps` |
 | Powód porażki | `lossReason` (`credibility` / `score`) | Why a level was lost; null when won |
 | Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
 | Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |
@@ -52,7 +56,16 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Kolejka stanowisk | station sequence (`stationSequence`) | The station designated for each folder slot of a run: whole shuffled rounds over the bag stations |
 | Terminy teczek w worku | slot times (`bagSlotTimes`) | `firstAtS + i × gapS × spawnGapFactor` up to `lastSpawnS`, rounded to 0.1 s; harder difficulties get more slots |
 | Dobór historii | story matching (`matchStories`, `assignStories`) | Distinct pool stories for the slots, each decidable at its slot's station (Kuhn's maximum matching with opening and multi-stamp preferences); `assignStories` fills what the pool cannot cover with the least-used story |
-| Talia stanowiska (tryb nieskończony) | station deck | Endless stories one station can decide; should hold at least `ENDLESS_MIN_DECK` |
+| Pula historii | pool (`bag.pool`, `levelBagSchema`) | The stories a bag level may deal onto the conveyor; event stories stay in `events` |
+| Plik poziomu / poziom rozwiązany | level file (`LevelFile`, `levelFileSchema`) / resolved level (`Level`, `levelSchema`) | A file has a `schedule` with `stars` or a `bag`; a resolved level always has a schedule and stars (bag levels keep their `bag`) |
+| Podgląd poziomu z workiem | bag preview (`resolveLevel`, `BAG_PREVIEW_SEED`) | The Normal run `LEVELS` and `getLevel` serve for a bag level (lobby, briefing, tools) |
+| Rozgrywka (przygotowana) | prepared run (`prepareRun`, `prepareLevelRun`, `PreparedRun`) | The level a room plays for one run seed and difficulty: dealt schedule, deadlines, stars, stories, `maxScore` |
+| Ziarno rozgrywki | run seed (`RunOptions.seed`) | Picks the dealt stations and stories; drawn by the server per briefing, separate from the sim seed |
+| Podsumowanie rozgrywki | run summary (`runSummary`, `RunSummary`) | `{folders, maxScore, stars}` of a prepared run; stars null in endless |
+| Rozdanie z worka | `generateBagLevel` (`bagDeadlineS`) | One run of a bag level: slot times, station sequence, matched stories, scaled and clamped deadlines, stars from the run maximum |
+| Skalowanie terminów | `scaledDeadlineS`, `applyDifficulty` | Deadline × `deadlineFactor`, rounded to whole seconds (Normal unchanged); `applyDifficulty` scales a fixed schedule's deadlines only |
+| Historie poziomu | `levelStoryIds` | The pool of a bag level, otherwise the scheduled ids; never event stories |
+| Talia stanowiska (tryb nieskończony) | station deck (`endlessDecks`) | Endless stories one station can decide; each endless slot draws from its station's deck with `bagDrawer`; should hold at least `ENDLESS_MIN_DECK` (validator warning) |
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
 | Za co punkty (podsumowanie punktów) | `resultTotals` (`TotalsRow`) | Results-screen totals: outcome rows with base points and credibility (`correct`, `correction`, `weakProof`, `wrong`, `expired`, `unfinished`), bonus rows (`speed`, `proofs` = multi-stamp, `bossCall`), and an `other` row („Inne”) for results the server capped; Σ rows = Σ `scoreDelta` |
 | Do następnej gwiazdki | `starProgress` (`StarProgress`) | Next star and missing points of a won level, plus thresholds as shares of `maxScore` |
