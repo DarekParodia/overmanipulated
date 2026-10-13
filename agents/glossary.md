@@ -27,20 +27,30 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Premia za tempo | `speedBonus` | Balance value `SCORE.speedBonus`; on a folder result it is `bonuses.speed` |
 | Premie | `bonuses` (`speed`, `multiStamp`, `bossCall`) | Points on top of a folder's base points; base = `scoreDelta − Σ bonuses` |
 | Premia za komplet dowodów | `multiStampBonus` | Balance value `SCORE.multiStampBonus`, paid per proof beyond the first; on a folder result it is `bonuses.multiStamp` |
-| Teczka z kilkoma dowodami | multi-stamp folder | Its story has `requiredStamps` > 1; spawns with `MULTI_STAMP_EXTRA_DEADLINE_MS` more per extra proof |
+| Teczka z kilkoma dowodami | multi-stamp folder | Its story has `requiredStamps` > 1; spawns with `MULTI_STAMP_EXTRA_DEADLINE_MS` more per extra proof (`multiStampExtraMs`), schedule and event folders alike; content warns before level `MULTI_STAMP_FIRST_LEVEL` |
 | Przeterminowane | `expired` | |
 | Wynik teczki | `folderResult` (`FolderResult`) | Outcome, reason, deltas, cited stamps and bonuses of one folder |
-| Powód wyniku | `reason` (`FolderReason`) | Why a folder ended the way it did; 14 values, each belongs to one outcome |
+| Powód wyniku | `reason` (`FolderReason`) | Why a folder ended the way it did; 14 values, each belongs to one outcome. Its title `pl.outcome.title[reason]` is shared by the toast, the desk and the Kolegium |
 | Niedokończona (nie zdążyliście) | `unfinished` | Folder still in play when the level ends; 0 points |
 | Słaby dowód | `weakProof` | Reason: a cited stamp is not valid proof; half points |
 | Za mało dowodów | `incompleteProof` | Reason: fewer countable proofs than required, e.g. only the AI scanner cited; half points |
 | Wskazane dowody | `justifyingStampIds` | Stamps cited at the desk with a verdict (1–3) |
 | Wymagane dowody | `requiredStamps` | Distinct justifying, non-hint stamps a story needs; 1 unless set |
+| Rozwiązywalna historia | solvable story (`proofCount`) | The level's stations give at least `requiredStamps` proofs: `proofCount(story, stations)` counts distinct justifying, non-hint stamps from those stations; checked by `checkStoryFitsLevel` and endless `isSolvable` |
 | Stanowisko-podpowiedź | hint-only station (`HINT_ONLY_STATIONS`, `isHintOnly`) | `aiScanner`: its stamp may justify, but never counts as proof (`countsAsProof`) |
+| Stanowisko rozstrzygające (Rozstrzyga) | deciding station (`decidingStations`, S7-20) | A station on the level's map with a justifying, non-hint stamp of the story; the desk result names it after „Rozstrzyga:” |
+| Linie wyniku werdyktu | `deskResultLines` (`DeskResultLine`) | At most two lines under the desk result: `proof`, `weakProof`, `tooFewProofs`, `hintOnly`, `decidedBy`, `correctVerdict`, `proofInFolder`, `notChecked`; the same on every difficulty |
 | Powód porażki | `lossReason` (`credibility` / `score`) | Why a level was lost; null when won |
 | Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
 | Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |
 | Worek stanowisk | station bag (`bag`, constants `BAG_*`) | Run generation: folders are dealt in shuffled rounds over the stations that decide the level's stories |
+| Stanowisko rozstrzygające | deciding station (`decidingStations`) | A station decides a story when the story has a justifying, non-hint stamp from it (`proofCount`); a decisive stamp that does not justify decides nothing. The one rule for the bag, validation and guidance |
+| Stanowiska worka | bag stations (`bagStations`) | The level stations that decide at least one pool story |
+| Historia przypięta / elastyczna | pinned / flex story (`isPinned`, `pinnedCounts`) | Pinned: exactly one deciding station and one required proof. Every other decidable story is flex; multi-stamp stories are always flex |
+| Losowanie z worka | `bagDrawer` | Whole shuffled rounds over a list, never the same item twice in a row; deals the station sequence and endless stories |
+| Kolejka stanowisk | station sequence (`stationSequence`) | The station designated for each folder slot of a run: whole shuffled rounds over the bag stations |
+| Terminy teczek w worku | slot times (`bagSlotTimes`) | `firstAtS + i × gapS × spawnGapFactor` up to `lastSpawnS`, rounded to 0.1 s; harder difficulties get more slots |
+| Dobór historii | story matching (`matchStories`, `assignStories`) | Distinct pool stories for the slots, each decidable at its slot's station (Kuhn's maximum matching with opening and multi-stamp preferences); `assignStories` fills what the pool cannot cover with the least-used story |
 | Talia stanowiska (tryb nieskończony) | station deck | Endless stories one station can decide; should hold at least `ENDLESS_MIN_DECK` |
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
 | Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced. Shown as the dashed ghost card in a free queue slot (`queueView` ghost `'next'`, `pl.hud.next`) and as the conveyor sign's blue ring with „za N s” (`conveyorIndicator` kind `'incoming'`) |

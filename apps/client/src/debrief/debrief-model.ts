@@ -1,13 +1,15 @@
 // Pure helpers behind the debrief (Kolegium): one card per story in order of arrival, and the
 // blunder-of-the-day vote tallies with this player's optimistic vote. Free of React and of the
 // content module so they are unit-tested directly.
-import type {
-  BlunderVote,
-  FolderOutcome,
-  FolderResult,
-  LobbyPlayer,
-  StationKind,
-  Verdict,
+import {
+  type BlunderVote,
+  type FolderOutcome,
+  type FolderReason,
+  type FolderResult,
+  isHintOnly,
+  type LobbyPlayer,
+  type StationKind,
+  type Verdict,
 } from '@redakcja/shared';
 
 /** Story facts the debrief needs; a subset of the content `Story`. */
@@ -27,11 +29,14 @@ export type DebriefCard = {
   folderId: string;
   headline: string | null;
   outcome: FolderOutcome;
+  /** Why the folder ended that way; picks the card's title (`pl.outcome.title`). */
+  reason: FolderReason;
   /** The team's verdict; null when the folder expired. */
   verdict: Verdict | null;
   correctVerdict: Verdict | null;
   scoreDelta: number;
   debrief: DebriefStory['debrief'] | null;
+  /** Deciding proof nobody checked; hint-only stamps (the AI scanner) are never proof. */
   missedStamps: MissedStamp[];
 };
 
@@ -69,13 +74,16 @@ export function debriefCards(
       folderId: result.folderId,
       headline: story?.headline ?? null,
       outcome: result.outcome,
+      reason: result.reason,
       verdict: result.verdict,
       correctVerdict: story?.correctVerdict ?? null,
       scoreDelta: result.scoreDelta,
       debrief: story?.debrief ?? null,
       missedStamps: result.missedStampIds.flatMap((id) => {
         const stamp = stamps.find((s) => s.id === id);
-        return stamp ? [{ id: stamp.id, station: stamp.station, text: stamp.text }] : [];
+        return stamp && !isHintOnly(stamp.station)
+          ? [{ id: stamp.id, station: stamp.station, text: stamp.text }]
+          : [];
       }),
     });
   }

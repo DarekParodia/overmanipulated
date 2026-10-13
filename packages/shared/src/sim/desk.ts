@@ -116,7 +116,9 @@ export function uniqueCites(citedStampIds: readonly string[]): string[] {
  * 2. Any cite that is not valid proof → `wrongJustification` / `weakProof`, half points.
  * 3. Fewer countable proofs than required → `wrongJustification` / `incompleteProof`, half
  *    points (citing only the AI scanner lands here).
- * 4. Otherwise `correct`, with the speed bonus; nothing is reported missed.
+ * 4. Otherwise `correct`, with the speed bonus and the multi-stamp bonus
+ *    (`(N − 1) × SCORE.multiStampBonus`, never scaled by the difficulty); nothing is reported
+ *    missed.
  */
 export function evaluateVerdict(
   story: SimStory,
@@ -144,7 +146,8 @@ export function evaluateVerdict(
     (id) => story.justifyingStamps.includes(id) && folder.stamps.includes(id),
   );
   const countable = valid.filter((id) => countsAsProof(story, id));
-  if (valid.length < cited.length || countable.length < requiredStampsOf(story)) {
+  const required = requiredStampsOf(story);
+  if (valid.length < cited.length || countable.length < required) {
     return {
       outcome: 'wrongJustification',
       reason: valid.length < cited.length ? 'weakProof' : 'incompleteProof',
@@ -157,13 +160,13 @@ export function evaluateVerdict(
   const totalMs = folder.deadlineMs - folder.spawnedAtMs;
   const fast = folder.deadlineMs - nowMs > totalMs * SPEED_BONUS_REMAINING_FRACTION;
   const speed = fast ? SCORE.speedBonus : 0;
+  const multiStamp = (required - 1) * SCORE.multiStampBonus;
   return {
     outcome: 'correct',
     reason: reward.reason,
-    scoreDelta: reward.score + speed,
+    scoreDelta: reward.score + speed + multiStamp,
     credibilityDelta: reward.credibility,
-    // The multi-stamp bonus arrives with multi-stamp folders (S7-18).
-    bonuses: { speed, multiStamp: 0, bossCall: 0 },
+    bonuses: { speed, multiStamp, bossCall: 0 },
     missedStampIds: [],
   };
 }

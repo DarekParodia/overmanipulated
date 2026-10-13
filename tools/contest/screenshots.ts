@@ -172,7 +172,7 @@ const S = {
   deskResultBad: defineShot(
     'stol-wynik-blad',
     'Wynik werdyktu: błąd',
-    'Przy błędzie gra pokazuje, jakiej pieczątki zabrakło.',
+    'Przy błędzie gra pokazuje właściwy werdykt i stanowisko, które go rozstrzyga.',
   ),
   evBoss: defineShot(
     'zdarzenie-telefon-od-szefa',
@@ -212,7 +212,7 @@ const S = {
   kolegiumMissed: defineShot(
     'kolegium-blad',
     'Kolegium: błędny werdykt',
-    'Przy błędzie widać, jakich pieczątek zabrakło. Wpadka dnia wybierana głosowaniem.',
+    'Przy błędzie widać dowód, który rozstrzygał. Wpadka dnia wybierana głosowaniem.',
   ),
   endlessBriefing: defineShot(
     'bez-konca-briefing',
