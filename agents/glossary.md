@@ -139,4 +139,18 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Station help (Pomoc stanowiska) | `stationHelp` (`pl.stationHelp.kinds[kind]`) | Per station: `purpose`, `proves`, 2–3 `steps` per device, `realWorld`; one source for the help card, practice, lobby details and contest legends |
 | Polish plural | `pluralPl(n, one, few, many)` | Polish noun form for a count (`strings/plural.ts`) |
 
+## Server config and ads (Stage 7)
+
+| Polish | English (code) | Notes |
+| --- | --- | --- |
+| Konfiguracja publiczna | `publicConfig` (`PublicConfig`, `publicConfigSchema`, `DEFAULT_PUBLIC_CONFIG`) | What the client may know of the server's `config.json`, derived per request host; its own schema, never a pick of the server config. Served by `GET /api/config` and embedded in the HTML shell (`PUBLIC_CONFIG_ELEMENT_ID`) |
+| Flaga funkcji | `featureFlag` (`FeatureFlags`, `DEFAULT_FEATURE_FLAGS`) | `roomBrowser` (off by default), `versus`, `spectators`, `intro`; gates entry points only, running matches keep going |
+| Komunikat redakcji | `motd` (`motdSchema`) | Operator message in the main menu: stable `id`, `text` ≤ `MOTD_MAX_CHARS`, `tone` `info` / `warning` |
+| Reklama / miejsce reklamy | `ad` / `adPlacement` (`menu`, `lobby`, `results`, `spectator`) | Never during play; `slots` maps a placement to an AdSense ad unit |
+| Odbiorcy reklam (wiek) | `ageTreatment` (`child` / `teen` / `unspecified`) | Age tag on every ad request; default `teen` (`DEFAULT_AD_AGE_TREATMENT`) |
+| Reklamy ograniczone | ads mode `limited` | Google's limited ads: no cookies, no local storage, no personalisation; the only mode accepted while `ageTreatment` is `teen` or `child` (`adModeAllowed`) |
+| Reklamy niespersonalizowane | ads mode `nonPersonalized` | May use cookies, so they need consent; adults only (`ageTreatment: 'unspecified'`). Personalised ads are never offered |
+| Domena / host | `normalizeHost`, `hostAllowed`, `hostnameSchema` | Bare lower-case host without port; ad domains match exactly, never a parent or wildcard |
+| Znacznik nonce CSP | `CSP_NONCE_PLACEHOLDER` | Placeholder Vite writes into the built `index.html`; the HTML shell swaps in a per-request nonce |
+
 Missing a term? Add it here in the same commit that introduces it.
