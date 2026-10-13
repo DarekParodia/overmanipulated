@@ -159,6 +159,12 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
 | Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
 
+| Polish | English | Notes |
+| --- | --- | --- |
+| Premia (roli) | passive (`RoleSummary.passive`, `pl.lobbyRoles.passiveLabel`) | A role's always-on bonus; „Bez premii” for a role without one or without a role |
+| Przepustki ról | role passes (`RolePasses`, `data-testid="role-pass-<role>"`) | The lobby's 7 native radios (6 roles + „Bez roli”), with the marks of the teammates who picked each (`role-pass-dots`) |
+| Panel roli | role detail panel (`data-testid="role-detail"`, `roleSummary`, `roleSummaryNote`) | Under the passes: the checked (or hovered / pad-focused) role's passive with its stations on the level, the ability with the device's key and cooldown, and „Ta premia / Ta zdolność nie działa na tym poziomie.” when a perk does nothing there |
+
 ## Abilities (`Ability`, Stage 7)
 
 | Polish | English | Notes |
