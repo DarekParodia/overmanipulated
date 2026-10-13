@@ -431,7 +431,7 @@ describe('validate CLI', () => {
       'l6-frekwencja-w-poludnie-archive',
     ]);
     // New stories wait for their level's bag pool: S7-32 writes l4 stories and S7-33 converts
-    // the level; S7-30 writes l3 stories and S7-31 puts them into the l3 pool.
+    // the level.
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([
       'l4-tlumy-na-sorze',
@@ -439,14 +439,6 @@ describe('validate CLI', () => {
       'l4-ratownik-o-kaskach',
       'l4-basen-zamkniety',
       'l4-sobotnie-szczepienia',
-    ]);
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([
-      'l3-zalana-sala',
-      'l3-dyrektor-na-plazy',
-      'l3-pusta-stolowka',
-      'l3-pracownia-robotyki',
-      'l3-psycholog-z-sieci',
-      'l3-zajecia-przed-matura',
     ]);
     const warnings = decisiveNotJustifying.length + notScheduled.length;
     expect(out).toContain(`0 error(s), ${warnings} warning(s)`);
