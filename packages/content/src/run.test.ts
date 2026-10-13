@@ -7,7 +7,7 @@ import { LEVEL_FILES } from './files.ts';
 import { getLevel, LEVELS, prepareLevelRun, STORIES } from './index.ts';
 import { levelStoryIds, maxLevelScore, proofCount } from './rules.ts';
 import { applyDifficulty, prepareRun, resolveLevel, runSummary } from './run.ts';
-import { type Level, levelSchema } from './schema.ts';
+import { type Level, levelFileSchema, levelSchema } from './schema.ts';
 
 const { level: bagFile, stories } = bagContent();
 const byId = new Map(stories.map((story) => [story.id, story]));
@@ -190,9 +190,8 @@ describe('prepareRun and applyDifficulty', () => {
 
 describe('LEVELS', () => {
   it('serves every level with an authored schedule exactly as its file', () => {
-    const files = Object.values(LEVEL_FILES).map((file) => levelSchema.parse(file));
-    const fixed = files.filter((level: Level) => !level.bag);
-    expect(fixed.length).toBe(LEVELS.length);
-    expect(LEVELS).toEqual(fixed);
+    const files = Object.values(LEVEL_FILES).map((file) => levelFileSchema.parse(file));
+    const fixed = files.filter((level) => !level.bag).map((level) => levelSchema.parse(level));
+    expect(LEVELS.filter((level: Level) => !level.bag)).toEqual(fixed);
   });
 });
