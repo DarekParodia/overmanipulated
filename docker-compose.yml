@@ -1,5 +1,6 @@
-# Production-like stack: Caddy (TLS, static client, reverse proxy) + Bun game server.
-# Usage: DOMAIN=gra.example.pl docker compose up -d --build   (see docs/deploy.md)
+# Production stack: Caddy (static client, reverse proxy, HTTP only) + Bun game server.
+# TLS is terminated by an external reverse proxy that forwards to port 8080 (see docs/deploy.md).
+# Usage: docker compose up -d --build
 # Sized for a small VPS (1 vCPU / 1 GB RAM): a 4-player room is a few MB, the limits only cap
 # runaway behaviour.
 
@@ -19,13 +20,13 @@ services:
     # The server stops accepting sockets and closes the database on SIGTERM; 15 s is plenty.
     stop_grace_period: 15s
     environment:
-      PORT: 3000
+      PORT: "3000"
       DATABASE_PATH: /data/redakcja.sqlite
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - db:/data
     expose:
-      - '3000'
+      - "3000"
     mem_limit: 384m
     cpus: 1.0
     pids_limit: 128
@@ -45,15 +46,10 @@ services:
     depends_on:
       server:
         condition: service_healthy
-    environment:
-      DOMAIN: ${DOMAIN:-localhost}
     ports:
-      - '80:80'
-      - '443:443'
-      - '443:443/udp'
-    volumes:
-      - caddy-data:/data
-      - caddy-config:/config
+      # The external reverse proxy (TLS) connects here. Bound on all interfaces as requested on
+      # the caddy branch: firewall port 8080 so only that proxy can reach it.
+      - "0.0.0.0:8080:80"
     mem_limit: 128m
     cpus: 0.5
     pids_limit: 128
@@ -63,5 +59,3 @@ services:
 
 volumes:
   db:
-  caddy-data:
-  caddy-config:

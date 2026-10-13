@@ -1,7 +1,9 @@
-# Everything goes through 443 (school networks block unusual ports; wss needs TLS).
-# DOMAIN defaults to localhost, for which Caddy issues a locally trusted certificate.
+# TLS is terminated by the external reverse proxy (everything reaches players over 443: school
+# networks block unusual ports, and wss needs TLS). This Caddy instance serves plain HTTP on :80
+# and is published on host port 8080 for that proxy; the proxy must forward WebSocket upgrades
+# and the original Host header.
 # Access logs are off on purpose (no IP addresses stored); see docs/deploy.md to switch them on.
-{$DOMAIN:localhost} {
+:80 {
 	encode zstd gzip
 
 	header {
@@ -13,15 +15,16 @@
 		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
 		Cross-Origin-Opener-Policy "same-origin"
 		# 'unsafe-inline' for styles only: React inline style attributes. Scripts are same-origin
-		# only. wss://{hostport} is listed next to 'self' because older Safari versions do not
-		# match 'self' against ws(s) URLs. blob:/data: serve canvas textures and decoded audio.
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self' wss://{hostport}; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		# only. wss: is listed next to 'self' because older Safari versions do not
+		# match 'self' against ws(s) URLs, and behind an external proxy the Host seen here may not
+		# be the public name. blob:/data: serve canvas textures and decoded audio.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: data:; connect-src 'self' wss:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 	}
 
 	# Game socket and REST API go to the Bun server. WebSocket upgrades pass through untouched;
 	# there is no idle timeout on a proxied socket, the client's 2 s heartbeat and the server's
 	# own pings keep NATs and proxies awake.
-	@backend path /ws /api/* /health
+	@backend path /ws /api /api/* /health
 	handle @backend {
 		header Cache-Control "no-store"
 		request_body {

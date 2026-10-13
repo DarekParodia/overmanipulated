@@ -52,6 +52,6 @@ FROM caddy:2-alpine AS web
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=client-build /app/apps/client/dist /srv
 # Caddy's admin API listens on localhost:2019 inside the container; answering means the config
-# loaded. (A request through :443 would need a certificate for "localhost".)
+# loaded. (Caddy serves plain HTTP on :80; TLS is terminated by the external reverse proxy.)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
   CMD wget -q -O /dev/null http://localhost:2019/config/ || exit 1
