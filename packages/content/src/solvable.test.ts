@@ -25,8 +25,11 @@ function levelsToCheck(): Level[] {
   return endless ? [...LEVELS, endless] : [...LEVELS];
 }
 
-/** The time each story of the level gets: its first schedule entry or event, in seconds. */
-function deadlinesOf(level: Level): Map<string, number> {
+/**
+ * The time each story of the level gets: its first schedule entry or event, in seconds. A bag
+ * level adds every pool story the preview run did not deal, at its Normal priority deadline.
+ */
+function deadlinesOf(level: Level, stories: Readonly<Record<string, Story>>): Map<string, number> {
   const deadlines = new Map<string, number>();
   for (const entry of [
     ...level.schedule,
@@ -36,7 +39,22 @@ function deadlinesOf(level: Level): Map<string, number> {
       deadlines.set(entry.storyId, entry.deadlineS);
     }
   }
+  for (const id of level.bag?.pool ?? []) {
+    const priority = stories[id]?.priority ?? 'normal';
+    if (level.bag && !deadlines.has(id)) {
+      deadlines.set(id, level.bag.deadlineS[priority]);
+    }
+  }
   return deadlines;
+}
+
+/** The level's story book plus every bag pool story (the preview run deals only some of them). */
+function storiesToPlay(level: Level): Readonly<Record<string, Story>> {
+  const pool = (level.bag?.pool ?? []).flatMap((id) => {
+    const story = getStory(id);
+    return story ? [[id, story] as const] : [];
+  });
+  return { ...storiesForLevel(level), ...Object.fromEntries(pool) };
 }
 
 /** The first `requiredStamps` proofs the level's stations can give, or fewer when they fall short. */
@@ -114,8 +132,8 @@ function playStory(level: Level, story: Story, deadlineS: number): string[] {
 describe('every level is solvable', () => {
   for (const level of levelsToCheck()) {
     it(`${level.id}: each story earns its maximum score with its required proofs`, () => {
-      const stories = storiesForLevel(level);
-      const deadlines = deadlinesOf(level);
+      const stories = storiesToPlay(level);
+      const deadlines = deadlinesOf(level, stories);
       expect(deadlines.size).toBeGreaterThan(0);
       const issues = [...deadlines].flatMap(([id, deadlineS]) => {
         const story = stories[id];
@@ -125,20 +143,21 @@ describe('every level is solvable', () => {
     });
   }
 
-  for (const level of LEVELS.filter((l) => l.bag)) {
-    it(`${level.id}: every bag pool story earns its maximum score, dealt or not`, () => {
-      const pool = level.bag?.pool ?? [];
-      expect(pool.length).toBeGreaterThan(0);
-      const issues = pool.flatMap((id) => {
-        const story = getStory(id);
-        const deadlineS = story ? level.bag?.deadlineS[story.priority] : undefined;
-        return story && deadlineS !== undefined
-          ? playStory(level, story, deadlineS)
-          : [`${id} is not a story`];
-      });
-      expect(issues).toEqual([]);
-    });
-  }
+  it('plays the whole l4 bag pool, the two-proof stories included (S7-33)', () => {
+    const level = getLevel('l4-zdrowie');
+    if (!level) {
+      throw new Error('l4-zdrowie missing');
+    }
+    const deadlines = deadlinesOf(level, storiesToPlay(level));
+    expect(deadlines.size).toBe(24);
+    expect(deadlines.get('l4-raport-pielegniarek')).toBe(55);
+    expect(deadlines.get('l4-cytat-dyrektorki')).toBe(55);
+    for (const id of ['l4-raport-pielegniarek', 'l4-cytat-dyrektorki']) {
+      const story = getStory(id);
+      expect(story?.requiredStamps).toBe(2);
+      expect(story ? playStory(level, story, 55) : ['missing']).toEqual([]);
+    }
+  });
 
   it('covers a multi-stamp story: two proofs, 20 s more, and the bonus on top', () => {
     const level = LEVELS.find((l) => l.id === 'l0-greybox');

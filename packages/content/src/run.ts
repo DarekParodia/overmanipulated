@@ -1,7 +1,8 @@
 // Run preparation (S7-21): turns a level into the run a room plays, for one run seed and
-// difficulty. A bag level deals a fresh schedule (`generateBagLevel`), endless generates its own,
-// and a level with an authored schedule only gets its deadlines scaled (`applyDifficulty`). Pure:
-// the server draws the run seed (separate from the sim seed) and calls this once per briefing.
+// difficulty. A bag level deals a fresh schedule (`generateBagLevel`), endless generates its own
+// (`generateEndlessLevel`, which scales its spawn interval and deadlines), and a level with an
+// authored schedule only gets its deadlines scaled (`applyDifficulty`). Pure: the server draws the
+// run seed (separate from the sim seed) and calls this once per briefing.
 import {
   BAG_PREVIEW_SEED,
   type Difficulty,
@@ -83,8 +84,7 @@ export function prepareRun(
   if (base.bag) {
     level = generateBagLevel(base, stories, seed, difficulty);
   } else if (base.id === ENDLESS_LEVEL_ID) {
-    // Until S7-22 scales the endless interval too, only its deadlines follow the difficulty.
-    level = applyDifficulty(generateEndlessLevel(seed, levels, stories), difficulty);
+    level = generateEndlessLevel(seed, levels, stories, difficulty);
   } else {
     level = applyDifficulty(base, difficulty);
   }

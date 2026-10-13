@@ -24,83 +24,43 @@
     "####################"
   ],
   "stations": ["imageSearch", "sourceRegistry", "archive", "phone"],
-  "schedule": [
-    {
-      "atS": 4,
-      "storyId": "l3-dzien-otwarty",
-      "deadlineS": 55
-    },
-    {
-      "atS": 28,
-      "storyId": "l3-dyrektor-zwolniony",
-      "deadlineS": 70
-    },
-    {
-      "atS": 52,
-      "storyId": "l3-screen-wiadomosci",
-      "deadlineS": 50
-    },
-    {
-      "atS": 76,
-      "storyId": "l3-regulamin-telefonow",
-      "deadlineS": 65
-    },
-    {
-      "atS": 100,
-      "storyId": "l3-koperta-z-pieniedzmi",
-      "deadlineS": 60
-    },
-    {
-      "atS": 124,
-      "storyId": "l3-petycja-poparcia",
-      "deadlineS": 70
-    },
-    {
-      "atS": 148,
-      "storyId": "l3-wszyscy-wiedza",
-      "deadlineS": 45
-    },
-    {
-      "atS": 172,
-      "storyId": "l3-najgorsze-liceum",
-      "deadlineS": 65
-    },
-    {
-      "atS": 196,
-      "storyId": "l3-satyra-poniedzialki",
-      "deadlineS": 65
-    },
-    {
-      "atS": 220,
-      "storyId": "l3-kontrola-kuratorium",
-      "deadlineS": 55
-    },
-    {
-      "atS": 244,
-      "storyId": "l3-szkola-zamknieta",
-      "deadlineS": 40
-    },
-    {
-      "atS": 268,
-      "storyId": "l3-nagranie-krzykow",
-      "deadlineS": 65
-    },
-    {
-      "atS": 292,
-      "storyId": "l3-oswiadczenie-dyrektora",
-      "deadlineS": 60
-    },
-    {
-      "atS": 316,
-      "storyId": "l3-screen-z-gazety",
-      "deadlineS": 55
-    },
-    {
-      "atS": 340,
-      "storyId": "l3-apel-o-spokoj",
-      "deadlineS": 50
+  "bag": {
+    "pool": [
+      "l3-dzien-otwarty",
+      "l3-dyrektor-zwolniony",
+      "l3-screen-wiadomosci",
+      "l3-regulamin-telefonow",
+      "l3-koperta-z-pieniedzmi",
+      "l3-petycja-poparcia",
+      "l3-wszyscy-wiedza",
+      "l3-najgorsze-liceum",
+      "l3-satyra-poniedzialki",
+      "l3-kontrola-kuratorium",
+      "l3-szkola-zamknieta",
+      "l3-nagranie-krzykow",
+      "l3-oswiadczenie-dyrektora",
+      "l3-screen-z-gazety",
+      "l3-apel-o-spokoj",
+      "l3-zalana-sala",
+      "l3-dyrektor-na-plazy",
+      "l3-pusta-stolowka",
+      "l3-pracownia-robotyki",
+      "l3-psycholog-z-sieci",
+      "l3-zajecia-przed-matura",
+      "l3-stara-afera",
+      "l3-zmyslony-wywiad",
+      "l3-boisko-ze-zbiorki",
+      "l3-dyrektor-bez-dyplomu"
+    ],
+    "firstAtS": 4,
+    "gapS": 24,
+    "lastSpawnS": 340,
+    "deadlineS": {
+      "normal": 60,
+      "important": 60,
+      "urgent": 45
     }
-  ],
+  },
   "events": [
     {
       "kind": "viral",
@@ -120,6 +80,5 @@
       "storyId": "l3-viral-pozegnanie",
       "deadlineS": 50
     }
-  ],
-  "stars": { "two": 240, "three": 350 }
+  ]
 }
