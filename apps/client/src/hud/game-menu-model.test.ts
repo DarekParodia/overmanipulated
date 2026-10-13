@@ -24,9 +24,15 @@ function room(connected: boolean[]): RoomStateMessage {
       connected: online,
       role: null,
       ready: false,
+      team: 0,
     })),
     briefing: null,
     blunderVotes: [],
+    mode: 'coop',
+    visibility: 'private',
+    name: null,
+    spectatorsAllowed: false,
+    spectators: [],
   };
 }
 
