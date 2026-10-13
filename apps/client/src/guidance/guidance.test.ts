@@ -4,6 +4,8 @@ import type { GameplayEvent } from '../fx/event-cues.ts';
 import { pl } from '../strings/pl.ts';
 import {
   BUSY_KINDS,
+  hasEnoughProofs,
+  justifyingCount,
   type NextStepInput,
   nextStep,
   type StoryStamps,
@@ -73,6 +75,63 @@ function input(partial: Partial<NextStepInput>): NextStepInput {
     ...partial,
   };
 }
+
+describe('multi-stamp folders (S7-19)', () => {
+  // Needs two proofs: the archive and the registry; the AI scanner justifies but is a hint.
+  const two: StoryStamps = {
+    stamps: [...story.stamps, { id: 's-ai', station: 'aiScanner' }],
+    justifyingStamps: ['s-ai', 's-archive', 's-registry'],
+    requiredStamps: 2,
+  };
+  const withTwo = (partial: Partial<NextStepInput>) => input({ story: () => two, ...partial });
+
+  test('justifyingCount counts distinct proofs, never the AI scanner', () => {
+    expect(justifyingCount(folder('f', carried, { stamps: ['s-ai', 's-image'] }), two)).toBe(0);
+    expect(justifyingCount(folder('f', carried, { stamps: ['s-archive', 's-ai'] }), two)).toBe(1);
+    expect(
+      justifyingCount(folder('f', carried, { stamps: ['s-archive', 's-registry'] }), two),
+    ).toBe(2);
+    expect(justifyingCount(folder('f', carried, { stamps: ['s-archive'] }), undefined)).toBe(0);
+  });
+
+  test('hasEnoughProofs compares against requiredStamps (1 when absent)', () => {
+    const one = folder('f', carried, { stamps: ['s-archive'] });
+    expect(hasEnoughProofs(one, story)).toBe(true);
+    expect(hasEnoughProofs(one, two)).toBe(false);
+    expect(
+      hasEnoughProofs(folder('f', carried, { stamps: ['s-archive', 's-registry'] }), two),
+    ).toBe(true);
+    expect(hasEnoughProofs(one, undefined)).toBe(false);
+  });
+
+  test('one proof of two: on to the missing proving station, not the desk', () => {
+    const step = nextStep(withTwo({ folders: [folder('f', carried, { stamps: ['s-archive'] })] }));
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
+    expect(step.text).toBe('Zanieś do: Kartoteka');
+  });
+
+  test('the AI scanner does not make up the second proof', () => {
+    const step = nextStep(
+      withTwo({ folders: [folder('f', carried, { stamps: ['s-archive', 's-ai'] })] }),
+    );
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
+  });
+
+  test('both proofs collected: to a free desk', () => {
+    const step = nextStep(
+      withTwo({ folders: [folder('f', carried, { stamps: ['s-registry', 's-archive'] })] }),
+    );
+    expect(step.kind).toBe('toDesk');
+    expect(step.targetFixtureIds).toEqual(['desk-0', 'desk-1']);
+  });
+
+  test('an unchecked multi-stamp folder: every proving station', () => {
+    const step = nextStep(withTwo({ folders: [folder('f', carried)] }));
+    expect(step.targetFixtureIds).toEqual(['archive-0', 'sourceRegistry-0']);
+  });
+});
 
 describe('nextStep', () => {
   test('nothing anywhere: wait', () => {
