@@ -10,7 +10,7 @@ import { typeset } from '../strings/typography.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './Guidance.module.css';
 import { BUSY_KINDS, type NextStepKind } from './next-step.ts';
-import { useGuidance } from './store.ts';
+import { useEffectiveHints, useGuidance } from './store.ts';
 import { Tutorial } from './Tutorial.tsx';
 import { useTutorial } from './tutorial-store.ts';
 import { useGuidanceDriver } from './use-guidance-driver.ts';
@@ -50,7 +50,8 @@ export function Guidance() {
 }
 
 function HintBubble() {
-  const enabled = useGuidance((s) => s.hintsEnabled);
+  // Off with the setting, and on Ekspert whatever the setting says (S7-24).
+  const enabled = useEffectiveHints();
   const step = useGuidance((s) => s.step);
   if (!enabled || !step || BUSY_KINDS.has(step.kind)) {
     return null;

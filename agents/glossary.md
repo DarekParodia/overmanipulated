@@ -62,7 +62,7 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Rozgrywka (przygotowana) | prepared run (`prepareRun`, `prepareLevelRun`, `PreparedRun`) | The level a room plays for one run seed and difficulty: dealt schedule, deadlines, stars, stories, `maxScore` |
 | Ziarno rozgrywki | run seed (`RunOptions.seed`) | Picks the dealt stations and stories; drawn by the server per briefing, separate from the sim seed |
 | Podsumowanie rozgrywki | run summary (`runSummary`, `RunSummary`) | `{folders, maxScore, stars}` of a prepared run; stars null in endless; `roomState.run` from the briefing through the results, null in the lobby |
-| Stanowisko z worka (teczki) | bag station (`folder.bagStation`, schedule entry `station`) | The station the bag slot designated for a dealt folder, copied from its schedule entry at spawn; absent on event folders and authored schedules |
+| Stanowisko z worka (teczki) | bag station (`folder.bagStation`, schedule entry `station`) | The station the bag slot designated for a dealt folder, copied from its schedule entry at spawn; absent on event folders and authored schedules. Guidance names it first among the stations it would suggest anyway (S7-24) |
 | Rozdanie z worka | `generateBagLevel` (`bagDeadlineS`) | One run of a bag level: slot times, station sequence, matched stories, scaled and clamped deadlines, stars from the run maximum |
 | Skalowanie terminów | `scaledDeadlineS`, `applyDifficulty` | Deadline × `deadlineFactor`, rounded to whole seconds (Normal unchanged); `applyDifficulty` scales a fixed schedule's deadlines only |
 | Historie poziomu | `levelStoryIds` | The pool of a bag level, otherwise the scheduled ids; never event stories |
@@ -146,6 +146,9 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Skalowanie kar | `scalePenalty` (`penaltyFactor`) | Wrong-verdict, expiry and correction penalties × the factor, halves rounded away from zero; rewards are never scaled |
 | Utrata / odzysk przy sprostowaniu | `correctionLoss` / `correctionRecover` | Credibility a correction costs (scaled) and the share of it a filed correction gives back |
 | Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
+| Zasady rundy minigry | round rules (`roundRules`, `RoundRules`) | What the room's difficulty gives one minigame round on the client: `difficulty` (for the mistake limit), `timeLimitMs` and `revealOnFail`; passed in `MinigameProps` |
+| Pokazanie odpowiedzi po porażce | answer reveal (`revealOnFail`, `revealsOnFail`) | A failed round shows the right answer (cell, result, card or reading); off on Ekspert and at stations that keep their card (`MINIGAME_STABLE_SEED_STATIONS`) |
+| Podpowiedzi (efektywne) | effective hints (`effectiveHints`, `useEffectiveHints`) | The „co dalej” hints the game shows: the player setting AND `DIFFICULTY[d].hints`, so none on Ekspert; drives the hint bubble, scene markers and the evidence badge; the tutorial is unaffected |
 
 ## Screens (`ScreenId`)
 

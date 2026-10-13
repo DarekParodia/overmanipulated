@@ -2,8 +2,10 @@
 // folder ("Dobrze! +30", "Fałszywka w druku! −20", "Teczka przepadła −5"; titles by reason from
 // `pl.outcome`), colour plus an outcome icon. At most two at once, newest on top; each
 // disappears on its own.
+import { DIFFICULTY } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
 import { onGameEvent } from '../net/game-events.ts';
+import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
@@ -44,7 +46,9 @@ export function VerdictToasts() {
       if (event.kind === 'verdictResult') {
         add(verdictToast(event, hudStory(event.storyId), serial.current++));
       } else if (event.kind === 'folderExpired') {
-        add(expiredToast(event, hudStory(event.storyId), serial.current++));
+        // The event has no deltas: scale the table's with the room's difficulty, as the sim does.
+        const { penaltyFactor } = DIFFICULTY[useApp.getState().difficulty];
+        add(expiredToast(event, hudStory(event.storyId), serial.current++, penaltyFactor));
       }
     });
     return () => {
