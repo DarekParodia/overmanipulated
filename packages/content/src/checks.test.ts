@@ -497,26 +497,15 @@ describe('validate CLI', () => {
   it('passes on the real content', () => {
     const result = run();
     const out = result.stdout.toString();
-    // Decisive stamps that do not justify (S7-21 warning); S7-33 cleans up l4, S7-58 l6.
+    // Decisive stamps that do not justify (S7-21 warning); S7-33 cleaned up l4, S7-58 cleans l6.
     const decisiveNotJustifying = [...out.matchAll(/decisive stamp "([^"]+)" does not justify/g)];
     expect(decisiveNotJustifying.map((match) => match[1])).toEqual([
-      'l4-ankieta-uczniow-phone',
-      'l4-raport-pielegniarek-phone',
-      'l4-darmowe-badania-wzroku-archive',
-      'l4-darmowe-badania-wzroku-data',
-      'l4-woda-z-kranu-phone',
       'l6-frekwencja-w-poludnie-archive',
     ]);
-    // New stories wait for their level's bag pool: S7-32 writes l4 stories and S7-33 converts
-    // the level; S7-30 writes l3 stories and S7-31 puts them into the l3 pool.
+    // New stories wait for their level's bag pool: since S7-33 every l4 story is in the l4 pool;
+    // S7-30 writes l3 stories and S7-31 puts them into the l3 pool.
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([
-      'l4-tlumy-na-sorze',
-      'l4-zimna-woda-po-obiedzie',
-      'l4-ratownik-o-kaskach',
-      'l4-basen-zamkniety',
-      'l4-sobotnie-szczepienia',
-    ]);
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([]);
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([
       'l3-zalana-sala',
       'l3-dyrektor-na-plazy',

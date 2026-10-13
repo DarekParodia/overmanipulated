@@ -159,7 +159,7 @@
       {
         "id": "l4-ankieta-uczniow-phone",
         "station": "phone",
-        "text": "Pielęgniarka potwierdza, że ankietę zebrano w październiku.",
+        "text": "Pielęgniarka potwierdza ankietę i wynik: 41% uczniów śpi krócej niż 7 godzin.",
         "relevance": "decisive"
       },
       {
@@ -169,12 +169,16 @@
         "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l4-ankieta-uczniow-source", "l4-ankieta-uczniow-data"],
+    "justifyingStamps": [
+      "l4-ankieta-uczniow-source",
+      "l4-ankieta-uczniow-phone",
+      "l4-ankieta-uczniow-data"
+    ],
     "technique": "none",
     "debrief": {
       "what": "Prawdziwy raport miejskiej przychodni szkolnej, oparty na dużej, losowo dobranej grupie uczniów.",
       "technique": "Brak manipulacji. Liczby zgadzają się z tabelą, a próba jest duża i opisana.",
-      "tool": "Biblioteka danych: dane w tabeli zgadzają się z komunikatem. Kartoteka źródeł potwierdziła autora.",
+      "tool": "Biblioteka danych: dane w tabeli zgadzają się z komunikatem. Kartoteka źródeł potwierdziła autora, a pielęgniarka – wynik.",
       "realWorld": "Miasta publikują raporty z ankiet szkolnych. Warto sprawdzić liczebność próby i czy liczby zgadzają się z tabelą."
     },
     "reviewed": false
@@ -294,8 +298,8 @@
       {
         "id": "l4-raport-pielegniarek-phone",
         "station": "phone",
-        "text": "Rzeczniczka instytutu potwierdza, że raport jest prawdziwy.",
-        "relevance": "decisive"
+        "text": "Rzeczniczka na urlopie. Dyżurny instytutu: „Nic nie wiem o żadnym raporcie”.",
+        "relevance": "misleading"
       },
       {
         "id": "l4-raport-pielegniarek-data",
@@ -305,6 +309,7 @@
       }
     ],
     "justifyingStamps": ["l4-raport-pielegniarek-source", "l4-raport-pielegniarek-data"],
+    "requiredStamps": 2,
     "technique": "none",
     "debrief": {
       "what": "Prawdziwy raport miejskiego instytutu z poprawnie policzonym wzrostem.",
@@ -423,8 +428,8 @@
       {
         "id": "l4-darmowe-badania-wzroku-archive",
         "station": "archive",
-        "text": "W archiwum jest podobny komunikat z ubiegłego roku, o tej samej akcji.",
-        "relevance": "decisive"
+        "text": "W archiwum niemal ten sam komunikat sprzed roku, tylko z inną datą.",
+        "relevance": "misleading"
       },
       {
         "id": "l4-darmowe-badania-wzroku-phone",
@@ -439,12 +444,16 @@
         "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l4-darmowe-badania-wzroku-source", "l4-darmowe-badania-wzroku-phone"],
+    "justifyingStamps": [
+      "l4-darmowe-badania-wzroku-source",
+      "l4-darmowe-badania-wzroku-phone",
+      "l4-darmowe-badania-wzroku-data"
+    ],
     "technique": "none",
     "debrief": {
       "what": "Prawdziwy komunikat urzędu o cyklicznej akcji badań przesiewowych w szkołach.",
       "technique": "Brak manipulacji. Źródło, termin i lista szkół zostały potwierdzone w kilku miejscach.",
-      "tool": "Kartoteka źródeł i telefon do wydziału zdrowia potwierdziły komunikat. Archiwum pokazało, że akcja jest cykliczna.",
+      "tool": "Kartoteka źródeł, telefon do wydziału zdrowia i tabela szkół potwierdziły komunikat. Stary komunikat w archiwum nie znaczył, że post jest odgrzany: akcja jest cykliczna.",
       "realWorld": "Miasta ogłaszają badania przesiewowe zwykle w komunikatach urzędowych. Warto sprawdzić, czy ten sam komunikat jest na stronie urzędu."
     },
     "reviewed": false
@@ -530,6 +539,7 @@
       }
     ],
     "justifyingStamps": ["l4-cytat-dyrektorki-archive", "l4-cytat-dyrektorki-phone"],
+    "requiredStamps": 2,
     "technique": "cytat-wyrwany-z-kontekstu",
     "debrief": {
       "what": "Prawdziwe zdanie z wywiadu, ale bez dalszej części, która zmienia jego sens.",
@@ -609,8 +619,8 @@
       {
         "id": "l4-woda-z-kranu-phone",
         "station": "phone",
-        "text": "Redakcja Kuriera potwierdza: to satyra, nie badanie.",
-        "relevance": "decisive"
+        "text": "Wodociągi miejskie: woda z kranu jest czysta i można ją pić.",
+        "relevance": "misleading"
       },
       {
         "id": "l4-woda-z-kranu-data",
@@ -896,6 +906,186 @@
       "technique": "Brak manipulacji. Wpis był zgodny z tym, co mówi sama przychodnia, choć autorka nie była oficjalnym źródłem.",
       "tool": "Telefon do rejestracji przychodni potwierdził godziny i zasady akcji.",
       "realWorld": "Na grupach mieszkańców krąży wiele praktycznych informacji. Gdy chodzi o zdrowie, krótki telefon do źródła rozwiewa wątpliwości."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-obowiazkowe-szczepienia",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Wydział Zdrowia: od poniedziałku szczepienia w szkołach obowiązkowe!",
+    "body": "Komunikat z herbem miasta: „Uczeń bez szczepienia na grypę nie wejdzie do szkoły”. Udostępniło go już 2 tysiące osób.",
+    "source": "Profil „Wydział Zdrowia NB – info”",
+    "stamps": [
+      {
+        "id": "l4-obowiazkowe-szczepienia-source",
+        "station": "sourceRegistry",
+        "text": "Profil założono wczoraj. Prawdziwy wydział ma konto zweryfikowane od 8 lat i inny adres.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-obowiazkowe-szczepienia-archive",
+        "station": "archive",
+        "text": "W archiwum są tylko ogłoszenia o dobrowolnych szczepieniach z lat ubiegłych.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-obowiazkowe-szczepienia-phone",
+        "station": "phone",
+        "text": "Sekretariat Szkoły nr 2: „Rodzice dzwonią od rana, też o tym słyszeliśmy”.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-obowiazkowe-szczepienia-data",
+        "station": "dataLibrary",
+        "text": "Komunikat nie podaje liczb, nie ma czego porównać.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-obowiazkowe-szczepienia-source"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywy komunikat o obowiązkowych szczepieniach, opublikowany przez profil udający miejski wydział zdrowia.",
+      "technique": "Podszywanie się pod instytucję: herb, urzędowy ton i nazwa podobna do prawdziwej mają sprawić, że nikt nie sprawdzi nadawcy.",
+      "tool": "Kartoteka źródeł: profil powstał dzień wcześniej, a prawdziwy wydział ma inne, zweryfikowane konto. Telefony zaniepokojonych rodziców niczego nie potwierdzały.",
+      "realWorld": "Fałszywe profile urzędów i szpitali pojawiają się zwłaszcza wtedy, gdy ludzie się boją. Sprawdź, od kiedy konto istnieje i czy prowadzi je instytucja."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-rodzice-za-lipowitem",
+    "type": "post",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Rodzice z Nowych Brzegów chcą Lipowitu w każdej szkole",
+    "body": "Strona „Rodzice za zdrowiem” zebrała 312 podpisów pod apelem: „Nasze dzieci zasługują na Lipowit w stołówce!”.",
+    "source": "Strona „Rodzice za zdrowiem”",
+    "stamps": [
+      {
+        "id": "l4-rodzice-za-lipowitem-source",
+        "station": "sourceRegistry",
+        "text": "Stronę zarejestrowała agencja reklamowa, która prowadzi kampanię producenta Lipowitu.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-rodzice-za-lipowitem-archive",
+        "station": "archive",
+        "text": "Brak wcześniejszych wpisów tej strony w archiwum.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-rodzice-za-lipowitem-phone",
+        "station": "phone",
+        "text": "Dwie mamy z listy potwierdzają, że naprawdę podpisały apel.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-rodzice-za-lipowitem-data",
+        "station": "dataLibrary",
+        "text": "Pod apelem jest 312 podpisów, tyle, ile podaje strona.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-rodzice-za-lipowitem-source"],
+    "technique": "astroturfing",
+    "debrief": {
+      "what": "Prawdziwy apel z prawdziwymi podpisami, ale zorganizowany przez agencję producenta, a nie przez rodziców.",
+      "technique": "Astroturfing: kampania firmy udaje oddolną akcję zwykłych ludzi, żeby reklama wyglądała jak głos mieszkańców.",
+      "tool": "Kartoteka źródeł: stronę zarejestrowała agencja reklamowa producenta. Podpisy są prawdziwe, więc wystarczy opublikować z kontekstem: kto stoi za apelem.",
+      "realWorld": "Firmy i grupy interesu czasem zakładają „oddolne” inicjatywy. Sprawdź, kto zarejestrował stronę i kto płaci za kampanię."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-ospa-w-przychodni",
+    "type": "quote",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Lekarka z przychodni dziecięcej: „Mamy dwa razy więcej przypadków ospy”",
+    "body": "Cytat krąży na grupie rodziców: dr Anna Lis z przychodni przy ul. Klonowej prosi o obserwowanie wysypki u dzieci.",
+    "source": "Post na grupie „Mamy z Nowych Brzegów”",
+    "stamps": [
+      {
+        "id": "l4-ospa-w-przychodni-source",
+        "station": "sourceRegistry",
+        "text": "Cytat wkleiła osoba prywatna, bez linku do źródła.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-ospa-w-przychodni-archive",
+        "station": "archive",
+        "text": "Brak nagrania tej wypowiedzi w archiwum.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l4-ospa-w-przychodni-phone",
+        "station": "phone",
+        "text": "Dr Lis potwierdza słowa i liczby: 46 dzieci z ospą w tym tygodniu, tydzień wcześniej 22.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-ospa-w-przychodni-data",
+        "station": "dataLibrary",
+        "text": "Miasto nie publikuje tygodniowych danych o ospie.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-ospa-w-przychodni-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa wypowiedź lekarki o wzroście zachorowań na ospę, przekazana dalej przez rodziców.",
+      "technique": "Brak manipulacji. Cytat bez linku wyglądał podejrzanie, ale lekarka potwierdziła i słowa, i liczby.",
+      "tool": "Telefon do lekarki potwierdził wypowiedź. Brak linku był sygnałem do sprawdzenia, a nie dowodem fałszu.",
+      "realWorld": "Wiele prawdziwych informacji krąży bez źródła. Najprostszy test to zapytać osobę, którą się cytuje."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l4-szkoly-zamkniete-w-piatek",
+    "type": "post",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Grypa: w piątek wszystkie szkoły w mieście zamknięte!",
+    "body": "Wiadomość krąży w klasowych czatach: „Kuzynka z urzędu mówi, że decyzja zapadła. Przekażcie dalej!”.",
+    "source": "Wiadomość w czatach klasowych",
+    "stamps": [
+      {
+        "id": "l4-szkoly-zamkniete-w-piatek-source",
+        "station": "sourceRegistry",
+        "text": "Wiadomość przekazała dalej nauczycielka, ale nie jest jej autorką. Autor nieznany.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-szkoly-zamkniete-w-piatek-archive",
+        "station": "archive",
+        "text": "W 2019 r. szkoły w mieście zamknięto na tydzień z powodu grypy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l4-szkoly-zamkniete-w-piatek-phone",
+        "station": "phone",
+        "text": "Wydział edukacji: „Nie ma decyzji o zamknięciu szkół. Lekcje w piątek normalnie”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l4-szkoly-zamkniete-w-piatek-data",
+        "station": "dataLibrary",
+        "text": "Brak danych o nieobecnościach z tego tygodnia.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l4-szkoly-zamkniete-w-piatek-phone"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Plotka o zamknięciu szkół, której nie potwierdził urząd odpowiedzialny za taką decyzję.",
+      "technique": "Plotka bez źródła: „kuzynka z urzędu” brzmi wiarygodnie, ale nie da się jej sprawdzić, a prośba „przekażcie dalej” przyspiesza obieg.",
+      "tool": "Telefon do wydziału edukacji: decyzji nie ma, lekcje odbędą się normalnie. Archiwum pokazało tylko, że kiedyś szkoły zamknięto, nie że stanie się to teraz.",
+      "realWorld": "W sezonie chorób często krążą plotki o zamknięciu szkół. Decyzję ogłasza urząd lub dyrekcja, więc tam warto zadzwonić."
     },
     "reviewed": false
   }
