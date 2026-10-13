@@ -122,9 +122,11 @@ describe('generateEndlessLevel', () => {
       ...LEVELS.find((l) => l.id === 'l1-burza'),
       id: 'l3-test',
       schedule: extra.map((s, i) => ({ atS: i, storyId: s.id, deadlineS: 30 })),
+      // Level 1 deals from a bag; the test level schedules its stories instead.
+      bag: undefined,
     } as (typeof LEVELS)[number];
     const pool = endlessStoryPool([...LEVELS, l3], [...STORIES, ...extra]);
-    expect(pool.some((s) => s.id.startsWith('l3-'))).toBe(true);
+    expect(pool.map((s) => s.id)).toEqual(expect.arrayContaining(extra.map((s) => s.id)));
     expect(pool.some((s) => s.id.startsWith('l0-'))).toBe(false);
     const numbers = pool.map((s) => Number(/^l(\d+)-/.exec(s.id)?.[1]));
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
