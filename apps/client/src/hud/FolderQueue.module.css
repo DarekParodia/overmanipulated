@@ -458,3 +458,89 @@
     height: 13px;
   }
 }
+
+/*
+ * --- Role abilities (S7-40) --------------------------------------------------------------------
+ * More time: a small hourglass "+20" chip on the top-right corner (the evidence chip moves a
+ * little left to make room). Koło ratunkowe: a round lifebuoy badge on the top-left corner. The
+ * folder a ready press would act on: a dashed blue outline (blue = selection), never colour alone
+ * as the outline's dashes carry it too.
+ */
+
+.extended {
+  position: absolute;
+  top: -0.7rem;
+  right: -0.5rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 0 var(--space-1) 0 2px;
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop-pressed);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  color: var(--outline);
+  white-space: nowrap;
+}
+
+.extendedCard .evidence {
+  left: 38%;
+}
+
+.rescue {
+  position: absolute;
+  top: -0.7rem;
+  left: -0.5rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: 50%;
+  box-shadow: var(--pop-pressed);
+  color: var(--outline);
+}
+
+.abilityTarget {
+  outline: var(--stroke) dashed var(--blue);
+  outline-offset: var(--stroke);
+}
+
+@media (max-height: 500px), (max-width: 760px) {
+  /* The phone card is a low strip under a thin top margin: the corner marks hang less far. */
+  .extended,
+  .rescue {
+    top: -0.45rem;
+  }
+
+  .extended svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .extended {
+    line-height: 1.2;
+  }
+
+  .rescue {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .rescue svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .extendedCard .evidence {
+    left: 50%;
+  }
+}

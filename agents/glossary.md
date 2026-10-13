@@ -165,7 +165,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Podgląd zdolności | ability preview (`abilityPreview`, `AbilityPreview`, `AbilityView`, `AbilityEnv`) | What a press would do now (`none`, `calling`, `armed`, `cooling`, `blocked`, `arm`, `now` with its target); one function for the sim, the HUD and the bots |
 | Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |
 | Stan zdolności załogi | crew ability state (`AbilityState`, `snapshot.crew`, `crewSnapshot`) | `abilityReadyAtMs`, `abilityArmed`, `fieldCall`, `rescuesLeft` per player |
-| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue (no role, cooling) |
+| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue when the shared preview says it does nothing (no role, cooling, blocked, a call running) |
+| Żeton zdolności | ability chip (`AbilityChip`, `abilityChipModel`, `data-testid="hud-ability"`) | Bottom-left HUD chip on keyboard and gamepad: ring, key cap, one-word name, status (`ready`, `armed`, `calling`, `cooling`, `blocked`) |
+| Przycisk zdolności | ability button (`AbilityButton`, grid area `ability`, `data-testid="touch-ability"`) | The 4th thumb button on touch; same ring and states as the chip, shown only with a role |
+| Cel zdolności | ability target (`AbilityTarget`, `abilityTargetFolder`, `abilityTargetName`, `data-ability-target`) | What a ready press would act on: the folder card gets a dashed blue outline, a teammate or station is named on the chip |
+| Pierścień postępu | progress ring (`ui/ProgressRing`, `RingTone`) | The round fill shared by the work prompt and the ability chip / button |
 | Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
 
 ## Station families (`StationFamily`, Stage 7)

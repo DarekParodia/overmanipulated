@@ -18,6 +18,7 @@ import { sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
+import { ProgressRing } from '../ui/ProgressRing.tsx';
 import { KeyCap, ResultMark, STATION_ICON } from './kit.tsx';
 import { minigameFor } from './minigames/index.ts';
 import {
@@ -176,10 +177,6 @@ export function StationOverlay({ station, folder, onResult, onClose }: StationOv
   );
 }
 
-/** Ring geometry for the work prompt (SVG units). */
-const RING_R = 26;
-const RING_C = 2 * Math.PI * RING_R;
-
 /** While the player holds the work button: a big progress ring and "Hold [key]". */
 export function WorkPrompt({ station }: { station: Station }) {
   const device = useApp((s) => s.inputDevice);
@@ -187,29 +184,14 @@ export function WorkPrompt({ station }: { station: Station }) {
     station.durationMs > 0 ? Math.min(1, station.progressMs / station.durationMs) : 0;
   return (
     <div className={`panel ${styles.plate}`} role="status" data-testid="work-prompt">
-      <span
+      <ProgressRing
+        progress={progress}
+        tone="work"
         className={styles.ring}
-        role="progressbar"
-        aria-label={pl.vocab.stations[station.kind]}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(progress * 100)}
+        label={pl.vocab.stations[station.kind]}
       >
-        <svg viewBox="0 0 64 64" aria-hidden="true">
-          <circle className={styles.ringTrack} cx={32} cy={32} r={RING_R} />
-          <circle
-            className={styles.ringFill}
-            cx={32}
-            cy={32}
-            r={RING_R}
-            strokeDasharray={RING_C}
-            strokeDashoffset={RING_C * (1 - progress)}
-          />
-        </svg>
-        <span className={styles.ringIcon}>
-          <Icon name={STATION_ICON[station.kind]} size={26} />
-        </span>
-      </span>
+        <Icon name={STATION_ICON[station.kind]} size={26} />
+      </ProgressRing>
       <span className={styles.plateText}>
         {device === 'touch' ? (
           <span>{pl.station.holdTouch}</span>

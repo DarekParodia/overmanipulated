@@ -164,14 +164,15 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'ability.armed': chip('bolt', t.abilityArmed, 'info', { scope: 'local' }),
   'ability.disarmed': skip('own-action'),
   'ability.denied': skip('own-action'),
+  'ability.ready': chip('bolt', t.abilityReady, 'good', { scope: 'local' }),
   'ability.expertise': chip('bolt', t.expertise, 'good'),
   'ability.call.start': chip('phone', t.callStarted, 'info'),
   'ability.call.done': chip('phone', t.callStamp, 'good'),
   'ability.call.dropped': chip('phone', t.callDropped, 'warn', { scope: 'local' }),
   'ability.extendDeadline': chip('hourglass', t.moreTime, 'good'),
-  'ability.secondChance': chip('bolt', t.secondChance, 'good'),
+  'ability.secondChance': chip('retry', t.secondChance, 'good'),
   'ability.pass': chip('folder', t.folderPassed, 'info'),
-  'role.rescue': chip('hourglass', t.rescued, 'good'),
+  'role.rescue': chip('lifebuoy', t.rescued, 'good'),
 };
 
 /** The chip a cue shows for the given context, or null when it shows none. */
