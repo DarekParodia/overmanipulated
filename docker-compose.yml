@@ -1,9 +1,10 @@
 # Production stack: Caddy (static client, reverse proxy, HTTP only) + Bun game server.
 # TLS is terminated by an external reverse proxy that forwards to port 8080 (see docs/deploy.md).
 # Usage: docker compose up -d --build
-# Sized for a small VPS (1 vCPU / 1 GB RAM): a 4-player room is a few MB, the limits only cap
-# runaway behaviour. No pids_limit: hosts without the cgroup pids controller (LXC, some VPS
-# kernels) refuse to start containers that set it.
+# Sized for a small VPS (1 vCPU / 1 GB RAM): a 4-player room is a few MB. No mem_limit, cpus or
+# pids_limit: hosts without those cgroup controllers (LXC, some VPS kernels) refuse to start
+# containers that set them. Add them back in a docker-compose.override.yml where supported:
+#   services: { server: { mem_limit: 384m, cpus: 1.0 }, web: { mem_limit: 128m, cpus: 0.5 } }
 
 x-logging: &logging
   driver: json-file
@@ -28,8 +29,6 @@ services:
       - db:/data
     expose:
       - "3000"
-    mem_limit: 384m
-    cpus: 1.0
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -50,8 +49,6 @@ services:
       # The external reverse proxy (TLS) connects here. Bound on all interfaces as requested on
       # the caddy branch: firewall port 8080 so only that proxy can reach it.
       - "0.0.0.0:8080:80"
-    mem_limit: 128m
-    cpus: 0.5
     security_opt:
       - no-new-privileges:true
     logging: *logging
