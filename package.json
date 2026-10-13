@@ -21,7 +21,9 @@
     "lint:design": "bun tools/design/check-tokens.ts",
     "perf:budget": "bun run build && bun tools/perf/check-bundle.ts",
     "test:e2e": "playwright test",
-    "smoke": "bun tools/smoke/smoke.ts"
+    "smoke": "bun tools/smoke/smoke.ts",
+    "review:export": "bun tools/content/review-export.ts",
+    "review:apply": "bun tools/content/review-apply.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
