@@ -9,16 +9,19 @@ import {
   carriedFolder,
   countsAsProof,
   createRng,
+  type Difficulty,
   type Folder,
   folderOnFixture,
   type GameState,
-  MINIGAME_TIME_LIMIT_MS,
+  MINIGAME_STABLE_SEED_STATIONS,
+  minigameTimeLimitMs,
   PLAYER_SPEED_TILES_PER_S,
   type PlayerCommand,
   type PlayerInput,
   type Rng,
   ROLE_PERKS,
   raidOfFolder,
+  requiredStampsOf,
   type SimContext,
   type SimStory,
   type StationKind,
@@ -28,10 +31,13 @@ import {
   workDurationMs,
 } from '../../packages/shared/src/index.ts';
 import {
+  DIFFICULTY_FAIL_FACTOR,
+  MAX_FAIL_CHANCE,
   MINIGAME_BASE_S,
   MINIGAME_DIFFICULTY,
   MINIGAME_FAIL_AT,
   MINIGAME_SPREAD,
+  RETRY_FAIL_FACTOR,
   type SkillProfile,
 } from './models.ts';
 import { directionToFixture, distanceTo, nextWaypoint, walkSeconds } from './nav.ts';
@@ -65,6 +71,8 @@ type Memory = {
   order: StationKind[];
   direct: Verdict | null;
   recognised: boolean | undefined;
+  /** Stations where a minigame for this folder already failed (for the retry model). */
+  failedAt: Set<StationKind>;
 };
 
 export type BotOutput = {
@@ -107,6 +115,7 @@ export class Bot {
     private readonly profile: SkillProfile,
     private readonly team: Team,
     seed: number,
+    private readonly difficulty: Difficulty,
   ) {
     this.rng = createRng(seed);
     this.abilityUser = this.rng.next() < profile.usesAbility;
@@ -233,7 +242,7 @@ export class Bot {
           return;
         }
         if (station.operatorId === this.playerId && station.phase === 'minigame') {
-          this.planMinigame(state, station.kind);
+          this.planMinigame(state, station.kind, this.mem(state, ctx));
           this.enter('minigame', now);
         }
         return;
@@ -262,6 +271,9 @@ export class Bot {
       case 'afterGame': {
         const mem = this.mem(state, ctx);
         const kind = this.target?.station;
+        if (!this.resultSuccess && kind && mem) {
+          mem.failedAt.add(kind);
+        }
         if (this.resultSuccess || ++this.stationFailures >= this.profile.maxStationFailures) {
           if (kind && mem) {
             mem.visited.add(kind);
@@ -316,7 +328,7 @@ export class Bot {
           kind: 'verdict',
           folderId: folder.id,
           verdict: call.verdict,
-          justifyingStampIds: [call.stampId],
+          justifyingStampIds: call.stampIds.length > 0 ? call.stampIds : ['none'],
         });
         out.work = false;
         // The folder disappears next tick; the bot is free again after a reaction delay.
@@ -386,20 +398,22 @@ export class Bot {
     if (!mem || !story) {
       return this.deskTarget(state, ctx);
     }
-    const held = new Set(folder.stamps);
-    const holdsJustifying = story.justifyingStamps.some((id) => held.has(id));
-    if (holdsJustifying && mem.recognised === undefined) {
+    // Enough proof once the folder holds as many proofs as the story needs; the AI scanner's
+    // stamp is only a hint and never counts (`countsAsProof`).
+    const proofs = folder.stamps.filter((id) => countsAsProof(story, id)).length;
+    const holdsProof = proofs >= requiredStampsOf(story);
+    if (holdsProof && mem.recognised === undefined) {
       mem.recognised = this.rng.next() < this.profile.recognise;
     }
     const waited = this.waitSinceMs === null ? 0 : now - this.waitSinceMs;
     const enough =
       mem.direct !== null ||
-      (holdsJustifying && mem.recognised === true) ||
+      (holdsProof && mem.recognised === true) ||
       mem.visited.size >= this.profile.patience;
 
     let stationChoice: StationKind | 'desk' | 'wait' = 'desk';
     if (!enough) {
-      stationChoice = this.chooseStation(state, ctx, story, mem, waited);
+      stationChoice = this.chooseStation(state, ctx, folder, story, mem, waited);
     }
     if (stationChoice === 'wait') {
       this.waitSinceMs ??= now;
@@ -418,6 +432,7 @@ export class Bot {
   private chooseStation(
     state: GameState,
     ctx: SimContext,
+    folder: Folder,
     story: SimStory,
     mem: Memory,
     waitedMs: number,
@@ -426,8 +441,9 @@ export class Bot {
     if (!me) {
       return 'desk';
     }
+    // Stations whose stamp proves the verdict (never the hint-only AI scanner).
     const justifying = new Set(
-      story.stamps.filter((s) => story.justifyingStamps.includes(s.id)).map((s) => s.station),
+      story.stamps.filter((s) => countsAsProof(story, s.id)).map((s) => s.station),
     );
     const open = ctx.level.stations.filter((kind) => !mem.visited.has(kind));
     const usable = open.filter((kind) => {
@@ -455,9 +471,13 @@ export class Bot {
       const walk = fixture ? walkSeconds(distanceTo(ctx.map, fixture.id, me)) : 99;
       return walk + workDurationMs(state, this.playerId, kind, ctx.tuning) / 1000;
     };
+    // Like guidance, the folder's bag station comes first among the proof stations.
+    const bagFirst = (k: StationKind) => (k === folder.bagStation ? 0 : 1);
     const ordered = mem.informed
       ? [
-          ...usable.filter((k) => justifying.has(k)).sort((a, b) => cost(a) - cost(b)),
+          ...usable
+            .filter((k) => justifying.has(k))
+            .sort((a, b) => bagFirst(a) - bagFirst(b) || cost(a) - cost(b)),
           ...mem.order.filter((k) => usable.includes(k) && !justifying.has(k)),
         ]
       : mem.order.filter((k) => usable.includes(k));
@@ -515,6 +535,7 @@ export class Bot {
         order,
         direct,
         recognised: undefined,
+        failedAt: new Set(),
       };
       this.memory.set(folder.id, mem);
     }
@@ -525,13 +546,13 @@ export class Bot {
     folder: Folder,
     story: SimStory,
     mem: Memory | undefined,
-  ): { verdict: Verdict; stampId: string } {
+  ): { verdict: Verdict; stampIds: string[] } {
     const held = story.stamps.filter((s) => folder.stamps.includes(s.id));
-    const justifying = held.filter((s) => story.justifyingStamps.includes(s.id));
+    const cited = citeStamps(story, folder.stamps);
     if (mem?.direct) {
-      return { verdict: mem.direct, stampId: held[0]?.id ?? 'none' };
+      return { verdict: mem.direct, stampIds: cited };
     }
-    const holdsJustifying = justifying.length > 0;
+    const holdsJustifying = held.some((s) => story.justifyingStamps.includes(s.id));
     const misled = held.some((s) => s.relevance === 'misleading');
     const p = holdsJustifying
       ? this.profile.verdictAccuracy
@@ -543,21 +564,21 @@ export class Bot {
       const others = VERDICTS.filter((v) => v !== story.correctVerdict);
       verdict = others[this.rng.int(others.length)] as Verdict;
     }
-    let stampId = 'none';
-    if (holdsJustifying && this.rng.next() >= this.profile.wrongJustification) {
-      // The AI scanner is only a hint: cite real proof whenever the folder has some.
-      const proof = justifying.filter((s) => countsAsProof(story, s.id));
-      const pick = proof.length > 0 ? proof : justifying;
-      stampId = (pick[this.rng.int(pick.length)] as { id: string }).id;
-    } else if (held.length > 0) {
-      const wrong = held.filter((s) => !story.justifyingStamps.includes(s.id));
-      const pool = wrong.length > 0 ? wrong : held;
-      stampId = (pool[this.rng.int(pool.length)] as { id: string }).id;
+    // A wrong justification: one cited stamp is swapped for a held stamp that proves nothing.
+    const wrong = held.filter(
+      (s) => !story.justifyingStamps.includes(s.id) && !cited.includes(s.id),
+    );
+    const citesJustifying = cited.some((id) => story.justifyingStamps.includes(id));
+    if (citesJustifying && wrong.length > 0 && this.rng.next() < this.profile.wrongJustification) {
+      const swap = wrong[this.rng.int(wrong.length)];
+      if (swap) {
+        cited[cited.length - 1] = swap.id;
+      }
     }
-    return { verdict, stampId };
+    return { verdict, stampIds: cited };
   }
 
-  private planMinigame(state: GameState, kind: StationKind): void {
+  private planMinigame(state: GameState, kind: StationKind, mem: Memory | undefined): void {
     const role = state.crew[this.playerId]?.role ?? null;
     let durationMs =
       MINIGAME_BASE_S[kind] *
@@ -567,13 +588,15 @@ export class Bot {
     if (kind === 'phone' && !(role && ROLE_PERKS[role].skipsPhoneQueue)) {
       durationMs += 2500 + this.rng.next() * 2000; // the queue (PHONE_QUEUE_MIN/MAX_MS)
     }
-    const failChance = Math.min(0.9, this.profile.minigameFailChance * MINIGAME_DIFFICULTY[kind]);
-    let success = this.rng.next() >= failChance;
+    const retry = mem?.failedAt.has(kind) ?? false;
+    const chance = failChance(this.profile, kind, this.difficulty, retry);
+    let success = this.rng.next() >= chance;
     if (!success) {
       durationMs *= MINIGAME_FAIL_AT;
     }
-    if (durationMs >= MINIGAME_TIME_LIMIT_MS) {
-      durationMs = MINIGAME_TIME_LIMIT_MS;
+    const limitMs = minigameTimeLimitMs(this.difficulty);
+    if (durationMs >= limitMs) {
+      durationMs = limitMs;
       success = false;
     }
     this.resultAtMs = state.elapsedMs + durationMs;
@@ -675,4 +698,38 @@ export class Bot {
     out.move = { x: (dx / length) * magnitude, y: (dy / length) * magnitude };
     return false;
   }
+}
+
+/**
+ * The stamps a verdict cites: as many as the story needs (`requiredStamps`) or as the folder
+ * holds, proofs first (`countsAsProof`), then other justifying stamps (the AI scanner's hint,
+ * which never counts), then the rest, each group in the story's stamp order.
+ */
+export function citeStamps(story: SimStory, folderStamps: readonly string[]): string[] {
+  const held = story.stamps.filter((s) => folderStamps.includes(s.id)).map((s) => s.id);
+  const rank = (id: string) =>
+    countsAsProof(story, id) ? 0 : story.justifyingStamps.includes(id) ? 1 : 2;
+  const ordered = [...held].sort((a, b) => rank(a) - rank(b));
+  return ordered.slice(0, Math.min(requiredStampsOf(story), ordered.length));
+}
+
+/**
+ * Chance that one minigame attempt fails: the profile's chance × the station's fiddliness × the
+ * difficulty factor, halved again on a retry at a station that keeps its puzzle
+ * (MINIGAME_STABLE_SEED_STATIONS), capped at MAX_FAIL_CHANCE.
+ */
+export function failChance(
+  profile: Pick<SkillProfile, 'minigameFailChance'>,
+  kind: StationKind,
+  difficulty: Difficulty,
+  retry: boolean,
+): number {
+  const retryFactor = retry && MINIGAME_STABLE_SEED_STATIONS.includes(kind) ? RETRY_FAIL_FACTOR : 1;
+  return Math.min(
+    MAX_FAIL_CHANCE,
+    profile.minigameFailChance *
+      MINIGAME_DIFFICULTY[kind] *
+      DIFFICULTY_FAIL_FACTOR[difficulty] *
+      retryFactor,
+  );
 }

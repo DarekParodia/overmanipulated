@@ -62,7 +62,12 @@ export type AnimationTrigger =
   | 'tempoUp'
   // S4-05 level events.
   /** A level event starts or ends (banner / badges listen via the game event feed). */
-  | 'eventAnnounce';
+  | 'eventAnnounce'
+  // S7-40 role abilities (HUD chip and touch button).
+  /** The local ability came off its cooldown: the chip / button bumps once. */
+  | 'abilityReady'
+  /** A local press that cannot do anything: the chip / button shakes (none with reduced motion). */
+  | 'abilityDenied';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -535,6 +540,36 @@ export const cues = {
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
     haptic: 'error',
   },
+  // S7-53 Stenogram minigame: the clip's line found in the record (the highlighter sweeps it),
+  // the round solved (the right judgement or „Nie ma w zapisie”), or a wrong pick struck
+  // through. DOM overlay only, so no particles.
+  'transcript.find': {
+    severity: 1,
+    sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
+  'transcript.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'transcript.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
+  // S7-55 Mapa minigame: the district (or „Nie ma na mapie”) found and pinned, or a wrong pick
+  // struck through with a red pencil line. DOM overlay only, so no particles.
+  'geolocation.found': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'geolocation.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
   // S7-54 Inne media minigame: the right answer (copies then get a „kopia” stamp), or a wrong
   // answer struck through (one wrong answer fails). DOM overlay only, so no particles.
   'crossCheck.right': {
@@ -658,13 +693,25 @@ export const cues = {
     particles: { preset: 'dust', count: 2 },
   },
   /**
-   * A local ability press with nothing to do: no role, or the ability is still cooling (S7-39).
-   * Only the presser hears it; the HUD chip shake (`abilityDenied`) arrives with S7-40.
+   * A local ability press with nothing to do: no role, cooling, blocked or a call running
+   * (S7-39, read from the shared preview since S7-40). Only the presser hears it; the chip or
+   * the touch button shakes.
    */
   'ability.denied': {
     severity: 1,
     sound: { ids: ['back'], bus: 'ui' },
     haptic: 'tick',
+    animation: 'abilityDenied',
+  },
+  /**
+   * The local ability is ready again (client-derived from the crew cooldown, S7-40): a soft
+   * tick and a bump of the chip or the button. `tick` stands in until S7-42 adds `abready`.
+   */
+  'ability.ready': {
+    severity: 1,
+    sound: { ids: ['tick'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
+    animation: 'abilityReady',
   },
   /** Ekspertyza solved the station's task: the stamp lands without a minigame. */
   'ability.expertise': {

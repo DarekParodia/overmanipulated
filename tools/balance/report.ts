@@ -1,10 +1,18 @@
 // Aggregation of bot runs into per-level statistics and the checks against the balance intent.
-import type { RunResult } from './game.ts';
+import {
+  DIFFICULTIES,
+  type Difficulty,
+  ENDLESS_LEVEL_ID,
+  STATION_KINDS,
+  type StationKind,
+} from '../../packages/shared/src/index.ts';
+import type { RunResult, StarPair } from './game.ts';
 
 export type Spread = { mean: number; p10: number; p50: number; p90: number };
 
 export type Summary = {
   levelId: string;
+  difficulty: Difficulty;
   crew: string;
   crewSize: number;
   runs: number;
@@ -13,9 +21,12 @@ export type Summary = {
   /** Shares of runs with 0, 1, 2, 3 stars. */
   stars: [number, number, number, number];
   score: Spread;
-  /** Mean score as a share of the level's best possible score (0 when unknown). */
+  /** Mean of each run's score as a share of that run's best possible score (0 when unknown). */
   scoreShare: number;
+  /** Mean best possible score of the runs (bag levels deal a different run per seed). */
   maxScore: number;
+  /** Mean star thresholds of the runs; null for endless. */
+  thresholds: StarPair | null;
   credibilityMin: Spread;
   /** Mean credibility at tenths of the level (endless: every minute). */
   trail: number[];
@@ -30,6 +41,8 @@ export type Summary = {
   /** Level time at the end of the run, in minutes (endless survival). */
   lastedMin: Spread;
   cappedShare: number;
+  /** Mean share of level time each station was busy (a folder on it or an operator at it). */
+  stationBusyShare: Partial<Record<StationKind, number>>;
 };
 
 export function percentile(sorted: readonly number[], p: number): number {
@@ -76,17 +89,35 @@ export function summarize(runs: readonly RunResult[]): Summary {
   }
   const resolved = runs.reduce((a, r) => a + r.resolved, 0);
   const verdicts = runs.reduce((a, r) => a + r.correct + r.wrong + r.wrongJustification, 0);
-  const maxScore = first.maxScore;
+  const withThresholds = runs.flatMap((r) => (r.thresholds ? [r.thresholds] : []));
+  const busy: Partial<Record<StationKind, number>> = {};
+  for (const kind of STATION_KINDS) {
+    const shares = runs.flatMap((r) => {
+      const share = r.stationBusyShare[kind];
+      return share === undefined ? [] : [share];
+    });
+    if (shares.length > 0) {
+      busy[kind] = mean(shares);
+    }
+  }
   return {
     levelId: first.levelId,
+    difficulty: first.difficulty,
     crew: first.crew,
     crewSize: first.crewSize,
     runs: n,
     winRate: runs.filter((r) => r.won).length / n,
     stars,
     score: spread(runs.map((r) => r.score)),
-    scoreShare: maxScore > 0 ? mean(runs.map((r) => r.score)) / maxScore : 0,
-    maxScore,
+    scoreShare: mean(runs.map((r) => (r.maxScore > 0 ? r.score / r.maxScore : 0))),
+    maxScore: mean(runs.map((r) => r.maxScore)),
+    thresholds:
+      withThresholds.length === 0
+        ? null
+        : {
+            two: mean(withThresholds.map((t) => t.two)),
+            three: mean(withThresholds.map((t) => t.three)),
+          },
     credibilityMin: spread(runs.map((r) => r.credibilityMin)),
     trail,
     expiredRate: resolved === 0 ? 0 : runs.reduce((a, r) => a + r.expired, 0) / resolved,
@@ -97,11 +128,12 @@ export function summarize(runs: readonly RunResult[]): Summary {
     firstVerdictS: spread(runs.flatMap((r) => (r.firstVerdictS === null ? [] : [r.firstVerdictS]))),
     lastedMin: spread(runs.map((r) => r.endedAtS / 60)),
     cappedShare: runs.filter((r) => r.capped).length / n,
+    stationBusyShare: busy,
   };
 }
 
 export function groupKey(run: RunResult): string {
-  return `${run.levelId}|${run.crew}|${run.crewSize}`;
+  return `${run.levelId}|${run.difficulty}|${run.crew}|${run.crewSize}`;
 }
 
 export function summarizeAll(runs: readonly RunResult[]): Summary[] {
@@ -157,6 +189,51 @@ export function endlessTable(rows: readonly Summary[]): string {
   return [head, ...body].join('\n');
 }
 
+/**
+ * Markdown table of station load: the mean busy share of each station for the average crew of
+ * three, one row per level and difficulty, with the spread (busiest / least busy station).
+ */
+export function stationLoadTable(summaries: readonly Summary[]): string {
+  const rows = summaries
+    .filter((s) => s.crew === 'average' && s.crewSize === 3)
+    .sort(
+      (a, b) =>
+        // Campaign levels by id, endless last (as in the per-level sections).
+        Number(a.levelId === ENDLESS_LEVEL_ID) - Number(b.levelId === ENDLESS_LEVEL_ID) ||
+        a.levelId.localeCompare(b.levelId) ||
+        DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty),
+    );
+  const kinds = STATION_KINDS.filter((kind) =>
+    rows.some((s) => s.stationBusyShare[kind] !== undefined),
+  );
+  const head =
+    `| Level | Difficulty | ${kinds.join(' | ')} | Spread (max / min) |\n` +
+    `| --- | --- | ${kinds.map(() => '---').join(' | ')} | --- |`;
+  const body = rows.map((s) => {
+    const cells = kinds.map((kind) => {
+      const share = s.stationBusyShare[kind];
+      return share === undefined ? '-' : pct(share);
+    });
+    return `| ${s.levelId} | ${s.difficulty} | ${cells.join(' | ')} | ${f1(loadSpread(s))} |`;
+  });
+  return [head, ...body].join('\n');
+}
+
+/**
+ * Busiest station's share over the least busy one's (1 = perfectly even). A station that was
+ * never busy counts as a hundredth of the level, so the ratio stays finite.
+ */
+export function loadSpread(summary: Pick<Summary, 'stationBusyShare'>): number {
+  const shares = Object.values(summary.stationBusyShare);
+  if (shares.length === 0) {
+    return 1;
+  }
+  return Math.max(...shares) / Math.max(MIN_BUSY_SHARE, Math.min(...shares));
+}
+
+/** Floor for the least busy station in `loadSpread`. */
+const MIN_BUSY_SHARE = 0.01;
+
 // --- Intent checks ---------------------------------------------------------------------------
 
 export type Check = { name: string; ok: boolean; detail: string };
@@ -168,12 +245,14 @@ type Find = (levelId: string, crew: string, size?: number) => Summary | undefine
  * levels' star thresholds and best scores, for the 55 % / 80 % guideline.
  */
 export function intentChecks(
-  summaries: readonly Summary[],
+  all: readonly Summary[],
   levels: readonly { id: string; maxScore: number; stars: { two: number; three: number } }[],
 ): Check[] {
+  // The S6-01 targets are Normal's; the other difficulties only have to keep the order.
+  const summaries = all.filter((s) => s.difficulty === 'normal');
   const find: Find = (levelId, crew, size = 3) =>
     summaries.find((s) => s.levelId === levelId && s.crew === crew && s.crewSize === size);
-  const checks: Check[] = [];
+  const checks: Check[] = [...monotonicChecks(all)];
   const add = (name: string, ok: boolean, detail: string) => checks.push({ name, ok, detail });
 
   const l1 = (crew: string) => find('l1-burza', crew);
@@ -197,37 +276,42 @@ export function intentChecks(
   if (l6) {
     add('L6: average crew of 3 wins >= 60%', l6.winRate >= 0.6, pct(l6.winRate));
   }
-  const ids = levels.map((l) => l.id).filter((id) => id !== 'l0-greybox');
+  // Only the levels this report ran on Normal (a `--levels` subset skips the others).
+  const ids = levels
+    .map((l) => l.id)
+    .filter((id) => id !== 'l0-greybox' && find(id, 'average') !== undefined);
   const shares = ids.map((id) => find(id, 'average')?.scoreShare ?? Number.NaN);
-  const _wins = ids.map((id) => find(id, 'average')?.winRate ?? Number.NaN);
-  add(
-    'Difficulty rises: average score share of L1 > L6 by >= 5 points, no level 8 points easier than the one before',
-    shares.length > 1 &&
+  if (shares.length > 1) {
+    add(
+      'Difficulty rises: average score share of L1 > L6 by >= 5 points, no level 8 points easier than the one before',
       (shares[0] ?? 0) - (shares[shares.length - 1] ?? 0) >= 0.05 &&
-      shares.every((v, i) => i === 0 || v <= (shares[i - 1] ?? 1) + 0.08),
-    shares.map((v) => pct(v)).join(' > '),
-  );
-  add(
-    'No level unwinnable: expert wins >= 90% and average wins >= 60% everywhere',
-    ids.every(
-      (id) =>
-        (find(id, 'expert')?.winRate ?? 0) >= 0.9 && (find(id, 'average')?.winRate ?? 0) >= 0.6,
-    ),
-    ids
-      .map(
+        shares.every((v, i) => i === 0 || v <= (shares[i - 1] ?? 1) + 0.08),
+      shares.map((v) => pct(v)).join(' > '),
+    );
+  }
+  if (ids.length > 0) {
+    add(
+      'No level unwinnable: expert wins >= 90% and average wins >= 60% everywhere',
+      ids.every(
         (id) =>
-          `${id.slice(0, 2)} ${pct(find(id, 'expert')?.winRate ?? 0)}/${pct(find(id, 'average')?.winRate ?? 0)}`,
-      )
-      .join(', '),
-  );
-  add(
-    'No level trivially maxed: even the optimal expert crew stays <= 97% of max score',
-    ids.every((id) => {
-      const e = find(id, 'expert');
-      return e !== undefined && e.scoreShare <= 0.97;
-    }),
-    ids.map((id) => pct(find(id, 'expert')?.scoreShare ?? 0)).join(', '),
-  );
+          (find(id, 'expert')?.winRate ?? 0) >= 0.9 && (find(id, 'average')?.winRate ?? 0) >= 0.6,
+      ),
+      ids
+        .map(
+          (id) =>
+            `${id.slice(0, 2)} ${pct(find(id, 'expert')?.winRate ?? 0)}/${pct(find(id, 'average')?.winRate ?? 0)}`,
+        )
+        .join(', '),
+    );
+    add(
+      'No level trivially maxed: even the optimal expert crew stays <= 97% of max score',
+      ids.every((id) => {
+        const e = find(id, 'expert');
+        return e !== undefined && e.scoreShare <= 0.97;
+      }),
+      ids.map((id) => pct(find(id, 'expert')?.scoreShare ?? 0)).join(', '),
+    );
+  }
   for (const level of levels) {
     if (level.maxScore <= 0 || level.id === 'l0-greybox') {
       continue;
@@ -247,6 +331,30 @@ export function intentChecks(
       endless.lastedMin.p50 >= 6 && endless.lastedMin.p50 <= 10,
       `${f1(endless.lastedMin.p50)} min`,
     );
+  }
+  return checks;
+}
+
+/**
+ * The per-difficulty intent (S7-34): on every level run on two or more difficulties, the average
+ * crew of three never wins more often on a harder difficulty than on an easier one.
+ */
+export function monotonicChecks(summaries: readonly Summary[]): Check[] {
+  const rows = summaries.filter((s) => s.crew === 'average' && s.crewSize === 3);
+  const levelIds = [...new Set(rows.map((s) => s.levelId))];
+  const checks: Check[] = [];
+  for (const levelId of levelIds) {
+    const ladder = DIFFICULTIES.flatMap((difficulty) =>
+      rows.filter((s) => s.levelId === levelId && s.difficulty === difficulty),
+    );
+    if (ladder.length < 2) {
+      continue;
+    }
+    checks.push({
+      name: `${levelId}: average x3 win rate does not rise from easy to expert`,
+      ok: ladder.every((s, i) => i === 0 || s.winRate <= (ladder[i - 1]?.winRate ?? 1)),
+      detail: ladder.map((s) => `${s.difficulty} ${pct(s.winRate)}`).join(' >= '),
+    });
   }
   return checks;
 }

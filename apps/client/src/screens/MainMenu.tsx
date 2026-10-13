@@ -14,6 +14,7 @@ import { Field } from '../ui/Field.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { GameLogo } from './GameLogo.tsx';
 import styles from './MainMenu.module.css';
+import { MotdBanner } from './menu/MotdBanner.tsx';
 
 const CODE_FILTER = new RegExp(`[^${ROOM_CODE_ALPHABET}]`, 'g');
 
@@ -88,6 +89,8 @@ export function MainMenu() {
         <GameLogo />
         <p className={styles.tagline}>{pl.menu.tagline}</p>
       </header>
+
+      <MotdBanner className={styles.motd} />
 
       <section className={`panel ${styles.card}`}>
         <Field

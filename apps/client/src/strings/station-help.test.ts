@@ -82,6 +82,10 @@ describe('station help copy', () => {
       pl.minigames.dataLibrary.mismatch,
       pl.minigames.metadata.matches,
       pl.minigames.metadata.noData,
+      pl.minigames.transcript.notInRecord,
+      pl.minigames.transcript.same,
+      pl.minigames.transcript.changed,
+      pl.minigames.geolocation.notHere,
       pl.minigames.crossCheck.answers.unconfirmed,
     ]);
     const quoted = STATION_KINDS.flatMap((kind) =>
@@ -111,9 +115,9 @@ describe('minigame key hints', () => {
 
   it('exist for every device, touch included, in every registered minigame', () => {
     const registered = STATION_KINDS.filter((kind) => minigames[kind] !== undefined);
-    // The six Stage 2–4 minigames, Metadane (S7-52) and Inne media (S7-54) at least; new stations
-    // bring their own hints when they register.
-    expect(registered.length).toBeGreaterThanOrEqual(8);
+    // The six Stage 2–4 minigames, Metadane (S7-52), Stenogram (S7-53), Inne media (S7-54) and
+    // Mapa (S7-55) at least; new stations bring their own hints when they register.
+    expect(registered.length).toBeGreaterThanOrEqual(10);
     for (const kind of registered) {
       for (const device of DEVICES) {
         const hints = strings[kind]?.keys[device] ?? [];
@@ -143,6 +147,14 @@ describe('minigame key hints', () => {
     expect(strings.metadata?.keys.touch.map((hint) => hint.keys[0])).toEqual([
       'Stuknij',
       pl.minigames.metadata.matches,
+    ]);
+    expect(strings.transcript?.keys.touch.map((hint) => hint.keys[0])).toEqual([
+      'Stuknij',
+      pl.minigames.transcript.notInRecord,
+    ]);
+    expect(strings.geolocation?.keys.touch.map((hint) => hint.keys[0])).toEqual([
+      'Stuknij',
+      pl.minigames.geolocation.notHere,
     ]);
     expect(strings.crossCheck?.keys.touch).toEqual([{ keys: ['Stuknij'], label: 'odpowiedź' }]);
   });

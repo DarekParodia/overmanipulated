@@ -15,18 +15,30 @@ sends). Nothing in the game rules is mocked. A run is deterministic: the sim RNG
 RNG derive from the run seed (`tools/balance/game.ts`). The default matrix is 8 crews x 6 levels
 x 40 seeds + endless x 8 crews x 24 seeds (about 2600 runs, about 60-80 s on 4 cores; worker
 threads). Options: `--seeds N`, `--endless-seeds N`, `--levels l1-burza,l4-zdrowie`,
-`--no-endless`, `--workers N`, `--json file`, `--md`.
+`--no-endless`, `--difficulty easy,normal,hard,expert` (default `normal`), `--workers N`,
+`--json file`, `--md`.
 
-Output per level and crew: win rate (survived with a positive score), star distribution, score
-p10/p50/p90 and as share of the level's best possible score, minimum credibility, credibility
-trajectory (tenths of the level), share of expired folders, share of wrong verdicts or wrong
-justifications, time to first verdict, events started per run. Endless: survival time
-distribution (runs are cut at 20 min). The last block prints pass/fail checks against the
-intent (below).
+Since S7-34 every run is the one a room would play: `prepareLevelRun(level, {seed, difficulty})`
+deals it (a bag level gets its own schedule and star thresholds per seed, endless its own
+schedule, an authored level its scaled deadlines), and the sim runs with that difficulty's
+`simTuning`. Headers show the mean run max score and thresholds. A "Station load" table gives,
+for the average crew of three, the share of level time each station had a folder or an operator,
+with the busiest/least-busy spread. Intent checks add "the average crew of three does not win more
+often on a harder difficulty" per level; the targets below stay Normal's. The report on stdout is
+the same for the same matrix whatever the worker count (timing goes to stderr). The numbers in
+the sections below predate the bag and multi-stamp folders; S7-35 re-measures them.
+
+Output per level, difficulty and crew: win rate (survived with a positive score), star
+distribution, score p10/p50/p90 and as share of the level's best possible score, minimum
+credibility, credibility trajectory (tenths of the level), share of expired folders, share of
+wrong verdicts or wrong justifications, time to first verdict, events started per run. Endless:
+survival time distribution (runs are cut at 20 min). The last block prints pass/fail checks
+against the intent (below).
 
 ### Bot models (`tools/balance/models.ts`, all assumptions)
 
-Roles by crew size: 2 = photo editor, archivist; 3 = + reporter; 4 = + managing editor.
+Roles by crew size: 1 = Wszechstronny (generalist, S7-43); 2 = photo editor, archivist; 3 = +
+reporter; 4 = + managing editor.
 
 | Parameter | rookie | average | expert |
 | --- | --- | --- | --- |
@@ -49,6 +61,15 @@ Teamwork: an idle bot claims the next folder on the conveyor (rookies first come
 others by deadline and priority), then carries it through the stations it chooses and to a free
 desk. Bots wait for busy stations, avoid stations that are down and retry after a failed
 minigame. "Mixed" is rookie + average + expert.
+
+Per difficulty and multi-stamp (S7-34, also assumptions): the minigame failure chance is
+multiplied by `DIFFICULTY_FAIL_FACTOR` (easy 0.75, normal 1, hard 1.15, expert 1.4), halved
+(`RETRY_FAIL_FACTOR`) when the same bot retries a folder at a station that keeps its card
+(`MINIGAME_STABLE_SEED_STATIONS`, the Kartoteka), and capped at 90 %; an attempt that reaches the
+difficulty's minigame time limit fails. A bot treats a folder as ready once it holds as many
+proofs as the story requires (the AI scanner's hint never counts), heads first for the folder's
+bag station, and cites that many stamps at the desk (proofs first); a wrong justification swaps
+one cited stamp for a held stamp that proves nothing.
 
 ### Limits (read before trusting any number)
 

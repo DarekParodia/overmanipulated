@@ -1,6 +1,13 @@
 // Balance and engine constants shared by client and server.
 // Change values here, never inline (AGENTS.md rule 6).
-import type { Ability, Difficulty, Role, StationFamily, StationKind } from './domain.ts';
+import {
+  type Ability,
+  type Difficulty,
+  type Role,
+  STATION_KINDS,
+  type StationFamily,
+  type StationKind,
+} from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
 export const PROTOCOL_VERSION = 6;
@@ -181,6 +188,22 @@ export const ROLE_PERKS = {
     expertiseFamily: null,
     skipsPhoneQueue: false,
     rescuesPerLevel: 0,
+  },
+  generalist: {
+    fasterAt: STATION_KINDS,
+    workFactor: 0.8,
+    ability: 'secondChance',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  rescuer: {
+    fasterAt: [],
+    workFactor: 1,
+    ability: 'passFolder',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 1,
   },
 } as const satisfies Record<Role, RolePerk>;
 

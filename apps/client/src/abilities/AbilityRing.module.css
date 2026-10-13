@@ -1,0 +1,36 @@
+/* The ability ring's number and the Koło ratunkowe badge (S7-40). */
+
+/* Whole seconds in the ring: a HUD number, so 30 px and tabular. */
+.seconds {
+  padding-top: 0.12em; /* Baloo sits high in its box */
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* A small lifebuoy chip with the rescues left; greyed out once used. */
+.rescue {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-2) 0 2px;
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop-pressed);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  color: var(--outline);
+  white-space: nowrap;
+}
+
+.rescueUsed {
+  background: var(--surface-sunk);
+  color: var(--text-faint);
+}

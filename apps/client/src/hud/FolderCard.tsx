@@ -3,8 +3,12 @@
 // folder is. No headline: the card is read in a glance. Under ten seconds the card turns red
 // and shakes (no shake with reduced motion; nothing blinks). A multi-stamp folder also gets an
 // evidence chip centred on its top edge (S7-19): proofs collected out of N with hints on, or
-// only "×N" with them off or on Ekspert (the effective hints, S7-24).
+// only "×N" with them off or on Ekspert (the effective hints, S7-24). Role abilities (S7-40):
+// a folder that got more time (Przedłużenie, Koło ratunkowe) wears an hourglass "+20" chip on its
+// top-right corner, one carried by a Ratownik with the rescue left a lifebuoy on its top-left
+// corner, and the folder the local player's ready press would act on a dashed blue outline.
 import type { Folder } from '@redakcja/shared';
+import { RESCUE_ICON } from '../abilities/ability-icons.ts';
 import type { TagBadge } from '../events/event-model.ts';
 import { useEffectiveHints } from '../guidance/store.ts';
 import { pl } from '../strings/pl.ts';
@@ -37,6 +41,8 @@ export function FolderCard({
   where,
   whereKind,
   tag = null,
+  abilityTarget = false,
+  rescue = false,
 }: {
   folder: Folder;
   elapsedMs: number;
@@ -44,6 +50,10 @@ export function FolderCard({
   whereKind: LocationKind;
   /** Badge of the level event the folder belongs to (shares, boss call, raid, correction). */
   tag?: TagBadge | null;
+  /** The local player's ready ability press would act on this folder (S7-40). */
+  abilityTarget?: boolean;
+  /** A Ratownik with Koło ratunkowe left carries it (S7-40). */
+  rescue?: boolean;
 }) {
   const story = hudStory(folder.storyId);
   const type = story?.type ?? 'article';
@@ -54,14 +64,40 @@ export function FolderCard({
   // The setting AND `DIFFICULTY[room difficulty].hints`, so Ekspert shows only "×N".
   const hintsOn = useEffectiveHints();
   const evidence = evidenceBadge(folder, story, hintsOn);
+  const extendedS = Math.round((folder.extendedMs ?? 0) / 1000);
 
   return (
     <li
-      className={`${styles.card} ${styles[priority]} ${warn ? styles.warn : ''}`}
+      className={`${styles.card} ${styles[priority]} ${warn ? styles.warn : ''} ${extendedS > 0 ? styles.extendedCard : ''} ${abilityTarget ? styles.abilityTarget : ''}`}
       data-folder={folder.id}
       data-warn={warn || undefined}
       data-tag={tag?.kind}
+      data-extended={extendedS > 0 ? extendedS : undefined}
+      data-rescue={rescue || undefined}
+      data-ability-target={abilityTarget || undefined}
     >
+      {abilityTarget && <span className="visually-hidden">{pl.hud.ability.targetLabel}</span>}
+      {extendedS > 0 && (
+        <span
+          className={styles.extended}
+          role="img"
+          aria-label={pl.hud.ability.extendedLabel(extendedS)}
+          data-testid="folder-extended"
+        >
+          <Icon name="hourglass" size={14} />
+          <span aria-hidden="true">{pl.hud.ability.extended(extendedS)}</span>
+        </span>
+      )}
+      {rescue && (
+        <span
+          className={styles.rescue}
+          role="img"
+          aria-label={pl.hud.ability.rescueLabel}
+          data-testid="folder-rescue"
+        >
+          <Icon name={RESCUE_ICON} size={16} />
+        </span>
+      )}
       {tag && (
         <span
           className={`${styles.tag} ${styles[`tag_${tag.tone}`]} ${tag.urgent ? styles.tagUrgent : ''}`}

@@ -34,7 +34,7 @@
 bun run test                 # all unit tests
 bun test packages/shared     # one package
 bun run validate:content     # content checks
-bun run test:e2e             # e2e, desktop + mobile projects
+bun run test:e2e             # e2e: desktop, mobile and phone-small (640×360) projects
 ```
 
 In CI, Playwright installs its own Chromium (`playwright install --with-deps chromium`). In a
@@ -45,6 +45,11 @@ Locally Playwright reuses servers already listening on its ports (3000 for the g
 4173 for the preview). When several checkouts run e2e on one machine (e.g. agent worktrees),
 give each its own ports so no run talks to another checkout's build:
 `E2E_SERVER_PORT=3311 E2E_WEB_PORT=4311 bun run test:e2e`.
+
+Playwright projects: `desktop` (1366×768), `mobile` (Pixel 7 landscape, 863×360) and
+`phone-small` (the same phone at 640×360, the smallest supported screen). `phone-small` runs only
+`e2e/phone-layout.spec.ts`, the phone HUD checks, which `mobile` runs too and `desktop` skips; put
+new phone-layout checks there rather than overriding the viewport per test.
 
 The e2e tests read avatar positions from the scene exposed as `window.__scene` when the page is
 opened with `?debug`; avatar groups are named `player:<nickname>`.

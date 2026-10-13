@@ -151,6 +151,9 @@ apps/server/drizzle/   generated SQL migrations (committed)
 ## Rendering and performance budget
 
 - Low-poly 3D at an angled top-down camera; UI is 2D DOM layered on top.
+- Camera framing is pure math in `scene/camera-framing.ts` (tested in bun): fit the room, or
+  follow the local player on small screens under the measured HUD band (`hud/hud-band.ts`) with
+  `setViewOffset`. Anything projected to the screen uses `camera.project`, so it follows the offset.
 - Budget: **60 FPS on Intel UHD 620** (Chrome, Edge, Firefox) and on mid-range phones (never
   below 30 FPS), ≤ 100k triangles, ~150 draw calls on desktop / ~100 on mobile, repeated
   furniture via instancing, ≤ 10 MB initial download with a progress bar for assets.

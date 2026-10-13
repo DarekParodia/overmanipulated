@@ -20,7 +20,15 @@ function crewOf(...roles: Parameters<typeof addPlayer>[3][]) {
 }
 
 describe('role passives (ROLE_PERKS)', () => {
-  const state = crewOf('photoEditor', 'archivist', 'reporter', 'managingEditor', null);
+  const state = crewOf(
+    'photoEditor',
+    'archivist',
+    'reporter',
+    'managingEditor',
+    null,
+    'generalist',
+    'rescuer',
+  );
   const work = (playerId: string, kind: Parameters<typeof workDurationMs>[2]) =>
     workDurationMs(state, playerId, kind, NORMAL_TUNING);
 
@@ -51,7 +59,19 @@ describe('role passives (ROLE_PERKS)', () => {
     expect(work('p5', 'phone')).toBe(6000);
   });
 
+  it('makes Wszechstronny 20% faster at every station and Ratownik not faster', () => {
+    expect(work('p6', 'imageSearch')).toBe(3200);
+    expect(work('p6', 'phone')).toBe(4800);
+    expect(work('p6', 'archive')).toBe(4000);
+    expect(work('p6', 'aiScanner')).toBe(2400);
+    expect(work('p6', 'metadata')).toBe(3200);
+    expect(work('p7', 'imageSearch')).toBe(4000);
+    expect(work('p7', 'phone')).toBe(6000);
+  });
+
   it('reads the factor per role and kind', () => {
+    expect(roleWorkFactor('generalist', 'phone')).toBe(0.8);
+    expect(roleWorkFactor('rescuer', 'archive')).toBe(1);
     expect(roleWorkFactor('photoEditor', 'imageSearch')).toBe(0.6);
     expect(roleWorkFactor('managingEditor', 'phone')).toBe(1);
     expect(roleWorkFactor(null, 'archive')).toBe(1);
@@ -64,6 +84,8 @@ describe('role abilities', () => {
     expect(abilityOf('archivist')).toBe('expertise');
     expect(abilityOf('reporter')).toBe('fieldCall');
     expect(abilityOf('managingEditor')).toBe('extendDeadline');
+    expect(abilityOf('generalist')).toBe('secondChance');
+    expect(abilityOf('rescuer')).toBe('passFolder');
     expect(abilityOf(null)).toBeNull();
   });
 
@@ -80,6 +102,8 @@ describe('role abilities', () => {
     expect(expertiseCovers('archivist', 'transcript')).toBe(true);
     expect(expertiseCovers('archivist', 'crossCheck')).toBe(false);
     expect(expertiseCovers(null, 'imageSearch')).toBe(false);
+    expect(expertiseCovers('generalist', 'imageSearch')).toBe(false);
+    expect(expertiseCovers('rescuer', 'archive')).toBe(false);
   });
 
   it('lists the stations of each family', () => {
@@ -106,6 +130,11 @@ describe('crew ability state', () => {
       fieldCall: null,
       rescuesLeft: 0,
     });
+  });
+
+  it('gives a Ratownik one rescue per level', () => {
+    expect(crewOf('rescuer').crew.p1?.rescuesLeft).toBe(1);
+    expect(crewOf('generalist').crew.p1?.rescuesLeft).toBe(0);
   });
 
   it('makes a mid-game joiner’s ability ready at once', () => {
