@@ -1,5 +1,13 @@
 # Deployment
 
+> **Topology change (merged from the `caddy` branch):** Caddy no longer terminates TLS. It serves
+> plain HTTP on container port 80, published as host port **8080**, and an external reverse proxy
+> terminates TLS on 443 and forwards to `host:8080` (it must pass WebSocket upgrades and the
+> original `Host` header). The `DOMAIN` variable and Caddy's certificate volumes are gone; port
+> 8080 should be firewalled so only that proxy can reach it. Sections below that mention Caddy
+> obtaining certificates describe the earlier layout.
+
+
 The game runs as two containers behind one public port:
 
 ```
