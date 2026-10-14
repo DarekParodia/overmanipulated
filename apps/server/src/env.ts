@@ -1,7 +1,7 @@
 import { BRIEFING_DURATION_MS } from '@redakcja/shared';
 import { z } from 'zod';
 
-const envSchema = z.object({
+export const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_PATH: z.string().min(1).default('./data/redakcja.sqlite'),
   /** Dev only: artificial one-way latency added to every message in both directions. */

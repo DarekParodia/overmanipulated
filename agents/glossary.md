@@ -151,7 +151,7 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, 
 | Niezależne źródło | `isIndependent(card)` | An agency or newsroom card with its own reporter (not an echo). Only these count |
 | Potwierdzają / Zaprzeczają / Za mało źródeł | `confirmed` / `denied` / `unconfirmed` (`Conclusion`, `conclude(cards)`) | Any independent denial → denied; ≥ `CROSS_CHECK_CONFIRMATIONS` (2) independent confirmations → confirmed; else unconfirmed |
 
-## Roles (`RoleId`)
+## Roles (`Role`)
 
 Passives and abilities live in `ROLE_PERKS` (`RolePerk`, S7-36): `fasterAt` × `workFactor` is the
 passive, `ability` the active one (R / RB / the fourth touch button).
@@ -164,6 +164,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Redaktor prowadzący | `managingEditor` | — | Przedłużenie |
 | Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
 | Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
+| Bez roli | no role (`role: null`, `pl.lobbyRoles.noRole`) | — („Bez premii”) | — („Bez zdolności”) |
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -172,6 +173,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Panel roli | role detail panel (`data-testid="role-detail"`, `roleSummary`, `roleSummaryNote`) | Under the passes: the checked (or hovered / pad-focused) role's passive with its stations on the level, the ability with the device's key and cooldown, and „Ta premia / Ta zdolność nie działa na tym poziomie.” when a perk does nothing there |
 
 ## Abilities (`Ability`, Stage 7)
+
+Every ability is pressed with R / RB / the fourth touch button, whose one-word label is
+`pl.touch.ability` (Ekspert, Dzwoń, +20 s, Szansa, Podaj). All cooldowns are 60 s (`ABILITY`,
+kept after the S7-46 bot data). Player-facing copy: design document „Role”, contest
+`how-to-play.pl.md` „Role i zdolności” and the role cards (S7-47).
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -195,6 +201,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Podpowiedź zdolności | ability hint (next step kind `ability`, `NextStepAbility`, `abilityHintKey`) | The hint bubble names a ready press that helps now: Przedłużenie for a warned folder in hand („R: +20 s dla teczki”), Telefon z terenu instead of the walk to the phone, Druga szansa at a locked station; the key is R / RB or the touch button's label in quotes; hidden with the other hints on Ekspert |
 | Krok zdolności | tutorial ability step (`'ability'`, `ABILITY_STEP`, signal `abilityUsed`, `skipAbilityStep`) | The 6th tutorial step: the role icon and „R: Ekspertyza – …”; done by the local `ability` event (armed, started, done); skipped without a role, on a level where the ability cannot act (`abilityStepApplies`: Ekspertyza without its family's station, Telefon z terenu without a phone, Podaj teczkę without a connected teammate) or when the ability was used earlier in the run |
 | Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
+| Znacznik zdolności | ability marker (`abilities/AbilityMarkers.tsx`, `abilityMarkers`, `AbilityMarker`, `data-testid="ability-marker"`) | World marker beside a player (hip height, clear of the name tag): `armed` (blue ring with the ability icon) or `call` (phone in a draining orange ring); `passTarget` is the dashed floor ring under the teammate the local Ratownik's Podaj teczkę would reach (S7-42) |
+| Lot teczki | pass arc (`passArcPoint`, `PASS_ARC_LIFT`, `ABILITY.passFolder.flightMs`) | The cosmetic 450 ms arc of a folder handed over with Podaj teczkę; in the simulation it is in the receiver's hands at once |
+| Reakcja na zdolność | ability reaction (`abilityReaction`, `ABILITY_CLIPS`: `abilityPower`, `abilityThrow`, `abilityCall`; `stopUpper`) | The upper-body clip an avatar plays for its own ability event (and the receiver's catch) |
 
 ## Station families (`StationFamily`, Stage 7)
 
@@ -303,10 +312,18 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Konfiguracja serwera | `serverConfig` (`serverConfigSchema`, `ServerConfig`, `config/config.json`) | Operator's product settings in `apps/server/src/config.ts`: `site`, `features`, `motd`, `rooms`, `ads`, `csp`. Strict (unknown keys refused); an invalid file stops the start and never replaces a running config |
 | Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |
 | Zgoda na reklamy | `ads.signOff` (`{by, date}`) | Supervisor or legal sign-off recorded in config.json; `ads.enabled: true` is refused without it, also when forced by `ADS_ENABLED` |
+| Wyłącznik reklam | `ADS_ENABLED` (env, `ConfigOverrides.adsEnabled`) | The only env setting that overlaps `config.json`: written into `ads.enabled` before validation at start and on every reload, so `false` always wins and `true` still needs the sign-off |
+| Plik ads.txt | `ads.adsTxt`, `GET /ads.txt` | Operator's ads.txt lines served as text on every host, also while ads are off; empty means 404. AdSense reads the root domain's file first (`docs/deploy.md`, AdSense operator checklist) |
+| Weryfikacja witryny | `ads.verification` | Serves AdSense's `google-adsense-account` meta tag on `ads.domains` pages while ads are still off |
+| Sprawdzenie konfiguracji | `bun run config:check` (`tools/deploy/config-check.ts`, `checkConfig`) | Validates a `config.json` as the server would (with `ADS_ENABLED` applied) and prints the public config per ads host; run before saving the file on the server |
+| Lista kontrolna AdSense | AdSense operator checklist (`docs/deploy.md`) | Steps before `ads.enabled: true` in production: sign-off, root-domain site, ads.txt, Polish consent message without the floating link, Auto ads off, fixed units, config, flag check |
 | Ustawienia pokoi | `RoomSettings` (`RegistryOptions.settings()`, `roomSettings`) | `maxRooms`, `defaultDifficulty` and the feature flags, read by the registry at every room creation, so a reload applies to the next room |
 | Tryb pokoju (Razem / Na punkty) | `roomMode` (`coop` / `versus`, `RoomMode`, lobby action `setMode`) | Razem: one shared newsroom. Na punkty: two newsrooms play the same run side by side; on `roomState.mode`, a new room is co-op (S7-77) |
 | Redakcja w pojedynku (Kurier / Głos) | team (`teamIndex` 0 / 1, `TeamIndex`, `MAX_TEAMS`, lobby action `setTeam`) | One newsroom (one sim) of a room, up to `MAX_TEAM_PLAYERS` (4) players; co-op has team 0 only. On `roomState.players[].team`, `snapshot.team`, `event.team`, `levelEnd.team` |
 | Gracz / widz | member kind (`memberKind`: `player` / `spectator`, `join.as`, lobby action `setSpectator`) | A room member plays in a team or watches; one reconnect token is exactly one member kind. `MAX_ROOM_PLAYERS` (8) players plus `MAX_SPECTATORS` (8) spectators per room |
+| Członek pokoju | room member (`RoomMember {kind, team, clientId?}`, `room.members`) | A player or a spectator of a room, in join order; one reconnect token resumes exactly one member with its current kind and team |
+| Przebieg redakcji | team run (`TeamRun {game, forfeited}`, `room.teams`) | One newsroom's sim inside a room: one in co-op, two in versus, stepped in lockstep with one `SimContext` and one sim seed; `inspect().game` is team 0's |
+| Kanały pokoju | room topics (`roomTopics`, `topicsFor`, `syncTopics`, `publishTeam`) | `room:CODE` (everyone: `roomState`, `gameStarted`), `room:CODE:t0` / `:t1` (a team's players: its snapshots, events, `levelEnd`), `room:CODE:spec` (spectators: every 2nd snapshot of each team, `levelEnd`s, spectator events) |
 | Widownia | `spectatorsAllowed` (lobby action `setSpectatorsAllowed`), `roomState.spectators` (`LobbySpectator`) | The room's spectator seats; off by default, the host opens them. A spectator join to a closed Widownia gets `spectatorsOff` |
 | Pokój prywatny / publiczny | `roomVisibility` (`private` / `public`, lobby action `setVisibility`) | Private rooms are reached by code only (default); public ones are listed in the room browser when the `roomBrowser` flag is on |
 | Nazwa pokoju | `roomName` (`roomNameSchema`, lobby action `setRoomName`) | Optional host-given name: trimmed, 1..`ROOM_NAME_MAX_LENGTH` (24), no control characters; the server's name filter answers `invalidName` |
@@ -332,5 +349,10 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Markdown-lite | `parseMarkdownLite`, `MdBlock`, `MdInline`, `markdownTitle` (`packages/shared/src/markdown-lite.ts`) | Pure AST parser for the documents the game serves (headings, paragraphs, lists, tables, bold, code, https or same-site links, `<!-- name -->` conditional blocks, `{{key\|fallback}}`); renderers escape every text |
 | Przycisk-odnośnik | `LinkButton` (`ui/LinkButton.tsx`) | A link styled as a `Button` (never primary) with the `ui.click` cue; opens in the same tab so the gamepad's `click()` works |
 | Strażnik reklam (e2e) | ad guard (`guardAdRequests`, `trackContext(context, { ads })` in `e2e/helpers.ts`) | Every e2e context without an ads config fails its test (in `closePlayers`) if it sends a request to a Google ad host; `openPlayer` and `trackContext` apply it, `guardAdRequests(page.context())` covers Playwright's own `page` fixture; only `ads.spec.ts` opts out |
+| Oglądaj / Oglądasz (ekran widowni) | spectate screen (`ScreenId` `'spectate'`, `joinRoom(nickname, code, 'spectator')`) | Where a spectator lands while a match is played or its results show; the briefing before it is read-only („Oglądasz” instead of „Gotowy!”). On the menu, `matchInProgress` offers „Oglądaj” for the same room when the `spectators` flag is on |
+| Widoki widowni | spectate store (`useSpectate`, `spectateViews`, `SpectateView`) | One game store and snapshot buffer per watched newsroom, the spectator event feed, `matchStats` and each team's `levelEnd`; spectator messages go here only, never to `useGame` or the gameplay event listeners |
+| Rodzaj członka / własna redakcja | `selfKind(room, playerId)`, `selfTeam(room, playerId)` | Derived from `roomState`: a member listed in `spectators` watches; a player's own team routes their snapshots, events and level end (a message for the other team is dropped) |
+| Usunięcie z pokoju | kick (lobby action `kick`, error `kicked`, `kickCooldown`) | The host removes a member: the client forgets its slot and shows `pl.errors.kicked` on the menu. A rejoin from the same browser (`clientId`) during the cooldown gets `kickCooldown` |
+| Ostatni kod | `lastJoinCode` (`useApp`) | The room code of the last join by code; null after creating a room |
 
 Missing a term? Add it here in the same commit that introduces it.

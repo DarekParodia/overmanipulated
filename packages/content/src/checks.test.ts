@@ -620,7 +620,16 @@ describe('endless decks (checkEndlessDecks)', () => {
       'warning',
       `endless deck of station ${station} holds 0 stories; aim for at least 4 (add stories decided at ${station} to a campaign level)`,
     ];
-    expect(deckIssues([l1])).toEqual([thin('archive'), thin('phone'), thin('dataLibrary')]);
+    // Level 1 decides nothing at the four M4 stations either (S7-64: endless runs all ten).
+    expect(deckIssues([l1])).toEqual([
+      thin('archive'),
+      thin('phone'),
+      thin('dataLibrary'),
+      thin('geolocation'),
+      thin('transcript'),
+      thin('crossCheck'),
+      thin('metadata'),
+    ]);
   });
 
   it('skips content without a campaign level (the greybox alone feeds no endless pool)', () => {
@@ -638,6 +647,10 @@ describe('endless decks (checkEndlessDecks)', () => {
       'decks.archive',
       'decks.phone',
       'decks.dataLibrary',
+      'decks.geolocation',
+      'decks.transcript',
+      'decks.crossCheck',
+      'decks.metadata',
     ]);
   });
 });
