@@ -12,9 +12,10 @@ textSha1}}), gets one take per clip, post-processes every take the same way, joi
 
 Takes come from one of two sources:
 
-  --recordings DIR --voice LABEL
+  --recordings DIR --voice LABEL [--licence self-recorded-CC0] [--credit NAME]
       A volunteer's recordings, DIR/<clipId>.wav (any rate, mono or stereo), released under CC0.
-      Licence `self-recorded-CC0`. This is the shipping path while no TTS voice passes the audit.
+      Licence `self-recorded-CC0`. This is the shipping path (user decision 2026-10-13); the
+      volunteer's guide, clip table and consent form are in docs/voice-recording.pl.md.
 
   --voice NAME                      a Piper voice from VOICES (downloaded, SHA-256 pinned)
   --model PATH --voice LABEL --licence L [--credit TEXT]
@@ -30,7 +31,7 @@ fades, normalise to -20 dBFS RMS over the audible part with the peak held at or 
 Fails (writing nothing) when either audio file would exceed VOICE_MAX_BYTES.
 
 Usage:
-  python3 tools/audio/synth_voice.py --recordings ~/takes --voice volunteer-a
+  python3 tools/audio/synth_voice.py --recordings ~/takes --voice ochotnik-1 --licence self-recorded-CC0 --credit 'Name'
   python3 tools/audio/synth_voice.py --model pl_PL-x.onnx --voice pl_PL-x --licence CC0-1.0
   [--out DIR] writes the three files to DIR instead (for a trial run)
   [--lines FILE] reads the line export from FILE instead of running bun
