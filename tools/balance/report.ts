@@ -1,5 +1,7 @@
 // Aggregation of bot runs into per-level statistics and the checks against the balance intent.
 import {
+  ABILITIES,
+  type Ability,
   DIFFICULTIES,
   type Difficulty,
   ENDLESS_LEVEL_ID,
@@ -15,6 +17,8 @@ export type Summary = {
   difficulty: Difficulty;
   crew: string;
   crewSize: number;
+  /** The role setup of the runs (`RunResult.roles`). */
+  roles: string;
   runs: number;
   /** Share of runs that survived to the end (endless: share that reached the time cap). */
   winRate: number;
@@ -43,6 +47,12 @@ export type Summary = {
   cappedShare: number;
   /** Mean share of level time each station was busy (a folder on it or an operator at it). */
   stationBusyShare: Partial<Record<StationKind, number>>;
+  /** Mean number of abilities that took effect per run, by ability (only the ones used). */
+  abilities: Partial<Record<Ability, number>>;
+  /** Mean folders saved by Koło ratunkowe per run. */
+  rescuesPerRun: number;
+  /** Bot watchdogs that fired, summed over the runs (`RunResult.stalls`). */
+  stalls: number;
 };
 
 export function percentile(sorted: readonly number[], p: number): number {
@@ -100,11 +110,19 @@ export function summarize(runs: readonly RunResult[]): Summary {
       busy[kind] = mean(shares);
     }
   }
+  const abilities: Partial<Record<Ability, number>> = {};
+  for (const ability of ABILITIES) {
+    const used = mean(runs.map((r) => r.abilities[ability] ?? 0));
+    if (used > 0) {
+      abilities[ability] = used;
+    }
+  }
   return {
     levelId: first.levelId,
     difficulty: first.difficulty,
     crew: first.crew,
     crewSize: first.crewSize,
+    roles: first.roles,
     runs: n,
     winRate: runs.filter((r) => r.won).length / n,
     stars,
@@ -129,11 +147,14 @@ export function summarize(runs: readonly RunResult[]): Summary {
     lastedMin: spread(runs.map((r) => r.endedAtS / 60)),
     cappedShare: runs.filter((r) => r.capped).length / n,
     stationBusyShare: busy,
+    abilities,
+    rescuesPerRun: mean(runs.map((r) => r.rescues)),
+    stalls: runs.reduce((a, r) => a + r.stalls, 0),
   };
 }
 
 export function groupKey(run: RunResult): string {
-  return `${run.levelId}|${run.difficulty}|${run.crew}|${run.crewSize}`;
+  return `${run.levelId}|${run.difficulty}|${run.crew}|${run.crewSize}|${run.roles}`;
 }
 
 export function summarizeAll(runs: readonly RunResult[]): Summary[] {
@@ -186,6 +207,31 @@ export function endlessTable(rows: readonly Summary[]): string {
     (s) =>
       `| ${s.crew} ×${s.crewSize} | ${f1(s.lastedMin.p10)} / ${f1(s.lastedMin.p50)} / ${f1(s.lastedMin.p90)} | ${pct(s.cappedShare)} | ${f0(s.score.p50)} | ${pct(s.expiredRate)} | ${formatEventCounts(s.events)} |`,
   );
+  return [head, ...body].join('\n');
+}
+
+/**
+ * Markdown table of ability use (S7-46): abilities that took effect and Koło ratunkowe rescues,
+ * per run, for the average crews of every size, one row per level, difficulty and crew size.
+ */
+export function abilityTable(summaries: readonly Summary[]): string {
+  const rows = summaries
+    .filter((s) => s.crew === 'average')
+    .sort(
+      (a, b) =>
+        Number(a.levelId === ENDLESS_LEVEL_ID) - Number(b.levelId === ENDLESS_LEVEL_ID) ||
+        a.levelId.localeCompare(b.levelId) ||
+        DIFFICULTIES.indexOf(a.difficulty) - DIFFICULTIES.indexOf(b.difficulty) ||
+        a.crewSize - b.crewSize,
+    );
+  const used = ABILITIES.filter((ability) => rows.some((s) => s.abilities[ability] !== undefined));
+  const head =
+    `| Level | Difficulty | Crew | ${[...used, 'rescue'].join(' | ')} |\n` +
+    `| --- | --- | --- | ${[...used, 'rescue'].map(() => '---').join(' | ')} |`;
+  const body = rows.map((s) => {
+    const cells = used.map((ability) => f1(s.abilities[ability] ?? 0));
+    return `| ${s.levelId} | ${s.difficulty} | ×${s.crewSize} | ${[...cells, f1(s.rescuesPerRun)].join(' | ')} |`;
+  });
   return [head, ...body].join('\n');
 }
 
@@ -370,6 +416,14 @@ export function intentChecks(
       dominated.length === 0
         ? `busiest ${pct(Math.max(...loads.flatMap((s) => Object.values(s.stationBusyShare))))}`
         : dominated.join(', '),
+    );
+  }
+  const stalls = all.reduce((a, s) => a + s.stalls, 0);
+  if (all.length > 0) {
+    add(
+      'No bot stalls: no watchdog fired (station, desk or field call)',
+      stalls === 0,
+      `${stalls} in ${all.reduce((a, s) => a + s.runs, 0)} runs`,
     );
   }
   const endless = find('endless', 'average');
