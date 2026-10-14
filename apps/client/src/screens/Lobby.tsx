@@ -272,13 +272,13 @@ export function Lobby() {
             data-testid="open-encyclopedia"
             onClick={() => useEncyclopedia.getState().show()}
           >
-            {pl.encyclopedia.open}
+            <span className={styles.actionLabel}>{pl.encyclopedia.open}</span>
           </Button>
           <Button icon={<Icon name="trophy" size={24} />} onClick={() => setBoardOpen(true)}>
-            {pl.leaderboard.open}
+            <span className={styles.actionLabel}>{pl.leaderboard.open}</span>
           </Button>
           <Button back icon={<Icon name="leave" size={24} />} onClick={leaveRoom}>
-            {pl.lobby.leave}
+            <span className={styles.actionLabel}>{pl.lobby.leave}</span>
           </Button>
         </div>
       </header>

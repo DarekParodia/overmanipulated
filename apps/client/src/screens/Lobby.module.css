@@ -159,7 +159,16 @@
     min-height: 4rem;
     font-size: var(--text-sm);
   }
-  /* „Jak grać?” (S7-96) is icon only here, like the settings, so the actions keep their rows. */
+  /* The top actions (settings, „Jak grać?”, Encyklopedia, Wyniki, Wyjdź) are icon only here, the
+     words kept as their accessible names, so they stay one row of 48 px targets at 640 px
+     (S7-96, S7-86). */
+  .topActions {
+    flex-wrap: nowrap;
+  }
+  .topActions > button {
+    gap: 0;
+    padding-inline: var(--space-3);
+  }
   .actionLabel {
     position: absolute;
     width: 1px;

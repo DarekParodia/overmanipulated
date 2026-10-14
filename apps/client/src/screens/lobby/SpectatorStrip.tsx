@@ -55,7 +55,8 @@ export function SpectatorStrip({
     >
       <h2 id="spectators-title" className={styles.title}>
         <Icon name="eye" size={24} />
-        {pl.lobbyRoom.spectatorsTitle(spectators.length, MAX_SPECTATORS)}
+        <span className={styles.titleWord}>{pl.lobbyRoom.spectatorsTitle} </span>
+        <span>{pl.lobbyRoom.spectatorsCount(spectators.length, MAX_SPECTATORS)}</span>
       </h2>
       {isHost && featureOn ? (
         <div className={styles.toggle} data-testid="spectators-allowed">
@@ -104,7 +105,7 @@ export function SpectatorStrip({
           data-testid="to-spectators"
           onClick={onWatch}
         >
-          {pl.lobbyRoom.toSpectators}
+          <span className={styles.moveLabel}>{pl.lobbyRoom.toSpectators}</span>
         </Button>
       )}
       {canPlay && (
@@ -114,7 +115,7 @@ export function SpectatorStrip({
           data-testid="to-players"
           onClick={onPlay}
         >
-          {pl.lobbyRoom.toPlayers}
+          <span className={styles.moveLabel}>{pl.lobbyRoom.toPlayers}</span>
         </Button>
       )}
     </section>
