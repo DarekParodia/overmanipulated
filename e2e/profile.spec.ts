@@ -278,9 +278,19 @@ test('the gamepad reaches the reset, cancels it and closes the dialog', async ({
           ),
         [button, down] as const,
       );
+    // The pad is polled once per animation frame: let two frames see each state.
+    const frames = () =>
+      page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
     await set(true);
+    await frames();
     await page.waitForTimeout(120);
     await set(false);
+    await frames();
     await page.waitForTimeout(120);
   };
   const focused = () =>
