@@ -242,11 +242,12 @@
       }
     ],
     "justifyingStamps": ["l5-wolne-tempo-image", "l5-wolne-tempo-archive"],
+    "requiredStamps": 2,
     "technique": "tania-podrobka-spowolnienie",
     "debrief": {
       "what": "Prawdziwy film z sesji rady, ale spowolniony, by burmistrz sprawiał wrażenie pijanego.",
       "technique": "Tania podróbka: prosty montaż zamiast sztucznej inteligencji. Zmiana tempa lub wycięcie fragmentu zmienia sens autentycznego nagrania.",
-      "tool": "Lupa obrazu i Archiwum: porównanie z oryginałem. Skaner AI nic nie wykrył, bo nagranie nie jest wygenerowane.",
+      "tool": "Lupa obrazu: oryginał klipu w normalnym tempie. Archiwum: pełny zapis sesji. Skaner AI nic nie wykrył, bo nagranie nie jest wygenerowane.",
       "realWorld": "Spowolnione filmy z politykami krążyły wielokrotnie w różnych krajach. Najprostsza edycja bywa skuteczniejsza niż deepfake."
     },
     "reviewed": false
@@ -372,6 +373,7 @@
       "l5-burmistrz-na-jachcie-metadata",
       "l5-burmistrz-na-jachcie-scanner"
     ],
+    "requiredStamps": 2,
     "technique": "obraz-wygenerowany-ai",
     "debrief": {
       "what": "Obraz wygenerowany przez program. Na zdjęciu widać dziwne dłonie i zniekształcone napisy na burcie.",
@@ -1516,6 +1518,69 @@
       "technique": "Podszywanie się pod instytucję: herb, znajoma nazwa i twarz burmistrza usypiają czujność. Pośpiech („tylko dziś”) ma przeszkodzić w sprawdzeniu.",
       "tool": "Kartoteka źródeł: profil ma 3 dni i jeden wpis, a prawdziwy profil urzędu działa od lat pod inną nazwą.",
       "realWorld": "Fałszywe profile urzędów i firm wyłudzają dane, obiecując bony i zwroty. Sprawdź, od kiedy działa konto i dokąd prowadzi link."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-basen-zamkniety",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Burmistrz z tablicą „Od lipca basen zamknięty”?",
+    "body": "Zdjęcie: burmistrz Wrzosek przed basenem miejskim trzyma tablicę z napisem „Od lipca basen zamknięty”. Post udostępniło już ponad tysiąc osób.",
+    "source": "Profil „Brzegi bez ściemy”",
+    "stamps": [
+      {
+        "id": "l5-basen-zamkniety-image",
+        "station": "imageSearch",
+        "text": "Wyszukiwanie obrazem znalazło oryginał w galerii urzędu. Na tablicy było „Od lipca basen otwarty”.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-basen-zamkniety-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 5% – brak śladów generowania. Według skanera zdjęcie jest autentyczne.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-basen-zamkniety-source",
+        "station": "sourceRegistry",
+        "text": "Profil anonimowy, publikuje memy o mieście. Nie wiadomo, kto go prowadzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-basen-zamkniety-phone",
+        "station": "phone",
+        "text": "Rzecznik urzędu jest na urlopie. Zastępca oddzwoni po południu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-basen-zamkniety-archive",
+        "station": "archive",
+        "text": "Archiwum: rok temu radni rozmawiali o zamknięciu basenu na remont.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-basen-zamkniety-transcript",
+        "station": "transcript",
+        "text": "Brak wypowiedzi do porównania – na zdjęciu jest tylko napis.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-basen-zamkniety-metadata",
+        "station": "metadata",
+        "text": "Profil usunął metadane zdjęcia – nic z nich nie wynika.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-basen-zamkniety-image"],
+    "technique": "zmanipulowane-zdjecie",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie z otwarcia sezonu na basenie, ale z podmienionym napisem na tablicy. Basen działa jak co roku.",
+      "technique": "Tania podróbka: prosty montaż zamiast sztucznej inteligencji. Wystarczyło zmienić jedno słowo na tablicy, by zdjęcie kłamało.",
+      "tool": "Lupa obrazu: oryginał w galerii urzędu ma inny napis. Skaner AI nic nie wykrył, bo zdjęcia nie wygenerował program.",
+      "realWorld": "Zdjęcia polityków z podmienionym napisem na transparencie lub koszulce krążą przy każdej kampanii. Oryginał zwykle da się znaleźć wyszukiwaniem obrazem."
     },
     "reviewed": false
   }

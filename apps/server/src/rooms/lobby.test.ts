@@ -360,17 +360,18 @@ describe('results and back to lobby', () => {
 
   it("sends why the level was lost, the level's star thresholds and its best score", () => {
     const host = join('Ala');
-    lobby(host, { kind: 'selectLevel', levelId: 'l5-deepfake' });
+    // l6 keeps its authored schedule and stars until S7-63 (l5 moved to the bag in S7-60).
+    lobby(host, { kind: 'selectLevel', levelId: 'l6-atak' });
     endOutcome = { won: false, stars: 0, lossReason: 'credibility' };
     playToResults(host);
     expect(host.last('levelEnd')).toMatchObject({
-      levelId: 'l5-deepfake',
+      levelId: 'l6-atak',
       difficulty: 'normal',
       won: false,
       stars: 0,
       lossReason: 'credibility',
-      starThresholds: { two: 240, three: 350 },
-      maxScore: 435,
+      starThresholds: { two: 250, three: 360 },
+      maxScore: 450,
     });
   });
 

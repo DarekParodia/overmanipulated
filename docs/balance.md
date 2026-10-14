@@ -161,7 +161,8 @@ stated):
 ## Results (S7-35, crews of three, 24 seeds)
 
 Per cell: win % / 2+ stars % / 3 stars % / score as % of the run's best. Folders and thresholds are
-the mean over the dealt runs; l5 and l6 still play authored schedules (fixed thresholds) until M4.
+the mean over the dealt runs; l5 and l6 still played authored schedules (fixed thresholds) here;
+l5 has dealt from a bag since S7-60 (see *l5 on the bag* below).
 
 | Level | Difficulty | Folders (mean) | Stars at | Rookie ×3 | Average ×3 | Expert ×3 | Mixed ×3 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -230,6 +231,37 @@ All 35 checks pass: the ladder on l0–l6 and endless, the four per-difficulty t
 difficulty rises (average score share 75 > 68 > 62 > 58 > 52 > 54 % for l1–l6; l6 within the
 8-point allowance), no level unwinnable or trivially maxed (expert 87–96 % of max), thresholds
 55 % / 79–85 % of the preview max on l1–l6, no dominant station (busiest 44 %, Normal endless ×4), endless 8.5 min.
+
+## l5 on the bag (S7-60, crews of three, 24 seeds)
+
+Level 5 deals from a bag of its 23 non-event stories (two of them ask for two proofs) over six bag
+stations; the boss calls and the AI scanner outage stay. The scope's bag `{4, 24, 340, 60/60/45}`
+cost the average crew 5 points of score share against the old authored schedule on Normal (47 %
+vs 52 %), because every folder in the 24×14 room needs a longer walk. A wider gap gives 13 Normal
+folders instead of 15 (11 / 13 / 15 / 17 by difficulty) and pinned target 3 either way:
+
+| `gapS` | Normal stars at | Average ×3 Normal | Average ×3 Easy | Average ×3 Expert |
+| --- | --- | --- | --- | --- |
+| 24 | 248 / 361 of 452 | 100 / 38 / 0 / 47 | 100 / 67 / 0 / 61 | 96 / 0 / 0 / 22 |
+| **26 (kept)** | 220 / 320 of 400 | 100 / 42 / 0 / 49 | 100 / 92 / 17 / 66 | 88 / 0 / 0 / 21 |
+| 28 | 220 / 320 of 400 | 100 / 46 / 0 / 49 | 100 / 80 / 13 / 65 | 92 / 4 / 0 / 22 |
+
+`gapS` 26 keeps the ladder (l4 58 % > l5 49 % ≥ l6 48 % for the average crew on Normal) and the
+last Normal slot at 316 s, so a two-proof folder still ends by 396 s. Full l5 rows at `gapS` 26
+(folders are 13 / 15 / 17 / 19 with both boss calls):
+
+| Level | Difficulty | Stars at | Rookie ×3 | Average ×3 | Expert ×3 | Mixed ×3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| l5 | easy | 190 / 276 of 345 | 96 / 0 / 0 / 16 | 100 / 92 / 17 / 66 | 100 / 100 / 96 / 92 | 100 / 38 / 0 / 52 |
+| l5 | normal | 220 / 320 of 400 | 46 / 0 / 0 / -1 | 100 / 42 / 0 / 49 | 100 / 100 / 92 / 89 | 100 / 0 / 0 / 35 |
+| l5 | hard | 248 / 361 of 452 | 8 / 0 / 0 / -12 | 96 / 13 / 0 / 37 | 100 / 100 / 62 / 83 | 100 / 0 / 0 / 33 |
+| l5 | expert | 280 / 406 of 508 | 0 / 0 / 0 / -19 | 88 / 0 / 0 / 21 | 100 / 100 / 33 / 75 | 92 / 0 / 0 / 21 |
+
+Every intent check for l5 passes (thresholds 55 % / 80 % of the run maximum, expert crew ≤ 89 % of
+max). The station spread falls from 3.5 to 2.9 on Normal: the six bag stations are 11–19 % busy
+and only the hint-only AI scanner (7 %) is below that. Reproduce with `bun run balance --levels
+l5-deepfake --difficulty easy,normal,hard,expert --crew-sizes 3 --seeds 24 --md`. S7-66 re-runs
+the whole matrix for M4.
 
 ## Open points for the playtests
 

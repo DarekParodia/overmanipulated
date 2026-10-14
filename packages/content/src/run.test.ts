@@ -127,34 +127,35 @@ describe('bagDeadlineS', () => {
 });
 
 describe('prepareRun and applyDifficulty', () => {
-  // Level 5 keeps its authored schedule until M4 (S7-60).
-  const l5 = getLevel('l5-deepfake');
-  if (!l5) {
-    throw new Error('level 5 missing');
+  // Level 6 is the last level with an authored schedule (until S7-63); level 5 moved to the bag
+  // in S7-60.
+  const l6 = getLevel('l6-atak');
+  if (!l6) {
+    throw new Error('level 6 missing');
   }
 
   it('leaves a fixed level unchanged on Normal', () => {
-    const run = prepareRun(l5, { seed: 7, difficulty: 'normal' }, LEVELS, STORIES);
-    expect(run.level).toEqual(l5);
-    expect(run.maxScore).toBe(maxLevelScore(l5, new Map(STORIES.map((s) => [s.id, s]))));
-    const eventIds = l5.events.flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId]));
+    const run = prepareRun(l6, { seed: 7, difficulty: 'normal' }, LEVELS, STORIES);
+    expect(run.level).toEqual(l6);
+    expect(run.maxScore).toBe(maxLevelScore(l6, new Map(STORIES.map((s) => [s.id, s]))));
+    const eventIds = l6.events.flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId]));
     expect(Object.keys(run.stories).sort()).toEqual(
-      [...new Set([...l5.schedule.map((spawn) => spawn.storyId), ...eventIds])].sort(),
+      [...new Set([...l6.schedule.map((spawn) => spawn.storyId), ...eventIds])].sort(),
     );
     expect(runSummary(run)).toEqual({
-      folders: l5.schedule.length,
+      folders: l6.schedule.length,
       maxScore: run.maxScore,
-      stars: l5.stars,
+      stars: l6.stars,
     });
   });
 
   it('scales only the deadlines of a fixed level', () => {
-    const easy = applyDifficulty(l5, 'easy');
-    expect(easy.schedule.map((spawn) => spawn.atS)).toEqual(l5.schedule.map((spawn) => spawn.atS));
-    expect(easy.stars).toEqual(l5.stars);
-    expect(l5.schedule[0]?.deadlineS).toBe(60);
-    expect(easy.schedule[0]?.deadlineS).toBe(78);
-    expect(prepareRun(l5, { seed: 1, difficulty: 'easy' }, LEVELS, STORIES).level).toEqual(easy);
+    const easy = applyDifficulty(l6, 'easy');
+    expect(easy.schedule.map((spawn) => spawn.atS)).toEqual(l6.schedule.map((spawn) => spawn.atS));
+    expect(easy.stars).toEqual(l6.stars);
+    expect(l6.schedule[0]?.deadlineS).toBe(50);
+    expect(easy.schedule[0]?.deadlineS).toBe(65);
+    expect(prepareRun(l6, { seed: 1, difficulty: 'easy' }, LEVELS, STORIES).level).toEqual(easy);
   });
 
   it('deals a bag level anew for every seed and difficulty from its preview', () => {
@@ -187,8 +188,8 @@ describe('prepareRun and applyDifficulty', () => {
   });
 
   it('prepares a bundled level by id', () => {
-    const run = prepareLevelRun('l5-deepfake', { seed: 2, difficulty: 'hard' });
-    expect(run?.level.schedule.map((spawn) => spawn.atS)).toEqual(l5.schedule.map((s) => s.atS));
+    const run = prepareLevelRun('l6-atak', { seed: 2, difficulty: 'hard' });
+    expect(run?.level.schedule.map((spawn) => spawn.atS)).toEqual(l6.schedule.map((s) => s.atS));
     expect(prepareLevelRun('l9-nie-ma', { seed: 2, difficulty: 'hard' })).toBeUndefined();
   });
 
