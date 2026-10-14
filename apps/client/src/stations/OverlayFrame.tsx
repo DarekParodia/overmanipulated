@@ -33,6 +33,11 @@ export type OverlayFrameProps = {
    * mounted underneath but inert, so a minigame keeps its state.
    */
   cover?: ReactNode;
+  /**
+   * Inside another panel (the practice round in „Jak grać”, S7-97): the frame fills its parent
+   * instead of sitting on the right half of the screen over the newsroom.
+   */
+  embedded?: boolean;
   testId?: string;
   children: ReactNode;
 };
@@ -52,12 +57,13 @@ export function OverlayFrame({
   closeFocused = false,
   help,
   cover,
+  embedded = false,
   testId,
   children,
 }: OverlayFrameProps) {
   return (
     <section
-      className={`panel ${styles.frame}`}
+      className={`panel ${styles.frame} ${embedded ? styles.embedded : ''}`}
       aria-label={title}
       data-testid={testId}
       // Taps on the panel must never reach the touch joystick or the scene behind it.

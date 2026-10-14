@@ -50,6 +50,10 @@ menu 592 KB gzip (588 KB without the dialog: the shared code moves from the entr
 the entry still loads, which compresses 4 KB worse), game 814 KB gzip, first load (menu + game +
 extras) 1.38 MB gzip.
 
+S7-103 („O grze”): the dialog adds 18 KB raw, 6 KB gzip to the extras route (now 28 KB raw,
+9 KB gzip); `CREDITS.md` and the voice sprite are fetched only when its Zasoby tab opens and are
+not counted. Menu 597 KB gzip, first load 1.39 MB gzip.
+
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
 

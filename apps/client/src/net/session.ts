@@ -22,6 +22,7 @@ import { emitCue } from '../fx/feedback.ts';
 import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
 import { selfKind, selfTeam, useApp } from '../store/app.ts';
 import { clientId } from '../store/client-id.ts';
+import { useProfile } from '../store/profile.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
 import { playerColor } from '../ui/tokens.ts';
@@ -133,6 +134,8 @@ function handleLevelEnd(message: LevelEndMessage): void {
   if (!message.versus) {
     useProgress.getState().record(message.levelId, message.difficulty, message.stars);
   }
+  // The profile counts versus matches too: `won` is then this newsroom's match result (S7-104).
+  useProfile.getState().recordLevelEnd(message);
 }
 
 /** Removed by the host (S7-82): the slot is gone, so back to the menu with the reason. */
@@ -199,6 +202,7 @@ function handleMessage(message: ServerMessage): void {
       if (event.kind === 'gameStarted') {
         // Kartoteka cards the player left in the last level do not come back (S7-14).
         useRetryMemory.getState().reset();
+        useProfile.getState().startMatch();
         emitCue('game.start');
         return;
       }

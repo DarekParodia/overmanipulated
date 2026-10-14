@@ -97,6 +97,10 @@ Gra zapisuje w przeglądarce (pamięć lokalna, nie ciasteczka), na urządzeniu 
 - listę stanowisk, przy których gracz widział już kartę pomocy (`redakcja.stationHelp.v1`),
   żeby nie pokazywać jej przy każdym podejściu; przycisk „Pokaż pomoc stanowisk od nowa”
   w ustawieniach ją czyści,
+- profil gracza (`redakcja.profile.v1`): liczbę rozegranych i wygranych wydań, werdyktów
+  (trafnych i chybionych), zebranych pieczątek, nieudanych zadań i użytych zdolności, liczbę
+  wydań w każdej roli oraz wybrany kolor i dodatek postaci; przycisk „Wyczyść statystyki”
+  w oknie „Profil” usuwa liczby,
 - oznaczenie zamkniętego komunikatu redakcji, żeby ten sam komunikat nie pokazywał się znowu,
 - tymczasowy znak pozwalający wrócić do pokoju po chwilowej utracie połączenia (tylko do
   zamknięcia karty przeglądarki).
