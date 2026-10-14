@@ -6,6 +6,8 @@ import {
   createOffset,
   HOP_HEIGHT,
   HOP_S,
+  PASS_ARC_LIFT,
+  passArcPoint,
   SLIDE_DISTANCE,
   stepEffects,
   triggerEffect,
@@ -78,5 +80,24 @@ describe('folder props', () => {
       geometry.dispose();
     }
     expect(counts.size).toBeGreaterThan(1);
+  });
+});
+
+describe('Podaj teczkę arc (S7-42)', () => {
+  const from = { x: 2, y: 3, height: 0.9 };
+  const to = { x: 6, y: 3, height: 0.9 };
+
+  it('leaves the passer, peaks 1.2 tiles above the line half way and lands in the receiver', () => {
+    const out = { x: 0, y: 0, height: 0 };
+    expect(passArcPoint(from, to, 0, out)).toEqual(from);
+    expect(passArcPoint(from, to, 0.5, out)).toEqual({ x: 4, y: 3, height: 0.9 + PASS_ARC_LIFT });
+    expect(PASS_ARC_LIFT).toBe(1.2);
+    expect(passArcPoint(from, to, 1, out)).toEqual(to);
+  });
+
+  it('clamps outside the flight', () => {
+    const out = { x: 0, y: 0, height: 0 };
+    expect(passArcPoint(from, to, 1.5, out)).toEqual(to);
+    expect(passArcPoint(from, to, -1, out)).toEqual(from);
   });
 });

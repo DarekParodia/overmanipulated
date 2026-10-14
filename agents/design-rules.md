@@ -32,9 +32,11 @@ blocks you, raise it in the plan's *Open questions*; don't quietly break it.
    outlines).
 6. **Tell players what to do next.** When a player carries a folder, the station that can help
    lights up, and a hint bubble says what's next ("Zanieś do Lupy", "Gotowe — na stół!").
-   The first level starts with a guided tutorial. Exception (S7-24): on Ekspert, and when the
-   player turns hints off, the bubble, the station markers and the folder-card proof count
-   („1/2” becomes „×2”) are gone (`useEffectiveHints`); the tutorial still runs.
+   The first level starts with a guided tutorial; with a role, its last step shows the role
+   ability (S7-45). A ready ability that helps right now takes the bubble („R: +20 s dla
+   teczki”). Exception (S7-24): on Ekspert, and when the player turns hints off, the bubble
+   (ability hints included), the station markers and the folder-card proof count („1/2”
+   becomes „×2”) are gone (`useEffectiveHints`); the tutorial still runs.
 7. **Readable from 2 m on a classroom projector and on a 640×360 phone.** Minimum text 15 px
    (secondary labels), body 17 px, HUD numbers ≥ 30 px. Contrast ≥ 4.5:1 for all text.
 8. **Big targets.** ≥ 48 px touch targets, ≥ 8 px between them. Main buttons ≥ 60 px tall.
@@ -144,8 +146,9 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   nothing ever points at it. Without ads, with an ad blocker or when Google has no ad, the frame
   is gone and nothing replaces it: no empty box, no "turn off your ad blocker". The creative
   inside the frame is third-party and exempt from the tokens and the one-yellow rule; the frame
-  is not. The main-menu footer (`MenuFooter`) holds minor ghost links such as „Zgody reklamowe”;
-  never yellow.
+  is not. The main-menu footer (`MenuFooter`) holds minor ghost links („Prywatność”, „Zgody
+  reklamowe”); never yellow. A link to a page (`LinkButton`) looks like a ghost button and opens
+  in the same tab.
 - Generous spacing (≥ `--space-4` between groups). If a screen feels crowded, remove things;
   don't shrink them.
 

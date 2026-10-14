@@ -363,13 +363,17 @@ describe('gameplay event cues', () => {
     const sessionKinds = ['playerJoined', 'playerLeft', 'playerReconnected', 'gameStarted'];
     expect([...kinds].sort()).toEqual(all.filter((k) => !sessionKinds.includes(k)).sort());
     for (const event of everyEvent) {
-      const cue: Cue = cues[cueForEvent(event, () => 'true')];
+      const id = cueForEvent(event, () => 'true', player);
+      if (id === null) {
+        throw new Error(`no cue for ${event.kind}`);
+      }
+      const cue: Cue = cues[id];
       expect(cue.sound).toBeDefined();
       // Audio-only information does not exist: particles or an animation trigger too.
       expect(cue.particles !== undefined || cue.animation !== undefined).toBe(true);
     }
     for (const ping of ['needArchive', 'fake', 'mine'] as const) {
-      expect(cueForEvent({ kind: 'ping', playerId: player, ping }, () => undefined)).toBe(
+      expect(cueForEvent({ kind: 'ping', playerId: player, ping }, () => undefined, player)).toBe(
         `ping.${ping}`,
       );
     }
@@ -377,13 +381,41 @@ describe('gameplay event cues', () => {
 
   it('gives every ability stage and a rescue a cue with sound and a visual layer (S7-36)', () => {
     for (const [event, id] of abilityStages) {
-      expect(cueForEvent(event, () => undefined)).toBe(id);
+      expect(cueForEvent(event, () => undefined, player)).toBe(id);
       const cue: Cue = cues[id];
       expect(cue.sound).toBeDefined();
       expect(cue.particles !== undefined || cue.animation !== undefined).toBe(true);
     }
     const rescued = everyEvent.find((e) => e.kind === 'folderRescued');
-    expect(rescued && cueForEvent(rescued, () => undefined)).toBe('role.rescue');
+    expect(rescued && cueForEvent(rescued, () => undefined, player)).toBe('role.rescue');
+  });
+
+  it("keeps a teammate's arm and disarm silent, but not what the ability does (S7-42)", () => {
+    for (const [event, id] of abilityStages) {
+      const silent = event.stage === 'armed' || event.stage === 'disarmed';
+      expect(cueForEvent(event, () => undefined, 'p2')).toBe(silent ? null : id);
+    }
+    // A client without a player id hears nobody's arming.
+    const armed: GameplayEvent = {
+      kind: 'ability',
+      playerId: player,
+      ability: 'expertise',
+      stage: 'armed',
+    };
+    expect(cueForEvent(armed, () => undefined, null)).toBeNull();
+  });
+
+  it('plays the ability sounds of the sprite (S7-42)', () => {
+    expect(cues['ability.ready'].sound.ids).toEqual(['abready']);
+    expect(cues['ability.ready'].sound.bus).toBe('ui');
+    expect(cues['ability.armed'].sound.ids).toEqual(['abpower']);
+    expect(cues['ability.expertise'].sound.ids).toEqual(['abpower']);
+    expect(cues['ability.pass'].sound.ids).toEqual(['abthrow']);
+    const map = sprite as unknown as Record<string, [number, number, boolean]>;
+    for (const id of ['abready', 'abpower', 'abthrow']) {
+      expect(map[id]?.[2]).toBe(false);
+      expect(map[id]?.[1]).toBeGreaterThan(100);
+    }
   });
 
   it('maps verdict outcomes by severity', () => {
@@ -391,14 +423,14 @@ describe('gameplay event cues', () => {
     if (verdict?.kind !== 'verdictResult') {
       throw new Error('fixture missing');
     }
-    expect(cueForEvent(verdict, () => 'true')).toBe('verdict.correct');
-    expect(cueForEvent({ ...verdict, verdict: 'publishWithContext' }, () => 'misleading')).toBe(
-      'verdict.contextCorrect',
-    );
-    expect(cueForEvent({ ...verdict, outcome: 'wrongJustification' }, () => 'true')).toBe(
+    expect(cueForEvent(verdict, () => 'true', player)).toBe('verdict.correct');
+    expect(
+      cueForEvent({ ...verdict, verdict: 'publishWithContext' }, () => 'misleading', player),
+    ).toBe('verdict.contextCorrect');
+    expect(cueForEvent({ ...verdict, outcome: 'wrongJustification' }, () => 'true', player)).toBe(
       'verdict.wrongJustification',
     );
-    expect(cueForEvent({ ...verdict, outcome: 'wrong' }, () => 'false')).toBe(
+    expect(cueForEvent({ ...verdict, outcome: 'wrong' }, () => 'false', player)).toBe(
       'verdict.fakePublished',
     );
     expect(wrongVerdictCue('publishWithContext', 'unverifiable')).toBe('verdict.fakePublished');
@@ -645,10 +677,10 @@ describe('role ability ready (S7-40)', () => {
     ).toBe(false);
   });
 
-  it('is a quiet ui-bus tick with the chip bump; a denied press shakes the chip', () => {
+  it('is a quiet ui-bus abready with the chip bump; a denied press shakes the chip', () => {
     expect(cues['ability.ready']).toEqual({
       severity: 1,
-      sound: { ids: ['tick'], bus: 'ui', volume: 0.6 },
+      sound: { ids: ['abready'], bus: 'ui', volume: 0.6 },
       haptic: 'tick',
       animation: 'abilityReady',
     });

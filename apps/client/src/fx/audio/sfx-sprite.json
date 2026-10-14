@@ -43,5 +43,8 @@
   "evclear": [36965, 610, false],
   "evback": [37695, 600, false],
   "evzap": [38415, 140, false],
-  "ambchatter": [38675, 10000, true]
+  "ambchatter": [38675, 10000, true],
+  "abready": [48795, 170, false],
+  "abpower": [49085, 430, false],
+  "abthrow": [49635, 480, false]
 }

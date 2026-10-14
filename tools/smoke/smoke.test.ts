@@ -22,6 +22,10 @@ const HTML = `<!doctype html><html><head>
 <link rel="icon" href="/icons/icon.svg">
 </head><body><div id="root"></div></body></html>`;
 
+/** A privacy note with the ads blocks of docs/privacy.pl.md. */
+const PRIVACY_MD =
+  '# Prywatność\n\n<!-- ads -->\nReklamy.\n<!-- /ads -->\n<!-- no-ads -->\nBez reklam.\n<!-- /no-ads -->\n';
+
 /** The built index.html as Vite writes it with `html.cspNonce` (S7-70). */
 const SHELL_HTML = `<!doctype html><html><head>
 <meta property="csp-nonce" nonce="${CSP_NONCE_PLACEHOLDER}">
@@ -58,7 +62,7 @@ function startStack(config: ServerConfigInput, front: 'proxy' | 'static-fallback
     { PORT: 0, DATABASE_PATH: ':memory:', DEV_LATENCY_MS: 0, BRIEFING_MS: 5000 },
     {
       config: staticConfigStore(config),
-      shell: { indexHtml: SHELL_HTML, supportsNonce: true },
+      shell: { indexHtml: SHELL_HTML, supportsNonce: true, privacyMarkdown: PRIVACY_MD },
     },
   );
   const backend = `localhost:${game.server.port}`;
@@ -191,7 +195,10 @@ describe('smoke run, ads off (base CSP)', () => {
     );
     expect(byName(results, 'HTML shell nonce changes per request')?.detail).toBe('fresh nonce');
     expect(byName(results, 'GET /ads.txt')?.detail).toBe('not configured (404)');
-    expect(byName(results, 'GET /prywatnosc')?.status).toBe('pass');
+    expect(byName(results, 'GET /prywatnosc')).toMatchObject({
+      status: 'pass',
+      detail: 'privacy page, ads section hidden',
+    });
     expect(byName(results, 'GET /manifest.webmanifest')?.detail).toBe(
       'application/manifest+json, no-cache',
     );
@@ -223,6 +230,10 @@ describe('smoke run, ads on (nonce CSP)', () => {
       status: 'pass',
       detail: '1 line(s), text/plain',
     });
+    expect(byName(results, 'GET /prywatnosc')).toMatchObject({
+      status: 'pass',
+      detail: 'privacy page, ads section shown',
+    });
   }, 30_000);
 });
 
@@ -242,6 +253,10 @@ describe('smoke run, game server pages missing (static fallback)', () => {
     expect(byName(results, 'GET /ads.txt')).toMatchObject({
       status: 'fail',
       detail: 'HTML instead of ads.txt: the SPA fallback swallowed /ads.txt',
+    });
+    expect(byName(results, 'GET /prywatnosc')).toMatchObject({
+      status: 'fail',
+      detail: 'HTTP 502, text/html; charset=utf-8',
     });
   }, 30_000);
 

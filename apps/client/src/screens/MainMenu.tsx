@@ -7,6 +7,7 @@ import { type FormEvent, useEffect, useState } from 'react';
 import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
+import { useHowTo } from '../howto/store.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
@@ -87,6 +88,13 @@ export function MainMenu() {
   return (
     <main className={styles.page}>
       <div className={styles.corner}>
+        <Button
+          icon={<Icon name="question" size={28} />}
+          data-testid="open-how-to"
+          onClick={() => useHowTo.getState().show('intro')}
+        >
+          <span className={styles.cornerLabel}>{pl.howTo.open}</span>
+        </Button>
         <Button
           icon={<Icon name="book" size={26} />}
           data-testid="open-encyclopedia"

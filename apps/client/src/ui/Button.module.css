@@ -13,6 +13,7 @@
   background: var(--surface);
   box-shadow: var(--pop);
   color: var(--text);
+  text-decoration: none; /* LinkButton renders an <a>; .ghost underlines again */
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--text-lg);

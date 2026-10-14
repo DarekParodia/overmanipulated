@@ -652,21 +652,16 @@ describe('validate CLI', () => {
     // Decisive stamps that do not justify (S7-21 warning): S7-33 cleaned up l4, S7-58 cleaned l6.
     const decisiveNotJustifying = [...out.matchAll(/decisive stamp "([^"]+)" does not justify/g)];
     expect(decisiveNotJustifying.map((match) => match[1])).toEqual([]);
-    // New stories wait for their level's bag pool: since S7-31 and S7-33 every l3 and l4 story
-    // is in its level's pool.
+    // New stories wait for their level's bag pool: since S7-31, S7-33, S7-60 and S7-63 every
+    // l3, l4, l5 and l6 story is in its level's pool (or spawned by an event).
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([]);
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([]);
-    // The S7-59 stories wait for the l5 bag pool (S7-60).
-    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l5-'))).toEqual([
-      'l5-cytat-z-sesji',
-      'l5-wywiad-skrocony',
-      'l5-zdjecie-czytelnika',
-      'l5-film-z-montazu',
-      'l5-drzemka-na-sesji',
-      'l5-burmistrz-morsuje',
-      'l5-falszywy-profil-urzedu',
-    ]);
+    for (const prefix of ['l3-', 'l4-', 'l5-', 'l6-']) {
+      expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith(prefix))).toEqual(
+        [],
+      );
+    }
+    // S7-60: every l5 bag station has its pinned target (no 'aim for' warning on l5).
+    expect(out).not.toMatch(/levels\/l5-deepfake\.json bag\.pool: station \S+ has \d+ pinned/);
     // Every bag's last slot window fits its level (S7-35 moved l0 to 165 s + 75 s = 240 s).
     const deadlineFit = [...out.matchAll(/warning (levels\/\S+) bag\.lastSpawnS: /g)];
     expect(deadlineFit).toEqual([]);

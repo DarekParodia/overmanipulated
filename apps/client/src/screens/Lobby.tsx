@@ -9,6 +9,7 @@ import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
+import { useHowTo } from '../howto/store.ts';
 import {
   leaveRoom,
   selectLevel,
@@ -173,6 +174,13 @@ export function Lobby() {
             icon={<Icon name="settings" size={24} label={pl.lobby.settings} />}
             onClick={() => setSettingsOpen(true)}
           />
+          <Button
+            icon={<Icon name="question" size={24} />}
+            data-testid="open-how-to"
+            onClick={() => useHowTo.getState().show('intro')}
+          >
+            <span className={styles.actionLabel}>{pl.howTo.open}</span>
+          </Button>
           <Button
             icon={<Icon name="book" size={24} />}
             data-testid="open-encyclopedia"
