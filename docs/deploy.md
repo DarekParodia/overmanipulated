@@ -92,7 +92,7 @@ Retention (90 days) and the limits below are constants in the code, not environm
 | Compression | zstd and gzip on the fly; Brotli files are pre-built at image build time (`tools/deploy/precompress.ts`) and served by `precompressed br` | `curl -sI -H 'Accept-Encoding: br' https://<domain>/assets/<index>.js` |
 | Cache: hashed assets | `/assets/<name>-<8 hash chars>.(js\|css\|woff2)` → `public, max-age=31536000, immutable`. Only when the file exists: a missing hashed file is a plain 404, never `index.html` cached for a year | `curl -sI` the script |
 | Cache: static files | manifest, icons and the un-hashed audio in `/assets/audio` → `no-cache` (revalidate by ETag). The manifest is sent as `application/manifest+json` (Caddy knows no type for it). `index.html.br` from the precompress step stays unused: the page comes from the game server | `curl -sI https://<domain>/manifest.webmanifest` |
-| Pages | `/`, SPA paths, `/index.html`, `/ads.txt`, `/prywatnosc` → game server (it sets `Cache-Control`: `no-store` on the shell, `public, max-age=300` on `/ads.txt`). Unknown file-like paths (`/foo.js`) get a plain 404, never HTML | `bun run smoke -- <url>` |
+| Pages | `/`, SPA paths, `/index.html`, `/ads.txt`, `/prywatnosc` → game server (it sets `Cache-Control`: `no-store` on the shell, `public, max-age=300` on `/ads.txt`, `no-cache` on `/prywatnosc`). Unknown file-like paths (`/foo.js`) get a plain 404, never HTML | `bun run smoke -- <url>` |
 | Server down | `handle_errors 502 503 504`: the static `index.html` of the same build, `no-store`, with the security headers; not for `/ads.txt`, `/api`, `/ws`, `/health` | Stop the server, open the site |
 | Cache: API | `/api/*`, `/health`, `/ws` → `no-store` | |
 | Security headers | `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` plus CSP `frame-ancestors 'none'`, `Permissions-Policy` (no camera, microphone, geolocation), no `Server` header, on every response (`security_headers` snippet, also on the fallback page). `Content-Security-Policy`, `Referrer-Policy: no-referrer` and `Cross-Origin-Opener-Policy` are **defaults** (`?Header`): the game server sets its own on the pages it renders and those win | `bun run smoke -- <url> --strict` |
@@ -210,8 +210,9 @@ endpoint, `/api/config`, the HTML page and every script/stylesheet it links (cac
 compression, security headers), the HTML shell (the embedded config parses and agrees with
 `/api/config`; the CSP mode matches it: ads on needs `'strict-dynamic'` with a `'nonce-…'` equal to
 the module script's nonce, ads off needs `script-src 'self'` without `'unsafe-eval'`; a second
-request gets a different nonce), `/ads.txt` (404 or `text/plain`, never HTML), `/prywatnosc` and
-the manifest (static, `no-cache`), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
+request gets a different nonce), `/ads.txt` (404 or `text/plain`, never HTML), `/prywatnosc` (the
+privacy page, not the shell: no script, never the ads CSP, its ads section shown exactly when
+`/api/config` has ads on) and the manifest (static, `no-cache`), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
 create room, second socket joins by code, ready, start, skip the briefing, receive live
 snapshots that acknowledge the input. It prints PASS/WARN/FAIL per step and exits 1 on any
 failure. A static fallback page instead of the server-rendered shell is a warning ("static
@@ -279,7 +280,8 @@ level; text readable at 640×360; no console errors; sound unlocks after the fir
 2. `docker compose ps` shows both services healthy; `bun run smoke -- https://<domain> --strict`
    passes with no warnings.
 3. Supervisor sign-off done (`reviewed: true` for all stories, see `docs/review/`), and the
-   privacy note (`docs/privacy.pl.md`) went to the teacher.
+   privacy note went to the teacher: `https://<domain>/prywatnosc`, with `site.operator` (name,
+   contact, hosting) filled in `config.json`, which replaces the „[do uzupełnienia…]” lines.
 4. Device matrix above filled in at least for laptop + Android + iPhone.
 
 **Before class (30 minutes)**
