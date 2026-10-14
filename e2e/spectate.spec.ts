@@ -191,11 +191,16 @@ test('versus: a mid-match spectator sees both newsrooms and can switch them', as
     'aria-pressed',
     'true',
   );
-  // One tap on Głos's score switches the view; the canvas stays the same one.
+  // One tap on Głos's score switches the view; the canvas (and its WebGL context) stays the same
+  // one, and Głos, already synced, is live at once.
+  await canvases.first().evaluate((canvas) => {
+    canvas.dataset.e2eMark = 'first';
+  });
   await watcher.page.getByTestId('spectate-score-1').tap();
   await expect(views.first()).toHaveAttribute('data-team', '1');
-  await expect(views.first()).toHaveAttribute('data-live', 'true');
+  await expect(views.first()).toHaveAttribute('data-live', 'true', { timeout: 1000 });
   await expect(canvases).toHaveCount(1);
+  await expect(canvases.first()).toHaveAttribute('data-e2e-mark', 'first');
   await expect(watcher.page.getByTestId('spectate-plate-1')).toContainText('Łukasz');
   await expect(watcher.page.getByTestId('spectate-score-1')).toHaveAttribute(
     'aria-pressed',

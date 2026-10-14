@@ -81,7 +81,7 @@ components per station kind with `React.lazy`.
 | --- | --- | --- | --- |
 | S7-56 (all ten minigames) | 814 KB | 51 % | 301 KB |
 | S7-66 (M4 done: abilities, ten stations, endless room) | 822 KB | 51 % | 303 KB |
-| S7-90 (spectate screen I: views, layout, scoreboard) | 826 KB | 52 % | 305 KB |
+| S7-90 (spectate screen I: views, layout, scoreboard; the lazy styleguide counts here since S7-101) | 868 KB | 53 % | 305 KB |
 
 Real transfer in headless Chromium (webm audio, brotli estimate, whole flow menu, lobby, briefing,
 match): menu 434 KB, everything 1.7 MB brotli. The 10 MB limit is met about seven times over.

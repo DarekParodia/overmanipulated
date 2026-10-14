@@ -315,6 +315,7 @@ function EventFeedHook() {
   return null;
 }
 
+/** The keys of a versus split (or of the one-view layout, where they swap the newsroom). */
 function KeyHint({ single }: { single: boolean }) {
   const device = useApp((s) => s.inputDevice);
   if (device !== 'keyboard' && device !== 'gamepad') {
@@ -481,7 +482,8 @@ export function SpectateScreen() {
       )}
 
       <footer className={styles.footer}>
-        <KeyHint single={single} />
+        {/* Co-op has one newsroom: no key changes the view, so no hint. */}
+        {teams.length > 1 && <KeyHint single={layout === 'single'} />}
         <div className={styles.buttons}>
           {phase === 'results' && host && (
             <Button
