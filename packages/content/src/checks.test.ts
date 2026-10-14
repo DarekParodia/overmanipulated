@@ -404,7 +404,7 @@ describe('level 2 content', () => {
       firstAtS: 4,
       gapS: 24,
       lastSpawnS: 340,
-      deadlineS: { normal: 55, important: 60, urgent: 45 },
+      deadlineS: { normal: 50, important: 55, urgent: 40 },
     });
     expect(pool).toHaveLength(18);
     expect(pool.map((s) => s.id)).toEqual(expect.arrayContaining(newStories));

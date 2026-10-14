@@ -3,6 +3,8 @@
 // What the game shows follows the effective hints (S7-24): the setting AND the room's difficulty
 // (`DIFFICULTY[d].hints`), so Ekspert plays without the bubble, the scene markers and the
 // folder-card proof count, whatever the setting says. The first-game tutorial is unaffected.
+// Each GameView (net/game-view.ts) holds a guidance store: `useGuidance` is the player view's;
+// a spectator view gets a disabled stub (no hints, no step) (S7-85).
 import { DIFFICULTY, type Difficulty } from '@redakcja/shared';
 import { create } from 'zustand';
 import { useApp } from '../store/app.ts';
@@ -18,19 +20,37 @@ type GuidanceStore = {
   setStep(step: NextStep | null): void;
 };
 
-export const useGuidance = create<GuidanceStore>((set, get) => ({
-  hintsEnabled: readStored('local', HINTS_KEY) !== 'off',
-  step: null,
-  setHintsEnabled(enabled) {
-    set({ hintsEnabled: enabled });
-    writeStored('local', HINTS_KEY, enabled ? null : 'off');
-  },
-  setStep(step) {
-    if (!sameStep(get().step, step)) {
-      set({ step });
-    }
-  },
-}));
+/** The player's guidance: the hints setting persists in local storage. */
+function createPlayerGuidance() {
+  return create<GuidanceStore>((set, get) => ({
+    hintsEnabled: readStored('local', HINTS_KEY) !== 'off',
+    step: null,
+    setHintsEnabled(enabled) {
+      set({ hintsEnabled: enabled });
+      writeStored('local', HINTS_KEY, enabled ? null : 'off');
+    },
+    setStep(step) {
+      if (!sameStep(get().step, step)) {
+        set({ step });
+      }
+    },
+  }));
+}
+
+export type GuidanceStoreApi = ReturnType<typeof createPlayerGuidance>;
+
+/** Guidance for a view nobody plays in (a spectator): hints off, no step, setters ignored. */
+export function createDisabledGuidance(): GuidanceStoreApi {
+  return create<GuidanceStore>(() => ({
+    hintsEnabled: false,
+    step: null,
+    setHintsEnabled: () => undefined,
+    setStep: () => undefined,
+  }));
+}
+
+/** The player view's guidance. */
+export const useGuidance: GuidanceStoreApi = createPlayerGuidance();
 
 /** Hints are shown when the player wants them and the difficulty allows them. */
 export function effectiveHints(hintsEnabled: boolean, difficulty: Difficulty): boolean {
@@ -44,7 +64,12 @@ export function useEffectiveHints(): boolean {
   return effectiveHints(enabled, difficulty);
 }
 
-/** The effective hints flag right now, for per-frame readers outside React renders. */
+/** The effective hints flag of a guidance store right now, for per-frame readers. */
+export function effectiveHintsOf(guidance: GuidanceStoreApi): boolean {
+  return effectiveHints(guidance.getState().hintsEnabled, useApp.getState().difficulty);
+}
+
+/** The player's effective hints flag right now, for per-frame readers outside React renders. */
 export function effectiveHintsNow(): boolean {
-  return effectiveHints(useGuidance.getState().hintsEnabled, useApp.getState().difficulty);
+  return effectiveHintsOf(useGuidance);
 }

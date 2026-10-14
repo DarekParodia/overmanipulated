@@ -2,15 +2,18 @@
 // in a passive effect and unmounted after React finishes rendering. drei's Html recreates its
 // root inside a layout effect when the canvas target settles, which can leave it empty; this
 // keeps the root stable for the lifetime of the overlay. Callers move their elements each frame
-// with `screenPosition`.
+// with `screenPosition`. A separate root does not inherit context, so the node is wrapped in the
+// caller's GameView provider (S7-85).
 import { useThree } from '@react-three/fiber';
-import { type ReactNode, useEffect } from 'react';
+import { createElement, type ReactNode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Camera, Vector3 } from 'three';
+import { GameViewProvider, useGameView } from '../net/view-context.tsx';
 
 /** Mounts `node` (memoised by the caller) in a layer over the canvas while the hook lives. */
 export function useOverlay(className: string, node: ReactNode): void {
   const gl = useThree((s) => s.gl);
+  const view = useGameView();
   useEffect(() => {
     const parent = gl.domElement.parentElement;
     if (!parent) {
@@ -20,7 +23,7 @@ export function useOverlay(className: string, node: ReactNode): void {
     layer.className = className;
     parent.appendChild(layer);
     const root = createRoot(layer);
-    root.render(node);
+    root.render(createElement(GameViewProvider, { view }, node));
     return () => {
       // A root can't be unmounted synchronously while React renders; defer it.
       setTimeout(() => {
@@ -28,7 +31,7 @@ export function useOverlay(className: string, node: ReactNode): void {
         layer.remove();
       });
     };
-  }, [gl, className, node]);
+  }, [gl, className, node, view]);
 }
 
 /**

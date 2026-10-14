@@ -136,7 +136,11 @@ The next-folder countdown (ghost card, conveyor ring) makes no sound: it runs al
 would only be noise. Animation listeners (`feedback.onAnimation`) receive
 `{ reducedMotion, noFlash }` and must honour them; cues about another player (`remote`) never
 vibrate. In a `?debug` build, `window.__fx` exposes `handleGameEvent`, `emitCue` and `useGame`
-for testing feedback by hand.
+for testing feedback by hand. Each GameView (S7-85) has its own dispatcher: events are routed with
+`routeViewEvent(view, event)`, so a second canvas's particles and shake stay in its own scene;
+the player's view uses the global `feedback` that audio, haptics and captions are connected to.
+`CueContext.silent` mutes a cue's sound and loops only (particles, shake, animation and the
+caption still run), for views that must not be heard.
 
 ## Music
 

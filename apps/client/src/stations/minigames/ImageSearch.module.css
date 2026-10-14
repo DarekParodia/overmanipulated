@@ -290,3 +290,57 @@
     font-size: var(--text-md);
   }
 }
+
+/*
+ * Short landscape phones (640×360): the photo and the loupe keep the whole left column and the
+ * key hints sit under the result cards, which get a step smaller, so everything fits without
+ * scrolling. `.table` lends its children to the root grid.
+ */
+@media (max-height: 430px) {
+  .root {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    column-gap: var(--space-4);
+  }
+
+  .root > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .table {
+    display: contents;
+  }
+
+  .submitted {
+    grid-column: 1;
+    grid-row: 2 / 4;
+    align-self: start;
+  }
+
+  .results {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    max-width: calc(var(--columns, 3) * 5.5rem);
+  }
+
+  .root > .hints {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  /* Round over: the banner across the top, the results under it. */
+  .table > [role="status"] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .over .results {
+    grid-column: 1 / -1;
+    grid-row: 3;
+  }
+
+  .caption {
+    font-size: var(--text-sm);
+  }
+}

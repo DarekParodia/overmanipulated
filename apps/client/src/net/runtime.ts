@@ -1,6 +1,6 @@
 // Per-match client runtime: fixed 50 ms input ticks (send + predict, plus the role ability
 // press), snapshot intake (interpolation buffer + reconciliation), and render-time sampling for
-// the scene.
+// the scene. A watch runtime (spectators, S7-85) only buffers and samples: every player is remote.
 import { DEFAULT_LEVEL_ID, getLevel } from '@redakcja/content';
 import {
   GREYBOX_MAP,
@@ -27,6 +27,12 @@ import {
 /** Never simulate more than this many input ticks in one frame (tab was in the background). */
 const MAX_TICKS_PER_FRAME = 4;
 
+/**
+ * How far behind a spectator view renders: 2.5 spectator snapshot intervals (every 2nd tick,
+ * 10 Hz), so one late snapshot never stalls the picture. Players keep INTERPOLATION_DELAY_MS.
+ */
+export const SPECTATOR_INTERPOLATION_DELAY_MS = 250;
+
 export type RenderedPlayer = SampledPlayer & { local: boolean };
 
 /** Tile map of a level (cached; layouts never change at runtime). */
@@ -41,16 +47,20 @@ export function mapForLevel(levelId: string): TileMap {
   return map;
 }
 
-export type GameRuntime = {
+/** What a GameView (net/game-view.ts) renders from: one newsroom's map and players. */
+export type ViewRuntime = {
   /** Map of the level being played; set by `reset` when a level starts. */
   readonly map: TileMap;
   readonly buffer: SnapshotBuffer;
-  readonly predictor: Predictor;
   onSnapshot(snapshot: SnapshotMessage, receivedAt: number): void;
-  /** Advances input ticks; returns the render state for this frame. */
+  /** Advances the runtime; returns the render state for this frame. */
   frame(now: number, dtMs: number): Map<string, RenderedPlayer>;
   /** Clears all match state; `levelId` selects the map for the next match. */
   reset(levelId?: string): void;
+};
+
+export type GameRuntime = ViewRuntime & {
+  readonly predictor: Predictor;
   /**
    * One role ability press from an overlay that captures the input (R / RB as the nav intent
    * `ability`, S7-41): sent, or refused here with the "denied" cue, like a press in the world.
@@ -177,6 +187,40 @@ export function createRuntime(
       accumulator = 0;
       localKnown = false;
       paused = false;
+    },
+  };
+}
+
+/**
+ * A runtime that only watches (S7-85): snapshots go to the interpolation buffer, and every
+ * player is sampled `delayMs` in the past as a remote player. No input, no prediction.
+ */
+export function createWatchRuntime(
+  levelId: string = DEFAULT_LEVEL_ID,
+  delayMs: number = SPECTATOR_INTERPOLATION_DELAY_MS,
+): ViewRuntime {
+  let map = mapForLevel(levelId);
+  const buffer = createSnapshotBuffer();
+  return {
+    get map() {
+      return map;
+    },
+    buffer,
+    onSnapshot(snapshot, receivedAt) {
+      buffer.push(snapshot, receivedAt);
+    },
+    frame(now) {
+      const players = new Map<string, RenderedPlayer>();
+      for (const [id, sampled] of buffer.sample(now, delayMs)) {
+        players.set(id, { ...sampled, local: false });
+      }
+      return players;
+    },
+    reset(nextLevelId) {
+      if (nextLevelId) {
+        map = mapForLevel(nextLevelId);
+      }
+      buffer.clear();
     },
   };
 }

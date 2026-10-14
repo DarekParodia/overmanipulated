@@ -286,23 +286,47 @@
 
 /*
  * Short landscape phones (640×360): a narrower photo column and 3 × 56 px rows, so the photo, the
- * button and the whole map fit under the task line; every tile stays ≥ 48 px tall.
+ * button and the whole map fit under the task line; every tile stays ≥ 48 px tall. The key hints
+ * sit under the map and the photo column runs down beside them. `.body` lends its children to
+ * the root grid; the areas match the wide layout above.
  */
 @media (max-height: 430px) {
-  .root,
-  .body {
-    gap: var(--space-2);
+  .root {
+    grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+    grid-template-areas:
+      "task task"
+      "side map"
+      "side hints";
+    gap: var(--space-1) var(--space-2);
   }
 
-  @container (min-width: 34rem) {
-    .body {
-      grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
-    }
+  .root > :first-child {
+    grid-area: task;
+  }
+
+  .body {
+    display: contents;
+  }
+
+  .side {
+    grid-area: side;
+    align-self: start;
   }
 
   .map {
+    grid-area: map;
     gap: var(--space-1);
     padding: var(--space-1);
+  }
+
+  /* After the round (no hints): the result under both columns. */
+  .foot {
+    grid-row: 4;
+    grid-column: 1 / -1;
+  }
+
+  .root > .hints {
+    grid-area: hints;
   }
 
   .tile {

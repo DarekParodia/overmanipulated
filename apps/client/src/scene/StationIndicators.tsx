@@ -7,12 +7,11 @@
 // one layer over the canvas: no draw calls, crisp text.
 
 import { useFrame } from '@react-three/fiber';
-import type { Fixture, Station } from '@redakcja/shared';
+import type { Fixture, Station, TileMap } from '@redakcja/shared';
 import { useMemo } from 'react';
 import { Vector3 } from 'three';
-import { useEvents } from '../events/event-store.ts';
-import { useGame } from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
+import type { GameView } from '../net/game-view.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useApp } from '../store/app.ts';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
@@ -49,8 +48,8 @@ type Sign = {
 type RoomPlayers = readonly { id: string; colorIndex: number }[] | undefined;
 
 /** Groups touching fixtures of one kind into runs (conveyor belts, desk blocks). */
-function runsOf(kind: 'conveyor' | 'desk'): Fixture[][] {
-  const left = runtime.map.fixtures.filter((f) => f.kind === kind);
+function runsOf(map: TileMap, kind: 'conveyor' | 'desk'): Fixture[][] {
+  const left = map.fixtures.filter((f) => f.kind === kind);
   const runs: Fixture[][] = [];
   while (left.length > 0) {
     const run = left.splice(0, 1);
@@ -73,9 +72,9 @@ function runsOf(kind: 'conveyor' | 'desk'): Fixture[][] {
   return runs;
 }
 
-function collectSigns(): Sign[] {
+function collectSigns(map: TileMap): Sign[] {
   const signs: Sign[] = [];
-  for (const fixture of runtime.map.fixtures) {
+  for (const fixture of map.fixtures) {
     if (fixture.kind === 'station' && fixture.station) {
       signs.push({
         id: fixture.id,
@@ -88,7 +87,7 @@ function collectSigns(): Sign[] {
     }
   }
   for (const kind of ['conveyor', 'desk'] as const) {
-    for (const run of runsOf(kind)) {
+    for (const run of runsOf(map, kind)) {
       const first = run[0];
       if (!first) {
         continue;
@@ -109,8 +108,8 @@ function collectSigns(): Sign[] {
   return signs;
 }
 
-function indicatorFor(sign: Sign): StationIndicator {
-  const state = useGame.getState();
+function indicatorFor(view: GameView, sign: Sign): StationIndicator {
+  const state = view.store.getState();
   if (sign.kind === 'conveyor') {
     return conveyorIndicator(state.nextFolder, state.elapsedMs, state.conveyorFull);
   }
@@ -122,7 +121,7 @@ function indicatorFor(sign: Sign): StationIndicator {
     return desk?.operatorId ? { kind: 'busy', operatorId: desk.operatorId } : { kind: 'none' };
   }
   const station: Station | undefined = state.stations.find((s) => s.id === sign.fixtureIds[0]);
-  const events = useEvents.getState();
+  const events = view.events.getState();
   return stationIndicator(
     station,
     station ? events.outageTotals[station.id] : undefined,
@@ -286,12 +285,12 @@ function SignBadge({ handle }: { handle: SignHandle }) {
 }
 
 /** Updates one sign's ring from the game state; DOM writes only when something changed. */
-function updateSign(handle: SignHandle, delta: number, players: RoomPlayers): void {
+function updateSign(view: GameView, handle: SignHandle, delta: number, players: RoomPlayers): void {
   const { element, ring } = handle;
   if (!element || !ring) {
     return;
   }
-  const indicator = indicatorFor(handle.sign);
+  const indicator = indicatorFor(view, handle.sign);
   const current = handle.shown;
   const target = 'fraction' in indicator ? indicator.fraction : 1;
   if (indicator.kind === 'down' && handle.seconds && current.secondsLeft !== indicator.seconds) {
@@ -336,9 +335,10 @@ function updateSign(handle: SignHandle, delta: number, players: RoomPlayers): vo
  * to the projected sign positions.
  */
 export function StationIndicators() {
+  const view = useGameView();
   const handles = useMemo(
     () =>
-      collectSigns().map(
+      collectSigns(view.runtime.map).map(
         (sign): SignHandle => ({
           sign,
           anchor: null,
@@ -358,7 +358,7 @@ export function StationIndicators() {
           at: '',
         }),
       ),
-    [],
+    [view],
   );
   const projected = useMemo(() => new Vector3(), []);
 
@@ -381,7 +381,7 @@ export function StationIndicators() {
         handle.at = at;
         anchor.style.transform = at;
       }
-      updateSign(handle, delta, players);
+      updateSign(view, handle, delta, players);
     }
   });
 

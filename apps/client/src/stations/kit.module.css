@@ -224,6 +224,23 @@
   }
 }
 
+/* Short landscape phones (640×360): the task line and the key-hint row are a step slimmer, so
+   every minigame and its hints fit the overlay without scrolling (platforms.md). */
+@media (max-height: 430px) {
+  .mark {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .keyHints {
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .keyHints .keyCap {
+    height: 1.75rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .markUsed,
   .good,

@@ -17,6 +17,7 @@ import {
   faceTowards,
   gameInfo,
   joinRoom,
+  openExtraPlayer,
   openPlayer,
   type Player,
   pickRole,
@@ -127,7 +128,7 @@ const S = {
   hudSix: defineShot(
     'rozgrywka-poziom-6',
     'Rozgrywka (poziom 6)',
-    'Sześć stanowisk, stół redakcyjny i stoliki do odkładania teczek.',
+    'Osiem stanowisk w większej sali, stół redakcyjny i stoliki do odkładania teczek.',
   ),
   stImageSearch: defineShot(
     'stanowisko-lupa-obrazu',
@@ -398,7 +399,16 @@ async function emit(page: Page, event: unknown): Promise<void> {
   await page.evaluate((e) => (window as unknown as { __game: any }).__game.emit(e), event);
 }
 
-async function shootDevice(browser: Browser, baseUrl: string, device: Device): Promise<string[]> {
+/**
+ * `browser` holds the photographed player; `crowd` the players who only fill seats (see
+ * `openExtraPlayer`), so their scenes never queue in the photographed page's GPU process.
+ */
+async function shootDevice(
+  browser: Browser,
+  crowd: Browser,
+  baseUrl: string,
+  device: Device,
+): Promise<string[]> {
   const missing: string[] = [];
   const dir = (key: string) => outPath('screenshots', device.id, `${key}.png`);
   const take = async (page: Page, key: string, pause = 500) => {
@@ -445,7 +455,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
     await take(solo.page, S.encyclopedia, 900);
   });
   await attempt(S.encyclopediaCard, async () => {
-    const grid = solo.page.getByRole('list', { name: pl.encyclopedia.gridLabel });
+    const grid = solo.page.getByRole('group', { name: pl.encyclopedia.gridLabel });
     const first = grid.getByRole('button').first();
     await first.click({ timeout: 4000 });
     await take(solo.page, S.encyclopediaCard, 900);
@@ -457,7 +467,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
   const code = await createRoom(host);
   const guests: Player[] = [];
   for (const name of ['Łukasz', 'Ola', 'Kuba']) {
-    const guest = await openPlayer(browser, baseUrl, name, device.options, veteran);
+    const guest = await openExtraPlayer(crowd, baseUrl, name, veteran);
     await joinRoom(guest, code);
     guests.push(guest);
   }
@@ -511,7 +521,7 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
   // --- Room B: level 6, injected scenes --------------------------------------------------
   const six = await openPlayer(browser, baseUrl, 'Zośka', device.options, veteran);
   const sixCode = await createRoom(six);
-  const mate = await openPlayer(browser, baseUrl, 'Łukasz', device.options, veteran);
+  const mate = await openExtraPlayer(crowd, baseUrl, 'Łukasz', veteran);
   await joinRoom(mate, sixCode);
   await selectLevel(six, 'l6-atak');
   await setReady(mate);
@@ -555,12 +565,11 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
       await take(six.page, S.deskEvidence, 1200);
     });
     await attempt(S.deskVerdict, async () => {
-      await six.page
-        .getByRole('button', {
-          name: new RegExp(pl.vocab.stations[decisive?.station ?? 'imageSearch']),
-        })
-        .first()
-        .click({ timeout: 4000 });
+      // The evidence list scrolls inside the sheet, under its sticky verdict footer, which can
+      // take the pointer; a dispatched click picks the stamp the way a tap would.
+      const evidence = six.page.getByTestId(`desk-stamp-${decisive?.id ?? stampIds[0]}`);
+      await evidence.scrollIntoViewIfNeeded({ timeout: 8000 });
+      await evidence.dispatchEvent('click');
       await take(six.page, S.deskVerdict, 600);
     });
     const me = (await gameInfo(six)).me ?? 'p1';
@@ -740,11 +749,16 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
     await take(six.page, S.kolegium, 900);
   });
   await attempt(S.kolegiumMissed, async () => {
-    // Page 0 is the summary on phones (S7-06); the wrong verdict is the third card.
+    // The wrong verdict is the third card. Phones page the Kolegium (page 0 is the summary,
+    // S7-06); wider screens list every card, so scroll to it.
     const next = six.page.getByRole('button', { name: pl.debrief.next });
-    for (let i = 0; i < 3; i++) {
-      await next.click({ timeout: 3000 });
-      await six.page.waitForTimeout(250);
+    if (await next.isVisible()) {
+      for (let i = 0; i < 3; i++) {
+        await next.click({ timeout: 8000 });
+        await six.page.waitForTimeout(250);
+      }
+    } else {
+      await six.page.getByTestId('kolegium-card').nth(2).scrollIntoViewIfNeeded({ timeout: 8000 });
     }
     await take(six.page, S.kolegiumMissed, 700);
   });
@@ -821,6 +835,10 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
       await newbie.page.keyboard.press('KeyE');
     });
     await attempt(S.tutorialWork, async () => take(newbie.page, S.tutorialWork, 900));
+  } else {
+    // The walk to the conveyor is keyboard-driven; on phones these two shots are not taken, so the
+    // index says so instead of linking files that do not exist.
+    missing.push(S.tutorialPickup, S.tutorialWork);
   }
   await newbie.context.close();
   return missing;
@@ -862,13 +880,15 @@ ${rows.join('\n')}
 export async function buildScreenshots(): Promise<Record<string, string[]>> {
   const stack = await startStack();
   const browser = await launchBrowser();
+  const crowd = await launchBrowser();
   const missing: Record<string, string[]> = {};
   try {
     for (const device of DEVICES) {
       console.log(`screenshots: ${device.label}`);
-      missing[device.id] = await shootDevice(browser, stack.baseUrl, device);
+      missing[device.id] = await shootDevice(browser, crowd, stack.baseUrl, device);
     }
   } finally {
+    await crowd.close();
     await browser.close();
     await stack.stop();
   }
