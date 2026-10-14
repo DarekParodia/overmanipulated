@@ -171,6 +171,31 @@ describe('l6 Atak stories for Mapa and Inne media', () => {
     expect(l6Story('l6-kolejka-do-lokalu').truth).toBe('true');
   });
 
+  it('files the two photos from elsewhere under the place alias', () => {
+    // So a Metadane puzzle on them contradicts on the place, not the date.
+    expect(['l6-most-zamkniety', 'l6-pusta-dwunastka'].map((id) => l6Story(id).technique)).toEqual([
+      'zdjecie-z-innego-miejsca',
+      'zdjecie-z-innego-miejsca',
+    ]);
+  });
+
+  it('writes irrelevant Mapa stamps as a place that matches its caption', () => {
+    // An irrelevant stamp shows no problem, so the minigame shows a photo from the captioned
+    // district; the stamp must not claim there is nothing to find on the map.
+    const irrelevant = l6Stories.flatMap((story) =>
+      story.stamps.filter(
+        (stamp) => stamp.station === 'geolocation' && stamp.relevance === 'irrelevant',
+      ),
+    );
+    expect(irrelevant.length).toBeGreaterThan(0);
+    for (const stamp of irrelevant) {
+      expect({ id: stamp.id, matches: stamp.text.includes('podpisu') }).toEqual({
+        id: stamp.id,
+        matches: true,
+      });
+    }
+  });
+
   it('pins three stories to Inne media', () => {
     expect(pinnedTo('crossCheck')).toEqual([
       'l6-agencja-dementuje',
