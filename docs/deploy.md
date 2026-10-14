@@ -403,8 +403,10 @@ the module script's nonce, ads off needs `script-src 'self'` without `'unsafe-ev
 request gets a different nonce), `/ads.txt` (404 or `text/plain`, never HTML), `/prywatnosc` (the
 privacy page, not the shell: no script, never the ads CSP, its ads section shown exactly when
 `/api/config` has ads on) and the manifest (static, `no-cache`), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
-create room, second socket joins by code, ready, start, skip the briefing, receive live
-snapshots that acknowledge the input. It prints PASS/WARN/FAIL per step and exits 1 on any
+create room, second socket joins by code, the host picks Fotoedytor, ready, start, skip the
+briefing, receive live snapshots that acknowledge the input, then press the role ability
+(`useAbility`) and see Ekspertyza armed in the `ability` event and in `snapshot.crew` (roles
+and abilities, M3). It prints PASS/WARN/FAIL per step and exits 1 on any
 failure. A static fallback page instead of the server-rendered shell is a warning ("static
 fallback?"): the game server is down or the catch-all does not reach it. The script is covered
 by `tools/smoke/smoke.test.ts`, which runs it against a local server with ads off and with ads on

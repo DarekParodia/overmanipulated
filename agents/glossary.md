@@ -151,7 +151,7 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, 
 | Niezależne źródło | `isIndependent(card)` | An agency or newsroom card with its own reporter (not an echo). Only these count |
 | Potwierdzają / Zaprzeczają / Za mało źródeł | `confirmed` / `denied` / `unconfirmed` (`Conclusion`, `conclude(cards)`) | Any independent denial → denied; ≥ `CROSS_CHECK_CONFIRMATIONS` (2) independent confirmations → confirmed; else unconfirmed |
 
-## Roles (`RoleId`)
+## Roles (`Role`)
 
 Passives and abilities live in `ROLE_PERKS` (`RolePerk`, S7-36): `fasterAt` × `workFactor` is the
 passive, `ability` the active one (R / RB / the fourth touch button).
@@ -164,6 +164,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Redaktor prowadzący | `managingEditor` | — | Przedłużenie |
 | Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
 | Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
+| Bez roli | no role (`role: null`, `pl.lobbyRoles.noRole`) | — („Bez premii”) | — („Bez zdolności”) |
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -172,6 +173,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Panel roli | role detail panel (`data-testid="role-detail"`, `roleSummary`, `roleSummaryNote`) | Under the passes: the checked (or hovered / pad-focused) role's passive with its stations on the level, the ability with the device's key and cooldown, and „Ta premia / Ta zdolność nie działa na tym poziomie.” when a perk does nothing there |
 
 ## Abilities (`Ability`, Stage 7)
+
+Every ability is pressed with R / RB / the fourth touch button, whose one-word label is
+`pl.touch.ability` (Ekspert, Dzwoń, +20 s, Szansa, Podaj). All cooldowns are 60 s (`ABILITY`,
+kept after the S7-46 bot data). Player-facing copy: design document „Role”, contest
+`how-to-play.pl.md` „Role i zdolności” and the role cards (S7-47).
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -338,5 +344,10 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Markdown-lite | `parseMarkdownLite`, `MdBlock`, `MdInline`, `markdownTitle` (`packages/shared/src/markdown-lite.ts`) | Pure AST parser for the documents the game serves (headings, paragraphs, lists, tables, bold, code, https or same-site links, `<!-- name -->` conditional blocks, `{{key\|fallback}}`); renderers escape every text |
 | Przycisk-odnośnik | `LinkButton` (`ui/LinkButton.tsx`) | A link styled as a `Button` (never primary) with the `ui.click` cue; opens in the same tab so the gamepad's `click()` works |
 | Strażnik reklam (e2e) | ad guard (`guardAdRequests`, `trackContext(context, { ads })` in `e2e/helpers.ts`) | Every e2e context without an ads config fails its test (in `closePlayers`) if it sends a request to a Google ad host; `openPlayer` and `trackContext` apply it, `guardAdRequests(page.context())` covers Playwright's own `page` fixture; only `ads.spec.ts` opts out |
+| Oglądaj / Oglądasz (ekran widowni) | spectate screen (`ScreenId` `'spectate'`, `joinRoom(nickname, code, 'spectator')`) | Where a spectator lands while a match is played or its results show; the briefing before it is read-only („Oglądasz” instead of „Gotowy!”). On the menu, `matchInProgress` offers „Oglądaj” for the same room when the `spectators` flag is on |
+| Widoki widowni | spectate store (`useSpectate`, `spectateViews`, `SpectateView`) | One game store and snapshot buffer per watched newsroom, the spectator event feed, `matchStats` and each team's `levelEnd`; spectator messages go here only, never to `useGame` or the gameplay event listeners |
+| Rodzaj członka / własna redakcja | `selfKind(room, playerId)`, `selfTeam(room, playerId)` | Derived from `roomState`: a member listed in `spectators` watches; a player's own team routes their snapshots, events and level end (a message for the other team is dropped) |
+| Usunięcie z pokoju | kick (lobby action `kick`, error `kicked`, `kickCooldown`) | The host removes a member: the client forgets its slot and shows `pl.errors.kicked` on the menu. A rejoin from the same browser (`clientId`) during the cooldown gets `kickCooldown` |
+| Ostatni kod | `lastJoinCode` (`useApp`) | The room code of the last join by code; null after creating a room |
 
 Missing a term? Add it here in the same commit that introduces it.

@@ -318,6 +318,12 @@ const icons = {
     { d: 'M3.5 17a8.5 8.5 0 0 1 17 0Z', fill: 'tint' },
     { d: 'M12 17l4-5.5M6.5 13.5l1 .6M12 10.5V12M17.5 13.5l-1 .6' },
   ],
+  // --- S7-84 spectators --------------------------------------------------------------------
+  /** An open eye: watch a match from the Widownia (Oglądaj, Oglądasz). */
+  eye: [
+    { d: 'M2.5 12c2.5-4.3 5.7-6.5 9.5-6.5s7 2.2 9.5 6.5c-2.5 4.3-5.7 6.5-9.5 6.5S5 16.3 2.5 12Z' },
+    { d: 'M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z', fill: 'tint' },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;

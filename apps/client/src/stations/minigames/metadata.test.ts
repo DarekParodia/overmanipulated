@@ -186,6 +186,7 @@ describe('generatePuzzle', () => {
     expect(TECHNIQUE_FIELD).toEqual({
       'stare-zdjecie-nowy-podpis': 'taken',
       'zdjecie-w-zlym-czasie': 'taken',
+      'zdjecie-z-innego-miejsca': 'place',
       'obraz-wygenerowany-ai': 'device',
       'deepfake-wideo': 'software',
     });
@@ -197,6 +198,14 @@ describe('generatePuzzle', () => {
       );
       expect(old.contradiction).toBe('taken');
       expect(OLD_TIMES).toContain(old.file.taken ?? '');
+      // A photo from another place (the l6 Mapa fakes) gives away the place, not the date.
+      const elsewhere = generatePuzzle(
+        seed,
+        story('false', 'photo', 'zdjecie-z-innego-miejsca'),
+        stamp('decisive'),
+      );
+      expect(elsewhere.contradiction).toBe('place');
+      expect(OTHER_TOWNS).toContain(elsewhere.file.place ?? '');
       const generated = generatePuzzle(
         seed,
         story('false', 'photo', 'obraz-wygenerowany-ai'),
