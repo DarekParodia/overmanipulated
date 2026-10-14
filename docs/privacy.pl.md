@@ -94,7 +94,8 @@ Gra zapisuje w przeglądarce (pamięć lokalna, nie ciasteczka), na urządzeniu 
 - ostatnio użyty pseudonim, ustawienia gry (np. dźwięk, animacje, wyłączone podpowiedzi),
 - postęp: najlepsze wyniki poziomów i trybu bez końca (osobno dla każdego poziomu trudności),
   odblokowane karty w Encyklopedii manipulacji,
-- oznaczenie, że samouczek i film wprowadzający zostały już obejrzane,
+- oznaczenie, że samouczek i wprowadzenie (`redakcja.intro.seen.v1`) zostały już obejrzane;
+  dzięki temu wprowadzenie odtwarza się samo tylko w pierwszym pokoju treningowym,
 - listę stanowisk, przy których gracz widział już kartę pomocy (`redakcja.stationHelp.v1`),
   żeby nie pokazywać jej przy każdym podejściu; przycisk „Pokaż pomoc stanowisk od nowa”
   w ustawieniach ją czyści,

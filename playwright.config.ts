@@ -7,6 +7,14 @@ const launchOptions = executablePath ? { executablePath } : {};
 // reuses another checkout's servers.
 const serverPort = process.env.E2E_SERVER_PORT ?? '3000';
 const webPort = process.env.E2E_WEB_PORT ?? '4173';
+const baseURL = `http://localhost:${webPort}`;
+// The first-time intro (S7-102) autoplays when a player opens a training room. Every context
+// starts with it seen, so a spec's lobby is free to use; intro.spec clears it to test the
+// autoplay. `browser.newContext()` in a spec gets this too.
+const introSeen = {
+  cookies: [],
+  origins: [{ origin: baseURL, localStorage: [{ name: 'redakcja.intro.seen.v1', value: '1' }] }],
+};
 
 export default defineConfig({
   testDir: './e2e',
@@ -17,7 +25,8 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {
-    baseURL: `http://localhost:${webPort}`,
+    baseURL,
+    storageState: introSeen,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     launchOptions,
@@ -63,7 +72,7 @@ export default defineConfig({
     },
     {
       command: `bun run build && cd apps/client && bunx vite preview --port ${webPort} --strictPort`,
-      url: `http://localhost:${webPort}`,
+      url: baseURL,
       env: { GAME_SERVER: `localhost:${serverPort}` },
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,

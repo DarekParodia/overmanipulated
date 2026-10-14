@@ -11,6 +11,9 @@
 // S7-101: while the intro plays, its keys (← / →, Space, Enter, Esc) and pad intents (d-pad
 // left / right, A, B) go to the player first (`IntroInput`); its yellow „Dalej” takes the yellow
 // from „Gotowe” until the end card.
+// S7-102: the intro's end (the last scene or „Pomiń”) marks it seen, and so does „Gotowe” over a
+// running intro (closing it is skipping it); switching tabs or the game starting does not. The
+// lobby's first-time autoplay (`autoplay`, no tab bar) closes the dialog when the intro ends.
 import { STATION_KINDS, type StationKind } from '@redakcja/shared';
 import {
   type MutableRefObject,
@@ -25,17 +28,19 @@ import { emitCue } from '../fx/feedback.ts';
 import { handleMenuIntent } from '../input/menu-nav.ts';
 import { handleNavKey, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { type IntroInput, IntroPlayer } from '../intro/IntroPlayer.tsx';
+import { markIntroSeen } from '../intro/intro-store.ts';
 import { ControlsTab } from '../screens/SettingsTabs.tsx';
 import { STATION_ICON } from '../stations/kit.tsx';
 import { StationHelpCard } from '../stations/StationHelpCard.tsx';
 import { type InputDevice, useApp } from '../store/app.ts';
+import { useFeature } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './HowToPlay.module.css';
 import { PracticeRound } from './PracticeRound.tsx';
-import { HOW_TO_TABS, type HowToTab, nextHowToTab, useHowTo } from './store.ts';
+import { HOW_TO_TABS, type HowToTab, howToTabs, nextHowToTab, useHowTo } from './store.ts';
 
 const TAB_ICON: Record<HowToTab, IconName> = {
   intro: 'play',
@@ -121,6 +126,21 @@ function HowToSheet({ intro }: { intro: MutableRefObject<IntroInput | null> }) {
   const cardOpen = tab === 'stations' && station !== null;
   const [introRunning, setIntroRunning] = useState(false);
   const introPlaying = tab === 'intro' && introRunning;
+  const tabs = howToTabs(useFeature('intro'));
+
+  function onIntroEnd() {
+    markIntroSeen();
+    if (useHowTo.getState().autoplay) {
+      hide();
+    }
+  }
+
+  function close() {
+    if (introPlaying) {
+      markIntroSeen();
+    }
+    hide();
+  }
 
   function switchTab(next: HowToTab) {
     if (next !== tab) {
@@ -159,7 +179,7 @@ function HowToSheet({ intro }: { intro: MutableRefObject<IntroInput | null> }) {
       }
     } else if (intent === 'alt') {
       if (!autoplay) {
-        switchTab(nextHowToTab(tab, 1));
+        switchTab(nextHowToTab(tab, 1, tabs));
       }
     } else {
       handleMenuIntent(intent);
@@ -189,7 +209,7 @@ function HowToSheet({ intro }: { intro: MutableRefObject<IntroInput | null> }) {
             <Segmented<HowToTab>
               label={pl.howTo.tabsLabel}
               value={tab}
-              options={TAB_OPTIONS}
+              options={TAB_OPTIONS.filter((option) => tabs.includes(option.id))}
               onChange={switchTab}
               testId="how-to-tab"
             />
@@ -200,7 +220,7 @@ function HowToSheet({ intro }: { intro: MutableRefObject<IntroInput | null> }) {
           back
           icon={<Icon name="check" size={24} />}
           data-testid="how-to-close"
-          onClick={hide}
+          onClick={close}
         >
           {pl.howTo.close}
         </Button>
@@ -211,7 +231,12 @@ function HowToSheet({ intro }: { intro: MutableRefObject<IntroInput | null> }) {
         data-testid={`how-to-panel-${tab}`}
       >
         {tab === 'intro' && (
-          <IntroPlayer device={device} input={intro} onRunningChange={setIntroRunning} />
+          <IntroPlayer
+            device={device}
+            input={intro}
+            onEnd={onIntroEnd}
+            onRunningChange={setIntroRunning}
+          />
         )}
         {tab === 'stations' && <StationsTab device={device} station={station} />}
         {tab === 'controls' && <ControlsTab />}

@@ -1,5 +1,14 @@
-import { beforeEach, describe, expect, it } from 'bun:test';
-import { canPractice, HOW_TO_TABS, nextHowToTab, useHowTo } from './store.ts';
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { DEFAULT_PUBLIC_CONFIG } from '@redakcja/shared';
+import { usePublicConfig } from '../store/public-config.ts';
+import {
+  canPractice,
+  HOW_TO_TABS,
+  howToTabs,
+  nextHowToTab,
+  offeredTab,
+  useHowTo,
+} from './store.ts';
 
 describe('how-to tabs', () => {
   it('has the three tabs in order', () => {
@@ -12,6 +21,40 @@ describe('how-to tabs', () => {
     expect(nextHowToTab('controls', 1)).toBe('intro');
     expect(nextHowToTab('intro', -1)).toBe('controls');
     expect(nextHowToTab('stations', -1)).toBe('intro');
+  });
+
+  it('drops Wprowadzenie when the intro flag is off (S7-102)', () => {
+    expect(howToTabs(true)).toEqual(['intro', 'stations', 'controls']);
+    expect(howToTabs(false)).toEqual(['stations', 'controls']);
+    expect(offeredTab('intro', howToTabs(false))).toBe('stations');
+    expect(offeredTab('controls', howToTabs(false))).toBe('controls');
+    expect(nextHowToTab('controls', 1, howToTabs(false))).toBe('stations');
+    expect(nextHowToTab('stations', -1, howToTabs(false))).toBe('controls');
+  });
+});
+
+describe('how-to store with the intro flag off (S7-102)', () => {
+  beforeEach(() => {
+    usePublicConfig.setState({
+      config: {
+        ...DEFAULT_PUBLIC_CONFIG,
+        features: { ...DEFAULT_PUBLIC_CONFIG.features, intro: false },
+      },
+    });
+    useHowTo.getState().hide();
+  });
+
+  afterEach(() => {
+    usePublicConfig.setState({ config: DEFAULT_PUBLIC_CONFIG });
+  });
+
+  it('opens on the stations instead, and never autoplays', () => {
+    useHowTo.getState().show('intro', { autoplay: true });
+    expect(useHowTo.getState()).toMatchObject({ open: true, tab: 'stations', autoplay: false });
+    useHowTo.getState().setTab('intro');
+    expect(useHowTo.getState().tab).toBe('stations');
+    useHowTo.getState().setTab('controls');
+    expect(useHowTo.getState().tab).toBe('controls');
   });
 });
 
