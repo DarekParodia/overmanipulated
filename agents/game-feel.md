@@ -125,6 +125,8 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `lobby.hostChanged` | the roomState `hostId` changed in the lobby: the host handed it on in the manage sheet („Przekaż gospodarza”) or left (everyone hears it; S7-87) | a crown pops onto the new host's „Gospodarz” chip (static under reduced motion) | soft chime (`chime`, ui bus, 0.6) | — (DOM) | — | ● |
 | `lobby.kicked` | the server's `kicked` error: the host removed this member (S7-87) | the menu shows the alert „Gospodarz usunął cię z pokoju.” | buzzer (`buzzer`, ui bus) | — (DOM) | thud | ●● |
 | `room.spectatorJoined` | someone new is in `roomState.spectators` (a join or a move to the Widownia; never the local member; a spectator away from the lobby hears nothing; S7-86) | lobby: a new eye chip pops into the Widownia strip; in game: a blue „Widz dołączył” toast with an eye in the verdict-toast stack | soft join chime (`join`, ui bus, 0.5) | — (DOM) | — | ● |
+| `spectate.follow` | a spectator follows a player or stops (← / →, A / D, d-pad, RB, a chip tap; Esc, B or the FollowCard's ✗; S7-91) | the view's camera glides after the player (`CameraRig` smoothing at the follow zoom, never a cut); their plate chip and name tag get the blue selection ring and the FollowCard appears in their view | paper slide (`slide`, ui bus, 0.6) | — (DOM; caption skipped: the spectator's own press, the ring moves) | — | ● |
+| `spectate.feed` | a new top row in the spectators' event feed (one cue per new top row, so a burst of reveals is one sound; rows already there when the screen opens make none; S7-91) | `feedPop`: the row slides in from the left (a fade under reduced motion; nothing blinks) | soft tick (`tick`, ui bus, 0.3) | — (DOM; caption skipped: the row is the words) | — | ● |
 
 Add a row here when you add a cue, in the same commit.
 
@@ -155,9 +157,11 @@ caption still run), for views that must not be heard.
 `event.raidResolved`, the ability cues that land and `role.rescue`) keep their sound; every other
 cue plays silently. Sounds play at `SPECTATOR_SFX_GAIN` (0.6) of the player's volume, panned
 `TEAM_PAN` (Kurier −0.5, Głos +0.5) while both newsrooms are on screen and centred when one is;
-a newsroom off screen is not heard. No haptics, no camera shake, no hit-stop and no captions
-(the event feed of S7-91 is the visual twin of every audible cue). The masked and revealed
-results of the versus embargo play no cue.
+a newsroom off screen is not heard. No haptics, no camera shake, no hit-stop and no captions:
+the event feed (S7-91, `spectate/EventFeed.tsx`) is the visual twin of every audible cue — a
+verdict (correct, weak proof, wrong, a published fake), an expiry, an event start, a beaten raid,
+an ability landing, a rescue. The masked and revealed results of the versus embargo play no view
+cue; they show in the feed (a masked row names only the newsroom), with `spectate.feed`.
 
 ## Music
 

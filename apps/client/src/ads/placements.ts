@@ -35,9 +35,13 @@ export const AD_PLACEMENTS: Record<AdPlacement, AdPlacementLayout> = {
     query: '(min-width: 1780px) and (min-height: 900px)',
     size: { width: 160, height: 600 },
   },
-  /** Spectator view; the spectator screen places it (S7-91). */
+  /**
+   * Spectate screen (S7-91): a medium rectangle at the bottom of the side stats sheet and under
+   * the figures of the spectator results, a full --space-ad-gap below anything interactive;
+   * 900 px tall leaves room for that gap under the sheet's header and the tables.
+   */
   spectator: {
-    query: '(min-width: 1280px) and (min-height: 720px)',
-    size: { width: 728, height: 90 },
+    query: '(min-width: 1280px) and (min-height: 900px)',
+    size: { width: 300, height: 250 },
   },
 };

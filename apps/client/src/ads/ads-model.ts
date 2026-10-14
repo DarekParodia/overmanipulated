@@ -12,16 +12,21 @@ export type AdEligibility = {
   screen: ScreenId;
   /** The results plate is up (the HUD shows it on the game screen once the level ended). */
   levelEnded: boolean;
-  /** Watching a match as a spectator; always false until spectators land (S7-91). */
+  /** This member watches the match from the Widownia (S7-91). */
   spectating: boolean;
 };
 
 /**
- * Whether ad requests may run now: the menu and the lobby, the results of a finished level and
- * the spectator view. Never during play, the briefing or the styleguide.
+ * Whether ad requests may run now: the menu and the lobby, the results of a finished level and a
+ * spectator's spectate screen (S7-91: its units sit only in the stats sheet and the spectator
+ * results, never over a live view). Never during a player's play, the briefing or the styleguide.
  */
 export function adEligible({ screen, levelEnded, spectating }: AdEligibility): boolean {
-  return AD_ELIGIBLE_SCREENS.has(screen) || (screen === 'game' && (levelEnded || spectating));
+  return (
+    AD_ELIGIBLE_SCREENS.has(screen) ||
+    (screen === 'game' && levelEnded) ||
+    (screen === 'spectate' && spectating)
+  );
 }
 
 /** The AdSense ad unit of a placement, or null when ads are off or the placement has none. */

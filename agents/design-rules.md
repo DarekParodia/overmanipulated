@@ -153,8 +153,10 @@ action.
   close button. Never yellow: the menu keeps one main action.
 - **Ads** (S7-74, only when the operator enables them): only on the main menu (left rail),
   the lobby (banner under the footer), the results (bottom-right rail, 1780×900 and up) and the
-  spectator view. Never during play, in the briefing, in station or desk overlays, in dialogs or
-  sheets, and **never on phones** (no placement's viewport gate matches `PHONE_QUERY`). Each ad
+  spectate screen (S7-91, 1280×900 and up: a 300×250 unit at the bottom of the side stats sheet
+  and under the figures of the spectator results, never over a live view). Never during play, in
+  the briefing, in station or desk overlays, in any other dialog or sheet, and **never on
+  phones** (no placement's viewport gate matches `PHONE_QUERY`). Each ad
   sits in the white „Reklama” frame (`AdSlot`: `--surface`, `--outline-border`, `--radius-md`)
   at least `--space-ad-gap` (≥ 150 px, `AD_MIN_GAP_PX`) from any control, fixed-size (no
   responsive units, no layout shift), not focusable, with no cue, animation or sound, and

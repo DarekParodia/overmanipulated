@@ -33,6 +33,11 @@ game may require a specific device.
 | Station help in a station overlay (the card shows by itself on a station's first use; while it is up, Enter / A, Esc / B and H / Select close the card, never the station) | H | Select / Back (button 8) | Purple '?' in the overlay header |
 | „Jak grać” dialog (main menu corner, lobby, settings → Sterowanie, briefing station chips, in-game menu „Pomoc: stanowiska”): switch tab / back from a station card / close | Tab + Enter on the tabs / Esc / Esc | Y / B / B | Tap a tab / „Rozumiem” / „Gotowe” |
 | „Wypróbuj” practice round (S7-97; a station card in „Jak grać”, out of play only): start / play / back to the card / again | Enter on „Wypróbuj” / the minigame's keys (the dialog hands them to the nav intents; Tab and Q are the minigame's `alt`, H is ignored) / Esc / Enter on „Jeszcze raz” | A / the minigame's buttons / B / A | „Wypróbuj” / tap and drag / ✗ or „Wróć” / „Jeszcze raz” |
+| Spectate screen (S7-90/S7-91): follow the previous / next player (Kurier's players, then Głos's; the camera glides after them, their chip and name tag get a blue ring and a FollowCard shows in their view) | ← / → or A / D | D-pad / stick ← / →, or RB (next) | Tap a player chip on the team plate (a second tap stops) |
+| Spectate screen: stop following, then bring both newsrooms back | Esc | B (with nobody followed and both shown, B is „Wyjdź”, as on every menu screen) | ✗ on the FollowCard |
+| Spectate screen: toggle split / one newsroom (one view: swap), or pick a newsroom | Space / Enter; 1 / 2 | A | The team button on the plate; on a phone a score in the top bar |
+| Spectate screen: stats sheet (side sheet; full screen on a phone) | Q (Esc closes) | Y (B closes) | „Statystyki” (✗ closes) |
+| Spectator results (S7-91): walk the Kolegium cards / switch the newsroom's cards (versus) | ← / → / Q | D-pad ← / → / Y | Scroll / the „Kurier” „Głos” segments |
 
 - The **last used device** decides which prompts are shown (key caps, pad glyphs or touch icons).
   Minigame key hints exist for all three devices; on touch the chip names the gesture

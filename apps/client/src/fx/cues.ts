@@ -70,7 +70,10 @@ export type AnimationTrigger =
   | 'abilityDenied'
   // S7-89 versus.
   /** The rival chip pops (lead taken) or shakes (lead lost); none with reduced motion. */
-  | 'versusLead';
+  | 'versusLead'
+  // S7-91 spectate screen.
+  /** A new row slides into the spectators' event feed (`value`: its id); a fade with reduced motion. */
+  | 'feedPop';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -493,6 +496,17 @@ export const cues = {
   'room.spectatorJoined': {
     severity: 1,
     sound: { ids: ['join'], bus: 'ui', volume: 0.5 },
+  },
+  // S7-91 spectate screen: a spectator follows a player (the camera glides after them; their
+  // chip and name tag get a blue ring) or stops; a new row comes into the event feed.
+  'spectate.follow': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
+  },
+  'spectate.feed': {
+    severity: 1,
+    sound: { ids: ['tick'], bus: 'ui', volume: 0.3 },
+    animation: 'feedPop',
   },
   // S3-03 briefing: the newspaper card whooshes in and slaps onto the desk; "Gotowy!" stamps.
   'briefing.intro': {

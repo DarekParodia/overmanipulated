@@ -96,6 +96,17 @@ describe('computeFraming', () => {
     });
   }
 
+  test('a following spectator view follows even where the whole room fits (S7-91)', () => {
+    const input = { width: 1366, height: 700, mapW: 24, mapH: 14, topInsetPx: 0 };
+    const local = { x: 12, y: 7 };
+    expect(computeFraming({ ...input, local }).follow).toBe(false);
+    const followed = computeFraming({ ...input, local, forceFollow: true });
+    expect(followed.follow).toBe(true);
+    expect(followed.target).toEqual({ x: 12, z: 7 });
+    // Nobody followed: the room is fitted.
+    expect(computeFraming({ ...input, local: null, forceFollow: true }).follow).toBe(false);
+  });
+
   test('the band moves the belt down by half its height', () => {
     const map = parseLayout(LEVELS[0]?.layout ?? []);
     const input = { width: 640, height: 360, mapW: map.width, mapH: map.height };

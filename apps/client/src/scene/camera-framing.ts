@@ -43,6 +43,11 @@ export type FramingInput = {
   topInsetPx: number;
   /** Fit mode: depth kept free behind the room, in tiles (FIT_BACK_ROOM when left out). */
   backRoom?: number;
+  /**
+   * Follow `local` even when the whole room would fit (a spectator following a player, S7-91);
+   * with `local` null the room is fitted as usual.
+   */
+  forceFollow?: boolean;
 };
 
 export type Framing = {
@@ -67,7 +72,7 @@ export function computeFraming(input: FramingInput): Framing {
   const fitWidth = mapW + FIT_SIDE_ROOM;
   const fitDepth = mapH + (input.backRoom ?? FIT_BACK_ROOM);
   const tilePxIfFit = Math.min(width / fitWidth, height / (fitDepth * sinE));
-  if (tilePxIfFit >= MIN_TILE_PX || local === null) {
+  if ((tilePxIfFit >= MIN_TILE_PX && input.forceFollow !== true) || local === null) {
     const aspect = width / Math.max(1, height);
     return {
       follow: false,

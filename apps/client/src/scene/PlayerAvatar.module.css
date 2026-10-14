@@ -29,3 +29,9 @@
   color: var(--text);
   box-shadow: var(--pop-pressed);
 }
+
+/* The player a spectator follows (S7-91): a blue selection ring around the tag. */
+.label[data-followed="true"] {
+  outline: var(--stroke-bold) solid var(--blue);
+  outline-offset: 2px;
+}

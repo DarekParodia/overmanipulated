@@ -2,7 +2,7 @@
 // screens it follows the local player at a readable zoom, clamped to the room and framed under
 // the HUD band (scene/camera-framing.ts). Applies the GameView's shake and hit punch, fed by the
 // view's own feedback (S7-85). A spectator view (S7-90) fits its whole newsroom under the team
-// plate unless it follows a player, and never shakes.
+// plate unless it follows a player (S7-91: then always at the follow zoom), and never shakes.
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { type PerspectiveCamera, Vector3 } from 'three';
@@ -64,6 +64,9 @@ export function CameraRig() {
       // (S7-90) start right under their own frame.
       topInsetPx: view.kind === 'player' ? useHudBand.getState().px : 0,
       backRoom: view.kind === 'spectator' ? SPECTATOR_FIT_BACK_ROOM : FIT_BACK_ROOM,
+      // A spectator view has a subject only while it follows a player (S7-91): then it glides
+      // after them at the follow zoom, whatever the screen size.
+      forceFollow: view.kind === 'spectator',
     });
     const k = 1 - Math.exp(-FOLLOW_SMOOTHING * delta);
     focus.current.lerp(tmp.set(framing.target.x, 0, framing.target.z), k);

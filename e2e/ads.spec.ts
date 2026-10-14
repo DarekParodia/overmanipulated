@@ -6,7 +6,15 @@ import {
   type Route,
   test,
 } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, PHONE, trackContext } from './helpers.ts';
+import {
+  closePlayers,
+  createRoom,
+  DESKTOP,
+  joinRoom,
+  openPlayer,
+  PHONE,
+  trackContext,
+} from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -29,7 +37,12 @@ const ADS_CONFIG = {
     enabled: true,
     mode: 'limited',
     client: CLIENT,
-    slots: { menu: '1111111111', lobby: '2222222222', results: '3333333333' },
+    slots: {
+      menu: '1111111111',
+      lobby: '2222222222',
+      results: '3333333333',
+      spectator: '4444444444',
+    },
     ageTreatment: 'teen',
   },
 };
@@ -109,32 +122,38 @@ function rail(page: Page, placement: string) {
   return page.locator(`[data-ad-placement="${placement}"]`);
 }
 
-/** Shortest distance from the rail to any visible control outside it and outside dialogs. */
-async function gapToControls(page: Page, placement: string): Promise<number> {
-  return page.evaluate((placement) => {
-    const ad = document.querySelector(`[data-ad-placement="${placement}"]`);
-    if (!ad) {
-      return -1;
-    }
-    const a = ad.getBoundingClientRect();
-    const controls = document.querySelectorAll(
-      'button, a[href], input, select, textarea, label, [role="button"], [tabindex]:not([tabindex="-1"])',
-    );
-    let nearest = Number.POSITIVE_INFINITY;
-    for (const control of controls) {
-      if (ad.contains(control) || control.closest('dialog')) {
-        continue;
+/**
+ * Shortest distance from the rail to any visible control outside it and outside dialogs; with
+ * `inDialogs`, the controls of an open dialog count too (a rail inside the dialog, S7-91).
+ */
+async function gapToControls(page: Page, placement: string, inDialogs = false): Promise<number> {
+  return page.evaluate(
+    ([placement, inDialogs]) => {
+      const ad = document.querySelector(`[data-ad-placement="${placement}"]`);
+      if (!ad) {
+        return -1;
       }
-      const b = control.getBoundingClientRect();
-      if (b.width === 0 || b.height === 0 || getComputedStyle(control).visibility === 'hidden') {
-        continue;
+      const a = ad.getBoundingClientRect();
+      const controls = document.querySelectorAll(
+        'button, a[href], input, select, textarea, label, [role="button"], [tabindex]:not([tabindex="-1"])',
+      );
+      let nearest = Number.POSITIVE_INFINITY;
+      for (const control of controls) {
+        if (ad.contains(control) || (!inDialogs && control.closest('dialog'))) {
+          continue;
+        }
+        const b = control.getBoundingClientRect();
+        if (b.width === 0 || b.height === 0 || getComputedStyle(control).visibility === 'hidden') {
+          continue;
+        }
+        const dx = Math.max(0, a.left - b.right, b.left - a.right);
+        const dy = Math.max(0, a.top - b.bottom, b.top - a.bottom);
+        nearest = Math.min(nearest, Math.hypot(dx, dy));
       }
-      const dx = Math.max(0, a.left - b.right, b.left - a.right);
-      const dy = Math.max(0, a.top - b.bottom, b.top - a.bottom);
-      nearest = Math.min(nearest, Math.hypot(dx, dy));
-    }
-    return nearest;
-  }, placement);
+      return nearest;
+    },
+    [placement, inDialogs] as const,
+  );
 }
 
 async function pauseAdRequests(page: Page): Promise<number | undefined> {
@@ -283,6 +302,68 @@ test.describe('desktop', () => {
     // A blocked loader is not tried again.
     expect(googleRequests).toHaveLength(1);
     expect(ownErrors).toEqual([]);
+  });
+});
+
+test.describe('spectators', () => {
+  test.skip(({ isMobile }) => isMobile, 'phones never show ads');
+
+  test('the stats sheet and the spectator results hold the ad 150 px from every control', async ({
+    browser,
+  }, testInfo) => {
+    test.setTimeout(120_000);
+    // The spectator unit needs 1280×900 (placements.ts); the host only has to exist.
+    const { page } = await openWithAds(browser, { viewport: { width: 1600, height: 900 } });
+    const host = await openPlayer(browser, 'Zośka', { viewport: { width: 640, height: 360 } });
+    const code = await createRoom(host);
+    const lobby = (target: Page, action: Record<string, unknown>) =>
+      target.evaluate((a) => {
+        (window as unknown as { __session: { lobby(a: unknown): void } }).__session.lobby(a);
+      }, action);
+    await lobby(host.page, { kind: 'setSpectatorsAllowed', allowed: true });
+    await page.getByLabel('Twój podpis').fill('Widz');
+    await joinRoom({ page, nickname: 'Widz', touch: false }, code, { ready: false });
+    await lobby(page, { kind: 'setSpectator', spectator: true });
+    await expect(host.page.getByRole('button', { name: 'Do składu!' })).toBeEnabled();
+    await host.page.getByRole('button', { name: 'Do składu!' }).click();
+    await expect(page.getByTestId('spectate-screen')).toBeVisible({ timeout: 40_000 });
+
+    // Never over the live view; ad requests may run on a spectator's screen.
+    await expect(page.locator('[data-ad-placement]')).toHaveCount(0);
+    await expect.poll(() => pauseAdRequests(page)).toBe(0);
+
+    // The side stats sheet: the unit at its bottom, a full gap below the sheet's ✗.
+    await page.keyboard.press('KeyQ');
+    await expect(page.getByTestId('spectate-stats')).toBeVisible();
+    const sheetRail = rail(page, 'spectator');
+    await expect(sheetRail).toBeVisible();
+    await expect(sheetRail.locator('ins.adsbygoogle')).toHaveAttribute('data-ad-status', 'filled');
+    await expect(sheetRail.locator('ins.adsbygoogle')).toHaveAttribute(
+      'data-ad-slot',
+      '4444444444',
+    );
+    expect(await gapToControls(page, 'spectator', true)).toBeGreaterThanOrEqual(MIN_GAP_PX);
+    await page.screenshot({ path: testInfo.outputPath('spectator-sheet-ads.png'), scale: 'css' });
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('spectate-stats')).toBeHidden();
+    await expect(page.locator('[data-ad-placement]')).toHaveCount(0);
+
+    // The spectator results (the level end as the spectator topic delivers it).
+    await page.evaluate((levelEnd) => {
+      (window as unknown as { __session: { receive(m: unknown): void } }).__session.receive(
+        levelEnd,
+      );
+    }, LEVEL_END);
+    await expect(page.getByTestId('spectator-results')).toBeVisible();
+    const resultsRail = rail(page, 'spectator');
+    await resultsRail.scrollIntoViewIfNeeded();
+    await expect(resultsRail).toBeVisible();
+    await expect(resultsRail.locator('ins.adsbygoogle')).toHaveAttribute(
+      'data-ad-status',
+      'filled',
+    );
+    expect(await gapToControls(page, 'spectator', true)).toBeGreaterThanOrEqual(MIN_GAP_PX);
+    await page.screenshot({ path: testInfo.outputPath('spectator-results-ads.png'), scale: 'css' });
   });
 });
 

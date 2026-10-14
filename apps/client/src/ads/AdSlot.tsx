@@ -2,7 +2,8 @@
 // are on for this host, the placement has an ad unit, the viewport fits the placement (never a
 // phone) and the loader is not blocked. No cue, animation or sound: AdSense forbids drawing
 // attention to ads. Not focusable: the ad iframe is outside the menu navigation's focus set.
-// Screens mount it (S7-74); the spectator screen mounts its own (S7-91).
+// Screens mount it (S7-74); the spectate screen mounts its own in the stats sheet and the
+// spectator results (S7-91).
 import type { AdPlacement } from '@redakcja/shared';
 import { memo, useEffect, useRef } from 'react';
 import { useMediaQuery } from '../debrief/use-media-query.ts';

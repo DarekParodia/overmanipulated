@@ -190,26 +190,43 @@
   max-width: calc(100% - 2 * var(--space-2));
   min-height: var(--touch-target);
   margin: 0;
-  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-2);
   border: var(--stroke-bold) solid var(--outline);
   border-radius: var(--radius-pill);
   background: var(--surface);
   box-shadow: var(--pop);
   color: var(--text);
+}
+
+/* The badge and name; in a split, the button that focuses the newsroom. */
+.plateHead {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 2.5rem;
+  margin: 0;
+  padding: 0 var(--space-2) 0 var(--space-1);
+  border: var(--stroke) solid transparent;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: inherit;
   font: inherit;
 }
 
 .plateButton {
+  border-color: var(--outline);
+  background: var(--surface-soft);
+  box-shadow: var(--pop-pressed);
   cursor: pointer;
   touch-action: manipulation;
 }
 
 .plateButton:active {
-  box-shadow: var(--pop-pressed);
-  transform: translateY(2px);
+  transform: translateY(1px);
 }
 
-.plateButton:focus-visible {
+.plateButton:focus-visible,
+.chip:focus-visible {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
 }
@@ -229,16 +246,30 @@
   min-width: 0;
 }
 
+/* A player: tap to follow (S7-91). The followed one wears the blue selection ring. */
 .chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   max-width: 9rem;
+  min-height: 2.5rem;
+  margin: 0;
   padding: 2px var(--space-2);
+  border: var(--stroke) solid transparent;
   border-radius: var(--radius-pill);
   background: var(--surface-sunk);
+  color: inherit;
+  font: inherit;
   font-size: var(--text-sm);
   font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--blue-dark);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--blue);
 }
 
 .chipName {
@@ -298,8 +329,24 @@
   pointer-events: none;
 }
 
+.footer[hidden] {
+  display: none;
+}
+
 .footer > * {
   pointer-events: auto;
+}
+
+/* The event feed over the key hint. */
+.footerLeft {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.footerLeft:empty {
+  display: none;
 }
 
 .buttons {
@@ -358,5 +405,20 @@
   /* The plate keeps its badge and player marks; the pressed score in the bar names the team. */
   .plateName {
     display: none;
+  }
+
+  /* 48 px touch targets for the follow chips (the name is hidden, the mark stays). */
+  .chip {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    justify-content: center;
+  }
+}
+
+/* Touch screens: every plate control is a 48 px target. */
+@media (pointer: coarse) {
+  .plateHead,
+  .chip {
+    min-height: var(--touch-target);
   }
 }

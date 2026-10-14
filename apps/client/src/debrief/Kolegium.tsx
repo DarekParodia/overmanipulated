@@ -65,6 +65,8 @@ export type KolegiumProps = {
    * got that folder). Absent in co-op.
    */
   rivals?: readonly (FolderResult | null)[];
+  /** Spectators (S7-91): the cards without the blunder vote. */
+  readOnly?: boolean;
 };
 
 export function Kolegium({
@@ -78,6 +80,7 @@ export function Kolegium({
   votes,
   lead,
   rivals,
+  readOnly = false,
 }: KolegiumProps) {
   const list = useRef<HTMLOListElement>(null);
   const first = paged && lead !== undefined ? -1 : 0;
@@ -133,6 +136,7 @@ export function Kolegium({
       onSelect={() => onCurrent(index)}
       {...(paged ? { onSwipe: turn } : {})}
       {...(rivals ? { rival: rivals[index] ?? null } : {})}
+      readOnly={readOnly}
     />
   );
 

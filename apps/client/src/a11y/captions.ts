@@ -132,6 +132,9 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'lobby.kicked': skip('visual-elsewhere'),
   // Someone watching is worth knowing about, also with the sound off (S7-86).
   'room.spectatorJoined': chip('eye', t.spectatorJoined, 'info'),
+  // S7-91: the spectator's own press (the blue ring moves), and the feed row is the words itself.
+  'spectate.follow': skip('ui'),
+  'spectate.feed': skip('visual-elsewhere'),
   'briefing.intro': skip('visual-elsewhere'),
   'briefing.land': skip('visual-elsewhere'),
   'briefing.ready': skip('visual-elsewhere'),
