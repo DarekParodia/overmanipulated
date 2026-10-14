@@ -106,10 +106,17 @@
   }
 }
 
+/* Short landscape phones: one row whatever the spectators — the eye and the count (the word
+   „Widownia” stays the heading's name and is on the switch beside it), the switch, the chips,
+   which wrap among themselves in the space left, and the move button as an icon. */
 @media (max-height: 520px) and (orientation: landscape) {
   .strip {
-    gap: var(--space-1) var(--space-3);
+    flex-wrap: nowrap;
+    gap: var(--space-1) var(--space-2);
     padding: var(--space-1) var(--space-2);
+  }
+  .chips {
+    flex-basis: 0;
   }
   .title {
     font-size: var(--text-md);
@@ -117,6 +124,21 @@
   .chip {
     min-height: 2rem;
     font-size: var(--text-sm);
+  }
+  /* „Na widownię” / „Do gry” are icon only here (the words stay their accessible names), like
+     the lobby's top actions. */
+  .strip > button {
+    flex: none;
+    gap: 0;
+    padding-inline: var(--space-3);
+  }
+  .titleWord,
+  .moveLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
 }
 

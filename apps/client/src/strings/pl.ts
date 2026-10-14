@@ -470,7 +470,9 @@ export const pl = {
     teamCount: (n: number, max: number) => `${n}\u00a0z\u00a0${max}`,
     joinTeam: 'Przejdź tutaj',
     uneven: 'Drużyny są nierówne',
-    spectatorsTitle: (n: number, max: number) => `Widownia: ${n}\u00a0z\u00a0${max}`,
+    /** The Widownia strip's head: the word (icon only on short phones) and the count. */
+    spectatorsTitle: 'Widownia:',
+    spectatorsCount: (n: number, max: number) => `${n}\u00a0z\u00a0${max}`,
     /** The host's switch: may spectators join this room. */
     spectatorsAllowed: 'Widownia otwarta',
     spectatorsClosed: 'Widownia zamknięta',

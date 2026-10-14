@@ -24,6 +24,26 @@ function column(player: Player, team: 0 | 1) {
   return player.page.getByTestId(`team-${team}`);
 }
 
+/**
+ * The boxes of `selector`'s matches, for a one-row check: every box must overlap the others
+ * vertically (a wrapped item starts below the first row's bottom).
+ */
+async function boxes(page: Page, selector: string) {
+  return page.locator(selector).evaluateAll((els) =>
+    els.map((el) => {
+      const rect = el.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height };
+    }),
+  );
+}
+
+function expectOneRow(rows: { top: number; bottom: number }[], what: string): void {
+  expect(rows.length, what).toBeGreaterThan(0);
+  const lowestTop = Math.max(...rows.map((r) => r.top));
+  const highestBottom = Math.min(...rows.map((r) => r.bottom));
+  expect(lowestTop, `${what} on one row`).toBeLessThan(highestBottom);
+}
+
 async function noSideScroll(page: Page): Promise<void> {
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -140,6 +160,23 @@ test('lobby at 640×360: one row of settings, two columns and the sticky start',
   await expect(column(host, 1)).toContainText('Bartek');
 
   await noSideScroll(host.page);
+  // S7-86: the top actions (settings, Jak grać?, Encyklopedia, Wyniki, Wyjdź) are one row of
+  // icon buttons, ≥ 48 px, that keep their names; the Widownia strip with „Na widownię” is one
+  // row too.
+  const actions = await boxes(host.page, 'header > div:has([data-testid="open-how-to"]) > button');
+  expect(actions).toHaveLength(5);
+  expectOneRow(actions, 'top actions');
+  for (const box of actions) {
+    expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(48);
+  }
+  for (const name of ['Ustawienia', 'Jak grać?', 'Encyklopedia', 'Wyniki', 'Wyjdź']) {
+    await expect(host.page.getByRole('button', { name, exact: true })).toBeVisible();
+  }
+  const watch = host.page.getByRole('button', { name: 'Na widownię' });
+  await expect(watch).toBeVisible();
+  const watchBox = await watch.boundingBox();
+  expect(Math.min(watchBox?.width ?? 0, watchBox?.height ?? 0)).toBeGreaterThanOrEqual(48);
+  expectOneRow(await boxes(host.page, '[data-testid="spectator-strip"] > *'), 'Widownia strip');
   // The footer with the one yellow action sticks to the bottom edge.
   const start = host.page.getByRole('button', { name: 'Do składu!' });
   await expect(start).toBeInViewport();
