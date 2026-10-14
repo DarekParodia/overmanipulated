@@ -22,11 +22,11 @@ const HTML = `<!doctype html><html><head>
 <link rel="icon" href="/icons/icon.svg">
 </head><body><div id="root"></div></body></html>`;
 
-/** The built index.html as Vite writes it with `html.cspNonce` (S7-70). */
 /** A privacy note with the ads blocks of docs/privacy.pl.md. */
 const PRIVACY_MD =
   '# Prywatność\n\n<!-- ads -->\nReklamy.\n<!-- /ads -->\n<!-- no-ads -->\nBez reklam.\n<!-- /no-ads -->\n';
 
+/** The built index.html as Vite writes it with `html.cspNonce` (S7-70). */
 const SHELL_HTML = `<!doctype html><html><head>
 <meta property="csp-nonce" nonce="${CSP_NONCE_PLACEHOLDER}">
 <script type="module" crossorigin src="/assets/index-abcd1234.js" nonce="${CSP_NONCE_PLACEHOLDER}"></script>

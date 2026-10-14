@@ -88,6 +88,8 @@ describe('the privacy note (docs/privacy.pl.md)', () => {
       expect(html).toContain('<a href="/">← Wróć do gry</a>');
       expect(html).not.toMatch(/\{\{|\}\}|<!--|-->|\*\*|\]\(/);
       expect(html).not.toContain('<script');
+      // A stray `<!-- word -->` would open a block and swallow the rest of the note.
+      expect(html).toContain('<h2>Uwaga dla nauczyciela</h2>');
     }
   });
 
