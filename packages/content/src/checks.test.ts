@@ -657,6 +657,16 @@ describe('validate CLI', () => {
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([]);
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([]);
+    // The S7-59 stories wait for the l5 bag pool (S7-60).
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l5-'))).toEqual([
+      'l5-cytat-z-sesji',
+      'l5-wywiad-skrocony',
+      'l5-zdjecie-czytelnika',
+      'l5-film-z-montazu',
+      'l5-drzemka-na-sesji',
+      'l5-burmistrz-morsuje',
+      'l5-falszywy-profil-urzedu',
+    ]);
     // Every bag's last slot window fits its level (S7-35 moved l0 to 165 s + 75 s = 240 s).
     const deadlineFit = [...out.matchAll(/warning (levels\/\S+) bag\.lastSpawnS: /g)];
     expect(deadlineFit).toEqual([]);

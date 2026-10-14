@@ -25,6 +25,7 @@ const t = pl.minigames.metadata;
 const OLD_TIMES: readonly string[] = t.times.map((x) => x.old);
 const FILE_TIMES: readonly string[] = t.times.map((x) => x.file);
 const EDITED_PHOTO: readonly string[] = t.software.photo.edited;
+const EDITED_RECORDING: readonly string[] = t.software.recording.edited;
 const OTHER_TOWNS: readonly string[] = t.otherTowns;
 const story = (
   truth: 'true' | 'false' | 'misleading',
@@ -186,6 +187,7 @@ describe('generatePuzzle', () => {
       'stare-zdjecie-nowy-podpis': 'taken',
       'zdjecie-w-zlym-czasie': 'taken',
       'obraz-wygenerowany-ai': 'device',
+      'deepfake-wideo': 'software',
     });
     for (let seed = 0; seed < 50; seed++) {
       const old = generatePuzzle(
@@ -202,6 +204,14 @@ describe('generatePuzzle', () => {
       );
       expect(generated.contradiction).toBe('device');
       expect(generated.file.device).toBe('brak – plik wygenerowany');
+      // A deepfake video went through a video editor (S7-59).
+      const deepfake = generatePuzzle(
+        seed,
+        story('false', 'recording', 'deepfake-wideo'),
+        stamp('decisive'),
+      );
+      expect(deepfake.contradiction).toBe('software');
+      expect(EDITED_RECORDING).toContain(deepfake.file.software ?? '');
     }
     // A technique field needs no draw: the RNG is untouched.
     const rng = createRng(5);
@@ -244,6 +254,14 @@ describe('generatePuzzle', () => {
     };
     expect(field('l5-zdjecie-sprzed-lat-metadata')).toBe('taken');
     expect(field('l5-burmistrz-na-jachcie-metadata')).toBe('device');
+    // S7-59: the new Metadane-pinned stories.
+    expect(field('l5-film-z-montazu-metadata')).toBe('software');
+    expect(field('l5-drzemka-na-sesji-metadata')).toBe('taken');
+    const reader = authored.find(({ stamp: x }) => x.id === 'l5-zdjecie-czytelnika-metadata');
+    if (!reader) throw new Error('l5-zdjecie-czytelnika-metadata missing');
+    for (let seed = 0; seed < 20; seed++) {
+      expect(generatePuzzle(seed, reader.story, reader.stamp).outcome).toBe('consistent');
+    }
   });
 
   it('strips every field for an irrelevant stamp', () => {

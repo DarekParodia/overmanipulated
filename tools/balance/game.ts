@@ -3,6 +3,7 @@
 // and the run is dealt by `prepareRun` with the same seed, S7-34).
 import type { PreparedRun } from '../../packages/content/src/index.ts';
 import {
+  type Ability,
   addPlayer,
   createGameState,
   type Difficulty,
@@ -31,7 +32,7 @@ import { PROFILES, type ProfileId, type SkillProfile } from './models.ts';
 
 /**
  * Roles by crew size, in join order (design doc: roles give a bonus, none blocks a station). A
- * solo player is Wszechstronny: 20% faster at every station (S7-43).
+ * solo player is Wszechstronny: 20% faster at every station (S7-43). This is the `mixed` preset.
  */
 export const ROLES_BY_CREW: Record<number, readonly Role[]> = {
   1: ['generalist'],
@@ -39,6 +40,39 @@ export const ROLES_BY_CREW: Record<number, readonly Role[]> = {
   3: ['photoEditor', 'archivist', 'reporter'],
   4: ['photoEditor', 'archivist', 'reporter', 'managingEditor'],
 };
+
+/**
+ * Role presets of `--roles` (S7-46): `mixed` is ROLES_BY_CREW; `rescue` is the same crew with a
+ * Ratownik in the last seat; `generalists` gives everyone Wszechstronny.
+ */
+export const ROLE_PRESETS = ['mixed', 'rescue', 'generalists'] as const;
+export type RolePreset = (typeof ROLE_PRESETS)[number];
+
+/** A role preset, or an explicit role per seat in join order (`null`: no role). */
+export type RoleSetup = RolePreset | readonly (Role | null)[];
+
+/** The role of every seat of a crew of `size` for a setup; seats past a list get no role. */
+export function crewRoles(setup: RoleSetup, size: number): (Role | null)[] {
+  const mixed = ROLES_BY_CREW[size] ?? ROLES_BY_CREW[4] ?? [];
+  const seat = (index: number): Role | null => {
+    if (typeof setup !== 'string') {
+      return setup[index] ?? null;
+    }
+    if (setup === 'generalists') {
+      return 'generalist';
+    }
+    if (setup === 'rescue' && index === size - 1) {
+      return 'rescuer';
+    }
+    return mixed[index] ?? null;
+  };
+  return Array.from({ length: size }, (_, index) => seat(index));
+}
+
+/** `mixed`, or the list joined with `+` (`-` for a seat without a role). */
+export function roleSetupLabel(setup: RoleSetup): string {
+  return typeof setup === 'string' ? setup : setup.map((role) => role ?? '-').join('+');
+}
 
 export type StarPair = { two: number; three: number };
 
@@ -56,6 +90,10 @@ export type Scenario = {
   stars: StarPair | null;
   /** Stop a run that lasts longer than this many level seconds (endless). */
   capS?: number;
+  /** The crew's roles (default `mixed`). */
+  roles?: RoleSetup;
+  /** False: no bot ever presses its ability (Koło ratunkowe stays passive). Default true. */
+  abilities?: boolean;
 };
 
 export type RunResult = {
@@ -63,6 +101,8 @@ export type RunResult = {
   difficulty: Difficulty;
   crew: string;
   crewSize: number;
+  /** The role setup (`roleSetupLabel`), plus ` no-abilities` when presses were off. */
+  roles: string;
   seed: number;
   won: boolean;
   /** 0 when lost; endless runs have no stars. */
@@ -94,6 +134,12 @@ export type RunResult = {
    * operator at it (any fixture of that kind).
    */
   stationBusyShare: Partial<Record<StationKind, number>>;
+  /** Abilities that took effect (`ability` events with stage `done`), by ability. */
+  abilities: Partial<Record<Ability, number>>;
+  /** Folders Koło ratunkowe saved (`folderRescued`). */
+  rescues: number;
+  /** Bot watchdogs that fired (a bot gave up waiting at a station, desk or call). */
+  stalls: number;
 };
 
 const TRAIL_POINTS = 10;
@@ -101,14 +147,18 @@ const TRAIL_POINTS = 10;
 export function runGame(scenario: Scenario): RunResult {
   const { level, stories, crew, seed, difficulty } = scenario;
   const map = parseLayout(level.layout);
-  const roles = ROLES_BY_CREW[crew.length] ?? ROLES_BY_CREW[4] ?? [];
+  const setup = scenario.roles ?? 'mixed';
+  const roles = crewRoles(setup, crew.length);
+  const pressAbilities = scenario.abilities ?? true;
   let state = createGameState({ map, seed: seed * 2 + 1 });
   const team = new Team();
   const bots: Bot[] = [];
   crew.forEach((profile, index) => {
     const id = `p${index + 1}`;
     state = addPlayer(state, id, spawnPoint(map, index), roles[index] ?? null);
-    bots.push(new Bot(id, profile, team, seed * 1009 + index * 7919 + 13, difficulty));
+    bots.push(
+      new Bot(id, profile, team, seed * 1009 + index * 7919 + 13, difficulty, pressAbilities),
+    );
   });
   const ctx: SimContext = { dtMs: TICK_MS, map, level, stories, tuning: scenario.tuning };
   const load = stationLoad(map, level.stations);
@@ -124,6 +174,8 @@ export function runGame(scenario: Scenario): RunResult {
   let wrongJustification = 0;
   let wrong = 0;
   let minigameFailures = 0;
+  const abilities: Partial<Record<Ability, number>> = {};
+  let rescues = 0;
   let firstVerdictMs: number | null = null;
   let credibilityMin = state.credibility;
 
@@ -160,6 +212,14 @@ export function runGame(scenario: Scenario): RunResult {
       case 'minigameFailed':
         minigameFailures++;
         break;
+      case 'ability':
+        if (event.stage === 'done') {
+          abilities[event.ability] = (abilities[event.ability] ?? 0) + 1;
+        }
+        break;
+      case 'folderRescued':
+        rescues++;
+        break;
       case 'verdictResult':
         firstVerdictMs ??= state.elapsedMs;
         if (event.outcome === 'correct') {
@@ -187,6 +247,7 @@ export function runGame(scenario: Scenario): RunResult {
     difficulty,
     crew: crewLabel(crew),
     crewSize: crew.length,
+    roles: `${roleSetupLabel(setup)}${pressAbilities ? '' : ' no-abilities'}`,
     seed,
     won: ended ? ended.won : capped,
     stars: ended?.stars ?? 0,
@@ -208,6 +269,9 @@ export function runGame(scenario: Scenario): RunResult {
     events,
     firstVerdictS: firstVerdictMs === null ? null : firstVerdictMs / 1000,
     stationBusyShare: load.shares(),
+    abilities,
+    rescues,
+    stalls: bots.reduce((sum, bot) => sum + bot.stalls, 0),
   };
 }
 
@@ -267,6 +331,7 @@ export function runScenario(
   crew: readonly SkillProfile[],
   seed: number,
   capS?: number,
+  options: { roles?: RoleSetup; abilities?: boolean } = {},
 ): Scenario {
   const stars = run.level.id === ENDLESS_LEVEL_ID ? null : { ...run.level.stars };
   return {
@@ -279,5 +344,6 @@ export function runScenario(
     maxScore: run.maxScore,
     stars,
     ...(capS === undefined ? {} : { capS }),
+    ...options,
   };
 }

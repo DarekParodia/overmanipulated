@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { STORIES } from '@redakcja/content';
 import { createRng, TRANSCRIPT_LINES, TRANSCRIPT_MAX_MISTAKES } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 import {
@@ -103,6 +104,24 @@ describe('transcriptVariant', () => {
 });
 
 describe('generatePuzzle', () => {
+  it('gives the Stenogram-pinned l5 stories the record their stamp describes (S7-59)', () => {
+    const variants = (id: string) => {
+      const found = STORIES.find((s) => s.id === id);
+      const record = found?.stamps.find((x) => x.station === 'transcript');
+      if (!found || !record) throw new Error(`${id} has no Stenogram stamp`);
+      return [
+        ...new Set(
+          Array.from({ length: 20 }, (_, seed) => generatePuzzle(seed, found, record).variant),
+        ),
+      ];
+    };
+    // An invented quote: nobody said it. A cut that flips the meaning. The same words in full.
+    expect(variants('l5-cytat-z-sesji')).toEqual(['absent']);
+    expect(variants('l5-wywiad-skrocony')).toEqual(['cut']);
+    expect(variants('l5-wyciety-cytat')).toEqual(['cut']);
+    expect(variants('l5-wywiad-radio')).toEqual(['fair']);
+  });
+
   it('is deterministic for a seed, story and stamp', () => {
     expect(generatePuzzle(11, story('false'), stamp('decisive'))).toEqual(
       generatePuzzle(11, story('false'), stamp('decisive')),

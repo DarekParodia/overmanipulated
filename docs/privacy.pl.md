@@ -37,6 +37,9 @@ Gra zapisuje w przeglądarce (pamięć lokalna, nie ciasteczka), na urządzeniu 
 - postęp: najlepsze wyniki poziomów i trybu bez końca (osobno dla każdego poziomu trudności),
   odblokowane karty w Encyklopedii manipulacji,
 - tymczasowy znak pozwalający wrócić do pokoju po chwilowej utracie połączenia,
+- listę stanowisk, przy których gracz widział już kartę pomocy (`redakcja.stationHelp.v1`),
+  żeby nie pokazywać jej przy każdym podejściu; przycisk „Pokaż pomoc stanowisk od nowa”
+  w ustawieniach ją czyści,
 - oznaczenie zamkniętego komunikatu redakcji, żeby ten sam komunikat nie pokazywał się znowu.
 
 Te dane nigdy nie opuszczają urządzenia, poza pseudonimem wysyłanym do pokoju. Można je
