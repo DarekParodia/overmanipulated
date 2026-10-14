@@ -14,7 +14,8 @@ const STORAGE_KEY = 'redakcja.progress.v2';
 const LEGACY_STORAGE_KEY = 'redakcja.progress.v1';
 /** The difficulty v1 progress was earned on. */
 const LEGACY_DIFFICULTY: Difficulty = 'normal';
-const MAX_STARS = 3;
+/** The most stars one level gives. */
+export const MAX_STARS = 3;
 /** Stars needed on a level to open the next one. */
 const STARS_TO_UNLOCK = 1;
 
@@ -97,6 +98,21 @@ export function bestStars(progress: Progress): LevelStars {
     }
   }
   return out;
+}
+
+/** The stars earned on one difficulty out of the most the levels can give (profile, S7-104). */
+export type StarTotal = { difficulty: Difficulty; stars: number; max: number };
+
+/**
+ * Stars per difficulty, easiest first, summed over `levelIds` (the shipped levels); stars kept
+ * for a level that is no longer in the game do not count.
+ */
+export function starTotals(progress: Progress, levelIds: readonly string[]): StarTotal[] {
+  return DIFFICULTIES.map((difficulty) => {
+    const earned = starsOn(progress, difficulty);
+    const stars = levelIds.reduce((sum, id) => sum + (earned[id] ?? 0), 0);
+    return { difficulty, stars, max: levelIds.length * MAX_STARS };
+  });
 }
 
 /** Keeps the best result per difficulty: a worse run never lowers the stars. */

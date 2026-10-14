@@ -16,6 +16,7 @@ import {
 import { emitCue } from '../fx/feedback.ts';
 import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
 import { useApp } from '../store/app.ts';
+import { useProfile } from '../store/profile.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
 import { playerColor } from '../ui/tokens.ts';
@@ -122,12 +123,14 @@ function handleMessage(message: ServerMessage): void {
     case 'levelEnd':
       useGame.getState().setLevelEnd(message);
       useProgress.getState().record(message.levelId, message.difficulty, message.stars);
+      useProfile.getState().recordLevelEnd(message);
       return;
     case 'event': {
       const { event } = message;
       if (event.kind === 'gameStarted') {
         // Kartoteka cards the player left in the last level do not come back (S7-14).
         useRetryMemory.getState().reset();
+        useProfile.getState().startMatch();
         emitCue('game.start');
         return;
       }

@@ -11,7 +11,9 @@ import { HowToPlayHost } from './howto/HowToPlayHost.tsx';
 import { useMenuNavigation } from './input/menu-nav.ts';
 import { GameGate } from './loading/GameGate.tsx';
 import { startPreload } from './loading/preload.ts';
+import { startProfileTracking } from './net/profile-tracking.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
+import { ProfileHost } from './profile/ProfileHost.tsx';
 import { Briefing } from './screens/Briefing.tsx';
 import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
@@ -40,6 +42,7 @@ export function App() {
     const disconnectOutputs = feedback.connect({ playSound, vibrate });
     const stopGameplayFeedback = startGameplayFeedback();
     const stopCaptions = startCaptions();
+    const stopProfileTracking = startProfileTracking();
     document.addEventListener('visibilitychange', handleVisibilityReturn);
     return () => {
       unsubscribeSettings();
@@ -47,6 +50,7 @@ export function App() {
       disconnectOutputs();
       stopGameplayFeedback();
       stopCaptions();
+      stopProfileTracking();
       document.removeEventListener('visibilitychange', handleVisibilityReturn);
     };
   }, []);
@@ -70,6 +74,7 @@ export function App() {
       <EncyclopediaScreen />
       {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
       <HowToPlayHost />
+      <ProfileHost />
       <PerfOverlay />
     </>
   );
