@@ -3,6 +3,7 @@
 // minor links sit in the footer under the card and, with ads on, a „Reklama” rail on the left.
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { useAbout } from '../about/store.ts';
 import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -153,7 +154,19 @@ export function MainMenu() {
         )}
       </section>
 
-      <MenuFooter className={styles.footer} />
+      <MenuFooter
+        className={styles.footer}
+        about={
+          <Button
+            variant="ghost"
+            icon={<Icon name="heart" size={22} />}
+            data-testid="open-about"
+            onClick={() => useAbout.getState().show()}
+          >
+            {pl.about.open}
+          </Button>
+        }
+      />
 
       {/* Fixed left rail; renders nothing without ads, on phones or below 1180×680 (S7-74). */}
       <AdSlot placement="menu" />

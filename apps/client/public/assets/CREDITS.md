@@ -1,10 +1,14 @@
 # Asset credits
 
-Every asset shipped with the game is listed here with its source and licence
-(agents/design-rules.md, agents/game-feel.md). Allowed: CC0, self-made, and assets under
-CC BY 4.0 or MIT with the attribution given here. Nothing non-commercial or research-only, and that
-covers the whole chain of a generated asset (for a TTS voice: its dataset and every checkpoint it
-was fine-tuned from).
+<!-- Shown in „O grze” → Zasoby (S7-103): fetched at runtime, rendered with markdown-lite (packages/shared/src/markdown-lite.ts: headings, paragraphs, `-` lists, pipe tables, **bold**, `code`, https links). Asset rules: agents/design-rules.md, agents/game-feel.md. -->
+
+Every asset shipped with the game is listed here with its source and licence. Allowed:
+
+- CC0 and self-made assets;
+- assets under CC BY 4.0 or MIT, with the attribution given here.
+
+Nothing non-commercial or research-only, and that covers the whole chain of a generated asset (for
+a TTS voice: its dataset and every checkpoint it was fine-tuned from).
 
 | Asset | Path | Source | Licence |
 | --- | --- | --- | --- |

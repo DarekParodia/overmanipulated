@@ -2122,6 +2122,37 @@ export const pl = {
     /** Gamepad only: the north button walks the tabs, as in the settings. */
     padHint: 'Y zmienia dział',
   },
+  // --- S7-103 „O grze”: authors, licence, privacy, version; asset credits; libraries. ---
+  about: {
+    /** The main-menu footer link. */
+    open: 'O grze',
+    title: 'O grze',
+    tabsLabel: 'Działy',
+    tabs: { game: 'Gra', credits: 'Zasoby', libraries: 'Biblioteki' },
+    close: 'Gotowe',
+    /** Gamepad only, as in „Jak grać”. */
+    padHint: 'Y zmienia dział',
+    authors: 'Autorzy',
+    licence: 'Licencja',
+    licenceSummary:
+      'Kod, grafika, dźwięki i teksty gry są chronione prawem autorskim: bez pisemnej zgody autora nie wolno ich kopiować ani rozpowszechniać. Biblioteki i zasoby z innych źródeł mają własne licencje – patrz „Zasoby” i „Biblioteki”.',
+    privacy: 'Prywatność',
+    privacyBody:
+      'Co gra zapisuje, na jak długo i po co – wszystko w notce o prywatności. Bez kont i bez e-maili.',
+    privacyLink: 'Notka o prywatności',
+    version: 'Wersja',
+    versionLine: (version: string, protocol: number) => `${version} · protokół ${protocol}`,
+    creditsLoading: 'Wczytuję listę zasobów…',
+    creditsError: 'Nie udało się wczytać listy zasobów. Sprawdź połączenie.',
+    retry: 'Spróbuj ponownie',
+    voiceHeading: 'Głos lektora',
+    /** Until the volunteer's recording ships (docs/voice-recording.pl.md). */
+    voicePending: 'Czekamy na nagranie ochotnika. Do tego czasu wprowadzenie ma tylko napisy.',
+    voiceCredit: (speaker: string, licence: string) => `${speaker} – licencja ${licence}.`,
+    librariesLead: 'Gra powstała dzięki otwartemu oprogramowaniu. Dziękujemy jego autorom!',
+    libraryColumns: { name: 'Biblioteka', licence: 'Licencja' },
+    sides: { client: 'W przeglądarce', server: 'Na serwerze gry' },
+  },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   encyclopedia: {
     title: 'Encyklopedia technik',

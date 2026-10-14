@@ -57,8 +57,12 @@ with the defaults (ads off, room browser off).
 
 ```sh
 git pull
-docker compose up -d --build
+APP_GIT_SHA=$(git rev-parse --short HEAD) docker compose up -d --build
 ```
+
+`APP_GIT_SHA` is optional: it puts the commit into the version „O grze” shows
+(`0.0.0+1a2b3c4 · protokół 7`); without it the version reads `+dev`. The build context has no
+`.git`, so the sha comes in as a build argument, the same for both images.
 
 Rooms live in memory, so a restart ends running matches. Deploy outside lesson hours.
 Players who are mid-game get the "connection lost" notice and can create a new room.

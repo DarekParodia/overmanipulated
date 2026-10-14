@@ -1,12 +1,46 @@
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 // Direct path, not the package: vite.config must not load zod or the rest of @redakcja/shared.
 import { CSP_NONCE_PLACEHOLDER } from '../../packages/shared/src/csp-nonce.ts';
+import { appVersion, authorsFrom, copyrightLine, shortSha } from './src/about/build-info.ts';
 
 const serverTarget = process.env.GAME_SERVER ?? 'localhost:3000';
 
+/** `git rev-parse --short HEAD`, or null outside a checkout (the Docker build has no .git). */
+function gitSha(): string | null {
+  try {
+    return execSync('git rev-parse --short HEAD', {
+      cwd: fileURLToPath(new URL('.', import.meta.url)),
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).toString();
+  } catch {
+    return null;
+  }
+}
+
+// „O grze” (S7-103): version, copyright and authors come from the package and the repository's
+// LICENSE at build time. APP_GIT_SHA wins over git (the Docker build passes it as a build arg).
+const packageJson: { version: string } = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+);
+const copyright = copyrightLine(readFileSync(new URL('../../LICENSE', import.meta.url), 'utf8'));
+if (copyright === null) {
+  throw new Error('LICENSE has no "Copyright" line for „O grze”');
+}
+export const APP_DEFINES = {
+  __APP_VERSION__: JSON.stringify(
+    appVersion(packageJson.version, shortSha(process.env.APP_GIT_SHA || gitSha())),
+  ),
+  __APP_COPYRIGHT__: JSON.stringify(copyright),
+  __APP_AUTHORS__: JSON.stringify(authorsFrom(copyright)),
+};
+
 export default defineConfig({
   plugins: [react()],
+  define: APP_DEFINES,
   // Every <script> and <link> Vite writes into index.html gets nonce="<placeholder>" (plus a
   // <meta property="csp-nonce"> its preload helper copies onto lazy chunks). The game server's
   // HTML shell swaps in a fresh nonce per request (S7-70); vite dev and preview send no CSP, so
