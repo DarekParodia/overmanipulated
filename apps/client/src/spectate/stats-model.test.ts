@@ -4,7 +4,16 @@ import { pendingAfter } from './feed-model.ts';
 import { accuracyOf, statsTeams } from './stats-model.ts';
 
 function player(id: string, team: number, nickname: string): LobbyPlayer {
-  return { id, nickname, colorIndex: 0, connected: true, role: null, ready: true, team };
+  return {
+    id,
+    nickname,
+    colorIndex: 0,
+    connected: true,
+    role: null,
+    ready: true,
+    team,
+    accessory: 'none',
+  };
 }
 
 const ROSTER = [player('p1', 0, 'Zośka'), player('p2', 1, 'Łukasz'), player('p3', 0, 'Ola')];

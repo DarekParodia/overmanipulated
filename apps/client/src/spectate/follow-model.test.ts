@@ -9,7 +9,16 @@ import {
 } from './follow-model.ts';
 
 function player(id: string, team: number): LobbyPlayer {
-  return { id, nickname: id, colorIndex: 0, connected: true, role: null, ready: true, team };
+  return {
+    id,
+    nickname: id,
+    colorIndex: 0,
+    connected: true,
+    role: null,
+    ready: true,
+    team,
+    accessory: 'none',
+  };
 }
 
 // Join order mixes the newsrooms; following walks Kurier first, then Głos.

@@ -185,6 +185,7 @@ describe('spectate store feed and follow (S7-91)', () => {
             role: null,
             ready: true,
             team: 0,
+            accessory: 'none',
           },
           {
             id: 'p2',
@@ -194,6 +195,7 @@ describe('spectate store feed and follow (S7-91)', () => {
             role: null,
             ready: true,
             team: 1,
+            accessory: 'none',
           },
         ],
         briefing: null,
