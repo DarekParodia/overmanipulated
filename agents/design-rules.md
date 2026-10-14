@@ -24,7 +24,8 @@ blocks you, raise it in the plan's *Open questions*; don't quietly break it.
    first use per browser; after that only the '?' in the overlay header (H / Select) opens it.
 3. **Big numbers, few numbers.** The HUD shows only time, points, credibility, up to 3 folders
    and the player's own role chip (ability icon, cooldown ring, key); a free queue slot may hold
-   one dashed ghost card counting down to the next folder (or „Taśma pełna”). Level-event
+   one dashed ghost card counting down to the next folder (or „Taśma pełna”). In versus also the
+   rival's points, in one chip (S7-89). Level-event
    folders are not telegraphed. Anything else is hidden or moved to the results screen.
 4. **Colour = meaning, always the same meaning** (see §3). Never use a meaning colour for
    decoration.
@@ -106,7 +107,13 @@ action.
   card for the next scheduled folder: dashed navy outline, soft fill, no pop shadow, an
   hourglass and the seconds; while the belt is full its band turns orange with the conveyor
   icon and „Taśma pełna”. An empty queue shows the ghost on its side with „Nowa teczka za N s”.
-  Level-event folders are never announced. **Role chip** (S7-40): bottom-left on keyboard and
+  Level-event folders are never announced. **Rival chip** (versus, S7-89): the rival newsroom's
+  badge, name and points in a white chip hanging under the pill's left edge (in endless versus
+  in place of the tempo chip, and the clock counts down the 10-minute match); on phones it is
+  the pill row's last segment, badge and points only, so the band stays one row. An arrow in a
+  small disc says who leads: up on green while this newsroom leads, down on orange while it
+  trails, none when tied; a change of lead pops or shakes the chip (`versus.leadTaken` /
+  `versus.leadLost`). Only the own newsroom's avatars are drawn. **Role chip** (S7-40): bottom-left on keyboard and
   gamepad, a white pill with a 64 px ring (the ability icon, or the seconds while it cools down
   or a field call runs), the key cap (R / RB), the ability's one-word name and one status line
   („Gotowa”, the target's name, „Uzbrojona”, „Dzwonię…” or the reason it cannot act). Ready is

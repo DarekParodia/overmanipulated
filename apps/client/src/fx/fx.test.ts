@@ -15,6 +15,7 @@ import {
   beltJustFilled,
   crossedLastSeconds,
   justPaused,
+  levelEndCue,
 } from './gameplay-feedback.ts';
 import { createPool, scaleAt, spawn, stepPool } from './particles/pool.ts';
 import { particleCapacity, particlePresets } from './particles/presets.ts';
@@ -641,6 +642,27 @@ describe('level timer', () => {
     expect(crossedLastSeconds(40_000, 0)).toBe(false);
     // Resuming after a reconnect at 12 s left is not a fresh crossing.
     expect(crossedLastSeconds(45_000, 12_000)).toBe(false);
+  });
+});
+
+describe('level-end stinger', () => {
+  const versus = (winnerTeam: 0 | 1 | null) => ({
+    winnerTeam,
+    reason: winnerTeam === null ? ('draw' as const) : ('score' as const),
+    teams: [],
+    rivalResults: [],
+  });
+
+  it('plays the match result in versus, from the team’s own side (S7-89)', () => {
+    expect(levelEndCue({ won: true, team: 1, versus: versus(1) }, false)).toBe('versus.win');
+    expect(levelEndCue({ won: false, team: 1, versus: versus(0) }, false)).toBe('versus.lose');
+    expect(levelEndCue({ won: false, team: 0, versus: versus(null) }, true)).toBe('versus.draw');
+  });
+
+  it('keeps the co-op and endless stingers', () => {
+    expect(levelEndCue({ won: true }, false)).toBe('level.win');
+    expect(levelEndCue({ won: false }, false)).toBe('level.lose');
+    expect(levelEndCue({ won: false }, true)).toBe('endless.over');
   });
 });
 

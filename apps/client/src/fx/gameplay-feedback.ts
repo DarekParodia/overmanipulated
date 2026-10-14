@@ -1,14 +1,21 @@
 // Feedback driven by game state rather than single events: the station work loop (kept in step
 // with station phases), the deadline ticker, the last-30-seconds sting, the full-belt alert, the
-// solo pause, the local role ability coming off its cooldown (S7-40) and the level-end stingers.
+// solo pause, the local role ability coming off its cooldown (S7-40) and the level-end stingers
+// (the match result in versus, S7-89).
 // Also mounts the hit-stop and loop outputs of the feedback bus.
-import { type CrewSnapshot, ENDLESS_LEVEL_ID, LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
+import {
+  type CrewSnapshot,
+  ENDLESS_LEVEL_ID,
+  LEVEL_LAST_SECONDS_MS,
+  type LevelEndMessage,
+} from '@redakcja/shared';
+import { type VersusResultKind, versusVerdict } from '../hud/versus-model.ts';
 import { selectCrewMember, useGame } from '../net/game-store.ts';
 import { renderState } from '../scene/render-state.ts';
 import { useApp } from '../store/app.ts';
 import { startLoopSound, stopSound } from './audio/audio-manager.ts';
 import { createLoopManager } from './audio/loops.ts';
-import { loops } from './cues.ts';
+import { type CueId, loops } from './cues.ts';
 import { tickIntervalMs, urgentTimeLeft } from './deadline-ticker.ts';
 import { emitCue, feedback } from './feedback.ts';
 import { hitStop } from './time-scale.ts';
@@ -56,6 +63,29 @@ export function abilityJustReady(previous: AbilityClock, current: AbilityClock):
     previous.elapsedMs < before.abilityReadyAtMs &&
     current.elapsedMs >= now.abilityReadyAtMs
   );
+}
+
+const VERSUS_CUE = {
+  win: 'versus.win',
+  lose: 'versus.lose',
+  draw: 'versus.draw',
+} as const satisfies Record<VersusResultKind, CueId>;
+
+/**
+ * The level-end stinger: the match result in versus (S7-89), the end of the run in endless, else
+ * the level won or lost.
+ */
+export function levelEndCue(
+  end: Pick<LevelEndMessage, 'won' | 'team' | 'versus'>,
+  endless: boolean,
+): CueId {
+  if (end.versus) {
+    return VERSUS_CUE[versusVerdict(end.versus, end.team ?? 0).result];
+  }
+  if (endless) {
+    return 'endless.over';
+  }
+  return end.won ? 'level.win' : 'level.lose';
 }
 
 export function startGameplayFeedback(): () => void {
@@ -113,15 +143,15 @@ export function startGameplayFeedback(): () => void {
 
     if (state.levelEnd && !previous.levelEnd) {
       stopAll();
-      const endless = useApp.getState().room?.levelId === ENDLESS_LEVEL_ID;
-      emitCue(endless ? 'endless.over' : state.levelEnd.won ? 'level.win' : 'level.lose', {
+      emitCue(levelEndCue(state.levelEnd, useApp.getState().room?.levelId === ENDLESS_LEVEL_ID), {
         ...(renderState.local ? { position: renderState.local } : {}),
       });
       return;
     }
     if (
       !state.levelEnd &&
-      useApp.getState().room?.levelId !== ENDLESS_LEVEL_ID &&
+      // Endless counts up and never runs out, except an endless versus match (S7-89).
+      (useApp.getState().room?.levelId !== ENDLESS_LEVEL_ID || state.scoreboard !== null) &&
       crossedLastSeconds(previous.timeLeftMs, state.timeLeftMs)
     ) {
       emitCue('level.lastSeconds');

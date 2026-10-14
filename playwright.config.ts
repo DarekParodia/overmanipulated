@@ -48,9 +48,10 @@ export default defineConfig({
     {
       // The smallest supported phone (S7-12): the phone layout checks at 640×360, the role
       // ability button there (S7-47), the spectate screen's team switch (S7-90), the lobby
-      // manage and level details sheets (S7-87) and the lobby look (S7-105).
+      // manage and level details sheets (S7-87), the versus rival chip and results (S7-89) and the
+      // lobby look (S7-105).
       name: 'phone-small',
-      testMatch: /(phone-layout|abilities|spectate|lobby-manage|lobby-look)\.spec\.ts/,
+      testMatch: /(phone-layout|abilities|spectate|lobby-manage|versus-hud|lobby-look)\.spec\.ts/,
       use: {
         ...devices['Pixel 7 landscape'],
         viewport: { width: 640, height: 360 },

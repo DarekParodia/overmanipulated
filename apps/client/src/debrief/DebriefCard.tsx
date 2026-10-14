@@ -4,9 +4,10 @@
 // chips and '×N' for a grouped story, the one-line reason with its bonuses, what the team decided
 // next to the right verdict, the debrief in four short titled chunks, the deciding proof and
 // where it was (only when the folder did not end well), and the blunder-of-the-day vote with a
-// dot per voter (votes are per story).
+// dot per voter (votes are per story). In versus the verdict row adds the rival's verdict on the
+// same folder (S7-89).
 
-import type { Verdict } from '@redakcja/shared';
+import type { FolderResult, Verdict } from '@redakcja/shared';
 import type { PointerEvent } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { HudGlyph } from '../hud/HudGlyph.tsx';
@@ -59,6 +60,51 @@ function VerdictChip({ verdict }: { verdict: Verdict | null }) {
   return <VerdictStamp kind={verdict} size="sm" />;
 }
 
+/**
+ * Versus (S7-89): what the rival did with the same folder — its verdict stamp (or „Przepadła”)
+ * and its outcome mark, „w grze” for a folder it still had at the end, or „nie mieli” for one its
+ * fuller belt never let in.
+ */
+function RivalChip({ rival }: { rival: FolderResult | null }) {
+  if (rival === null) {
+    return (
+      <span
+        className={`${styles.chip} ${styles.rivalNone}`}
+        role="img"
+        aria-label={pl.versus.rivalMissingLabel}
+        data-testid="kolegium-rival"
+        data-rival="missing"
+      >
+        {pl.versus.rivalMissing}
+      </span>
+    );
+  }
+  if (rival.outcome === 'unfinished') {
+    return (
+      <span
+        className={`${styles.chip} ${styles.rivalNone}`}
+        data-testid="kolegium-rival"
+        data-rival="unfinished"
+      >
+        <Icon name="hourglass" size={18} />
+        {pl.versus.rivalUnfinished}
+      </span>
+    );
+  }
+  return (
+    <span className={styles.rival} data-testid="kolegium-rival" data-rival={rival.outcome}>
+      <VerdictChip verdict={rival.verdict} />
+      <span
+        className={`${styles.rivalMark} ${TONE[rival.outcome]}`}
+        role="img"
+        aria-label={pl.outcome.group[rival.outcome]}
+      >
+        <Icon name={MARK[rival.outcome]} size={18} />
+      </span>
+    </span>
+  );
+}
+
 export type DebriefCardProps = {
   card: Card;
   /** Mark already slammed on (or shown without animation). */
@@ -75,6 +121,11 @@ export type DebriefCardProps = {
   onSelect(): void;
   /** Phones: swipe left / right turns the page. */
   onSwipe?(direction: -1 | 1): void;
+  /**
+   * Versus only (S7-89): the rival's result on the same folder (paired by spawn key), or null
+   * when the rival never got it. Absent in co-op.
+   */
+  rival?: FolderResult | null;
 };
 
 export function DebriefCard({
@@ -89,6 +140,7 @@ export function DebriefCard({
   onVote,
   onSelect,
   onSwipe,
+  rival,
 }: DebriefCardProps) {
   const swipe = useSwipe(onSwipe);
   const headline = typeset(card.headline ?? pl.debrief.untitled);
@@ -201,11 +253,19 @@ export function DebriefCard({
 
       <dl className={styles.verdicts}>
         <div className={styles.verdictPair}>
-          <dt>{pl.debrief.yourVerdict}</dt>
+          <dt>{rival === undefined ? pl.debrief.yourVerdict : pl.versus.ownVerdict}</dt>
           <dd>
             <VerdictChip verdict={card.verdict} />
           </dd>
         </div>
+        {rival !== undefined && (
+          <div className={styles.verdictPair}>
+            <dt>{pl.versus.rivalVerdict}</dt>
+            <dd>
+              <RivalChip rival={rival} />
+            </dd>
+          </div>
+        )}
         {card.correctVerdict && (
           <div className={styles.verdictPair}>
             <dt>{pl.debrief.correctVerdict}</dt>

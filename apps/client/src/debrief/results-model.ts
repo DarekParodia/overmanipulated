@@ -191,6 +191,9 @@ export function lossReasonOf(end: LossReasonInput): LossReason | null {
 // --- Kolegium cards -------------------------------------------------------------------------
 
 export type KolegiumCard = DebriefCard & {
+  /** The folder's spawn key (the first folder's, for a story grouped in endless); pairs a versus
+   *  card with the rival's result on the same folder (S7-89). */
+  spawnKey: string;
   credibilityDelta: number;
   bonuses: FolderResult['bonuses'];
   /** Proofs the story required (`requiredStamps`) and the countable ones the desk cited. */
@@ -285,6 +288,7 @@ function cardOf(
   return {
     storyId: result.storyId,
     folderId: result.folderId,
+    spawnKey: result.spawnKey,
     headline: story?.headline ?? null,
     outcome: result.outcome,
     reason: result.reason,

@@ -2,7 +2,8 @@
 // credibility; the folder queue top-centre; verdict toasts under it; the role ability chip
 // bottom-left on keyboard and gamepad (S7-40); the results panel at the end of a level. Room
 // code and ping live in the in-game menu sheet (GameMenu, S7-10). On phones the pill is one row
-// (S7-11); the pill and the queue mark the measured HUD band (hud-band.ts).
+// (S7-11); the pill and the queue mark the measured HUD band (hud-band.ts). In versus the rival
+// chip hangs under the pill, or ends its row on phones (S7-89).
 import { ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { useEffect } from 'react';
 import { AbilityChip } from '../abilities/AbilityChip.tsx';
@@ -17,10 +18,12 @@ import { LevelTimer } from './LevelTimer.tsx';
 import { ResultsPlate } from './ResultsPlate.tsx';
 import { ScoreCounter } from './ScoreCounter.tsx';
 import { VerdictToasts } from './VerdictToasts.tsx';
+import { VersusChip } from './VersusChip.tsx';
 
 export function Hud() {
   const levelEnd = useGame((s) => s.levelEnd);
-  const endless = useApp((s) => s.room?.levelId === ENDLESS_LEVEL_ID);
+  // The tempo chip's wider phone pill; an endless versus match shows the rival chip instead.
+  const endless = useApp((s) => s.room?.levelId === ENDLESS_LEVEL_ID && s.room.mode !== 'versus');
 
   useEffect(() => installHudDevFixture(), []);
 
@@ -32,6 +35,7 @@ export function Hud() {
           <ScoreCounter />
           <CredibilityGauge />
         </div>
+        <VersusChip />
       </div>
       <FolderQueue />
       <VerdictToasts />

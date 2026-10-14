@@ -1,7 +1,7 @@
 // Level timer: a big clock in the HUD pill. In the last 30 s it turns red and wobbles gently
 // (no wobble with reduced motion; the colour and the clock icon stay, nothing blinks). The
 // moment the last seconds start (`timerPulse`) the clock beats three times; steady under
-// reduced motion and no-flash.
+// reduced motion and no-flash. Endless counts up, but an endless versus match counts down.
 import { ENDLESS_LEVEL_ID, LEVEL_LAST_SECONDS_MS } from '@redakcja/shared';
 import { useEffect, useRef } from 'react';
 import { formatElapsed, tempoLevel } from '../endless/endless-model.ts';
@@ -49,7 +49,9 @@ function TempoChip({ elapsedMs }: { elapsedMs: number }) {
 
 export function LevelTimer() {
   const { timeLeftMs, elapsedMs } = useLevelClock();
-  const endless = useApp((s) => s.room?.levelId === ENDLESS_LEVEL_ID);
+  // Endless counts up, except a versus match (S7-89): that one lasts `VERSUS.endlessDurationS`
+  // and counts down like a level, with the rival chip in place of the tempo chip.
+  const endless = useApp((s) => s.room?.levelId === ENDLESS_LEVEL_ID && s.room.mode !== 'versus');
   const timer = useRef<HTMLDivElement>(null);
   const last = !endless && timeLeftMs > 0 && timeLeftMs <= LEVEL_LAST_SECONDS_MS;
   const clock = endless ? formatElapsed(elapsedMs) : formatClock(timeLeftMs);
