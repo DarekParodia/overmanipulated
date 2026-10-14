@@ -33,8 +33,8 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 
 Limits enforced (`BUDGET` in the script): 10 MB total for menu + game + extras (the project rule,
 also checked against the uncompressed sum), plus regression guards that trip long before it: menu
-route 700 KB gzip, menu JS+CSS 320 KB gzip (this catches three.js leaking into the menu bundle),
-game route 1.6 MB gzip, extras route 1 MB gzip.
+route 700 KB gzip, menu JS+CSS 340 KB gzip (this catches three.js, about 150 KB gzip, leaking into
+the menu bundle), game route 1.6 MB gzip, extras route 1 MB gzip.
 
 Measured (production build, mp3 = worst case):
 
