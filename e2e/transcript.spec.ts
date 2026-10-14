@@ -11,6 +11,7 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  hideScene,
   openPlayer,
   PHONE,
   skipStationHelp,
@@ -97,7 +98,7 @@ test('Stenogram: find the clip, judge the cut or answer „Nie ma w zapisie”',
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();
   // Software WebGL leaves little real time for the minigame clock; the overlay needs no scene.
-  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(page);
   const overlay = page.getByTestId('station-overlay');
 
   const rounds = [

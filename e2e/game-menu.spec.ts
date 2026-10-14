@@ -10,6 +10,7 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  hideScene,
   moveRight,
   PHONE,
   type Player,
@@ -17,8 +18,6 @@ import {
 } from './helpers.ts';
 
 test.afterEach(closePlayers);
-
-const HIDE_CANVAS = 'canvas { display: none !important; }';
 
 type Hook = { getState(): { elapsedMs: number; paused: boolean } };
 
@@ -190,7 +189,7 @@ test('the menu button opens the sheet; leaving needs two presses', async ({
   await button.click();
   // Software WebGL draws a frame every half second here; the two presses must land within
   // 3 s of each other and need no scene.
-  await page.addStyleTag({ content: HIDE_CANVAS });
+  await hideScene(page);
   const leave = menu.getByTestId('game-menu-leave');
   await leave.click();
   await expect(leave).toHaveText('Na pewno? Wyjdź');

@@ -10,6 +10,7 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  hideScene,
   openPlayer,
   PHONE,
   skipStationHelp,
@@ -171,7 +172,7 @@ test('in the station overlay every button of the new minigames is above the fold
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();
   // Software WebGL leaves little real time for the minigame clock; the overlay needs no scene.
-  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(page);
   const overlay = page.getByTestId('station-overlay');
 
   for (const { kind, root } of MINIGAMES) {

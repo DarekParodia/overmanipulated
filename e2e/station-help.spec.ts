@@ -5,7 +5,7 @@ import {
   type Page,
   test,
 } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, PHONE, trackContext } from './helpers.ts';
+import { closePlayers, createRoom, DESKTOP, hideScene, PHONE, trackContext } from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -64,7 +64,7 @@ async function openLevel(
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();
   // Software WebGL leaves little real time for the clock; the overlay needs no scene.
-  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(page);
   return page;
 }
 

@@ -8,6 +8,7 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  hideScene,
   PHONE,
   skipStationHelp,
   trackContext,
@@ -103,7 +104,7 @@ test('Ekspert: 15 s clock, one mistake, no answer, no hint bubble, ×2 on the ca
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();
   // Software WebGL leaves little real time for the 15 s clock; the overlay needs no scene.
-  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(page);
 
   await openLibrary(page);
   const overlay = page.getByTestId('station-overlay');

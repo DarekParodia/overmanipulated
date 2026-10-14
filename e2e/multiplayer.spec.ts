@@ -4,8 +4,10 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  GAME_READY_TIMEOUT_MS,
+  hideScene,
   joinRoom,
-  moveRight,
+  moveRightUntil,
   openPlayer,
   PHONE,
   pickRole,
@@ -73,6 +75,8 @@ async function briefingRunText(page: Page): Promise<BriefingRunText | null> {
 test('players create and join a room, start, and see each other move', async ({
   browser,
 }, testInfo) => {
+  // Three tabs of software WebGL: about 25 s on an idle machine, two minutes at load 40.
+  test.slow();
   const options = testInfo.project.name === 'mobile' ? PHONE : DESKTOP;
   const host = await openPlayer(browser, 'Zośka', options);
   const guests = [
@@ -88,7 +92,7 @@ test('players create and join a room, start, and see each other move', async ({
 
   await host.page.getByRole('button', { name: 'Do składu!' }).click();
   for (const player of [host, ...guests]) {
-    await expect(player.page.getByTestId('hud')).toBeVisible();
+    await expect(player.page.getByTestId('hud')).toBeVisible({ timeout: GAME_READY_TIMEOUT_MS });
   }
 
   // Everyone renders all three avatars.
@@ -101,14 +105,15 @@ test('players create and join a room, start, and see each other move', async ({
     .toEqual(['Ola', 'Zośka', 'Łukasz']);
   const before = (await avatarPositions(watcher)).Zośka?.x ?? 0;
 
-  await moveRight(host, 600);
-
-  await expect
-    .poll(async () => (await avatarPositions(watcher)).Zośka?.x ?? 0)
-    .toBeGreaterThan(before + 1);
-  await expect
-    .poll(async () => (await avatarPositions(guests[0] ?? host)).Zośka?.x ?? 0)
-    .toBeGreaterThan(before + 1);
+  // Held until both guests see the host move: the host's tab samples the key once per frame.
+  await moveRightUntil(host, async () => {
+    await expect
+      .poll(async () => (await avatarPositions(watcher)).Zośka?.x ?? 0)
+      .toBeGreaterThan(before + 1);
+    await expect
+      .poll(async () => (await avatarPositions(guests[0] ?? host)).Zośka?.x ?? 0)
+      .toBeGreaterThan(before + 1);
+  });
 });
 
 test('a mixed room: desktop host and phone guest see each other', async ({ browser }, testInfo) => {
@@ -123,10 +128,11 @@ test('a mixed room: desktop host and phone guest see each other', async ({ brows
 
   await expect.poll(async () => Object.keys(await avatarPositions(host)).length).toBe(2);
   const before = (await avatarPositions(host)).Łukasz?.x ?? 0;
-  await moveRight(phone, 600);
-  await expect
-    .poll(async () => (await avatarPositions(host)).Łukasz?.x ?? 0)
-    .toBeGreaterThan(before + 1);
+  await moveRightUntil(phone, () =>
+    expect
+      .poll(async () => (await avatarPositions(host)).Łukasz?.x ?? 0)
+      .toBeGreaterThan(before + 1),
+  );
 });
 
 test('the host starts only when guests are ready, and roles show on every roster', async ({
@@ -208,7 +214,7 @@ test('leaving mid-level goes through the menu, which keeps a shared level runnin
   await expect.poll(elapsed).toBeGreaterThan(openedAt + 500);
 
   // Software WebGL is slow; the two presses must land within 3 s and need no scene.
-  await host.page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(host.page);
   const leave = menu.getByTestId('game-menu-leave');
   await leave.click();
   await expect(leave).toHaveText('Na pewno? Wyjdź');
@@ -231,6 +237,8 @@ test('joining an unknown room shows a Polish error', async ({ browser }, testInf
 test('the host picks Trudny, the guest sees it, and the briefing shows the dealt run', async ({
   browser,
 }, testInfo) => {
+  // Three tabs of software WebGL: about 25 s on an idle machine, two minutes at load 40.
+  test.slow();
   const options = testInfo.project.name === 'mobile' ? PHONE : DESKTOP;
   const host = await openPlayer(browser, 'Zośka', options);
   const guest = await openPlayer(browser, 'Łukasz', options);

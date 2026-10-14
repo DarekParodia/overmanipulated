@@ -11,6 +11,7 @@ import {
 import {
   closePlayers,
   DESKTOP,
+  hideScene,
   joinRoom,
   openPlayer,
   PHONE,
@@ -132,7 +133,7 @@ test('level 5 runs in the 24×14 room with Stenogram and Metadane in two tabs', 
   await host.page.getByRole('button', { name: 'Do składu!' }).click();
   // Software WebGL on a loaded machine starves two tabs; the checks below need no scene.
   for (const player of [host, guest]) {
-    await player.page.addStyleTag({ content: 'canvas { display: none !important; }' });
+    await hideScene(player.page);
   }
 
   const fixtures = [

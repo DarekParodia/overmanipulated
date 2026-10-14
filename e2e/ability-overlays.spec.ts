@@ -15,6 +15,7 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  hideScene,
   PHONE,
   type Player,
   pickRole,
@@ -58,7 +59,7 @@ async function startSolo(player: Player, role: string | null): Promise<void> {
   await player.page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(player.page.getByTestId('hud')).toBeVisible();
   // Software WebGL draws the newsroom at a few frames per second; the overlay needs no scene.
-  await player.page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(player.page);
 }
 
 /** Pins one station the local player operates (or not) with a folder lying on it. */

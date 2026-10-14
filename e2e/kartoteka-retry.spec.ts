@@ -3,6 +3,8 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  GAME_READY_TIMEOUT_MS,
+  hideScene,
   openPlayer,
   PHONE,
   skipStationHelp,
@@ -20,6 +22,8 @@ const STATION_ID = 'retry-sourceRegistry';
 // signs on fields 0, 2 and 5; the other fields are clean.
 const SEED = 2;
 const STORY_ID = 'l0-falszywa-straz';
+/** The Kartoteka card's clock on Normal (`MINIGAME_TIME_LIMIT_MS`). */
+const CARD_CLOCK_MS = 20_000;
 
 /** Pins the Kartoteka station this player operates in `phase` over the server's snapshots. */
 async function setStation(page: Page, phase: 'idle' | 'minigame' | 'lockout'): Promise<void> {
@@ -62,10 +66,29 @@ async function setStation(page: Page, phase: 'idle' | 'minigame' | 'lockout'): P
   );
 }
 
-/** Whole seconds on the overlay clock („Zostało 12 s”). */
-async function clockSeconds(page: Page): Promise<number> {
-  const label = (await page.getByTestId('station-clock').getAttribute('aria-label')) ?? '';
-  return Number(label.match(/\d+/)?.[0] ?? Number.NaN);
+/** The page's clock (`performance.now()`, the clock the minigame timer runs on). */
+function pageNow(page: Page): Promise<number> {
+  return page.evaluate(() => performance.now());
+}
+
+/**
+ * Whole seconds on the overlay clock („Zostało 12 s”) and the page time they were read at, in
+ * one round trip.
+ */
+async function readClock(page: Page): Promise<{ seconds: number; at: number }> {
+  return page.evaluate(() => {
+    const label =
+      document.querySelector('[data-testid="station-clock"]')?.getAttribute('aria-label') ?? '';
+    return { seconds: Number(label.match(/\d+/)?.[0] ?? Number.NaN), at: performance.now() };
+  });
+}
+
+/**
+ * The card's 20 s clock started in full no earlier than `since` (page time taken before the card
+ * opened): whatever real time the steps in between took under load, the clock has not lost more.
+ */
+function expectFullClock(clock: { seconds: number; at: number }, since: number): void {
+  expect(clock.seconds * 1000).toBeGreaterThanOrEqual(CARD_CLOCK_MS - (clock.at - since));
 }
 
 /**
@@ -105,10 +128,10 @@ test('the Kartoteka card comes back with its circles and without the answer', as
   await skipStationHelp(page);
   await createRoom(player);
   await page.getByRole('button', { name: 'Do składu!' }).click();
-  await expect(page.getByTestId('hud')).toBeVisible();
+  await expect(page.getByTestId('hud')).toBeVisible({ timeout: GAME_READY_TIMEOUT_MS });
   // Software WebGL draws the newsroom at a few frames per second, which leaves the 20 s card
   // clock too little real time for the test's steps; the overlay does not need the scene.
-  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(page);
 
   await setStation(page, 'minigame');
   const overlay = page.getByTestId('station-overlay');
@@ -133,6 +156,7 @@ test('the Kartoteka card comes back with its circles and without the answer', as
   // After the lockout the server reopens the same card (same seed): circles kept, mistakes and
   // crossed-out fields cleared, and a full clock.
   await setStation(page, 'lockout');
+  const reopenedSince = await pageNow(page);
   await setStation(page, 'minigame');
   await expect(overlay.getByTestId('source-registry')).toBeVisible();
   await expect(overlay).toContainText('Ta sama karta: dokończ zakreślanie');
@@ -140,33 +164,40 @@ test('the Kartoteka card comes back with its circles and without the answer', as
   await expect(field(1)).toHaveAttribute('data-struck', 'false');
   await expect(field(3)).toHaveAttribute('data-struck', 'false');
   await expect(overlay.getByTestId('source-mistakes')).toHaveAttribute('data-count', '0');
-  expect(await clockSeconds(page)).toBeGreaterThanOrEqual(18);
+  expectFullClock(await readClock(page), reopenedSince);
   await page.screenshot({ path: testInfo.outputPath('retry.png'), scale: 'css' });
 
   // Put the card down after a few seconds: it comes back with the clock it had left.
   await field(2).click();
   await expect(field(2)).toHaveAttribute('data-circled', 'true');
   await page.waitForTimeout(3000);
-  const left = await clockSeconds(page);
+  const left = await readClock(page);
   await overlay.getByTestId('overlay-close').click();
+  const closedAt = await pageNow(page);
   await expect(overlay).toBeHidden();
   await setStation(page, 'idle');
+  const resumedSince = await pageNow(page);
   await setStation(page, 'minigame');
   await expect(overlay.getByTestId('source-registry')).toBeVisible();
   await expect(field(0)).toHaveAttribute('data-circled', 'true');
   await expect(field(2)).toHaveAttribute('data-circled', 'true');
-  const resumed = await clockSeconds(page);
-  expect(resumed).toBeLessThanOrEqual(left);
-  expect(resumed).toBeLessThanOrEqual(17);
-  expect(resumed).toBeGreaterThanOrEqual(5);
+  const resumed = await readClock(page);
+  expect(left.seconds).toBeLessThanOrEqual(17);
+  expect(resumed.seconds).toBeLessThanOrEqual(left.seconds);
+  // Only the time the card was open runs off its clock: from reading `left` to the close, and
+  // from the reopening to reading `resumed` (each bound generous, so a slow step only loosens
+  // it by its own length). The time it lay on the station does not count.
+  const openMs = closedAt - left.at + (resumed.at - resumedSince);
+  expect(resumed.seconds * 1000).toBeGreaterThanOrEqual((left.seconds - 1) * 1000 - openMs);
 
   // Filing the card with every warning sign circled succeeds, and the card is forgotten.
   const filed = await clickAndRead(page, ['source-field-5', 'source-file']);
   expect(filed.verdict).toContain('Sprawdzone!');
   await expect(overlay).toBeHidden();
   await setStation(page, 'idle');
+  const freshSince = await pageNow(page);
   await setStation(page, 'minigame');
   await expect(overlay).toContainText('Zakreśl podejrzane wpisy, potem odłóż kartę');
   await expect(field(0)).toHaveAttribute('data-circled', 'false');
-  expect(await clockSeconds(page)).toBeGreaterThanOrEqual(18);
+  expectFullClock(await readClock(page), freshSince);
 });

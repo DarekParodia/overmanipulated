@@ -3,6 +3,8 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  GAME_READY_TIMEOUT_MS,
+  hideScene,
   openPlayer,
   PHONE,
   skipStationHelp,
@@ -89,10 +91,10 @@ test('every minigame shows key hints for the device in use', async ({ browser },
   await skipStationHelp(page);
   await createRoom(player);
   await page.getByRole('button', { name: 'Do składu!' }).click();
-  await expect(page.getByTestId('hud')).toBeVisible();
+  await expect(page.getByTestId('hud')).toBeVisible({ timeout: GAME_READY_TIMEOUT_MS });
   // Software WebGL at about 1 fps under load lets a minigame clock run out before its hints are
   // read; the overlay needs no scene (as in difficulty-rules.spec.ts and transcript.spec.ts).
-  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
+  await hideScene(page);
 
   for (const { kind, root, storyId } of MINIGAMES) {
     // Open the station overlay locally: a station this player operates in the minigame phase,

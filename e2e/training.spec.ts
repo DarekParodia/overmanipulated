@@ -5,8 +5,9 @@ import {
   closePlayers,
   createRoom,
   DESKTOP,
+  GAME_READY_TIMEOUT_MS,
   joinRoom,
-  moveRight,
+  moveRightUntil,
   openPlayer,
   PHONE,
   type Player,
@@ -29,6 +30,8 @@ function folderStories(player: Player): Promise<string[]> {
 test('Training deals bag folders to both tabs and the tutorial advances', async ({
   browser,
 }, testInfo) => {
+  // Two tabs of software WebGL: 25–40 s on an idle machine, over a minute under load.
+  test.slow();
   const options = testInfo.project.name === 'desktop' ? DESKTOP : PHONE;
   const host = await openPlayer(browser, 'Zośka', options);
   const guest = await openPlayer(browser, 'Łukasz', options);
@@ -39,12 +42,13 @@ test('Training deals bag folders to both tabs and the tutorial advances', async 
   await host.page.getByRole('button', { name: 'Do składu!' }).click();
 
   for (const player of [host, guest]) {
-    await expect(player.page.getByTestId('hud')).toBeVisible();
+    await expect(player.page.getByTestId('hud')).toBeVisible({ timeout: GAME_READY_TIMEOUT_MS });
     await expect(player.page.getByTestId('tutorial')).toHaveAttribute('data-step', 'move');
   }
 
-  await moveRight(host, 600);
-  await expect(host.page.getByTestId('tutorial')).toHaveAttribute('data-step', 'pickup');
+  await moveRightUntil(host, () =>
+    expect(host.page.getByTestId('tutorial')).toHaveAttribute('data-step', 'pickup'),
+  );
   await expect(guest.page.getByTestId('tutorial')).toHaveAttribute('data-step', 'move');
 
   // The first slot is at 3 s; both tabs get the same dealt l0 stories.
