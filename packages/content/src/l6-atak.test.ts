@@ -1,8 +1,23 @@
 import { describe, expect, it } from 'bun:test';
-import { CONTENT_TRUE_STORY_SHARE, parseLayout, type StationKind } from '@redakcja/shared';
-import { decidingStations, isPinned } from './bag.ts';
-import { getLevel, STORIES } from './index.ts';
-import type { Story } from './schema.ts';
+import {
+  BAG_PREVIEW_SEED,
+  CONTENT_TRUE_STORY_SHARE,
+  DIFFICULTIES,
+  parseLayout,
+  type StationKind,
+} from '@redakcja/shared';
+import {
+  bagSlotTimes,
+  decidingStations,
+  generateBagLevel,
+  isPinned,
+  pinnedCounts,
+  starThresholds,
+} from './bag.ts';
+import { checkBag, maxLevelScore } from './checks.ts';
+import { LEVEL_FILES } from './files.ts';
+import { getLevel, getStory, STORIES } from './index.ts';
+import { levelFileSchema, type Story } from './schema.ts';
 
 // S7-58: l6 Atak grows to 24x14 with Mapa (geolocation) and Inne media (crossCheck).
 const level = getLevel('l6-atak');
@@ -52,8 +67,8 @@ describe('l6 Atak room', () => {
 });
 
 describe('l6 Atak stamps', () => {
-  it('gives each of the 29 stories, event stories included, one stamp per station', () => {
-    expect(l6Stories).toHaveLength(29);
+  it('gives each of the 33 stories, event stories included, one stamp per station', () => {
+    expect(l6Stories).toHaveLength(33);
     for (const story of l6Stories) {
       expect(story.stamps.map((stamp) => stamp.station)).toEqual(stations);
       expect(story.stamps.slice(6).map((stamp) => stamp.id)).toEqual([
@@ -234,8 +249,171 @@ describe('l6 Atak stories for Lupa and the archive', () => {
       ['misleading', 'Zajezdnia przy ulicy Portowej, miejsce się zgadza.'],
     ]);
   });
+});
 
-  it('brings the l6 true share to 9 of 29', () => {
-    expect(l6Stories.filter((story) => story.truth === 'true')).toHaveLength(9);
+// S7-63: the phone and the data library get three pinned stories each, three multi-stamp picks
+// ask for two or three proofs, and the level deals from a bag.
+describe('l6 Atak stories for the phone and the data library', () => {
+  it('pins three stories to the phone: two new, one of them true', () => {
+    expect(pinnedTo('phone')).toEqual([
+      'l6-dowoz-seniorow',
+      'l6-komisja-w-bibliotece',
+      'l6-strajk-kierowcow',
+    ]);
+    expect(
+      ['l6-komisja-w-bibliotece', 'l6-strajk-kierowcow'].map((id) => {
+        const story = l6Story(id);
+        return [story.truth, story.correctVerdict, story.technique];
+      }),
+    ).toEqual([
+      ['true', 'publish', 'none'],
+      ['false', 'reject', 'plotka-bez-zrodla'],
+    ]);
+  });
+
+  it('pins three stories to the data library: two new statistics', () => {
+    expect(pinnedTo('dataLibrary')).toEqual([
+      'l6-sonda-w-grupie',
+      'l6-spoznienia-dwunastki',
+      'l6-najdrozsza-linia',
+    ]);
+    expect(
+      ['l6-spoznienia-dwunastki', 'l6-najdrozsza-linia'].map((id) => {
+        const story = l6Story(id);
+        return [story.type, story.truth, story.correctVerdict, story.technique];
+      }),
+    ).toEqual([
+      ['statistic', 'false', 'reject', 'zmanipulowana-statystyka'],
+      ['statistic', 'misleading', 'publishWithContext', 'zmanipulowana-statystyka'],
+    ]);
+  });
+
+  it('asks two proofs on apel and the poll, three on the hashtag', () => {
+    const picks = ['l6-apel-mieszkancow', 'l6-sondaz-pracowni', 'l6-hashtag-12-to-koniec'].map(
+      (id) => {
+        const story = l6Story(id);
+        return [story.requiredStamps, decidingStations(story, stations)];
+      },
+    );
+    expect(picks).toEqual([
+      [2, ['archive', 'phone']],
+      [2, ['sourceRegistry', 'dataLibrary']],
+      [3, ['archive', 'dataLibrary', 'crossCheck']],
+    ]);
+    const multiStamp = l6Stories.filter((story) => story.requiredStamps !== 1);
+    expect(multiStamp.map((story) => story.id)).toEqual([
+      'l6-apel-mieszkancow',
+      'l6-sondaz-pracowni',
+      'l6-hashtag-12-to-koniec',
+    ]);
+  });
+
+  it('brings the l6 true share to 10 of 33', () => {
+    expect(l6Stories.filter((story) => story.truth === 'true')).toHaveLength(10);
+  });
+});
+
+describe('l6 Atak on the bag', () => {
+  const file = levelFileSchema.parse(LEVEL_FILES['levels/l6-atak.json']);
+  const pool = (file.bag?.pool ?? []).flatMap((id) => {
+    const story = getStory(id);
+    return story ? [story] : [];
+  });
+
+  it('deals from a bag of the 28 l6 stories no event spawns, with no schedule or stars', () => {
+    expect(file.bag).toMatchObject({
+      firstAtS: 4,
+      gapS: 27,
+      lastSpawnS: 382,
+      deadlineS: { normal: 55, important: 55, urgent: 40 },
+    });
+    expect(file.bag?.starShares).toBeUndefined();
+    expect(file.schedule).toBeUndefined();
+    expect(file.stars).toBeUndefined();
+    expect(pool).toHaveLength(28);
+    expect(new Set(pool.map((story) => story.id)).size).toBe(28);
+    const eventStories = file.events.flatMap((event) =>
+      event.kind === 'outage' ? [] : [event.storyId],
+    );
+    expect(eventStories).toEqual([
+      'l6-nalot-zostaje12',
+      'l6-sprostowanie-apel',
+      'l6-szef-kaze-publikowac',
+      'l6-nalot-hashtag',
+      'l6-sprostowanie-tlum',
+    ]);
+    expect(
+      l6Stories
+        .map((story) => story.id)
+        .filter((id) => !eventStories.includes(id))
+        .sort(),
+    ).toEqual(pool.map((story) => story.id).sort());
+  });
+
+  it('keeps the events as they were', () => {
+    expect(file.events.map((event) => [event.kind, event.atS])).toEqual([
+      ['botRaid', 60],
+      ['correction', 140],
+      ['bossCall', 195],
+      ['outage', 230],
+      ['botRaid', 285],
+      ['correction', 345],
+    ]);
+  });
+
+  it('keeps the pool true share within the content target: 10 of 28', () => {
+    const trueCount = pool.filter((story) => story.truth === 'true').length;
+    expect(trueCount).toBe(10);
+    expect(trueCount / pool.length).toBeGreaterThanOrEqual(CONTENT_TRUE_STORY_SHARE.min);
+    expect(trueCount / pool.length).toBeLessThanOrEqual(CONTENT_TRUE_STORY_SHARE.max);
+  });
+
+  it('pins three pool stories on each of the seven bag stations', () => {
+    expect(Object.fromEntries(pinnedCounts(pool, stations))).toEqual({
+      imageSearch: 3,
+      archive: 3,
+      sourceRegistry: 3,
+      phone: 3,
+      dataLibrary: 3,
+      geolocation: 3,
+      crossCheck: 3,
+    });
+  });
+
+  it('passes the bag checks with no issue: 12, 15, 16 and 18 folders by difficulty', () => {
+    const bag = file.bag;
+    if (!bag) {
+      throw new Error('l6 has no bag');
+    }
+    expect(DIFFICULTIES.map((d) => bagSlotTimes(bag, d).length)).toEqual([12, 15, 16, 18]);
+    const issues: string[] = [];
+    checkBag({ ...file, bag }, new Map(STORIES.map((s) => [s.id, s])), (path, severity, message) =>
+      issues.push(`${severity} ${path.join('.')}: ${message}`),
+    );
+    expect(issues).toEqual([]);
+  });
+
+  it('serves the Normal preview run of the bag: 15 folders from 4 s, every 27 s', () => {
+    expect(level).toEqual(generateBagLevel(file, STORIES, BAG_PREVIEW_SEED, 'normal'));
+    expect(level?.schedule.map((spawn) => spawn.atS)).toEqual([
+      4, 31, 58, 85, 112, 139, 166, 193, 220, 247, 274, 301, 328, 355, 382,
+    ]);
+    expect(new Set(level?.schedule.map((spawn) => spawn.storyId)).size).toBe(15);
+  });
+
+  it('ends every dealt folder with the level and takes the stars from the default shares', () => {
+    const byId = new Map(STORIES.map((s) => [s.id, s]));
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of [0, 1, 7, 0xffffffff]) {
+        const dealt = generateBagLevel(file, STORIES, seed, difficulty);
+        const ids = dealt.schedule.map((spawn) => spawn.storyId);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(ids.every((id) => id.startsWith('l6-'))).toBe(true);
+        for (const spawn of dealt.schedule) {
+          expect(spawn.atS + spawn.deadlineS).toBeLessThanOrEqual(file.durationS);
+        }
+        expect(dealt.stars).toEqual(starThresholds(maxLevelScore(dealt, byId)));
+      }
+    }
   });
 });

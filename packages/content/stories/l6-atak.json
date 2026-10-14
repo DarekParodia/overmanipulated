@@ -1676,9 +1676,9 @@
     "priority": "important",
     "truth": "true",
     "correctVerdict": "publish",
-    "headline": "Komisja nr 7 przeniesiona: głosujemy w bibliotece, nie w szkole",
-    "body": "Rada Osiedla Zatoka: w Szkole Podstawowej nr 2 pękła rura. W niedzielę komisja nr 7 pracuje w Bibliotece Miejskiej przy ul. Lipowej 4.",
-    "source": "Profil „Rada Osiedla Zatoka”",
+    "headline": "Komisja nr 3 przeniesiona: głosujemy w bibliotece, nie w szkole",
+    "body": "Rada Osiedla Lipowa: w Szkole Podstawowej nr 6 pękła rura. W niedzielę komisja nr 3 pracuje w Bibliotece Miejskiej przy ul. Lipowej 4.",
+    "source": "Profil „Rada Osiedla Lipowa”",
     "stamps": [
       {
         "id": "l6-komisja-w-bibliotece-image",
@@ -1689,7 +1689,7 @@
       {
         "id": "l6-komisja-w-bibliotece-archive",
         "station": "archive",
-        "text": "Archiwum: od 15 lat komisja nr 7 zawsze pracowała w szkole.",
+        "text": "Archiwum: od 15 lat komisja nr 3 zawsze pracowała w szkole.",
         "relevance": "misleading"
       },
       {
@@ -1701,7 +1701,7 @@
       {
         "id": "l6-komisja-w-bibliotece-phone",
         "station": "phone",
-        "text": "Biuro wyborcze urzędu potwierdza: awaria w szkole, komisja nr 7 w bibliotece przy Lipowej 4.",
+        "text": "Biuro wyborcze urzędu potwierdza: awaria w szkole, komisja nr 3 w bibliotece przy Lipowej 4.",
         "relevance": "decisive"
       },
       {
@@ -1732,7 +1732,7 @@
     "justifyingStamps": ["l6-komisja-w-bibliotece-phone"],
     "technique": "none",
     "debrief": {
-      "what": "Prawdziwa zmiana lokalu: w szkole pękła rura, więc komisja nr 7 pracuje w niedzielę w bibliotece.",
+      "what": "Prawdziwa zmiana lokalu: w szkole pękła rura, więc komisja nr 3 pracuje w niedzielę w bibliotece.",
       "technique": "Brak manipulacji. Zmiana brzmi podejrzanie, bo przez lata było inaczej, ale urząd ją potwierdza.",
       "tool": "Telefon: biuro wyborcze potwierdza awarię i nowy adres. Archiwum pokazywało tylko, gdzie komisja pracowała wcześniej.",
       "realWorld": "Lokale wyborcze czasem zmieniają się w ostatniej chwili, na przykład po awarii. Zmianę potwierdza urząd, a na drzwiach starego lokalu wisi kartka z nowym adresem."
