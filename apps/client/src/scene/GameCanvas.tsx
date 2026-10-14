@@ -1,7 +1,9 @@
 // The 3D newsroom. Flat Lambert materials and no tone mapping keep scene colours true to the
 // design tokens; quality presets control DPR and shadows. Renders one GameView (S7-85), the local
 // player's unless another is given; only the primary canvas probes the device, drives adaptive
-// quality and installs the debug hooks, so a second canvas beside it is a plain view.
+// quality and installs the debug hooks, so a second canvas beside it is a plain view. A spectator
+// view (S7-90) renders at most on the medium preset with DPR 1.5 and no shadows, so two of them
+// side by side stay inside the desktop render budget.
 import { Canvas } from '@react-three/fiber';
 import { useEffect } from 'react';
 import { NoToneMapping, SRGBColorSpace } from 'three';
@@ -27,7 +29,15 @@ import { Particles } from './Particles.tsx';
 import { PerfProbe } from './PerfProbe.tsx';
 import { PingBubbles } from './PingBubbles.tsx';
 import { Players } from './Players.tsx';
-import { detectPreset, deviceHints, isCoarsePointer, profileFor, useQuality } from './quality.ts';
+import {
+  detectPreset,
+  deviceHints,
+  isCoarsePointer,
+  profileFor,
+  type QualityProfile,
+  spectatorProfile,
+  useQuality,
+} from './quality.ts';
 import { StationIndicators } from './StationIndicators.tsx';
 import { SunLight } from './SunLight.tsx';
 import { Warmup } from './Warmup.tsx';
@@ -37,6 +47,27 @@ function gpuName(gl: WebGLRenderingContext | WebGL2RenderingContext): string {
   return info
     ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL))
     : String(gl.getParameter(gl.RENDERER));
+}
+
+const viewIds = new WeakMap<GameView, number>();
+let lastViewId = 0;
+
+/** A stable id per GameView object, for React keys. */
+function viewId(view: GameView): number {
+  let id = viewIds.get(view);
+  if (id === undefined) {
+    lastViewId += 1;
+    id = lastViewId;
+    viewIds.set(view, id);
+  }
+  return id;
+}
+
+const uncapped = (profile: QualityProfile): QualityProfile => profile;
+
+/** The quality cap of a view: none for the player, `spectatorProfile` for a spectator. */
+function capFor(playing: boolean): (profile: QualityProfile) => QualityProfile {
+  return playing ? uncapped : spectatorProfile;
 }
 
 export type GameCanvasProps = {
@@ -52,25 +83,25 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
   const fallback = useGameView();
   const view = given ?? fallback;
   const playing = view.kind === 'player';
-  const profile = useQuality((s) => s.profile);
+  // The store holds the capped profile while spectating, so the props that read it (motes,
+  // small props, particles) follow the cap too; capping here as well covers a stale store.
+  const fit = capFor(playing);
+  const profile = fit(useQuality((s) => s.profile));
   const chosen = useSettings((s) => s.quality);
-  // World props (and the sun's shadow box) read the view's map once; remount them when a level
-  // with another map starts.
-  const levelId = useApp((s) => s.room?.levelId ?? '');
-
   // A preset picked in settings is final (auto off). Back on "auto" the detected preset returns.
   useEffect(() => {
     if (!primary) {
       return;
     }
     const coarse = isCoarsePointer();
+    const cap = capFor(playing);
     if (chosen) {
-      useQuality.getState().choose(profileFor(chosen, coarse, window.devicePixelRatio), false);
+      useQuality.getState().choose(cap(profileFor(chosen, coarse, window.devicePixelRatio)), false);
     } else if (perfStats.gpu) {
       const preset = detectPreset(perfStats.gpu, coarse, deviceHints());
-      useQuality.getState().choose(profileFor(preset, coarse, window.devicePixelRatio), true);
+      useQuality.getState().choose(cap(profileFor(preset, coarse, window.devicePixelRatio)), true);
     }
-  }, [chosen, primary]);
+  }, [chosen, primary, playing]);
 
   return (
     <Canvas
@@ -96,7 +127,9 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
         if (!useSettings.getState().quality) {
           const coarse = isCoarsePointer();
           const preset = detectPreset(name, coarse, deviceHints());
-          useQuality.getState().choose(profileFor(preset, coarse, window.devicePixelRatio), true);
+          useQuality
+            .getState()
+            .choose(fit(profileFor(preset, coarse, window.devicePixelRatio)), true);
         }
       }}
       style={{ touchAction: 'none' }}
@@ -104,27 +137,43 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
       <GameViewProvider view={view}>
         <color attach="background" args={[colors.sky]} />
         <hemisphereLight args={[colors.surface, colors.furniture, 1.6]} />
-        <Driver />
-        <CameraRig />
-        <group key={levelId}>
-          <SunLight shadows={profile.shadows} />
-          <Newsroom shadows={profile.shadows} />
-          <Ambience />
-          <Fixtures shadows={profile.shadows} />
-          {playing && <InteractionHighlight />}
-          <StationIndicators />
-          <Folders />
-          <EventsWorld />
-          <EventMarkers />
-          {playing && <GuidanceMarkers />}
-        </group>
-        <Players shadows={profile.shadows} />
-        <PingBubbles />
-        <AbilityMarkers />
-        <Particles />
+        <ViewScene key={viewId(view)} playing={playing} profile={profile} />
         <PerfProbe viewKey={viewKey} primary={primary} />
         <Warmup />
       </GameViewProvider>
     </Canvas>
+  );
+}
+
+/**
+ * Everything that renders the view. Keyed by the view, so a canvas that switches views (the
+ * spectate screen's team switch on a phone, S7-90) remounts its scene in the same WebGL context
+ * instead of creating a new one.
+ */
+function ViewScene({ playing, profile }: { playing: boolean; profile: QualityProfile }) {
+  // World props (and the sun's shadow box) read the view's map once; remount them when a level
+  // with another map starts.
+  const levelId = useApp((s) => s.room?.levelId ?? '');
+  return (
+    <>
+      <Driver />
+      <CameraRig />
+      <group key={levelId}>
+        <SunLight shadows={profile.shadows} />
+        <Newsroom shadows={profile.shadows} />
+        <Ambience />
+        <Fixtures shadows={profile.shadows} />
+        {playing && <InteractionHighlight />}
+        <StationIndicators />
+        <Folders />
+        <EventsWorld />
+        <EventMarkers />
+        {playing && <GuidanceMarkers />}
+      </group>
+      <Players shadows={profile.shadows} />
+      <PingBubbles />
+      <AbilityMarkers />
+      <Particles />
+    </>
   );
 }

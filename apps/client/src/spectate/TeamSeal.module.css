@@ -1,0 +1,32 @@
+.seal {
+  flex: none;
+  overflow: visible;
+}
+
+.shield {
+  fill: var(--outline);
+  stroke: var(--outline);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.ring {
+  fill: var(--surface);
+  stroke: var(--outline);
+  stroke-width: 2.4;
+}
+
+.inkLight,
+.inkDark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.inkLight {
+  fill: var(--surface);
+}
+
+.inkDark {
+  fill: var(--outline);
+}

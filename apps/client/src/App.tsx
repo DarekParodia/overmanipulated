@@ -20,7 +20,6 @@ import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
 import { SettingsPanel } from './screens/SettingsPanel.tsx';
 import { Styleguide } from './screens/Styleguide.tsx';
-import { SpectateSummary } from './spectate/SpectateSummary.tsx';
 import { useApp } from './store/app.ts';
 import { usePublicConfig } from './store/public-config.ts';
 import { applySettingsToDocument, useSettings } from './store/settings.ts';
@@ -71,7 +70,7 @@ export function App() {
       {screen === 'lobby' && <Lobby />}
       {screen === 'briefing' && <Briefing />}
       {screen === 'game' && <GameGate />}
-      {screen === 'spectate' && <SpectateSummary />}
+      {screen === 'spectate' && <GameGate which="spectate" />}
       {screen === 'styleguide' && <Styleguide />}
       <SettingsPanel />
       <EncyclopediaScreen />

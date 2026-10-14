@@ -25,6 +25,9 @@ import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import styles from './GameScreen.module.css';
 
+// The spectate screen shares the game chunk (three.js and the scene) with the game screen.
+export { SpectateScreen } from '../spectate/SpectateScreen.tsx';
+
 export function GameScreen() {
   const connection = useApp((s) => s.connection);
   const device = useApp((s) => s.inputDevice);

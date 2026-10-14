@@ -2121,19 +2121,41 @@ export const pl = {
     },
   },
   /**
-   * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
-   * screen (S7-90/91) builds on these.
+   * Spectators: the read-only briefing (S7-84) and the spectate screen (S7-90): one view per
+   * newsroom, the top-bar scoreboard and the team plates. During play: at most 8 words per line.
    */
   spectate: {
     title: 'Widownia',
     watching: 'Oglądasz',
     waiting: 'Czekamy na pierwszy obraz…',
     leave: 'Wyjdź',
-    /** One newsroom's line on the watch screen: name, points and credibility. */
+    /** One newsroom's line on the scoreboard (screen readers): name, points and credibility. */
     teamLine: (team: string, score: number, credibility: number) =>
       `${team}: ${score} pkt, wiarygodność ${credibility}`,
     /** The single newsroom of a co-op match. */
     coopTeam: 'Redakcja',
+    /** The top bar (screen readers). */
+    scoreboardLabel: 'Wynik meczu',
+    /** The crown on the newsroom ahead. */
+    leader: 'Prowadzi',
+    clockLabel: (clock: string) => `Czas: ${clock}`,
+    /** Co-op scoreboard: folders closed with a verdict and folders that ran out of time. */
+    resolved: (count: number) => `Zamknięte teczki: ${count}`,
+    expired: (count: number) => `Przeterminowane teczki: ${count}`,
+    /** The results phase, before the spectator results (S7-91). */
+    matchOver: 'Koniec meczu',
+    /** The views region (screen readers). */
+    viewsLabel: 'Podgląd redakcji',
+    /** One-view layout: the score segment that shows its newsroom (phones). */
+    showTeam: (team: string) => `Pokaż redakcję ${team}`,
+    /** Split layout: the team plate focuses its newsroom, and a second tap brings both back. */
+    focusTeam: (team: string) => `Tylko redakcja ${team}`,
+    bothTeams: 'Pokaż obie redakcje',
+    /** The keys of the spectate screen, keyboard and gamepad only (≤ 8 words). */
+    hints: {
+      keyboard: { split: 'Spacja – widok · 1, 2 – redakcja', single: 'Spacja – druga redakcja' },
+      gamepad: { split: 'A – widok · B – obie redakcje', single: 'A – druga redakcja' },
+    },
   },
   // --- S7-96 „Jak grać”: the help dialog with the intro, the stations and the controls. ---
   howTo: {

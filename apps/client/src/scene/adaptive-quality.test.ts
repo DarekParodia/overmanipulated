@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { ADAPTIVE, createAdaptiveController } from './adaptive-quality.ts';
-import { degradeLadder, detectPreset, profileFor } from './quality.ts';
+import { degradeLadder, detectPreset, profileFor, spectatorProfile } from './quality.ts';
 
 const SLOW = 0.03;
 const GOOD = 1 / 60;
@@ -209,5 +209,26 @@ describe('device detection', () => {
     expect(profileFor('high', true, 3).maxDpr).toBe(1.5);
     expect(profileFor('high', false, 3).maxDpr).toBe(2);
     expect(profileFor('medium', false, 1).maxDpr).toBe(1);
+  });
+});
+
+describe('spectator canvas profile (S7-90)', () => {
+  it('caps high at medium, DPR 1.5, no shadows and no motes', () => {
+    expect(spectatorProfile(profileFor('high', false, 2))).toEqual({
+      preset: 'medium',
+      maxDpr: 1.5,
+      shadows: false,
+      detail: true,
+      particleScale: 1,
+      motes: false,
+      outlines: true,
+    });
+  });
+
+  it('keeps a lower preset and a lower DPR as they are', () => {
+    expect(spectatorProfile(profileFor('medium', false, 1))).toEqual(
+      profileFor('medium', false, 1),
+    );
+    expect(spectatorProfile(profileFor('low', true, 3))).toEqual(profileFor('low', true, 3));
   });
 });

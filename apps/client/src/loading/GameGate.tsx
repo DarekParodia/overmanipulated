@@ -1,5 +1,6 @@
-// Holds the game screen back until the assets it needs have arrived (fonts and the lazy game
-// chunk always; sound files only for a short grace period, so a slow audio server never blocks play).
+// Holds the game screen (or the spectate screen, S7-90; both live in the lazy game chunk) back
+// until the assets it needs have arrived (fonts and the lazy game chunk always; sound files only
+// for a short grace period, so a slow audio server never blocks play).
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { Loading } from '../screens/Loading.tsx';
 import { loadGameScreen } from './game-chunk.ts';
@@ -12,8 +13,11 @@ export const SOUND_GRACE_MS = 4000;
 export const GIVE_UP_MS = 20_000;
 
 const GameScreen = lazy(() => loadGameScreen().then((module) => ({ default: module.GameScreen })));
+const SpectateScreen = lazy(() =>
+  loadGameScreen().then((module) => ({ default: module.SpectateScreen })),
+);
 
-export function GameGate() {
+export function GameGate({ which = 'game' }: { which?: 'game' | 'spectate' }) {
   const tasks = useLoading((s) => s.tasks);
   const [graceOver, setGraceOver] = useState(false);
   const [gaveUp, setGaveUp] = useState(false);
@@ -31,7 +35,7 @@ export function GameGate() {
   const ready = gaveUp || (blockingDone(tasks) && (graceOver || allDone(tasks)));
   return ready ? (
     <Suspense fallback={<Loading />}>
-      <GameScreen />
+      {which === 'spectate' ? <SpectateScreen /> : <GameScreen />}
     </Suspense>
   ) : (
     <Loading />
