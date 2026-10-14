@@ -93,6 +93,13 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   stats and (at the results) level ends. In versus the server-side embargo
   (`spectator-embargo.ts`) masks a verdict or expiry until both newsrooms closed its `spawnKey`
   or the level ended, and `matchStats` counts only what the Widownia was shown.
+- **Lobby administration** (Stage 7, host only, any phase): `setVisibility` (rooms are private;
+  public needs the `roomBrowser` flag), `setRoomName` (the shared name filter answers
+  `invalidName`), `transferHost` (to a connected member, never self) and `kick` (never self):
+  the target gets `error kicked`, leaves for good (its token is dropped) and its socket closes
+  with `CLOSE_KICKED` (4002). The room remembers the target's browser `clientId` for
+  `KICK_REJOIN_COOLDOWN_MS` (10 min, `limits.ts`) and answers its joins with `kickCooldown`;
+  there is no IP ban, because a class shares one address.
 - **Run lifecycle** (Stage 7): the lobby holds the selected level as `getLevel` serves it and the
   room's difficulty (host only, lobby only). Every briefing, replays included, deals the run with
   `prepareRun` from a fresh **run seed** (never sent to clients) and the room's difficulty;

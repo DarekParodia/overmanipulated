@@ -34,10 +34,12 @@ import {
   type ErrorCode,
   emptyPlayerStats,
   encodeMessage,
+  type FeatureFlag,
   type GameEvent,
   type GameState,
   INPUT_QUEUE_CATCH_UP_THRESHOLD,
   INPUT_QUEUE_MAX,
+  isAcceptableName,
   type JoinMessage,
   type LevelEndMessage,
   type LevelOutcome,
@@ -90,11 +92,11 @@ import {
   type VersusResult,
   versusOutcome,
 } from '@redakcja/shared';
-import { MAX_ROOMS } from '../limits.ts';
+import { KICK_REJOIN_COOLDOWN_MS, MAX_ROOMS } from '../limits.ts';
 import { log } from '../log.ts';
 import type { RoomSettings } from '../public-config.ts';
 import { generateReconnectToken, generateRoomCode, secureRandom } from './codes.ts';
-import { CLOSE_REPLACED, type Connection, type Hub } from './connection.ts';
+import { CLOSE_KICKED, CLOSE_REPLACED, type Connection, type Hub } from './connection.ts';
 
 /** A room member: a player in one newsroom, or a spectator in the Widownia (S7-79). */
 type RoomMember = {
@@ -180,6 +182,11 @@ type Room = {
   outcome: VersusResult | null;
   /** What the spectator topic still holds back of the current level (S7-81). */
   embargo: SpectatorEmbargo;
+  /**
+   * Browsers the host kicked, by `clientId`, with the `now()` time their cooldown ends: a join
+   * from one of them before then gets `kickCooldown` (S7-82). Room-scoped; expired entries go.
+   */
+  kicked: Map<ClientId, number>;
 };
 
 /** The room's pub/sub topics (protocol v7). */
@@ -471,7 +478,7 @@ export function createRoomRegistry(options: RegistryOptions) {
   }
 
   /** Whether a feature flag of config.json is on now (the shared defaults without settings). */
-  function featureOn(flag: 'versus' | 'spectators'): boolean {
+  function featureOn(flag: FeatureFlag): boolean {
     return options.settings?.().features[flag] ?? DEFAULT_FEATURE_FLAGS[flag];
   }
 
@@ -772,6 +779,10 @@ export function createRoomRegistry(options: RegistryOptions) {
       sendError(connection, 'roomNotFound');
       return;
     }
+    if (inKickCooldown(room, message.clientId)) {
+      sendError(connection, 'kickCooldown');
+      return;
+    }
     // A versus match keeps its line-up: a new player waits for the results (or spectates).
     if (room.mode === 'versus' && (room.phase === 'briefing' || room.phase === 'playing')) {
       sendError(connection, 'matchInProgress');
@@ -858,6 +869,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       spectatorStats: new Map(),
       outcome: null,
       embargo: createEmbargo(1),
+      kicked: new Map(),
     };
     rooms.set(code, room);
     const host = addToRoom(room, message.nickname, connection, kind, 0, message.clientId);
@@ -884,6 +896,10 @@ export function createRoomRegistry(options: RegistryOptions) {
     const room = rooms.get(message.roomCode);
     if (!room) {
       sendError(connection, 'roomNotFound');
+      return;
+    }
+    if (inKickCooldown(room, message.clientId)) {
+      sendError(connection, 'kickCooldown');
       return;
     }
     if (!room.spectatorsAllowed) {
@@ -1056,11 +1072,16 @@ export function createRoomRegistry(options: RegistryOptions) {
         setSpectatorsAllowed(room, member, action.allowed);
         return;
       case 'setVisibility':
+        setVisibility(room, member, action.visibility);
+        return;
       case 'setRoomName':
+        setRoomName(room, member, action.name);
+        return;
       case 'kick':
+        kick(room, member, action.playerId);
+        return;
       case 'transferHost':
-        // On the wire since protocol 7 (S7-77); served from S7-82. Ignored until then, like any
-        // action that does not apply.
+        transferHost(room, member, action.playerId);
         return;
       case 'backToLobby':
         if (member.id !== room.hostId) {
@@ -1257,6 +1278,113 @@ export function createRoomRegistry(options: RegistryOptions) {
     if (spectator && target.connection) {
       syncSpectator(room, target.connection);
     }
+  }
+
+  /**
+   * Host, any phase: private (reached by code) or public (listed in the room browser). Public
+   * needs the `roomBrowser` flag; a room already public stays so if the flag goes off later.
+   */
+  function setVisibility(room: Room, member: RoomMember, visibility: RoomVisibility): void {
+    if (member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    if (visibility === 'public' && !featureOn('roomBrowser')) {
+      reject(member, 'featureDisabled', 'the room browser is not available');
+      return;
+    }
+    if (room.visibility === visibility) {
+      return;
+    }
+    room.visibility = visibility;
+    log.info('room visibility changed', { room: room.code, visibility });
+    broadcastRoomState(room);
+  }
+
+  /**
+   * Host, any phase: names the room (the schema already trimmed it) or clears the name with
+   * null. A name the shared filter blocks gets `invalidName` and changes nothing.
+   */
+  function setRoomName(room: Room, member: RoomMember, name: string | null): void {
+    if (member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    if (name !== null && !isAcceptableName(name)) {
+      reject(member, 'invalidName');
+      return;
+    }
+    if (room.name === name) {
+      return;
+    }
+    room.name = name;
+    broadcastRoomState(room);
+  }
+
+  /** Whether `clientId` was kicked from the room less than `KICK_REJOIN_COOLDOWN_MS` ago. */
+  function inKickCooldown(room: Room, clientId: ClientId | undefined): boolean {
+    if (clientId === undefined) {
+      return false;
+    }
+    const until = room.kicked.get(clientId);
+    if (until === undefined) {
+      return false;
+    }
+    if (now() >= until) {
+      room.kicked.delete(clientId);
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Host, any phase, never self: the target gets `error kicked`, leaves the room for good (its
+   * token is dropped, so a reconnect gets `reconnectFailed`) and its socket closes with
+   * `CLOSE_KICKED`. Its browser (`clientId`) may not rejoin for `KICK_REJOIN_COOLDOWN_MS`; there
+   * is no IP ban, since a whole class shares one address.
+   */
+  function kick(room: Room, member: RoomMember, playerId: string): void {
+    if (member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    const target = room.members.get(playerId);
+    if (!target || target.id === member.id) {
+      reject(member, 'invalidTarget');
+      return;
+    }
+    const time = now();
+    for (const [clientId, until] of room.kicked) {
+      if (time >= until) {
+        room.kicked.delete(clientId);
+      }
+    }
+    if (target.clientId !== undefined) {
+      room.kicked.set(target.clientId, time + KICK_REJOIN_COOLDOWN_MS);
+    }
+    const connection = target.connection;
+    if (connection) {
+      sendError(connection, 'kicked');
+    }
+    log.info('member kicked', { room: room.code, player: target.id });
+    removeMember(room, target);
+    connection?.close(CLOSE_KICKED, 'kicked');
+  }
+
+  /** Host, any phase: hands the host to another connected member (a spectator may host). */
+  function transferHost(room: Room, member: RoomMember, playerId: string): void {
+    if (member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    const target = room.members.get(playerId);
+    if (!target || target.id === member.id || target.connection === null) {
+      reject(member, 'invalidTarget');
+      return;
+    }
+    room.hostId = target.id;
+    log.info('host transferred', { room: room.code, player: target.id });
+    broadcastRoomState(room);
   }
 
   /** The first newsroom of the mode without a connected player, or null when all have one. */

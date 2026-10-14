@@ -14,6 +14,11 @@ export const JOINS_PER_MINUTE_PER_IP = 120;
 export const ROOMS_PER_MINUTE_PER_IP = 20;
 /** Rooms alive at once; keeps memory bounded on a small VPS. */
 export const MAX_ROOMS = 300;
+/**
+ * How long a browser (`clientId`) the host kicked may not rejoin that room (S7-82): 10 minutes.
+ * Not an IP ban, which would lock out the whole class behind one address.
+ */
+export const KICK_REJOIN_COOLDOWN_MS = 10 * 60 * 1000;
 
 // --- config.json (S7-68) -------------------------------------------------------------------
 
