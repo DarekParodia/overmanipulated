@@ -1,7 +1,8 @@
 // Angled top-down camera. Fits the whole newsroom when tiles would be big enough; on small
 // screens it follows the local player at a readable zoom, clamped to the room and framed under
 // the HUD band (scene/camera-framing.ts). Applies the GameView's shake and hit punch, fed by the
-// view's own feedback (S7-85).
+// view's own feedback (S7-85). A spectator view (S7-90) fits its whole newsroom under the team
+// plate unless it follows a player, and never shakes.
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { type PerspectiveCamera, Vector3 } from 'three';
@@ -11,7 +12,13 @@ import { hitCamera, settleCamera } from '../fx/camera/view-camera.ts';
 import { fxTimeScale } from '../fx/time-scale.ts';
 import { useHudBand } from '../hud/hud-band.ts';
 import { useGameView } from '../net/view-context.tsx';
-import { computeFraming, placeCamera, setUpLens } from './camera-framing.ts';
+import {
+  computeFraming,
+  FIT_BACK_ROOM,
+  placeCamera,
+  SPECTATOR_FIT_BACK_ROOM,
+  setUpLens,
+} from './camera-framing.ts';
 
 const FOLLOW_SMOOTHING = 6;
 
@@ -34,7 +41,10 @@ export function CameraRig() {
   useEffect(
     () =>
       view.feedback.connect({
-        addTrauma: (amount) => hitCamera(view.camera, amount),
+        // A spectator watches calmly: no camera shake (S7-90).
+        ...(view.kind !== 'spectator'
+          ? { addTrauma: (amount: number) => hitCamera(view.camera, amount) }
+          : {}),
         screenX: (position) => {
           tmp.set(position.x, 0.5, position.y).project(camera);
           return tmp.x;
@@ -50,8 +60,10 @@ export function CameraRig() {
       mapW: view.runtime.map.width,
       mapH: view.runtime.map.height,
       local: view.render.local,
-      // The intro's stage has no HUD over it, whatever screen the dialog opened on (S7-101).
-      topInsetPx: view.kind === 'intro' ? 0 : useHudBand.getState().px,
+      // Only a player has the HUD over the scene: the intro's stage (S7-101) and a spectator view
+      // (S7-90) start right under their own frame.
+      topInsetPx: view.kind === 'player' ? useHudBand.getState().px : 0,
+      backRoom: view.kind === 'spectator' ? SPECTATOR_FIT_BACK_ROOM : FIT_BACK_ROOM,
     });
     const k = 1 - Math.exp(-FOLLOW_SMOOTHING * delta);
     focus.current.lerp(tmp.set(framing.target.x, 0, framing.target.z), k);

@@ -125,3 +125,59 @@ export function nameToSend(text: string): string | null {
   const trimmed = text.trim();
   return trimmed.length > 0 ? trimmed : null;
 }
+
+/** What the host's manage sheet offers for one other member (S7-87). */
+export type MemberOptions = {
+  nickname: string;
+  /** Whether the member watches from the Widownia. */
+  spectator: boolean;
+  /** „Przenieś do: …”: Na punkty, a player, and the other newsroom has a free seat. */
+  moveTo: TeamIndex | null;
+  /** „Na widownię”: a player, the feature is on and the Widownia has a seat (closed or not). */
+  toSpectators: boolean;
+  /** „Do gry”: a spectator, and a seat is free. */
+  toPlayers: boolean;
+  /** „Przekaż gospodarza”: a connected member (the server refuses a disconnected one). */
+  makeHost: boolean;
+};
+
+/**
+ * The host's options for member `targetId`, mirroring the server's `setTeam`, `setSpectator`
+ * and `transferHost` rules; null when `selfId` is not the host, the target is the host or is
+ * gone. A kick is always offered.
+ */
+export function memberOptions(
+  room: Pick<LobbyRoom, 'hostId' | 'mode' | 'players' | 'spectators'>,
+  selfId: string | null,
+  targetId: string,
+  spectatorsFeature: boolean,
+): MemberOptions | null {
+  if (selfId === null || room.hostId !== selfId || targetId === selfId) {
+    return null;
+  }
+  const asPlayer = room.players.find((p) => p.id === targetId);
+  if (asPlayer) {
+    const other: TeamIndex = asPlayer.team === 0 ? 1 : 0;
+    const otherHasSeat = teamPlayers(room.players, other).length < MAX_TEAM_PLAYERS;
+    return {
+      nickname: asPlayer.nickname,
+      spectator: false,
+      moveTo: room.mode === 'versus' && otherHasSeat ? other : null,
+      toSpectators: spectatorsFeature && room.spectators.length < MAX_SPECTATORS,
+      toPlayers: false,
+      makeHost: asPlayer.connected,
+    };
+  }
+  const asSpectator = room.spectators.find((s) => s.id === targetId);
+  if (asSpectator) {
+    return {
+      nickname: asSpectator.nickname,
+      spectator: true,
+      moveTo: null,
+      toSpectators: false,
+      toPlayers: hasFreeSeat(room),
+      makeHost: asSpectator.connected,
+    };
+  }
+  return null;
+}

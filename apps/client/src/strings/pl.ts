@@ -8,6 +8,7 @@ import type {
   FolderBonuses,
   FolderOutcome,
   FolderReason,
+  LevelEventKind,
   LossReason,
   PingKind,
   Priority,
@@ -211,6 +212,8 @@ export const pl = {
     /** Clears the seen station help cards (S7-95). */
     stationHelpAgain: 'Pokaż pomoc stanowisk od nowa',
     stationHelpQueued: 'Pomoc pokaże się znowu',
+    /** Ułatwienia: plays the intro again (S7-102), whether or not it was seen. */
+    introAgain: 'Obejrzyj wprowadzenie',
     close: 'Gotowe',
     closeIcon: 'Zamknij',
     // S5-06 settings screen.
@@ -477,6 +480,65 @@ export const pl = {
     startNoPlayers: 'Nikt nie siedzi przy biurku.',
     /** In-game toast when someone starts watching (S7-86). */
     spectatorJoined: 'Widz dołączył',
+  },
+  /**
+   * The host's manage sheet (S7-87): the „more” button on another member's card opens it with
+   * the moves the server would accept and the kick behind a confirm step.
+   */
+  manage: {
+    /** The „more” button's accessible name (the sheet's heading is the nickname). */
+    open: (name: string) => `Opcje: ${name}`,
+    kicker: 'Opcje gracza',
+    watching: 'Ogląda z\u00a0widowni',
+    moveTo: (team: string) => `Przenieś do: ${team}`,
+    makeHost: 'Przekaż gospodarza',
+    kick: 'Usuń z\u00a0pokoju',
+    kickConfirm: 'Usunąć na pewno?',
+    kickYes: 'Tak, usuń',
+    cancel: 'Anuluj',
+    close: 'Zamknij',
+  },
+  /**
+   * „Szczegóły” of the chosen level in the lobby (S7-87), for guests and the host: stations,
+   * events, the star rule, the best stars from this browser and the rule of the mode.
+   */
+  levelDetails: {
+    open: 'Szczegóły',
+    kicker: 'Szczegóły poziomu',
+    stations: 'Stanowiska',
+    events: 'Zdarzenia',
+    noEvents: 'Bez niespodzianek. Same teczki.',
+    /** What each event does, one short line (outside play, so a little longer than a banner). */
+    eventWhat: {
+      viral: 'Teczka krąży po sieci i\u00a0zyskuje udostępnienia',
+      bossCall: 'Szef naciska na publikację. Sprawdź mimo to',
+      botRaid: 'Fala niemal takich samych teczek',
+      outage: 'Jedno stanowisko na chwilę przestaje działać',
+      correction: 'Opublikowany błąd trzeba sprostować przy stole',
+    } satisfies Record<LevelEventKind, string>,
+    folders: (n: number) => `${n} ${pluralPl(n, 'teczka', 'teczki', 'teczek')}`,
+    /** A bag level: the folders a run deals out of how many stories it may draw. */
+    pool: (n: number) => `z\u00a0puli ${n} historii`,
+    stars: 'Gwiazdki',
+    starOne: 'Wynik powyżej zera',
+    starShare: (percent: number) => `${percent}% możliwych punktów`,
+    starPoints: (points: number) => `${points}\u00a0pkt`,
+    /** A bag level in the lobby: the run (and its points) is dealt at the briefing. */
+    starsLater: 'Progi w\u00a0punktach zobaczycie na odprawie.',
+    /** Accessible name of a star rule row. */
+    starsLabel: (n: number) => `${n} ${pluralPl(n, 'gwiazdka', 'gwiazdki', 'gwiazdek')}`,
+    best: 'Twoje gwiazdki',
+    bestEndless: 'Twój najlepszy wynik',
+    /** Best stars or score on one difficulty, for screen readers. */
+    bestStarsLabel: (difficulty: string, stars: number) =>
+      `${difficulty}: ${stars} ${pluralPl(stars, 'gwiazdka', 'gwiazdki', 'gwiazdek')}`,
+    bestNone: '–',
+    rules: 'Zasady',
+    versusRule: 'Wygrywa redakcja z\u00a0większą liczbą punktów',
+    versusEndless: (minutes: number) =>
+      `Pojedynek trwa ${minutes} ${pluralPl(minutes, 'minutę', 'minuty', 'minut')}`,
+    endlessRule: 'Gra trwa, dopóki macie wiarygodność',
+    close: 'Gotowe',
   },
   /** Difficulty picker in the lobby and its chips (S7-25). */
   difficulty: {
@@ -1998,6 +2060,19 @@ export const pl = {
     paused: 'Pauza',
     /** The stage's accessible name. */
     stageLabel: 'Scena wprowadzenia',
+    /** S7-102: the few words on the later scenes' art; the subtitles carry the rest. */
+    art: {
+      strongProof: 'Mocny dowód',
+      weakProof: 'Słaby dowód',
+      /** The weak proof's badge: half the points. */
+      half: '½',
+      /** The stamps of a folder that needs two. */
+      stamps: (have: number, need: number) => `${have}/${need}`,
+      /** The HUD pill's level clock. */
+      clock: '1:24',
+      /** The red folder card's countdown. */
+      countdown: '5\u00a0s',
+    },
     voice: {
       welcome:
         'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
@@ -2287,19 +2362,41 @@ export const pl = {
     rivalUnfinished: 'w grze',
   },
   /**
-   * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
-   * screen (S7-90/91) builds on these.
+   * Spectators: the read-only briefing (S7-84) and the spectate screen (S7-90): one view per
+   * newsroom, the top-bar scoreboard and the team plates. During play: at most 8 words per line.
    */
   spectate: {
     title: 'Widownia',
     watching: 'Oglądasz',
     waiting: 'Czekamy na pierwszy obraz…',
     leave: 'Wyjdź',
-    /** One newsroom's line on the watch screen: name, points and credibility. */
+    /** One newsroom's line on the scoreboard (screen readers): name, points and credibility. */
     teamLine: (team: string, score: number, credibility: number) =>
       `${team}: ${score} pkt, wiarygodność ${credibility}`,
     /** The single newsroom of a co-op match. */
     coopTeam: 'Redakcja',
+    /** The top bar (screen readers). */
+    scoreboardLabel: 'Wynik meczu',
+    /** The crown on the newsroom ahead. */
+    leader: 'Prowadzi',
+    clockLabel: (clock: string) => `Czas: ${clock}`,
+    /** Co-op scoreboard: folders closed with a verdict and folders that ran out of time. */
+    resolved: (count: number) => `Zamknięte teczki: ${count}`,
+    expired: (count: number) => `Przeterminowane teczki: ${count}`,
+    /** The results phase, before the spectator results (S7-91). */
+    matchOver: 'Koniec meczu',
+    /** The views region (screen readers). */
+    viewsLabel: 'Podgląd redakcji',
+    /** One-view layout: the score segment that shows its newsroom (phones). */
+    showTeam: (team: string) => `Pokaż redakcję ${team}`,
+    /** Split layout: the team plate focuses its newsroom, and a second tap brings both back. */
+    focusTeam: (team: string) => `Tylko redakcja ${team}`,
+    bothTeams: 'Pokaż obie redakcje',
+    /** The keys of the spectate screen, keyboard and gamepad only (≤ 8 words). */
+    hints: {
+      keyboard: { split: 'Spacja – widok · 1, 2 – redakcja', single: 'Spacja – druga redakcja' },
+      gamepad: { split: 'A – widok · B – obie redakcje', single: 'A – druga redakcja' },
+    },
   },
   // --- S7-96 „Jak grać”: the help dialog with the intro, the stations and the controls. ---
   howTo: {

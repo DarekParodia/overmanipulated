@@ -30,6 +30,7 @@
   grid-area: chips;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
 }
 
@@ -76,12 +77,18 @@
   color: var(--text-soft);
 }
 
-/* Host: the campaign map. Title and the chosen level's chips on top, the tile path below. */
+/* Host: the campaign map. Title, the chosen level's chips and „Szczegóły” on top, the tile path
+   below. */
 .map {
+  grid-template-columns: auto 1fr auto;
   grid-template-areas:
-    "title chips"
-    "path path";
+    "title chips details"
+    "path path path";
   row-gap: var(--space-1);
+}
+
+.details {
+  grid-area: details;
 }
 
 .mapTitle {
@@ -262,7 +269,8 @@
   }
   /* The tiles speak for themselves on a phone; the sticky action bar stays short. */
   .map {
-    grid-template-areas: "path path";
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "path details";
   }
   .mapTitle,
   .map .chips {

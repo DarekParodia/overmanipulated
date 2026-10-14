@@ -21,7 +21,12 @@ export const FOLLOW_BACK_MARGIN = 3.5;
 /** Fit mode: floor shown beside the room, in tiles (both sides together). */
 const FIT_SIDE_ROOM = 1.5;
 /** Fit mode: extra depth for the signs over the back row and the HUD above them, in tiles. */
-const FIT_BACK_ROOM = 5;
+export const FIT_BACK_ROOM = 5;
+/**
+ * Fit mode for a spectator view (S7-90): no HUD over the room, only the team plate, so the back
+ * keeps room for the signs over the back row and little more.
+ */
+export const SPECTATOR_FIT_BACK_ROOM = 3;
 /** Fit mode: the view centre sits this far in front of the room centre, towards the back. */
 const FIT_BACK_SHIFT = 0.9;
 
@@ -36,6 +41,8 @@ export type FramingInput = {
   local: { x: number; y: number } | null;
   /** How far down the HUD band reaches, in CSS px (0 when not measured). */
   topInsetPx: number;
+  /** Fit mode: depth kept free behind the room, in tiles (FIT_BACK_ROOM when left out). */
+  backRoom?: number;
 };
 
 export type Framing = {
@@ -58,7 +65,7 @@ export function computeFraming(input: FramingInput): Framing {
   const { width, height, mapW, mapH, local } = input;
   const sinE = Math.sin(ELEVATION);
   const fitWidth = mapW + FIT_SIDE_ROOM;
-  const fitDepth = mapH + FIT_BACK_ROOM;
+  const fitDepth = mapH + (input.backRoom ?? FIT_BACK_ROOM);
   const tilePxIfFit = Math.min(width / fitWidth, height / (fitDepth * sinE));
   if (tilePxIfFit >= MIN_TILE_PX || local === null) {
     const aspect = width / Math.max(1, height);

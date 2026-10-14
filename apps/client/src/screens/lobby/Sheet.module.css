@@ -1,0 +1,313 @@
+/* The lobby's modal sheets (S7-87): the host's manage sheet and the level details. A centred
+   panel on desktop; on short landscape phones it fills the height and its body scrolls, so every
+   control stays reachable at 640×360. */
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: min(30rem, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.wide {
+  width: min(46rem, calc(100vw - 2 * var(--space-4)));
+}
+
+.dialog::backdrop {
+  background: var(--outline-a50);
+}
+
+.sheet {
+  display: grid;
+  gap: var(--space-3);
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-4) var(--space-5);
+}
+
+.dialog[open] .sheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.heading {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.kicker {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.08em;
+  overflow-wrap: anywhere;
+}
+
+.title svg {
+  flex: none;
+  margin-top: -0.12em;
+}
+
+.note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 800;
+  color: var(--text-soft);
+}
+
+.note svg {
+  flex: none;
+}
+
+/* One full-width button per line: the moves first, the red kick last. */
+.actions {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.confirm {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.confirmText {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Level details: a fixed header and footer, and a body that scrolls (and takes the focus, so
+   the keyboard and the pad scroll it). */
+.scrolling {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.body {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0 calc(-1 * var(--space-2));
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+.body:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: -2px;
+}
+
+/* Chips, then sections with an icon heading. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2.25rem;
+  padding: 0.15em var(--space-3) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.chip svg {
+  flex: none;
+  margin-top: -0.15em;
+}
+
+.section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+}
+
+.sectionTitle svg {
+  flex: none;
+  margin-top: -0.12em;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.item > svg {
+  grid-row: span 2;
+}
+
+.itemName {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  line-height: var(--leading-snug);
+}
+
+.itemLine {
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.plain {
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.starRows {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.starRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  font-weight: 700;
+}
+
+.starIcons {
+  display: inline-flex;
+  min-width: 4.5rem;
+}
+
+.starOn {
+  --icon-fill: var(--yellow);
+}
+
+.starOff {
+  color: var(--text-faint);
+}
+
+.points {
+  padding: 0.1em var(--space-2) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.best {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bestItem {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: var(--stroke) dashed var(--outline-a50);
+  border-radius: var(--radius-md);
+  font-weight: 800;
+}
+
+/* The room's difficulty: a solid outline (selection is blue elsewhere, here it is only marked). */
+.current {
+  border-style: solid;
+  border-color: var(--outline);
+  background: var(--surface);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .dialog,
+  .sheet {
+    max-height: calc(100dvh - 2 * var(--space-2));
+  }
+  .sheet {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .actions {
+    gap: var(--space-2);
+  }
+  .body {
+    gap: var(--space-3);
+  }
+}

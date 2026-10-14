@@ -128,6 +128,8 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   // The mode chip and the newsroom columns change on screen (S7-86).
   'lobby.modeSwitch': skip('visual-elsewhere'),
   'lobby.teamSwitch': skip('visual-elsewhere'),
+  'lobby.hostChanged': skip('visual-elsewhere'),
+  'lobby.kicked': skip('visual-elsewhere'),
   // Someone watching is worth knowing about, also with the sound off (S7-86).
   'room.spectatorJoined': chip('eye', t.spectatorJoined, 'info'),
   'briefing.intro': skip('visual-elsewhere'),

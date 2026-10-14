@@ -119,3 +119,8 @@
     font-size: var(--text-sm);
   }
 }
+
+/* The host's „more” button sits at the end of another spectator's chip (S7-87). */
+.chip > button {
+  margin: var(--space-1) calc(-1 * var(--space-2)) var(--space-1) var(--space-1);
+}

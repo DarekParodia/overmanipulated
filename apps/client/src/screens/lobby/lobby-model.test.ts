@@ -5,6 +5,7 @@ import {
   canWatch,
   emptyTeam,
   hasFreeSeat,
+  memberOptions,
   nameToSend,
   roomTitle,
   startGate,
@@ -167,5 +168,64 @@ describe('room name', () => {
   it('sends trimmed text, and null for an empty field', () => {
     expect(nameToSend('  3B piątek ')).toBe('3B piątek');
     expect(nameToSend('   ')).toBeNull();
+  });
+});
+
+describe('memberOptions', () => {
+  it('offers nothing to a guest, for the host itself or for someone gone', () => {
+    const r = room([player('Ala', 0), player('Bartek', 1)]);
+    expect(memberOptions(r, 'Bartek', 'Ala', true)).toBeNull();
+    expect(memberOptions(r, 'Ala', 'Ala', true)).toBeNull();
+    expect(memberOptions(r, 'Ala', 'Zenon', true)).toBeNull();
+    expect(memberOptions(r, null, 'Bartek', true)).toBeNull();
+  });
+
+  it('moves a versus player to the other newsroom while it has a seat', () => {
+    const r = room([player('Ala', 0), player('Bartek', 1)]);
+    expect(memberOptions(r, 'Ala', 'Bartek', true)).toEqual({
+      nickname: 'Bartek',
+      spectator: false,
+      moveTo: 0,
+      toSpectators: true,
+      toPlayers: false,
+      makeHost: true,
+    });
+    const full = room([...four(0, 'k'), player('Ala', 1), player('Bartek', 1)]);
+    expect(memberOptions(full, 'Ala', 'Bartek', true)?.moveTo).toBeNull();
+  });
+
+  it('has no newsroom move in Razem', () => {
+    const r = room([player('Ala', 0), player('Bartek', 0)], 'coop');
+    expect(memberOptions(r, 'Ala', 'Bartek', true)?.moveTo).toBeNull();
+  });
+
+  it('sends a player to the Widownia only with the feature on and a seat free, closed or not', () => {
+    const r = room([player('Ala', 0), player('Bartek', 0)], 'coop', { spectatorsAllowed: false });
+    expect(memberOptions(r, 'Ala', 'Bartek', true)?.toSpectators).toBe(true);
+    expect(memberOptions(r, 'Ala', 'Bartek', false)?.toSpectators).toBe(false);
+    const crowd = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => spectator(`s${n}`));
+    const full = room([player('Ala', 0), player('Bartek', 0)], 'coop', { spectators: crowd });
+    expect(memberOptions(full, 'Ala', 'Bartek', true)?.toSpectators).toBe(false);
+  });
+
+  it('brings a spectator back to play while a seat is free', () => {
+    const r = room([player('Ala', 0)], 'coop', { spectators: [spectator('Pani')] });
+    expect(memberOptions(r, 'Ala', 'Pani', true)).toEqual({
+      nickname: 'Pani',
+      spectator: true,
+      moveTo: null,
+      toSpectators: false,
+      toPlayers: true,
+      makeHost: true,
+    });
+    const full = room([player('Ala', 0), ...four(0, 'k').slice(1)], 'coop', {
+      spectators: [spectator('Pani')],
+    });
+    expect(memberOptions(full, 'Ala', 'Pani', true)?.toPlayers).toBe(false);
+  });
+
+  it('hands the host only to a connected member', () => {
+    const r = room([player('Ala', 0), player('Bartek', 1, { connected: false })]);
+    expect(memberOptions(r, 'Ala', 'Bartek', true)?.makeHost).toBe(false);
   });
 });

@@ -137,7 +137,7 @@ function otherTeam(team: TeamIndex | undefined): boolean {
 function routeSpectator(message: RoomStateMessage, previous: RoomStateMessage | null): void {
   const app = useApp.getState();
   if (message.phase === 'briefing' && app.screen !== 'briefing') {
-    useSpectate.getState().reset();
+    useSpectate.getState().reset(message.levelId);
     app.setScreen('briefing');
   } else if (
     (message.phase === 'playing' || message.phase === 'results') &&
@@ -145,7 +145,7 @@ function routeSpectator(message: RoomStateMessage, previous: RoomStateMessage | 
   ) {
     // Already reset when the briefing began; joining mid-match arrives here directly.
     if (previous?.phase !== 'briefing') {
-      useSpectate.getState().reset();
+      useSpectate.getState().reset(message.levelId);
     }
     app.setScreen('spectate');
   } else if (message.phase === 'lobby' && app.screen !== 'lobby') {
@@ -176,6 +176,8 @@ function handleKicked(): void {
   closeSession();
   resetToMenu();
   useApp.setState({ connection: 'idle', error: 'kicked' });
+  // The menu's alert says why (S7-87).
+  emitCue('lobby.kicked');
 }
 
 function handleMessage(message: ServerMessage): void {
@@ -509,6 +511,16 @@ export function setVisibility(visibility: RoomVisibility): void {
 /** Host: names the room, or clears the name with null. */
 export function setRoomName(name: string | null): void {
   lobby({ kind: 'setRoomName', name });
+}
+
+/** Host (S7-87): removes a member from the room; their browser may not rejoin for a while. */
+export function kick(playerId: string): void {
+  lobby({ kind: 'kick', playerId });
+}
+
+/** Host (S7-87): hands the host to another connected member (a spectator may host). */
+export function transferHost(playerId: string): void {
+  lobby({ kind: 'transferHost', playerId });
 }
 
 /** Sends a player decision (minigame result, verdict, ping, …); applied on the next tick. */

@@ -1,12 +1,10 @@
 // The intro's timeline (S7-99), pure: how long each scene lasts, when it moves on, how its line
-// splits into subtitle chunks and whether the lobby should play it on its own. The player
+// splits into subtitle chunks (the lobby's autoplay rule is in intro-store.ts). The player
 // (S7-101) feeds it clock readings; nothing here reads the time, the DOM or storage.
 //
 // A scene with a voice clip ends INTRO_GAP_MS after the clip ends; INTRO_END_GRACE_MS past the
 // clip's length is the safety net if its end never fires. Without a voice (muted, not loaded,
 // audio still locked) the scene lasts its fallback time: INTRO_WORD_MS per word, clamped.
-import type { ScreenId } from '../store/app.ts';
-import { levelNumber } from '../store/progress.ts';
 
 /** Reading time per word when there is no voice. */
 export const INTRO_WORD_MS = 400;
@@ -202,25 +200,4 @@ export function chunkIndexAt(chunks: readonly SubtitleChunk[], elapsedMs: number
     }
   });
   return index;
-}
-
-export type AutoplayInput = {
-  screen: ScreenId;
-  levelId: string;
-  /** This browser has finished or skipped the intro before (`intro-store.ts`). */
-  seen: boolean;
-  spectator: boolean;
-  /** The intro (or the dialog holding it) is already open. */
-  open: boolean;
-};
-
-/** The lobby plays the intro once per browser, on the training level, for players only. */
-export function shouldAutoplayIntro(input: AutoplayInput): boolean {
-  return (
-    input.screen === 'lobby' &&
-    levelNumber(input.levelId) === 0 &&
-    !input.seen &&
-    !input.spectator &&
-    !input.open
-  );
 }

@@ -8,7 +8,6 @@ import {
   sceneDurationMs,
   sceneDurations,
   sceneElapsedMs,
-  shouldAutoplayIntro,
   startIntro,
   subtitleChunks,
   subtitleIndexAt,
@@ -284,29 +283,5 @@ describe('introReducer', () => {
 
   it('is done at once with no scenes', () => {
     expect(introReducer(startIntro(0), { type: 'start', now: 0 }, []).done).toBe(true);
-  });
-});
-
-describe('shouldAutoplayIntro', () => {
-  const base = {
-    screen: 'lobby',
-    levelId: 'l0-greybox',
-    seen: false,
-    spectator: false,
-    open: false,
-  } as const;
-
-  it('plays in the lobby on the training level for a player who has not seen it', () => {
-    expect(shouldAutoplayIntro(base)).toBe(true);
-  });
-
-  it('does not play anywhere else, twice, for spectators or over itself', () => {
-    expect(shouldAutoplayIntro({ ...base, levelId: 'l1-burza' })).toBe(false);
-    expect(shouldAutoplayIntro({ ...base, levelId: 'endless' })).toBe(false);
-    expect(shouldAutoplayIntro({ ...base, screen: 'mainMenu' })).toBe(false);
-    expect(shouldAutoplayIntro({ ...base, screen: 'game' })).toBe(false);
-    expect(shouldAutoplayIntro({ ...base, seen: true })).toBe(false);
-    expect(shouldAutoplayIntro({ ...base, spectator: true })).toBe(false);
-    expect(shouldAutoplayIntro({ ...base, open: true })).toBe(false);
   });
 });

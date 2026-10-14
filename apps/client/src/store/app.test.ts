@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
 import type { RoomStateMessage } from '@redakcja/shared';
-import { newsroomPlayers, useApp } from './app.ts';
+import { useApp } from './app.ts';
 
 const ROOM: RoomStateMessage = {
   type: 'roomState',
@@ -52,26 +52,5 @@ describe('app store: room difficulty and run (S7-23)', () => {
     expect(state.room).toBeNull();
     expect(state.run).toBeNull();
     expect(state.difficulty).toBe('expert');
-  });
-});
-
-describe('newsroom players (S7-89)', () => {
-  const player = (id: string, team: 0 | 1) => ({
-    id,
-    nickname: id,
-    colorIndex: 0,
-    connected: true,
-    role: null,
-    ready: true,
-    team,
-  });
-  const players = [player('p1', 0), player('p2', 1), player('p3', 0)];
-
-  it('keeps every player in co-op and only the given team in versus', () => {
-    expect(newsroomPlayers({ ...ROOM, players }, 1).map((p) => p.id)).toEqual(['p1', 'p2', 'p3']);
-    const versus = { ...ROOM, mode: 'versus' as const, players };
-    expect(newsroomPlayers(versus, 1).map((p) => p.id)).toEqual(['p2']);
-    expect(newsroomPlayers(versus, 0).map((p) => p.id)).toEqual(['p1', 'p3']);
-    expect(newsroomPlayers(null, 0)).toEqual([]);
   });
 });

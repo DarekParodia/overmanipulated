@@ -3,17 +3,38 @@
 // open the dialog; the dialog itself is a lazy chunk (`HowToPlayHost`). The tab order and the
 // tab stepping are pure and tested. S7-97 adds the practice round („Wypróbuj”): `practice` says
 // whether a station's card has turned into a round ('playing') or its outcome ('result').
+// S7-102: with the operator's 'intro' flag off the dialog has no Wprowadzenie tab and opens on
+// „Stanowiska” instead.
 import type { StationKind } from '@redakcja/shared';
 import { create } from 'zustand';
+import { usePublicConfig } from '../store/public-config.ts';
 
 export const HOW_TO_TABS = ['intro', 'stations', 'controls'] as const;
 export type HowToTab = (typeof HOW_TO_TABS)[number];
 
+/** The tabs on offer (S7-102): with the operator's 'intro' flag off there is no Wprowadzenie. */
+export function howToTabs(intro: boolean): readonly HowToTab[] {
+  return intro ? HOW_TO_TABS : HOW_TO_TABS.filter((tab) => tab !== 'intro');
+}
+
+/** `tab` when it is on offer, else the first tab that is. */
+export function offeredTab(tab: HowToTab, tabs: readonly HowToTab[]): HowToTab {
+  return tabs.includes(tab) ? tab : (tabs[0] ?? tab);
+}
+
 /** The next tab in `direction` (+1 / -1), wrapping around: a pad's Y walks them in a circle. */
-export function nextHowToTab(tab: HowToTab, direction: 1 | -1 = 1): HowToTab {
-  const index = HOW_TO_TABS.indexOf(tab);
-  const count = HOW_TO_TABS.length;
-  return HOW_TO_TABS[(index + direction + count) % count] ?? tab;
+export function nextHowToTab(
+  tab: HowToTab,
+  direction: 1 | -1 = 1,
+  tabs: readonly HowToTab[] = HOW_TO_TABS,
+): HowToTab {
+  const index = tabs.indexOf(tab);
+  const count = tabs.length;
+  return tabs[(index + direction + count) % count] ?? tab;
+}
+
+function tabsOnOffer(): readonly HowToTab[] {
+  return howToTabs(usePublicConfig.getState().config.features.intro);
 }
 
 /** The practice round of the open station card: off, a minigame running, or its outcome. */
@@ -68,17 +89,18 @@ export const useHowTo = create<HowToStore>((set, get) => ({
   autoplay: false,
   practice: 'off',
   show(tab = 'intro', options = {}) {
+    const shown = offeredTab(tab, tabsOnOffer());
     set({
       open: true,
-      tab,
+      tab: shown,
       station: options.station ?? null,
       practiceAllowed: options.practiceAllowed ?? true,
-      autoplay: options.autoplay ?? false,
+      autoplay: shown === 'intro' && (options.autoplay ?? false),
       practice: 'off',
     });
   },
   setTab(tab) {
-    set({ tab, station: null, autoplay: false, practice: 'off' });
+    set({ tab: offeredTab(tab, tabsOnOffer()), station: null, autoplay: false, practice: 'off' });
   },
   setStation(station) {
     set({ station, practice: 'off' });

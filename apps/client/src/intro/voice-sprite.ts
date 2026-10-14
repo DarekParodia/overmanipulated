@@ -116,3 +116,29 @@ export async function loadIntroVoice(
   const sprite = await loadVoiceSprite(get);
   return sprite === null ? false : load(voiceClips(sprite));
 }
+
+/**
+ * One shared load of the shipped sprite and its audio (S7-102): the first intro player to mount
+ * starts it (the lobby's autoplay opens one at once) and every replay takes the same promise, so
+ * the sprite is fetched once per page. Resolves the sprite (its audio still loading, see
+ * `voiceStatus`) or null when the build ships no voice or the sprite is not there; like
+ * `loadVoice`, a failed load is not retried.
+ */
+export function voicePreloader(
+  get: FetchJson = fetchJson,
+  shipped: boolean = VOICE_SHIPPED,
+  load: (clips: VoiceClips) => Promise<boolean> = loadVoice,
+): () => Promise<VoiceSprite | null> {
+  let pending: Promise<VoiceSprite | null> | null = null;
+  return () => {
+    pending ??= loadShippedVoiceSprite(get, shipped).then((sprite) => {
+      if (sprite) {
+        void load(voiceClips(sprite));
+      }
+      return sprite;
+    });
+    return pending;
+  };
+}
+
+export const preloadIntroVoice = voicePreloader();

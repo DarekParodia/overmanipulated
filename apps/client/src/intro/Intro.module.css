@@ -100,16 +100,325 @@
   line-height: var(--leading-tight);
 }
 
-.later {
+/*
+ * Scenes 7–11 (S7-102): kit pieces in a row (or a column), each popping in after the one before
+ * (`--delay`, set by IntroArt). They fit the ~150 px stage of a 640×360 phone (see the phone
+ * block at the end).
+ */
+.kit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  max-width: 100%;
+  max-height: 100%;
+  padding: var(--space-4);
+  color: var(--text);
+}
+
+.kitColumn {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--space-3);
+}
+
+.row {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-5);
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.piece {
+  animation: scene-in var(--motion-slow) var(--ease-bounce) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+.card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  min-width: 8.5rem;
+  padding: var(--space-3) var(--space-4);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--pop);
+}
+
+.cardIcon {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+/* A weak proof: the stamp is there, but faded. */
+.cardWeak .cardIcon {
+  opacity: 0.5;
+}
+
+/* Red means time running out: the late folder's card. */
+.cardLate {
+  background: var(--red);
+  color: var(--text-on-dark);
+}
+
+.caption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.badge {
+  position: absolute;
+  top: calc(-1 * var(--space-3));
+  right: calc(-1 * var(--space-3));
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.badgeGood {
+  background: var(--green);
+  color: var(--text-on-dark);
+}
+
+.badgeWarn {
+  background: var(--orange);
+  color: var(--text);
+}
+
+.badgeInline {
+  position: static;
+}
+
+.slots {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.slot {
+  display: inline-grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--stroke) dashed var(--outline);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.slotOn {
+  border-style: solid;
+  background: var(--green);
+  color: var(--text-on-dark);
+}
+
+/* The HUD pill: the level clock, then the credibility shield over a draining bar. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-2) var(--space-4);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.pillPart {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.meter {
+  position: relative;
+  width: 8rem;
+  height: 1.125rem;
+  overflow: hidden;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunk);
+}
+
+/* It drains once, from full green to a low red (the HUD's colours), and stays there. */
+.meterFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 25%;
+  background: var(--red);
+  box-shadow: var(--stroke) 0 0 var(--outline);
+  animation: meter-drain 2.4s var(--ease-out) both;
+  animation-delay: 0.6s;
+}
+
+@keyframes meter-drain {
+  from {
+    width: 100%;
+    background: var(--green);
+  }
+  70% {
+    background: var(--green);
+  }
+  to {
+    width: 25%;
+    background: var(--red);
+  }
+}
+
+/* Role passes: the intro reporter's role is the one picked (blue = selection). */
+.pass {
+  display: grid;
+  place-items: center;
+  padding: var(--space-2);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--pop);
+}
+
+.passOn {
+  background: var(--blue);
+}
+
+.ability {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4) var(--space-2) var(--space-2);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--pop);
+}
+
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.ringSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ringTrack,
+.ringFill {
+  fill: none;
+  stroke-width: 9;
+}
+
+.ringTrack {
+  stroke: var(--surface-sunk);
+}
+
+/* After use the ability refills (grey, the HUD's cooling ring) and is ready again (green). */
+.ringFill {
+  stroke: var(--green);
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  animation: ring-refill 3s linear both;
+  animation-delay: 1.2s;
+}
+
+@keyframes ring-refill {
+  from {
+    stroke: var(--text-soft);
+    stroke-dashoffset: 100;
+  }
+  99% {
+    stroke: var(--text-soft);
+  }
+  to {
+    stroke: var(--green);
+    stroke-dashoffset: 0;
+  }
+}
+
+.mate {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.bubblePing {
+  background: var(--surface);
+}
+
+/* Purple means a hint, as in the game. */
+.bubbleHint {
+  background: var(--purple);
+  color: var(--text-on-dark);
+}
+
+.kolegium {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
   border: var(--outline-border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--pop-lg);
-  color: var(--text);
+}
+
+.kolegiumTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+
+.star {
+  display: grid;
+}
+
+/* The middle star sits a little higher, as on the results panel. */
+.star:nth-child(2) {
+  margin-bottom: var(--space-4);
 }
 
 /* --- Callouts over the newsroom -------------------------------------------------------------- */
@@ -324,20 +633,38 @@
   line-height: var(--leading-tight);
 }
 
+/* A paused intro holds the art where it is. */
+.player[data-paused] .art,
+.player[data-paused] .art * {
+  animation-play-state: paused;
+}
+
 /* --- Reduced motion: fades only -------------------------------------------------------------- */
 
 @media (prefers-reduced-motion: reduce) {
   .art,
   .calloutSlot,
-  .proof {
+  .proof,
+  .piece {
     animation-name: scene-fade;
+  }
+  .meterFill,
+  .ringFill {
+    animation: none;
   }
 }
 
 :global(html[data-reduced-motion="true"]) .art,
 :global(html[data-reduced-motion="true"]) .calloutSlot,
-:global(html[data-reduced-motion="true"]) .proof {
+:global(html[data-reduced-motion="true"]) .proof,
+:global(html[data-reduced-motion="true"]) .piece {
   animation-name: scene-fade;
+}
+
+/* No drain, no refill: the end state at once. */
+:global(html[data-reduced-motion="true"]) .meterFill,
+:global(html[data-reduced-motion="true"]) .ringFill {
+  animation: none;
 }
 
 :global(html[data-reduced-motion="true"]) .chip:active {
@@ -387,8 +714,80 @@
   .paper {
     font-size: var(--text-lg);
   }
-  .later {
-    padding: var(--space-3);
+  /* Scenes 7–11 in about 150 px of stage height: one row, clear of the progress dots. */
+  .kit {
+    gap: var(--space-3);
+    margin-bottom: 2.25rem;
+    padding: var(--space-2);
+  }
+  .kitColumn {
+    flex-direction: row;
+    gap: var(--space-2);
+  }
+  .card {
+    grid-template-columns: auto auto;
+    align-items: center;
+    min-width: 0;
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-1) var(--space-3);
+  }
+  .cardIcon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+  .caption,
+  .bubble {
+    font-size: var(--text-md);
+  }
+  .card > .caption {
+    grid-column: 1 / -1;
+  }
+  .badge {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: var(--text-md);
+  }
+  .badge svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  .pill {
+    gap: var(--space-3);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-lg);
+  }
+  .meter {
+    width: 5rem;
+  }
+  .pass {
+    padding: var(--space-1);
+  }
+  .pass svg {
+    width: 2rem;
+    height: 2rem;
+  }
+  .ability {
+    padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
+  }
+  .ring,
+  .mate {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  .ringIcon {
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+  .kolegium {
+    padding: var(--space-1) var(--space-3);
+    gap: var(--space-1);
+  }
+  .kolegiumTitle {
+    font-size: var(--text-lg);
+  }
+  .star svg {
+    width: 2rem;
+    height: 2rem;
   }
   .controls {
     flex-wrap: nowrap;

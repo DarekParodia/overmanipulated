@@ -2,12 +2,13 @@
 // host's switch that opens it (closed by default) and the own move: „Na widownię” for a player
 // who may watch instead, „Do gry” for a spectator host (a guest spectator gets „Do gry” as the
 // footer's yellow action instead). Hidden while the server offers no spectators and nobody
-// watches.
+// watches. The host finds a „more” button on every other spectator's chip (S7-87).
 import { type LobbySpectator, MAX_SPECTATORS } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 import { Button } from '../../ui/Button.tsx';
 import { Checkbox } from '../../ui/Checkbox.tsx';
 import { Icon } from '../../ui/icons/Icon.tsx';
+import { MoreButton } from './MoreButton.tsx';
 import styles from './SpectatorStrip.module.css';
 
 export type SpectatorStripProps = {
@@ -25,6 +26,8 @@ export type SpectatorStripProps = {
   onAllowed(allowed: boolean): void;
   onWatch(): void;
   onPlay(): void;
+  /** The host's manage sheet for another spectator (S7-87); omitted for guests. */
+  onManage?: ((spectatorId: string) => void) | undefined;
 };
 
 export function SpectatorStrip({
@@ -39,6 +42,7 @@ export function SpectatorStrip({
   onAllowed,
   onWatch,
   onPlay,
+  onManage,
 }: SpectatorStripProps) {
   if (!featureOn && spectators.length === 0) {
     return null;
@@ -81,6 +85,14 @@ export function SpectatorStrip({
               <Icon name="eye" size={18} />
               {spectator.nickname}
               {spectator.id === selfId && <span className={styles.you}>{pl.lobby.you}</span>}
+              {onManage && spectator.id !== selfId && (
+                <MoreButton
+                  label={pl.manage.open(spectator.nickname)}
+                  disabled={disabled}
+                  testId="member-options"
+                  onClick={() => onManage(spectator.id)}
+                />
+              )}
             </li>
           ))
         )}

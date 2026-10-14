@@ -26,6 +26,10 @@ information: deadline warning and ticks ("Termin blisko"), last seconds, pings, 
   640×360, band about 64 px), so the captions start right under it; the numbers stay 30 px. A
   long number widens the pill rather than clipping it, and the folder queue moves along.
 - When sound is muted and captions are off, a one-time "Włącz napisy" chip offers them.
+- The spectate screen (S7-90) shows no captions: a watched newsroom's cues live on its own view's
+  feedback, which the caption stack does not listen to. A spectator hears only
+  `SPECTATOR_AUDIBLE_CUES` (verdict outcomes, expiries, event starts, raids, abilities), and the
+  spectator event feed (S7-91) is the visual twin of each of them. No haptics either.
 
 ### Intro subtitles (S7-101)
 
@@ -36,6 +40,13 @@ reading time (400 ms per word, 2.5–12 s). The bar is a polite live region, at 
 640×360. Voice lines are never cues, so they have no caption chip. Pauza holds the scene and its
 subtitle; Wstecz replays the previous one. Reduced motion: the scenes and callouts only fade;
 no-flash: nothing in the player blinks.
+
+Scenes 7–11 (S7-102) are UI-kit pictures with at most a few words; their pieces pop in one after
+another, the credibility bar drains and the ability ring refills once. Reduced motion fades the
+pieces in and shows the drained bar and the full ring at once; a paused intro holds its art too.
+The lobby plays the intro on its own once per browser (a new training room); „Pomiń”, Esc, B or
+„Gotowe” end it and it does not come back; the settings (Ułatwienia → „Obejrzyj wprowadzenie”)
+and „Jak grać?” replay it.
 
 ## Colour blindness
 

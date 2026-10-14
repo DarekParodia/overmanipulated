@@ -12,6 +12,7 @@ import {
   type TileMap,
   tileCenter,
 } from '@redakcja/shared';
+import type { CueId } from '../fx/cues.ts';
 import { cueForEvent, type GameplayEvent, verdictColors } from '../fx/event-cues.ts';
 import type { CueContext, Feedback } from '../fx/feedback.ts';
 import type { RenderState } from '../scene/render-state.ts';
@@ -71,12 +72,20 @@ export type ViewLookup = {
 /** A view events are routed to: its lookup, its listeners and its feedback. */
 export type EventView = ViewLookup & { readonly bus: GameEventBus; readonly feedback: Feedback };
 
-/** Delivers one gameplay event to a view: its listeners first, then its cue. */
-export function routeViewEvent(view: EventView, event: GameplayEvent): void {
+/**
+ * Delivers one gameplay event to a view: its listeners first, then its cue. `audible` decides
+ * which cues keep their sound; the others play silently (a spectator's view, S7-90).
+ */
+export function routeViewEvent(
+  view: EventView,
+  event: GameplayEvent,
+  audible: (cue: CueId) => boolean = () => true,
+): void {
   view.bus.emit(event);
   const cue = cueForEvent(event, (storyId) => getStory(storyId)?.truth, view.subjectId());
   if (cue !== null) {
-    view.feedback.emit(cue, contextFor(view, event));
+    const context = contextFor(view, event);
+    view.feedback.emit(cue, audible(cue) ? context : { ...context, silent: true });
   }
 }
 
