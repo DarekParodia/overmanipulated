@@ -184,6 +184,14 @@ Audit of the 38 visible renderables on high:
 
 Result: no change needed; the e2e test keeps it that way.
 
+**Several canvases (S7-85).** Each `GameCanvas` has its own renderer, so `PerfProbe` writes its
+counters to `perfStats.views[viewKey]` and the overlay's `draw calls` and `triangles` rows are the
+sum over every mounted canvas (one canvas while playing, so the numbers above are unchanged).
+Only the primary canvas measures frame time and walks the adaptive-quality ladder. The GameView
+refactor itself was measured on the l1 room (solo host, 1366x768, fixed high preset, 7 injected
+floor folders, SwiftShader): 50–51 draw calls before and after, and the same list of visible meshes;
+triangles (23.1–24.4k) differ between runs only by the folder prop of the injected story type.
+
 ## Textures and models: not applicable
 
 The game is fully procedural: all geometry is built in code (merged boxes, a skinned rig from

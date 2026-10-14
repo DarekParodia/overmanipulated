@@ -8,10 +8,10 @@
 // also gets a group named `fixture:<id>` at its tile centre for tests.
 
 import { useFrame } from '@react-three/fiber';
-import type { StationKind } from '@redakcja/shared';
+import type { Fixture, StationKind } from '@redakcja/shared';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import { type BufferGeometry, type InstancedMesh, Object3D, type Texture } from 'three';
-import { runtime } from '../net/session.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { isFirstDeskTile } from './entities.ts';
@@ -85,8 +85,12 @@ function StationModel({
   );
 }
 
-function tilesOf(kind: string, filter: (id: string) => boolean = () => true): Tile[] {
-  return runtime.map.fixtures
+function tilesOf(
+  fixtures: readonly Fixture[],
+  kind: string,
+  filter: (id: string) => boolean = () => true,
+): Tile[] {
+  return fixtures
     .filter((f) => f.kind === kind && filter(f.id))
     .map((f) => ({ x: f.col + 0.5, z: f.row + 0.5 }));
 }
@@ -217,16 +221,17 @@ export function Fixtures({ shadows }: { shadows: boolean }) {
 }
 
 function FixtureSet({ detail, shadows }: { detail: boolean; shadows: boolean }) {
-  const fixtures = useMemo(() => runtime.map.fixtures, []);
+  const view = useGameView();
+  const fixtures = useMemo(() => view.runtime.map.fixtures, [view]);
   const tiles = useMemo(() => {
     const firstDesks = new Set(
       fixtures.filter((f) => isFirstDeskTile(f, fixtures)).map((f) => f.id),
     );
     return {
-      conveyor: tilesOf('conveyor'),
-      table: tilesOf('table'),
-      deskLeft: tilesOf('desk', (id) => firstDesks.has(id)),
-      deskRight: tilesOf('desk', (id) => !firstDesks.has(id)),
+      conveyor: tilesOf(fixtures, 'conveyor'),
+      table: tilesOf(fixtures, 'table'),
+      deskLeft: tilesOf(fixtures, 'desk', (id) => firstDesks.has(id)),
+      deskRight: tilesOf(fixtures, 'desk', (id) => !firstDesks.has(id)),
     };
   }, [fixtures]);
   const g = useGeometries(sharedParts);

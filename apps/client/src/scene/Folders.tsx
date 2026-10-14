@@ -22,13 +22,9 @@ import {
 } from 'three';
 import { useShallow } from 'zustand/react/shallow';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
-import { feedback } from '../fx/feedback.ts';
-import { onGameEvent } from '../net/game-events.ts';
-import { useGame } from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
+import { useGameView, useViewGame } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
-import { handAnchors } from './character/hands.ts';
 import {
   ATLAS_PRIORITIES,
   ATLAS_TYPES,
@@ -50,7 +46,6 @@ import {
 } from './folder-motion.ts';
 import { createFolderProps } from './folder-props.ts';
 import { cylinder } from './geometry.ts';
-import { renderState } from './render-state.ts';
 import { createFolderAtlas } from './textures.ts';
 
 /** Smoothing rates (1/s) towards the target placement. Carried folders stick to the hands. */
@@ -145,7 +140,8 @@ function FolderModel({
 }
 
 export function Folders() {
-  const live = useGame(useShallow((s) => s.folders.map((f) => `${f.id}\n${f.storyId}`)));
+  const view = useGameView();
+  const live = useViewGame(useShallow((s) => s.folders.map((f) => `${f.id}\n${f.storyId}`)));
   // Expired folders leave the state before their crumple has played: keep drawing them.
   const [ghosts, setGhosts] = useState<readonly string[]>([]);
   const items = useMemo(() => {
@@ -168,7 +164,7 @@ export function Folders() {
     [atlas, geometry, markGeometry, propGeometries],
   );
 
-  const fixtures = useMemo(() => new Map(runtime.map.fixtures.map((f) => [f.id, f])), []);
+  const fixtures = useMemo(() => new Map(view.runtime.map.fixtures.map((f) => [f.id, f])), [view]);
   const groups = useRef(new Map<string, Group>());
   const motion = useRef(new Map<string, Motion>());
   const effects = useRef(new Map<string, FolderEffects>());
@@ -200,7 +196,7 @@ export function Folders() {
 
   useEffect(
     () =>
-      feedback.onAnimation((trigger, context, options) => {
+      view.feedback.onAnimation((trigger, context, options) => {
         const id = context.folderId;
         if (!id) {
           return;
@@ -214,21 +210,21 @@ export function Folders() {
         if (trigger === 'crumple') {
           const storyId =
             motion.current.get(id)?.storyId ??
-            useGame.getState().folders.find((f) => f.id === id)?.storyId;
+            view.store.getState().folders.find((f) => f.id === id)?.storyId;
           if (storyId !== undefined) {
             const item = `${id}\n${storyId}`;
             setGhosts((list) => (list.includes(item) ? list : [...list, item]));
           }
         }
       }),
-    [],
+    [view],
   );
 
   // Podaj teczkę: the folder leaves from where it is drawn now (the passer's hands). Under
   // reduced motion it snaps to the receiver like any carried folder.
   useEffect(
     () =>
-      onGameEvent((event) => {
+      view.bus.on((event) => {
         if (
           event.kind !== 'ability' ||
           event.ability !== 'passFolder' ||
@@ -248,7 +244,7 @@ export function Folders() {
           });
         }
       }),
-    [],
+    [view],
   );
 
   useLayoutEffect(() => {
@@ -263,7 +259,7 @@ export function Folders() {
 
   useFrame((_, delta) => {
     const reducedMotion = useSettings.getState().reducedMotion;
-    const carrier = (playerId: string) => renderState.players.get(playerId);
+    const carrier = (playerId: string) => view.render.players.get(playerId);
     /** Where a folder sits in a player's hands (character IK, else the carry pose). */
     const inHands = (folder: Folder, playerId: string) => {
       const inTheirHands =
@@ -273,7 +269,7 @@ export function Folders() {
         fixtures,
         carrier,
       );
-      const hands = handAnchors.get(playerId);
+      const hands = view.render.hands.get(playerId);
       if (placed && hands) {
         placed.x = hands.x;
         placed.y = hands.y;
@@ -316,7 +312,7 @@ export function Folders() {
       return true;
     };
 
-    for (const folder of useGame.getState().folders) {
+    for (const folder of view.store.getState().folders) {
       const group = groups.current.get(folder.id);
       if (!group) {
         continue;

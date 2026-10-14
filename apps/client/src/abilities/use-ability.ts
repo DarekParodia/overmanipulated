@@ -13,8 +13,9 @@ import {
   type SnapshotMessage,
   type TileMap,
 } from '@redakcja/shared';
+import { useStore } from 'zustand';
 import { hudStory } from '../hud/story-lookup.ts';
-import { type GameStore, useGame } from '../net/game-store.ts';
+import { type GameStore, type GameStoreApi, useGame } from '../net/game-store.ts';
 import { useApp } from '../store/app.ts';
 import { buildAbilityEnv, buildAbilityView } from './ability-view.ts';
 
@@ -22,7 +23,8 @@ import { buildAbilityEnv, buildAbilityView } from './ability-view.ts';
 export type AbilitySources = {
   readonly map: TileMap;
   readonly buffer: { latest(): SnapshotMessage | null };
-  readonly predictor: { readonly state: PlayerState | null };
+  /** A watch runtime has no prediction (no local player). */
+  readonly predictor?: { readonly state: PlayerState | null };
 };
 
 export type LocalAbility = {
@@ -51,7 +53,7 @@ export function abilityFrom(
   if (playerId === null || ability === null) {
     return { role, ability, preview: NONE, elapsedMs: game.elapsedMs };
   }
-  const predicted = sources.predictor.state;
+  const predicted = sources.predictor?.state ?? null;
   const view = buildAbilityView({
     elapsedMs: game.elapsedMs,
     folders: game.folders,
@@ -71,15 +73,21 @@ export function localAbility(sources: AbilitySources, playerId: string | null): 
   return abilityFrom(sources, useGame.getState(), { playerId, room: useApp.getState().room });
 }
 
-/** The local ability, recomputed on every snapshot and room change. */
-export function useLocalAbility(sources: AbilitySources): LocalAbility {
+/**
+ * The local ability, recomputed on every snapshot and room change. `store` is the game store of
+ * the view the sources belong to (the player's own by default).
+ */
+export function useLocalAbility(
+  sources: AbilitySources,
+  store: GameStoreApi = useGame,
+): LocalAbility {
   // Each snapshot moves the tick; the dev fixture can also swap folders or crew without one.
-  useGame((s) => s.tick);
-  const elapsedMs = useGame((s) => s.elapsedMs);
-  const folders = useGame((s) => s.folders);
-  const stations = useGame((s) => s.stations);
-  const desks = useGame((s) => s.desks);
-  const crew = useGame((s) => s.crew);
+  useStore(store, (s) => s.tick);
+  const elapsedMs = useStore(store, (s) => s.elapsedMs);
+  const folders = useStore(store, (s) => s.folders);
+  const stations = useStore(store, (s) => s.stations);
+  const desks = useStore(store, (s) => s.desks);
+  const crew = useStore(store, (s) => s.crew);
   const playerId = useApp((s) => s.playerId);
   const room = useApp((s) => s.room);
   return abilityFrom(sources, { elapsedMs, folders, stations, desks, crew }, { playerId, room });

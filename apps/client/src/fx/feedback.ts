@@ -30,6 +30,8 @@ export type CueContext = {
   value?: number;
   /** Key of the looping sound a cue starts or stops (e.g. the station id). */
   loopKey?: string;
+  /** No sound and no loops for this cue; particles, shake, animation and captions stay (S7-85). */
+  silent?: boolean;
 };
 
 export type FeedbackOutputs = {
@@ -131,27 +133,24 @@ export function createFeedback(getSettings: () => Settings, getQuality: () => Qu
         }
       }
       const resolved = resolveCue(cues[id], settings, getQuality());
-      if (resolved.sound && outputs.playSound) {
+      // A silent cue (S7-85) neither plays a sound nor starts or stops a loop.
+      const sound = context.silent ? null : resolved.sound;
+      const loop = context.silent ? null : resolved.loop;
+      if (sound && outputs.playSound) {
         const pan =
           context.position && outputs.screenX
             ? Math.max(-1, Math.min(1, outputs.screenX(context.position))) * PAN_WIDTH
             : 0;
-        outputs.playSound(
-          resolved.sound.ids,
-          resolved.sound.bus,
-          resolved.sound.volume ?? 1,
-          resolved.sound.rateJitter ?? 0,
-          pan,
-        );
+        outputs.playSound(sound.ids, sound.bus, sound.volume ?? 1, sound.rateJitter ?? 0, pan);
       }
-      if (resolved.loop === 'stopAll') {
+      if (loop === 'stopAll') {
         outputs.stopLoop?.();
-      } else if (resolved.loop === 'stop') {
+      } else if (loop === 'stop') {
         if (context.loopKey) {
           outputs.stopLoop?.(context.loopKey);
         }
-      } else if (resolved.loop && context.loopKey) {
-        outputs.startLoop?.(context.loopKey, resolved.loop);
+      } else if (loop && context.loopKey) {
+        outputs.startLoop?.(context.loopKey, loop);
       }
       if (context.position) {
         for (const particles of [resolved.particles, resolved.extraParticles]) {
@@ -208,13 +207,21 @@ export function createFeedback(getSettings: () => Settings, getQuality: () => Qu
   };
 }
 
+export type Feedback = ReturnType<typeof createFeedback>;
+
 /** Current quality preset, set by the scene once the device has been probed. */
 export const qualityState = { current: 'medium' as QualityPreset };
 
-export const feedback = createFeedback(
-  () => useSettings.getState(),
-  () => qualityState.current,
-);
+/** A dispatcher reading the player's settings and the probed quality: one per GameView. */
+export function createViewFeedback(): Feedback {
+  return createFeedback(
+    () => useSettings.getState(),
+    () => qualityState.current,
+  );
+}
+
+/** The player view's dispatcher: audio, haptics and captions are connected to this one. */
+export const feedback: Feedback = createViewFeedback();
 
 /** The one entry point gameplay and UI code uses (agents/code-conventions.md). */
 export function emitCue(id: CueId, context?: CueContext): void {

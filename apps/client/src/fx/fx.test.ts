@@ -116,6 +116,48 @@ describe('cue resolution respects settings', () => {
     fb.emit('stamp.applied', { position: { x: 1, y: 1 } });
     expect(calls).toEqual([]);
   });
+
+  it('mutes only the sound and the loops of a silent cue (S7-85)', () => {
+    const calls: string[] = [];
+    const fb = createFeedback(
+      () => ({ ...defaults, reducedMotion: false }),
+      () => 'high',
+    );
+    fb.connect({
+      playSound: (ids) => calls.push(`sound:${ids[0]}`),
+      spawnParticles: (preset) => calls.push(`particles:${preset}`),
+      addTrauma: () => calls.push('shake'),
+      startLoop: (key, loop) => calls.push(`start:${key}:${loop}`),
+      stopLoop: (key) => calls.push(`stop:${key ?? 'all'}`),
+    });
+    fb.onAnimation((trigger) => calls.push(`anim:${trigger}`));
+    fb.onCue((id) => calls.push(`caption:${id}`));
+    fb.emit('stamp.applied', { position: { x: 1, y: 1 }, loopKey: 'phone-0', silent: true });
+    fb.emit('station.workStart', { loopKey: 'phone-0', silent: true });
+    fb.emit('level.win', { silent: true });
+    expect(calls).toEqual([
+      'caption:stamp.applied',
+      'particles:paperBits',
+      'particles:inkSplat',
+      'shake',
+      'anim:stampSlam',
+      'caption:station.workStart',
+      'anim:workStart',
+      'caption:level.win',
+      'anim:cheer',
+    ]);
+    calls.length = 0;
+    fb.emit('stamp.applied', { position: { x: 1, y: 1 }, loopKey: 'phone-0' });
+    expect(calls).toEqual([
+      'caption:stamp.applied',
+      'sound:stamp',
+      'stop:phone-0',
+      'particles:paperBits',
+      'particles:inkSplat',
+      'shake',
+      'anim:stampSlam',
+    ]);
+  });
 });
 
 describe('particle pool', () => {
