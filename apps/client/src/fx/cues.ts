@@ -677,12 +677,12 @@ export const cues = {
     particles: { preset: 'sparks', count: 5 },
     extraParticles: { preset: 'smoke', count: 2 },
   },
-  // --- S7-36 role abilities and Koło ratunkowe. Placeholder sounds from the current sprite until
-  // the ability sounds land (S7-42). ---
+  // --- S7-36 role abilities and Koło ratunkowe; final sounds since S7-42 (`abready`, `abpower`,
+  // `abthrow`). A teammate's arm / disarm plays no cue (`cueForEvent` returns null). ---
   /** Ekspertyza or Druga szansa waits armed for its trigger. */
   'ability.armed': {
     severity: 1,
-    sound: { ids: ['copy'], bus: 'sfx', volume: 0.5 },
+    sound: { ids: ['abpower'], bus: 'sfx', volume: 0.5 },
     particles: { preset: 'inkPuff', count: 6 },
     haptic: 'tick',
   },
@@ -704,19 +704,19 @@ export const cues = {
     animation: 'abilityDenied',
   },
   /**
-   * The local ability is ready again (client-derived from the crew cooldown, S7-40): a soft
-   * tick and a bump of the chip or the button. `tick` stands in until S7-42 adds `abready`.
+   * The local ability is ready again (client-derived from the crew cooldown, S7-40): two soft
+   * rising ticks and a bump of the chip or the button.
    */
   'ability.ready': {
     severity: 1,
-    sound: { ids: ['tick'], bus: 'ui', volume: 0.6 },
+    sound: { ids: ['abready'], bus: 'ui', volume: 0.6 },
     haptic: 'tick',
     animation: 'abilityReady',
   },
   /** Ekspertyza solved the station's task: the stamp lands without a minigame. */
   'ability.expertise': {
     severity: 2,
-    sound: { ids: ['chime'], bus: 'sfx', volume: 0.8 },
+    sound: { ids: ['abpower'], bus: 'sfx', volume: 0.8 },
     particles: { preset: 'starBurst' },
     extraParticles: { preset: 'inkPuff', count: 6 },
     haptic: 'success',
@@ -756,10 +756,10 @@ export const cues = {
     particles: { preset: 'sparks', count: 6 },
     haptic: 'tick',
   },
-  /** Podaj teczkę: the folder lands in a teammate's hands. */
+  /** Podaj teczkę: the folder flies (450 ms arc, scene/Folders.tsx) into a teammate's hands. */
   'ability.pass': {
     severity: 1,
-    sound: { ids: ['rustle'], bus: 'sfx', volume: 0.8, rateJitter: 0.08 },
+    sound: { ids: ['abthrow'], bus: 'sfx', volume: 0.8, rateJitter: 0.06 },
     particles: { preset: 'paperFlutter', count: 3 },
     haptic: 'tick',
     animation: 'hop',

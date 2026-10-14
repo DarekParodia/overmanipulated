@@ -7,6 +7,7 @@ import { initAudio, playSound } from './fx/audio/audio-manager.ts';
 import { feedback } from './fx/feedback.ts';
 import { startGameplayFeedback } from './fx/gameplay-feedback.ts';
 import { vibrate } from './fx/haptics.ts';
+import { HowToPlayHost } from './howto/HowToPlayHost.tsx';
 import { useMenuNavigation } from './input/menu-nav.ts';
 import { GameGate } from './loading/GameGate.tsx';
 import { startPreload } from './loading/preload.ts';
@@ -16,6 +17,7 @@ import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
 import { SettingsPanel } from './screens/SettingsPanel.tsx';
 import { Styleguide } from './screens/Styleguide.tsx';
+import { SpectateSummary } from './spectate/SpectateSummary.tsx';
 import { useApp } from './store/app.ts';
 import { usePublicConfig } from './store/public-config.ts';
 import { applySettingsToDocument, useSettings } from './store/settings.ts';
@@ -64,9 +66,12 @@ export function App() {
       {screen === 'lobby' && <Lobby />}
       {screen === 'briefing' && <Briefing />}
       {screen === 'game' && <GameGate />}
+      {screen === 'spectate' && <SpectateSummary />}
       {screen === 'styleguide' && <Styleguide />}
       <SettingsPanel />
       <EncyclopediaScreen />
+      {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
+      <HowToPlayHost />
       <PerfOverlay />
     </>
   );

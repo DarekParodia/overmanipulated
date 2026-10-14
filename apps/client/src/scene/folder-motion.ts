@@ -1,7 +1,7 @@
 // Folder animations (S3-06) driven by feedback triggers: `slideIn` (arrives along the conveyor
 // and settles with a bounce), `hop` (picked up, new deadline), `place` and `stampSlam` (squash),
-// `tremble` (deadline close) and `crumple` (expired). Pure, allocation-free maths; Folders.tsx
-// applies the result on top of the folder's placement.
+// `tremble` (deadline close) and `crumple` (expired); and the Podaj teczkę arc (S7-42). Pure,
+// allocation-free maths; Folders.tsx applies the result on top of the folder's placement.
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
 
 /** Distance (tiles, along -x) a new folder slides in from. */
@@ -140,5 +140,25 @@ export function stepEffects(
       out.roll += Math.sin(t * 40) * 0.2 * (1 - t);
     }
   }
+  return out;
+}
+
+// --- Podaj teczkę (S7-42) ----------------------------------------------------------------------
+
+/** Peak height (tiles) the passed folder rises above the straight line between the hands. */
+export const PASS_ARC_LIFT = 1.2;
+
+export type ArcPoint = { x: number; y: number; height: number };
+
+/**
+ * The passed folder's point on its arc at `t` (0..1, clamped) of the flight: a straight line
+ * from the passer's hands to the receiver's, lifted by `PASS_ARC_LIFT × 4t(1 − t)`. Writes into
+ * `out`.
+ */
+export function passArcPoint(from: ArcPoint, to: ArcPoint, t: number, out: ArcPoint): ArcPoint {
+  const k = Math.min(1, Math.max(0, t));
+  out.x = from.x + (to.x - from.x) * k;
+  out.y = from.y + (to.y - from.y) * k;
+  out.height = from.height + (to.height - from.height) * k + PASS_ARC_LIFT * 4 * k * (1 - k);
   return out;
 }

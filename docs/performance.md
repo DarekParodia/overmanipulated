@@ -23,12 +23,18 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
   download them; the script skips them by reading the ranges.
 - **Game route** (added by the first match): the lazy `GameScreen` chunk (three.js, the scene, the
   stations), its CSS, the SFX sprite and the two level music layers.
+- **Extras route** (S7-96, what a first session may open on top): the lazy dialogs whose manifest
+  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`),
+  the chunks they import and load later, and the intro voice in `assets/voice` (one audio format
+  plus its sprite json). Chunks the menu or the game route already counted are not counted
+  again, and the extras never count as game, so a new lazy dialog does not eat `gameMax`.
 - Text files are measured gzip -9 and brotli -11 (Caddy serves `zstd gzip`); fonts and audio are
   already compressed. Audio ships as webm (Opus) with an mp3 fallback; the larger set must fit.
 
-Limits enforced (`BUDGET` in the script): 10 MB total (the project rule, also checked against the
-uncompressed sum), plus regression guards that trip long before it: menu route 700 KB gzip, menu
-JS+CSS 320 KB gzip (this catches three.js leaking into the menu bundle), game route 1.6 MB gzip.
+Limits enforced (`BUDGET` in the script): 10 MB total for menu + game + extras (the project rule,
+also checked against the uncompressed sum), plus regression guards that trip long before it: menu
+route 700 KB gzip, menu JS+CSS 320 KB gzip (this catches three.js leaking into the menu bundle),
+game route 1.6 MB gzip, extras route 1 MB gzip.
 
 Measured (production build, mp3 = worst case):
 
@@ -37,6 +43,12 @@ Measured (production build, mp3 = worst case):
 | Menu (first screen) | 1.31 MB | 573 KB | 528 KB |
 | Game (added by first match) | 1.64 MB | 814 KB | 760 KB |
 | **First load, both** | **2.95 MB** | **1.35 MB** | **1.26 MB** |
+
+S7-96 (the „Jak grać” shell, the first extra): extras route 10 KB raw, 3 KB gzip (the dialog's
+own code and CSS; the station help card and the controls tab it shows are already in the menu);
+menu 592 KB gzip (588 KB without the dialog: the shared code moves from the entry into a chunk
+the entry still loads, which compresses 4 KB worse), game 814 KB gzip, first load (menu + game +
+extras) 1.38 MB gzip.
 
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
@@ -64,6 +76,22 @@ by `net/runtime.ts`, so it sits in the menu chunk. Loading it with the game chun
 A manual vendor chunk for three.js was tried and rejected: rolldown then hoisted shared modules
 (react, zustand) into it and the menu route imported three.js. The default split already keeps
 three.js out of the menu.
+
+## Ads (Stage 7)
+
+Ads are off unless the operator enables them for a host (`docs/deploy.md`, AdSense operator
+checklist), and every budget above is measured and enforced with ads off:
+`bun run perf:budget` measures our own build, and `e2e/performance.spec.ts` runs with the
+default config, where the e2e ad guard (`guardAdRequests` in `e2e/helpers.ts`) fails any test
+that requests a Google ad host. Google's script and creatives are **outside the budget**, since
+the game cannot size them, and kept away from the frames that matter:
+
+- they load only on an ad host, only on an ad screen (main menu, lobby, results; the spectator view once S7-91 places its slot)
+  and only when a placement's viewport gate matches, so phones never load them;
+- never during play: requests are paused (`pauseAdRequests`) on every other screen and no ad
+  is on screen, so a match pays no network or frame cost for new ads;
+- our own ads code (`apps/client/src/ads/`: loader, slot, pause guard) is a few KB in the menu
+  route and counted there.
 
 ## Loading screen and preloading
 

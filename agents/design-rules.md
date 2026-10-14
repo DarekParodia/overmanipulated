@@ -146,8 +146,9 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
   nothing ever points at it. Without ads, with an ad blocker or when Google has no ad, the frame
   is gone and nothing replaces it: no empty box, no "turn off your ad blocker". The creative
   inside the frame is third-party and exempt from the tokens and the one-yellow rule; the frame
-  is not. The main-menu footer (`MenuFooter`) holds minor ghost links such as „Zgody reklamowe”;
-  never yellow.
+  is not. The main-menu footer (`MenuFooter`) holds minor ghost links („Prywatność”, „Zgody
+  reklamowe”); never yellow. A link to a page (`LinkButton`) looks like a ghost button and opens
+  in the same tab.
 - Generous spacing (≥ `--space-4` between groups). If a screen feels crowded, remove things;
   don't shrink them.
 
