@@ -6,6 +6,9 @@
 //          and the menu music.
 //   game   what the first match adds: the lazy game chunk graph, its CSS, the SFX sprite and the
 //          level music layers.
+//   extras the lazy dialogs a first session may open on top (S7-96): „Jak grać”, the intro and its
+//          voice, „O grze” and the profile. Their chunks come from `EXTRAS_SOURCES`; whatever the
+//          menu or the game already loaded is not counted again.
 //
 // Text files (js, css, html, json, svg) are measured gzip-compressed and brotli-compressed, as
 // Caddy serves them (`encode zstd gzip`); fonts and audio are already compressed and counted raw.
@@ -28,7 +31,19 @@ export const BUDGET = {
   menuCodeMax: 320 * KB,
   /** Guard: everything the first match adds to the menu load, gzip. */
   gameMax: 1.6 * MB,
+  /** Guard: the lazy extras (help, intro with its voice, about, profile), gzip. */
+  extrasMax: 1 * MB,
 } as const;
+
+/**
+ * Source folders (Vite manifest keys) of the lazy extras. A dynamic import of the entry from one
+ * of them is the extras route, not the game route.
+ */
+export const EXTRAS_SOURCES = ['src/intro/', 'src/howto/', 'src/about/', 'src/profile/'] as const;
+
+export function isExtrasKey(key: string): boolean {
+  return EXTRAS_SOURCES.some((prefix) => key.startsWith(prefix));
+}
 
 export type FileCost = { path: string; raw: number; gzip: number; brotli: number };
 export type RouteCost = { files: FileCost[]; raw: number; gzip: number; brotli: number };
@@ -93,12 +108,22 @@ export function staticGraph(manifest: Manifest, key: string): string[] {
   return [...files];
 }
 
-/** All chunk files of a dynamically imported subtree, minus what the parent already loaded. */
-export function lazyGraph(manifest: Manifest, entryKey: string): string[] {
+/**
+ * All chunk files of the entry's dynamically imported subtrees, minus what the entry already
+ * loaded. `exclude` leaves some dynamic imports out (the extras, which have their own route).
+ */
+export function lazyGraph(
+  manifest: Manifest,
+  entryKey: string,
+  exclude: (key: string) => boolean = () => false,
+): string[] {
   const entry = manifest[entryKey];
   const already = new Set(staticGraph(manifest, entryKey));
   const files = new Set<string>();
   for (const dynamicKey of entry?.dynamicImports ?? []) {
+    if (exclude(dynamicKey)) {
+      continue;
+    }
     for (const file of staticGraph(manifest, dynamicKey)) {
       if (!already.has(file)) {
         files.add(file);
@@ -106,6 +131,55 @@ export function lazyGraph(manifest: Manifest, entryKey: string): string[] {
     }
   }
   return [...files];
+}
+
+/**
+ * Chunk files of the extras route: the entry's dynamic imports from `EXTRAS_SOURCES` with their
+ * static imports, and the dynamic imports inside them (an extra may load its own parts later),
+ * minus what the entry already loaded and minus `loaded` (the game route's files): a chunk the
+ * game shares with an extra is paid for once, by the game.
+ */
+export function extrasGraph(
+  manifest: Manifest,
+  entryKey: string,
+  loaded: readonly string[] = [],
+  isExtras: (key: string) => boolean = isExtrasKey,
+): string[] {
+  const already = new Set([...staticGraph(manifest, entryKey), ...loaded]);
+  const files = new Set<string>();
+  const seen = new Set<string>();
+  const pending = (manifest[entryKey]?.dynamicImports ?? []).filter(isExtras);
+  for (let key = pending.pop(); key !== undefined; key = pending.pop()) {
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    for (const file of staticGraph(manifest, key)) {
+      if (!already.has(file)) {
+        files.add(file);
+      }
+    }
+    for (const chunk of staticKeys(manifest, key)) {
+      pending.push(...(manifest[chunk]?.dynamicImports ?? []));
+    }
+  }
+  return [...files];
+}
+
+/** Manifest keys reachable through static imports from `key` (itself included). */
+function staticKeys(manifest: Manifest, key: string): string[] {
+  const seen = new Set<string>();
+  const visit = (k: string) => {
+    if (seen.has(k) || !manifest[k]) {
+      return;
+    }
+    seen.add(k);
+    for (const imported of manifest[k]?.imports ?? []) {
+      visit(imported);
+    }
+  };
+  visit(key);
+  return [...seen];
 }
 
 /**
@@ -166,7 +240,8 @@ export function linkedFiles(html: string): string[] {
 export type Report = {
   menu: RouteCost;
   game: RouteCost;
-  /** menu + game for the larger audio format */
+  extras: RouteCost;
+  /** menu + game + extras for the larger audio format */
   total: { gzip: number; brotli: number; raw: number; audioFormat: string };
   violations: string[];
 };
@@ -209,6 +284,28 @@ function audioFiles(
   return { menu, game, levelSets: [...sets.values()] };
 }
 
+/**
+ * The intro voice (S7-100) in one audio format, with the sprite json that describes it. It plays
+ * in the extras („Jak grać”, the lobby intro), so it counts there, not in the menu.
+ */
+export function voiceFiles(dist: string, ext: string): string[] {
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const name of readdirSync(join(dist, dir)).sort()) {
+      const rel = posix.join(dir, name);
+      if (statSync(join(dist, rel)).isDirectory()) {
+        walk(rel);
+      } else if (name.endsWith(`.${ext}`) || name.endsWith('.json')) {
+        files.push(rel);
+      }
+    }
+  };
+  if (existsSync(join(dist, 'assets/voice'))) {
+    walk('assets/voice');
+  }
+  return files;
+}
+
 export function measure(dist: string): Report {
   const manifest = JSON.parse(readFileSync(join(dist, '.vite/manifest.json'), 'utf8')) as Manifest;
   const html = readFileSync(join(dist, 'index.html'), 'utf8');
@@ -227,7 +324,8 @@ export function measure(dist: string): Report {
   const linked = linkedFiles(html).filter(
     (f) => existsSync(join(dist, f)) && !menuChunks.includes(f),
   );
-  const gameChunks = lazyGraph(manifest, entryKey);
+  const gameChunks = lazyGraph(manifest, entryKey, isExtrasKey);
+  const extrasChunks = extrasGraph(manifest, entryKey, gameChunks);
 
   const reports = ['webm', 'mp3'].map((ext) => {
     const audio = audioFiles(dist, ext);
@@ -242,19 +340,20 @@ export function measure(dist: string): Report {
         .map((files) => ({ files, cost: sum(files.map((f) => readCost(dist, f))) }))
         .sort((a, b) => b.cost.gzip - a.cost.gzip)[0]?.files ?? [];
     const game = sum([...gameChunks, ...audio.game, ...biggestSet].map((f) => readCost(dist, f)));
-    return { ext, menu, game };
+    const extras = sum([...extrasChunks, ...voiceFiles(dist, ext)].map((f) => readCost(dist, f)));
+    return { ext, menu, game, extras };
   });
-  const largest = reports.reduce((a, b) =>
-    b.menu.gzip + b.game.gzip > a.menu.gzip + a.game.gzip ? b : a,
-  );
+  const firstLoad = (r: { menu: RouteCost; game: RouteCost; extras: RouteCost }) =>
+    r.menu.gzip + r.game.gzip + r.extras.gzip;
+  const largest = reports.reduce((a, b) => (firstLoad(b) > firstLoad(a) ? b : a));
 
   const menuCode = sum(
     largest.menu.files.filter((f) => f.path.endsWith('.js') || f.path.endsWith('.css')),
   );
   const total = {
-    gzip: largest.menu.gzip + largest.game.gzip,
-    brotli: largest.menu.brotli + largest.game.brotli,
-    raw: largest.menu.raw + largest.game.raw,
+    gzip: firstLoad(largest),
+    brotli: largest.menu.brotli + largest.game.brotli + largest.extras.brotli,
+    raw: largest.menu.raw + largest.game.raw + largest.extras.raw,
     audioFormat: largest.ext,
   };
   const violations: string[] = [];
@@ -263,12 +362,17 @@ export function measure(dist: string): Report {
       violations.push(`${what}: ${kb(value)} exceeds ${kb(max)}`);
     }
   };
-  limit('first load (menu + game, gzip)', total.gzip, BUDGET.firstLoadMax);
-  limit('first load (menu + game, raw, no compression at all)', total.raw, BUDGET.firstLoadMax);
+  limit('first load (menu + game + extras, gzip)', total.gzip, BUDGET.firstLoadMax);
+  limit(
+    'first load (menu + game + extras, raw, no compression at all)',
+    total.raw,
+    BUDGET.firstLoadMax,
+  );
   limit('menu route (gzip)', largest.menu.gzip, BUDGET.menuMax);
   limit('menu JS+CSS (gzip)', menuCode.gzip, BUDGET.menuCodeMax);
   limit('game route extra (gzip)', largest.game.gzip, BUDGET.gameMax);
-  return { menu: largest.menu, game: largest.game, total, violations };
+  limit('extras route (gzip)', largest.extras.gzip, BUDGET.extrasMax);
+  return { menu: largest.menu, game: largest.game, extras: largest.extras, total, violations };
 }
 
 export function kb(bytes: number): string {
@@ -295,6 +399,8 @@ if (import.meta.main) {
   console.log(table('MENU (first screen)', report.menu));
   console.log();
   console.log(table('GAME (added by the first match)', report.game));
+  console.log();
+  console.log(table('EXTRAS (help, intro, about, profile)', report.extras));
   console.log();
   console.log(
     `first load total (${report.total.audioFormat} audio): ${kb(report.total.raw)} raw, ${kb(report.total.gzip)} gzip, ${kb(report.total.brotli)} brotli (limit ${kb(BUDGET.firstLoadMax)})`,
