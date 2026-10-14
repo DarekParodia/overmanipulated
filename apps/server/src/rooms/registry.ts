@@ -52,6 +52,7 @@ import {
   type MemberKind,
   MINIGAME_MIN_SOLVE_MS,
   maskForSpectators,
+  maskName,
   matchDurationMs,
   nextScheduledSpawn,
   openSpawnKey,
@@ -64,8 +65,11 @@ import {
   type QueuedCommand,
   RECONNECT_GRACE_MS,
   type Role,
+  type RoomListQuery,
+  type RoomListResponse,
   type RoomMode,
   type RoomPhase,
+  type RoomSummary,
   type RoomVisibility,
   type RunSummary,
   release,
@@ -92,11 +96,12 @@ import {
   type VersusResult,
   versusOutcome,
 } from '@redakcja/shared';
-import { KICK_REJOIN_COOLDOWN_MS, MAX_ROOMS } from '../limits.ts';
+import { KICK_REJOIN_COOLDOWN_MS, MAX_ROOMS, ROOM_LIST_CACHE_MS } from '../limits.ts';
 import { log } from '../log.ts';
 import type { RoomSettings } from '../public-config.ts';
 import { generateReconnectToken, generateRoomCode, secureRandom } from './codes.ts';
 import { CLOSE_KICKED, CLOSE_REPLACED, type Connection, type Hub } from './connection.ts';
+import { createRoomListCache, queryRoomList } from './room-list.ts';
 
 /** A room member: a player in one newsroom, or a spectator in the Widownia (S7-79). */
 type RoomMember = {
@@ -1938,11 +1943,68 @@ export function createRoomRegistry(options: RegistryOptions) {
     broadcastRoomState(room);
   }
 
+  /**
+   * The room browser's view of a room (S7-83), or null when it is not listed: private, or nobody
+   * is connected (every member is inside the reconnect grace). The host nickname is masked.
+   */
+  function summaryOf(room: Room): RoomSummary | null {
+    const host = room.members.get(room.hostId);
+    const anyoneConnected = [...room.members.values()].some((m) => m.connection !== null);
+    if (room.visibility !== 'public' || !host || !anyoneConnected) {
+      return null;
+    }
+    const players = playersOf(room).length;
+    const spectators = spectatorsOf(room).length;
+    const maxPlayers = room.mode === 'versus' ? MAX_ROOM_PLAYERS : MAX_TEAM_PLAYERS;
+    const spectatorsAllowed = room.spectatorsAllowed && featureOn('spectators');
+    return {
+      code: room.code,
+      name: room.name,
+      hostNickname: maskName(host.nickname),
+      levelId: room.level.id,
+      mode: room.mode,
+      difficulty: room.difficulty,
+      players,
+      maxPlayers,
+      spectators,
+      spectatorsAllowed,
+      inGame: room.phase === 'briefing' || room.phase === 'playing',
+      // User decision 10: the browser offers a seat only in the lobby, even where a code join
+      // would still work (co-op mid-level, results).
+      canJoinAsPlayer: room.phase === 'lobby' && players < maxPlayers,
+      canSpectate: spectatorsAllowed && spectators < MAX_SPECTATORS,
+      createdAt: room.createdAt,
+    };
+  }
+
+  const roomList = createRoomListCache({
+    now,
+    ttlMs: ROOM_LIST_CACHE_MS,
+    build: () =>
+      [...rooms.values()].flatMap((room) => {
+        const summary = summaryOf(room);
+        return summary ? [summary] : [];
+      }),
+  });
+
+  /**
+   * Public rooms for the room browser: the cached list (at most `ROOM_LIST_CACHE_MS` old), then
+   * the query's search, filters and limit. The caller gates it on the `roomBrowser` flag.
+   */
+  function listRooms(query: RoomListQuery): RoomListResponse {
+    return queryRoomList(roomList.entries(), query);
+  }
+
   return {
     handleMessage,
     handleDisconnect,
     tick,
     sendError,
+    listRooms,
+    /** How often the room list was rebuilt (the cache, S7-83). */
+    get roomListBuilds() {
+      return roomList.builds;
+    },
     get roomCount() {
       return rooms.size;
     },

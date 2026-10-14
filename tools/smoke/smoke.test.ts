@@ -179,7 +179,8 @@ describe('smoke helpers', () => {
 describe('smoke run, ads off (base CSP)', () => {
   let stack: Stack;
   beforeAll(() => {
-    stack = startStack({}, 'proxy');
+    // The room browser on here, off (the default) in the other runs: both answers are checked.
+    stack = startStack({ features: { roomBrowser: true } }, 'proxy');
   });
   afterAll(() => stack.stop());
 
@@ -194,6 +195,10 @@ describe('smoke run, ads off (base CSP)', () => {
     // The stand-in sends no X-Content-Type-Options, so that is a warning, not a failure.
     expect(byName(results, 'GET / (HTML)')?.status).toBe('warn');
     expect(byName(results, 'GET /api/config')?.detail).toBe('ads off, revision 0');
+    expect(byName(results, 'GET /api/rooms')).toMatchObject({
+      status: 'pass',
+      detail: 'room browser on, 0 public room(s)',
+    });
     expect(byName(results, 'HTML shell: embedded config and CSP mode')?.detail).toBe(
       "base mode: script-src 'self'",
     );
@@ -225,6 +230,10 @@ describe('smoke run, ads on (nonce CSP)', () => {
     const results = await runSmoke(stack.baseUrl, { snapshots: 2 });
     expect(results.filter((r) => r.status === 'fail')).toEqual([]);
     expect(byName(results, 'GET /api/config')?.detail).toBe('ads on, revision 0');
+    expect(byName(results, 'GET /api/rooms')).toMatchObject({
+      status: 'pass',
+      detail: 'room browser off (404)',
+    });
     expect(byName(results, 'HTML shell: embedded config and CSP mode')).toMatchObject({
       status: 'pass',
       detail: 'ads mode: nonce policy matches the page',

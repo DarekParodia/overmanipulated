@@ -51,7 +51,11 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   - `GET /health`: liveness, plus a DB check.
   - `GET /ws`: WebSocket upgrade for the game protocol.
   - `/api/*`: REST endpoints (leaderboard, content preview for the supervisor, room stats, and
-    `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`).
+    `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`;
+    `GET /api/rooms`: the room browser's list of public rooms, 404 while the `roomBrowser` flag is
+    off; `registry.listRooms` filters a summary list it rebuilds at most every `ROOM_LIST_CACHE_MS`,
+    see `apps/server/src/rooms/room-list.ts`, and the route limits each address to
+    `ROOM_LIST_PER_MINUTE_PER_IP`).
     An unknown `/api/*` path is a JSON 404, never HTML.
   - Mounted last (`routes/shell.ts`): `/`, SPA paths and `/index.html` render the **HTML shell**
     from the built client `index.html` (`shell/`): a per-request CSP nonce replaces Vite's
