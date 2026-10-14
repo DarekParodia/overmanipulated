@@ -274,6 +274,12 @@
   margin-left: auto;
 }
 
+/* Keyboard/gamepad focus on „Rozumiem” (S7-95), shown even without :focus-visible (a pad). */
+.actions [data-focused] {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
 /* Narrow cards (phones, the overlay on small laptops): the drawing goes under the steps. */
 @container (max-width: 30rem) {
   .how {

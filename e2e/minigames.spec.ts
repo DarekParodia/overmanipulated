@@ -5,7 +5,15 @@
 // pools or on which outcome the seed rolls. In the station overlay every button sits above the
 // fold of its scrolling body; only the key hints may need a scroll (Decision log, S7-15).
 import { type BrowserContextOptions, expect, type Locator, test } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, openPlayer, PHONE, trackContext } from './helpers.ts';
+import {
+  closePlayers,
+  createRoom,
+  DESKTOP,
+  openPlayer,
+  PHONE,
+  skipStationHelp,
+  trackContext,
+} from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -157,6 +165,7 @@ test('in the station overlay every button of the new minigames is above the fold
   const touch = testInfo.project.name !== 'desktop';
   const player = await openPlayer(browser, 'Zośka', deviceOptions(touch));
   const { page } = player;
+  await skipStationHelp(page);
   await createRoom(player);
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();

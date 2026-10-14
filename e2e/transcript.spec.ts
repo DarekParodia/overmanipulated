@@ -7,7 +7,14 @@
 // variant comes from the seed; a Stenogram stamp on either one must keep it. (Since S7-57 every
 // level-5 story has a Stenogram stamp, and none of them is decisive on a false story.)
 import { expect, type Page, test } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, openPlayer, PHONE } from './helpers.ts';
+import {
+  closePlayers,
+  createRoom,
+  DESKTOP,
+  openPlayer,
+  PHONE,
+  skipStationHelp,
+} from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -85,6 +92,7 @@ test('Stenogram: find the clip, judge the cut or answer „Nie ma w zapisie”',
   const options = touch ? { ...PHONE, viewport: { width: 640, height: 360 } } : DESKTOP;
   const player = await openPlayer(browser, 'Zośka', options);
   const { page } = player;
+  await skipStationHelp(page);
   await createRoom(player);
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();

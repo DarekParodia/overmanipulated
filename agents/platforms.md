@@ -30,6 +30,7 @@ game may require a specific device.
 | Role ability inside a station or desk overlay (Ekspertyza in a covered minigame: header button; any other ability as in the world) | R | RB | Ekspertyza: icon-only 48 px button in the overlay header (the 4th button is under the overlay) |
 | Minigames, desk, menus | Keys / mouse | D-pad + buttons | Tap, drag, swipe |
 | In-game menu (pauses a solo level) | Esc (when nothing else owns the input and the tutorial card is not up) | Start (button 9) | Menu button top-right |
+| Station help in a station overlay (the card shows by itself on a station's first use; while it is up, Enter / A, Esc / B and H / Select close the card, never the station) | H | Select / Back (button 8) | Purple '?' in the overlay header |
 
 - The **last used device** decides which prompts are shown (key caps, pad glyphs or touch icons).
   Minigame key hints exist for all three devices; on touch the chip names the gesture

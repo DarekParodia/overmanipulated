@@ -5,6 +5,7 @@ import { useGuidance } from '../guidance/store.ts';
 import { resetTutorial } from '../guidance/tutorial-store.ts';
 import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { KeyCap } from '../stations/kit.tsx';
+import { resetStationHelp } from '../stations/station-help-store.ts';
 import { useApp } from '../store/app.ts';
 import { type QualityPreset, qualityPresets, useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
@@ -113,6 +114,7 @@ export function AccessTab() {
   const hintsEnabled = useGuidance((g) => g.hintsEnabled);
   const setHintsEnabled = useGuidance((g) => g.setHintsEnabled);
   const [tutorialReset, setTutorialReset] = useState(false);
+  const [stationHelpReset, setStationHelpReset] = useState(false);
   return (
     <div className={styles.stack}>
       <Checkbox
@@ -141,6 +143,19 @@ export function AccessTab() {
           }}
         >
           {tutorialReset ? pl.settings.tutorialQueued : pl.settings.tutorialAgain}
+        </Button>
+      </div>
+      <div>
+        <Button
+          variant="secondary"
+          disabled={stationHelpReset}
+          onClick={() => {
+            resetStationHelp();
+            setStationHelpReset(true);
+          }}
+          data-testid="station-help-reset"
+        >
+          {stationHelpReset ? pl.settings.stationHelpQueued : pl.settings.stationHelpAgain}
         </Button>
       </div>
     </div>

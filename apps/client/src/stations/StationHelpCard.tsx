@@ -38,6 +38,11 @@ export type StationHelpCardProps = {
   onClose(): void;
   /** An extra action before „Rozumiem”; it becomes the yellow one and „Rozumiem” turns white. */
   action?: ReactNode;
+  /**
+   * Keyboard/gamepad (S7-95): „Rozumiem” takes the focus when the card opens and shows the focus
+   * ring, so Enter / A reads as pressing it.
+   */
+  focusGot?: boolean;
 };
 
 export function StationHelpCard({
@@ -46,6 +51,7 @@ export function StationHelpCard({
   variant = 'inPlay',
   onClose,
   action,
+  focusGot = false,
 }: StationHelpCardProps) {
   const help = pl.stationHelp.kinds[kind];
   const name = pl.vocab.stations[kind];
@@ -109,6 +115,8 @@ export function StationHelpCard({
             variant={action ? 'secondary' : 'primary'}
             icon={<Icon name="check" />}
             onClick={onClose}
+            autoFocus={focusGot}
+            data-focused={focusGot || undefined}
             data-testid="station-help-got"
           >
             {pl.stationHelp.got}

@@ -193,6 +193,9 @@ export const pl = {
     hints: 'Podpowiedzi „co dalej”',
     tutorialAgain: 'Pokaż samouczek jeszcze raz',
     tutorialQueued: 'Samouczek w następnej grze',
+    /** Clears the seen station help cards (S7-95). */
+    stationHelpAgain: 'Pokaż pomoc stanowisk od nowa',
+    stationHelpQueued: 'Pomoc pokaże się znowu',
     close: 'Gotowe',
     closeIcon: 'Zamknij',
     // S5-06 settings screen.
@@ -232,6 +235,7 @@ export const pl = {
       work: 'Pracuj (trzymaj)',
       ping: 'Sygnał',
       ability: 'Zdolność roli',
+      stationHelp: 'Pomoc stanowiska',
     },
     keySpace: 'Spacja',
     padStick: 'Lewa gałka',
@@ -1443,6 +1447,9 @@ export const pl = {
     got: 'Rozumiem',
     /** The help card's note: reading help does not stop the folder's deadline. */
     deadlineRuns: 'Termin teczki biegnie dalej',
+    /** The '?' in a station overlay's header (S7-95): its accessible name and key caps. */
+    openLabel: (station: string) => `Jak działa: ${station}`,
+    key: { keyboard: 'H', gamepad: 'Select', touch: '' } satisfies Record<Device, string>,
     /** Accessible names of the card's parts. */
     stepsLabel: 'Kroki',
     realWorldLabel: 'Tak jest naprawdę',
