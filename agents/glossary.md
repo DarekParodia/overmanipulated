@@ -306,5 +306,10 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Wstrzymanie reklam | `useAdRequestPause`, `setAdRequestsPaused` (`pauseAdRequests`) | Pause guard mounted in `App`: ad requests are paused on every screen that is not an ad screen |
 | Odstęp od reklamy | `--space-ad-gap` (9.5rem), `AD_MIN_GAP_PX` (150) | Clear space between an ad and any control (AdSense game-page guidance) |
 | Znacznik wieku zgody | `data-tag-for-under-age-of-consent` (TFUA), `data-tag-for-age-treatment` (TFAT) | Per-unit tags from `adRequestAttributes`: TFUA in `limited` mode (Google serves limited ads), TFAT `1` child / `2` teen |
+| Oglądaj / Oglądasz (ekran widowni) | spectate screen (`ScreenId` `'spectate'`, `joinRoom(nickname, code, 'spectator')`) | Where a spectator lands while a match is played or its results show; the briefing before it is read-only („Oglądasz” instead of „Gotowy!”). On the menu, `matchInProgress` offers „Oglądaj” for the same room when the `spectators` flag is on |
+| Widoki widowni | spectate store (`useSpectate`, `spectateViews`, `SpectateView`) | One game store and snapshot buffer per watched newsroom, the spectator event feed, `matchStats` and each team's `levelEnd`; spectator messages go here only, never to `useGame` or the gameplay event listeners |
+| Rodzaj członka / własna redakcja | `selfKind(room, playerId)`, `selfTeam(room, playerId)` | Derived from `roomState`: a member listed in `spectators` watches; a player's own team routes their snapshots, events and level end (a message for the other team is dropped) |
+| Usunięcie z pokoju | kick (lobby action `kick`, error `kicked`, `kickCooldown`) | The host removes a member: the client forgets its slot and shows `pl.errors.kicked` on the menu. A rejoin from the same browser (`clientId`) during the cooldown gets `kickCooldown` |
+| Ostatni kod | `lastJoinCode` (`useApp`) | The room code of the last join by code; null after creating a room |
 
 Missing a term? Add it here in the same commit that introduces it.

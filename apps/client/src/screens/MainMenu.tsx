@@ -1,5 +1,6 @@
 // Title screen (design-rules §5): the game logo on the sky, one centred panel with the
 // nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner.
+// A versus match already under way (`matchInProgress`) offers to watch it instead (S7-84).
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
@@ -7,7 +8,7 @@ import { requestMusic } from '../fx/audio/music.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
-import { usePublicConfig } from '../store/public-config.ts';
+import { useFeature, usePublicConfig } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Field } from '../ui/Field.tsx';
@@ -24,6 +25,8 @@ export function MainMenu() {
   const error = useApp((s) => s.error);
   const connection = useApp((s) => s.connection);
   const setSettingsOpen = useApp((s) => s.setSettingsOpen);
+  const lastJoinCode = useApp((s) => s.lastJoinCode);
+  const spectators = useFeature('spectators');
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -66,8 +69,17 @@ export function MainMenu() {
     joinRoom(name, code);
   }
 
+  function watch() {
+    const name = validNickname();
+    if (name && lastJoinCode) {
+      joinRoom(name, lastJoinCode, 'spectator');
+    }
+  }
+
   const serverError = error ? pl.errors[error] : null;
   const message = localError ?? serverError;
+  const canWatch =
+    localError === null && error === 'matchInProgress' && spectators && lastJoinCode !== null;
 
   return (
     <main className={styles.page}>
@@ -133,6 +145,16 @@ export function MainMenu() {
             <Icon name="reject" size={22} />
             {message}
           </p>
+        )}
+        {canWatch && (
+          <Button
+            icon={<Icon name="eye" size={26} />}
+            disabled={busy}
+            data-testid="menu-watch"
+            onClick={watch}
+          >
+            {pl.menu.watchAction}
+          </Button>
         )}
         {health && health !== 'ok' && (
           <p className={styles.error} role="status">

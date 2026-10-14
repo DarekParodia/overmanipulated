@@ -73,6 +73,8 @@ export const pl = {
     /** Message of the day (S7-72): the banner's name and its close button. */
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
+    /** Offered next to `matchInProgress` (S7-84): watch the same room from the Widownia. */
+    watchAction: 'Oglądaj',
   },
   /** Ads (S7-73): the frame's label, also its name for screen readers. */
   ads: {
@@ -284,6 +286,8 @@ export const pl = {
   },
   // --- Stage 2 gameplay. Shared vocabulary first, then one namespace per feature. ----------
   vocab: {
+    /** Versus newsrooms by team index (S7-84): 0 Kurier, 1 Głos. */
+    teams: ['Kurier', 'Głos'],
     storyTypes: {
       photo: 'Zdjęcie',
       quote: 'Cytat',
@@ -2060,6 +2064,21 @@ export const pl = {
     },
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
+  /**
+   * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
+   * screen (S7-90/91) builds on these.
+   */
+  spectate: {
+    title: 'Widownia',
+    watching: 'Oglądasz',
+    waiting: 'Czekamy na pierwszy obraz…',
+    leave: 'Wyjdź',
+    /** One newsroom's line on the watch screen: name, points and credibility. */
+    teamLine: (team: string, score: number, credibility: number) =>
+      `${team}: ${score} pkt, wiarygodność ${credibility}`,
+    /** The single newsroom of a co-op match. */
+    coopTeam: 'Redakcja',
+  },
   encyclopedia: {
     title: 'Encyklopedia technik',
     open: 'Encyklopedia',

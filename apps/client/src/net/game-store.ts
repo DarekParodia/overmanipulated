@@ -1,6 +1,8 @@
 // Latest authoritative gameplay state besides player positions (those go through the snapshot
 // buffer and prediction): folders, stations, desks, score, credibility, level timer, the next
-// scheduled folder, the pause flag and the level result. Updated on every snapshot; UI subscribes with selectors.
+// scheduled folder, the pause flag, the versus scoreboard and the level result. Updated on every
+// snapshot; UI subscribes with selectors. `createGameStore` makes one per view: `useGame` is the
+// player's own newsroom, the spectate store keeps one per team (S7-84).
 import type {
   CrewSnapshot,
   Desk,
@@ -9,8 +11,9 @@ import type {
   NextFolder,
   SnapshotMessage,
   Station,
+  TeamScore,
 } from '@redakcja/shared';
-import { create } from 'zustand';
+import { create, type StoreApi, type UseBoundStore } from 'zustand';
 
 export type GameStore = {
   tick: number;
@@ -29,6 +32,8 @@ export type GameStore = {
   conveyorFull: boolean;
   /** The solo player's in-game menu holds the level still (S7-10). */
   paused: boolean;
+  /** Versus only: both newsrooms' standings (the rival chip, S7-89); null in co-op. */
+  scoreboard: readonly TeamScore[] | null;
   /** Set when the level ends; cleared when a new level starts. */
   levelEnd: LevelEndMessage | null;
   applySnapshot(snapshot: SnapshotMessage): void;
@@ -49,6 +54,7 @@ const EMPTY = {
   nextFolder: null,
   conveyorFull: false,
   paused: false,
+  scoreboard: null,
   levelEnd: null,
 } satisfies Partial<GameStore>;
 
@@ -59,31 +65,63 @@ function stableNextFolder(previous: NextFolder | null, next: NextFolder | null):
     : next;
 }
 
-export const useGame = create<GameStore>((set, get) => ({
-  ...EMPTY,
-  applySnapshot(snapshot) {
-    set({
-      tick: snapshot.tick,
-      elapsedMs: snapshot.elapsedMs,
-      timeLeftMs: snapshot.timeLeftMs,
-      score: snapshot.score,
-      credibility: snapshot.credibility,
-      folders: snapshot.folders,
-      stations: snapshot.stations,
-      desks: snapshot.desks,
-      crew: snapshot.crew,
-      nextFolder: stableNextFolder(get().nextFolder, snapshot.nextFolder),
-      conveyorFull: snapshot.conveyorFull,
-      paused: snapshot.paused,
-    });
-  },
-  setLevelEnd(message) {
-    set({ levelEnd: message });
-  },
-  reset() {
-    set(EMPTY);
-  },
-}));
+/** Same standings: keep the old array, so the rival chip re-renders only when a number moves. */
+function stableScoreboard(
+  previous: readonly TeamScore[] | null,
+  next: readonly TeamScore[] | null,
+): readonly TeamScore[] | null {
+  if (!previous || !next || previous.length !== next.length) {
+    return next;
+  }
+  const same = previous.every((team, i) => {
+    const other = next[i];
+    return (
+      other !== undefined &&
+      team.team === other.team &&
+      team.score === other.score &&
+      team.credibility === other.credibility &&
+      team.resolved === other.resolved &&
+      team.expired === other.expired &&
+      team.connected === other.connected
+    );
+  });
+  return same ? previous : next;
+}
+
+export type GameStoreApi = UseBoundStore<StoreApi<GameStore>>;
+
+/** A fresh, empty game store for one view (the player's newsroom or one watched team). */
+export function createGameStore(): GameStoreApi {
+  return create<GameStore>((set, get) => ({
+    ...EMPTY,
+    applySnapshot(snapshot) {
+      set({
+        tick: snapshot.tick,
+        elapsedMs: snapshot.elapsedMs,
+        timeLeftMs: snapshot.timeLeftMs,
+        score: snapshot.score,
+        credibility: snapshot.credibility,
+        folders: snapshot.folders,
+        stations: snapshot.stations,
+        desks: snapshot.desks,
+        crew: snapshot.crew,
+        nextFolder: stableNextFolder(get().nextFolder, snapshot.nextFolder),
+        conveyorFull: snapshot.conveyorFull,
+        paused: snapshot.paused,
+        scoreboard: stableScoreboard(get().scoreboard, snapshot.scoreboard ?? null),
+      });
+    },
+    setLevelEnd(message) {
+      set({ levelEnd: message });
+    },
+    reset() {
+      set(EMPTY);
+    },
+  }));
+}
+
+/** The local player's newsroom. */
+export const useGame = createGameStore();
 
 // --- Selectors -----------------------------------------------------------------------------
 
