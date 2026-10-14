@@ -7,9 +7,11 @@ export type CheckboxProps = {
   label: string;
   checked: boolean;
   onChange(checked: boolean): void;
+  /** Greyed out and skipped by the pad's menu navigator (e.g. while offline). */
+  disabled?: boolean;
 };
 
-export function Checkbox({ label, checked, onChange }: CheckboxProps) {
+export function Checkbox({ label, checked, onChange, disabled = false }: CheckboxProps) {
   const id = useId();
   return (
     <label className={styles.row} htmlFor={id}>
@@ -18,6 +20,7 @@ export function Checkbox({ label, checked, onChange }: CheckboxProps) {
         type="checkbox"
         className={styles.native}
         checked={checked}
+        disabled={disabled}
         onChange={(event) => {
           emitCue('ui.click');
           onChange(event.target.checked);

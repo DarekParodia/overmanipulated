@@ -28,6 +28,7 @@ import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
+import { TeamBadge } from '../ui/TeamBadge.tsx';
 import styles from './SpectateScreen.module.css';
 import { type ScoreSide, scoreSides } from './scoreboard-model.ts';
 import { spectatorSoundOutput, teamPan } from './spectate-audio.ts';
@@ -44,7 +45,6 @@ import {
   type Viewport,
   visibleTeams,
 } from './spectate-layout.ts';
-import { TeamSeal } from './TeamSeal.tsx';
 
 const CONFIRM_KEYS: ReadonlySet<string> = new Set(['Space', 'Enter', 'NumpadEnter']);
 const COOP_TEAMS: readonly TeamIndex[] = [0];
@@ -128,7 +128,7 @@ function TeamScore({ side, versus, mirrored, pick }: ScoreProps) {
   const label = pl.spectate.teamLine(name, side.score, side.credibility);
   const content = (
     <>
-      <TeamSeal team={side.team} size={30} />
+      <TeamBadge team={side.team} size={30} />
       <span className={styles.teamName} aria-hidden="true">
         {name}
       </span>
@@ -233,7 +233,7 @@ function TeamPlate({
   const name = teamName(team, versus);
   const content = (
     <>
-      {versus ? <TeamSeal team={team} size={26} /> : <Icon name="eye" size={24} />}
+      {versus ? <TeamBadge team={team} size={26} /> : <Icon name="eye" size={24} />}
       <span className={styles.plateName}>{name}</span>
       <span className={styles.chips}>
         {players.map((player) => (

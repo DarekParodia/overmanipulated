@@ -1,0 +1,162 @@
+/* Room settings row (S7-86): name on the left, visibility and mode switches with their one-line
+   hints on the right; wraps onto more rows on narrow screens. */
+.room {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-5);
+  min-width: 0;
+}
+
+.name {
+  flex: 1 1 14rem;
+  min-width: 0;
+  max-width: 24rem;
+}
+
+.nameForm {
+  margin: 0;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.setting {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.choices {
+  display: flex;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  gap: var(--space-2);
+}
+
+/* Secondary chips like the difficulty picker's: white with a pop shadow; the chosen one blue. */
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-height: var(--touch-target);
+  padding: 0.15em var(--space-4) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.chip svg,
+.state svg {
+  flex: none;
+  margin-top: -0.15em;
+}
+
+.choices:not(:disabled) .chip:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.chip:has(.native:focus-visible) {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+.chosen {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.chosen svg {
+  stroke-width: 3;
+}
+
+.choices:disabled .chip {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+/* Guests: what the host chose, flat (not pressable). */
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2.5rem;
+  padding: 0.15em var(--space-4) 0;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  white-space: nowrap;
+  animation: chip-pop var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes chip-pop {
+  0% {
+    transform: scale(0.85);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.hint {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* Short landscape phones: tighter chips; the visibility hint goes first (its chip says enough). */
+@media (max-height: 520px) and (orientation: landscape) {
+  .room {
+    gap: var(--space-2) var(--space-3);
+  }
+  .name {
+    flex-basis: 12rem;
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .chip {
+    padding: 0.15em var(--space-3) 0;
+    font-size: var(--text-sm);
+  }
+  .state {
+    min-height: 2rem;
+    padding: 0.15em var(--space-3) 0;
+    font-size: var(--text-sm);
+  }
+  .minorHint {
+    display: none;
+  }
+}
