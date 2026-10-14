@@ -1836,7 +1836,18 @@ export const pl = {
       waitIn: (s: number) => `Czekaj – teczka za\u00a0${s}\u00a0s`,
       /** A scheduled folder waits for a free conveyor tile. */
       conveyorFull: 'Taśma pełna – zabierz teczkę',
+      /**
+       * Role ability hints (S7-45): the device's key (`abilityHintKey`), then what a press does
+       * right now. Przedłużenie for a warned folder in hand, Telefon z terenu instead of the walk
+       * to the phone, Druga szansa at a locked station.
+       */
+      abilityExtend: (key: string) =>
+        `${key}: +${ABILITY.extendDeadline.addMs / 1000}\u00a0s dla teczki`,
+      abilityCall: (key: string) => `${key}: zadzwoń z\u00a0terenu`,
+      abilitySecond: (key: string) => `${key}: druga szansa`,
     },
+    /** The ability's key in a hint on touch: the fourth thumb button's own label, quoted. */
+    abilityTouchKey: (label: string) => `„${label}”`,
     bubbleLabel: 'Podpowiedź',
     tutorial: {
       label: 'Samouczek',
@@ -1857,6 +1868,20 @@ export const pl = {
       work: (key: string) => `Zanieś ją na stanowisko, trzymaj ${key}`,
       minigame: 'Rozwiąż zadanie na stanowisku',
       verdict: 'Zanieś teczkę na stół, wybierz werdykt',
+      /** The role ability step (S7-45, only with a role): key, ability name, what it does. */
+      ability: (key: string, name: string, what: string) => `${key}: ${name} – ${what}`,
+      /**
+       * What the ability does, short enough for the card's 8 words with the key and the name
+       * (the lobby's `lobbyRoles.abilityWhat` is longer).
+       */
+      abilityWhat: {
+        photoEditor: 'zadanie przy obrazie od razu',
+        archivist: 'zadanie przy dokumentach od razu',
+        reporter: 'pieczątka Telefonu bez chodzenia',
+        managingEditor: `+${ABILITY.extendDeadline.addMs / 1000}\u00a0s dla teczki`,
+        generalist: 'po pudle jeszcze raz',
+        rescuer: 'rzut do wolnej osoby',
+      } satisfies Record<Role, string>,
       done: 'Super! Tak trzymaj!',
     },
   },
