@@ -90,6 +90,7 @@ describe('caption table', () => {
     });
     expect(captionTable['lobby.modeSwitch']).toEqual({ skip: 'visual-elsewhere' });
     expect(captionTable['lobby.teamSwitch']).toEqual({ skip: 'visual-elsewhere' });
+    expect(captionTable['lobby.lookChanged']).toEqual({ skip: 'visual-elsewhere' });
   });
 
   it('leaves the spectate cues to the screen: the ring moves, the feed row is the words (S7-91)', () => {

@@ -21,6 +21,8 @@ export type TeamColumnsProps = {
   onJoin(team: TeamIndex): void;
   /** The host's manage sheet for another player (S7-87); omitted for guests. */
   onManage?: ((playerId: string) => void) | undefined;
+  /** The own card's „Zmień wygląd” (S7-105). */
+  onLook?: (() => void) | undefined;
 };
 
 export function TeamColumns({
@@ -30,6 +32,7 @@ export function TeamColumns({
   disabled,
   onJoin,
   onManage,
+  onLook,
 }: TeamColumnsProps) {
   const room = { mode: 'versus' as const, players: [...players] };
   return (
@@ -64,6 +67,7 @@ export function TeamColumns({
                     onManage={
                       onManage && player.id !== selfId ? () => onManage(player.id) : undefined
                     }
+                    onLook={player.id === selfId ? onLook : undefined}
                     manageDisabled={disabled}
                   />
                 ))}

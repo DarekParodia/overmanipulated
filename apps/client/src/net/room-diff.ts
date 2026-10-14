@@ -57,3 +57,30 @@ export function hostChanged(
     previous !== null && previous.roomCode === next.roomCode && previous.hostId !== next.hostId
   );
 }
+
+/**
+ * Ids of players who changed their look (S7-105: accessory or colour from `setLook`) while
+ * staying in the same newsroom; a mode switch or a team move recolours players for its own cue,
+ * and the local member already heard their own press.
+ */
+export function lookChanges(
+  previous: RoomDiffState | null,
+  next: RoomDiffState,
+  selfId: string | null,
+): string[] {
+  if (!sameRoom(previous, next) || previous.mode !== next.mode) {
+    return [];
+  }
+  const before = new Map(previous.players.map((p) => [p.id, p] as const));
+  return next.players
+    .filter((p) => {
+      const old = before.get(p.id);
+      return (
+        p.id !== selfId &&
+        old !== undefined &&
+        old.team === p.team &&
+        (old.accessory !== p.accessory || old.colorIndex !== p.colorIndex)
+      );
+    })
+    .map((p) => p.id);
+}

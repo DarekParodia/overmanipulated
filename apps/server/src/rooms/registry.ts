@@ -14,6 +14,7 @@ import {
   storiesForLevel,
 } from '@redakcja/content';
 import {
+  type Accessory,
   addPlayer,
   applyStatsEvent,
   BRIEFING_DURATION_MS,
@@ -44,6 +45,7 @@ import {
   type LevelEndMessage,
   type LevelOutcome,
   type LobbyAction,
+  type Look,
   MAX_ROOM_PLAYERS,
   MAX_SPECTATORS,
   MAX_TEAM_PLAYERS,
@@ -56,12 +58,12 @@ import {
   matchDurationMs,
   nextScheduledSpawn,
   openSpawnKey,
-  PLAYER_COLOR_COUNT,
   type PlayerCommand,
   type PlayerInput,
   type PlayerStats,
   PROTOCOL_VERSION,
   parseLayout,
+  pickColor,
   type QueuedCommand,
   RECONNECT_GRACE_MS,
   type Role,
@@ -90,6 +92,7 @@ import {
   type TeamStanding,
   TICK_MS,
   type TileMap,
+  takenColors,
   teamScoreOf,
   timeLeftMs,
   unfinishedResults,
@@ -114,6 +117,10 @@ type RoomMember = {
   nickname: string;
   /** Per team: two newsrooms reuse the same four colours and spawn points. */
   colorIndex: number;
+  /** The profile's colour (S7-105): taken whenever the team has it free; null = no preference. */
+  preferredColor: number | null;
+  /** Worn in the lobby and in 3D (S7-105). */
+  accessory: Accessory;
   /** Resumes exactly this member, with its kind and team. */
   reconnectToken: string;
   connection: Connection | null;
@@ -287,7 +294,7 @@ export type RegistryOptions = {
 export type RoomRegistry = ReturnType<typeof createRoomRegistry>;
 
 /** The room's players (of one team, when given), in join order. */
-function playersOf(room: Room, team?: TeamIndex): RoomMember[] {
+function playersOf(room: Pick<Room, 'members'>, team?: TeamIndex): RoomMember[] {
   return [...room.members.values()].filter(
     (m) => m.kind === 'player' && (team === undefined || m.team === team),
   );
@@ -327,15 +334,18 @@ export function pickTeam(room: {
   return best;
 }
 
-/** The lowest colour (and spawn point) no player of `team` holds. */
-function freeColorIndex(room: Room, team: TeamIndex): number {
-  const used = new Set(playersOf(room, team).map((p) => p.colorIndex));
-  for (let i = 0; i < PLAYER_COLOR_COUNT; i++) {
-    if (!used.has(i)) {
-      return i;
-    }
-  }
-  return 0;
+/**
+ * A colour (and spawn point) for a player arriving in `team`: `preferred` when no player of the
+ * team holds it, else the lowest free one (S7-105). `except` leaves one member out of the count
+ * (the player changing their own look).
+ */
+export function freeColorIndex(
+  room: Pick<Room, 'members'>,
+  team: TeamIndex,
+  preferred: number | null,
+  except?: string,
+): number {
+  return pickColor(takenColors(playersOf(room, team), team, except ?? null), preferred);
 }
 
 /** Every topic a member listens on: the room's, plus its team's (players) or the Widownia's. */
@@ -374,11 +384,12 @@ export function syncTopics(
 
 /**
  * Gives every player its team for the room's mode (co-op: team 0; versus: alternating in join
- * order, so the first joiner is in Kurier, the second in Głos) and its colour within that team
- * in join order. Spectators keep their team, which co-op resets to 0.
+ * order, so the first joiner is in Kurier, the second in Głos) and its colour within that team:
+ * in join order, each player takes their preferred colour when no earlier teammate holds it,
+ * else the lowest free one (S7-105). Spectators keep their team, which co-op resets to 0.
  */
 function assignTeams(room: Pick<Room, 'mode' | 'members'>): void {
-  const nextColor = Array.from({ length: MAX_TEAMS }, () => 0);
+  const taken = Array.from({ length: MAX_TEAMS }, () => new Set<number>());
   let index = 0;
   for (const member of room.members.values()) {
     if (member.kind !== 'player') {
@@ -390,8 +401,9 @@ function assignTeams(room: Pick<Room, 'mode' | 'members'>): void {
     const team = room.mode === 'versus' ? index % MAX_TEAMS : 0;
     index += 1;
     member.team = team;
-    member.colorIndex = (nextColor[team] ?? 0) % PLAYER_COLOR_COUNT;
-    nextColor[team] = (nextColor[team] ?? 0) + 1;
+    const used = taken[team] ?? new Set<number>();
+    member.colorIndex = pickColor(used, member.preferredColor);
+    used.add(member.colorIndex);
   }
 }
 
@@ -669,6 +681,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         role: p.role,
         ready: p.ready,
         team: p.team,
+        accessory: p.accessory,
       })),
       // Clients count the briefing down locally from `endsInMs`; it is re-sent with every
       // roomState (skip, join, reconnect), so there is no periodic broadcast.
@@ -718,14 +731,18 @@ export function createRoomRegistry(options: RegistryOptions) {
     kind: MemberKind,
     team: TeamIndex,
     clientId: ClientId | undefined,
+    look: Look | undefined,
   ): RoomMember {
+    const preferredColor = look?.color ?? null;
     const member: RoomMember = {
       id: `p${room.nextPlayerNumber++}`,
       kind,
       team,
       ...(clientId === undefined ? {} : { clientId }),
       nickname,
-      colorIndex: kind === 'player' ? freeColorIndex(room, team) : 0,
+      colorIndex: kind === 'player' ? freeColorIndex(room, team, preferredColor) : 0,
+      preferredColor,
+      accessory: look?.accessory ?? 'none',
       reconnectToken: generateReconnectToken(),
       connection: null,
       disconnectedAt: null,
@@ -798,7 +815,15 @@ export function createRoomRegistry(options: RegistryOptions) {
       sendError(connection, 'roomFull');
       return;
     }
-    const player = addToRoom(room, message.nickname, connection, 'player', team, message.clientId);
+    const player = addToRoom(
+      room,
+      message.nickname,
+      connection,
+      'player',
+      team,
+      message.clientId,
+      message.look,
+    );
     // A shared co-op level never waits for one player's menu.
     room.paused = false;
     log.info('player joined', { room: room.code, player: player.id });
@@ -877,7 +902,15 @@ export function createRoomRegistry(options: RegistryOptions) {
       kicked: new Map(),
     };
     rooms.set(code, room);
-    const host = addToRoom(room, message.nickname, connection, kind, 0, message.clientId);
+    const host = addToRoom(
+      room,
+      message.nickname,
+      connection,
+      kind,
+      0,
+      message.clientId,
+      message.look,
+    );
     room.hostId = host.id;
     log.info('room created', { room: code, player: host.id, kind });
     broadcastRoomState(room);
@@ -922,6 +955,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       'spectator',
       0,
       message.clientId,
+      message.look,
     );
     // The solo pause is for a room nobody else is in.
     room.paused = false;
@@ -1088,6 +1122,9 @@ export function createRoomRegistry(options: RegistryOptions) {
       case 'transferHost':
         transferHost(room, member, action.playerId);
         return;
+      case 'setLook':
+        setLook(room, member, action.look);
+        return;
       case 'backToLobby':
         if (member.id !== room.hostId) {
           rejectNotHost(member);
@@ -1157,6 +1194,34 @@ export function createRoomRegistry(options: RegistryOptions) {
   }
 
   /**
+   * Lobby only (S7-105): a member's profile look changed. The preference is kept for later team
+   * moves; a player takes the colour now when no teammate holds it (else keeps the current one,
+   * with no error), and the accessory always applies. Ignored in the briefing, while playing
+   * and on the results screen, so a look never changes mid-run.
+   */
+  function setLook(room: Room, member: RoomMember, look: Look): void {
+    if (room.phase !== 'lobby') {
+      return;
+    }
+    const before = { colorIndex: member.colorIndex, accessory: member.accessory };
+    member.preferredColor = look.color;
+    member.accessory = look.accessory;
+    if (member.kind === 'player' && look.color !== null) {
+      const taken = takenColors(playersOf(room, member.team), member.team, member.id);
+      if (!taken.has(look.color)) {
+        member.colorIndex = look.color;
+      }
+    }
+    // Only a change the wire shows sends a roomState (not a spectator's look, not a kept colour).
+    if (
+      member.kind === 'player' &&
+      (member.colorIndex !== before.colorIndex || member.accessory !== before.accessory)
+    ) {
+      broadcastRoomState(room);
+    }
+  }
+
+  /**
    * Versus, lobby or results: a player moves to the other newsroom (the host may move anyone)
    * and takes the lowest free colour there.
    */
@@ -1187,7 +1252,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       return;
     }
     const before = topicsFor(room.code, target);
-    target.colorIndex = freeColorIndex(room, team);
+    target.colorIndex = freeColorIndex(room, team, target.preferredColor);
     target.team = team;
     syncTopics(room.code, target, before);
     broadcastRoomState(room);
@@ -1269,7 +1334,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         reject(member, 'teamFull');
         return;
       }
-      target.colorIndex = freeColorIndex(room, team);
+      target.colorIndex = freeColorIndex(room, team, target.preferredColor);
       target.team = team;
       target.kind = 'player';
     }

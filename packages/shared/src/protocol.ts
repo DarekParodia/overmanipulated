@@ -20,6 +20,7 @@ import {
 import {
   abilitySchema,
   abilityStageSchema,
+  accessorySchema,
   difficultySchema,
   levelEventKindSchema,
   pingKindSchema,
@@ -109,6 +110,20 @@ export const inputActionsSchema = z.object({
 
 // --- Client → server -----------------------------------------------------------------------
 
+/**
+ * The look a player brings from their profile (S7-105): a preferred colour, which the room honours
+ * when no teammate holds it (null lets the room pick), and the accessory, always applied.
+ */
+export const lookSchema = z.object({
+  color: z
+    .number()
+    .int()
+    .min(0)
+    .max(PLAYER_COLOR_COUNT - 1)
+    .nullable(),
+  accessory: accessorySchema,
+});
+
 export const joinMessageSchema = z.object({
   type: z.literal('join'),
   protocolVersion: z.number().int(),
@@ -121,6 +136,8 @@ export const joinMessageSchema = z.object({
   as: memberKindSchema.optional(),
   /** The browser's stable client id (kick cooldown); old clients omit it. */
   clientId: clientIdSchema.optional(),
+  /** The profile's look (S7-105); omitted = no preference, no accessory. */
+  look: lookSchema.optional(),
 });
 
 export const lobbyActionSchema = z.discriminatedUnion('kind', [
@@ -168,6 +185,11 @@ export const lobbyActionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('kick'), playerId: playerIdSchema }),
   /** Host only: hand the host role to another connected member (S7-82). */
   z.object({ kind: z.literal('transferHost'), playerId: playerIdSchema }),
+  /**
+   * Lobby only (S7-105): the profile's look changed. A colour another teammate holds keeps the
+   * current one; the accessory always applies.
+   */
+  z.object({ kind: z.literal('setLook'), look: lookSchema }),
 ]);
 
 export const lobbyMessageSchema = z.object({
@@ -253,6 +275,8 @@ export const lobbyPlayerSchema = z.object({
   ready: z.boolean(),
   /** The player's newsroom; always 0 in co-op (S7-77). */
   team: teamIndexSchema,
+  /** Worn in the lobby card and in 3D (S7-105). */
+  accessory: accessorySchema,
 });
 
 /** A member watching from the Widownia (S7-77). */
@@ -653,6 +677,7 @@ export type MoveVector = z.infer<typeof moveVectorSchema>;
 export type InputActions = z.infer<typeof inputActionsSchema>;
 export type JoinMessage = z.infer<typeof joinMessageSchema>;
 export type LobbyAction = z.infer<typeof lobbyActionSchema>;
+export type Look = z.infer<typeof lookSchema>;
 export type LobbyMessage = z.infer<typeof lobbyMessageSchema>;
 export type PlayerCommand = z.infer<typeof playerCommandSchema>;
 export type CommandMessage = z.infer<typeof commandMessageSchema>;

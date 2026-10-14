@@ -23,6 +23,7 @@ function player(id: string, team: 0 | 1, extra: Partial<LobbyPlayer> = {}): Lobb
     role: null,
     ready: true,
     team,
+    accessory: 'none',
     ...extra,
   };
 }

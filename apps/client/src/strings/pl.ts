@@ -3,6 +3,7 @@
 import type {
   Ability,
   AbilityBlockReason,
+  Accessory,
   Difficulty,
   ErrorCode,
   FolderBonuses,
@@ -28,7 +29,6 @@ import type { RoomListProblem } from '../rooms/room-list-model.ts';
 import type { FeedTone } from '../spectate/feed-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
-import type { Accessory } from '../store/profile-model.ts';
 import { listPl, pluralPl } from './plural.ts';
 
 /**
@@ -110,6 +110,8 @@ export const pl = {
     leave: 'Wyjdź',
     settings: 'Ustawienia',
     playersCount: (n: number, max: number) => `${n} z ${max} przy biurkach`,
+    /** The own card's round button (S7-105): opens the profile's colour and accessory. */
+    changeLook: 'Zmień wygląd',
   },
   game: {
     leave: 'Wyjdź z redakcji',
@@ -2558,12 +2560,15 @@ export const pl = {
     colorLabel: 'Kolor gracza',
     /** Colour name and its shape (S5-05), so the choice never rests on colour alone. */
     colors: ['Pomarańczowy, koło', 'Niebieski, kwadrat', 'Morski, trójkąt', 'Różowy, romb'],
+    /** In a room (S7-105): another player of your newsroom wears this colour. */
+    takenColor: 'Zajęty w\u00a0pokoju',
+    takenLabel: (color: string) => `${color} – zajęty w\u00a0pokoju`,
     accessoryLabel: 'Dodatek',
     accessories: {
       none: 'Bez dodatku',
       scarf: 'Szalik',
       bowTie: 'Muszka',
-      pressCard: 'Legitymacja prasowa',
+      pressBadge: 'Legitymacja prasowa',
     } satisfies Record<Accessory, string>,
     statsTitle: 'Statystyki',
     stats: {

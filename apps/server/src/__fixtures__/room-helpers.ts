@@ -7,6 +7,7 @@ import {
   type GameEvent,
   type GameState,
   type LobbyAction,
+  type Look,
   type MemberKind,
   PROTOCOL_VERSION,
   parseServerMessage,
@@ -25,6 +26,8 @@ export type JoinFields = {
   as?: MemberKind;
   token?: string;
   clientId?: string;
+  /** The profile's look (S7-105). */
+  look?: Look;
 };
 
 export function createRoomHarness(options: Omit<Partial<RegistryOptions>, 'hub' | 'step'> = {}) {
@@ -74,6 +77,7 @@ export function createRoomHarness(options: Omit<Partial<RegistryOptions>, 'hub' 
       ...(fields.as === undefined ? {} : { as: fields.as }),
       ...(fields.token === undefined ? {} : { reconnectToken: fields.token }),
       ...(fields.clientId === undefined ? {} : { clientId: fields.clientId }),
+      ...(fields.look === undefined ? {} : { look: fields.look }),
     });
     return connection;
   }

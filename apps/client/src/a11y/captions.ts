@@ -130,6 +130,8 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'lobby.teamSwitch': skip('visual-elsewhere'),
   'lobby.hostChanged': skip('visual-elsewhere'),
   'lobby.kicked': skip('visual-elsewhere'),
+  // The player's card shows the new colour and accessory badge (S7-105).
+  'lobby.lookChanged': skip('visual-elsewhere'),
   // Someone watching is worth knowing about, also with the sound off (S7-86).
   'room.spectatorJoined': chip('eye', t.spectatorJoined, 'info'),
   // S7-91: the spectator's own press (the blue ring moves), and the feed row is the words itself.

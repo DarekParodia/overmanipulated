@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { roleSchema } from '@redakcja/shared';
+import { ACCESSORIES, roleSchema } from '@redakcja/shared';
 import { BASE_CLIPS, characterClips, GESTURE_CLIPS } from './clips.ts';
 import {
   createCharacterController,
@@ -17,6 +17,7 @@ import {
   boneRestWorld,
   buildCharacterGeometry,
   CHARACTER_HEIGHT,
+  cosmeticParts,
   createCharacterRig,
 } from './rig.ts';
 
@@ -57,6 +58,44 @@ describe('character rig', () => {
       ),
     );
     expect(counts.size).toBe(roleSchema.options.length + 1);
+  });
+
+  it('adds each cosmetic on the neck or the torso, about 100 triangles at most (S7-105)', () => {
+    const triangles = (role: Parameters<typeof buildCharacterGeometry>[1], accessory: string) => {
+      const geometry = buildCharacterGeometry(
+        '#ff8c42',
+        role,
+        ACCESSORIES.find((a) => a === accessory) ?? 'none',
+      ).body;
+      const count = (geometry.index?.count ?? geometry.getAttribute('position').count) / 3;
+      geometry.dispose();
+      return count;
+    };
+    const plain = triangles(null, 'none');
+    const counts = new Set<number>();
+    for (const accessory of ACCESSORIES) {
+      for (const part of cosmeticParts(accessory)) {
+        expect(['torso']).toContain(part.bone);
+      }
+      const added = triangles(null, accessory) - plain;
+      expect(added).toBeLessThanOrEqual(120);
+      counts.add(added);
+      // Worn together with every role accessory, the character stays inside its height.
+      for (const role of roleSchema.options) {
+        const { body } = buildCharacterGeometry('#ff8c42', role, accessory);
+        body.computeBoundingBox();
+        expect(body.boundingBox?.max.y ?? 9).toBeLessThan(CHARACTER_HEIGHT + 0.1);
+        body.dispose();
+      }
+    }
+    expect(counts.has(0)).toBe(true);
+    expect(counts.size).toBe(ACCESSORIES.length);
+  });
+
+  it('tags the body with its accessory for the debug scene hook', () => {
+    const rig = createCharacterRig('#3a86ff', null, { shadows: false, accessory: 'scarf' });
+    expect(rig.body.userData.accessory).toBe('scarf');
+    rig.dispose();
   });
 
   it('names every bone so clips can bind to them', () => {

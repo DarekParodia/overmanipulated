@@ -10,6 +10,7 @@
 
 import { useFrame } from '@react-three/fiber';
 import {
+  type Accessory,
   type FolderLocation,
   fixtureById,
   PLAYER_SPEED_TILES_PER_S,
@@ -133,10 +134,19 @@ export type PlayerAvatarProps = {
   nickname: string;
   colorIndex: number;
   role: Role | null;
+  /** The player's cosmetic on the neck or chest (S7-105). */
+  accessory: Accessory;
   shadows: boolean;
 };
 
-export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: PlayerAvatarProps) {
+export function PlayerAvatar({
+  id,
+  nickname,
+  colorIndex,
+  role,
+  accessory,
+  shadows,
+}: PlayerAvatarProps) {
   const view = useGameView();
   const root = useRef<Group>(null);
   const body = useRef<Group>(null);
@@ -173,7 +183,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
     if (!parent) {
       return;
     }
-    const rig = createCharacterRig(playerColor(colorIndex), role, { shadows });
+    const rig = createCharacterRig(playerColor(colorIndex), role, { shadows, accessory });
     parent.add(rig.root);
     // Adaptive quality can drop the navy outline hull as a last resort.
     const syncOutline = () => {
@@ -199,7 +209,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
         rigRef.current = null;
       }
     };
-  }, [view, colorIndex, role, shadows, id]);
+  }, [view, colorIndex, role, accessory, shadows, id]);
 
   useEffect(
     () =>

@@ -8,6 +8,7 @@ import {
   encodeMessage,
   type LevelEndMessage,
   type LobbyAction,
+  type Look,
   type MemberKind,
   type PlayerCommand,
   PROTOCOL_VERSION,
@@ -28,7 +29,7 @@ import { renderState } from '../scene/render-state.ts';
 import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
 import { selfKind, selfTeam, useApp } from '../store/app.ts';
 import { clientId } from '../store/client-id.ts';
-import { useProfile } from '../store/profile.ts';
+import { profileLook, useProfile } from '../store/profile.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
 import { useSettings } from '../store/settings.ts';
@@ -324,6 +325,7 @@ function open(): void {
         ...(pendingJoin.roomCode ? { roomCode: pendingJoin.roomCode } : {}),
         ...(pendingJoin.as === 'spectator' ? { as: 'spectator' as const } : {}),
         clientId: clientId(),
+        look: profileLook(),
       });
     } else if (slot) {
       send({
@@ -521,6 +523,14 @@ export function kick(playerId: string): void {
 /** Host (S7-87): hands the host to another connected member (a spectator may host). */
 export function transferHost(playerId: string): void {
   lobby({ kind: 'transferHost', playerId });
+}
+
+/**
+ * Lobby only (S7-105): the profile's look changed while in a room. The room keeps the current
+ * colour when a teammate holds the preferred one; the accessory always applies.
+ */
+export function setLook(look: Look): void {
+  lobby({ kind: 'setLook', look });
 }
 
 /** Sends a player decision (minigame result, verdict, ping, …); applied on the next tick. */

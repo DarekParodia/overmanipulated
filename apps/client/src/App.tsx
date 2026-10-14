@@ -12,6 +12,7 @@ import { HowToPlayHost } from './howto/HowToPlayHost.tsx';
 import { useMenuNavigation } from './input/menu-nav.ts';
 import { GameGate } from './loading/GameGate.tsx';
 import { startPreload } from './loading/preload.ts';
+import { startLookSync } from './net/look-sync.ts';
 import { startProfileTracking } from './net/profile-tracking.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
 import { ProfileHost } from './profile/ProfileHost.tsx';
@@ -50,6 +51,7 @@ export function App() {
     const stopGameplayFeedback = startGameplayFeedback();
     const stopCaptions = startCaptions();
     const stopProfileTracking = startProfileTracking();
+    const stopLookSync = startLookSync();
     document.addEventListener('visibilitychange', handleVisibilityReturn);
     return () => {
       unsubscribeSettings();
@@ -58,6 +60,7 @@ export function App() {
       stopGameplayFeedback();
       stopCaptions();
       stopProfileTracking();
+      stopLookSync();
       document.removeEventListener('visibilitychange', handleVisibilityReturn);
     };
   }, []);

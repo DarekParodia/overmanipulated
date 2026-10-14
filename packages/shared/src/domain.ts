@@ -60,6 +60,11 @@ export const pingKindSchema = z.enum(['needArchive', 'fake', 'mine']);
 export const stampRelevanceSchema = z.enum(['decisive', 'misleading', 'irrelevant']);
 /** Room difficulty (Stage 7): picks one preset from `DIFFICULTY` in constants.ts. */
 export const difficultySchema = z.enum(['easy', 'normal', 'hard', 'expert']);
+/**
+ * The cosmetic a player's character wears (glossary: Dodatek, S7-105): on the neck or the chest
+ * only, so it never collides with a role accessory.
+ */
+export const accessorySchema = z.enum(['none', 'scarf', 'bowTie', 'pressBadge']);
 
 /** Random level events (design doc, "Zdarzenia losowe"); scheduled from level data. */
 export const levelEventKindSchema = z.enum([
@@ -84,6 +89,7 @@ export type LevelEventKind = z.infer<typeof levelEventKindSchema>;
 export type PingKind = z.infer<typeof pingKindSchema>;
 export type StampRelevance = z.infer<typeof stampRelevanceSchema>;
 export type Difficulty = z.infer<typeof difficultySchema>;
+export type Accessory = z.infer<typeof accessorySchema>;
 
 /**
  * Stations whose stamp is only a hint (design doc: "AI is only a hint"). Such a stamp may be
@@ -104,6 +110,8 @@ export const STATION_FAMILIES = stationFamilySchema.options;
 export const PING_KINDS = pingKindSchema.options;
 /** Easiest first; pickers and per-difficulty tables list them in this order. */
 export const DIFFICULTIES = difficultySchema.options;
+/** Pickers list them in this order, „Bez dodatku” first. */
+export const ACCESSORIES = accessorySchema.options;
 
 /**
  * The verdict a story must get (agents/content-authoring.md, "Truth → verdict").

@@ -19,6 +19,7 @@ const ROOM: RoomStateMessage = {
       role: 'reporter',
       ready: true,
       team: 0,
+      accessory: 'none',
     },
   ],
   briefing: null,
@@ -116,13 +117,13 @@ describe('profile tracking (S7-104)', () => {
   it('keeps the look when the statistics are cleared', () => {
     const profile = useProfile.getState();
     profile.setColor(3);
-    profile.setAccessory('pressCard');
+    profile.setAccessory('pressBadge');
     profile.recordLevelEnd(LEVEL_END);
     profile.clearStats();
     expect(useProfile.getState().profile).toEqual({
       ...emptyProfile(),
       color: 3,
-      accessory: 'pressCard',
+      accessory: 'pressBadge',
     });
   });
 });

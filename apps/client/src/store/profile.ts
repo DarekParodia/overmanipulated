@@ -3,11 +3,10 @@
 // (fed through `onGameEvent` by net/profile-tracking.ts), `recordLevelEnd` adds the finished
 // level (net/session.ts, beside the campaign progress) and `startMatch` drops a tally left by a
 // level the player walked out of. A spectator, or anyone not seated in the room, is not tracked.
-import type { GameEvent, LevelEndMessage, PlayerStats } from '@redakcja/shared';
+import type { Accessory, GameEvent, LevelEndMessage, Look, PlayerStats } from '@redakcja/shared';
 import { create } from 'zustand';
 import { useApp } from './app.ts';
 import {
-  type Accessory,
   type Profile,
   parseProfile,
   type Seat,
@@ -18,6 +17,12 @@ import {
 import { readStored, writeStored } from './safe-storage.ts';
 
 export const PROFILE_KEY = 'redakcja.profile.v1';
+
+/** The profile's look as the room gets it (join and `setLook`, S7-105). */
+export function profileLook(): Look {
+  const { color, accessory } = useProfile.getState().profile;
+  return { color, accessory };
+}
 
 /** The local player's seat in the current room; null outside a room or as a spectator. */
 export function currentSeat(): Seat | null {
