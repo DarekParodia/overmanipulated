@@ -150,6 +150,8 @@ test('lobby at 640×360: one row of settings, two columns and the sticky start',
   const host = await openPlayer(browser, 'Zośka', SMALL_PHONE);
   const guest = await openPlayer(browser, 'Bartek', DESKTOP);
   const third = await openPlayer(browser, 'Celina', DESKTOP);
+  // The longest nickname allowed (16 characters).
+  const long = await openPlayer(browser, 'Konstantynopolka', DESKTOP);
   const code = await createRoom(host);
   await joinRoom(guest, code, { ready: false });
   await host.page.getByTestId('room-mode-versus').click();
@@ -158,6 +160,8 @@ test('lobby at 640×360: one row of settings, two columns and the sticky start',
   await third.page.getByTestId('to-spectators').click();
   await expect(host.page.getByTestId('spectator-chip')).toHaveText(/Celina/);
   await expect(column(host, 1)).toContainText('Bartek');
+  await joinRoom(long, code, { ready: false });
+  await expect(host.page.getByTestId('player-card')).toHaveCount(3);
 
   await noSideScroll(host.page);
   // S7-86: the top actions (settings, Jak grać?, Encyklopedia, Wyniki, Wyjdź) are one row of
@@ -177,6 +181,21 @@ test('lobby at 640×360: one row of settings, two columns and the sticky start',
   const watchBox = await watch.boundingBox();
   expect(Math.min(watchBox?.width ?? 0, watchBox?.height ?? 0)).toBeGreaterThanOrEqual(48);
   expectOneRow(await boxes(host.page, '[data-testid="spectator-strip"] > *'), 'Widownia strip');
+  // Every player-card name in the newsroom columns is one line; a long one ends in „…” and keeps
+  // the whole nickname as its text and tooltip.
+  const names = await host.page.getByTestId('player-name').evaluateAll((els) =>
+    els.map((el) => ({
+      text: el.textContent,
+      title: el.getAttribute('title'),
+      height: el.getBoundingClientRect().height,
+      line: Number.parseFloat(getComputedStyle(el).lineHeight),
+    })),
+  );
+  expect(names.map((n) => n.text).sort()).toEqual(['Bartek', 'Konstantynopolka', 'Zośka']);
+  for (const name of names) {
+    expect(name.height, `${name.text} on one line`).toBeLessThan(name.line * 1.5);
+    expect(name.title).toBe(name.text);
+  }
   // The footer with the one yellow action sticks to the bottom edge.
   const start = host.page.getByRole('button', { name: 'Do składu!' });
   await expect(start).toBeInViewport();

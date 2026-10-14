@@ -1,6 +1,7 @@
 // One player in the lobby row: avatar circle in the player's colour, name, role (icon + name)
 // and a big state chip — ✓ Gotowy / Czeka for guests, Gospodarz for the host. In the newsroom
-// columns of Na punkty (S7-86) the card is a compact row: avatar, name and role icon, state chip.
+// columns of Na punkty (S7-86) the card is a compact row: avatar, name and role icon, state chip
+// (on a second line when the column is too narrow for the name). The name is always one line.
 // The host sees a round „more” button next to another member's chip, for the manage sheet; the
 // host's chip wears a crown that pops when the host role moves (S7-87). The player's accessory
 // sits as a badge on the avatar, and the own card has a round „Zmień wygląd” button that opens the
@@ -67,14 +68,20 @@ export function PlayerCard({
       {player.accessory !== 'none' && (
         <span className="visually-hidden">{pl.profile.accessories[player.accessory]}</span>
       )}
-      <span className={styles.name}>
-        {player.nickname}
-        {isMe && <span className={styles.you}>{pl.lobby.you}</span>}
-      </span>
-      <span className={`${styles.role} ${player.role ? '' : styles.noRole}`}>
-        <RoleIcon role={player.role ?? 'none'} size={22} />
-        <span data-testid="roster-role">
-          {player.role ? pl.vocab.roles[player.role] : pl.lobbyRoles.noRole}
+      <span className={styles.who}>
+        <span className={styles.name}>
+          {/* One line: a long nickname ends in „…”; the text (its accessible name) and the
+              tooltip keep it whole. */}
+          <span className={styles.nameText} title={player.nickname} data-testid="player-name">
+            {player.nickname}
+          </span>
+          {isMe && <span className={styles.you}>{pl.lobby.you}</span>}
+        </span>
+        <span className={`${styles.role} ${player.role ? '' : styles.noRole}`}>
+          <RoleIcon role={player.role ?? 'none'} size={22} />
+          <span data-testid="roster-role">
+            {player.role ? pl.vocab.roles[player.role] : pl.lobbyRoles.noRole}
+          </span>
         </span>
       </span>
       <span className={styles.foot}>

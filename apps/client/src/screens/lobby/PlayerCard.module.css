@@ -1,5 +1,7 @@
 .card {
   display: grid;
+  /* A track that may shrink below the name's width, so a long nickname ends in „…”. */
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   align-content: start;
   gap: var(--space-2);
@@ -61,16 +63,29 @@
   animation: pop-in var(--motion-base) var(--ease-bounce) both;
 }
 
+/* Name and role: two more rows of the tall card; one block beside the avatar in the compact row. */
+.who {
+  display: contents;
+}
+
+/* The name stays on one line; a long nickname ends in „…” (full in the text and the tooltip). */
 .name {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
   max-width: 100%;
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 800;
   line-height: var(--leading-snug);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+}
+
+.nameText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .you {
@@ -170,39 +185,37 @@
   border-color: var(--text-faint);
 }
 
-/* Compact row (newsroom columns, S7-86): avatar | name over role | state chip. The card pops in
-   again when its player moves to the other column. */
+/* Compact row (newsroom columns, S7-86): avatar | name over role | state chip. When the column
+   leaves the name less than 7rem (a 640 px phone), the chip moves to a second line instead of
+   squeezing the name. The card pops in again when its player moves to the other column. */
 .compact {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    "avatar name state"
-    "avatar role state";
-  justify-items: start;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   column-gap: var(--space-3);
-  row-gap: 0;
+  row-gap: var(--space-2);
   padding: var(--space-2) var(--space-3);
   text-align: left;
 }
 
 .compact .avatar {
-  grid-area: avatar;
+  flex: none;
   width: 2.75rem;
   height: 2.75rem;
   font-size: var(--text-lg);
 }
 
-.compact .name {
-  grid-area: name;
-}
-
-.compact .role {
-  grid-area: role;
+.compact .who {
+  display: grid;
+  flex: 1 1 7rem;
+  justify-items: start;
+  min-width: 0;
 }
 
 .compact .foot {
-  grid-area: state;
+  flex: none;
   flex-wrap: nowrap;
+  margin-left: auto;
 }
 
 .compact .state {
