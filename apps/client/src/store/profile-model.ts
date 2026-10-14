@@ -2,8 +2,10 @@
 // look, kept per browser under `redakcja.profile.v1`, with no account. Pure: the counters of one
 // match come from the shared match-stats accumulator (`applyStatsEvent`, S7-78), the same one the
 // server folds for spectators and `levelEnd.stats`, so a counter is never defined twice. The look
-// (colour, accessory) is only a preference for now; S7-105 sends it with the join.
+// (colour, accessory) goes to the room with the join and `setLook` (S7-105, net/look-sync.ts).
 import {
+  type Accessory,
+  accessorySchema,
   applyStatsEvent,
   emptyPlayerStats,
   type GameEvent,
@@ -17,9 +19,8 @@ import {
 } from '@redakcja/shared';
 import { z } from 'zod';
 
-/** The cosmetic a player can wear (glossary: Dodatek); S7-105 moves it onto the wire. */
-export const ACCESSORIES = ['none', 'scarf', 'bowTie', 'pressCard'] as const;
-export type Accessory = (typeof ACCESSORIES)[number];
+/** S7-104 stored the press badge as `pressCard` before the wire named it (S7-105). */
+const LEGACY_ACCESSORY: Readonly<Record<string, Accessory>> = { pressCard: 'pressBadge' };
 
 const count = z.number().int().nonnegative().catch(0);
 
@@ -44,7 +45,12 @@ export const profileSchema = z.object({
     .max(PLAYER_COLOR_COUNT - 1)
     .nullable()
     .catch(null),
-  accessory: z.enum(ACCESSORIES).catch('none'),
+  accessory: z
+    .preprocess(
+      (value) => (typeof value === 'string' ? (LEGACY_ACCESSORY[value] ?? value) : value),
+      accessorySchema,
+    )
+    .catch('none'),
 });
 
 export type Profile = z.infer<typeof profileSchema>;

@@ -1,13 +1,13 @@
 // „Profil” (S7-104): this browser's player profile in a lazy modal dialog. Left, „Wygląd”: a
 // preview (the player mark in the chosen colour, the accessory glyph, the nickname), the colour
-// swatches (colour + shape, S5-05) and the accessory chips — kept here only until S7-105 sends
-// them to the room. Right, „Statystyki”: six tiles from the profile counters, the stars per
-// difficulty from the campaign progress, the „only in this browser” note and „Wyczyść
-// statystyki” behind a confirm step. One yellow „Gotowe” closes it. Keyboard (Tab, arrows in a
-// radio group, Enter, Esc), gamepad (d-pad, A, B) and touch all work; a centred panel on desktop,
-// a full-screen sheet on phones.
+// swatches (colour + shape, S5-05) and the accessory chips; in a room the look reaches the other
+// players at once and a colour a teammate holds is crossed out (S7-105). Right, „Statystyki”:
+// six tiles from the profile counters, the stars per difficulty from the campaign progress, the
+// „only in this browser” note and „Wyczyść statystyki” behind a confirm step. One yellow
+// „Gotowe” closes it. Keyboard (Tab, arrows in a radio group, Enter, Esc), gamepad (d-pad, A, B)
+// and touch all work; a centred panel on desktop, a full-screen sheet on phones.
 import { LEVELS } from '@redakcja/content';
-import { PLAYER_COLOR_COUNT } from '@redakcja/shared';
+import { ACCESSORIES, type Accessory, PLAYER_COLOR_COUNT, takenColors } from '@redakcja/shared';
 import {
   type CSSProperties,
   type ReactNode,
@@ -24,7 +24,7 @@ import { handleMenuIntent } from '../input/menu-nav.ts';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { useApp } from '../store/app.ts';
 import { useProfile } from '../store/profile.ts';
-import { ACCESSORIES, type Accessory, accuracy, favouriteRole } from '../store/profile-model.ts';
+import { accuracy, favouriteRole } from '../store/profile-model.ts';
 import { starTotals, useProgress } from '../store/progress.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
@@ -153,8 +153,18 @@ function LookSection() {
   const setColor = useProfile((s) => s.setColor);
   const setAccessory = useProfile((s) => s.setAccessory);
   const nickname = useApp((s) => s.nickname).trim();
+  const room = useApp((s) => s.room);
+  const playerId = useApp((s) => s.playerId);
   const id = useId();
-  const shown = color ?? 0;
+  // In a room (S7-105) the preview and the ticked swatch show the colour the room gave you (so a
+  // ticked swatch is never a crossed-out one), and a colour another player of your newsroom holds
+  // cannot be picked.
+  const me = room?.players.find((p) => p.id === playerId);
+  const taken = useMemo(
+    () => (room && me ? takenColors(room.players, me.team, me.id) : new Set<number>()),
+    [room, me],
+  );
+  const shown = me?.colorIndex ?? color ?? 0;
   const name = nickname || pl.profile.noNickname;
 
   return (
@@ -185,25 +195,35 @@ function LookSection() {
         <legend className={styles.legend}>{pl.profile.colorLabel}</legend>
         <span className={styles.swatches}>
           {COLOR_INDICES.map((index) => {
-            const checked = index === color;
+            const checked = index === (me ? me.colorIndex : color);
+            const isTaken = taken.has(index);
+            const label = pl.profile.colors[index] ?? '';
             return (
               <label
                 key={index}
-                className={`${styles.swatch} ${checked ? styles.chosen : ''}`}
+                className={`${styles.swatch} ${checked ? styles.chosen : ''} ${isTaken ? styles.taken : ''}`}
                 data-testid={`profile-color-${index}`}
+                data-taken={isTaken || undefined}
+                title={isTaken ? pl.profile.takenColor : undefined}
               >
                 <input
                   type="radio"
                   name={`${id}-color`}
                   className={styles.native}
                   checked={checked}
-                  aria-label={pl.profile.colors[index]}
+                  disabled={isTaken}
+                  aria-label={isTaken ? pl.profile.takenLabel(label) : label}
                   onChange={() => {
                     emitCue('ui.click');
                     setColor(index);
                   }}
                 />
                 <PlayerMark colorIndex={index} size={36} />
+                {isTaken && (
+                  <span className={styles.takenMark} aria-hidden="true">
+                    <Icon name="cross" size={32} />
+                  </span>
+                )}
                 {checked && (
                   <span className={styles.tick} aria-hidden="true">
                     <Icon name="check" size={16} />
@@ -213,6 +233,12 @@ function LookSection() {
             );
           })}
         </span>
+        {taken.size > 0 && (
+          <p className={styles.takenNote} data-testid="profile-taken-note">
+            <Icon name="cross" size={18} />
+            {pl.profile.takenColor}
+          </p>
+        )}
       </fieldset>
 
       <fieldset className={styles.group} data-testid="profile-accessories">

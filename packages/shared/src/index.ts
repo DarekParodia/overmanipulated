@@ -5,6 +5,7 @@ export * from './difficulty.ts';
 export * from './domain.ts';
 export * from './entities.ts';
 export * from './leaderboard.ts';
+export * from './look.ts';
 export * from './markdown-lite.ts';
 export * from './match-stats.ts';
 export * from './name-filter.ts';

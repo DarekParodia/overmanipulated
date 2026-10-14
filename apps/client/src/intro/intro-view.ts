@@ -39,6 +39,7 @@ export const INTRO_ROSTER: readonly LobbyPlayer[] = [
     role: INTRO_PLAYER_ROLE,
     ready: true,
     team: 0,
+    accessory: 'none',
   },
 ];
 

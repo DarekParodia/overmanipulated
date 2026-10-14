@@ -64,6 +64,7 @@ function room(fields: Partial<RoomStateMessage> = {}): RoomStateMessage {
         role: null,
         ready: true,
         team: 0,
+        accessory: 'none',
       },
       {
         id: 'p2',
@@ -73,6 +74,7 @@ function room(fields: Partial<RoomStateMessage> = {}): RoomStateMessage {
         role: null,
         ready: true,
         team: 1,
+        accessory: 'scarf',
       },
     ],
     briefing: null,

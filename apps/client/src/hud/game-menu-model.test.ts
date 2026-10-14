@@ -25,6 +25,7 @@ function room(connected: boolean[]): RoomStateMessage {
       role: null,
       ready: false,
       team: 0,
+      accessory: 'none' as const,
     })),
     briefing: null,
     blunderVotes: [],

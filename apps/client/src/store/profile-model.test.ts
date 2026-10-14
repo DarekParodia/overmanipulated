@@ -87,6 +87,11 @@ describe('profile storage', () => {
       emptyProfile(),
     );
   });
+
+  it('reads the press badge S7-104 stored as pressCard (S7-105)', () => {
+    expect(parseProfile(JSON.stringify({ accessory: 'pressCard' })).accessory).toBe('pressBadge');
+    expect(parseProfile(JSON.stringify({ accessory: 'pressBadge' })).accessory).toBe('pressBadge');
+  });
 });
 
 describe('match tally', () => {

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'bun:test';
 import { TECHNIQUES } from '@redakcja/content';
 import {
   ABILITIES,
+  ACCESSORIES,
   LEVEL_EVENT_KINDS,
   PING_KINDS,
   ROLES,
@@ -16,7 +17,6 @@ import { cardIcon } from '../../encyclopedia/card-icons.ts';
 import { EVENT_ICON } from '../../events/event-model.ts';
 import { PING_ICON } from '../../pings/PingPicker.tsx';
 import { STATION_ICON } from '../../stations/kit.tsx';
-import { ACCESSORIES } from '../../store/profile-model.ts';
 import { ACCESSORY_ICON_NAMES } from './AccessoryIcon.tsx';
 import { iconNames } from './Icon.tsx';
 import { ROLE_ICON_NAMES } from './RoleIcon.tsx';

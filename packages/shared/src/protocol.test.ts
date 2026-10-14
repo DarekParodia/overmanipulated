@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { PROTOCOL_VERSION } from './constants.ts';
+import { ACCESSORIES } from './domain.ts';
 import {
   encodeMessage,
   parseClientMessage,
@@ -31,8 +32,8 @@ const ROOM_DEFAULTS = {
 };
 
 describe('protocol version', () => {
-  it('is 7 for the Stage 7 M6 wire (rooms, versus, spectators)', () => {
-    expect(PROTOCOL_VERSION).toBe(7);
+  it('is 8 for the Stage 7 M7 wire (the player look)', () => {
+    expect(PROTOCOL_VERSION).toBe(8);
   });
 });
 
@@ -200,6 +201,7 @@ describe('server messages', () => {
             role: null,
             ready: false,
             team: 0,
+            accessory: 'none',
           },
         ],
       },
@@ -567,6 +569,7 @@ describe('server messages', () => {
             role: null,
             ready: false,
             team: 0,
+            accessory: 'none',
           },
         ],
       }).ok,
@@ -586,6 +589,7 @@ describe('rooms, versus and spectators (S7-77)', () => {
     role: null,
     ready: false,
     team,
+    accessory: 'scarf',
   });
   const spectator = (i: number) => ({ id: `p${i}`, nickname: `Widz ${i}`, connected: true });
   const room = {
@@ -868,5 +872,37 @@ describe('rooms, versus and spectators (S7-77)', () => {
     ]) {
       expect(server({ type: 'error', code })).toBe(true);
     }
+  });
+});
+
+describe('the player look (S7-105)', () => {
+  const join = { type: 'join', protocolVersion: PROTOCOL_VERSION, nickname: 'Zośka' };
+  const parseJoin = (look: unknown) => parseClientMessage({ ...join, look }).ok;
+  const lobby = (action: unknown) => parseClientMessage({ type: 'lobby', action }).ok;
+
+  it('accepts a join with a preferred colour 0..3 or null and an accessory', () => {
+    expect(parseJoin({ color: 0, accessory: 'none' })).toBe(true);
+    expect(parseJoin({ color: 3, accessory: 'pressBadge' })).toBe(true);
+    expect(parseJoin({ color: null, accessory: 'scarf' })).toBe(true);
+    expect(parseClientMessage(join).ok).toBe(true);
+  });
+
+  it('rejects a colour outside 0..3, a fraction and an unknown accessory', () => {
+    expect(parseJoin({ color: 4, accessory: 'none' })).toBe(false);
+    expect(parseJoin({ color: -1, accessory: 'none' })).toBe(false);
+    expect(parseJoin({ color: 1.5, accessory: 'none' })).toBe(false);
+    expect(parseJoin({ color: 1, accessory: 'hat' })).toBe(false);
+    expect(parseJoin({ color: 1 })).toBe(false);
+  });
+
+  it('accepts setLook with the same look shape', () => {
+    expect(lobby({ kind: 'setLook', look: { color: 2, accessory: 'bowTie' } })).toBe(true);
+    expect(lobby({ kind: 'setLook', look: { color: null, accessory: 'none' } })).toBe(true);
+    expect(lobby({ kind: 'setLook', look: { color: 2 } })).toBe(false);
+    expect(lobby({ kind: 'setLook' })).toBe(false);
+  });
+
+  it('lists the four accessories in picker order', () => {
+    expect([...ACCESSORIES]).toEqual(['none', 'scarf', 'bowTie', 'pressBadge']);
   });
 });

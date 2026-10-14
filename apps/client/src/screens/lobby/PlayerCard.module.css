@@ -25,6 +25,7 @@
 }
 
 .avatar {
+  position: relative;
   display: grid;
   place-items: center;
   width: 3.5rem;
@@ -42,6 +43,22 @@
 
 .away .avatar {
   opacity: 0.5;
+}
+
+/* The accessory badge (S7-105) on the avatar's lower right; pops in on every new look. */
+.accessory {
+  position: absolute;
+  right: -0.55rem;
+  bottom: -0.45rem;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--outline);
+  animation: pop-in var(--motion-base) var(--ease-bounce) both;
 }
 
 .name {
@@ -191,6 +208,16 @@
 .compact .state {
   min-height: 2.25rem;
   font-size: var(--text-sm);
+}
+
+.compact .accessory {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.compact .accessory svg {
+  width: 1.1rem;
+  height: 1.1rem;
 }
 
 @keyframes pop-in {

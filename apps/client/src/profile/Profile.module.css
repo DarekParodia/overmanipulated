@@ -241,6 +241,47 @@
   height: 1px;
 }
 
+/* A colour another player of your newsroom holds (S7-105): sunk, dashed, crossed out. */
+.taken {
+  cursor: not-allowed;
+  background: var(--surface-sunk);
+  border-style: dashed;
+  border-color: var(--text-faint);
+  box-shadow: none;
+}
+
+.taken:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.taken > svg {
+  opacity: 0.45;
+}
+
+.takenMark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--outline);
+  pointer-events: none;
+}
+
+.takenMark svg {
+  stroke-width: 3.5;
+}
+
+.takenNote {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
 /* --- Statystyki --------------------------------------------------------------------------- */
 
 .tiles {

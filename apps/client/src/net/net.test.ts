@@ -241,7 +241,16 @@ function soloRoom(role: Role | null): RoomStateMessage {
     difficulty: 'normal',
     run: null,
     players: [
-      { id: 'p1', nickname: 'Zośka', colorIndex: 0, connected: true, role, ready: true, team: 0 },
+      {
+        id: 'p1',
+        nickname: 'Zośka',
+        colorIndex: 0,
+        connected: true,
+        role,
+        ready: true,
+        team: 0,
+        accessory: 'none',
+      },
     ],
     briefing: null,
     blunderVotes: [],

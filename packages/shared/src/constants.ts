@@ -10,7 +10,7 @@ import {
 } from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 7;
+export const PROTOCOL_VERSION = 8;
 
 // --- Simulation timing ---------------------------------------------------------------------
 

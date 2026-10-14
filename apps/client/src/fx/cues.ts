@@ -449,6 +449,11 @@ export const cues = {
     sound: { ids: ['buzzer'], bus: 'ui' },
     haptic: 'thud',
   },
+  // S7-105: another player changed their look in the lobby (the accessory badge pops).
+  'lobby.lookChanged': {
+    severity: 1,
+    sound: { ids: ['hover'], bus: 'ui', volume: 0.6, rateJitter: 0.1 },
+  },
   'room.spectatorJoined': {
     severity: 1,
     sound: { ids: ['join'], bus: 'ui', volume: 0.5 },

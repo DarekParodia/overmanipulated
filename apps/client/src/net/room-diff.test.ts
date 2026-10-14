@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'bun:test';
 import type { LobbyPlayer, LobbySpectator, RoomMode } from '@redakcja/shared';
-import { hostChanged, joinedSpectators, modeSwitched, teamSwitches } from './room-diff.ts';
+import {
+  hostChanged,
+  joinedSpectators,
+  lookChanges,
+  modeSwitched,
+  teamSwitches,
+} from './room-diff.ts';
 
-function player(id: string, team: 0 | 1): LobbyPlayer {
-  return { id, nickname: id, colorIndex: 0, connected: true, role: null, ready: false, team };
+function player(
+  id: string,
+  team: 0 | 1,
+  look: Pick<LobbyPlayer, 'colorIndex' | 'accessory'> = { colorIndex: 0, accessory: 'none' },
+): LobbyPlayer {
+  return { id, nickname: id, connected: true, role: null, ready: false, team, ...look };
 }
 
 function spectator(id: string): LobbySpectator {
@@ -75,5 +85,37 @@ describe('hostChanged', () => {
     expect(
       hostChanged({ roomCode: 'ABCD', hostId: 'p1' }, { roomCode: 'WXYZ', hostId: 'p2' }),
     ).toBe(false);
+  });
+});
+
+describe('lookChanges (S7-105)', () => {
+  it('names the players whose accessory or colour changed in the same newsroom', () => {
+    const before = state([], [player('p1', 0), player('p2', 0), player('p3', 0)]);
+    const after = state(
+      [],
+      [
+        player('p1', 0),
+        player('p2', 0, { colorIndex: 0, accessory: 'scarf' }),
+        player('p3', 0, { colorIndex: 2, accessory: 'none' }),
+      ],
+    );
+    expect(lookChanges(before, after, 'p1')).toEqual(['p2', 'p3']);
+  });
+
+  it('never names the local member, a team move, a mode switch or a newcomer', () => {
+    const before = state([], [player('me', 0), player('p2', 0)], 'versus');
+    const after = state(
+      [],
+      [
+        player('me', 0, { colorIndex: 1, accessory: 'bowTie' }),
+        player('p2', 1, { colorIndex: 3, accessory: 'none' }),
+        player('p3', 0, { colorIndex: 2, accessory: 'scarf' }),
+      ],
+      'versus',
+    );
+    expect(lookChanges(before, after, 'me')).toEqual([]);
+    const coop = state([], [player('p2', 0, { colorIndex: 3, accessory: 'scarf' })], 'coop');
+    expect(lookChanges(before, coop, 'me')).toEqual([]);
+    expect(lookChanges(null, after, 'me')).toEqual([]);
   });
 });

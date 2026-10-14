@@ -1,7 +1,7 @@
 // Accessory glyphs (S7-104, glossary: Dodatek) in the icon set's style (design-rules §6): 24×24,
 // 2.5 px rounded navy strokes, `tint` parts filled from `--icon-fill` (the player's colour where
-// the glyph stands for a player). The profile shows them; S7-105 adds them to the lobby card.
-import type { Accessory } from '../../store/profile-model.ts';
+// the glyph stands for a player). The profile and the lobby card show them (S7-105).
+import type { Accessory } from '@redakcja/shared';
 import { ICON_STROKE, type IconPart, IconPaths } from './Icon.tsx';
 
 const paths: Record<Accessory, readonly IconPart[]> = {
@@ -15,7 +15,7 @@ const paths: Record<Accessory, readonly IconPart[]> = {
     { d: 'M10.5 12L3.5 7.5v9ZM13.5 12l7-4.5v9Z', fill: 'tint' },
     { d: 'M10.5 10h3v4h-3Z', fill: 'solid' },
   ],
-  pressCard: [
+  pressBadge: [
     { d: 'M9 6.5L12 3l3 3.5' },
     { d: 'M4 6.5h16v13H4Z', fill: 'tint' },
     { d: 'M7 10h4v5H7Z' },

@@ -19,6 +19,7 @@ export function Players({ shadows }: { shadows: boolean }) {
             nickname={player.nickname}
             colorIndex={player.colorIndex}
             role={player.role}
+            accessory={player.accessory}
             shadows={shadows}
           />
         ))}

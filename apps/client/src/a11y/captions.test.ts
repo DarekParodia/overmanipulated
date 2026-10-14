@@ -90,6 +90,7 @@ describe('caption table', () => {
     });
     expect(captionTable['lobby.modeSwitch']).toEqual({ skip: 'visual-elsewhere' });
     expect(captionTable['lobby.teamSwitch']).toEqual({ skip: 'visual-elsewhere' });
+    expect(captionTable['lobby.lookChanged']).toEqual({ skip: 'visual-elsewhere' });
   });
 
   it('keeps muted-by-design decorative cues out of the stack', () => {

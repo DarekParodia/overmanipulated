@@ -20,7 +20,7 @@ import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { useHowTo } from '../howto/store.ts';
 import { introSeen, shouldAutoplayIntro } from '../intro/intro-store.ts';
-import { hostChanged, modeSwitched, teamSwitches } from '../net/room-diff.ts';
+import { hostChanged, lookChanges, modeSwitched, teamSwitches } from '../net/room-diff.ts';
 import {
   kick,
   leaveRoom,
@@ -38,6 +38,7 @@ import {
   transferHost,
 } from '../net/session.ts';
 import { selfKind, type UiError, useApp } from '../store/app.ts';
+import { useProfile } from '../store/profile.ts';
 import { useFeature } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
@@ -142,9 +143,10 @@ function useIntroAutoplay(): void {
 
 /**
  * Everyone hears the host switch the mode and a player change newsroom (S7-86) and the host role
- * move (S7-87), from the roomState diff, so a press and a remote change sound alike.
+ * move (S7-87), from the roomState diff, so a press and a remote change sound alike; another
+ * player's new look (S7-105) too.
  */
-function useRoomCues(): void {
+function useRoomCues(playerId: string | null): void {
   const room = useApp((s) => s.room);
   const before = useRef(room);
   useEffect(() => {
@@ -161,7 +163,10 @@ function useRoomCues(): void {
     if (hostChanged(previous, room)) {
       emitCue('lobby.hostChanged');
     }
-  }, [room]);
+    if (lookChanges(previous, room, playerId).length > 0) {
+      emitCue('lobby.lookChanged');
+    }
+  }, [room, playerId]);
 }
 
 export function Lobby() {
@@ -192,7 +197,7 @@ export function Lobby() {
   useRemoteReadyCue(playerId);
   useIntroAutoplay();
   useRemoteDifficultyCue(room !== null && room.hostId === playerId);
-  useRoomCues();
+  useRoomCues(playerId);
 
   if (!room) {
     return null;
@@ -213,6 +218,7 @@ export function Lobby() {
   // In Na punkty only the own newsroom's role choices matter (the rival plays its own run).
   const teammates = room.players.filter((p) => p.id !== playerId && p.team === me?.team);
   const manage = isHost ? setManagedId : undefined;
+  const openLook = () => useProfile.getState().show();
 
   async function copyCode() {
     if (!room) {
@@ -331,6 +337,7 @@ export function Lobby() {
             disabled={!online}
             onJoin={(team: TeamIndex) => act(() => setTeam(team))}
             onManage={manage}
+            onLook={openLook}
           />
         ) : (
           <ol className={styles.cards}>
@@ -342,6 +349,7 @@ export function Lobby() {
                 isHost={player.id === room.hostId}
                 onManage={manage && player.id !== playerId ? () => manage(player.id) : undefined}
                 manageDisabled={!online}
+                onLook={player.id === playerId ? openLook : undefined}
               />
             ))}
             {Array.from({ length: empty }, (_, i) => (

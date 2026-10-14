@@ -1,8 +1,9 @@
 // Procedural cartoon character (S3-05): a small bone rig (hips, torso, head, arms, legs) skinned
 // to chunky flat-shaded primitives. Every part follows exactly one bone, so the whole body is one
 // vertex-coloured SkinnedMesh plus one inverted-hull outline mesh sharing the skeleton: two draw
-// calls per character, whatever the role accessory. +x is forward (the face), +y up.
-import type { Role } from '@redakcja/shared';
+// calls per character, whatever the role accessory or the player's cosmetic (S7-105). +x is
+// forward (the face), +y up.
+import type { Accessory, Role } from '@redakcja/shared';
 import {
   BackSide,
   Bone,
@@ -249,6 +250,68 @@ function accessoryParts(role: Role | null): Part[] {
   }
 }
 
+/** Where the head meets the torso, in the torso bone's space (the neck line). */
+const NECK_Y = 0.47;
+/** The badge sits on the chest's left (+z), clear of the camera, whistle and belt of the roles. */
+const BADGE_AT: readonly [number, number, number] = [0.245, 0.29, 0.14];
+
+/**
+ * The player's cosmetic (glossary: Dodatek, S7-105), worn on the neck or the chest only, so it
+ * never collides with a role accessory (cap, glasses and pencil on the head; camera, notebook,
+ * belt and lifebuoy on the torso and arm). About 100 triangles each.
+ */
+export function cosmeticParts(accessory: Accessory): Part[] {
+  switch (accessory) {
+    case 'scarf': {
+      // A knitted ring round the neck and one tail hanging over the chest.
+      const ring = new TorusGeometry(0.215, 0.055, 4, 12).rotateX(Math.PI / 2);
+      return [
+        part('torso', ring, colors.surface, [0, NECK_Y, 0], OUTLINE_SMALL),
+        part(
+          'torso',
+          box(0.05, 0.2, 0.09).rotateZ(-0.15),
+          colors.surface,
+          [0.255, NECK_Y - 0.14, 0.09],
+          OUTLINE_SMALL,
+        ),
+      ];
+    }
+    case 'bowTie': {
+      // Two flattened cones meeting at a knot, under the chin.
+      const wing = (tip: 1 | -1) =>
+        scaled(new CylinderGeometry(0, 0.065, 0.11, 4).rotateX((tip * Math.PI) / 2), 0.5, 1, 1);
+      return [
+        part('torso', wing(-1), colors.red, [0.24, NECK_Y - 0.03, 0.06], OUTLINE_SMALL),
+        part('torso', wing(1), colors.red, [0.24, NECK_Y - 0.03, -0.06], OUTLINE_SMALL),
+        part('torso', sphere(0.032, 6, 4), colors.redDark, [0.255, NECK_Y - 0.03, 0], 0),
+      ];
+    }
+    case 'pressBadge': {
+      // A white press card clipped to the chest, with a blue header strip and a navy clip.
+      const yaw = -Math.atan2(BADGE_AT[2], BADGE_AT[0]);
+      return [
+        part('torso', box(0.025, 0.12, 0.09).rotateY(yaw), colors.surface, BADGE_AT, OUTLINE_SMALL),
+        part(
+          'torso',
+          box(0.01, 0.03, 0.085).rotateY(yaw),
+          colors.blue,
+          [BADGE_AT[0] + 0.012, BADGE_AT[1] + 0.035, BADGE_AT[2] + 0.008],
+          0,
+        ),
+        part(
+          'torso',
+          box(0.02, 0.03, 0.03).rotateY(yaw),
+          colors.outline,
+          [BADGE_AT[0], BADGE_AT[1] + 0.07, BADGE_AT[2]],
+          0,
+        ),
+      ];
+    }
+    case 'none':
+      return [];
+  }
+}
+
 /** Grows a centred part by `thickness` on every side (non-uniform scale about its centre). */
 function inflate(geometry: BufferGeometry, thickness: number): BufferGeometry {
   const clone = geometry.clone();
@@ -297,8 +360,9 @@ function buildSkinned(parts: readonly Part[], withColor: boolean): BufferGeometr
 export function buildCharacterGeometry(
   color: string,
   role: Role | null,
+  accessory: Accessory = 'none',
 ): { body: BufferGeometry; outline: BufferGeometry } {
-  const parts = [...bodyParts(color), ...accessoryParts(role)];
+  const parts = [...bodyParts(color), ...accessoryParts(role), ...cosmeticParts(accessory)];
   const hulls = parts
     .filter((p) => p.outline > 0)
     .map((p) => ({ ...p, geometry: inflate(p.geometry, p.outline) }));
@@ -320,7 +384,7 @@ export type CharacterRig = {
 export function createCharacterRig(
   color: string,
   role: Role | null,
-  options: { shadows: boolean },
+  options: { shadows: boolean; accessory?: Accessory },
 ): CharacterRig {
   const bones = {} as Record<BoneName, Bone>;
   for (const name of BONE_NAMES) {
@@ -336,13 +400,15 @@ export function createCharacterRig(
     }
   }
 
-  const geometry = buildCharacterGeometry(color, role);
+  const geometry = buildCharacterGeometry(color, role, options.accessory);
   const bodyMaterial = new MeshLambertMaterial({ vertexColors: true, flatShading: true });
   const outlineMaterial = new MeshBasicMaterial({ color: colors.outline, side: BackSide });
   const body = new SkinnedMesh(geometry.body, bodyMaterial);
   const outline = new SkinnedMesh(geometry.outline, outlineMaterial);
   body.name = 'avatar-body';
   outline.name = 'avatar-outline';
+  // Read by the debug scene hook (e2e: the accessory reaches the 3D character, S7-105).
+  body.userData.accessory = options.accessory ?? 'none';
   body.castShadow = options.shadows;
   // Up to four characters: culling them costs more than it saves, and poses leave the bind box.
   body.frustumCulled = false;

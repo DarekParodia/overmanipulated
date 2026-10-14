@@ -33,6 +33,7 @@ zewnętrzna usługa w grze. W trakcie rozgrywki reklam nie ma nigdy.
 | Wynik drużyny w trybie bez końca: kod pokoju, pseudonimy graczy, liczba punktów, poziom trudności, czas przetrwania, data | Tablica wyników (globalna i klasowa, osobna dla każdego poziomu trudności) | **90 dni**, potem automatyczne usunięcie (sprawdzane co godzinę) |
 | Głosy „Wpadka dnia” po omówieniu poziomu: który poziom i która wiadomość zmyliła | Statystyki dla nauczyciela. Głos nie jest powiązany z pseudonimem | **90 dni** |
 | Stan gry w trakcie poziomu (pozycje, teczki, punkty) | Działanie rozgrywki | Tylko w pamięci serwera. Znika po zamknięciu pokoju, nigdy nie trafia do bazy |
+| Wybrany kolor i dodatek postaci (z profilu) | Pokazanie postaci innym graczom w pokoju | Tylko w pamięci serwera, do zamknięcia pokoju; **nie jest zapisywany** w bazie ani w logach |
 | Losowy identyfikator przeglądarki (ciąg przypadkowych znaków, bez danych o graczu) | Gdy gospodarz usunie kogoś z pokoju, ta sama przeglądarka nie wróci do tego pokoju przez 10 minut | Tylko w pamięci serwera, najdłużej do zamknięcia pokoju; **nie jest zapisywany** w bazie ani w logach |
 | Adres IP | Ochrona serwera przed nadużyciami (limit prób dołączania do pokoi i zakładania nowych) | Tylko chwilowo w pamięci serwera; **nie jest zapisywany** w bazie ani w logach |
 
@@ -110,8 +111,8 @@ Gra zapisuje w przeglądarce (pamięć lokalna, nie ciasteczka), na urządzeniu 
 - tymczasowy znak pozwalający wrócić do pokoju po chwilowej utracie połączenia (tylko do
   zamknięcia karty przeglądarki).
 
-Te dane nigdy nie opuszczają urządzenia, poza pseudonimem i identyfikatorem przeglądarki
-wysyłanymi do pokoju. Można je
+Te dane nigdy nie opuszczają urządzenia, poza pseudonimem, identyfikatorem przeglądarki
+oraz kolorem i dodatkiem postaci wysyłanymi do pokoju. Można je
 usunąć, czyszcząc dane witryny w przeglądarce.
 
 ## Głos lektora w intro
