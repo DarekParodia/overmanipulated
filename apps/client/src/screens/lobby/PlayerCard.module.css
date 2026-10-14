@@ -122,6 +122,31 @@
   background: var(--surface);
 }
 
+/* The state chip and, for the host, the „more” button beside it (S7-87). */
+.foot {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* The crown pops onto the host's chip, again when the host role moves (S7-87); the motion
+   tokens make it static under reduced motion. */
+.crown {
+  --icon-fill: var(--yellow);
+  animation: crown-pop var(--motion-slow) var(--ease-bounce) both;
+}
+
+@keyframes crown-pop {
+  0% {
+    transform: translateY(-0.4em) scale(0.4);
+  }
+  100% {
+    transform: none;
+  }
+}
+
 .stateAway {
   background: var(--surface-soft);
   color: var(--text-soft);
@@ -158,8 +183,12 @@
   grid-area: role;
 }
 
-.compact .state {
+.compact .foot {
   grid-area: state;
+  flex-wrap: nowrap;
+}
+
+.compact .state {
   min-height: 2.25rem;
   font-size: var(--text-sm);
 }

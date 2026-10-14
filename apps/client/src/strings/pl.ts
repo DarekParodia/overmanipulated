@@ -8,6 +8,7 @@ import type {
   FolderBonuses,
   FolderOutcome,
   FolderReason,
+  LevelEventKind,
   LossReason,
   PingKind,
   Priority,
@@ -476,6 +477,65 @@ export const pl = {
     startNoPlayers: 'Nikt nie siedzi przy biurku.',
     /** In-game toast when someone starts watching (S7-86). */
     spectatorJoined: 'Widz dołączył',
+  },
+  /**
+   * The host's manage sheet (S7-87): the „more” button on another member's card opens it with
+   * the moves the server would accept and the kick behind a confirm step.
+   */
+  manage: {
+    /** The „more” button's accessible name (the sheet's heading is the nickname). */
+    open: (name: string) => `Opcje: ${name}`,
+    kicker: 'Opcje gracza',
+    watching: 'Ogląda z\u00a0widowni',
+    moveTo: (team: string) => `Przenieś do: ${team}`,
+    makeHost: 'Przekaż gospodarza',
+    kick: 'Usuń z\u00a0pokoju',
+    kickConfirm: 'Usunąć na pewno?',
+    kickYes: 'Tak, usuń',
+    cancel: 'Anuluj',
+    close: 'Zamknij',
+  },
+  /**
+   * „Szczegóły” of the chosen level in the lobby (S7-87), for guests and the host: stations,
+   * events, the star rule, the best stars from this browser and the rule of the mode.
+   */
+  levelDetails: {
+    open: 'Szczegóły',
+    kicker: 'Szczegóły poziomu',
+    stations: 'Stanowiska',
+    events: 'Zdarzenia',
+    noEvents: 'Bez niespodzianek. Same teczki.',
+    /** What each event does, one short line (outside play, so a little longer than a banner). */
+    eventWhat: {
+      viral: 'Teczka krąży po sieci i\u00a0zyskuje udostępnienia',
+      bossCall: 'Szef naciska na publikację. Sprawdź mimo to',
+      botRaid: 'Fala niemal takich samych teczek',
+      outage: 'Jedno stanowisko na chwilę przestaje działać',
+      correction: 'Opublikowany błąd trzeba sprostować przy stole',
+    } satisfies Record<LevelEventKind, string>,
+    folders: (n: number) => `${n} ${pluralPl(n, 'teczka', 'teczki', 'teczek')}`,
+    /** A bag level: the folders a run deals out of how many stories it may draw. */
+    pool: (n: number) => `z\u00a0puli ${n} historii`,
+    stars: 'Gwiazdki',
+    starOne: 'Wynik powyżej zera',
+    starShare: (percent: number) => `${percent}% możliwych punktów`,
+    starPoints: (points: number) => `${points}\u00a0pkt`,
+    /** A bag level in the lobby: the run (and its points) is dealt at the briefing. */
+    starsLater: 'Progi w\u00a0punktach zobaczycie na odprawie.',
+    /** Accessible name of a star rule row. */
+    starsLabel: (n: number) => `${n} ${pluralPl(n, 'gwiazdka', 'gwiazdki', 'gwiazdek')}`,
+    best: 'Twoje gwiazdki',
+    bestEndless: 'Twój najlepszy wynik',
+    /** Best stars or score on one difficulty, for screen readers. */
+    bestStarsLabel: (difficulty: string, stars: number) =>
+      `${difficulty}: ${stars} ${pluralPl(stars, 'gwiazdka', 'gwiazdki', 'gwiazdek')}`,
+    bestNone: '–',
+    rules: 'Zasady',
+    versusRule: 'Wygrywa redakcja z\u00a0większą liczbą punktów',
+    versusEndless: (minutes: number) =>
+      `Pojedynek trwa ${minutes} ${pluralPl(minutes, 'minutę', 'minuty', 'minut')}`,
+    endlessRule: 'Gra trwa, dopóki macie wiarygodność',
+    close: 'Gotowe',
   },
   /** Difficulty picker in the lobby and its chips (S7-25). */
   difficulty: {

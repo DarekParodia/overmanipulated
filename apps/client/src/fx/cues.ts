@@ -438,6 +438,17 @@ export const cues = {
     sound: { ids: ['slide'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
     haptic: 'tick',
   },
+  // S7-87 host manage sheet: the host role moves (a crown pops onto the new host's card); a
+  // kicked member lands on the menu with the reason.
+  'lobby.hostChanged': {
+    severity: 1,
+    sound: { ids: ['chime'], bus: 'ui', volume: 0.6 },
+  },
+  'lobby.kicked': {
+    severity: 2,
+    sound: { ids: ['buzzer'], bus: 'ui' },
+    haptic: 'thud',
+  },
   'room.spectatorJoined': {
     severity: 1,
     sound: { ids: ['join'], bus: 'ui', volume: 0.5 },

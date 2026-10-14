@@ -1,0 +1,42 @@
+/* A white round button with the „more” dots, a full touch target (S7-87). */
+.more {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  border: var(--outline-border);
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--pop);
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.more:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.more:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.more:disabled {
+  cursor: not-allowed;
+  background: var(--surface-sunk);
+  color: var(--text-faint);
+  border-color: var(--text-faint);
+  box-shadow: none;
+}
+
+.more:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}

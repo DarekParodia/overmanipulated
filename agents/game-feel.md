@@ -120,6 +120,8 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
 | `lobby.modeSwitch` | the host switches Razem / Na punkty: the roomState `mode` changed (everyone hears it, the host's press included; S7-86) | the guests' mode chip pops; the roster becomes two newsroom columns or one row | paper slide (`slide`, ui bus, 0.8) | — (DOM) | light tick | ● |
 | `lobby.teamSwitch` | a player moved to the other newsroom: a `players[].team` changed without a mode switch (S7-86) | the player's card pops into its new column (static under reduced motion) | paper slide (`slide`, ui bus, 0.7, jitter) | — (DOM) | light tick | ● |
+| `lobby.hostChanged` | the roomState `hostId` changed in the lobby: the host handed it on in the manage sheet („Przekaż gospodarza”) or left (everyone hears it; S7-87) | a crown pops onto the new host's „Gospodarz” chip (static under reduced motion) | soft chime (`chime`, ui bus, 0.6) | — (DOM) | — | ● |
+| `lobby.kicked` | the server's `kicked` error: the host removed this member (S7-87) | the menu shows the alert „Gospodarz usunął cię z pokoju.” | buzzer (`buzzer`, ui bus) | — (DOM) | thud | ●● |
 | `room.spectatorJoined` | someone new is in `roomState.spectators` (a join or a move to the Widownia; never the local member; a spectator away from the lobby hears nothing; S7-86) | lobby: a new eye chip pops into the Widownia strip; in game: a blue „Widz dołączył” toast with an eye in the verdict-toast stack | soft join chime (`join`, ui bus, 0.5) | — (DOM) | — | ● |
 
 Add a row here when you add a cue, in the same commit.

@@ -1,11 +1,14 @@
 // One player in the lobby row: avatar circle in the player's colour, name, role (icon + name)
 // and a big state chip — ✓ Gotowy / Czeka for guests, Gospodarz for the host. In the newsroom
 // columns of Na punkty (S7-86) the card is a compact row: avatar, name and role icon, state chip.
+// The host sees a round „more” button next to another member's chip, for the manage sheet; the
+// host's chip wears a crown that pops when the host role moves (S7-87).
 import type { LobbyPlayer } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 import { Icon } from '../../ui/icons/Icon.tsx';
 import { RoleIcon } from '../../ui/icons/RoleIcon.tsx';
 import { playerColorVar } from '../../ui/tokens.ts';
+import { MoreButton } from './MoreButton.tsx';
 import styles from './PlayerCard.module.css';
 
 export type PlayerCardProps = {
@@ -14,9 +17,19 @@ export type PlayerCardProps = {
   isHost: boolean;
   /** One row instead of a tall card (the two newsroom columns, S7-86). */
   compact?: boolean;
+  /** The host's „more” button for this member (S7-87); omitted for guests and the own card. */
+  onManage?: (() => void) | undefined;
+  manageDisabled?: boolean;
 };
 
-export function PlayerCard({ player, isMe, isHost, compact = false }: PlayerCardProps) {
+export function PlayerCard({
+  player,
+  isMe,
+  isHost,
+  compact = false,
+  onManage,
+  manageDisabled = false,
+}: PlayerCardProps) {
   const initial = player.nickname.trim().charAt(0).toLocaleUpperCase('pl-PL');
   return (
     <li
@@ -41,24 +54,37 @@ export function PlayerCard({ player, isMe, isHost, compact = false }: PlayerCard
           {player.role ? pl.vocab.roles[player.role] : pl.lobbyRoles.noRole}
         </span>
       </span>
-      {!player.connected ? (
-        <span className={`${styles.state} ${styles.stateAway}`}>
-          <Icon name="expired" size={22} />
-          {pl.lobby.disconnected}
-        </span>
-      ) : isHost ? (
-        <span className={`${styles.state} ${styles.stateHost}`}>{pl.lobby.host}</span>
-      ) : player.ready ? (
-        <span className={`${styles.state} ${styles.stateReady}`}>
-          <Icon name="publish" size={22} />
-          {pl.lobbyRoles.readyState}
-        </span>
-      ) : (
-        <span className={`${styles.state} ${styles.stateWaiting}`}>
-          <Icon name="clock" size={22} />
-          {pl.lobbyRoles.notReady}
-        </span>
-      )}
+      <span className={styles.foot}>
+        {!player.connected ? (
+          <span className={`${styles.state} ${styles.stateAway}`}>
+            <Icon name="expired" size={22} />
+            {pl.lobby.disconnected}
+          </span>
+        ) : isHost ? (
+          <span className={`${styles.state} ${styles.stateHost}`} data-testid="host-chip">
+            <Icon name="crown" size={22} className={`${styles.crown}`} />
+            {pl.lobby.host}
+          </span>
+        ) : player.ready ? (
+          <span className={`${styles.state} ${styles.stateReady}`}>
+            <Icon name="publish" size={22} />
+            {pl.lobbyRoles.readyState}
+          </span>
+        ) : (
+          <span className={`${styles.state} ${styles.stateWaiting}`}>
+            <Icon name="clock" size={22} />
+            {pl.lobbyRoles.notReady}
+          </span>
+        )}
+        {onManage && (
+          <MoreButton
+            label={pl.manage.open(player.nickname)}
+            disabled={manageDisabled}
+            testId="member-options"
+            onClick={onManage}
+          />
+        )}
+      </span>
     </li>
   );
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import type { LobbyPlayer, LobbySpectator, RoomMode } from '@redakcja/shared';
-import { joinedSpectators, modeSwitched, teamSwitches } from './room-diff.ts';
+import { hostChanged, joinedSpectators, modeSwitched, teamSwitches } from './room-diff.ts';
 
 function player(id: string, team: 0 | 1): LobbyPlayer {
   return { id, nickname: id, colorIndex: 0, connected: true, role: null, ready: false, team };
@@ -57,5 +57,23 @@ describe('modeSwitched and teamSwitches', () => {
     const after = state([], [player('a', 1), player('b', 1), player('c', 0)], 'versus');
     expect(teamSwitches(before, after)).toEqual(['a']);
     expect(teamSwitches(after, after)).toEqual([]);
+  });
+});
+
+describe('hostChanged', () => {
+  it('sees the host move to another member of the same room', () => {
+    expect(
+      hostChanged({ roomCode: 'ABCD', hostId: 'p1' }, { roomCode: 'ABCD', hostId: 'p2' }),
+    ).toBe(true);
+    expect(
+      hostChanged({ roomCode: 'ABCD', hostId: 'p1' }, { roomCode: 'ABCD', hostId: 'p1' }),
+    ).toBe(false);
+  });
+
+  it('ignores the first state and another room', () => {
+    expect(hostChanged(null, { roomCode: 'ABCD', hostId: 'p1' })).toBe(false);
+    expect(
+      hostChanged({ roomCode: 'ABCD', hostId: 'p1' }, { roomCode: 'WXYZ', hostId: 'p2' }),
+    ).toBe(false);
   });
 });

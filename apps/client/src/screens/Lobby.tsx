@@ -2,7 +2,8 @@
 // mode; S7-86), the players as a row of cards or, in Na punkty, two newsroom columns, the
 // Widownia strip, the role picker, the difficulty (S7-25), the level, and one main action —
 // "Gotowy" for guests, "Do składu!" for the host, "Do gry" for a guest watching from the
-// Widownia while a seat is free.
+// Widownia while a seat is free. The host manages the other members from a sheet behind each
+// card's „more” button, and everyone reads „Szczegóły” of the level (S7-87).
 import { getLevel } from '@redakcja/content';
 import {
   MAX_PLAYERS,
@@ -18,8 +19,9 @@ import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { useHowTo } from '../howto/store.ts';
-import { modeSwitched, teamSwitches } from '../net/room-diff.ts';
+import { hostChanged, modeSwitched, teamSwitches } from '../net/room-diff.ts';
 import {
+  kick,
   leaveRoom,
   selectLevel,
   setDifficulty,
@@ -32,6 +34,7 @@ import {
   setTeam,
   setVisibility,
   startGame,
+  transferHost,
 } from '../net/session.ts';
 import { selfKind, type UiError, useApp } from '../store/app.ts';
 import { useFeature } from '../store/public-config.ts';
@@ -41,7 +44,9 @@ import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './Lobby.module.css';
 import { DifficultyPicker } from './lobby/DifficultyPicker.tsx';
 import { LevelCard } from './lobby/LevelCard.tsx';
+import { LevelDetailsSheet } from './lobby/LevelDetailsSheet.tsx';
 import { canWatch, hasFreeSeat, startGate } from './lobby/lobby-model.ts';
+import { MemberSheet } from './lobby/MemberSheet.tsx';
 import { PlayerCard } from './lobby/PlayerCard.tsx';
 import { ReadyToggle } from './lobby/ReadyToggle.tsx';
 import { RolePasses } from './lobby/RolePasses.tsx';
@@ -108,8 +113,8 @@ function useRemoteDifficultyCue(isHost: boolean): void {
 }
 
 /**
- * Everyone hears the host switch the mode and a player change newsroom (S7-86), from the
- * roomState diff, so a press and a remote change sound alike.
+ * Everyone hears the host switch the mode and a player change newsroom (S7-86) and the host role
+ * move (S7-87), from the roomState diff, so a press and a remote change sound alike.
  */
 function useRoomCues(): void {
   const room = useApp((s) => s.room);
@@ -124,6 +129,9 @@ function useRoomCues(): void {
       emitCue('lobby.modeSwitch');
     } else if (teamSwitches(previous, room).length > 0) {
       emitCue('lobby.teamSwitch');
+    }
+    if (hostChanged(previous, room)) {
+      emitCue('lobby.hostChanged');
     }
   }, [room]);
 }
@@ -140,6 +148,9 @@ export function Lobby() {
   const roomBrowserOn = useFeature('roomBrowser');
   const [copied, setCopied] = useState(false);
   const [boardOpen, setBoardOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  /** The member whose manage sheet is open (host only, S7-87). */
+  const [managedId, setManagedId] = useState<string | null>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => requestMusic('menu'), []);
   useEffect(
@@ -172,6 +183,7 @@ export function Lobby() {
   const levelStations = getLevel(room.levelId)?.stations ?? STATION_KINDS;
   // In Na punkty only the own newsroom's role choices matter (the rival plays its own run).
   const teammates = room.players.filter((p) => p.id !== playerId && p.team === me?.team);
+  const manage = isHost ? setManagedId : undefined;
 
   async function copyCode() {
     if (!room) {
@@ -241,6 +253,26 @@ export function Lobby() {
         difficulty={room.difficulty}
         onClose={() => setBoardOpen(false)}
       />
+      <LevelDetailsSheet
+        open={detailsOpen}
+        levelId={room.levelId}
+        mode={room.mode}
+        difficulty={room.difficulty}
+        run={run}
+        onClose={() => setDetailsOpen(false)}
+      />
+      <MemberSheet
+        room={room}
+        selfId={playerId}
+        targetId={managedId}
+        spectatorsOn={spectatorsOn}
+        disabled={!online}
+        onClose={() => setManagedId(null)}
+        onMove={(team, id) => act(() => setTeam(team, id))}
+        onSpectator={(spectator, id) => act(() => setSpectator(spectator, id))}
+        onMakeHost={(id) => act(() => transferHost(id))}
+        onKick={(id) => act(() => kick(id))}
+      />
 
       <RoomSettings
         room={room}
@@ -269,6 +301,7 @@ export function Lobby() {
             selfId={playerId}
             disabled={!online}
             onJoin={(team: TeamIndex) => act(() => setTeam(team))}
+            onManage={manage}
           />
         ) : (
           <ol className={styles.cards}>
@@ -278,6 +311,8 @@ export function Lobby() {
                 player={player}
                 isMe={player.id === playerId}
                 isHost={player.id === room.hostId}
+                onManage={manage && player.id !== playerId ? () => manage(player.id) : undefined}
+                manageDisabled={!online}
               />
             ))}
             {Array.from({ length: empty }, (_, i) => (
@@ -302,6 +337,7 @@ export function Lobby() {
         onAllowed={(allowed) => act(() => setSpectatorsAllowed(allowed))}
         onWatch={() => act(() => setSpectator(true))}
         onPlay={() => act(() => setSpectator(false))}
+        onManage={manage}
       />
 
       {/* Spectators pick no role: they do not play (S7-86). */}
@@ -331,6 +367,7 @@ export function Lobby() {
           isHost={isHost}
           disabled={!online}
           onSelect={(levelId) => act(() => selectLevel(levelId))}
+          onDetails={() => setDetailsOpen(true)}
         />
         <div className={styles.action}>
           {isHost ? (

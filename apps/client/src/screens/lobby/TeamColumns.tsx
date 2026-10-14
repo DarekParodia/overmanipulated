@@ -19,9 +19,18 @@ export type TeamColumnsProps = {
   selfId: string | null;
   disabled: boolean;
   onJoin(team: TeamIndex): void;
+  /** The host's manage sheet for another player (S7-87); omitted for guests. */
+  onManage?: ((playerId: string) => void) | undefined;
 };
 
-export function TeamColumns({ players, hostId, selfId, disabled, onJoin }: TeamColumnsProps) {
+export function TeamColumns({
+  players,
+  hostId,
+  selfId,
+  disabled,
+  onJoin,
+  onManage,
+}: TeamColumnsProps) {
   const room = { mode: 'versus' as const, players: [...players] };
   return (
     <>
@@ -52,6 +61,10 @@ export function TeamColumns({ players, hostId, selfId, disabled, onJoin }: TeamC
                     isMe={player.id === selfId}
                     isHost={player.id === hostId}
                     compact
+                    onManage={
+                      onManage && player.id !== selfId ? () => onManage(player.id) : undefined
+                    }
+                    manageDisabled={disabled}
                   />
                 ))}
                 {members.length < MAX_TEAM_PLAYERS && (
