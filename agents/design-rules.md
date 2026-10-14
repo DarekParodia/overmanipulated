@@ -72,9 +72,17 @@ All colours come from `apps/client/src/ui/tokens.css` (DOM) and `tokens.ts` (thr
 | `--sky` | background | behind menus |
 | `--surface` / `--outline` / `--text` | neutral | panels, outlines, text |
 | `--player-0..3` | player identity | avatars, name tags, ping bubbles — nothing else |
+| `--team-0` / `--team-0-ink` | versus newsroom Kurier | the navy `TeamBadge` shield with a white „K” (lobby columns, rival chip, results) — nothing else |
+| `--team-1` / `--team-1-ink` | versus newsroom Głos | the white `TeamBadge` seal with a navy „G” — nothing else |
 
 Folder priority: normal = blue, important = orange, urgent = red, **plus** the flag shape
 (1, 2 or 3 flags) so it never relies on colour.
+
+Versus newsrooms (S7-86) take no meaning colour: the two team tokens are the neutral navy and
+white swapped, and the badge's shape (shield / seal) and letter (K / G) tell them apart, so a
+team is never confused with "do this next", "correct" or "selected". The lobby's own team move
+(„Przejdź tutaj”) and the Widownia moves are white buttons; the footer keeps the one yellow
+action.
 
 ## 4. Type
 

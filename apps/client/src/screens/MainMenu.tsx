@@ -82,10 +82,11 @@ export function MainMenu() {
     }
   }
 
-  const serverError = error ? pl.errors[error] : null;
-  const message = localError ?? serverError;
   const canWatch =
     localError === null && error === 'matchInProgress' && spectators && lastJoinCode !== null;
+  // The plain `matchInProgress` copy promises nothing; with „Oglądaj” offered, it says so (S7-86).
+  const serverError = canWatch ? pl.menu.matchInProgressWatch : error ? pl.errors[error] : null;
+  const message = localError ?? serverError;
 
   return (
     <main className={styles.page}>

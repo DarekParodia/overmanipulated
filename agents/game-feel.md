@@ -118,6 +118,9 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `debrief.star` / `debrief.mark` | results reveal: each earned star, then each Kolegium card's outcome mark (skippable by any tap/key; off with reduced motion) | star pop / mark slams on like a stamp | chime / stamp thud | — (DOM) | tick | ●● / ● |
 | `debrief.row` | results reveal: each row of the „Za co punkty” totals table, after the stars and the progress line (skippable by any tap/key; off with reduced motion) | row slides in, its points count up from 0 (`useRolledNumber`) | soft tick (`tick`, ui bus) | — (DOM) | tick | ● |
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
+| `lobby.modeSwitch` | the host switches Razem / Na punkty: the roomState `mode` changed (everyone hears it, the host's press included; S7-86) | the guests' mode chip pops; the roster becomes two newsroom columns or one row | paper slide (`slide`, ui bus, 0.8) | — (DOM) | light tick | ● |
+| `lobby.teamSwitch` | a player moved to the other newsroom: a `players[].team` changed without a mode switch (S7-86) | the player's card pops into its new column (static under reduced motion) | paper slide (`slide`, ui bus, 0.7, jitter) | — (DOM) | light tick | ● |
+| `room.spectatorJoined` | someone new is in `roomState.spectators` (a join or a move to the Widownia; never the local member; a spectator away from the lobby hears nothing; S7-86) | lobby: a new eye chip pops into the Widownia strip; in game: a blue „Widz dołączył” toast with an eye in the verdict-toast stack | soft join chime (`join`, ui bus, 0.5) | — (DOM) | — | ● |
 
 Add a row here when you add a cue, in the same commit.
 

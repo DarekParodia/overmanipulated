@@ -104,6 +104,10 @@
 }
 
 .reason {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   font-family: var(--font-display);
   font-size: var(--text-md);
   font-weight: 700;

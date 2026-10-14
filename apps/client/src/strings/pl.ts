@@ -12,6 +12,8 @@ import type {
   PingKind,
   Priority,
   Role,
+  RoomMode,
+  RoomVisibility,
   StationKind,
   StoryType,
   Verdict,
@@ -78,6 +80,8 @@ export const pl = {
     adConsent: 'Zgody reklamowe',
     /** Offered next to `matchInProgress` (S7-84): watch the same room from the Widownia. */
     watchAction: 'Oglądaj',
+    /** `matchInProgress` when „Oglądaj” is offered next to it (S7-86). */
+    matchInProgressWatch: 'Pojedynek trwa. Możesz go oglądać.',
     /** Footer link (S7-75): the privacy note at /prywatnosc, in the same tab. */
     privacy: 'Prywatność',
   },
@@ -165,7 +169,8 @@ export const pl = {
     teamFull: 'Ta redakcja ma już komplet.',
     spectatorsFull: 'Na widowni nie ma już miejsc.',
     spectatorsOff: 'Ta redakcja nie wpuszcza widowni.',
-    matchInProgress: 'Pojedynek trwa. Możesz go oglądać.',
+    /** Without „Oglądaj” (spectators off): nothing to offer, so no promise (S7-86). */
+    matchInProgress: 'Pojedynek już trwa. Dołącz po meczu.',
     teamEmpty: 'Każda redakcja potrzebuje gracza.',
     kicked: 'Gospodarz usunął cię z pokoju.',
     kickCooldown: 'Gospodarz niedawno cię usunął. Wróć później.',
@@ -299,6 +304,16 @@ export const pl = {
   vocab: {
     /** Versus newsrooms by team index (S7-84): 0 Kurier, 1 Głos. */
     teams: ['Kurier', 'Głos'],
+    /** Room modes (S7-86): one shared newsroom, or two newsrooms for points. */
+    modes: {
+      coop: 'Razem',
+      versus: 'Na punkty',
+    } satisfies Record<RoomMode, string>,
+    /** Room visibility (S7-86): reached by code only, or listed in the room browser. */
+    visibility: {
+      private: 'Prywatny',
+      public: 'Publiczny',
+    } satisfies Record<RoomVisibility, string>,
     storyTypes: {
       photo: 'Zdjęcie',
       quote: 'Cytat',
@@ -418,6 +433,45 @@ export const pl = {
     startOffline: 'Brak połączenia z serwerem.',
     startWaiting: (names: readonly string[]) => `Czekamy na: ${names.join(', ')}.`,
     allReady: 'Wszyscy gotowi!',
+  },
+  /**
+   * Lobby room settings (S7-86): name, visibility, mode, the two newsroom columns and the
+   * Widownia strip.
+   */
+  lobbyRoom: {
+    settingsTitle: 'Pokój',
+    nameLabel: 'Nazwa pokoju',
+    namePlaceholder: 'np. 3B – piątek',
+    /** A room without a name shows its host. */
+    noName: (host: string) => `Pokój: ${host}`,
+    visibilityLabel: 'Widoczność pokoju',
+    visibilityHints: {
+      private: 'Wejście tylko z\u00a0kodem',
+      public: 'Pokój widać na liście',
+    } satisfies Record<RoomVisibility, string>,
+    modeLabel: 'Tryb gry',
+    modeHints: {
+      coop: 'Jedna redakcja, wspólny wynik',
+      versus: 'Dwie redakcje, wygrywa więcej punktów',
+    } satisfies Record<RoomMode, string>,
+    /** A newsroom column's head: its players out of its seats. */
+    teamCount: (n: number, max: number) => `${n}\u00a0z\u00a0${max}`,
+    joinTeam: 'Przejdź tutaj',
+    uneven: 'Drużyny są nierówne',
+    spectatorsTitle: (n: number, max: number) => `Widownia: ${n}\u00a0z\u00a0${max}`,
+    /** The host's switch: may spectators join this room. */
+    spectatorsAllowed: 'Widownia otwarta',
+    spectatorsClosed: 'Widownia zamknięta',
+    noSpectators: 'Nikt nie ogląda',
+    toSpectators: 'Na widownię',
+    toPlayers: 'Do gry',
+    spectatorWaiting: 'Oglądasz. Gospodarz zaraz zaczyna.',
+    spectatorFull: 'Brak wolnych miejsc przy biurkach.',
+    /** Start gate (the server answers `teamEmpty`): a newsroom has no connected player. */
+    startTeamEmpty: (team: string) => `${team}: brak graczy.`,
+    startNoPlayers: 'Nikt nie siedzi przy biurku.',
+    /** In-game toast when someone starts watching (S7-86). */
+    spectatorJoined: 'Widz dołączył',
   },
   /** Difficulty picker in the lobby and its chips (S7-25). */
   difficulty: {
@@ -2085,6 +2139,8 @@ export const pl = {
     suggestAction: 'Włącz napisy',
     suggestDismiss: 'Zamknij podpowiedź',
     captions: {
+      /** S7-86: someone started watching from the Widownia. */
+      spectatorJoined: 'Nowy widz',
       newFolder: 'Nowa teczka',
       deadlineNear: 'Termin blisko',
       folderLost: 'Teczka przepadła',

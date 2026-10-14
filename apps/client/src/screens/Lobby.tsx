@@ -1,8 +1,16 @@
-// Lobby (design-rules §5): the room code big in a pill, the players as a row of cards, the
-// role picker, the difficulty (S7-25), the level, and one main action — "Gotowy" for guests,
-// "Do składu!" for the host.
+// Lobby (design-rules §5): the room code big in a pill, the room settings (name, visibility,
+// mode; S7-86), the players as a row of cards or, in Na punkty, two newsroom columns, the
+// Widownia strip, the role picker, the difficulty (S7-25), the level, and one main action —
+// "Gotowy" for guests, "Do składu!" for the host, "Do gry" for a guest watching from the
+// Widownia while a seat is free.
 import { getLevel } from '@redakcja/content';
-import { MAX_PLAYERS, type Role, STATION_KINDS } from '@redakcja/shared';
+import {
+  MAX_PLAYERS,
+  MAX_ROOM_PLAYERS,
+  type Role,
+  STATION_KINDS,
+  type TeamIndex,
+} from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
 import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
@@ -10,24 +18,36 @@ import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { useHowTo } from '../howto/store.ts';
+import { modeSwitched, teamSwitches } from '../net/room-diff.ts';
 import {
   leaveRoom,
   selectLevel,
   setDifficulty,
+  setMode,
   setReady,
   setRole,
+  setRoomName,
+  setSpectator,
+  setSpectatorsAllowed,
+  setTeam,
+  setVisibility,
   startGame,
 } from '../net/session.ts';
-import { type UiError, useApp } from '../store/app.ts';
+import { selfKind, type UiError, useApp } from '../store/app.ts';
+import { useFeature } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './Lobby.module.css';
 import { DifficultyPicker } from './lobby/DifficultyPicker.tsx';
 import { LevelCard } from './lobby/LevelCard.tsx';
+import { canWatch, hasFreeSeat, startGate } from './lobby/lobby-model.ts';
 import { PlayerCard } from './lobby/PlayerCard.tsx';
 import { ReadyToggle } from './lobby/ReadyToggle.tsx';
 import { RolePasses } from './lobby/RolePasses.tsx';
+import { RoomSettings } from './lobby/RoomSettings.tsx';
+import { SpectatorStrip } from './lobby/SpectatorStrip.tsx';
+import { TeamColumns } from './lobby/TeamColumns.tsx';
 
 /**
  * Server errors a lobby action can answer with; shown next to the main action. The room actions
@@ -87,6 +107,27 @@ function useRemoteDifficultyCue(isHost: boolean): void {
   }, [difficulty, isHost]);
 }
 
+/**
+ * Everyone hears the host switch the mode and a player change newsroom (S7-86), from the
+ * roomState diff, so a press and a remote change sound alike.
+ */
+function useRoomCues(): void {
+  const room = useApp((s) => s.room);
+  const before = useRef(room);
+  useEffect(() => {
+    const previous = before.current;
+    before.current = room;
+    if (!room) {
+      return;
+    }
+    if (modeSwitched(previous, room)) {
+      emitCue('lobby.modeSwitch');
+    } else if (teamSwitches(previous, room).length > 0) {
+      emitCue('lobby.teamSwitch');
+    }
+  }, [room]);
+}
+
 export function Lobby() {
   const room = useApp((s) => s.room);
   const playerId = useApp((s) => s.playerId);
@@ -94,6 +135,9 @@ export function Lobby() {
   const error = useApp((s) => s.error);
   const run = useApp((s) => s.run);
   const setSettingsOpen = useApp((s) => s.setSettingsOpen);
+  const versusOn = useFeature('versus');
+  const spectatorsOn = useFeature('spectators');
+  const roomBrowserOn = useFeature('roomBrowser');
   const [copied, setCopied] = useState(false);
   const [boardOpen, setBoardOpen] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -108,31 +152,26 @@ export function Lobby() {
   );
   useRemoteReadyCue(playerId);
   useRemoteDifficultyCue(room !== null && room.hostId === playerId);
+  useRoomCues();
 
   if (!room) {
     return null;
   }
   const isHost = room.hostId === playerId;
   const me = room.players.find((p) => p.id === playerId);
-  const empty = MAX_PLAYERS - room.players.length;
+  const watching = selfKind(room, playerId) === 'spectator';
+  const versus = room.mode === 'versus';
+  const empty = Math.max(0, MAX_PLAYERS - room.players.length);
   const online = connection === 'online';
-  // Start gate (the server enforces the same rule and answers `notReady`): every connected
-  // guest must be ready.
-  const waitingFor = room.players
-    .filter((p) => p.id !== room.hostId && p.connected && !p.ready)
-    .map((p) => p.nickname);
-  const canStart = online && waitingFor.length === 0;
-  const startReason = !online
-    ? pl.lobbyRoles.startOffline
-    : waitingFor.length > 0
-      ? pl.lobbyRoles.startWaiting(waitingFor)
-      : room.players.length > 1
-        ? pl.lobbyRoles.allReady
-        : null;
+  // Start gate (the server enforces the same rules and answers `notReady` / `teamEmpty`): every
+  // connected guest is ready and every newsroom has a connected player.
+  const { canStart, reason: startReason } = startGate(room, online);
+  const seatFree = hasFreeSeat(room);
   const lobbyError = error && LOBBY_ERRORS.has(error) ? pl.errors[error] : null;
   // The detail panel names only the stations of the chosen level (endless: its preview's).
   const levelStations = getLevel(room.levelId)?.stations ?? STATION_KINDS;
-  const teammates = room.players.filter((p) => p.id !== playerId);
+  // In Na punkty only the own newsroom's role choices matter (the rival plays its own run).
+  const teammates = room.players.filter((p) => p.id !== playerId && p.team === me?.team);
 
   async function copyCode() {
     if (!room) {
@@ -203,35 +242,78 @@ export function Lobby() {
         onClose={() => setBoardOpen(false)}
       />
 
-      <section className={styles.players} aria-labelledby="players-title">
+      <RoomSettings
+        room={room}
+        isHost={isHost}
+        disabled={!online}
+        versusOn={versusOn}
+        roomBrowserOn={roomBrowserOn}
+        onName={(name) => act(() => setRoomName(name))}
+        onVisibility={(visibility) => act(() => setVisibility(visibility))}
+        onMode={(mode) => act(() => setMode(mode))}
+      />
+
+      <section
+        className={styles.players}
+        aria-labelledby="players-title"
+        data-testid="lobby-players"
+        data-mode={room.mode}
+      >
         <h1 id="players-title" className={styles.sectionTitle}>
-          {pl.lobby.playersCount(room.players.length, MAX_PLAYERS)}
+          {pl.lobby.playersCount(room.players.length, versus ? MAX_ROOM_PLAYERS : MAX_PLAYERS)}
         </h1>
-        <ol className={styles.cards}>
-          {room.players.map((player) => (
-            <PlayerCard
-              key={player.id}
-              player={player}
-              isMe={player.id === playerId}
-              isHost={player.id === room.hostId}
-            />
-          ))}
-          {Array.from({ length: empty }, (_, i) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: empty seats have no identity.
-            <li key={`empty-${i}`} className={styles.emptySeat}>
-              {pl.lobby.emptySlot}
-            </li>
-          ))}
-        </ol>
+        {versus ? (
+          <TeamColumns
+            players={room.players}
+            hostId={room.hostId}
+            selfId={playerId}
+            disabled={!online}
+            onJoin={(team: TeamIndex) => act(() => setTeam(team))}
+          />
+        ) : (
+          <ol className={styles.cards}>
+            {room.players.map((player) => (
+              <PlayerCard
+                key={player.id}
+                player={player}
+                isMe={player.id === playerId}
+                isHost={player.id === room.hostId}
+              />
+            ))}
+            {Array.from({ length: empty }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: empty seats have no identity.
+              <li key={`empty-${i}`} className={styles.emptySeat}>
+                {pl.lobby.emptySlot}
+              </li>
+            ))}
+          </ol>
+        )}
       </section>
 
-      <RolePasses
-        role={me?.role ?? null}
+      <SpectatorStrip
+        spectators={room.spectators}
+        spectatorsAllowed={room.spectatorsAllowed}
+        selfId={playerId}
+        isHost={isHost}
+        featureOn={spectatorsOn}
         disabled={!online}
-        levelStations={levelStations}
-        teammates={teammates}
-        onChange={(role: Role | null) => act(() => setRole(role))}
+        canWatch={canWatch(room, playerId, spectatorsOn)}
+        canPlay={watching && isHost && seatFree}
+        onAllowed={(allowed) => act(() => setSpectatorsAllowed(allowed))}
+        onWatch={() => act(() => setSpectator(true))}
+        onPlay={() => act(() => setSpectator(false))}
       />
+
+      {/* Spectators pick no role: they do not play (S7-86). */}
+      {!watching && (
+        <RolePasses
+          role={me?.role ?? null}
+          disabled={!online}
+          levelStations={levelStations}
+          teammates={teammates}
+          onChange={(role: Role | null) => act(() => setRole(role))}
+        />
+      )}
 
       {isHost && (
         <DifficultyPicker
@@ -261,6 +343,19 @@ export function Lobby() {
             >
               {pl.lobby.start}
             </Button>
+          ) : watching ? (
+            seatFree && (
+              <Button
+                variant="primary"
+                big
+                icon={<Icon name="play" size={26} />}
+                disabled={!online}
+                data-testid="to-players"
+                onClick={() => act(() => setSpectator(false))}
+              >
+                {pl.lobbyRoom.toPlayers}
+              </Button>
+            )
           ) : (
             <ReadyToggle
               ready={me?.ready ?? false}
@@ -274,6 +369,12 @@ export function Lobby() {
             </p>
           )}
           {!isHost && me?.ready && <p className={styles.reason}>{pl.lobby.waitingForHost}</p>}
+          {!isHost && watching && (
+            <p className={styles.reason} data-testid="spectator-waiting">
+              <Icon name="eye" size={22} />
+              {pl.lobbyRoom.spectatorWaiting}
+            </p>
+          )}
           {lobbyError && (
             <p className={styles.error} role="alert">
               {lobbyError}

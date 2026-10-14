@@ -324,6 +324,16 @@ const icons = {
     { d: 'M2.5 12c2.5-4.3 5.7-6.5 9.5-6.5s7 2.2 9.5 6.5c-2.5 4.3-5.7 6.5-9.5 6.5S5 16.3 2.5 12Z' },
     { d: 'M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z', fill: 'tint' },
   ],
+  // --- S7-86 lobby: teams and member options -------------------------------------------------
+  /** Two arrows passing each other: move to the other newsroom („Przejdź tutaj”). */
+  swap: [{ d: 'M4 8.5h14.5M15 5l3.5 3.5L15 12' }, { d: 'M20 15.5H5.5M9 12l-3.5 3.5L9 19' }],
+  /** Three dots: more options for a member (host manage sheet, S7-87). */
+  more: [
+    {
+      d: 'M4 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0ZM10 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0ZM16 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0Z',
+      fill: 'solid',
+    },
+  ],
 } satisfies Record<string, readonly IconPart[]>;
 
 export type IconName = keyof typeof icons;
