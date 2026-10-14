@@ -83,11 +83,27 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   room plays as team 0.
 - Rooms are in memory; 4-letter codes from an unambiguous alphabet (no `O/0`, `I/1`). A room
   holds members (players and spectators) and one newsroom (`TeamRun`, one sim) per team: one in
-  co-op, two in versus, at most 4 players each. A disconnected member's slot is held for 60 s for
-  reconnection; its token resumes exactly that member.
+  co-op, two in versus, at most `MAX_TEAM_PLAYERS` (4) players each, so `MAX_ROOM_PLAYERS` (8) per
+  room, plus up to `MAX_SPECTATORS` (8) spectators. `MAX_PLAYERS` stays the per-sim cap. A
+  disconnected member's slot is held for 60 s for reconnection; its token resumes exactly that
+  member, with the kind and team it has now.
 - Fixed **20 Hz** tick loop per active room: drain queued inputs per team → build one `SimContext`
   → `step` every team in lockstep → publish each team's events and snapshot (`publishTeam`
   encodes once for the team and spectator topics). Empty rooms are destroyed.
+- **Versus** (Na punkty, Stage 7): two identical newsrooms on one run, one sim seed and one
+  `SimContext`, stepped in lockstep; nothing in the sim or the map knows about teams. Folders,
+  minigame seeds, rival results and the embargo are keyed by the folder's `spawnKey`
+  (`s<n>` / `e<n>.<wave>`), never by the per-sim `folderId`, so diverged belts still pair up.
+  `versusOutcome` (`packages/shared/src/versus.ts`) runs after every step: credibility 0 or a
+  forfeit (last player gone while playing, after the reconnect grace for a drop, or nobody at the
+  start) loses at once; at the match time (`matchDurationMs`; `VERSUS.endlessDurationS` in
+  endless) the higher score wins and equal scores draw. Versus never writes progress or the
+  leaderboard. Player joins are refused in the briefing and while playing (`matchInProgress`);
+  co-op keeps code joins mid-level. **Client trust:** minigame results stay client-reported; in
+  versus only, `SimContext.minSolveMs` (`MINIGAME_MIN_SOLVE_MS`) turns a success faster than an
+  honest solve into a failure. The client bundle holds every story's truth (the Kolegium needs
+  it); that is accepted for a classroom game (Decision log, S7-93), so never rely on the client
+  not knowing an answer — rely on the server's scoring.
 - **Spectators** (Widownia, Stage 7): a room member of kind `spectator` joins in any phase while
   the `spectators` flag is on and the host opened the Widownia (`spectatorsAllowed`, off unless a
   spectator created the room), up to 8. Spectators never hold a player gate (ready, briefing,
@@ -180,9 +196,16 @@ apps/server/drizzle/   generated SQL migrations (committed)
 
 - Discriminated unions on `type`, one Zod schema per message, `ClientMessage` and `ServerMessage`
   unions. Types are inferred.
-- Client → server: `join`, `lobby`, `input` (with sequence number), `verdict`, and station
-  interaction messages as needed. Server → client: `snapshot`, `event`, `levelEnd`, plus
-  lobby/room state and errors.
+- Client → server: `join` (with `as` player or spectator, `clientId`, `look`), `lobby` (room and
+  host actions), `input` (with sequence number), `command` (minigame result, verdict, cancel,
+  ping, ability) and `heartbeat`. Server → client: `welcome`, `roomState`, `snapshot`, `event`,
+  `levelEnd`, `error`, `heartbeatAck`, and for spectators only `spectatorEvent` and `matchStats`.
+- Which topic carries what is part of the contract (see Server above): a player never receives
+  the other team's snapshots or events, the spectator topic or `matchStats`; in versus a spectator
+  never receives a raw `verdictResult`, only `verdictMasked` and, once both newsrooms closed the
+  key, `verdictRevealed` (`spectator-embargo.ts`). A new message
+  that reveals a verdict, outcome, reason or points must go through the embargo, and a new
+  per-team message through `publishTeam`.
 - JSON on the wire at first. Keep messages small (no full content in snapshots — send story ids;
   the client already has content bundled). Switching to msgpack must not change types.
 - Bump `PROTOCOL_VERSION` in `constants.ts` on breaking changes; the server rejects mismatches.

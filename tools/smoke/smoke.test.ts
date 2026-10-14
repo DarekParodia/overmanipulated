@@ -192,6 +192,10 @@ describe('smoke run, ads off (base CSP)', () => {
       status: 'pass',
       detail: 'Ekspertyza armed, crew state in the snapshot',
     });
+    expect(byName(results, 'spectator watches the level (M6)')).toMatchObject({
+      status: 'pass',
+      detail: 'Widownia open, spectator synced (snapshot and matchStats)',
+    });
     // The stand-in sends no X-Content-Type-Options, so that is a warning, not a failure.
     expect(byName(results, 'GET / (HTML)')?.status).toBe('warn');
     expect(byName(results, 'GET /api/config')?.detail).toBe('ads off, revision 0');
@@ -247,6 +251,20 @@ describe('smoke run, ads on (nonce CSP)', () => {
       status: 'pass',
       detail: 'privacy page, ads section shown',
     });
+  }, 30_000);
+
+  it('skips the Widownia check on a server with spectators off', async () => {
+    const off = startStack({ features: { spectators: false } }, 'proxy');
+    try {
+      const results = await runSmoke(off.baseUrl, { snapshots: 1 });
+      expect(results.filter((r) => r.status === 'fail')).toEqual([]);
+      expect(byName(results, 'spectator watches the level (M6)')).toMatchObject({
+        status: 'pass',
+        detail: 'spectators off on this server (skipped)',
+      });
+    } finally {
+      await off.stop();
+    }
   }, 30_000);
 });
 

@@ -7,9 +7,9 @@
 // it links, response headers (warnings; failures with --strict), the HTML shell the game server
 // renders (embedded config, CSP mode, nonce rotation), /ads.txt, /prywatnosc and the manifest,
 // then a full game flow over `wss://…/ws`: heartbeat, create room, second player joins by code,
-// ready, start, skip the briefing, receive live snapshots that acknowledge our input and arm the
-// host's role ability (M3). Exit code 1 if any check fails. --insecure accepts a self-signed
-// certificate.
+// ready, start, skip the briefing, receive live snapshots that acknowledge our input, arm the
+// host's role ability (M3) and let a spectator watch the level from the Widownia (M6). Exit code
+// 1 if any check fails. --insecure accepts a self-signed certificate.
 import {
   type ClientMessage,
   encodeMessage,
@@ -604,6 +604,38 @@ export async function runSmoke(
         m.crew.some((member) => member.id === hostId && member.abilityArmed),
       );
       return 'Ekspertyza armed, crew state in the snapshot';
+    });
+
+    // The Widownia (M6): the host opens it mid-level and a third socket watches. The spectators
+    // flag is on by default; a server that switched it off has nothing to check here.
+    await check('spectator watches the level (M6)', async () => {
+      const { roomCode } = hostBox;
+      if (!roomCode) {
+        throw new Error('no level running');
+      }
+      const config = apiConfig as PublicConfig | null;
+      if (config && !config.features.spectators) {
+        return 'spectators off on this server (skipped)';
+      }
+      host.send({ type: 'lobby', action: { kind: 'setSpectatorsAllowed', allowed: true } });
+      await host.waitFor('roomState', (m) => m.spectatorsAllowed);
+      const watcher = await openSocket(wsUrl, insecure);
+      sockets.push(watcher);
+      watcher.send({
+        type: 'join',
+        protocolVersion: PROTOCOL_VERSION,
+        nickname: 'Smoke W',
+        roomCode,
+        as: 'spectator',
+      });
+      const welcome = await watcher.waitFor('welcome');
+      // The sync on attach: each newsroom's snapshot, then the counters.
+      await watcher.waitFor('snapshot', (m) => m.team === 0);
+      await watcher.waitFor('matchStats');
+      await host.waitFor('roomState', (m) =>
+        m.spectators.some((spectator) => spectator.id === welcome.playerId),
+      );
+      return 'Widownia open, spectator synced (snapshot and matchStats)';
     });
   }
 

@@ -24,13 +24,15 @@ Gra łączy chaos i presję czasu znane z Overcooked z rzetelną pracą fact-che
 
 **Czym różni się od istniejących gier:** Bad News i Go Viral! stawiają gracza po stronie manipulatora i są jednoosobowe. Quizy typu „prawda czy fałsz” sprawdzają wiedzę, ale nie uczą procesu. Tutaj gracze wspólnie przechodzą cały proces weryfikacji, a każda decyzja ma koszt czasowy.
 
+**Współpraca jest rdzeniem, rywalizacja dodatkiem.** Podstawowy tryb to „Razem”: jedna redakcja i wspólny wynik. Opcjonalnie dwie redakcje mogą zmierzyć się „Na punkty” na tym samym rozdaniu teczek, a reszta klasy może oglądać mecz z Widowni (patrz „Na punkty, Widownia i lista pokoi”). Każda redakcja nadal wygrywa tylko rzetelnością: kary za błędy są większe niż nagrody za tempo.
+
 ## Zasady i przebieg gry
 
 Zespół wygrywa poziom, jeśli przed końcem czasu zdobędzie co najmniej 1 gwiazdkę, a wskaźnik Wiarygodności redakcji nie spadnie do zera.
 
 ### Przygotowanie
 
-1. Jeden gracz zakłada pokój i dostaje 4-literowy kod. Pozostali wpisują go na stronie gry. Nie trzeba zakładać konta, wystarczy pseudonim.
+1. Jeden gracz zakłada pokój i dostaje 4-literowy kod. Pozostali wpisują go na stronie gry. Nie trzeba zakładać konta, wystarczy pseudonim. Pokój jest prywatny: bez kodu nikt do niego nie trafi. Gospodarz wybiera tryb gry („Razem” albo „Na punkty”) i decyduje, czy otworzyć Widownię.
 2. Każdy wybiera jedną z sześciu ról albo gra „Bez roli”. Rola daje stałą premię i jedną zdolność, ale nie blokuje żadnego stanowiska. Kilka osób może mieć tę samą rolę, więc zespół może grać w dowolnym składzie.
 3. Gospodarz wybiera poziom z kampanii i poziom trudności (patrz „Poziomy trudności”). Przed startem gracze widzą krótki „briefing redakcyjny”: temat dnia, nowe mechaniki, liczbę teczek w tym rozdaniu i progi gwiazdek.
 
@@ -135,6 +137,43 @@ W trakcie poziomu pojawiają się zdarzenia, które symulują realne techniki pr
 
 Po każdym poziomie gracze widzą ekran podsumowania. Każde zgłoszenie jest tam opisane: co to było, jaka technika manipulacji, jakie narzędzie to wykrywało, gdzie podobny przypadek zdarzył się w rzeczywistości. Gracze głosują też na „wpadkę dnia”, czyli materiał, który najbardziej ich zmylił. To element najmocniej punktowany w kryterium potencjału edukacyjnego, bo zamienia doświadczenie z gry w nazwaną wiedzę.
 
+## Na punkty, Widownia i lista pokoi
+
+Rdzeniem gry pozostaje współpraca w jednej redakcji („Razem”). Trzy dodatki są opcjonalne: pojedynek dwóch redakcji („Na punkty”), oglądanie meczu z Widowni i lista publicznych pokoi. Operator serwera może wyłączyć każdy z nich (flagi `versus`, `spectators` i `roomBrowser` w konfiguracji); lista pokoi jest domyślnie wyłączona.
+
+### Na punkty: pojedynek dwóch redakcji
+
+- Gospodarz przełącza w poczekalni „Tryb gry” na „Na punkty”. Gracze dzielą się na dwie redakcje: **Kurier** (granatowa tarcza z białą literą K) i **Głos** (biała pieczęć z granatową literą G). Redakcje różnią się kształtem i literą, nie tylko kolorem. Gra rozdziela graczy na przemian, w kolejności dołączenia, a nowi trafiają do mniejszej redakcji. Potem każdy może przejść do drugiej redakcji („Przejdź tutaj”), a gospodarz może przenosić innych.
+- Redakcja ma od 1 do 4 graczy, więc w pokoju gra do 8 osób (od 1 na 1 do 4 na 4). Drużyny mogą być nierówne: poczekalnia ostrzega („Drużyny są nierówne”), ale gra nie wyrównuje szans. Start wymaga co najmniej jednego połączonego gracza w każdej redakcji.
+- Obie redakcje grają ten sam poziom na tym samym poziomie trudności, z tym samym rozdaniem teczek i tymi samymi zadaniami w minigrach, każda w swojej, identycznej sali. Nie widzą się nawzajem: na ekranie są tylko własni gracze, a pod wskaźnikiem punktów jest żeton rywali z ich punktami i strzałką, kto prowadzi (na telefonie: ostatnie pole paska). Każda teczka ma klucz wspólny dla obu redakcji. Dzięki temu te same teczki da się porównać, nawet gdy taśmy się rozjadą (np. pełna taśma utnie jednej redakcji falę nalotu botów).
+- Zdolności, ich odnawianie i Koło ratunkowe działają w każdej redakcji osobno, a „Podaj teczkę” działa tylko we własnej redakcji.
+- **Kto wygrywa.** Redakcja, której Wiarygodność spadnie do zera, od razu przegrywa. Tak samo redakcja, która oddała mecz walkowerem: ostatni gracz wyszedł, nie wrócił w ciągu 60 sekund po rozłączeniu albo przy starcie nikogo w niej nie było. Gdy skończy się czas (albo obie redakcje odpadną w tej samej chwili), wygrywa redakcja z większą liczbą punktów. Równe punkty to remis; Wiarygodność go nie rozstrzyga.
+- Pojedynek w trybie bez końca trwa 10 minut, a zegar odlicza czas do końca meczu.
+- Pojedynek nie zapisuje postępu kampanii, gwiazdek ani wyników w tablicy trybu bez końca. Ekran wyników pokazuje zwycięzcę i powód, karty obu redakcji (punkty, Wiarygodność, liczba werdyktów), a w Kolegium przy każdej teczce werdykt własny i werdykt rywali („nie mieli”, gdy rywale tej teczki nie dostali, i „w grze”, gdy jej nie zamknęli).
+- **Minimalny czas rozwiązania.** W pojedynku minigra „rozwiązana” szybciej, niż zdoła uczciwy gracz (od 0,6 s przy Skanerze AI do 1,5 s przy Archiwum), liczy się jako pomyłka. Poza tym wynik minigry nadal zgłasza przeglądarka gracza. W szkolnej grze bez nagród to wystarcza.
+
+### Dołączanie do pokoju
+
+- **Razem:** kodem można dołączyć w każdej chwili, także w trakcie poziomu (spóźniony kolega wchodzi od razu do redakcji), dopóki redakcja ma mniej niż 4 graczy.
+- **Na punkty:** w trakcie meczu składy są stałe. Kodem jako gracz można dołączyć w poczekalni albo po meczu; w trakcie odprawy i gry gra odpowiada „Pojedynek już trwa” i, gdy serwer pozwala na widownię, proponuje „Oglądaj”.
+- **Lista pokoi** proponuje „Dołącz” tylko pokojom w poczekalni z wolnym miejscem, a „Oglądaj” tym z otwartą Widownią i wolnym miejscem.
+- **Widz** może dołączyć w każdej fazie i w każdym trybie, jeśli Widownia jest otwarta i ma wolne miejsce. Gracz w poczekalni i po meczu może przejść na otwartą Widownię („Na widownię”) i wrócić do gry („Do gry”), jeśli zwolniło się miejsce.
+
+### Widownia
+
+- W pokoju jest do 8 miejsc dla widzów, poza graczami. Widownia jest domyślnie zamknięta: gospodarz otwiera ją w poczekalni („Widownia otwarta”).
+- Gospodarz może sam oglądać zamiast grać („Na widownię”), np. nauczyciel przy projektorze. Może też przekazać rolę gospodarza innej osobie.
+- Gracze zawsze wiedzą, że ktoś patrzy: wejście widza ogłaszają dźwięk, napis „Nowy widz” i komunikat „Widz dołączył”, także w trakcie gry.
+- Widz niczym nie steruje i nie wstrzymuje gotowości, odprawy ani głosowania. Na komputerze widzi obie redakcje obok siebie, na telefonie jedną naraz (przełącza je stuknięciem). Ma tablicę wyników z czasem, punktami i Wiarygodnością. Może śledzić wybranego gracza (kamera idzie za nim, a karta pokazuje, co robi), otworzyć statystyki graczy (werdykty, trafność, pieczątki, pomyłki w zadaniach, zdolności) i czytać relację „Na żywo”. Relacja to wizualny odpowiednik każdego dźwięku, który widz słyszy. Po meczu widzi wyniki obu redakcji i ich Kolegium, ale nie głosuje.
+- **Embargo na werdykty.** Widz w pojedynku nie może podpowiadać rywalom, więc nie wie, jak wypadł werdykt, dopóki obie redakcje nie zamkną tej samej teczki albo mecz się nie skończy. Do tej chwili relacja pokazuje tylko „Kurier: werdykt” albo „Kurier: teczka zamknięta”, a statystyki nie wliczają tego werdyktu do trafności. Karta śledzonego gracza pokazuje pieczątki tylko jako ikony stanowisk, nigdy ich treść ani prawdę o teczce. Punkty redakcji na tablicy wyników zmieniają się na bieżąco: zdradzają, że komuś coś poszło dobrze, ale nie to, który werdykt był trafny.
+
+### Pokoje prywatne i publiczne, lista pokoi
+
+- Każdy nowy pokój jest **prywatny**: wchodzi się tylko z kodem. Gospodarz może oznaczyć go jako **publiczny**, ale tylko wtedy, gdy operator serwera włączył listę pokoi (domyślnie jest wyłączona).
+- Lista „Publiczne pokoje” w menu głównym pokazuje publiczne pokoje, w których ktoś jest połączony: kod, nazwę pokoju, podpis gospodarza, poziom, tryb, poziom trudności, liczbę graczy i widzów, czy trwa gra i czy można dołączyć albo oglądać. Można szukać po kodzie, nazwie i gospodarzu oraz filtrować po trybie, stanie pokoju i poziomie trudności. Otwarta lista odświeża się co 8 sekund.
+- Gospodarz może nadać pokojowi nazwę (do 24 znaków, np. „3B – piątek”). Nazwy pokoi i podpisy gospodarzy na liście przechodzą przez filtr wulgaryzmów: niedozwolona nazwa jest odrzucana, a niedozwolony podpis zastępują gwiazdki.
+- Gospodarz może **usunąć** z pokoju gracza albo widza, także w trakcie gry. Ta sama przeglądarka nie wróci do tego pokoju przez 10 minut. Gra nie blokuje adresu IP, bo cała klasa ma zwykle jeden adres.
+
 ## Treści i poziomy
 
 Gra ma kampanię z 6 poziomów i tryb nieskończony. Akcja toczy się w fikcyjnym mieście Nowe Brzegi. Dzięki temu treści są oparte na prawdziwych mechanizmach dezinformacji, ale nie dotyczą realnych polityków, firm ani tragedii. Unika to sporów i problemów z prawami do zdjęć.
@@ -201,14 +240,16 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 
 | Ekran | Co zawiera |
 | --- | --- |
-| Menu główne | Graj, Dołącz kodem, Jak grać?, Encyklopedia technik, Ustawienia; w stopce Profil i Prywatność |
-| Lobby | Kod pokoju, lista graczy, wybór roli i koloru postaci, przycisk gotowości |
+| Menu główne | Graj, Dołącz kodem, Oglądaj kodem (oko obok „Dołącz”), Publiczne pokoje (gdy operator włączy listę), Jak grać?, Encyklopedia technik, Ustawienia; w stopce Profil i Prywatność |
+| Lobby | Kod pokoju; nazwa i widoczność pokoju; tryb gry (Razem / Na punkty); lista graczy (w pojedynku dwie kolumny: Kurier i Głos); pasek Widowni z przełącznikiem „Widownia otwarta”; wybór roli i koloru postaci, przycisk gotowości. Gospodarz otwiera opcje gracza: przeniesienie do drugiej redakcji, na widownię lub do gry, przekazanie gospodarza, usunięcie z pokoju. „Szczegóły” poziomu dla wszystkich |
 | Wybór poziomu | Mapa kampanii z gwiazdkami, opis tematu dnia |
 | Briefing | Krótka zapowiedź poziomu i nowej mechaniki, 15–20 sekund |
 | Rozgrywka | Scena 3D redakcji; u góry kolejka zgłoszeń z licznikami czasu; z boku wskaźnik Wiarygodności i punkty; nad graczami ikony sygnałów |
 | Minigra stanowiska | Nakładka 2D na pół ekranu, scena w tle dalej żyje i reszta zespołu się porusza |
 | Stół redakcyjny | Teczka z pieczątkami, trzy przyciski werdyktu, wskazanie uzasadniającej pieczątki |
-| Kolegium redakcyjne | Lista zgłoszeń z poziomu, wyjaśnienia, głosowanie na „wpadkę dnia”, gwiazdki |
+| Kolegium redakcyjne | Lista zgłoszeń z poziomu, wyjaśnienia, głosowanie na „wpadkę dnia”, gwiazdki; w pojedynku zwycięzca, karty obu redakcji i werdykt rywali przy każdej teczce |
+| Publiczne pokoje | Lista publicznych pokoi z wyszukiwarką i filtrami (tryb, stan pokoju, poziom trudności); „Dołącz” i „Oglądaj” przy wybranym pokoju; tylko gdy operator włączy listę |
+| Widownia | Jedna albo obie redakcje na żywo (telefon: jedna, przełączana stuknięciem), tablica wyników, śledzenie gracza z kartą jego pracy, relacja „Na żywo”, statystyki graczy; po meczu wyniki obu redakcji i ich Kolegium do przeglądania |
 | Encyklopedia technik | Odblokowywane karty technik manipulacji i narzędzi weryfikacji, z przykładami z gry |
 | Jak grać | Okno pomocy z trzema działami: Wprowadzenie, Stanowiska (jak działa każde z dziesięciu, z przyciskiem „Wypróbuj” – ćwiczenie bez punktów i bez serwera), Sterowanie; otwierane z menu głównego, lobby, ustawień, kafelków „Nowe dziś” na odprawie i z menu w grze („Pomoc: stanowiska”, tam bez ćwiczeń) |
 | Wprowadzenie | Około 75-sekundowe wprowadzenie z napisami (lektor, gdy jest nagranie): naczelny opowiada w 11 scenach, jak działa redakcja – sceny z rozgrywką to prawdziwa gra na małej makiecie, reszta to rysunki z elementów interfejsu (dowody, wiarygodność, role, zespół, Kolegium); Wstecz, Pauza, Dalej, Pomiń. Odtwarza się samo raz na przeglądarkę, gdy gracz pierwszy raz wejdzie do pokoju z treningiem; potem w „Jak grać” i w Ustawieniach („Obejrzyj wprowadzenie”) |
@@ -291,22 +332,31 @@ redakcja/
 - **Serwer jest autorytatywny.** Klient wysyła tylko wejście gracza (kierunek ruchu, akcja). Serwer liczy stan i rozsyła go do pokoju. Dzięki temu nikt nie oszuka punktacji, a stan jest spójny u wszystkich.
 - **Tick 20 Hz po stronie serwera, render 60 FPS po stronie klienta.** Klient przewiduje ruch własnej postaci od razu, a pozycje innych graczy interpoluje między snapshotami z opóźnieniem około 100 ms. Gra jest grywalna przy pingu do około 150 ms.
 - **Kolizje na siatce.** Redakcja składa się z kafli, więc wystarczą proste kolizje prostokątów zamiast silnika fizyki.
-- **Pokoje w pamięci.** Do 4 graczy w pokoju, kod 4 litery. Po rozłączeniu gracz ma 60 sekund na powrót na swoje miejsce. Baza danych nie jest potrzebna; opcjonalnie bun:sqlite dla tablicy wyników.
-- **Bez kont i danych osobowych.** Tylko pseudonim, co upraszcza sprawy RODO w szkole.
+- **Pokoje w pamięci.** Kod ma 4 litery. Jedna redakcja (jedna symulacja) ma do 4 graczy. Pokój „Na punkty” ma dwie redakcje, czyli do 8 graczy, które serwer liczy krok w krok z tym samym ziarnem losowania. Każdy pokój ma do 8 miejsc dla widzów. Po rozłączeniu gracz ma 60 sekund na powrót na swoje miejsce. Stan gry nigdy nie trafia do bazy. Baza SQLite (bun:sqlite) przechowuje tylko tablicę wyników trybu bez końca i głosy na „wpadkę dnia”.
+- **Kanały pokoju.** Serwer rozsyła wiadomości trzema kanałami: wspólnym dla całego pokoju (stan poczekalni, start gry), osobnym dla każdej redakcji (jej snapshoty 20 razy na sekundę, zdarzenia i wynik poziomu) i kanałem Widowni (snapshoty obu redakcji 10 razy na sekundę, zdarzenia z embargiem na werdykty, statystyki raz na sekundę). Gracz nigdy nie dostaje wiadomości drugiej redakcji ani kanału Widowni, a kanał Widowni milczy, dopóki nie ma widza. Widz ogląda z opóźnieniem 250 ms, więc obraz płynnie łączy rzadsze snapshoty.
+- **Przepustowość.** Pełny pokój „Na punkty” wysyła około 0,26–0,45 MB/s, a z 8 widzami 0,54–0,90 MB/s (pomiar: `docs/performance.md`). W tym samym pomiarze procesor wystarczył nawet na 300 takich pokoi, więc liczbę pokoi na serwerze ogranicza raczej łącze niż procesor.
+- **Bez kont i danych osobowych.** Tylko pseudonim, co upraszcza sprawy RODO w szkole. Przeglądarka wysyła też losowy identyfikator, żeby osoba usunięta z pokoju nie wróciła do niego od razu; serwer trzyma go tylko w pamięci.
 
 ### Protokół wiadomości
 
 | Kierunek | Wiadomość | Zawartość |
 | --- | --- | --- |
-| Klient → serwer | join | Kod pokoju, pseudonim |
-| Klient → serwer | lobby | Wybór roli, gotowość, wybór poziomu (gospodarz) |
-| Klient → serwer | input | Numer sekwencji, wektor ruchu, akcje (podnieś, pracuj, sygnał) |
-| Klient → serwer | verdict | Id teczki, werdykt, id uzasadniającej pieczątki |
-| Serwer → klient | snapshot | Tick, pozycje graczy i teczek, stany stanowisk, liczniki |
-| Serwer → klient | event | Nowe zgłoszenie, wynik werdyktu, zdarzenie losowe, sygnał gracza |
-| Serwer → klient | levelEnd | Wynik, gwiazdki, dane do Kolegium |
+| Klient → serwer | join | Wersja protokołu, pseudonim, kod pokoju (bez kodu: nowy pokój), rola w pokoju (gracz albo widz), losowy identyfikator przeglądarki, wygląd postaci; przy powrocie znak powrotu |
+| Klient → serwer | lobby | Rola, gotowość, pominięcie briefingu, głos na „wpadkę dnia”, pauza w grze solo; gospodarz: poziom, poziom trudności, start, powrót do poczekalni, tryb gry, nazwa i widoczność pokoju, Widownia otwarta lub zamknięta, usunięcie z pokoju, przekazanie gospodarza; zmiana redakcji i przejście na widownię lub do gry (sam gracz albo gospodarz); wygląd postaci |
+| Klient → serwer | input | Numer sekwencji, wektor ruchu, akcje (podnieś, pracuj) |
+| Klient → serwer | command | Wynik minigry, werdykt (id teczki, werdykt, wskazane pieczątki), anulowanie, sygnał dla zespołu, zdolność roli |
+| Klient → serwer | heartbeat | Pomiar opóźnienia |
+| Serwer → klient | welcome | Id członka pokoju, kod pokoju, znak powrotu |
+| Serwer → klient | roomState | Faza, gospodarz, gracze z redakcjami i widzowie, tryb gry, nazwa, widoczność, Widownia, poziom i poziom trudności, rozdanie, briefing, głosy |
+| Serwer → klient | snapshot | Tick, redakcja, pozycje graczy i teczek, stany stanowisk, liczniki; w pojedynku punkty i Wiarygodność obu redakcji |
+| Serwer → klient | event | Zdarzenie jednej redakcji: nowe zgłoszenie, wynik werdyktu, zdarzenie losowe, sygnał gracza, zdolność |
+| Serwer → widz | spectatorEvent | Zdarzenie redakcji dla Widowni; w pojedynku werdykt najpierw zakryty (`verdictMasked`), potem odsłonięty (`verdictRevealed`) |
+| Serwer → widz | matchStats | Raz na sekundę: liczniki każdego gracza i wynik każdej redakcji |
+| Serwer → klient | levelEnd | Wynik, gwiazdki, dane do Kolegium, statystyki graczy; w pojedynku zwycięzca, powód i wyniki rywali |
+| Serwer → klient | error | Kod błędu, np. pokój pełny, pojedynek trwa, Widownia zamknięta, usunięcie z pokoju |
+| Serwer → klient | heartbeatAck | Odpowiedź na pomiar opóźnienia |
 
-Na start wiadomości w JSON. Jeśli ruch sieciowy okaże się za duży, można przejść na msgpack bez zmiany typów.
+Wiadomości są w JSON, a każdą sprawdza schemat Zod. Klient ze starą wersją protokołu dostaje błąd i prośbę o odświeżenie strony. Poza WebSocketem serwer ma kilka zapytań REST: konfigurację dla przeglądarki (`/api/config`), tablicę wyników i listę publicznych pokoi (`/api/rooms`, gdy operator ją włączy). Jeśli ruch sieciowy okaże się za duży, można przejść na msgpack bez zmiany typów.
 
 ### Wymagania wydajnościowe
 
@@ -337,7 +387,7 @@ Pełna gra multiplayer 3D to duży projekt, więc kolejność prac zakłada, że
 | II.a Kreatywność | Kooperacja pod presją czasu zamiast quizu; gracz przechodzi proces weryfikacji, nie zgaduje odpowiedzi |
 | II.b Spójność | Presja czasu w grze to ta sama presja, której używa dezinformacja; mechanika jest lekcją |
 | III.a Jasność zasad | Jeden cel, trzy werdykty, tabela punktacji, gwiazdki, warunek porażki |
-| III.b Atrakcyjność mechaniki | Dynamiczny co-op, role, zdarzenia losowe, tryb nieskończony z wynikami |
+| III.b Atrakcyjność mechaniki | Dynamiczny co-op, role, zdarzenia losowe, tryb nieskończony z wynikami; opcjonalny pojedynek dwóch redakcji na tym samym rozdaniu i Widownia dla reszty klasy |
 | V.a Kompletność wizualizacji | Plan redakcji, zrzuty wszystkich ekranów, karty ról, przykładowe teczki, nagranie |
 | V.b Estetyka i spójność | Gazetowy styl UI i pieczątki spójne z tematem redakcji |
 
