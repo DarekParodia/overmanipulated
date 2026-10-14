@@ -5,7 +5,7 @@
 // (net/view-context.tsx), so two views can render side by side (spectators, S7-90) and a local
 // sim can render in its own (the intro, S7-101). The local player's view is `playerView`
 // (net/session.ts), made from the module-level stores, so play needs no setup.
-import type { TeamIndex } from '@redakcja/shared';
+import type { LobbyPlayer, TeamIndex } from '@redakcja/shared';
 import { createEventStore, type EventStoreApi } from '../events/event-store.ts';
 import { createViewCamera, type ViewCamera } from '../fx/camera/view-camera.ts';
 import { createViewFeedback, type Feedback } from '../fx/feedback.ts';
@@ -17,7 +17,8 @@ import { createGameEventBus, type GameEventBus } from './game-events.ts';
 import { createGameStore, type GameStoreApi } from './game-store.ts';
 import { createWatchRuntime, type ViewRuntime } from './runtime.ts';
 
-export type GameViewKind = 'player' | 'spectator';
+/** `intro`: the intro's local sim (S7-101), a scripted reporter watched like a spectator. */
+export type GameViewKind = 'player' | 'spectator' | 'intro';
 
 export type GameView = {
   readonly kind: GameViewKind;
@@ -37,10 +38,19 @@ export type GameView = {
   readonly bus: GameEventBus;
   /** The local player (player view) or the followed player (spectator view), if any. */
   subjectId(): string | null;
+  /**
+   * Its own players and level, for a view that is not of the room (the intro, S7-101); left
+   * out, the scene draws the room's players and the room's level theme.
+   */
+  readonly roster?: readonly LobbyPlayer[];
+  readonly levelId?: string;
 };
 
 /** What a view must be given; every store left out is created fresh for it. */
-export type GameViewParts = Pick<GameView, 'kind' | 'team' | 'runtime' | 'subjectId'> &
+export type GameViewParts = Pick<
+  GameView,
+  'kind' | 'team' | 'runtime' | 'subjectId' | 'roster' | 'levelId'
+> &
   Partial<
     Pick<
       GameView,
@@ -71,6 +81,8 @@ export function createGameView(parts: GameViewParts): GameView {
     camera: parts.camera ?? createViewCamera(),
     feedback: parts.feedback ?? createViewFeedback(),
     bus: parts.bus ?? createGameEventBus(),
+    ...(parts.roster ? { roster: parts.roster } : {}),
+    ...(parts.levelId ? { levelId: parts.levelId } : {}),
   };
 }
 

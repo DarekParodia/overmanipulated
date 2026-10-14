@@ -56,7 +56,8 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
   const chosen = useSettings((s) => s.quality);
   // World props (and the sun's shadow box) read the view's map once; remount them when a level
   // with another map starts.
-  const levelId = useApp((s) => s.room?.levelId ?? '');
+  const roomLevelId = useApp((s) => s.room?.levelId ?? '');
+  const levelId = view.levelId ?? roomLevelId;
 
   // A preset picked in settings is final (auto off). Back on "auto" the detected preset returns.
   useEffect(() => {

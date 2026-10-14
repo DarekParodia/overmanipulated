@@ -148,6 +148,9 @@ caption still run), for views that must not be heard.
   time, urgent folders and low credibility.
 - Stingers for win, lose, events; music ducks under them (to 45 %). Intro voice lines duck it
   deeper (to 30 %); the lowest active dip wins. Voice lines are not cues: the intro subtitles them.
+  The intro's in-engine scenes (S7-101) emit the usual gameplay cues on their own GameView:
+  particles and animation only, since nothing connects audio, haptics or captions to a view
+  other than the player's, so the narrator is never covered.
 - Loop points seamless; total music within the download budget (stream after first load).
 
 ## Animation

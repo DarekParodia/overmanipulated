@@ -6,10 +6,12 @@ import {
   type IntroState,
   introReducer,
   sceneDurationMs,
+  sceneDurations,
   sceneElapsedMs,
   shouldAutoplayIntro,
   startIntro,
   subtitleChunks,
+  subtitleIndexAt,
 } from './intro-model.ts';
 
 const words = (n: number) => Array.from({ length: n }, (_, i) => `słowo${i}`).join(' ');
@@ -35,6 +37,32 @@ describe('sceneDurationMs', () => {
   it('is the clip plus 1500 ms with a voice, the fallback without', () => {
     expect(sceneDurationMs('a b c', 3200)).toBe(4700);
     expect(sceneDurationMs(words(12), null)).toBe(4800);
+  });
+});
+
+describe('sceneDurations (S7-101)', () => {
+  it('times the voiced scene by its clip and every other one by its reading time', () => {
+    const lines = ['a b c', words(12), words(40)];
+    expect(sceneDurations(lines, null, null)).toEqual([2500, 4800, 12000]);
+    expect(sceneDurations(lines, 1, 3000)).toEqual([2500, 4500, 12000]);
+    // A voiced scene whose clip is unknown falls back to its reading time.
+    expect(sceneDurations(lines, 1, null)).toEqual([2500, 4800, 12000]);
+  });
+});
+
+describe('subtitleIndexAt (S7-101)', () => {
+  const line = 'Raz dwa trzy. Cztery pięć!';
+
+  it('follows the voice: chunks are timed over the clip while it plays', () => {
+    // 14 of 26 characters: the second sentence shows from 1077 ms of a 2000 ms clip.
+    expect(subtitleIndexAt(line, 2000, 1076)).toBe(0);
+    expect(subtitleIndexAt(line, 2000, 1077)).toBe(1);
+  });
+
+  it('follows the reading time without a voice', () => {
+    // Five words read in 2500 ms (the minimum): the second sentence from 1346 ms.
+    expect(subtitleIndexAt(line, null, 1100)).toBe(0);
+    expect(subtitleIndexAt(line, null, 1346)).toBe(1);
   });
 });
 
@@ -101,6 +129,31 @@ describe('introReducer', () => {
       pausedTotal: 0,
       done: true,
     });
+  });
+
+  it('restarts the current scene: its clock, its clip end and any pause (S7-101)', () => {
+    let state = startIntro(0);
+    state = run(
+      state,
+      [
+        { type: 'next', now: 1000 },
+        { type: 'clipEnded', now: 2000 },
+        { type: 'togglePause', now: 2100 },
+        { type: 'restart', now: 5000 },
+      ],
+      durations,
+    );
+    expect(state).toEqual({
+      index: 1,
+      startedAt: 5000,
+      endedAt: null,
+      pausedAt: null,
+      pausedTotal: 0,
+      done: false,
+    });
+    expect(
+      introReducer({ ...state, done: true }, { type: 'restart', now: 6000 }, durations).done,
+    ).toBe(true);
   });
 
   it('moves on 450 ms after the clip ends, before the grace time runs out', () => {

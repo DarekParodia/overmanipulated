@@ -6,10 +6,9 @@ import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { Group } from 'three';
 import { useStore } from 'zustand';
-import { useGameView } from '../net/view-context.tsx';
+import { useGameView, useViewRoster } from '../net/view-context.tsx';
 import type { PingBubble } from '../pings/bubble-store.ts';
 import styles from '../pings/PingBubble.module.css';
-import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { playerColorVar } from '../ui/tokens.ts';
@@ -21,7 +20,7 @@ const BUBBLE_HEIGHT = 1.95;
 export function PingBubbles() {
   const view = useGameView();
   const bubbles = useStore(view.bubbles.use, (s) => s.bubbles);
-  const players = useApp((s) => s.room?.players);
+  const players = useViewRoster();
 
   useEffect(() => {
     const unsubscribe = view.bus.on((event) => {

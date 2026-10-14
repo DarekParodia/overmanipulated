@@ -1,0 +1,397 @@
+/*
+ * The intro player (S7-101): a stage with the live newsroom or UI-kit art, the subtitle bar
+ * under it (over its bottom edge on landscape phones), and one row of 48 px controls with the
+ * yellow „Dalej”. Scenes pop in; with reduced motion they only fade, and with no-flash nothing
+ * blinks (nothing here loops).
+ */
+.player {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.stage {
+  position: relative;
+  min-height: 12rem;
+  overflow: hidden;
+  border: var(--outline-border);
+  border-radius: var(--radius-lg);
+  background: var(--sky);
+  box-shadow: var(--pop);
+}
+
+/*
+ * A gameplay scene: the callout above the live newsroom (to its left on a landscape phone), so
+ * it never hides the reporter. The canvas slot holds the renderer's own overlays (signs, tags).
+ */
+.engine {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.calloutSlot {
+  display: grid;
+  place-items: center;
+  padding: var(--space-2) var(--space-3) 0;
+  animation: scene-in var(--motion-base) var(--ease-bounce) both;
+}
+
+.canvasSlot {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: scene-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes scene-in {
+  from {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scene-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- UI-kit scenes --------------------------------------------------------------------------- */
+
+.masthead {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+}
+
+.paper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+
+.later {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: var(--outline-border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--pop-lg);
+  color: var(--text);
+}
+
+/* --- Callouts over the newsroom -------------------------------------------------------------- */
+
+.callout {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  color: var(--text);
+}
+
+/* The HUD's folder cards, as the queue shows them in a match. */
+.queue {
+  --hud-card-w: 7.5rem;
+  padding: var(--space-2);
+  background: var(--outline-a20);
+  border: none;
+  box-shadow: none;
+}
+
+.sign,
+.proof {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+
+.proof {
+  padding: var(--space-1) var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--green);
+  color: var(--text-on-dark);
+  animation: scene-in var(--motion-base) var(--ease-bounce) both;
+}
+
+.sheet {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  opacity: 0.55;
+}
+
+.stepOn {
+  opacity: 1;
+}
+
+.number {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--purple);
+  color: var(--text-on-dark);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  line-height: 1;
+  padding-top: 0.1em;
+}
+
+/* --- Progress, voice chip, pause ------------------------------------------------------------- */
+
+.dots {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  list-style: none;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.dotDone {
+  background: var(--outline);
+}
+
+/* The current scene: a wider yellow pill (shape and colour). */
+.dotOn {
+  width: 1.5rem;
+  background: var(--yellow);
+}
+
+.chip {
+  position: absolute;
+  left: var(--space-3);
+  bottom: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  padding: 0 var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--blue);
+  color: var(--text-on-dark);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.chip:active {
+  box-shadow: var(--pop-pressed);
+  transform: translateY(2px);
+}
+
+.pausedBadge {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--outline-a20);
+  pointer-events: none;
+}
+
+.pausedBadge svg {
+  padding: var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-sizing: content-box;
+  --icon-fill: var(--yellow);
+}
+
+/* --- Subtitles and controls ------------------------------------------------------------------ */
+
+/* Always on: white bar, navy outline, two lines at most (intro-script.test.ts checks the text). */
+.subtitle {
+  display: grid;
+  place-items: center;
+  min-height: calc(2 * var(--leading-snug) * var(--text-lg) + 2 * var(--space-2));
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* „Wstecz”: the forward arrow, mirrored. */
+.flip {
+  transform: scaleX(-1);
+}
+
+/* --- The end card (in „Jak grać”) ------------------------------------------------------------ */
+
+.end {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-3);
+  height: 100%;
+  text-align: center;
+}
+
+.end > svg {
+  padding: var(--space-2);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--green);
+  color: var(--text-on-dark);
+  box-sizing: content-box;
+}
+
+.endText {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+
+/* --- Reduced motion: fades only -------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .art,
+  .calloutSlot,
+  .proof {
+    animation-name: scene-fade;
+  }
+}
+
+:global(html[data-reduced-motion="true"]) .art,
+:global(html[data-reduced-motion="true"]) .calloutSlot,
+:global(html[data-reduced-motion="true"]) .proof {
+  animation-name: scene-fade;
+}
+
+:global(html[data-reduced-motion="true"]) .chip:active {
+  transform: none;
+}
+
+/* --- Landscape phones (640×360): the callout goes beside the newsroom ----------------------- */
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .player {
+    gap: var(--space-2);
+  }
+  .stage {
+    min-height: 0;
+    border-radius: var(--radius-md);
+  }
+  .engine {
+    grid-template-rows: none;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .calloutSlot {
+    max-width: 45%;
+    padding: var(--space-2) 0 var(--space-2) var(--space-2);
+  }
+  .callout {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+  }
+  /* Only the „Następna teczka” card: the folders themselves ride in on the conveyor. */
+  .queue {
+    --hud-card-w: auto;
+  }
+  .queue li:not([data-testid="hud-next"]) {
+    display: none;
+  }
+  .sign,
+  .proof {
+    font-size: var(--text-md);
+  }
+  .subtitle {
+    min-height: calc(2 * var(--leading-snug) * var(--text-md) + 2 * var(--space-1));
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-md);
+  }
+  .paper {
+    font-size: var(--text-lg);
+  }
+  .later {
+    padding: var(--space-3);
+  }
+  .controls {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+  }
+}

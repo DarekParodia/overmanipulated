@@ -1,6 +1,7 @@
 // The HTML shell (S7-70) swaps CSP_NONCE_PLACEHOLDER for a per-request nonce; without it in the
 // build every nonce attribute is missing and ads stay off for good (`supportsNonce`).
 import { describe, expect, it } from 'bun:test';
+import { existsSync } from 'node:fs';
 import { CSP_NONCE_PLACEHOLDER } from '@redakcja/shared';
 import viteConfig from '../vite.config.ts';
 
@@ -24,5 +25,10 @@ describe('vite.config', () => {
       'Copyright © 2026 Kamil Wida. Wszelkie prawa zastrzeżone.',
     );
     expect(JSON.parse(String(define.__APP_AUTHORS__))).toEqual(['Kamil Wida']);
+  });
+
+  it('says whether the build ships the intro voice sprite (S7-101)', () => {
+    const shipped = existsSync(new URL('../public/assets/voice/intro.json', import.meta.url));
+    expect(JSON.parse(String(viteConfig.define?.__INTRO_VOICE__))).toBe(shipped);
   });
 });

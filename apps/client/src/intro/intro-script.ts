@@ -8,11 +8,18 @@
 // scripted input track drives it, so the stage is the real game, never a video file. Each such
 // scene names its track here; `intro/intro-sim.ts` (S7-101) owns the inputs behind the name. The
 // other scenes are drawn from the UI kit (FolderCard, VerdictStamp, ControlsArt, RoleIcon…).
+import type { Role } from '@redakcja/shared';
 import type { InputDevice } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 
 export const INTRO_DEVICES: readonly InputDevice[] = ['keyboard', 'gamepad', 'touch'];
+
+/**
+ * The reporter on the intro's stage (S7-101) is a photo editor: Lupa's hold-to-work fits the
+ * work scene, and the roles scene draws its ability (Ekspertyza).
+ */
+export const INTRO_ROLE = 'photoEditor' satisfies Role;
 
 export const INTRO_SCENE_IDS = [
   'welcome',
