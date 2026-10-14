@@ -39,9 +39,8 @@ test('lobby: name, mode switch, newsroom columns, Widownia and the start', async
   const guest = await openPlayer(browser, 'Bartek', options);
   const code = await createRoom(host);
 
-  // Private by default; without the room browser there is nothing else to pick.
-  await expect(host.page.getByTestId('room-visibility-chip')).toHaveText('Prywatny');
-  await expect(host.page.getByTestId('room-visibility')).toHaveCount(0);
+  // Private by default; the e2e server offers the room browser, so the host may go public.
+  await expect(host.page.getByTestId('room-visibility-private').locator('input')).toBeChecked();
   const name = host.page.getByTestId('room-name');
   await name.fill('3B piątek');
   await name.press('Enter');
@@ -50,6 +49,13 @@ test('lobby: name, mode switch, newsroom columns, Widownia and the start', async
   await expect(guest.page.getByTestId('room-title')).toHaveText('3B piątek');
   await expect(guest.page.getByTestId('room-mode-chip')).toHaveText('Razem');
   await expect(guest.page.getByTestId('room-mode')).toHaveCount(0);
+  await expect(guest.page.getByTestId('room-visibility-chip')).toHaveText('Prywatny');
+  await expect(guest.page.getByTestId('room-visibility')).toHaveCount(0);
+  await host.page.getByTestId('room-visibility-public').click();
+  await expect(guest.page.getByTestId('room-visibility-chip')).toHaveText('Publiczny');
+  // Back to private, so the room stays out of other specs' room lists.
+  await host.page.getByTestId('room-visibility-private').click();
+  await expect(guest.page.getByTestId('room-visibility-chip')).toHaveText('Prywatny');
 
   // Na punkty: the players are dealt into Kurier and Głos in join order.
   await host.page.getByTestId('room-mode-versus').click();
