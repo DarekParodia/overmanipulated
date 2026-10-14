@@ -1,5 +1,12 @@
 import { expect, type Page, test } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, openPlayer, PHONE } from './helpers.ts';
+import {
+  closePlayers,
+  createRoom,
+  DESKTOP,
+  openPlayer,
+  PHONE,
+  skipStationHelp,
+} from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -95,6 +102,7 @@ test('the Kartoteka card comes back with its circles and without the answer', as
   const options = touch ? { ...PHONE, viewport: { width: 640, height: 360 } } : DESKTOP;
   const player = await openPlayer(browser, 'Zośka', options);
   const { page } = player;
+  await skipStationHelp(page);
   await createRoom(player);
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();

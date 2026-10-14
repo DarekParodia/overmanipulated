@@ -4,7 +4,14 @@
 // the lobby picker lands (S7-25) the spec sends the host's `setDifficulty` over the page's own
 // WebSocket, so the server deals the run on Ekspert exactly as the picker will.
 import { expect, type Page, test, type WebSocketRoute } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, PHONE, trackContext } from './helpers.ts';
+import {
+  closePlayers,
+  createRoom,
+  DESKTOP,
+  PHONE,
+  skipStationHelp,
+  trackContext,
+} from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -82,6 +89,7 @@ test('Ekspert: 15 s clock, one mistake, no answer, no hint bubble, ×2 on the ca
     sockets.push(ws.connectToServer());
   });
   await page.goto('/?debug');
+  await skipStationHelp(page);
   await page.getByLabel('Twój podpis').fill('Ewa');
   await createRoom({ page, nickname: 'Ewa', touch });
 

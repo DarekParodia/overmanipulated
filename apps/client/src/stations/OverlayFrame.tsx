@@ -2,7 +2,7 @@
 // header (icon, name, a chunky time bar when timed, big round close button). Desktop: the
 // right half of the screen, the newsroom stays visible on the left. Phones: full width.
 // Header order (README §1.2): title, the time bar, `headerAction` (Ekspertyza, S7-41), the
-// back key cap, close.
+// station help '?' with its key cap (S7-95), the back key cap, close.
 import type { ReactNode } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
@@ -23,6 +23,16 @@ export type OverlayFrameProps = {
   headerAction?: ReactNode;
   /** Keyboard/gamepad focus is on the close button. */
   closeFocused?: boolean;
+  /**
+   * The station help '?' (S7-95): opens the help card. `keyCap` is the key that does the same
+   * (H / Select), shown next to it; empty on touch.
+   */
+  help?: { onOpen(): void; label: string; keyCap?: string } | undefined;
+  /**
+   * Shown over the body, under the header (the station help card, S7-95). The body stays
+   * mounted underneath but inert, so a minigame keeps its state.
+   */
+  cover?: ReactNode;
   testId?: string;
   children: ReactNode;
 };
@@ -40,6 +50,8 @@ export function OverlayFrame({
   time,
   headerAction,
   closeFocused = false,
+  help,
+  cover,
   testId,
   children,
 }: OverlayFrameProps) {
@@ -58,6 +70,26 @@ export function OverlayFrame({
         <h2 className={styles.title}>{title}</h2>
         {time ? <TimeBar {...time} /> : <span className={styles.spacer} />}
         {headerAction}
+        {help?.keyCap && (
+          <span className={styles.backKey} aria-hidden="true">
+            <KeyCap>{help.keyCap}</KeyCap>
+          </span>
+        )}
+        {help && (
+          <button
+            type="button"
+            className={styles.help}
+            aria-label={help.label}
+            title={help.label}
+            data-testid="overlay-help"
+            onClick={() => {
+              emitCue('ui.click');
+              help.onOpen();
+            }}
+          >
+            <Icon name="question" size={26} />
+          </button>
+        )}
         {backKey && (
           <span className={styles.backKey} aria-hidden="true">
             <KeyCap>{backKey}</KeyCap>
@@ -77,7 +109,12 @@ export function OverlayFrame({
           <Icon name="reject" size={28} />
         </button>
       </header>
-      <div className={styles.body}>{children}</div>
+      <div className={styles.content}>
+        <div className={styles.body} inert={cover ? true : undefined}>
+          {children}
+        </div>
+        {cover && <div className={styles.cover}>{cover}</div>}
+      </div>
     </section>
   );
 }

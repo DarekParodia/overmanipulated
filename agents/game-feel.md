@@ -44,8 +44,12 @@ Rules:
 - No per-frame allocation in particles, tweens or shake; pools are pre-sized.
 - Particle textures share one atlas; sounds use sprites; both are loaded with the level and
   counted in the download budget.
-- Every sound and texture has an entry in `apps/client/public/assets/CREDITS.md`
-  (CC0 / self-made only).
+- Every sound, voice line and texture has an entry in `apps/client/public/assets/CREDITS.md`.
+  Allowed licences: CC0, self-made, or CC BY 4.0 / MIT with the attribution in CREDITS.md (the
+  voice sprite's `licence` enum, `intro/voice-sprite.ts`, enforces this for the intro voice).
+  Never non-commercial or research-only, and that holds for the whole chain of a generated asset:
+  a TTS voice counts its dataset and every checkpoint it was fine-tuned from (S7-100 audit,
+  `docs/audio.md`).
 
 ## Feedback catalogue (starting point)
 
@@ -95,7 +99,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `ability.secondChance` | `ability` secondChance `done` (Druga szansa: lockout gone, minigame reopens) | — | power-up (`evback`, quiet) | sparks ×6 | light tick | ● |
 | `ability.pass` | `ability` passFolder `done` (Podaj teczkę; the 450 ms arc lands in S7-42) | `hop` | paper rustle | paper flutter ×3 | light tick | ● |
 | `role.rescue` | `folderRescued` (Koło ratunkowe: a folder at its deadline in a Ratownik's hands gets +20 s) | `hop`, `cardHop` | rising arpeggio (`evclear`) | star burst | small shake, success buzz | ●● |
-| `ui.click` / `ui.hover` / `ui.back` | menus; `ui.click` also when the host picks a difficulty (the chip turns blue) and, for guests, when the host changes it (their „Poziom: …” chip pops, S7-25), and on the leaderboard dialog's room/global and difficulty tabs (S7-26) | button press | click / tick | — | light tick (mobile) | ● |
+| `ui.click` / `ui.hover` / `ui.back` | menus; `ui.click` also when the host picks a difficulty (the chip turns blue) and, for guests, when the host changes it (their „Poziom: …” chip pops, S7-25), and on the leaderboard dialog's room/global and difficulty tabs (S7-26); the station help card opens with `ui.click` ('?', H / Select) and closes with `ui.click` („Rozumiem”, Enter / A) or `ui.back` (Esc / B, S7-95); the card pops in (still under reduced motion) | button press | click / tick | — | light tick (mobile) | ● |
 | `game.paused` | `paused` rising edge (`fx/gameplay-feedback.ts`): a solo player opened the in-game menu and the server holds the level (S7-10) | the menu sheet slides in (scale-pop on desktop, slide from the right on phones; none under reduced motion) with the „Pauza” chip; the level clock stops; deadline ticks and work loops stop | soft paper slide (`slide`, ui bus, 0.6) | — (DOM sheet; caption skipped: the chip says it) | light tick | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
 | `sourceRegistry.mistake` | clean field circled, or card filed with a warning sign missed | field crossed out, card nudges, mistake tally mark | dull blip | — | thud | ● |
@@ -115,6 +119,11 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
 
 Add a row here when you add a cue, in the same commit.
+
+**Ads have no cues** (S7-74, policy). AdSense forbids drawing attention to ads, so an ad
+appearing, filling, failing or being blocked plays no sound, animation, particles or haptics,
+and no cue may point at a rail. The „Zgody reklamowe” footer link is an ordinary button
+(`ui.click`); Google's consent message is Google's own UI.
 
 Event → cue mapping lives in `fx/event-cues.ts` (pure, unit-tested for every gameplay event
 kind); `net/game-events.ts` adds where it happens (fixture tile centre, folder location or

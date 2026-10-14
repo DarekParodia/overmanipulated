@@ -3,27 +3,38 @@
   "title": "Atak",
   "topic": "Referendum o linii 12",
   "briefingPoints": [
-    "Przed referendum ruszyła skoordynowana kampania.",
     "Nalot botów: wystarczy rozpoznać jedną kopię.",
-    "Sprostowanie: napraw własny błąd, odzyskaj zaufanie."
+    "Mapa: skąd naprawdę jest zdjęcie?",
+    "Inne media: licz źródła, nie kopie."
   ],
-  "briefing": "W niedzielę referendum w sprawie linii 12, a sieć zalewa skoordynowana kampania. Na taśmę wpadają fale niemal identycznych wpisów od botów: wystarczy rozpoznać jedną kopię. Czasem okaże się, że to my opublikowaliśmy fałsz: wtedy zanieście sprostowanie do stołu. Pracują wszystkie stanowiska, ale awaria jednego może was zaskoczyć.",
+  "briefing": "W niedzielę referendum w sprawie linii 12, a sieć zalewa skoordynowana kampania. Na taśmę wpadają fale niemal identycznych wpisów od botów: wystarczy rozpoznać jedną kopię. Mapa pokaże, gdzie naprawdę zrobiono zdjęcie, a Inne media – czy ktoś niezależny to potwierdza. Gdy okaże się, że opublikowaliśmy fałsz, zanieście sprostowanie do stołu. Uwaga: jedno stanowisko może na chwilę paść.",
   "durationS": 480,
   "layout": [
-    "######################",
-    "#CCCCC..=I==A==R=...P#",
-    "#....................#",
-    "#.T..1.......2....T..#",
-    "#....................#",
-    "#.......T=DD=T.......#",
-    "#..==....====....==..#",
-    "#....................#",
-    "#...3............4...#",
-    "#....................#",
-    "#..==..=S==L=...==...#",
-    "######################"
+    "########################",
+    "#CCCCC..=I==A==R==P=...#",
+    "#......................#",
+    "#..T...1........2...T..#",
+    "#......................#",
+    "#........T=DD=T........#",
+    "#..==.....====.....==..#",
+    "#......................#",
+    "#....3............4....#",
+    "#......................#",
+    "#..=S=..=L=..=G=..=X=..#",
+    "#......................#",
+    "#.==................==.#",
+    "########################"
   ],
-  "stations": ["imageSearch", "archive", "sourceRegistry", "phone", "aiScanner", "dataLibrary"],
+  "stations": [
+    "imageSearch",
+    "archive",
+    "sourceRegistry",
+    "phone",
+    "aiScanner",
+    "dataLibrary",
+    "geolocation",
+    "crossCheck"
+  ],
   "schedule": [
     {
       "atS": 4,

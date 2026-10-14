@@ -122,7 +122,7 @@ const S = {
   hudSix: defineShot(
     'rozgrywka-poziom-6',
     'Rozgrywka (poziom 6)',
-    'Wszystkie sześć stanowisk, stół redakcyjny i stoliki do odkładania teczek.',
+    'Sześć stanowisk, stół redakcyjny i stoliki do odkładania teczek.',
   ),
   stImageSearch: defineShot(
     'stanowisko-lupa-obrazu',
@@ -153,6 +153,26 @@ const S = {
     'stanowisko-biblioteka-danych',
     'Biblioteka danych',
     'Minigra: porównaj liczbę z oryginalną tabelą.',
+  ),
+  stMetadata: defineShot(
+    'stanowisko-metadane',
+    'Metadane',
+    'Minigra: porównaj dane pliku z opisem w teczce i wskaż pole, które się nie zgadza.',
+  ),
+  stTranscript: defineShot(
+    'stanowisko-stenogram',
+    'Stenogram',
+    'Minigra: znajdź cytat w zapisie rozmowy i oceń, czy skrót zmienia jego sens.',
+  ),
+  stCrossCheck: defineShot(
+    'stanowisko-inne-media',
+    'Inne media',
+    'Minigra: policz niezależne źródła. Kopia cudzego wpisu nie jest potwierdzeniem.',
+  ),
+  stGeolocation: defineShot(
+    'stanowisko-mapa',
+    'Mapa',
+    'Minigra: znajdź dzielnicę, w której stoją oba budynki ze zdjęcia.',
   ),
   deskEvidence: defineShot(
     'stol-dowod',
@@ -246,11 +266,18 @@ const FIXTURE_REASON = {
   expired: 'expired',
 } as const;
 
+/**
+ * A story with a stamp for the station, from l6 when it has one, else from any level (l5 stamps
+ * Stenogram and Metadane). A station no story stamps yet (Mapa and Inne media before S7-58) shows
+ * an l6 story: its minigame then rolls the puzzle's outcome from the seed.
+ */
 function storyForStation(kind: StationKind) {
-  const inSix = STORIES.find(
-    (s) => s.id.startsWith('l6-') && s.stamps.some((st) => st.station === kind),
+  const stamped = (s: (typeof STORIES)[number]) => s.stamps.some((st) => st.station === kind);
+  return (
+    STORIES.find((s) => s.id.startsWith('l6-') && stamped(s)) ??
+    STORIES.find(stamped) ??
+    STORIES.find((s) => s.id.startsWith('l6-'))
   );
-  return inSix ?? STORIES.find((s) => s.stamps.some((st) => st.station === kind));
 }
 
 /** Seeds the encyclopedia: about two thirds of the cards collected, the rest locked. */
@@ -285,7 +312,14 @@ async function injectScene(
     const state = g.getState();
     const folders: any[] = [];
     const base = { stamps: [] as string[], spawnedAtMs: 0, deadlineMs: 600000, warned: false };
-    const stations = state.stations.map((st: any) => {
+    // A station kind the level lacks (l6 has six of the ten) joins as an extra station off the
+    // map: the overlay needs only its state.
+    const kinds = state.stations.map((st: any) => st.kind);
+    const extra =
+      s.station && !kinds.includes(s.station.kind)
+        ? [{ ...state.stations[0], id: `demo-${s.station.kind}`, kind: s.station.kind }]
+        : [];
+    const stations = [...state.stations, ...extra].map((st: any) => {
       let next = { ...st, operatorId: null, phase: 'idle', progressMs: 0, outageMs: 0 };
       if (s.station && st.kind === s.station.kind) {
         next = {
@@ -474,12 +508,16 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
     ['phone', S.stPhone],
     ['aiScanner', S.stAiScanner],
     ['dataLibrary', S.stDataLibrary],
+    ['metadata', S.stMetadata],
+    ['transcript', S.stTranscript],
+    ['crossCheck', S.stCrossCheck],
+    ['geolocation', S.stGeolocation],
   ];
   for (const [kind, key] of stationShots) {
     await attempt(key, async () => {
       const story = storyForStation(kind);
       if (!story) {
-        throw new Error(`no story with a ${kind} stamp`);
+        throw new Error(`no story for a ${kind} station`);
       }
       await injectScene(six.page, { station: { kind, folderStoryId: story.id } });
       await take(six.page, key, 1400);
@@ -795,7 +833,7 @@ function indexMarkdown(missingByDevice: Record<string, string[]>): string {
 
 Zrzuty wszystkich ekranów i stanów gry: komputer (1366×768) i telefon (Pixel 7, poziomo). Plik jest **generowany** poleceniem \`bun run contest:build\`, więc po zmianach w interfejsie wystarczy uruchomić je ponownie.
 
-Menu, poczekalnia, briefing i samouczek to prawdziwe ekrany prowadzone przez serwer gry. Stanowiska, stół, zdarzenia i podsumowanie zostały ustawione pomocniczym uchwytem \`?debug\` (ten sam stan, który serwer wysyła w rozgrywce). Dzięki temu wszystkie sześć stanowisk i pięć zdarzeń widać na jednym zestawie zrzutów.
+Menu, poczekalnia, briefing i samouczek to prawdziwe ekrany prowadzone przez serwer gry. Stanowiska, stół, zdarzenia i podsumowanie zostały ustawione pomocniczym uchwytem \`?debug\` (ten sam stan, który serwer wysyła w rozgrywce). Dzięki temu wszystkie dziesięć stanowisk i pięć zdarzeń widać na jednym zestawie zrzutów.
 
 | Ekran i opis | ${DEVICES.map((d) => d.label).join(' | ')} |
 | --- | --- | --- |

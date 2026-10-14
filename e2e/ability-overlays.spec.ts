@@ -18,6 +18,7 @@ import {
   PHONE,
   type Player,
   pickRole,
+  skipStationHelp,
   trackContext,
 } from './helpers.ts';
 
@@ -44,6 +45,7 @@ async function open(browser: Browser, options: BrowserContextOptions): Promise<P
     throw error;
   });
   await page.goto('/?debug');
+  await skipStationHelp(page);
   await page.getByLabel('Twój podpis').fill('Zośka');
   return { page, nickname: 'Zośka', touch: options.hasTouch === true };
 }

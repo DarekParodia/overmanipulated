@@ -36,7 +36,11 @@ export type SkillProfile = {
   recogniseCorrection: number;
   /** Chance of obeying a boss call at once, without checking the folder. */
   obeyBoss: number;
-  /** Chance that the bot uses its role ability (Przedłużenie in an emergency, S7-37). */
+  /**
+   * Chance, per bot and run, that it uses its role ability at all (S7-46 policies in bot.ts:
+   * Przedłużenie in an emergency, Ekspertyza and Druga szansa armed, Telefon z terenu instead of
+   * the phone station; Podaj teczkę never).
+   */
   usesAbility: number;
   /** Failed attempts at one station before giving up on it. */
   maxStationFailures: number;

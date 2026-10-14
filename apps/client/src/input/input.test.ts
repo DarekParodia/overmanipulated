@@ -30,6 +30,12 @@ describe('keyboard', () => {
     expect(NAV_KEYS.KeyR).toBe('ability');
     expect(NAV_KEYS.KeyQ).toBe('alt');
   });
+
+  it('turns H into the station help intent, a key no minigame or world action uses (S7-95)', () => {
+    expect(NAV_KEYS.KeyH).toBe('help');
+    expect(GAME_KEYS.has('KeyH')).toBe(false);
+    expect(Object.values(NAV_KEYS).filter((intent) => intent === 'help')).toEqual(['help']);
+  });
 });
 
 describe('gamepad', () => {
@@ -54,6 +60,14 @@ describe('gamepad', () => {
     const reading = readGamepad(pad([0, 0], [5]));
     expect(reading).toMatchObject({ ability: true, interact: false, ping: false, active: true });
     expect(readGamepad(pad([0, 0], [4])).ability).toBe(false);
+  });
+
+  it('keeps Select (button 8) for the station help, apart from RB and Start (S7-95)', () => {
+    expect(PAD.select).toBe(8);
+    expect(PAD.rb).not.toBe(PAD.select);
+    expect(PAD.start).not.toBe(PAD.select);
+    const reading = readGamepad(pad([0, 0], [8]));
+    expect(reading).toMatchObject({ ability: false, interact: false, work: false, ping: false });
   });
 
   it('reports an idle pad as inactive', () => {

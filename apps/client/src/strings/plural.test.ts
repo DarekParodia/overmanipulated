@@ -44,9 +44,8 @@ describe('listPl', () => {
     expect(listPl(['Lupa', 'Skaner', 'Mapa', 'Metadane'])).toBe('Lupa, Skaner, Mapa i Metadane');
   });
 
-  it('builds the lobby speed-bonus line of a role with four stations', () => {
-    expect(pl.lobbyRoles.fasterAt(['Lupa', 'Skaner', 'Mapa', 'Metadane'], 40)).toBe(
-      'Lupa, Skaner, Mapa i Metadane +40%',
-    );
+  it('names the teammates who picked a role in the lobby', () => {
+    expect(pl.lobbyRoles.pickedBy(['Ola'])).toBe('Tę rolę ma: Ola');
+    expect(pl.lobbyRoles.pickedBy(['Ola', 'Kuba', 'Iza'])).toBe('Tę rolę mają: Ola, Kuba i Iza');
   });
 });

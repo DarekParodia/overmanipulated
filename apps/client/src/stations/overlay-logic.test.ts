@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'bun:test';
 import { handleNavKey, type NavIntent, subscribeNav } from '../input/ui-nav.ts';
-import { formatCountdown, moveFocus, secondsLeft, seedFromId, signed } from './overlay-logic.ts';
+import {
+  formatCountdown,
+  minigameElapsed,
+  minigameRemaining,
+  moveFocus,
+  pauseMinigameClock,
+  resumeMinigameClock,
+  secondsLeft,
+  seedFromId,
+  signed,
+  startMinigameClock,
+} from './overlay-logic.ts';
 
 const grid = [['stamp-a'], ['stamp-b'], ['v:publish', 'v:reject', 'v:context'], [], ['close']];
 
@@ -91,5 +102,42 @@ describe('overlay navigation stack', () => {
     offOlder();
     expect(newer).toEqual(['up']);
     expect(older).toEqual([]);
+  });
+});
+
+describe('minigame clock with pauses (S7-95)', () => {
+  it('leaves the paused stretch out: start 0, pause 3000–8000, now 10000 → 5000', () => {
+    expect(minigameElapsed(10000, 0, 5000, null)).toBe(5000);
+    let clock = startMinigameClock(0, false);
+    clock = pauseMinigameClock(clock, 3000);
+    expect(minigameElapsed(6000, clock.startedAt, clock.pausedTotal, clock.pausedAt)).toBe(3000);
+    clock = resumeMinigameClock(clock, 8000);
+    expect(clock).toEqual({ startedAt: 0, pausedTotal: 5000, pausedAt: null });
+    expect(minigameElapsed(10000, clock.startedAt, clock.pausedTotal, clock.pausedAt)).toBe(5000);
+  });
+
+  it('stands still from the start while the first-use card is up', () => {
+    const clock = startMinigameClock(1000, true);
+    expect(clock).toEqual({ startedAt: 1000, pausedTotal: 0, pausedAt: 1000 });
+    expect(minigameElapsed(9000, clock.startedAt, clock.pausedTotal, clock.pausedAt)).toBe(0);
+    const running = resumeMinigameClock(clock, 4000);
+    expect(running).toEqual({ startedAt: 1000, pausedTotal: 3000, pausedAt: null });
+    expect(minigameElapsed(6000, running.startedAt, running.pausedTotal, null)).toBe(2000);
+  });
+
+  it('ignores a second pause or a resume of a running clock', () => {
+    const paused = pauseMinigameClock(startMinigameClock(0, false), 2000);
+    expect(pauseMinigameClock(paused, 5000)).toEqual(paused);
+    const running = startMinigameClock(0, false);
+    expect(resumeMinigameClock(running, 5000)).toEqual(running);
+    expect(minigameElapsed(500, 1000, 0, null)).toBe(0);
+  });
+
+  it('counts down from the full limit, or from resumeMs on a resumed round', () => {
+    expect(minigameRemaining(20000, 0)).toBe(20000);
+    expect(minigameRemaining(20000, 5000)).toBe(15000);
+    expect(minigameRemaining(20000, 0, 4000)).toBe(4000);
+    expect(minigameRemaining(20000, 1500, 4000)).toBe(2500);
+    expect(minigameRemaining(20000, 9000, 4000)).toBe(0);
   });
 });

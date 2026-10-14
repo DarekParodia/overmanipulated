@@ -11,7 +11,7 @@ import { DUCK_TUNING, type Ducker, musicDucker } from './duck.ts';
 import { installMasterLimiter } from './limiter.ts';
 import { busVolume } from './mix.ts';
 
-/** One line in the voice sprite (`apps/client/src/intro/voice-sprite.json`, S7-100). */
+/** One line in the voice sprite (`/assets/voice/intro.json`, `intro/voice-sprite.ts`, S7-100). */
 export type VoiceClip = { startMs: number; durationMs: number };
 export type VoiceClips = Readonly<Record<string, VoiceClip>>;
 
