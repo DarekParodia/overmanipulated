@@ -75,6 +75,10 @@ export const pl = {
     motdClose: 'Zamknij komunikat',
     /** Footer link (S7-74): reopens Google's ad consent message. */
     adConsent: 'Zgody reklamowe',
+    /** Offered next to `matchInProgress` (S7-84): watch the same room from the Widownia. */
+    watchAction: 'Oglądaj',
+    /** Footer link (S7-75): the privacy note at /prywatnosc, in the same tab. */
+    privacy: 'Prywatność',
   },
   /** Ads (S7-73): the frame's label, also its name for screen readers. */
   ads: {
@@ -290,6 +294,8 @@ export const pl = {
   },
   // --- Stage 2 gameplay. Shared vocabulary first, then one namespace per feature. ----------
   vocab: {
+    /** Versus newsrooms by team index (S7-84): 0 Kurier, 1 Głos. */
+    teams: ['Kurier', 'Głos'],
     storyTypes: {
       photo: 'Zdjęcie',
       quote: 'Cytat',
@@ -500,6 +506,12 @@ export const pl = {
       targetLabel: 'Cel twojej zdolności',
       /** The folder card carried by a Ratownik with the rescue left. */
       rescueLabel: 'Chroni ją koło ratunkowe',
+      /** World markers over players (S7-42); they show icons only, these are their names. */
+      marker: {
+        armed: (nick: string, ability: string) => `${nick}: ${ability} uzbrojona`,
+        calling: (nick: string) => `${nick} dzwoni`,
+        passTarget: (nick: string) => `Podasz teczkę: ${nick}`,
+      },
     },
     /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
@@ -2104,6 +2116,36 @@ export const pl = {
       rescued: 'Teczka uratowana!',
       abilityReady: 'Zdolność gotowa',
     },
+  },
+  /**
+   * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
+   * screen (S7-90/91) builds on these.
+   */
+  spectate: {
+    title: 'Widownia',
+    watching: 'Oglądasz',
+    waiting: 'Czekamy na pierwszy obraz…',
+    leave: 'Wyjdź',
+    /** One newsroom's line on the watch screen: name, points and credibility. */
+    teamLine: (team: string, score: number, credibility: number) =>
+      `${team}: ${score} pkt, wiarygodność ${credibility}`,
+    /** The single newsroom of a co-op match. */
+    coopTeam: 'Redakcja',
+  },
+  // --- S7-96 „Jak grać”: the help dialog with the intro, the stations and the controls. ---
+  howTo: {
+    /** The entry button (main menu corner, lobby, settings). */
+    open: 'Jak grać?',
+    title: 'Jak grać',
+    tabsLabel: 'Działy pomocy',
+    tabs: { intro: 'Wprowadzenie', stations: 'Stanowiska', controls: 'Sterowanie' },
+    close: 'Gotowe',
+    /** The intro tab until the animated intro lands (S7-101): the narrator's lines to read. */
+    introLabel: 'Wprowadzenie krok po kroku',
+    stationsLabel: 'Stanowiska redakcji',
+    stationsLead: 'Wybierz stanowisko i zobacz, jak działa.',
+    /** Gamepad only: the north button walks the tabs, as in the settings. */
+    padHint: 'Y zmienia dział',
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   encyclopedia: {

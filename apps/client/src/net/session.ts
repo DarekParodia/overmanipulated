@@ -1,21 +1,27 @@
 // The single WebSocket session: join/create, reconnect with the slot token (survives reloads
 // via sessionStorage and short app switches on phones), heartbeat RTT, and routing of server
-// messages to the store, the game runtime and the feedback cues.
+// messages to the store, the game runtime and the feedback cues. Spectators (S7-84) get their own
+// routing: their snapshots, events, stats and level ends go to the spectate store only.
 import {
   type ClientMessage,
   type Difficulty,
   encodeMessage,
+  type LevelEndMessage,
   type LobbyAction,
+  type MemberKind,
   type PlayerCommand,
   PROTOCOL_VERSION,
   parseServerMessage,
   RECONNECT_GRACE_MS,
   type Role,
+  type RoomStateMessage,
   type ServerMessage,
+  type TeamIndex,
 } from '@redakcja/shared';
 import { emitCue } from '../fx/feedback.ts';
 import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
-import { useApp } from '../store/app.ts';
+import { selfKind, selfTeam, useApp } from '../store/app.ts';
+import { clientId } from '../store/client-id.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
 import { playerColor } from '../ui/tokens.ts';
@@ -23,6 +29,7 @@ import { reconnectDelayMs } from './backoff.ts';
 import { handleGameEvent } from './game-events.ts';
 import { useGame } from './game-store.ts';
 import { createRuntime } from './runtime.ts';
+import { useSpectate } from './spectate-store.ts';
 
 const TOKEN_KEY = 'redakcja.reconnect';
 const HEARTBEAT_MS = 2000;
@@ -51,7 +58,7 @@ function socketUrl(): string {
 
 let socket: WebSocket | null = null;
 /** A fresh join to send on the next open; null means resume `slot` instead. */
-let pendingJoin: { nickname: string; roomCode: string | null } | null = null;
+let pendingJoin: { nickname: string; roomCode: string | null; as: MemberKind } | null = null;
 let slot: StoredSlot | null = readSlot();
 let reconnectAttempt = 0;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -81,6 +88,61 @@ function resetLevelState(levelId: string): void {
   useGame.getState().reset();
 }
 
+/** Whether this client watches the room from the Widownia. */
+function watching(): boolean {
+  const { room, playerId } = useApp.getState();
+  return selfKind(room, playerId) === 'spectator';
+}
+
+/** A team-tagged message for another newsroom than the player's own is not theirs to show. */
+function otherTeam(team: TeamIndex | undefined): boolean {
+  const { room, playerId } = useApp.getState();
+  return team !== undefined && team !== selfTeam(room, playerId);
+}
+
+/** Moves a spectator between the lobby, the read-only briefing and the spectate screen. */
+function routeSpectator(message: RoomStateMessage, previous: RoomStateMessage | null): void {
+  const app = useApp.getState();
+  if (message.phase === 'briefing' && app.screen !== 'briefing') {
+    useSpectate.getState().reset();
+    app.setScreen('briefing');
+  } else if (
+    (message.phase === 'playing' || message.phase === 'results') &&
+    app.screen !== 'spectate'
+  ) {
+    // Already reset when the briefing began; joining mid-match arrives here directly.
+    if (previous?.phase !== 'briefing') {
+      useSpectate.getState().reset();
+    }
+    app.setScreen('spectate');
+  } else if (message.phase === 'lobby' && app.screen !== 'lobby') {
+    app.setScreen('lobby');
+  }
+}
+
+function handleLevelEnd(message: LevelEndMessage): void {
+  if (watching()) {
+    useSpectate.getState().applyLevelEnd(message);
+    return;
+  }
+  if (otherTeam(message.team)) {
+    return;
+  }
+  useGame.getState().setLevelEnd(message);
+  // A versus match is not a level played for progress (S7-80 writes no leaderboard either).
+  if (!message.versus) {
+    useProgress.getState().record(message.levelId, message.difficulty, message.stars);
+  }
+}
+
+/** Removed by the host (S7-82): the slot is gone, so back to the menu with the reason. */
+function handleKicked(): void {
+  setSlot(null);
+  closeSession();
+  resetToMenu();
+  useApp.setState({ connection: 'idle', error: 'kicked' });
+}
+
 function handleMessage(message: ServerMessage): void {
   const app = useApp.getState();
   switch (message.type) {
@@ -93,7 +155,9 @@ function handleMessage(message: ServerMessage): void {
     case 'roomState': {
       const previous = app.room;
       app.setRoom(message);
-      if (message.phase === 'briefing' && app.screen !== 'briefing') {
+      if (selfKind(message, app.playerId) === 'spectator') {
+        routeSpectator(message, previous);
+      } else if (message.phase === 'briefing' && app.screen !== 'briefing') {
         // Topic of the day before the level (S3-03). Entering it (from the lobby or, on a
         // replay, from the results screen) drops the previous level's state once.
         resetLevelState(message.levelId);
@@ -116,14 +180,21 @@ function handleMessage(message: ServerMessage): void {
       return;
     }
     case 'snapshot':
-      runtime.onSnapshot(message, performance.now());
-      useGame.getState().applySnapshot(message);
+      if (watching()) {
+        useSpectate.getState().applySnapshot(message, performance.now());
+      } else if (!otherTeam(message.team)) {
+        runtime.onSnapshot(message, performance.now());
+        useGame.getState().applySnapshot(message);
+      }
       return;
     case 'levelEnd':
-      useGame.getState().setLevelEnd(message);
-      useProgress.getState().record(message.levelId, message.difficulty, message.stars);
+      handleLevelEnd(message);
       return;
     case 'event': {
+      // Spectators follow the match through `spectatorEvent` (embargoed in versus) only.
+      if (watching() || otherTeam(message.team)) {
+        return;
+      }
       const { event } = message;
       if (event.kind === 'gameStarted') {
         // Kartoteka cards the player left in the last level do not come back (S7-14).
@@ -161,6 +232,10 @@ function handleMessage(message: ServerMessage): void {
       return;
     }
     case 'error':
+      if (message.code === 'kicked') {
+        handleKicked();
+        return;
+      }
       useApp.setState({ error: message.code });
       if (message.code === 'reconnectFailed') {
         setSlot(null);
@@ -176,9 +251,11 @@ function handleMessage(message: ServerMessage): void {
       useApp.setState({ rttMs: Math.round(performance.now() - message.clientTime) });
       return;
     case 'spectatorEvent':
+      // Never the player's stores or gameplay listeners: in versus it may hold a masked verdict.
+      useSpectate.getState().applyEvent(message);
+      return;
     case 'matchStats':
-      // Spectator-only messages (protocol 7); this client never joins as a spectator before the
-      // spectate screen lands (S7-84).
+      useSpectate.getState().applyMatchStats(message);
       return;
   }
 }
@@ -199,6 +276,8 @@ function open(): void {
         protocolVersion: PROTOCOL_VERSION,
         nickname: pendingJoin.nickname,
         ...(pendingJoin.roomCode ? { roomCode: pendingJoin.roomCode } : {}),
+        ...(pendingJoin.as === 'spectator' ? { as: 'spectator' as const } : {}),
+        clientId: clientId(),
       });
     } else if (slot) {
       send({
@@ -206,6 +285,7 @@ function open(): void {
         protocolVersion: PROTOCOL_VERSION,
         nickname: useApp.getState().nickname || 'Reporter',
         reconnectToken: slot.token,
+        clientId: clientId(),
       });
     }
     pendingJoin = null;
@@ -278,19 +358,23 @@ function closeSession(): void {
 
 function resetToMenu(): void {
   runtime.reset();
+  useSpectate.getState().reset();
   useApp.getState().clearRoom();
   useApp.setState({ playerId: null, screen: 'mainMenu', rttMs: null });
 }
 
-/** Creates a new room (no code) or joins one by code. */
-export function joinRoom(nickname: string, roomCode?: string): void {
+/**
+ * Creates a new room (no code) or joins one by code, as a player or as a spectator (S7-84). The
+ * code is remembered, so a `matchInProgress` answer can offer to watch the same room.
+ */
+export function joinRoom(nickname: string, roomCode?: string, as: MemberKind = 'player'): void {
   setSlot(null);
   closeSession();
   leaving = false;
   disconnectedAt = null;
   reconnectAttempt = 0;
-  useApp.setState({ error: null });
-  pendingJoin = { nickname, roomCode: roomCode ?? null };
+  useApp.setState({ error: null, lastJoinCode: roomCode ?? null });
+  pendingJoin = { nickname, roomCode: roomCode ?? null, as };
   open();
 }
 
@@ -371,6 +455,9 @@ export function handleVisibilityReturn(): void {
     open();
   }
 }
+
+/** Tests only: feeds one server message through the routing above. */
+export const receiveForTest = handleMessage;
 
 // Dev aid (`?debug`): replay a server message, e.g. a `roomState` in the briefing phase before
 // the server sends one, and send lobby actions from the console or a scripted playtest.

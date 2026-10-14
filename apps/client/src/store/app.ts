@@ -3,13 +3,15 @@ import {
   DEFAULT_DIFFICULTY,
   type Difficulty,
   type ErrorCode,
+  type MemberKind,
   type RoomStateMessage,
   type RunSummary,
+  type TeamIndex,
 } from '@redakcja/shared';
 import { create } from 'zustand';
 import { readStored, writeStored } from './safe-storage.ts';
 
-export type ScreenId = 'mainMenu' | 'lobby' | 'briefing' | 'game' | 'styleguide';
+export type ScreenId = 'mainMenu' | 'lobby' | 'briefing' | 'game' | 'spectate' | 'styleguide';
 export type ConnectionStatus = 'idle' | 'connecting' | 'online' | 'reconnecting' | 'offline';
 export type InputDevice = 'keyboard' | 'gamepad' | 'touch';
 export type UiError = ErrorCode | 'connectionLost';
@@ -30,6 +32,11 @@ type AppStore = {
   /** The run dealt at the briefing (folders, max score, stars); null in the lobby or menu. */
   run: RunSummary | null;
   error: UiError | null;
+  /**
+   * The room code of the last join by code (S7-84), so a `matchInProgress` answer can offer to
+   * watch the same room; null after creating a room.
+   */
+  lastJoinCode: string | null;
   rttMs: number | null;
   inputDevice: InputDevice;
   settingsOpen: boolean;
@@ -61,6 +68,7 @@ export const useApp = create<AppStore>((set, get) => ({
   difficulty: DEFAULT_DIFFICULTY,
   run: null,
   error: null,
+  lastJoinCode: null,
   rttMs: null,
   inputDevice: initialDevice(),
   settingsOpen: false,
@@ -89,3 +97,15 @@ export const useApp = create<AppStore>((set, get) => ({
     set({ settingsOpen: open });
   },
 }));
+
+/** Whether this member plays or watches (S7-84): spectators are listed apart from the players. */
+export function selfKind(room: RoomStateMessage | null, playerId: string | null): MemberKind {
+  return room !== null && playerId !== null && room.spectators.some((s) => s.id === playerId)
+    ? 'spectator'
+    : 'player';
+}
+
+/** The newsroom this player belongs to; team 0 in co-op, for spectators and before a room. */
+export function selfTeam(room: RoomStateMessage | null, playerId: string | null): TeamIndex {
+  return room?.players.find((p) => p.id === playerId)?.team ?? 0;
+}
