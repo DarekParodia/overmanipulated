@@ -263,6 +263,8 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Input device | `inputDevice`: `keyboard` / `gamepad` / `touch` | Last used device drives prompts |
 | Key hints | `KeyHints` (`pl.minigames.<kind>.keys`) | Key-cap chips under a minigame for the device in use; on touch they name the gesture („Stuknij”, „Przesuń”) or the button |
 | Station help (Pomoc stanowiska) | `stationHelp` (`pl.stationHelp.kinds[kind]`) | Per station: `purpose`, `proves`, 2–3 `steps` per device, `realWorld`; one source for the help card (`StationHelpCard`, variants `inPlay` / `full`), practice, lobby details and contest legends |
+| Jak grać (how to play) | `howToPlay`: `HowToPlayDialog`, `useHowTo` (`howto/store.ts`), `HowToTab`: `intro` / `stations` / `controls` | The lazy help dialog: Wprowadzenie, Stanowiska, Sterowanie; opened from the main menu corner, the lobby and the settings (Sterowanie) |
+| Dodatki (bundle) | extras route (`EXTRAS_SOURCES`, `extrasGraph`, `BUDGET.extrasMax`; `tools/perf/check-bundle.ts`) | Lazy chunks of `src/intro`, `src/howto`, `src/about`, `src/profile` and the intro voice; measured apart from menu and game, 1 MB gzip guard |
 | Polish plural | `pluralPl(n, one, few, many)` | Polish noun form for a count (`strings/plural.ts`) |
 | Audio bus | `AudioBus`: `music` / `sfx` / `ui` / `voice` | Each bus has its own volume slider; effective volume is `busVolume(settings, bus)` (`fx/audio/mix.ts`) |
 | Lektor (intro voiceover) | `voice` bus, `voiceVolume`, `fx/audio/voice.ts` (`loadVoice`, `playVoice`, `voiceStatus`) | Narrator lines of the intro; its own slider 'Lektor'; dips the music to `DUCK_TUNING.voiceDepth` (0.3); silent and skipped when muted, not loaded or locked |
