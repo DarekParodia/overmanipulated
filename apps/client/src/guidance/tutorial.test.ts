@@ -46,20 +46,23 @@ describe('the ability step', () => {
     expect(skipAbilityStep(TUTORIAL_DONE, true)).toBe(TUTORIAL_DONE);
   });
 
-  test('applies only where the ability can act on the level', () => {
+  test('applies only where the ability can act in the run', () => {
     // l1 has no phone and no documents station: a reporter or an archivist could never use it.
     const l1 = ['imageSearch', 'sourceRegistry'] as const;
-    expect(abilityStepApplies('reporter', l1)).toBe(false);
-    expect(abilityStepApplies('reporter', [...l1, 'phone'])).toBe(true);
-    expect(abilityStepApplies('photoEditor', l1)).toBe(true);
-    expect(abilityStepApplies('archivist', ['imageSearch'])).toBe(false);
-    expect(abilityStepApplies('archivist', ['archive'])).toBe(true);
+    expect(abilityStepApplies('reporter', l1, 1)).toBe(false);
+    expect(abilityStepApplies('reporter', [...l1, 'phone'], 1)).toBe(true);
+    expect(abilityStepApplies('photoEditor', l1, 1)).toBe(true);
+    expect(abilityStepApplies('archivist', ['imageSearch'], 1)).toBe(false);
+    expect(abilityStepApplies('archivist', ['archive'], 1)).toBe(true);
     for (const role of ['managingEditor', 'generalist', 'rescuer'] as const) {
-      expect(abilityStepApplies(role, l1)).toBe(true);
+      expect(abilityStepApplies(role, l1, 1)).toBe(true);
     }
-    expect(abilityStepApplies(null, l1)).toBe(false);
+    expect(abilityStepApplies(null, l1, 1)).toBe(false);
+    // Podaj teczkę needs a connected teammate: a rescuer playing alone could never pass.
+    expect(abilityStepApplies('rescuer', l1, 0)).toBe(false);
+    expect(abilityStepApplies('managingEditor', l1, 0)).toBe(true);
     // No snapshot yet: unknown, the step stays.
-    expect(abilityStepApplies('reporter', [])).toBe(true);
+    expect(abilityStepApplies('reporter', [], 1)).toBe(true);
   });
 
   test("the local player's armed, started or done ability counts", () => {

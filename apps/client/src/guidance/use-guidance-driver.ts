@@ -28,13 +28,17 @@ function liveAbility(): NextStepAbility | undefined {
     : { ability, preview, key: abilityHintKey(app.inputDevice, ability) };
 }
 
-/** Whether the tutorial's ability step applies: a role whose ability can act on this level. */
+/** Whether the tutorial's ability step applies: a role whose ability can act in this run. */
 function localHasRole(): boolean {
   const { room, playerId } = useApp.getState();
-  const role = room?.players.find((p) => p.id === playerId)?.role ?? null;
+  const me = room?.players.find((p) => p.id === playerId);
+  const others = (room?.players ?? []).filter(
+    (p) => p.id !== playerId && p.connected && p.team === me?.team,
+  );
   return abilityStepApplies(
-    role,
+    me?.role ?? null,
     useGame.getState().stations.map((station) => station.kind),
+    others.length,
   );
 }
 

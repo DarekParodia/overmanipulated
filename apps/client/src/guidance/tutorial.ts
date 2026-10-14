@@ -71,17 +71,23 @@ export function skipAbilityStep(stepIndex: number, hasRole: boolean, usedAlready
 }
 
 /**
- * Whether the tutorial's ability step applies: the role has an ability and the level lets it
- * act. Ekspertyza needs a station of the role's family and Telefon z terenu a phone; without
- * them every press is blocked and the step could never be completed (a reporter on l1). An
- * empty `stationKinds` (no snapshot yet) counts as unknown, so the step stays.
+ * Whether the tutorial's ability step applies: the role has an ability and the run lets it
+ * act. Ekspertyza needs a station of the role's family, Telefon z terenu a phone and Podaj
+ * teczkę a connected teammate; without them every press is blocked and the step could never be
+ * completed (a reporter on l1, a rescuer playing alone). An empty `stationKinds` (no snapshot
+ * yet) counts as unknown, so the step stays.
  */
 export function abilityStepApplies(
   role: Role | null,
   stationKinds: readonly StationKind[],
+  /** Connected teammates besides the local player. */
+  teammates: number,
 ): boolean {
   const ability = abilityOf(role);
   if (ability === null) {
+    return false;
+  }
+  if (ability === 'passFolder' && teammates === 0) {
     return false;
   }
   if (stationKinds.length === 0) {
