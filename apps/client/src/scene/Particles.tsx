@@ -1,7 +1,7 @@
-// Renders the shared particle pool as one instanced draw call of camera-facing sprites cut from
-// a procedural atlas (fx/particles/sprites.ts): flat shapes with a navy outline, tinted per
-// particle. Particles shrink to nothing instead of fading, matching the paper-cut look without
-// alpha blending (alpha-tested, so no sorting and no overdraw cost on phones).
+// Renders the GameView's particle pool (S7-85) as one instanced draw call of camera-facing
+// sprites cut from a procedural atlas (fx/particles/sprites.ts): flat shapes with a navy outline,
+// tinted per particle. Particles shrink to nothing instead of fading, matching the paper-cut look
+// without alpha blending (alpha-tested, so no sorting and no overdraw cost on phones).
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import {
@@ -18,8 +18,7 @@ import {
 } from 'three';
 import { particleStats } from '../debug/perf-stats.ts';
 import type { CueContext } from '../fx/feedback.ts';
-import { feedback } from '../fx/feedback.ts';
-import { createPool, scaleAt, spawn, stepPool } from '../fx/particles/pool.ts';
+import { scaleAt, spawn, stepPool } from '../fx/particles/pool.ts';
 import {
   type EmitterPreset,
   type ParticlePresetId,
@@ -35,6 +34,7 @@ import {
   SPRITE_ROWS,
 } from '../fx/particles/sprites.ts';
 import { fxTimeScale } from '../fx/time-scale.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors as tokens } from '../ui/tokens.ts';
 import { useQuality } from './quality.ts';
@@ -100,9 +100,13 @@ function instanced(count: number, itemSize: number): InstancedBufferAttribute {
 }
 
 export function Particles() {
+  const view = useGameView();
   const preset = useQuality((s) => s.profile.preset);
   const capacity = particleCapacity[preset];
-  const pool = useMemo(() => createPool(capacity), [capacity]);
+  // The view's pool starts fresh on mount and on a new capacity; only the view's feedback fills
+  // it. Spawning and drawing both read `view.particles.pool`, so a render React discards (strict
+  // mode calls the memo twice) can never leave them on different pools.
+  useMemo(() => view.particles.reset(capacity), [view, capacity]);
   const mesh = useRef<Mesh>(null);
   const color = useMemo(() => new Color(), []);
   const warmFrames = useRef(3);
@@ -153,7 +157,7 @@ export function Particles() {
 
   useEffect(
     () =>
-      feedback.connect({
+      view.feedback.connect({
         spawnParticles(id: ParticlePresetId, count: number, context: CueContext) {
           const position = context.position;
           if (!position) {
@@ -171,7 +175,7 @@ export function Particles() {
           for (let i = 0; i < scaled; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = between(p.speed);
-            spawn(pool, {
+            spawn(view.particles.pool, {
               x: position.x + Math.cos(angle) * 0.1,
               y: position.y + Math.sin(angle) * 0.1,
               z: p.height,
@@ -192,10 +196,11 @@ export function Particles() {
           }
         },
       }),
-    [pool, color],
+    [view, color],
   );
 
   useFrame((_, delta) => {
+    const pool = view.particles.pool;
     stepPool(pool, Math.min(delta, 0.1) * fxTimeScale());
     const pos = buffers.pos.array as Float32Array;
     const sizes = buffers.size.array as Float32Array;
@@ -203,7 +208,9 @@ export function Particles() {
     const frames = buffers.frame.array as Float32Array;
     const cols = buffers.color.array as Float32Array;
     let n = 0;
-    for (let i = 0; i < pool.capacity; i++) {
+    // Never more than these buffers hold (a pool of a new capacity may land a frame early).
+    const last = Math.min(pool.capacity, capacity);
+    for (let i = 0; i < last; i++) {
       if (!pool.alive[i]) {
         continue;
       }

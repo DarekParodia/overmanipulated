@@ -50,6 +50,10 @@ menu 592 KB gzip (588 KB without the dialog: the shared code moves from the entr
 the entry still loads, which compresses 4 KB worse), game 814 KB gzip, first load (menu + game +
 extras) 1.38 MB gzip.
 
+S7-103 („O grze”): the dialog adds 18 KB raw, 6 KB gzip to the extras route (now 28 KB raw,
+9 KB gzip); `CREDITS.md` and the voice sprite are fetched only when its Zasoby tab opens and are
+not counted. Menu 597 KB gzip, first load 1.39 MB gzip.
+
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
 
@@ -180,6 +184,14 @@ Audit of the 38 visible renderables on high:
 - Particles: one `InstancedMesh` for the whole pool.
 
 Result: no change needed; the e2e test keeps it that way.
+
+**Several canvases (S7-85).** Each `GameCanvas` has its own renderer, so `PerfProbe` writes its
+counters to `perfStats.views[viewKey]` and the overlay's `draw calls` and `triangles` rows are the
+sum over every mounted canvas (one canvas while playing, so the numbers above are unchanged).
+Only the primary canvas measures frame time and walks the adaptive-quality ladder. The GameView
+refactor itself was measured on the l1 room (solo host, 1366x768, fixed high preset, 7 injected
+floor folders, SwiftShader): 50–51 draw calls before and after, and the same list of visible meshes;
+triangles (23.1–24.4k) differ between runs only by the folder prop of the injected story type.
 
 ### The 24×14 rooms (S7-66)
 

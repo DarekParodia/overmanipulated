@@ -8,7 +8,7 @@ import { useFrame } from '@react-three/fiber';
 import type { TileMap } from '@redakcja/shared';
 import { useEffect, useMemo } from 'react';
 import { type BufferGeometry, ConeGeometry, PlaneGeometry } from 'three';
-import { runtime } from '../net/session.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { type AtlasCell, cellUv, createDecorAtlas, createRainTexture } from './decor-art.ts';
@@ -173,7 +173,8 @@ function buildLayer(map: TileMap, theme: Theme, detail: boolean): Layer {
 
 export function Decor({ theme }: { theme: Theme }) {
   const detail = useQuality((s) => s.profile.detail);
-  const layer = useMemo(() => buildLayer(runtime.map, theme, detail), [theme, detail]);
+  const view = useGameView();
+  const layer = useMemo(() => buildLayer(view.runtime.map, theme, detail), [view, theme, detail]);
   const atlas = useMemo(createDecorAtlas, []);
   const rainTexture = useMemo(() => (layer.rain ? createRainTexture() : null), [layer.rain]);
   useEffect(

@@ -18,16 +18,23 @@ import {
   type ServerMessage,
   type TeamIndex,
 } from '@redakcja/shared';
-import { emitCue } from '../fx/feedback.ts';
+import { useEvents } from '../events/event-store.ts';
+import { emitCue, feedback } from '../fx/feedback.ts';
+import { useGuidance } from '../guidance/store.ts';
+import { playerBubbles } from '../pings/bubble-store.ts';
+import { renderState } from '../scene/render-state.ts';
 import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
 import { selfKind, selfTeam, useApp } from '../store/app.ts';
 import { clientId } from '../store/client-id.ts';
+import { useProfile } from '../store/profile.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
+import { useSettings } from '../store/settings.ts';
 import { playerColor } from '../ui/tokens.ts';
 import { reconnectDelayMs } from './backoff.ts';
-import { handleGameEvent } from './game-events.ts';
+import { type GameplayEvent, playerEvents, routeViewEvent } from './game-events.ts';
 import { useGame } from './game-store.ts';
+import { createGameView } from './game-view.ts';
 import { createRuntime } from './runtime.ts';
 import { useSpectate } from './spectate-store.ts';
 
@@ -71,6 +78,29 @@ export const runtime = createRuntime(
   (message) => send(message),
   (command) => send({ type: 'command', command }),
 );
+
+/**
+ * The local player's GameView (S7-85): this session's runtime and the module-level stores the
+ * HUD reads too. The scene renders it whenever no other view is provided.
+ */
+export const playerView = createGameView({
+  kind: 'player',
+  team: 0,
+  runtime,
+  subjectId: () => useApp.getState().playerId,
+  store: useGame,
+  events: useEvents,
+  bubbles: playerBubbles,
+  guidance: useGuidance,
+  render: renderState,
+  feedback,
+  bus: playerEvents,
+});
+
+/** Delivers a gameplay event to the player's view (listeners, then its cue). */
+export function handleGameEvent(event: GameplayEvent): void {
+  routeViewEvent(playerView, event);
+}
 
 function send(message: ClientMessage): void {
   if (socket?.readyState === WebSocket.OPEN) {
@@ -133,6 +163,8 @@ function handleLevelEnd(message: LevelEndMessage): void {
   if (!message.versus) {
     useProgress.getState().record(message.levelId, message.difficulty, message.stars);
   }
+  // The profile counts versus matches too: `won` is then this newsroom's match result (S7-104).
+  useProfile.getState().recordLevelEnd(message);
 }
 
 /** Removed by the host (S7-82): the slot is gone, so back to the menu with the reason. */
@@ -199,6 +231,7 @@ function handleMessage(message: ServerMessage): void {
       if (event.kind === 'gameStarted') {
         // Kartoteka cards the player left in the last level do not come back (S7-14).
         useRetryMemory.getState().reset();
+        useProfile.getState().startMatch();
         emitCue('game.start');
         return;
       }
@@ -463,4 +496,12 @@ export const receiveForTest = handleMessage;
 // the server sends one, and send lobby actions from the console or a scripted playtest.
 if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
   (window as unknown as { __session?: unknown }).__session = { receive: handleMessage, lobby };
+  // Fire events and cues from the console or end-to-end tests.
+  (window as unknown as { __fx?: unknown }).__fx = {
+    handleGameEvent,
+    emitCue,
+    useGame,
+    useApp,
+    useSettings,
+  };
 }

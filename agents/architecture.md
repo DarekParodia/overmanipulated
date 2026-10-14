@@ -72,12 +72,18 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   and never hand-writes `fetch` URLs or response types.
 - The game itself stays on the WebSocket. Do not move real-time traffic (input, snapshots,
   verdicts) to REST.
-- Room broadcasting uses Bun's native pub/sub: `ws.raw.subscribe(roomTopic)` on join, then
-  `server.publish(roomTopic, …)`. One topic per room.
-- Rooms are in memory; 4-letter codes from an unambiguous alphabet (no `O/0`, `I/1`).
-  Max 4 players. A disconnected player's slot is held for 60 s for reconnection.
-- Fixed **20 Hz** tick loop per active room: drain queued inputs → `step` → broadcast snapshot and
-  events. Empty rooms are destroyed.
+- Room broadcasting uses Bun's native pub/sub: `ws.raw.subscribe(topic)` on join, then
+  `server.publish(topic, …)`. Each room has three kinds of topic (`roomTopics`, `topicsFor`):
+  `room:CODE` for everyone (`roomState`, `gameStarted`), `room:CODE:t0` / `:t1` for one team's
+  players (its snapshots, events and `levelEnd`) and `room:CODE:spec` for spectators. A co-op
+  room plays as team 0.
+- Rooms are in memory; 4-letter codes from an unambiguous alphabet (no `O/0`, `I/1`). A room
+  holds members (players and spectators) and one newsroom (`TeamRun`, one sim) per team: one in
+  co-op, two in versus, at most 4 players each. A disconnected member's slot is held for 60 s for
+  reconnection; its token resumes exactly that member.
+- Fixed **20 Hz** tick loop per active room: drain queued inputs per team → build one `SimContext`
+  → `step` every team in lockstep → publish each team's events and snapshot (`publishTeam`
+  encodes once for the team and spectator topics). Empty rooms are destroyed.
 - **Run lifecycle** (Stage 7): the lobby holds the selected level as `getLevel` serves it and the
   room's difficulty (host only, lobby only). Every briefing, replays included, deals the run with
   `prepareRun` from a fresh **run seed** (never sent to clients) and the room's difficulty;
@@ -189,6 +195,21 @@ apps/server/drizzle/   generated SQL migrations (committed)
   [`platforms.md`](platforms.md).
 - Particles, tweens, camera shake and audio live in `apps/client/src/fx/` and are triggered only
   through feedback cues; they never touch the simulation. See [`game-feel.md`](game-feel.md).
+- **GameView** (`net/game-view.ts`, S7-85): everything one rendered newsroom reads and writes —
+  runtime (map, players), game store, event store, ping bubbles, guidance, render state, particle
+  pool, camera shake, feedback and its gameplay-event listeners. Scene files (`scene/`, the
+  ability markers) get it with `useGameView()` / `useViewGame()` (`net/view-context.tsx`) and
+  never import `runtime`, `renderState`, `feedback`/`emitCue` or a module-level store from
+  `net/`, `events/`, `pings/` or `guidance/` (checked in `net/game-view.test.ts`). Without a
+  provider the view is the local player's `playerView` (`net/session.ts`), built from those
+  module-level stores, so the HUD and play need no setup. Separate React roots do not inherit
+  context: `useOverlay` and `ViewHtml` (drei `Html`) re-provide the view, and every `<Canvas>`
+  renders its own `GameViewProvider`. `GameCanvas({ view, primary, viewKey })`: only the primary
+  canvas detects the preset, adapts quality and installs the debug hooks; each canvas reports its
+  renderer counters under `perfStats.views[viewKey]` and the overlay shows the sum. A spectator
+  view (`createWatchView`; the spectate store holds one per team) samples
+  `SPECTATOR_INTERPOLATION_DELAY_MS` (250 ms) behind and has guidance off; a cue with `silent`
+  keeps everything but its sound and loops.
 - Models are glTF (`.glb`), optimised with gltf-transform, stored in `apps/client/public/assets/`.
   Base assets from Kenney (CC0) or self-made; record the source and licence of every asset in
   `apps/client/public/assets/CREDITS.md`.

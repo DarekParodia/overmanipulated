@@ -15,10 +15,14 @@ import {
 } from '@redakcja/content';
 import {
   addPlayer,
+  applyStatsEvent,
   BRIEFING_DURATION_MS,
+  byScore,
+  type ClientId,
   type ClientMessage,
   COMMAND_QUEUE_MAX,
   conveyorBlocked,
+  createEmbargo,
   createGameState,
   crewSnapshot,
   DEFAULT_DIFFICULTY,
@@ -27,18 +31,27 @@ import {
   ENDLESS,
   ENDLESS_LEVEL_ID,
   type ErrorCode,
+  emptyPlayerStats,
   encodeMessage,
   type GameEvent,
   type GameState,
   INPUT_QUEUE_CATCH_UP_THRESHOLD,
   INPUT_QUEUE_MAX,
   type JoinMessage,
+  type LevelEndMessage,
+  type LevelOutcome,
   type LobbyAction,
-  MAX_PLAYERS,
+  MAX_ROOM_PLAYERS,
+  MAX_TEAM_PLAYERS,
+  MAX_TEAMS,
+  type MemberKind,
+  MINIGAME_MIN_SOLVE_MS,
+  matchDurationMs,
   nextScheduledSpawn,
   PLAYER_COLOR_COUNT,
   type PlayerCommand,
   type PlayerInput,
+  type PlayerStats,
   PROTOCOL_VERSION,
   parseLayout,
   type QueuedCommand,
@@ -51,12 +64,22 @@ import {
   removePlayer as removeSimPlayer,
   type ServerMessage,
   type SimContext,
+  type SnapshotMessage,
+  SPECTATOR_SNAPSHOT_INTERVAL_TICKS,
+  type SpectatorEmbargo,
   simTuning,
   spawnPoint,
   step,
+  type TeamIndex,
+  type TeamScore,
+  type TeamStanding,
   TICK_MS,
   type TileMap,
+  teamScoreOf,
   timeLeftMs,
+  unfinishedResults,
+  type VersusResult,
+  versusOutcome,
 } from '@redakcja/shared';
 import { MAX_ROOMS } from '../limits.ts';
 import { log } from '../log.ts';
@@ -64,10 +87,18 @@ import type { RoomSettings } from '../public-config.ts';
 import { generateReconnectToken, generateRoomCode, secureRandom } from './codes.ts';
 import { CLOSE_REPLACED, type Connection, type Hub } from './connection.ts';
 
-type RoomPlayer = {
+/** A room member: a player in one newsroom, or a spectator in the Widownia (S7-79). */
+type RoomMember = {
   id: string;
+  kind: MemberKind;
+  /** The member's newsroom; always 0 in co-op. A spectator keeps the last one it played in. */
+  team: TeamIndex;
+  /** The browser's id from the join (the kick cooldown follows it, S7-82). */
+  clientId?: ClientId;
   nickname: string;
+  /** Per team: two newsrooms reuse the same four colours and spawn points. */
   colorIndex: number;
+  /** Resumes exactly this member, with its kind and team. */
   reconnectToken: string;
   connection: Connection | null;
   /** Server time when the connection dropped; null while connected. */
@@ -80,13 +111,24 @@ type RoomPlayer = {
   ready: boolean;
 };
 
+/** One newsroom of the room: its own sim, stepped in lockstep with the other team's. */
+type TeamRun = {
+  game: GameState;
+  /** Every player of the team left while playing (the versus forfeit, S7-80). */
+  forfeited: boolean;
+};
+
 type Room = {
   code: string;
   hostId: string;
   phase: RoomPhase;
-  /** Insertion order is join order. */
-  players: Map<string, RoomPlayer>;
-  game: GameState;
+  /** Players of every team and spectators; insertion order is join order. */
+  members: Map<string, RoomMember>;
+  /**
+   * One newsroom per team: one in co-op, two in versus. All are built from `map`, share the
+   * dealt run and, from the level start, one sim seed.
+   */
+  teams: [TeamRun, ...TeamRun[]];
   /**
    * The selected level as `getLevel` serves it (a bag level's Normal preview, the endless
    * preview) in the lobby; from the briefing on, the level the dealt run plays.
@@ -116,6 +158,24 @@ type Room = {
   visibility: RoomVisibility;
   name: string | null;
   spectatorsAllowed: boolean;
+  /** Unix ms (the room browser sorts by it, S7-83). */
+  createdAt: number;
+  /** Every player's counters of the current level, folded with `applyStatsEvent`. */
+  stats: Map<string, PlayerStats>;
+  /** How the versus match ended; null while it runs and in co-op (S7-80). */
+  outcome: VersusResult | null;
+  /** What the spectator topic still holds back of the current level (S7-81). */
+  embargo: SpectatorEmbargo;
+};
+
+/** The room's pub/sub topics (protocol v7). */
+export const roomTopics = {
+  /** Everyone: `roomState`, `gameStarted`. */
+  room: (code: string) => `room:${code}`,
+  /** One newsroom's players: its snapshots, events and `levelEnd`. */
+  team: (code: string, team: TeamIndex) => `room:${code}:t${team}`,
+  /** Spectators: every newsroom's snapshots (every 2nd), `levelEnd`s and spectator events. */
+  spectators: (code: string) => `room:${code}:spec`,
 };
 
 /**
@@ -142,11 +202,14 @@ function requireLevel(id: string): Level {
   return level;
 }
 
-type Membership = { roomCode: string; playerId: string };
+/** A connection's (or a reconnect token's) one member of one room. */
+type Membership = { roomCode: string; memberId: string };
 
 export type RegistryOptions = {
   hub: Hub;
   now?: () => number;
+  /** Wall-clock Unix ms for `createdAt` (the room browser's order); defaults to `Date.now`. */
+  wallClock?: () => number;
   random?: () => number;
   /** Called when the first room is created, so the loop can start. */
   onActive?: () => void;
@@ -182,17 +245,148 @@ export type RegistryOptions = {
 
 export type RoomRegistry = ReturnType<typeof createRoomRegistry>;
 
+/** The room's players (of one team, when given), in join order. */
+function playersOf(room: Room, team?: TeamIndex): RoomMember[] {
+  return [...room.members.values()].filter(
+    (m) => m.kind === 'player' && (team === undefined || m.team === team),
+  );
+}
+
+function spectatorsOf(room: Room): RoomMember[] {
+  return [...room.members.values()].filter((m) => m.kind === 'spectator');
+}
+
+/** Newsrooms the room's mode plays: 1 in co-op, 2 in versus. */
+function teamTotal(room: Room): number {
+  return room.mode === 'versus' ? MAX_TEAMS : 1;
+}
+
+/**
+ * The team a new player joins, or null when every team is full. Co-op has team 0 only; versus
+ * picks the smaller team, team 0 on a tie.
+ */
+export function pickTeam(room: {
+  mode: RoomMode;
+  members: ReadonlyMap<string, Pick<RoomMember, 'kind' | 'team'>>;
+}): TeamIndex | null {
+  const sizes = Array.from({ length: room.mode === 'versus' ? MAX_TEAMS : 1 }, () => 0);
+  for (const member of room.members.values()) {
+    if (member.kind === 'player' && member.team < sizes.length) {
+      sizes[member.team] = (sizes[member.team] ?? 0) + 1;
+    }
+  }
+  let best: TeamIndex | null = null;
+  let bestSize = MAX_TEAM_PLAYERS;
+  for (const [team, size] of sizes.entries()) {
+    if (size < bestSize) {
+      best = team;
+      bestSize = size;
+    }
+  }
+  return best;
+}
+
+/** The lowest colour (and spawn point) no player of `team` holds. */
+function freeColorIndex(room: Room, team: TeamIndex): number {
+  const used = new Set(playersOf(room, team).map((p) => p.colorIndex));
+  for (let i = 0; i < PLAYER_COLOR_COUNT; i++) {
+    if (!used.has(i)) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+/** Every topic a member listens on: the room's, plus its team's (players) or the Widownia's. */
+export function topicsFor(code: string, member: Pick<RoomMember, 'kind' | 'team'>): string[] {
+  return [
+    roomTopics.room(code),
+    member.kind === 'player' ? roomTopics.team(code, member.team) : roomTopics.spectators(code),
+  ];
+}
+
+/**
+ * Moves a connected member's subscriptions from the topics it had (`before`) to the ones its kind
+ * and team give now: for the team and kind switches of S7-80 and S7-81.
+ */
+export function syncTopics(
+  code: string,
+  member: Pick<RoomMember, 'kind' | 'team' | 'connection'>,
+  before: readonly string[],
+): void {
+  const connection = member.connection;
+  if (!connection) {
+    return;
+  }
+  const after = topicsFor(code, member);
+  for (const topic of before) {
+    if (!after.includes(topic)) {
+      connection.unsubscribe(topic);
+    }
+  }
+  for (const topic of after) {
+    if (!before.includes(topic)) {
+      connection.subscribe(topic);
+    }
+  }
+}
+
+/**
+ * Gives every player its team for the room's mode (co-op: team 0; versus: alternating in join
+ * order, so the first joiner is in Kurier, the second in Głos) and its colour within that team
+ * in join order. Spectators keep their team, which co-op resets to 0.
+ */
+function assignTeams(room: Pick<Room, 'mode' | 'members'>): void {
+  const nextColor = Array.from({ length: MAX_TEAMS }, () => 0);
+  let index = 0;
+  for (const member of room.members.values()) {
+    if (member.kind !== 'player') {
+      if (room.mode === 'coop') {
+        member.team = 0;
+      }
+      continue;
+    }
+    const team = room.mode === 'versus' ? index % MAX_TEAMS : 0;
+    index += 1;
+    member.team = team;
+    member.colorIndex = (nextColor[team] ?? 0) % PLAYER_COLOR_COUNT;
+    nextColor[team] = (nextColor[team] ?? 0) + 1;
+  }
+}
+
+/**
+ * The versus level end of a newsroom: `won` means the match was won; no campaign stars. A loser
+ * lost on credibility when its own ran out, otherwise on points; a draw has no loss reason.
+ */
+export function versusLevelOutcome(
+  result: VersusResult,
+  team: TeamIndex,
+  credibility: number,
+): LevelOutcome {
+  const won = result.winnerTeam === team;
+  if (won || result.winnerTeam === null) {
+    return { won, stars: 0, lossReason: null };
+  }
+  return { won, stars: 0, lossReason: credibility <= 0 ? 'credibility' : 'score' };
+}
+
+/** Fresh lobby newsrooms for the room's mode, without players. */
+function freshTeams(room: Pick<Room, 'map' | 'mode'>): [TeamRun, ...TeamRun[]] {
+  const run = (): TeamRun => ({ game: createGameState({ map: room.map }), forfeited: false });
+  return room.mode === 'versus' ? [run(), run()] : [run()];
+}
+
 export function createRoomRegistry(options: RegistryOptions) {
   const { hub } = options;
   const now = options.now ?? (() => performance.now());
+  const wallClock = options.wallClock ?? (() => Date.now());
   const random = options.random ?? secureRandom;
   const stepGame = options.step ?? step;
   const briefingMs = options.briefingMs ?? BRIEFING_DURATION_MS;
   const rooms = new Map<string, Room>();
   const memberships = new Map<string, Membership>();
+  /** Reconnect token → exactly one member (and so one kind). */
   const tokens = new Map<string, Membership>();
-
-  const topic = (code: string) => `room:${code}`;
 
   function send(connection: Connection, message: ServerMessage): void {
     connection.send(encodeMessage(message));
@@ -210,6 +404,24 @@ export function createRoomRegistry(options: RegistryOptions) {
     return Math.floor(random() * 0x7fffffff);
   }
 
+  /** The member of a connection or token, with its room. */
+  function resolve(
+    membership: Membership | undefined,
+  ): { room: Room; member: RoomMember } | undefined {
+    const room = membership ? rooms.get(membership.roomCode) : undefined;
+    const member = membership ? room?.members.get(membership.memberId) : undefined;
+    return room && member ? { room, member } : undefined;
+  }
+
+  /** Whether a feature flag of config.json is on now (the shared defaults without settings). */
+  function featureOn(flag: 'versus' | 'spectators'): boolean {
+    return options.settings?.().features[flag] ?? DEFAULT_FEATURE_FLAGS[flag];
+  }
+
+  function teamRun(room: Room, team: TeamIndex): TeamRun {
+    return room.teams[team] ?? room.teams[0];
+  }
+
   /**
    * Sets the room's level as `getLevel` serves it (a bag level's Normal preview, the endless
    * preview) and drops any dealt run; the briefing deals the real one (`prepareRoomRun`).
@@ -224,6 +436,7 @@ export function createRoomRegistry(options: RegistryOptions) {
   /**
    * Deals the run the room is about to play (README §4): a new run seed, apart from the sim seed,
    * on the room's difficulty, always from the selected level's base so every replay differs.
+   * Every newsroom of the room plays this one run.
    */
   function prepareRoomRun(room: Room): void {
     const seed = drawSeed();
@@ -239,12 +452,40 @@ export function createRoomRegistry(options: RegistryOptions) {
     room.run = { seed, summary: runSummary(run) };
   }
 
+  /** To everyone in the room (`roomState`, `gameStarted`). */
   function broadcast(room: Room, message: ServerMessage): void {
-    hub.publish(topic(room.code), encodeMessage(message));
+    hub.publish(roomTopics.room(room.code), encodeMessage(message));
   }
 
-  function broadcastEvent(room: Room, event: GameEvent): void {
-    broadcast(room, { type: 'event', tick: room.game.tick, event });
+  function hasConnectedSpectator(room: Room): boolean {
+    return spectatorsOf(room).some((m) => m.connection !== null);
+  }
+
+  /**
+   * To one newsroom's players and, with `toSpectators` while a spectator is connected, to the
+   * Widownia: encoded once, the same string on both topics.
+   */
+  function publishTeam(
+    room: Room,
+    team: TeamIndex,
+    message: ServerMessage,
+    toSpectators: boolean,
+  ): void {
+    const data = encodeMessage(message);
+    hub.publish(roomTopics.team(room.code, team), data);
+    if (toSpectators && hasConnectedSpectator(room)) {
+      hub.publish(roomTopics.spectators(room.code), data);
+    }
+  }
+
+  /** A game event to its newsroom's players (spectators get `spectatorEvent`s, S7-81). */
+  function publishTeamEvent(room: Room, team: TeamIndex, event: GameEvent): void {
+    publishTeam(
+      room,
+      team,
+      { type: 'event', tick: teamRun(room, team).game.tick, team, event },
+      false,
+    );
   }
 
   function broadcastRoomState(room: Room): void {
@@ -254,15 +495,14 @@ export function createRoomRegistry(options: RegistryOptions) {
       hostId: room.hostId,
       phase: room.phase,
       levelId: room.level.id,
-      players: [...room.players.values()].map((p) => ({
+      players: playersOf(room).map((p) => ({
         id: p.id,
         nickname: p.nickname,
         colorIndex: p.colorIndex,
         connected: p.connection !== null,
         role: p.role,
         ready: p.ready,
-        // One newsroom until versus teams land (S7-80).
-        team: 0,
+        team: p.team,
       })),
       // Clients count the briefing down locally from `endsInMs`; it is re-sent with every
       // roomState (skip, join, reconnect), so there is no periodic broadcast.
@@ -282,39 +522,43 @@ export function createRoomRegistry(options: RegistryOptions) {
       visibility: room.visibility,
       name: room.name,
       spectatorsAllowed: room.spectatorsAllowed,
-      // Spectators join from S7-81.
-      spectators: [],
+      spectators: spectatorsOf(room).map((s) => ({
+        id: s.id,
+        nickname: s.nickname,
+        connected: s.connection !== null,
+      })),
     });
   }
 
-  function freeColorIndex(room: Room): number {
-    const used = new Set([...room.players.values()].map((p) => p.colorIndex));
-    for (let i = 0; i < PLAYER_COLOR_COUNT; i++) {
-      if (!used.has(i)) {
-        return i;
-      }
+  function attach(room: Room, member: RoomMember, connection: Connection): void {
+    member.connection = connection;
+    member.disconnectedAt = null;
+    memberships.set(connection.id, { roomCode: room.code, memberId: member.id });
+    for (const topic of topicsFor(room.code, member)) {
+      connection.subscribe(topic);
     }
-    return 0;
-  }
-
-  function attach(room: Room, player: RoomPlayer, connection: Connection): void {
-    player.connection = connection;
-    player.disconnectedAt = null;
-    memberships.set(connection.id, { roomCode: room.code, playerId: player.id });
-    connection.subscribe(topic(room.code));
     send(connection, {
       type: 'welcome',
-      playerId: player.id,
+      playerId: member.id,
       roomCode: room.code,
-      reconnectToken: player.reconnectToken,
+      reconnectToken: member.reconnectToken,
     });
   }
 
-  function addToRoom(room: Room, nickname: string, connection: Connection): RoomPlayer {
-    const player: RoomPlayer = {
+  function addToRoom(
+    room: Room,
+    nickname: string,
+    connection: Connection,
+    team: TeamIndex,
+    clientId: ClientId | undefined,
+  ): RoomMember {
+    const member: RoomMember = {
       id: `p${room.nextPlayerNumber++}`,
+      kind: 'player',
+      team,
+      ...(clientId === undefined ? {} : { clientId }),
       nickname,
-      colorIndex: freeColorIndex(room),
+      colorIndex: freeColorIndex(room, team),
       reconnectToken: generateReconnectToken(),
       connection: null,
       disconnectedAt: null,
@@ -324,18 +568,20 @@ export function createRoomRegistry(options: RegistryOptions) {
       role: null,
       ready: false,
     };
-    room.players.set(player.id, player);
-    tokens.set(player.reconnectToken, { roomCode: room.code, playerId: player.id });
+    room.members.set(member.id, member);
+    tokens.set(member.reconnectToken, { roomCode: room.code, memberId: member.id });
     if (room.phase === 'playing') {
-      room.game = addPlayer(
-        room.game,
-        player.id,
-        spawnPoint(room.map, player.colorIndex),
-        player.role,
+      const run = teamRun(room, team);
+      run.game = addPlayer(
+        run.game,
+        member.id,
+        spawnPoint(room.map, member.colorIndex),
+        member.role,
       );
+      room.stats.set(member.id, emptyPlayerStats(member.id, team));
     }
-    attach(room, player, connection);
-    return player;
+    attach(room, member, connection);
+    return member;
   }
 
   function handleJoin(connection: Connection, message: JoinMessage): void {
@@ -348,71 +594,20 @@ export function createRoomRegistry(options: RegistryOptions) {
       return;
     }
 
+    // A token resumes exactly its member, as the kind and team it has now; `as` is not read, so
+    // one token can never be a player and a spectator at once.
+    if (message.reconnectToken !== undefined) {
+      reconnect(connection, message.reconnectToken);
+      return;
+    }
+
     if (message.as === 'spectator') {
       rejectSpectatorJoin(connection, message);
       return;
     }
 
-    if (message.reconnectToken !== undefined) {
-      const membership = tokens.get(message.reconnectToken);
-      const room = membership ? rooms.get(membership.roomCode) : undefined;
-      const player = membership ? room?.players.get(membership.playerId) : undefined;
-      if (!room || !player) {
-        sendError(connection, 'reconnectFailed');
-        return;
-      }
-      const previous = player.connection;
-      if (previous) {
-        // Same player opened a second socket (e.g. a quick reload): the new one wins.
-        memberships.delete(previous.id);
-        previous.unsubscribe(topic(room.code));
-        previous.close(CLOSE_REPLACED, 'replaced');
-      }
-      attach(room, player, connection);
-      // A reload comes back with the menu closed; a returning teammate shares the clock again.
-      room.paused = false;
-      log.info('player reconnected', { room: room.code, player: player.id });
-      broadcastEvent(room, { kind: 'playerReconnected', playerId: player.id });
-      broadcastRoomState(room);
-      return;
-    }
-
     if (message.roomCode === undefined) {
-      const settings = options.settings?.();
-      if (rooms.size >= (options.maxRooms ?? settings?.maxRooms ?? MAX_ROOMS)) {
-        log.warn('room limit reached', { rooms: rooms.size });
-        sendError(connection, 'roomFull', 'server is busy');
-        return;
-      }
-      const code = generateRoomCode(random, new Set(rooms.keys()));
-      const level = requireLevel(DEFAULT_LEVEL_ID);
-      const map = parseLayout(level.layout);
-      const room: Room = {
-        code,
-        hostId: '',
-        phase: 'lobby',
-        players: new Map(),
-        game: createGameState({ map }),
-        level,
-        stories: storiesForLevel(level),
-        difficulty: settings?.defaultDifficulty ?? DEFAULT_DIFFICULTY,
-        run: null,
-        map,
-        nextPlayerNumber: 1,
-        briefing: null,
-        blunderVotes: new Map(),
-        paused: false,
-        mode: 'coop',
-        visibility: 'private',
-        name: null,
-        spectatorsAllowed: false,
-      };
-      rooms.set(code, room);
-      const player = addToRoom(room, message.nickname, connection);
-      room.hostId = player.id;
-      log.info('room created', { room: code, player: player.id });
-      broadcastRoomState(room);
-      options.onActive?.();
+      createRoom(connection, message);
       return;
     }
 
@@ -421,16 +616,91 @@ export function createRoomRegistry(options: RegistryOptions) {
       sendError(connection, 'roomNotFound');
       return;
     }
-    if (room.players.size >= MAX_PLAYERS) {
+    // A versus match keeps its line-up: a new player waits for the results (or spectates).
+    if (room.mode === 'versus' && (room.phase === 'briefing' || room.phase === 'playing')) {
+      sendError(connection, 'matchInProgress');
+      return;
+    }
+    const team = pickTeam(room);
+    if (team === null) {
       sendError(connection, 'roomFull');
       return;
     }
-    const player = addToRoom(room, message.nickname, connection);
+    const player = addToRoom(room, message.nickname, connection, team, message.clientId);
     // A shared co-op level never waits for one player's menu.
     room.paused = false;
     log.info('player joined', { room: room.code, player: player.id });
-    broadcastEvent(room, { kind: 'playerJoined', playerId: player.id });
+    publishTeamEvent(room, team, { kind: 'playerJoined', playerId: player.id });
     broadcastRoomState(room);
+  }
+
+  function reconnect(connection: Connection, token: string): void {
+    const found = resolve(tokens.get(token));
+    if (!found) {
+      sendError(connection, 'reconnectFailed');
+      return;
+    }
+    const { room, member } = found;
+    const previous = member.connection;
+    if (previous) {
+      // Same member opened a second socket (e.g. a quick reload): the new one wins.
+      memberships.delete(previous.id);
+      for (const topic of topicsFor(room.code, member)) {
+        previous.unsubscribe(topic);
+      }
+      previous.close(CLOSE_REPLACED, 'replaced');
+    }
+    attach(room, member, connection);
+    // A reload comes back with the menu closed; a returning teammate shares the clock again.
+    room.paused = false;
+    log.info('player reconnected', { room: room.code, player: member.id });
+    if (member.kind === 'player') {
+      publishTeamEvent(room, member.team, { kind: 'playerReconnected', playerId: member.id });
+    }
+    broadcastRoomState(room);
+  }
+
+  function createRoom(connection: Connection, message: JoinMessage): void {
+    const settings = options.settings?.();
+    if (rooms.size >= (options.maxRooms ?? settings?.maxRooms ?? MAX_ROOMS)) {
+      log.warn('room limit reached', { rooms: rooms.size });
+      sendError(connection, 'roomFull', 'server is busy');
+      return;
+    }
+    const code = generateRoomCode(random, new Set(rooms.keys()));
+    const level = requireLevel(DEFAULT_LEVEL_ID);
+    const map = parseLayout(level.layout);
+    const mode: RoomMode = 'coop';
+    const room: Room = {
+      code,
+      hostId: '',
+      phase: 'lobby',
+      members: new Map(),
+      teams: freshTeams({ map, mode }),
+      level,
+      stories: storiesForLevel(level),
+      difficulty: settings?.defaultDifficulty ?? DEFAULT_DIFFICULTY,
+      run: null,
+      map,
+      nextPlayerNumber: 1,
+      briefing: null,
+      blunderVotes: new Map(),
+      paused: false,
+      mode,
+      visibility: 'private',
+      name: null,
+      spectatorsAllowed: false,
+      createdAt: wallClock(),
+      stats: new Map(),
+      outcome: null,
+      embargo: createEmbargo(1),
+    };
+    rooms.set(code, room);
+    const player = addToRoom(room, message.nickname, connection, 0, message.clientId);
+    room.hostId = player.id;
+    log.info('room created', { room: code, player: player.id });
+    broadcastRoomState(room);
+    options.onActive?.();
   }
 
   /**
@@ -439,9 +709,7 @@ export function createRoomRegistry(options: RegistryOptions) {
    * is always closed until the host can open it.
    */
   function rejectSpectatorJoin(connection: Connection, message: JoinMessage): void {
-    const spectatorsOn =
-      options.settings?.().features.spectators ?? DEFAULT_FEATURE_FLAGS.spectators;
-    if (!spectatorsOn || message.roomCode === undefined) {
+    if (!featureOn('spectators') || message.roomCode === undefined) {
       sendError(connection, 'featureDisabled', 'spectators are not available');
       return;
     }
@@ -463,36 +731,35 @@ export function createRoomRegistry(options: RegistryOptions) {
       case 'lobby':
       case 'command':
       case 'input': {
-        const membership = memberships.get(connection.id);
-        const room = membership ? rooms.get(membership.roomCode) : undefined;
-        const player = membership ? room?.players.get(membership.playerId) : undefined;
-        if (!room || !player) {
+        const found = resolve(memberships.get(connection.id));
+        if (!found) {
           sendError(connection, 'notInRoom');
           return;
         }
+        const { room, member } = found;
         if (message.type === 'lobby') {
-          handleLobby(room, player, message.action);
+          handleLobby(room, member, message.action);
         } else if (message.type === 'command') {
-          enqueueCommand(room, player, message.command);
+          enqueueCommand(room, member, message.command);
         } else {
-          enqueueInput(room, player, message);
+          enqueueInput(room, member, message);
         }
         return;
       }
     }
   }
 
-  function rejectNotHost(player: RoomPlayer): void {
-    if (player.connection) {
-      sendError(player.connection, 'notHost');
+  function rejectNotHost(member: RoomMember): void {
+    if (member.connection) {
+      sendError(member.connection, 'notHost');
     }
   }
 
-  function handleLobby(room: Room, player: RoomPlayer, action: LobbyAction): void {
+  function handleLobby(room: Room, member: RoomMember, action: LobbyAction): void {
     switch (action.kind) {
       case 'start': {
-        if (player.id !== room.hostId) {
-          rejectNotHost(player);
+        if (member.id !== room.hostId) {
+          rejectNotHost(member);
           return;
         }
         // Start works from the lobby and, as a replay, straight from the results screen. The
@@ -502,8 +769,15 @@ export function createRoomRegistry(options: RegistryOptions) {
         }
         const waitingFor = notReadyPlayers(room);
         if (waitingFor.length > 0) {
-          if (player.connection) {
-            sendError(player.connection, 'notReady', `waiting for ${waitingFor.join(', ')}`);
+          if (member.connection) {
+            sendError(member.connection, 'notReady', `waiting for ${waitingFor.join(', ')}`);
+          }
+          return;
+        }
+        const empty = emptyTeam(room);
+        if (empty !== null) {
+          if (member.connection) {
+            sendError(member.connection, 'teamEmpty', `team ${empty}`);
           }
           return;
         }
@@ -515,7 +789,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         if (room.phase === 'playing' || room.phase === 'briefing') {
           return;
         }
-        player.role = action.role;
+        member.role = action.role;
         broadcastRoomState(room);
         return;
       case 'setReady':
@@ -523,18 +797,18 @@ export function createRoomRegistry(options: RegistryOptions) {
         if (room.phase === 'playing' || room.phase === 'briefing') {
           return;
         }
-        player.ready = action.ready;
+        member.ready = action.ready;
         broadcastRoomState(room);
         return;
       case 'selectLevel': {
-        if (player.id !== room.hostId) {
-          rejectNotHost(player);
+        if (member.id !== room.hostId) {
+          rejectNotHost(member);
           return;
         }
         const level = getLevel(action.levelId);
         if (!level) {
-          if (player.connection) {
-            sendError(player.connection, 'unknownLevel');
+          if (member.connection) {
+            sendError(member.connection, 'unknownLevel');
           }
           return;
         }
@@ -542,7 +816,7 @@ export function createRoomRegistry(options: RegistryOptions) {
           return;
         }
         setLevel(room, level);
-        room.game = createGameState({ map: room.map });
+        room.teams = freshTeams(room);
         // Every (re)selection asks players to confirm again, so nobody is ready for a level
         // they have not seen.
         resetReady(room);
@@ -550,23 +824,23 @@ export function createRoomRegistry(options: RegistryOptions) {
         return;
       }
       case 'skipBriefing':
-        if (!room.briefing || room.briefing.skippedBy.has(player.id)) {
+        if (!room.briefing || room.briefing.skippedBy.has(member.id)) {
           return;
         }
-        room.briefing.skippedBy.add(player.id);
+        room.briefing.skippedBy.add(member.id);
         if (!finishBriefingIfAllSkipped(room)) {
           broadcastRoomState(room);
         }
         return;
       case 'voteBlunder':
-        voteBlunder(room, player, action.storyId);
+        voteBlunder(room, member, action.storyId);
         return;
       case 'setPaused':
         setPaused(room, action.paused);
         return;
       case 'setDifficulty':
-        if (player.id !== room.hostId) {
-          rejectNotHost(player);
+        if (member.id !== room.hostId) {
+          rejectNotHost(member);
           return;
         }
         if (room.phase !== 'lobby') {
@@ -578,19 +852,23 @@ export function createRoomRegistry(options: RegistryOptions) {
         broadcastRoomState(room);
         return;
       case 'setMode':
+        setMode(room, member, action.mode);
+        return;
       case 'setTeam':
+        setTeam(room, member, action.team, action.playerId);
+        return;
       case 'setSpectator':
       case 'setVisibility':
       case 'setRoomName':
       case 'setSpectatorsAllowed':
       case 'kick':
       case 'transferHost':
-        // On the wire since protocol 7 (S7-77); served from S7-80..S7-82. Ignored until then,
+        // On the wire since protocol 7 (S7-77); served from S7-81..S7-82. Ignored until then,
         // like any action that does not apply.
         return;
       case 'backToLobby':
-        if (player.id !== room.hostId) {
-          rejectNotHost(player);
+        if (member.id !== room.hostId) {
+          rejectNotHost(member);
           return;
         }
         if (room.phase !== 'results') {
@@ -599,13 +877,14 @@ export function createRoomRegistry(options: RegistryOptions) {
         room.phase = 'lobby';
         room.blunderVotes.clear();
         // Drop the finished run; the lobby shows the selected level again and the next start
-        // deals a new run and builds a fresh game.
+        // deals a new run and builds fresh newsrooms.
         setLevel(room, requireLevel(room.level.id));
-        room.game = createGameState({ map: room.map });
-        for (const p of room.players.values()) {
-          p.inputQueue = [];
-          p.lastQueuedSeq = -1;
-          p.commandQueue = [];
+        room.teams = freshTeams(room);
+        room.outcome = null;
+        for (const m of room.members.values()) {
+          m.inputQueue = [];
+          m.lastQueuedSeq = -1;
+          m.commandQueue = [];
         }
         resetReady(room);
         broadcastRoomState(room);
@@ -613,13 +892,106 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
   }
 
+  function reject(member: RoomMember, code: ErrorCode, detail?: string): void {
+    if (member.connection) {
+      sendError(member.connection, code, detail);
+    }
+  }
+
   /**
-   * The in-game menu pauses a solo level (S7-10): only while playing, with exactly one
-   * connected player. Rooms have no spectators yet (S7-78 adds them and must refuse here too).
-   * Resuming is always accepted. Anything else is ignored, like other out-of-phase actions.
+   * Host, lobby only: switches between co-op and versus. Versus deals the players into the two
+   * newsrooms alternately in join order; back to co-op needs at most one newsroom of players.
+   * Every member's topics follow its team, the newsrooms are rebuilt and nobody stays ready.
+   */
+  function setMode(room: Room, member: RoomMember, mode: RoomMode): void {
+    if (member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    if (room.phase !== 'lobby' || room.mode === mode) {
+      return;
+    }
+    if (mode === 'versus' && !featureOn('versus')) {
+      reject(member, 'featureDisabled', 'versus is not available');
+      return;
+    }
+    if (mode === 'coop' && playersOf(room).length > MAX_TEAM_PLAYERS) {
+      reject(member, 'teamFull', `${MAX_TEAM_PLAYERS} players at most`);
+      return;
+    }
+    const before = new Map(
+      [...room.members.values()].map((m) => [m.id, topicsFor(room.code, m)] as const),
+    );
+    room.mode = mode;
+    assignTeams(room);
+    room.teams = freshTeams(room);
+    room.embargo = createEmbargo(room.teams.length);
+    for (const m of room.members.values()) {
+      syncTopics(room.code, m, before.get(m.id) ?? []);
+    }
+    resetReady(room);
+    log.info('room mode changed', { room: room.code, mode });
+    broadcastRoomState(room);
+  }
+
+  /**
+   * Versus, lobby or results: a player moves to the other newsroom (the host may move anyone)
+   * and takes the lowest free colour there.
+   */
+  function setTeam(
+    room: Room,
+    member: RoomMember,
+    team: TeamIndex,
+    playerId: string | undefined,
+  ): void {
+    if (room.mode !== 'versus' || (room.phase !== 'lobby' && room.phase !== 'results')) {
+      return;
+    }
+    const targetId = playerId ?? member.id;
+    if (targetId !== member.id && member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    const target = room.members.get(targetId);
+    if (target?.kind !== 'player') {
+      reject(member, 'invalidTarget');
+      return;
+    }
+    if (target.team === team) {
+      return;
+    }
+    if (playersOf(room, team).length >= MAX_TEAM_PLAYERS) {
+      reject(member, 'teamFull');
+      return;
+    }
+    const before = topicsFor(room.code, target);
+    target.colorIndex = freeColorIndex(room, team);
+    target.team = team;
+    syncTopics(room.code, target, before);
+    broadcastRoomState(room);
+  }
+
+  /** The first newsroom of the mode without a connected player, or null when all have one. */
+  function emptyTeam(room: Room): TeamIndex | null {
+    for (let team = 0; team < teamTotal(room); team++) {
+      if (!playersOf(room, team).some((p) => p.connection !== null)) {
+        return team;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * The in-game menu pauses a solo level (S7-10): only while playing a co-op room with exactly
+   * one connected player (a versus clock never stops). S7-81 also refuses it while spectators
+   * are present. Resuming is always accepted. Anything else is ignored, like other out-of-phase
+   * actions.
    */
   function setPaused(room: Room, paused: boolean): void {
-    if (paused && (room.phase !== 'playing' || connectedCount(room) !== 1)) {
+    if (
+      paused &&
+      (room.phase !== 'playing' || room.mode !== 'coop' || connectedPlayerCount(room) !== 1)
+    ) {
       return;
     }
     if (room.paused === paused) {
@@ -628,30 +1000,24 @@ export function createRoomRegistry(options: RegistryOptions) {
     room.paused = paused;
     log.info(paused ? 'room paused' : 'room resumed', { room: room.code });
     // The tick that skips a paused room sends nothing, so the flag goes out now.
-    broadcastSnapshot(room);
+    publishSnapshots(room, false);
   }
 
-  function connectedCount(room: Room): number {
-    let count = 0;
-    for (const p of room.players.values()) {
-      if (p.connection !== null) {
-        count++;
-      }
-    }
-    return count;
+  function connectedPlayerCount(room: Room): number {
+    return playersOf(room).filter((p) => p.connection !== null).length;
   }
 
   /** Nicknames of connected non-host players who have not pressed ready. The host is
    * implicitly ready by pressing start; disconnected players never block the start. */
   function notReadyPlayers(room: Room): string[] {
-    return [...room.players.values()]
+    return playersOf(room)
       .filter((p) => p.id !== room.hostId && p.connection !== null && !p.ready)
       .map((p) => p.nickname);
   }
 
   function resetReady(room: Room): void {
-    for (const p of room.players.values()) {
-      p.ready = false;
+    for (const m of room.members.values()) {
+      m.ready = false;
     }
   }
 
@@ -683,7 +1049,7 @@ export function createRoomRegistry(options: RegistryOptions) {
     if (!briefing) {
       return false;
     }
-    const connected = [...room.players.values()].filter((p) => p.connection !== null);
+    const connected = playersOf(room).filter((p) => p.connection !== null);
     if (connected.length === 0 || !connected.every((p) => briefing.skippedBy.has(p.id))) {
       return false;
     }
@@ -691,17 +1057,17 @@ export function createRoomRegistry(options: RegistryOptions) {
     return true;
   }
 
-  function voteBlunder(room: Room, player: RoomPlayer, storyId: string): void {
+  function voteBlunder(room: Room, member: RoomMember, storyId: string): void {
     if (room.phase !== 'results') {
       return;
     }
-    if (!room.game.results.some((r) => r.storyId === storyId)) {
-      if (player.connection) {
-        sendError(player.connection, 'invalidMessage', `story ${storyId} is not in this run`);
+    if (!teamRun(room, member.team).game.results.some((r) => r.storyId === storyId)) {
+      if (member.connection) {
+        sendError(member.connection, 'invalidMessage', `story ${storyId} is not in this run`);
       }
       return;
     }
-    const previous = room.blunderVotes.get(player.id);
+    const previous = room.blunderVotes.get(member.id);
     if (previous?.storyId === storyId) {
       return;
     }
@@ -714,76 +1080,119 @@ export function createRoomRegistry(options: RegistryOptions) {
         log.error('blunder vote not stored', { room: room.code, error: String(error) });
       }
     }
-    room.blunderVotes.set(player.id, { storyId, rowId });
+    room.blunderVotes.set(member.id, { storyId, rowId });
     broadcastRoomState(room);
   }
 
+  /**
+   * The level starts in every newsroom at once: one sim seed for the match (the run, endless
+   * included, was dealt at the briefing and is shared), each team's players at their spawns. A
+   * versus newsroom whose players all left during the briefing starts forfeited.
+   */
   function startLevel(room: Room): void {
     room.phase = 'playing';
     room.briefing = null;
     room.paused = false;
-    // The run (endless included) was dealt at the briefing; the sim seed is a separate draw.
-    let game = createGameState({ map: room.map, seed: drawSeed() });
-    for (const p of room.players.values()) {
-      game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
-      p.inputQueue = [];
-      p.lastQueuedSeq = -1;
-      p.commandQueue = [];
-      p.ready = false;
+    const seed = drawSeed();
+    const build = (team: TeamIndex): TeamRun => {
+      let game = createGameState({ map: room.map, seed });
+      const players = playersOf(room, team);
+      for (const p of players) {
+        game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
+      }
+      return { game, forfeited: room.mode === 'versus' && players.length === 0 };
+    };
+    room.teams = teamTotal(room) > 1 ? [build(0), build(1)] : [build(0)];
+    room.stats = new Map(playersOf(room).map((p) => [p.id, emptyPlayerStats(p.id, p.team)]));
+    room.outcome = null;
+    room.embargo = createEmbargo(room.teams.length);
+    for (const m of room.members.values()) {
+      m.inputQueue = [];
+      m.lastQueuedSeq = -1;
+      m.commandQueue = [];
+      m.ready = false;
     }
-    room.game = game;
     log.info('game started', { room: room.code, level: room.level.id });
-    broadcastEvent(room, { kind: 'gameStarted' });
+    broadcast(room, {
+      type: 'event',
+      tick: room.teams[0].game.tick,
+      event: { kind: 'gameStarted' },
+    });
     broadcastRoomState(room);
   }
 
-  function enqueueCommand(room: Room, player: RoomPlayer, command: PlayerCommand): void {
-    if (room.phase !== 'playing' || player.commandQueue.length >= COMMAND_QUEUE_MAX) {
+  function enqueueCommand(room: Room, member: RoomMember, command: PlayerCommand): void {
+    if (
+      member.kind !== 'player' ||
+      room.phase !== 'playing' ||
+      member.commandQueue.length >= COMMAND_QUEUE_MAX
+    ) {
       return;
     }
-    player.commandQueue.push(command);
+    member.commandQueue.push(command);
   }
 
-  function enqueueInput(room: Room, player: RoomPlayer, input: PlayerInput): void {
-    if (room.phase !== 'playing' || input.seq <= player.lastQueuedSeq) {
+  function enqueueInput(room: Room, member: RoomMember, input: PlayerInput): void {
+    if (member.kind !== 'player' || room.phase !== 'playing' || input.seq <= member.lastQueuedSeq) {
       return;
     }
-    player.lastQueuedSeq = input.seq;
-    player.inputQueue.push({ seq: input.seq, move: input.move, actions: input.actions });
-    if (player.inputQueue.length > INPUT_QUEUE_MAX) {
-      player.inputQueue.splice(0, player.inputQueue.length - INPUT_QUEUE_MAX);
+    member.lastQueuedSeq = input.seq;
+    member.inputQueue.push({ seq: input.seq, move: input.move, actions: input.actions });
+    if (member.inputQueue.length > INPUT_QUEUE_MAX) {
+      member.inputQueue.splice(0, member.inputQueue.length - INPUT_QUEUE_MAX);
     }
   }
 
-  function removePlayer(room: Room, player: RoomPlayer): void {
-    room.players.delete(player.id);
-    tokens.delete(player.reconnectToken);
-    if (player.connection) {
-      memberships.delete(player.connection.id);
-      player.connection.unsubscribe(topic(room.code));
+  /** Drops a member for good: its token, its topics and (a player) its place in the sim. */
+  function removeMember(room: Room, member: RoomMember): void {
+    room.members.delete(member.id);
+    tokens.delete(member.reconnectToken);
+    if (member.connection) {
+      memberships.delete(member.connection.id);
+      for (const topic of topicsFor(room.code, member)) {
+        member.connection.unsubscribe(topic);
+      }
     }
-    room.game = removeSimPlayer(room.game, player.id);
-    room.briefing?.skippedBy.delete(player.id);
+    if (member.kind === 'player') {
+      const run = teamRun(room, member.team);
+      run.game = removeSimPlayer(run.game, member.id);
+      // The last player of a versus newsroom gone for good (left, or the grace ran out): the
+      // match is lost by forfeit, which the match rules settle at the next step.
+      if (
+        room.mode === 'versus' &&
+        room.phase === 'playing' &&
+        playersOf(room, member.team).length === 0
+      ) {
+        run.forfeited = true;
+      }
+    }
+    room.briefing?.skippedBy.delete(member.id);
     // A stored vote stays counted; it just leaves the room's list with its player.
-    room.blunderVotes.delete(player.id);
-    log.info('player left', { room: room.code, player: player.id });
-    if (room.players.size === 0) {
+    room.blunderVotes.delete(member.id);
+    log.info('player left', { room: room.code, player: member.id });
+    if (room.members.size === 0) {
       rooms.delete(room.code);
       log.info('room closed', { room: room.code });
       return;
     }
-    if (room.hostId === player.id) {
+    if (room.hostId === member.id) {
       reassignHost(room);
     }
-    broadcastEvent(room, { kind: 'playerLeft', playerId: player.id });
+    if (member.kind === 'player') {
+      publishTeamEvent(room, member.team, { kind: 'playerLeft', playerId: member.id });
+    }
     if (!finishBriefingIfAllSkipped(room)) {
       broadcastRoomState(room);
     }
   }
 
+  /** A connected player first, then a connected spectator, then anyone. */
   function reassignHost(room: Room): void {
-    const players = [...room.players.values()];
-    const next = players.find((p) => p.connection !== null) ?? players[0];
+    const members = [...room.members.values()];
+    const next =
+      members.find((m) => m.kind === 'player' && m.connection !== null) ??
+      members.find((m) => m.connection !== null) ??
+      members[0];
     if (next) {
       room.hostId = next.id;
     }
@@ -793,26 +1202,23 @@ export function createRoomRegistry(options: RegistryOptions) {
   function handleDisconnect(connection: Connection, intentional: boolean): void {
     const membership = memberships.get(connection.id);
     memberships.delete(connection.id);
-    if (!membership) {
+    const found = resolve(membership);
+    if (!found || found.member.connection?.id !== connection.id) {
       return;
     }
-    const room = rooms.get(membership.roomCode);
-    const player = room?.players.get(membership.playerId);
-    if (!room || !player || player.connection?.id !== connection.id) {
-      return;
-    }
+    const { room, member } = found;
     if (intentional) {
-      removePlayer(room, player);
+      removeMember(room, member);
       return;
     }
-    player.connection = null;
-    player.disconnectedAt = now();
-    player.inputQueue = [];
-    player.commandQueue = [];
-    if (room.hostId === player.id) {
+    member.connection = null;
+    member.disconnectedAt = now();
+    member.inputQueue = [];
+    member.commandQueue = [];
+    if (room.hostId === member.id) {
       reassignHost(room);
     }
-    log.info('player disconnected', { room: room.code, player: player.id });
+    log.info('player disconnected', { room: room.code, player: member.id });
     if (!finishBriefingIfAllSkipped(room)) {
       broadcastRoomState(room);
     }
@@ -822,9 +1228,9 @@ export function createRoomRegistry(options: RegistryOptions) {
   function tick(): void {
     const time = now();
     for (const room of [...rooms.values()]) {
-      for (const player of [...room.players.values()]) {
-        if (player.disconnectedAt !== null && time - player.disconnectedAt >= RECONNECT_GRACE_MS) {
-          removePlayer(room, player);
+      for (const member of [...room.members.values()]) {
+        if (member.disconnectedAt !== null && time - member.disconnectedAt >= RECONNECT_GRACE_MS) {
+          removeMember(room, member);
         }
       }
       if (!rooms.has(room.code)) {
@@ -841,47 +1247,138 @@ export function createRoomRegistry(options: RegistryOptions) {
       if (room.paused) {
         // The world waits for the menu. Input sent meanwhile is stale (the client sends none
         // while paused); queued decisions wait for the resume.
-        for (const player of room.players.values()) {
+        for (const player of playersOf(room)) {
           player.inputQueue = [];
         }
         continue;
       }
-      const inputs: Record<string, PlayerInput[]> = {};
-      const commands: QueuedCommand[] = [];
-      for (const player of room.players.values()) {
-        // One input per tick keeps the server in lockstep with client prediction; a queue that
-        // grew from network jitter is drained one extra input per tick.
-        const count = player.inputQueue.length > INPUT_QUEUE_CATCH_UP_THRESHOLD ? 2 : 1;
-        inputs[player.id] = player.inputQueue.splice(0, count);
-        for (const command of player.commandQueue.splice(0)) {
-          commands.push({ playerId: player.id, command });
-        }
+      stepRoom(room);
+    }
+  }
+
+  /**
+   * One lockstep tick of every newsroom: the same context (tuning, absent players) for each,
+   * every team stepped before anything is published, then each team's events and snapshot.
+   */
+  function stepRoom(room: Room): void {
+    const inputs = room.teams.map((): Record<string, PlayerInput[]> => ({}));
+    const commands = room.teams.map((): QueuedCommand[] => []);
+    for (const player of playersOf(room)) {
+      const teamInputs = inputs[player.team];
+      const teamCommands = commands[player.team];
+      if (!teamInputs || !teamCommands) {
+        continue;
       }
-      const absent = absentPlayerIds(room.players.values());
-      const ctx: SimContext = {
-        dtMs: TICK_MS,
-        map: room.map,
-        level: room.level,
-        stories: room.stories,
-        tuning: simTuning(room.difficulty),
-        ...(absent ? { absent } : {}),
-      };
-      const result = stepGame(room.game, inputs, commands, ctx);
-      room.game = result.state;
-      for (const event of result.events) {
-        broadcastEvent(room, event);
+      // One input per tick keeps the server in lockstep with client prediction; a queue that
+      // grew from network jitter is drained one extra input per tick.
+      const count = player.inputQueue.length > INPUT_QUEUE_CATCH_UP_THRESHOLD ? 2 : 1;
+      teamInputs[player.id] = player.inputQueue.splice(0, count);
+      for (const command of player.commandQueue.splice(0)) {
+        teamCommands.push({ playerId: player.id, command });
       }
-      broadcastSnapshot(room);
-      if (room.game.ended) {
+    }
+    const absent = absentPlayerIds(playersOf(room));
+    const ctx: SimContext = {
+      dtMs: TICK_MS,
+      map: room.map,
+      level: room.level,
+      stories: room.stories,
+      tuning: simTuning(room.difficulty),
+      ...(absent ? { absent } : {}),
+      // Versus anti-cheat: a scripted instant answer counts as a failure (off in co-op).
+      ...(room.mode === 'versus' ? { minSolveMs: MINIGAME_MIN_SOLVE_MS } : {}),
+    };
+    const events = room.teams.map((run, team) => {
+      const result = stepGame(run.game, inputs[team] ?? {}, commands[team] ?? [], ctx);
+      run.game = result.state;
+      countStats(room, result.events);
+      return result.events;
+    });
+    room.teams.forEach((_, team) => {
+      for (const event of events[team] ?? []) {
+        publishTeamEvent(room, team, event);
+      }
+    });
+    const spectatorFrame = room.teams[0].game.tick % SPECTATOR_SNAPSHOT_INTERVAL_TICKS === 0;
+    publishSnapshots(room, spectatorFrame);
+    if (room.mode === 'versus') {
+      // The match rules decide every tick: credibility, forfeit, time (600 s in endless).
+      room.outcome = matchOutcome(room);
+      if (room.outcome) {
         endLevel(room);
+      }
+    } else if (room.teams[0].game.ended !== null) {
+      endLevel(room);
+    }
+  }
+
+  /** Match time: the newsrooms step in lockstep, so this is any running one's level time. */
+  function matchElapsedMs(room: Room): number {
+    return Math.max(...room.teams.map((run) => run.game.elapsedMs));
+  }
+
+  function standingsOf(room: Room): TeamStanding[] {
+    return room.teams.map((run, team) => ({
+      team,
+      score: run.game.score,
+      credibility: run.game.credibility,
+      forfeited: run.forfeited,
+    }));
+  }
+
+  /**
+   * The versus result now, or null while the match goes on. Should every newsroom's sim have
+   * ended without the match rules deciding, the score decides.
+   */
+  function matchOutcome(room: Room): VersusResult | null {
+    const standings = standingsOf(room);
+    const result = versusOutcome(standings, matchElapsedMs(room), matchDurationMs(room.level));
+    if (result) {
+      return result;
+    }
+    return room.teams.every((run) => run.game.ended !== null) ? byScore(standings) : null;
+  }
+
+  /** Both newsrooms' standings for versus snapshots and `levelEnd`; undefined in co-op. */
+  function scoreboardOf(room: Room): TeamScore[] | undefined {
+    if (room.mode !== 'versus') {
+      return undefined;
+    }
+    return room.teams.map((run, team) =>
+      teamScoreOf(
+        run.game,
+        team,
+        playersOf(room, team).filter((p) => p.connection !== null).length,
+      ),
+    );
+  }
+
+  /** Folds a team's events into the players' counters (`applyStatsEvent` is the only rule). */
+  function countStats(room: Room, events: readonly GameEvent[]): void {
+    for (const event of events) {
+      const playerId = 'playerId' in event ? event.playerId : null;
+      const stats = typeof playerId === 'string' ? room.stats.get(playerId) : undefined;
+      if (stats) {
+        room.stats.set(stats.playerId, applyStatsEvent(stats, event));
       }
     }
   }
 
-  function broadcastSnapshot(room: Room): void {
-    const game = room.game;
+  function publishSnapshots(room: Room, toSpectators: boolean): void {
+    const scoreboard = scoreboardOf(room);
+    room.teams.forEach((_, team) => {
+      publishTeam(room, team, snapshotOf(room, team, scoreboard), toSpectators);
+    });
+  }
+
+  /**
+   * One newsroom's snapshot, tagged with its team. Versus adds the scoreboard and counts the
+   * match time down (endless included, `VERSUS.endlessDurationS`).
+   */
+  function snapshotOf(room: Room, team: TeamIndex, scoreboard?: TeamScore[]): SnapshotMessage {
+    const game = teamRun(room, team).game;
     const schedule = { level: room.level, stories: room.stories, map: room.map };
-    broadcast(room, {
+    return {
       type: 'snapshot',
       tick: game.tick,
       players: Object.values(game.players).map((p) => ({
@@ -893,7 +1390,10 @@ export function createRoomRegistry(options: RegistryOptions) {
         lastInputSeq: p.lastInputSeq,
       })),
       elapsedMs: game.elapsedMs,
-      timeLeftMs: timeLeftMs(game, room.level.durationS),
+      timeLeftMs:
+        room.mode === 'versus'
+          ? Math.max(0, matchDurationMs(room.level) - game.elapsedMs)
+          : timeLeftMs(game, room.level.durationS),
       score: game.score,
       credibility: game.credibility,
       folders: Object.values(game.folders),
@@ -903,7 +1403,9 @@ export function createRoomRegistry(options: RegistryOptions) {
       conveyorFull: conveyorBlocked(game, schedule),
       crew: crewSnapshot(game),
       paused: room.paused,
-    });
+      team,
+      ...(scoreboard ? { scoreboard } : {}),
+    };
   }
 
   function recordEndlessRun(room: Room, survivedS: number): void {
@@ -913,8 +1415,8 @@ export function createRoomRegistry(options: RegistryOptions) {
     try {
       options.recordLeaderboardEntry({
         roomCode: room.code,
-        players: [...room.players.values()].map((p) => p.nickname),
-        score: room.game.score,
+        players: playersOf(room).map((p) => p.nickname),
+        score: room.teams[0].game.score,
         survivedS,
         difficulty: room.difficulty,
       });
@@ -931,17 +1433,20 @@ export function createRoomRegistry(options: RegistryOptions) {
     );
   }
 
-  function endLevel(room: Room): void {
-    const { game } = room;
+  function survivedSOf(game: GameState): number {
+    return Math.floor(game.elapsedMs / 1000);
+  }
+
+  /**
+   * One newsroom's `levelEnd`. Co-op sends exactly what it always did; versus tags the team and
+   * adds the match summary (with the rival's results, which pair with ours by spawn key) and
+   * every player's stats.
+   */
+  function levelEndFor(room: Room, team: TeamIndex): LevelEndMessage {
+    const game = teamRun(room, team).game;
     const outcome = game.ended ?? { won: false, stars: 0, lossReason: null };
-    room.phase = 'results';
-    log.info('level ended', { room: room.code, level: room.level.id, ...outcome });
     const endless = room.level.id === ENDLESS_LEVEL_ID;
-    const survivedS = Math.floor(game.elapsedMs / 1000);
-    if (endless) {
-      recordEndlessRun(room, survivedS);
-    }
-    broadcast(room, {
+    const base = {
       type: 'levelEnd',
       levelId: room.level.id,
       difficulty: room.difficulty,
@@ -953,7 +1458,63 @@ export function createRoomRegistry(options: RegistryOptions) {
       lossReason: outcome.lossReason,
       starThresholds: endless ? null : { ...room.level.stars },
       maxScore: endless ? null : runMaxScore(room),
-      ...(endless ? { survivedS } : {}),
+      ...(endless ? { survivedS: survivedSOf(game) } : {}),
+    } satisfies LevelEndMessage;
+    const result = room.outcome;
+    if (room.mode !== 'versus' || !result) {
+      return base;
+    }
+    const scoreboard = scoreboardOf(room) ?? [];
+    const rival = teamRun(room, team === 0 ? 1 : 0).game;
+    return {
+      ...base,
+      team,
+      stats: [...room.stats.values()].slice(0, MAX_ROOM_PLAYERS),
+      versus: {
+        winnerTeam: result.winnerTeam,
+        reason: result.reason,
+        teams: scoreboard,
+        rivalResults: rival.results.slice(-ENDLESS.maxResultsSent),
+      },
+    };
+  }
+
+  /**
+   * Closes a versus newsroom the match rules ended before its own sim did (the rival's
+   * credibility or forfeit, endless time): its outcome follows the match, and every folder still
+   * in play is recorded as unfinished, as at a level's own end.
+   */
+  function closeVersusGame(room: Room, team: TeamIndex, result: VersusResult): void {
+    const run = teamRun(room, team);
+    const game = run.game;
+    const ended = versusLevelOutcome(result, team, game.credibility);
+    const unfinished =
+      game.ended === null ? unfinishedResults(Object.values(game.folders), room.stories) : [];
+    run.game = { ...game, ended, results: [...game.results, ...unfinished] };
+  }
+
+  function endLevel(room: Room): void {
+    const result = room.outcome;
+    if (room.mode === 'versus' && result) {
+      room.teams.forEach((_, team) => {
+        closeVersusGame(room, team, result);
+      });
+    }
+    const game = room.teams[0].game;
+    const outcome = game.ended ?? { won: false, stars: 0, lossReason: null };
+    room.phase = 'results';
+    log.info('level ended', {
+      room: room.code,
+      level: room.level.id,
+      ...outcome,
+      ...(result ? { winnerTeam: result.winnerTeam, reason: result.reason } : {}),
+    });
+    // Versus is never a leaderboard run (nor campaign progress, which the client skips).
+    if (room.level.id === ENDLESS_LEVEL_ID && room.mode === 'coop') {
+      recordEndlessRun(room, survivedSOf(game));
+    }
+    room.teams.forEach((_, team) => {
+      publishTeam(room, team, levelEndFor(room, team), true);
     });
     broadcastRoomState(room);
   }
@@ -982,14 +1543,22 @@ export function createRoomRegistry(options: RegistryOptions) {
         visibility: room.visibility,
         name: room.name,
         spectatorsAllowed: room.spectatorsAllowed,
+        createdAt: room.createdAt,
         /** The dealt run with its seed (the seed never goes on the wire). */
         run: room.run ? { seed: room.run.seed, summary: { ...room.run.summary } } : null,
-        game: room.game,
+        /** Team 0's newsroom: the co-op game (an alias of `games[0]`). */
+        game: room.teams[0].game,
+        /** Every newsroom, by team. */
+        games: room.teams.map((run) => run.game),
+        forfeited: room.teams.map((run) => run.forfeited),
+        outcome: room.outcome,
+        stats: [...room.stats.values()],
+        embargo: room.embargo,
         briefing: room.briefing
           ? { endsAt: room.briefing.endsAt, skippedBy: [...room.briefing.skippedBy] }
           : null,
         blunderVotes: [...room.blunderVotes].map(([playerId, vote]) => ({ playerId, ...vote })),
-        players: [...room.players.values()].map((p) => ({
+        players: playersOf(room).map((p) => ({
           id: p.id,
           nickname: p.nickname,
           colorIndex: p.colorIndex,
@@ -997,7 +1566,20 @@ export function createRoomRegistry(options: RegistryOptions) {
           queued: p.inputQueue.length,
           role: p.role,
           ready: p.ready,
+          team: p.team,
+          clientId: p.clientId ?? null,
         })),
+        spectators: spectatorsOf(room).map((s) => ({
+          id: s.id,
+          nickname: s.nickname,
+          connected: s.connection !== null,
+          team: s.team,
+          clientId: s.clientId ?? null,
+        })),
+        /** Topics each connected member listens on, by member id. */
+        topics: Object.fromEntries(
+          [...room.members.values()].map((m) => [m.id, topicsFor(room.code, m)]),
+        ),
       };
     },
   };

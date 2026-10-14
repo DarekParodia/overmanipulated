@@ -528,7 +528,7 @@ export function ImageSearch({
         </ol>
       </div>
 
-      {!isOver(play) && <KeyHints hints={t.keys} device={device} />}
+      {!isOver(play) && <KeyHints hints={t.keys} device={device} className={styles.hints} />}
 
       {dragging && selectedShape && (
         <div

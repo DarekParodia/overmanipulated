@@ -1,6 +1,6 @@
 // Protocol 7 (S7-77) on the existing registry: every roomState carries a new room's defaults,
-// the new lobby actions change nothing until S7-80..S7-82 serve them, and spectator joins are
-// refused until S7-81.
+// the lobby actions S7-81..S7-82 serve change nothing yet (setTeam does nothing in co-op;
+// setMode is covered by versus.test.ts since S7-80), and spectator joins are refused until S7-81.
 import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   DEFAULT_DIFFICULTY,
@@ -79,7 +79,6 @@ describe('protocol 7 room fields (S7-77)', () => {
     const guest = join('Bartek', { roomCode: codeOf(host) });
     const guestId = guest.last('welcome')?.playerId ?? '';
     const actions: LobbyAction[] = [
-      { kind: 'setMode', mode: 'versus' },
       { kind: 'setTeam', team: 1 },
       { kind: 'setSpectator', spectator: true },
       { kind: 'setVisibility', visibility: 'public' },

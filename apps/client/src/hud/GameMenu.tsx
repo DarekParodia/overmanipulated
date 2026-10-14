@@ -1,13 +1,15 @@
 // In-game menu sheet (S7-10), opened by the top-right menu button, Esc or a pad's Start. One
 // yellow „Wróć do gry”, then settings, fullscreen, the room code with copy and ping, and
-// „Wyjdź z redakcji”, which needs a second press. Solo, the server holds the level still while
-// the sheet is open („Pauza”); with teammates the shared level runs on („Gra trwa dalej”).
+// „Wyjdź z redakcji”, which needs a second press. „Pomoc: stanowiska” (S7-97) opens „Jak grać”
+// on its stations tab over the sheet, with practice off. Solo, the server holds the level still
+// while the sheet is open („Pauza”); with teammates the shared level runs on („Gra trwa dalej”).
 // A native modal dialog: it takes the input away from the world (movement stops), the pad
 // navigates it through input/menu-nav.ts and B or Esc closes it.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { TUTORIAL_DONE } from '../guidance/tutorial.ts';
 import { useTutorial } from '../guidance/tutorial-store.ts';
+import { useHowTo } from '../howto/store.ts';
 import { subscribeMenuButton } from '../input/menu-button.ts';
 import { captureInput, isInputCaptured } from '../input/ui-nav.ts';
 import { canFullscreen, toggleFullscreen } from '../mobile/device.ts';
@@ -192,6 +194,14 @@ function MenuSheet() {
             {typeset(fullscreen.on ? pl.gameMenu.exitFullscreen : pl.gameMenu.fullscreen)}
           </Button>
         )}
+        <Button
+          icon={<Icon name="question" size={24} />}
+          data-area="wide"
+          data-testid="game-menu-help"
+          onClick={() => useHowTo.getState().show('stations', { practiceAllowed: false })}
+        >
+          {typeset(pl.gameMenu.stationHelp)}
+        </Button>
         <Button
           back
           variant={armedAt === null ? 'secondary' : 'red'}

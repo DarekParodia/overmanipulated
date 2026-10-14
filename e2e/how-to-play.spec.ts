@@ -147,6 +147,14 @@ async function tapPad(page: Page, button: number): Promise<void> {
         ),
       [button, down] as const,
     );
+    // The pad is polled once per animation frame: wait until two frames saw the new state, so a
+    // loaded machine with slow frames cannot miss a press (S7-104 review).
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        ),
+    );
     await page.waitForTimeout(120);
   }
 }

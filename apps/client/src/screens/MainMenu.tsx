@@ -4,6 +4,7 @@
 // A versus match already under way (`matchInProgress`) offers to watch it instead (S7-84).
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { useAbout } from '../about/store.ts';
 import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -11,6 +12,7 @@ import { useHowTo } from '../howto/store.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
+import { useProfile } from '../store/profile.ts';
 import { useFeature, usePublicConfig } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
@@ -175,7 +177,29 @@ export function MainMenu() {
         )}
       </section>
 
-      <MenuFooter className={styles.footer} />
+      <MenuFooter
+        className={styles.footer}
+        profile={
+          <Button
+            variant="ghost"
+            icon={<Icon name="trophy" size={22} />}
+            data-testid="open-profile"
+            onClick={() => useProfile.getState().show()}
+          >
+            {pl.profile.open}
+          </Button>
+        }
+        about={
+          <Button
+            variant="ghost"
+            icon={<Icon name="heart" size={22} />}
+            data-testid="open-about"
+            onClick={() => useAbout.getState().show()}
+          >
+            {pl.about.open}
+          </Button>
+        }
+      />
 
       {/* Fixed left rail; renders nothing without ads, on phones or below 1180×680 (S7-74). */}
       <AdSlot placement="menu" />

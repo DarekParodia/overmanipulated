@@ -1,44 +1,41 @@
 // Ping bubbles (S2-11): a short torn speech slip above the player who pinged, for
 // PING_DURATION_MS. DOM via drei Html (no extra draw calls); the anchor follows the rendered
-// player position every frame. Only players with an active ping get an anchor.
-import { Html } from '@react-three/drei';
+// player position every frame. Only players with an active ping get an anchor. The bubbles are
+// the GameView's own (S7-85).
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { Group } from 'three';
-import { onGameEvent } from '../net/game-events.ts';
-import {
-  clearPingBubbles,
-  type PingBubble,
-  showPingBubble,
-  usePingBubbles,
-} from '../pings/bubble-store.ts';
+import { useStore } from 'zustand';
+import { useGameView } from '../net/view-context.tsx';
+import type { PingBubble } from '../pings/bubble-store.ts';
 import styles from '../pings/PingBubble.module.css';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { playerColorVar } from '../ui/tokens.ts';
-import { renderState } from './render-state.ts';
+import { ViewHtml } from './ViewHtml.tsx';
 
 /** Height of the bubble's anchor above the floor (above the name strip). */
 const BUBBLE_HEIGHT = 1.95;
 
 export function PingBubbles() {
-  const bubbles = usePingBubbles((s) => s.bubbles);
+  const view = useGameView();
+  const bubbles = useStore(view.bubbles.use, (s) => s.bubbles);
   const players = useApp((s) => s.room?.players);
 
   useEffect(() => {
-    const unsubscribe = onGameEvent((event) => {
+    const unsubscribe = view.bus.on((event) => {
       if (event.kind !== 'ping') {
         return;
       }
       // The sound and particles come from the event cue (net/game-events.ts).
-      showPingBubble(event.playerId, event.ping);
+      view.bubbles.show(event.playerId, event.ping);
     });
     return () => {
       unsubscribe();
-      clearPingBubbles();
+      view.bubbles.clear();
     };
-  }, []);
+  }, [view]);
 
   return (
     <>
@@ -66,11 +63,12 @@ function BubbleAnchor({
   colorIndex: number;
   bubble: PingBubble;
 }) {
+  const { render } = useGameView();
   const anchor = useRef<Group>(null);
-  const start = renderState.players.get(playerId);
+  const start = render.players.get(playerId);
 
   useFrame(() => {
-    const player = renderState.players.get(playerId);
+    const player = render.players.get(playerId);
     const group = anchor.current;
     if (group && player) {
       group.position.set(player.x, 0, player.y);
@@ -79,7 +77,12 @@ function BubbleAnchor({
 
   return (
     <group ref={anchor} name={`ping:${playerId}`} position={[start?.x ?? 0, 0, start?.y ?? 0]}>
-      <Html position={[0, BUBBLE_HEIGHT, 0]} center zIndexRange={[11, 1]} className={styles.wrap}>
+      <ViewHtml
+        position={[0, BUBBLE_HEIGHT, 0]}
+        center
+        zIndexRange={[11, 1]}
+        className={styles.wrap}
+      >
         <p
           key={bubble.seq}
           className={`${styles.bubble} ${styles[bubble.ping]}`}
@@ -92,7 +95,7 @@ function BubbleAnchor({
           <PlayerMark colorIndex={colorIndex} size={20} />
           {pl.vocab.pings[bubble.ping]}
         </p>
-      </Html>
+      </ViewHtml>
     </group>
   );
 }

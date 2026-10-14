@@ -8,9 +8,9 @@
 //   as if it came from the server; `send()` sends a real command to the server;
 //   `map()` / `localPlayerId()` describe this client.
 import type { Desk, Folder, NextFolder, PlayerCommand, Station, TileMap } from '@redakcja/shared';
-import { type GameplayEvent, handleGameEvent } from '../net/game-events.ts';
+import type { GameplayEvent } from '../net/game-events.ts';
 import { type GameStore, useGame } from '../net/game-store.ts';
-import { runtime, sendCommand } from '../net/session.ts';
+import { handleGameEvent, runtime, sendCommand } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 
 type Pinned = Partial<{

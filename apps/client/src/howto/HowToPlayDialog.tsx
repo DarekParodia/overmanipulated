@@ -4,12 +4,16 @@
 // „Gotowe” closes it; on a station card the card's „Rozumiem” takes the yellow and goes back to
 // the grid. Keyboard (Tab, Enter, Esc), gamepad (d-pad, A, B, Y switches tabs) and touch all work.
 // A centred panel on desktop, a full-screen sheet on phones.
+// S7-97: a station card offers a yellow „Wypróbuj” that turns the sheet into a practice round
+// (PracticeRound.tsx, no server, no score); opened from the in-game menu it says „Ćwiczenia po
+// wydaniu” instead. While a round runs the dialog hands its keys to the nav intents, as in a
+// match; Esc / B / ✗ go back to the card.
 import { STATION_KINDS, type StationKind } from '@redakcja/shared';
 import { type SyntheticEvent, useEffect, useLayoutEffect, useRef } from 'react';
 import { Segmented } from '../endless/Leaderboard.tsx';
 import { emitCue } from '../fx/feedback.ts';
 import { handleMenuIntent } from '../input/menu-nav.ts';
-import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
+import { handleNavKey, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { introClipsFor } from '../intro/intro-script.ts';
 import { ControlsTab } from '../screens/SettingsTabs.tsx';
 import { STATION_ICON } from '../stations/kit.tsx';
@@ -20,6 +24,7 @@ import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './HowToPlay.module.css';
+import { PracticeRound } from './PracticeRound.tsx';
 import { HOW_TO_TABS, type HowToTab, nextHowToTab, useHowTo } from './store.ts';
 
 const TAB_ICON: Record<HowToTab, IconName> = {
@@ -33,6 +38,7 @@ const TAB_OPTIONS = HOW_TO_TABS.map((id) => ({ id, label: pl.howTo.tabs[id], ico
 export function HowToPlayDialog() {
   const open = useHowTo((s) => s.open);
   const hide = useHowTo((s) => s.hide);
+  const practicing = useHowTo((s) => s.practice !== 'off');
   const dialog = useRef<HTMLDialogElement>(null);
 
   useLayoutEffect(() => {
@@ -47,10 +53,14 @@ export function HowToPlayDialog() {
     }
   }, [open]);
 
-  // Esc on a station card goes back to the grid first, like B.
+  // Esc in a practice round goes back to the card, on a station card back to the grid, like B.
   function onCancel(event: SyntheticEvent<HTMLDialogElement>) {
     const state = useHowTo.getState();
-    if (state.tab === 'stations' && state.station !== null) {
+    if (state.practice !== 'off') {
+      event.preventDefault();
+      emitCue('ui.back');
+      state.setPractice('off');
+    } else if (state.tab === 'stations' && state.station !== null) {
       event.preventDefault();
       emitCue('ui.back');
       state.setStation(null);
@@ -65,8 +75,15 @@ export function HowToPlayDialog() {
       onCancel={onCancel}
       aria-labelledby="how-to-title"
       data-testid="how-to-play"
-      // Keys belong to the dialog: the game's own key handler must not see them.
-      onKeyDown={(event) => event.nativeEvent.stopPropagation()}
+      data-practice={practicing || undefined}
+      // Keys belong to the dialog: the game's own key handler must not see them. A running
+      // practice round gets them as nav intents, like a minigame in a match.
+      onKeyDown={(event) => {
+        event.nativeEvent.stopPropagation();
+        if (useHowTo.getState().practice === 'playing' && handleNavKey(event.nativeEvent)) {
+          useApp.getState().setInputDevice('keyboard');
+        }
+      }}
     >
       {open && <HowToSheet />}
     </dialog>
@@ -80,6 +97,7 @@ function HowToSheet() {
   const setTab = useHowTo((s) => s.setTab);
   const setStation = useHowTo((s) => s.setStation);
   const hide = useHowTo((s) => s.hide);
+  const practice = useHowTo((s) => s.practice);
   const device = useApp((s) => s.inputDevice);
   const sheet = useRef<HTMLDivElement>(null);
   const cardOpen = tab === 'stations' && station !== null;
@@ -95,13 +113,20 @@ function HowToSheet() {
     }
   }
 
-  // Opens with the active tab focused, so the pad and the keyboard start at the top.
+  // Opens with the active tab focused, so the pad and the keyboard start at the top; opened on
+  // a station's card (a briefing chip), the card's own yellow action keeps the focus it took.
   useEffect(() => {
-    sheet.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
+    if (!sheet.current?.contains(document.activeElement)) {
+      sheet.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
+    }
   }, []);
 
   useInputCapture(true);
   useNavIntent((intent) => {
+    // The practice round handles its own intents; nothing it passes on may switch the tab.
+    if (useHowTo.getState().practice !== 'off') {
+      return true;
+    }
     if (intent === 'back') {
       emitCue('ui.back');
       if (cardOpen) {
@@ -118,6 +143,14 @@ function HowToSheet() {
     }
     return true;
   });
+
+  if (practice !== 'off' && station !== null) {
+    return (
+      <div ref={sheet} className={styles.practiceSheet}>
+        <PracticeRound kind={station} device={device} />
+      </div>
+    );
+  }
 
   return (
     <div ref={sheet} className={`panel ${styles.sheet}`}>
@@ -177,19 +210,23 @@ function IntroTab({ device }: { device: InputDevice }) {
 
 function StationsTab({ device, station }: { device: InputDevice; station: StationKind | null }) {
   const setStation = useHowTo((s) => s.setStation);
+  const setPractice = useHowTo((s) => s.setPractice);
+  const practiceAllowed = useHowTo((s) => s.practiceAllowed);
   const lastStation = useRef<StationKind | null>(null);
   const grid = useRef<HTMLDivElement>(null);
 
   const card = useRef<HTMLDivElement>(null);
 
-  // A card opens at its top with „Rozumiem” focused; back on the grid, the station just read
-  // keeps the focus.
+  // A card opens at its top with its yellow action focused („Wypróbuj”, or „Rozumiem” in a
+  // match), also back from a practice round; back on the grid, the station just read keeps
+  // the focus.
   useEffect(() => {
     if (station !== null) {
       lastStation.current = station;
-      card.current
-        ?.querySelector<HTMLElement>('[data-testid="station-help-got"]')
-        ?.focus({ preventScroll: true });
+      const main =
+        card.current?.querySelector<HTMLElement>('[data-testid="how-to-practice"]') ??
+        card.current?.querySelector<HTMLElement>('[data-testid="station-help-got"]');
+      main?.focus({ preventScroll: true });
       // On a short screen the card scrolls; it starts at its header, not at the button.
       card.current?.scrollIntoView({ block: 'start' });
     } else if (lastStation.current) {
@@ -207,7 +244,25 @@ function StationsTab({ device, station }: { device: InputDevice; station: Statio
           device={device}
           variant="full"
           onClose={() => setStation(null)}
+          action={
+            practiceAllowed ? (
+              <Button
+                variant="primary"
+                icon={<Icon name="play" size={24} />}
+                data-testid="how-to-practice"
+                onClick={() => setPractice('playing')}
+              >
+                {pl.howTo.practice}
+              </Button>
+            ) : undefined
+          }
         />
+        {!practiceAllowed && (
+          <p className={styles.practiceOff} data-testid="how-to-practice-off">
+            <Icon name="lock" size={22} />
+            {pl.howTo.practiceInGame}
+          </p>
+        )}
       </div>
     );
   }

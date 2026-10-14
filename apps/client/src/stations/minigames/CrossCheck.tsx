@@ -134,6 +134,7 @@ export function CrossCheck({
   return (
     <div className={styles.root} data-testid="cross-check" data-answer={puzzle.conclusion}>
       <TaskLine
+        className={styles.taskLine}
         aside={
           <Mistakes used={state.mistakes} max={state.maxMistakes} testId="cross-check-mistakes" />
         }
@@ -223,7 +224,7 @@ export function CrossCheck({
         )}
       </div>
 
-      {playing && <KeyHints hints={t.keys} device={device} />}
+      {playing && <KeyHints hints={t.keys} device={device} className={styles.hints} />}
     </div>
   );
 }

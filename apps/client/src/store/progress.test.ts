@@ -6,6 +6,7 @@ import {
   newStations,
   parseProgress,
   starsOn,
+  starTotals,
   withResult,
 } from './progress.ts';
 
@@ -120,5 +121,20 @@ describe('new stations', () => {
   it('lists only stations the previous campaign level did not have', () => {
     expect(newStations(second, levels)).toEqual(['phone']);
     expect(newStations(third, levels)).toEqual(['aiScanner']);
+  });
+});
+
+describe('star totals (profile, S7-104)', () => {
+  it('sums the stars per difficulty over the shipped levels, easiest first', () => {
+    const progress = {
+      easy: { 'l0-greybox': 3, 'l1-first-day': 2 },
+      hard: { 'l1-first-day': 1, 'l9-removed': 3 },
+    };
+    expect(starTotals(progress, ['l0-greybox', 'l1-first-day'])).toEqual([
+      { difficulty: 'easy', stars: 5, max: 6 },
+      { difficulty: 'normal', stars: 0, max: 6 },
+      { difficulty: 'hard', stars: 1, max: 6 },
+      { difficulty: 'expert', stars: 0, max: 6 },
+    ]);
   });
 });

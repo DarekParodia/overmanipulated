@@ -9,8 +9,9 @@ import type {
   LevelEndMessage,
   NextFolder,
 } from '@redakcja/shared';
-import { type GameplayEvent, handleGameEvent } from '../net/game-events.ts';
+import type { GameplayEvent } from '../net/game-events.ts';
 import { useGame } from '../net/game-store.ts';
+import { handleGameEvent } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { registerHudStory } from './story-lookup.ts';
 

@@ -299,22 +299,26 @@
 /*
  * Short landscape phones: the wide layout already puts the answers under the file data, next to
  * the description, so only the spacing tightens (a third column for the answers would squeeze
- * the 2×2 fields below a readable width at 640×360).
+ * the 2×2 fields below a readable width at 640×360), enough for the key hints to fit at 640×360
+ * without scrolling.
  */
 @media (max-height: 430px) {
-  .root,
+  .root {
+    gap: var(--space-1);
+  }
+
   .body {
-    gap: var(--space-2);
+    gap: var(--space-1) var(--space-2);
   }
 
   .claim {
     gap: var(--space-1);
-    padding: var(--space-2);
+    padding: var(--space-1) var(--space-2);
   }
 
   .file {
     gap: var(--space-1);
-    padding: var(--space-1) var(--space-2) var(--space-2);
+    padding: var(--space-1) var(--space-2);
   }
 
   .grid,

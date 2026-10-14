@@ -15,11 +15,15 @@ COPY packages/content/package.json packages/content/
 RUN bun install --frozen-lockfile
 
 FROM deps AS client-build
-COPY tsconfig.base.json ./
+# „O grze” (S7-103) shows `<version>+<git sha>`: there is no .git in the build context, so the sha
+# comes in as a build argument (docker-compose.yml); without it the version reads `+dev`. The
+# copyright line and the authors come from LICENSE.
+ARG APP_GIT_SHA=
+COPY tsconfig.base.json LICENSE ./
 COPY packages packages
 COPY apps/client apps/client
 COPY apps/server apps/server
-RUN cd apps/client && bunx vite build
+RUN cd apps/client && APP_GIT_SHA="$APP_GIT_SHA" bunx vite build
 # Brotli copies of js/css/html for Caddy's `precompressed br` (no per-request compression cost).
 COPY tools/deploy tools/deploy
 RUN bun tools/deploy/precompress.ts apps/client/dist

@@ -15,14 +15,13 @@ import {
   Object3D,
 } from 'three';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
-import { runtime } from '../net/session.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { type AmbienceLayout, ambienceLayout, type PropTile } from './ambience-layout.ts';
 import { ELEVATION } from './camera-framing.ts';
 import { box, cylinder, merge, mergePainted, ring, useGeometries } from './geometry.ts';
 import { useQuality } from './quality.ts';
-import { renderState } from './render-state.ts';
 
 const DESK_TOP_Y = 0.72;
 /** Fan hub height; the fan is shifted forward so that, seen from the camera, it hangs over its tile. */
@@ -131,7 +130,8 @@ function useInstanceColors(mesh: RefObject<InstancedMesh | null>, count: number)
 
 export function Ambience() {
   const detail = useQuality((s) => s.profile.detail);
-  const layout = useMemo(() => ambienceLayout(runtime.map), []);
+  const view = useGameView();
+  const layout = useMemo(() => ambienceLayout(view.runtime.map), [view]);
   const g = useGeometries(() => ({
     static: staticParts(layout),
     fan: fanGeometry(),
@@ -251,7 +251,7 @@ export function Ambience() {
         }
         if (detail && !reducedMotion) {
           let near = false;
-          for (const player of renderState.players.values()) {
+          for (const player of view.render.players.values()) {
             const dx = tile.x - player.x;
             const dz = tile.z - player.y;
             if (player.moving && dx * dx + dz * dz < WOBBLE_RADIUS * WOBBLE_RADIUS) {

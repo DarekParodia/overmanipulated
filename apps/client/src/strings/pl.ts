@@ -21,6 +21,7 @@ import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
+import type { Accessory } from '../store/profile-model.ts';
 import { listPl, pluralPl } from './plural.ts';
 
 /**
@@ -116,6 +117,8 @@ export const pl = {
     live: 'Gra trwa dalej',
     resume: 'Wróć do gry',
     settings: 'Ustawienia',
+    /** S7-97: „Jak grać” on its stations tab, practice off. */
+    stationHelp: 'Pomoc: stanowiska',
     fullscreen: 'Pełny ekran',
     exitFullscreen: 'Zamknij pełny ekran',
     leave: 'Wyjdź z redakcji',
@@ -2146,6 +2149,90 @@ export const pl = {
     stationsLead: 'Wybierz stanowisko i zobacz, jak działa.',
     /** Gamepad only: the north button walks the tabs, as in the settings. */
     padHint: 'Y zmienia dział',
+    /** S7-97: a station card's yellow action, a practice round with no server and no score. */
+    practice: 'Wypróbuj',
+    /** The practice round's header chip: nothing counts here. */
+    practiceTag: 'Ćwiczenie',
+    /** The practice round's close button: back to the station's card. */
+    practiceExit: 'Wróć do opisu',
+    practiceDone: 'Udało się!',
+    practiceFailed: 'Nie tym razem',
+    again: 'Jeszcze raz',
+    back: 'Wróć',
+    /** Opened from the in-game menu: practice waits until the level is over. */
+    practiceInGame: 'Ćwiczenia po wydaniu',
+  },
+  // --- S7-103 „O grze”: authors, licence, privacy, version; asset credits; libraries. ---
+  about: {
+    /** The main-menu footer link. */
+    open: 'O grze',
+    title: 'O grze',
+    tabsLabel: 'Działy',
+    tabs: { game: 'Gra', credits: 'Zasoby', libraries: 'Biblioteki' },
+    close: 'Gotowe',
+    /** Gamepad only, as in „Jak grać”. */
+    padHint: 'Y zmienia dział',
+    authors: 'Autorzy',
+    licence: 'Licencja',
+    licenceSummary:
+      'Kod, grafika, dźwięki i teksty gry są chronione prawem autorskim: bez pisemnej zgody autora nie wolno ich kopiować ani rozpowszechniać. Biblioteki i zasoby z innych źródeł mają własne licencje – patrz „Zasoby” i „Biblioteki”.',
+    privacy: 'Prywatność',
+    privacyBody:
+      'Co gra zapisuje, na jak długo i po co – wszystko w notce o prywatności. Bez kont i bez e-maili.',
+    privacyLink: 'Notka o prywatności',
+    version: 'Wersja',
+    versionLine: (version: string, protocol: number) => `${version} · protokół ${protocol}`,
+    creditsLoading: 'Wczytuję listę zasobów…',
+    creditsError: 'Nie udało się wczytać listy zasobów. Sprawdź połączenie.',
+    retry: 'Spróbuj ponownie',
+    voiceHeading: 'Głos lektora',
+    /** Until the volunteer's recording ships (docs/voice-recording.pl.md). */
+    voicePending: 'Czekamy na nagranie ochotnika. Do tego czasu wprowadzenie ma tylko napisy.',
+    voiceCredit: (speaker: string, licence: string) => `${speaker} – licencja ${licence}.`,
+    librariesLead: 'Gra powstała dzięki otwartemu oprogramowaniu. Dziękujemy jego autorom!',
+    libraryColumns: { name: 'Biblioteka', licence: 'Licencja' },
+    sides: { client: 'W przeglądarce', server: 'Na serwerze gry' },
+  },
+  // --- S7-104 Profil: this browser's statistics and the preferred look. ---
+  profile: {
+    /** The main-menu footer link. */
+    open: 'Profil',
+    title: 'Profil',
+    close: 'Gotowe',
+    lookTitle: 'Wygląd',
+    noNickname: 'Bez podpisu',
+    previewLabel: (nickname: string) => `Podgląd: ${nickname}`,
+    colorLabel: 'Kolor gracza',
+    /** Colour name and its shape (S5-05), so the choice never rests on colour alone. */
+    colors: ['Pomarańczowy, koło', 'Niebieski, kwadrat', 'Morski, trójkąt', 'Różowy, romb'],
+    accessoryLabel: 'Dodatek',
+    accessories: {
+      none: 'Bez dodatku',
+      scarf: 'Szalik',
+      bowTie: 'Muszka',
+      pressCard: 'Legitymacja prasowa',
+    } satisfies Record<Accessory, string>,
+    statsTitle: 'Statystyki',
+    stats: {
+      levels: 'Rozegrane wydania',
+      wins: 'Wygrane',
+      accuracy: 'Trafne werdykty',
+      favouriteRole: 'Ulubiona rola',
+      stamps: 'Zebrane pieczątki',
+      minigameFails: 'Nieudane zadania',
+    },
+    percent: (n: number) => `${n}\u00a0%`,
+    /** No verdict or no finished level with a role yet. */
+    none: '–',
+    starsTitle: 'Gwiazdki',
+    starsOf: (stars: number, max: number) => `${stars} z\u00a0${max}`,
+    starsLabel: (difficulty: string, stars: number, max: number) =>
+      `${difficulty}: ${stars} z\u00a0${max} ${pluralPl(max, 'gwiazdki', 'gwiazdek', 'gwiazdek')}`,
+    localOnly: 'Zapisane tylko w tej przeglądarce.',
+    clear: 'Wyczyść statystyki',
+    clearConfirm: 'Na pewno? Wyczyść',
+    clearCancel: 'Anuluj',
+    cleared: 'Statystyki wyczyszczone.',
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   encyclopedia: {

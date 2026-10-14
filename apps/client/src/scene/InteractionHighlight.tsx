@@ -8,12 +8,11 @@ import { findInteractionTarget } from '@redakcja/shared';
 import { useRef } from 'react';
 import { type Group, Path, Shape, ShapeGeometry } from 'three';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
-import { runtime } from '../net/session.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { surfaceHeight } from './entities.ts';
 import { mergePainted, useGeometries } from './geometry.ts';
-import { renderState } from './render-state.ts';
 
 /** Half the frame's outer size: a little larger than a tile so it hugs the prop. */
 const HALF = 0.62;
@@ -51,6 +50,7 @@ function frame(outer: number, inner: number, y: number): ShapeGeometry {
 }
 
 export function InteractionHighlight() {
+  const view = useGameView();
   const root = useRef<Group>(null);
   const pop = useRef<SpringState>({ value: 1, velocity: 0 });
   const g = useGeometries(() => ({
@@ -66,12 +66,12 @@ export function InteractionHighlight() {
       return;
     }
     let local: { x: number; y: number; facing: number } | undefined;
-    for (const player of renderState.players.values()) {
+    for (const player of view.render.players.values()) {
       if (player.local) {
         local = player;
       }
     }
-    const target = local ? findInteractionTarget(runtime.map, local, local.facing) : undefined;
+    const target = local ? findInteractionTarget(view.runtime.map, local, local.facing) : undefined;
     const reducedMotion = useSettings.getState().reducedMotion;
     if (!target) {
       highlightState.targetId = null;

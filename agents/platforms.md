@@ -31,7 +31,8 @@ game may require a specific device.
 | Minigames, desk, menus | Keys / mouse | D-pad + buttons | Tap, drag, swipe |
 | In-game menu (pauses a solo level) | Esc (when nothing else owns the input and the tutorial card is not up) | Start (button 9) | Menu button top-right |
 | Station help in a station overlay (the card shows by itself on a station's first use; while it is up, Enter / A, Esc / B and H / Select close the card, never the station) | H | Select / Back (button 8) | Purple '?' in the overlay header |
-| „Jak grać” dialog (main menu corner, lobby, settings → Sterowanie): switch tab / back from a station card / close | Tab + Enter on the tabs / Esc / Esc | Y / B / B | Tap a tab / „Rozumiem” / „Gotowe” |
+| „Jak grać” dialog (main menu corner, lobby, settings → Sterowanie, briefing station chips, in-game menu „Pomoc: stanowiska”): switch tab / back from a station card / close | Tab + Enter on the tabs / Esc / Esc | Y / B / B | Tap a tab / „Rozumiem” / „Gotowe” |
+| „Wypróbuj” practice round (S7-97; a station card in „Jak grać”, out of play only): start / play / back to the card / again | Enter on „Wypróbuj” / the minigame's keys (the dialog hands them to the nav intents; Tab and Q are the minigame's `alt`, H is ignored) / Esc / Enter on „Jeszcze raz” | A / the minigame's buttons / B / A | „Wypróbuj” / tap and drag / ✗ or „Wróć” / „Jeszcze raz” |
 
 - The **last used device** decides which prompts are shown (key caps, pad glyphs or touch icons).
   Minigame key hints exist for all three devices; on touch the chip names the gesture
@@ -51,6 +52,11 @@ game may require a specific device.
 - Overlays (stations, desk): half screen on desktop, full-width bottom sheet or full screen on
   phones; the 3D scene keeps running behind.
 - Text scaling setting must not break any layout down to 640×360.
+- Station minigames fit a 640×360 landscape phone without scrolling, key hints included: each
+  minigame has a short-phone layout (`@media (max-height: 430px)`) that puts the hint row where
+  the layout has room (beside the task line, under one column, in a free grid cell) instead of
+  pinning it over the controls; desktop sizes keep their own layout. `e2e/station-hints.spec.ts`
+  checks every minigame.
 - Never rely on hover to reveal information.
 
 ## Browser behaviour on mobile

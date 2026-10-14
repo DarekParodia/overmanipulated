@@ -5,6 +5,8 @@
 // Consumes commands: minigameResult, cancel (when operating a station).
 // Work time and lockout length follow the difficulty (`ctx.tuning`, Stage 7).
 // Minigame seeds are derived per folder spawn key, station kind and attempt (S7-13).
+// Versus minimum solve time (S7-80): with `ctx.minSolveMs`, a success reported sooner than the
+// kind's minimum after the round opened (`state.minigameOpenedMs`) counts as a failure.
 // Armed abilities (S7-38): an armed Ekspertyza that covers the station stamps the folder instead
 // of opening the minigame; an armed Druga szansa turns a failure into a fresh round for the same
 // operator without the lockout. Both start the cooldown, so the crew is part of the result.
@@ -52,6 +54,22 @@ function countUnstampedRound(
   }
   const key = minigameAttemptKey(folder.spawnKey, kind);
   return { ...attempts, [key]: (attempts[key] ?? 0) + 1 };
+}
+
+/**
+ * Whether a reported success comes too soon after the round opened to be a real solve (versus
+ * only: without `minSolveMs` every success counts).
+ */
+export function solvedTooSoon(
+  minSolveMs: Readonly<Record<StationKind, number>> | undefined,
+  kind: StationKind,
+  openedMs: number | undefined,
+  nowMs: number,
+): boolean {
+  if (!minSolveMs || openedMs === undefined) {
+    return false;
+  }
+  return nowMs - openedMs < minSolveMs[kind];
 }
 
 /** The station with no operator, no progress and no lockout (its outage is kept). */
@@ -121,6 +139,7 @@ function operatorCommand(
 export function stepStations(state: GameState, frame: SimFrame): GameState {
   const { dtMs } = frame.ctx;
   let attempts = state.minigameAttempts;
+  let opened = state.minigameOpenedMs;
   let folders = state.folders;
   let crew = state.crew;
   const stations: Record<string, Station> = {};
@@ -259,6 +278,7 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
           station.kind,
         );
         next = { ...station, progressMs, phase: 'minigame', minigameSeed: seed };
+        opened = { ...opened, [stationId]: state.elapsedMs };
         frame.events.push({
           kind: 'minigameStarted',
           stationId,
@@ -298,7 +318,15 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
         if (command.kind !== 'minigameResult') {
           break;
         }
-        if (command.success) {
+        const success =
+          command.success &&
+          !solvedTooSoon(
+            frame.ctx.minSolveMs,
+            station.kind,
+            state.minigameOpenedMs[stationId],
+            state.elapsedMs,
+          );
+        if (success) {
           const stampId = stampFor(frame, folder, station.kind);
           if (stampId !== undefined && !folder.stamps.includes(stampId)) {
             folders = {
@@ -329,6 +357,7 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
             station.kind,
           );
           next = { ...station, minigameSeed: seed, lockoutMs: 0 };
+          opened = { ...opened, [stationId]: state.elapsedMs };
           frame.events.push(
             {
               kind: 'minigameFailed',
@@ -387,9 +416,17 @@ export function stepStations(state: GameState, frame: SimFrame): GameState {
     !changed &&
     folders === state.folders &&
     attempts === state.minigameAttempts &&
+    opened === state.minigameOpenedMs &&
     crew === state.crew
   ) {
     return state;
   }
-  return { ...state, minigameAttempts: attempts, folders, stations, crew };
+  return {
+    ...state,
+    minigameAttempts: attempts,
+    minigameOpenedMs: opened,
+    folders,
+    stations,
+    crew,
+  };
 }

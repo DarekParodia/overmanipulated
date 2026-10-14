@@ -669,6 +669,8 @@ describe('9. Druga szansa', () => {
       progressMs: 4000,
       durationMs: 4000,
     });
+    // The fresh round restarts the versus minimum solve time (S7-80).
+    expect(run.state.minigameOpenedMs).toEqual({ 'archive-0': state.elapsedMs });
     expect(run.state.crew.p1).toMatchObject({ abilityArmed: false, abilityReadyAtMs: 70_000 });
   });
 
@@ -747,6 +749,7 @@ describe('9. Druga szansa', () => {
         lockoutMs: 0,
         minigameSeed: seed,
       });
+      expect(run.state.minigameOpenedMs).toEqual({ 'archive-0': 10_000 });
       expect(run.state.crew.p1).toMatchObject({ abilityArmed: false, abilityReadyAtMs: 70_000 });
     });
 
