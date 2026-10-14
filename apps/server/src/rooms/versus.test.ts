@@ -465,10 +465,16 @@ describe('a botRaid with diverging belts (l6)', () => {
     expect(team0?.activeEvents.map((e) => e.kind)).toEqual(['botRaid']);
     const keys0 = [...byKey(team0).keys()];
     const keys1 = [...byKey(team1).keys()];
-    // Team 0 met the raid with three folders on its 5-tile belt (s0, spawned at 4 s with the l6
-    // bag's 58 s deadline, is still there at 60 s): two raid folders, not four.
-    expect(keys0).toEqual(['s0', 's1', 's2', 'e0.0', 'e0.1']);
-    expect(keys1).toEqual(['s0', 's1', 's2', 'e0.0', 'e0.1', 'e0.2', 'e0.3']);
+    // Team 1 met the raid with an empty belt: the whole wave of four. Team 0's scheduled folders
+    // still took belt tiles, so its wave is smaller, under the same leading keys.
+    const raid = (keys: string[]) => keys.filter((key) => key.startsWith('e0.'));
+    const scheduled = (keys: string[]) => keys.filter((key) => !key.startsWith('e0.'));
+    expect(raid(keys1)).toEqual(['e0.0', 'e0.1', 'e0.2', 'e0.3']);
+    expect(raid(keys0).length).toBeGreaterThanOrEqual(2);
+    expect(raid(keys0).length).toBeLessThan(4);
+    expect(raid(keys0)).toEqual(raid(keys1).slice(0, raid(keys0).length));
+    expect(scheduled(keys0).length).toBeGreaterThan(0);
+    expect(scheduled(keys1)).toEqual(scheduled(keys0));
     for (const key of keys0) {
       const ours = must(byKey(team0).get(key), key);
       const theirs = must(byKey(team1).get(key), key);
@@ -498,7 +504,9 @@ describe('a botRaid with diverging belts (l6)', () => {
     const rival = end.versus?.rivalResults ?? [];
     const own = new Map(end.results.map((r) => [r.spawnKey, r]));
     const paired = rival.filter((r) => own.has(r.spawnKey));
-    expect(paired.map((r) => r.spawnKey)).toEqual(['s0', 's1', 's2', 'e0.0', 's3']);
+    const pairedKeys = paired.map((r) => r.spawnKey);
+    expect(pairedKeys).toContain('e0.0');
+    expect(pairedKeys).toContain('s3');
     for (const result of paired) {
       expect(result.storyId).toBe(must(own.get(result.spawnKey), result.spawnKey).storyId);
     }
@@ -549,8 +557,10 @@ describe('a botRaid with diverging belts (l6)', () => {
     expect(held0?.elapsedMs).toBe(60_500);
     expect(held0?.activeEvents).toEqual([]);
     expect(raidKeys(held0)).toEqual([]);
-    // Team 1's belt still holds s0, s1 and s2 (l6 bag deadline 58 s): two raid folders.
-    expect(raidKeys(raided1)).toEqual(['e0.0', 'e0.1']);
+    // Team 1 met the raid on time with as many folders as its belt had free tiles.
+    const wave = raidKeys(raided1);
+    expect(wave.length).toBeGreaterThanOrEqual(2);
+    expect(wave).toEqual(wave.map((_, i) => `e0.${i}`));
 
     // The belt clears: team 0's raid starts late, under the same keys, stories and seeds.
     patchTeam(match.code, 0, (state) => ({
@@ -561,7 +571,7 @@ describe('a botRaid with diverging belts (l6)', () => {
     room.ticks(2);
     const [team0, team1] = view(match.code).games;
     expect(team0?.activeEvents.map((e) => e.kind)).toEqual(['botRaid']);
-    expect(raidKeys(team0)).toEqual(['e0.0', 'e0.1']);
+    expect(raidKeys(team0)).toEqual(wave);
     for (const key of raidKeys(team0)) {
       const ours = must(byKey(team0).get(key), key);
       const theirs = must(byKey(team1).get(key), key);

@@ -27,11 +27,7 @@ export const BUDGET = {
   firstLoadMax: 10 * MB,
   /** Guard: the first screen alone (JS+CSS+fonts+menu music), gzip. */
   menuMax: 700 * KB,
-  /**
-   * Guard: JS and CSS of the first screen, gzip. Fails if three.js (about 150 KB gzip) lands in
-   * the menu bundle. 340 KB since S7-66: the menu was at 321 KB once the lazy dialogs split the
-   * icon code into shared chunks.
-   */
+  /** Guard: JS and CSS of the first screen, gzip. Fails if three.js lands in the menu bundle. */
   menuCodeMax: 340 * KB,
   /** Guard: everything the first match adds to the menu load, gzip. */
   gameMax: 1.6 * MB,

@@ -84,6 +84,15 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
 - Fixed **20 Hz** tick loop per active room: drain queued inputs per team → build one `SimContext`
   → `step` every team in lockstep → publish each team's events and snapshot (`publishTeam`
   encodes once for the team and spectator topics). Empty rooms are destroyed.
+- **Spectators** (Widownia, Stage 7): a room member of kind `spectator` joins in any phase while
+  the `spectators` flag is on and the host opened the Widownia (`spectatorsAllowed`, off unless a
+  spectator created the room), up to 8. Spectators never hold a player gate (ready, briefing,
+  votes, pause) and their input is dropped. The spectator topic gets every 2nd snapshot of each
+  team (10 Hz), `matchStats` every 20 ticks and every team event as a `spectatorEvent`, published
+  only while a spectator is connected; a joining spectator is synced with the current snapshots,
+  stats and (at the results) level ends. In versus the server-side embargo
+  (`spectator-embargo.ts`) masks a verdict or expiry until both newsrooms closed its `spawnKey`
+  or the level ended, and `matchStats` counts only what the Widownia was shown.
 - **Run lifecycle** (Stage 7): the lobby holds the selected level as `getLevel` serves it and the
   room's difficulty (host only, lobby only). Every briefing, replays included, deals the run with
   `prepareRun` from a fresh **run seed** (never sent to clients) and the room's difficulty;
