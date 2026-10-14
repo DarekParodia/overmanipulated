@@ -211,6 +211,8 @@ export const pl = {
     /** Clears the seen station help cards (S7-95). */
     stationHelpAgain: 'Pokaż pomoc stanowisk od nowa',
     stationHelpQueued: 'Pomoc pokaże się znowu',
+    /** Ułatwienia: plays the intro again (S7-102), whether or not it was seen. */
+    introAgain: 'Obejrzyj wprowadzenie',
     close: 'Gotowe',
     closeIcon: 'Zamknij',
     // S5-06 settings screen.
@@ -2057,6 +2059,19 @@ export const pl = {
     paused: 'Pauza',
     /** The stage's accessible name. */
     stageLabel: 'Scena wprowadzenia',
+    /** S7-102: the few words on the later scenes' art; the subtitles carry the rest. */
+    art: {
+      strongProof: 'Mocny dowód',
+      weakProof: 'Słaby dowód',
+      /** The weak proof's badge: half the points. */
+      half: '½',
+      /** The stamps of a folder that needs two. */
+      stamps: (have: number, need: number) => `${have}/${need}`,
+      /** The HUD pill's level clock. */
+      clock: '1:24',
+      /** The red folder card's countdown. */
+      countdown: '5\u00a0s',
+    },
     voice: {
       welcome:
         'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',

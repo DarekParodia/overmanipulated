@@ -27,13 +27,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import {
-  loadVoice,
-  playVoice,
-  stopVoice,
-  type VoiceStatus,
-  voiceStatus,
-} from '../fx/audio/voice.ts';
+import { playVoice, stopVoice, type VoiceStatus, voiceStatus } from '../fx/audio/voice.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { PAD } from '../input/gamepad.ts';
 import { firstGamepad } from '../input/gamepad-access.ts';
@@ -58,7 +52,7 @@ import {
 } from './intro-model.ts';
 import { INTRO_SCENES, type IntroClip, introClipsFor } from './intro-script.ts';
 import type { IntroClock } from './intro-view.ts';
-import { loadShippedVoiceSprite, type VoiceSprite, voiceClips } from './voice-sprite.ts';
+import { preloadIntroVoice, type VoiceSprite } from './voice-sprite.ts';
 
 const loadStage = () => import('./IntroStage.tsx');
 
@@ -216,10 +210,10 @@ export function IntroPlayer({ device, input, onEnd, onRunningChange }: IntroPlay
 
   useEffect(() => {
     let live = true;
-    void loadShippedVoiceSprite().then((loaded) => {
+    // One load per page (S7-102): a replay takes the promise the first player started.
+    void preloadIntroVoice().then((loaded) => {
       if (live && loaded) {
         sprite.current = loaded;
-        void loadVoice(voiceClips(loaded));
       }
     });
     return () => {

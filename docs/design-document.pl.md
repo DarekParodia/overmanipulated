@@ -211,6 +211,7 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 | Kolegium redakcyjne | Lista zgłoszeń z poziomu, wyjaśnienia, głosowanie na „wpadkę dnia”, gwiazdki |
 | Encyklopedia technik | Odblokowywane karty technik manipulacji i narzędzi weryfikacji, z przykładami z gry |
 | Jak grać | Okno pomocy z trzema działami: Wprowadzenie, Stanowiska (jak działa każde z dziesięciu, z przyciskiem „Wypróbuj” – ćwiczenie bez punktów i bez serwera), Sterowanie; otwierane z menu głównego, lobby, ustawień, kafelków „Nowe dziś” na odprawie i z menu w grze („Pomoc: stanowiska”, tam bez ćwiczeń) |
+| Wprowadzenie | Około 75-sekundowe wprowadzenie z napisami (lektor, gdy jest nagranie): naczelny opowiada w 11 scenach, jak działa redakcja – sceny z rozgrywką to prawdziwa gra na małej makiecie, reszta to rysunki z elementów interfejsu (dowody, wiarygodność, role, zespół, Kolegium); Wstecz, Pauza, Dalej, Pomiń. Odtwarza się samo raz na przeglądarkę, gdy gracz pierwszy raz wejdzie do pokoju z treningiem; potem w „Jak grać” i w Ustawieniach („Obejrzyj wprowadzenie”) |
 | Profil | Statystyki z tej przeglądarki (rozegrane i wygrane wydania, trafne werdykty, ulubiona rola, pieczątki, nieudane zadania), gwiazdki na każdym poziomie trudności, wybór koloru i dodatku postaci, czyszczenie statystyk; otwierany ze stopki menu głównego |
 
 ### Materiały do zgłoszenia konkursowego

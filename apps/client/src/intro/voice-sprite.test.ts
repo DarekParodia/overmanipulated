@@ -8,6 +8,7 @@ import {
   VOICE_SHIPPED,
   VOICE_SPRITE_URL,
   voiceClips,
+  voicePreloader,
   voiceSpriteSchema,
   voiceText,
 } from './voice-sprite.ts';
@@ -132,5 +133,52 @@ describe('loadVoiceSprite / loadIntroVoice', () => {
     expect(asked).toEqual([VOICE_SPRITE_URL]);
     // Outside a Vite build the define is missing and the sprite may be fetched.
     expect(VOICE_SHIPPED).toBe(true);
+  });
+});
+
+describe('voicePreloader (S7-102)', () => {
+  it('fetches the sprite once and starts loading its audio', async () => {
+    const asked: string[] = [];
+    const loaded: VoiceClips[] = [];
+    const preload = voicePreloader(
+      (url) => {
+        asked.push(url);
+        return Promise.resolve(SPRITE);
+      },
+      true,
+      (clips) => {
+        loaded.push(clips);
+        return Promise.resolve(true);
+      },
+    );
+    const first = preload();
+    expect(preload()).toBe(first);
+    expect((await first)?.voice).toBe('volunteer-a');
+    expect(asked).toEqual([VOICE_SPRITE_URL]);
+    expect(loaded).toEqual([
+      {
+        welcome: { startMs: 0, durationMs: 4210 },
+        'pickup.touch': { startMs: 4330, durationMs: 5120 },
+      },
+    ]);
+  });
+
+  it('resolves null and loads nothing when the build ships no voice', async () => {
+    const asked: string[] = [];
+    let loads = 0;
+    const preload = voicePreloader(
+      (url) => {
+        asked.push(url);
+        return Promise.resolve(SPRITE);
+      },
+      false,
+      () => {
+        loads += 1;
+        return Promise.resolve(true);
+      },
+    );
+    expect(await preload()).toBeNull();
+    expect(asked).toEqual([]);
+    expect(loads).toBe(0);
   });
 });

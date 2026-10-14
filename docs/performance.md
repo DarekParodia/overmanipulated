@@ -67,6 +67,12 @@ page (`?styleguide`, every minigame) became a lazy chunk in the same change: men
 290 KB of it JS and CSS (was 321 KB; guard 340 KB). Game route 864 KB gzip (54 % of `gameMax`;
 the styleguide counts there, being a lazy import of the entry), first load 1.43 MB gzip.
 
+S7-102 (intro scenes 7–11, lobby autoplay): the kit art of the five later scenes adds about
+2 KB gzip to the „Jak grać” chunk (extras now 84 KB raw, 25 KB gzip). The lobby takes only the
+seen flag and the autoplay rule (`intro/intro-store.ts`, under 1 KB); the voice starts loading
+when the player mounts, so no voice code joins the menu. Menu 575 KB gzip, 291 KB of it JS and
+CSS (guard 340 KB); first load 1.43 MB gzip.
+
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
 

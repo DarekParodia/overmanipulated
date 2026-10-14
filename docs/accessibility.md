@@ -41,6 +41,13 @@ reading time (400 ms per word, 2.5–12 s). The bar is a polite live region, at 
 subtitle; Wstecz replays the previous one. Reduced motion: the scenes and callouts only fade;
 no-flash: nothing in the player blinks.
 
+Scenes 7–11 (S7-102) are UI-kit pictures with at most a few words; their pieces pop in one after
+another, the credibility bar drains and the ability ring refills once. Reduced motion fades the
+pieces in and shows the drained bar and the full ring at once; a paused intro holds its art too.
+The lobby plays the intro on its own once per browser (a new training room); „Pomiń”, Esc, B or
+„Gotowe” end it and it does not come back; the settings (Ułatwienia → „Obejrzyj wprowadzenie”)
+and „Jak grać?” replay it.
+
 ## Colour blindness
 
 `a11y/colorblind.ts` simulates protanopia, deuteranopia and tritanopia (Machado 2009) and measures

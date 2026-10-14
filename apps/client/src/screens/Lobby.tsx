@@ -19,6 +19,7 @@ import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { useHowTo } from '../howto/store.ts';
+import { introSeen, shouldAutoplayIntro } from '../intro/intro-store.ts';
 import { hostChanged, modeSwitched, teamSwitches } from '../net/room-diff.ts';
 import {
   kick,
@@ -112,6 +113,33 @@ function useRemoteDifficultyCue(isHost: boolean): void {
   }, [difficulty, isHost]);
 }
 
+/** Rooms this page has autoplayed the intro in (S7-102): at most one try per room. */
+const introAutoplayed = new Set<string>();
+
+/**
+ * The first-time intro (S7-102): a player in a training room who has never finished or skipped
+ * it watches it once, in „Jak grać” without the tab bar; guests joining such a room too, never
+ * spectators. Off with the 'intro' feature flag. The player starts loading the voice (when the
+ * build ships one) as it mounts, in the same frame the dialog opens (`preloadIntroVoice`).
+ */
+function useIntroAutoplay(): void {
+  const enabled = useFeature('intro');
+  const screen = useApp((s) => s.screen);
+  const roomCode = useApp((s) => s.room?.roomCode ?? null);
+  const levelId = useApp((s) => s.room?.levelId ?? null);
+  const spectator = useApp((s) => selfKind(s.room, s.playerId) === 'spectator');
+  const open = useHowTo((s) => s.open);
+  useEffect(() => {
+    if (!enabled || roomCode === null || levelId === null || introAutoplayed.has(roomCode)) {
+      return;
+    }
+    if (shouldAutoplayIntro({ screen, levelId, seen: introSeen(), spectator, open })) {
+      introAutoplayed.add(roomCode);
+      useHowTo.getState().show('intro', { autoplay: true });
+    }
+  }, [enabled, screen, roomCode, levelId, spectator, open]);
+}
+
 /**
  * Everyone hears the host switch the mode and a player change newsroom (S7-86) and the host role
  * move (S7-87), from the roomState diff, so a press and a remote change sound alike.
@@ -162,6 +190,7 @@ export function Lobby() {
     [],
   );
   useRemoteReadyCue(playerId);
+  useIntroAutoplay();
   useRemoteDifficultyCue(room !== null && room.hostId === playerId);
   useRoomCues();
 

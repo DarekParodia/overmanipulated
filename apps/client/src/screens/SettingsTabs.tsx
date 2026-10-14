@@ -8,6 +8,7 @@ import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { KeyCap } from '../stations/kit.tsx';
 import { resetStationHelp } from '../stations/station-help-store.ts';
 import { useApp } from '../store/app.ts';
+import { useFeature } from '../store/public-config.ts';
 import { type QualityPreset, qualityPresets, useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
@@ -116,6 +117,7 @@ export function AccessTab() {
   const setHintsEnabled = useGuidance((g) => g.setHintsEnabled);
   const [tutorialReset, setTutorialReset] = useState(false);
   const [stationHelpReset, setStationHelpReset] = useState(false);
+  const intro = useFeature('intro');
   return (
     <div className={styles.stack}>
       <Checkbox
@@ -159,6 +161,23 @@ export function AccessTab() {
           {stationHelpReset ? pl.settings.stationHelpQueued : pl.settings.stationHelpAgain}
         </Button>
       </div>
+      {intro && (
+        // S7-102: the intro again, seen or not; it opens over the settings, in „Jak grać”.
+        <div>
+          <Button
+            variant="secondary"
+            icon={<Icon name="play" size={24} />}
+            data-testid="settings-intro"
+            onClick={() =>
+              useHowTo
+                .getState()
+                .show('intro', { practiceAllowed: useApp.getState().screen !== 'game' })
+            }
+          >
+            {pl.settings.introAgain}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

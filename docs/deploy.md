@@ -138,7 +138,7 @@ main-menu visit (at most once a minute) or reload; a running match never changes
 | `features.roomBrowser` | `false` | yes, next menu visit | Public room list (`GET /api/rooms`, 404 while off; public rooms only, cached 2 s, 600 requests a minute per address). Off by default: rooms of minors are never listed publicly unless the operator opts in |
 | `features.versus` | `true` | yes, next menu visit / new room | „Na punkty” (versus) mode. Gates entry points only: a running match keeps going |
 | `features.spectators` | `true` | yes, next join | Spectator joins (the host still opens the Widownia per room) |
-| `features.intro` | `true` | yes, next menu visit | The intro: its entry in „Jak grać” and its autoplay before the first training |
+| `features.intro` | `true` | yes, next menu visit | The intro: its Wprowadzenie tab in „Jak grać” (off: the dialog opens on Stanowiska), „Obejrzyj wprowadzenie” in the settings, and its autoplay in a new training room |
 | `motd` | `null` | yes, next menu visit | Message of the day in the main menu; `null` for none |
 | `motd.id` | required | yes | Stable id (`A–Z a–z 0–9 . _ -`, 1–40). Players who closed the message do not see it again until the id changes |
 | `motd.text` | required | yes | Polish text, one paragraph, ≤ 140 characters (`MOTD_MAX_CHARS`), no line breaks. Shown as written (typographic quotes and dashes are fixed up) |
