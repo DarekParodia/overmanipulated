@@ -15,6 +15,11 @@ function initiallyVisible(): boolean {
   }
 }
 
+// e2e and the console (`?debug`): the counters of each mounted canvas, `perfStats.views` (S7-92).
+if (initiallyVisible()) {
+  (window as unknown as { __perf?: typeof perfStats }).__perf = perfStats;
+}
+
 export function PerfOverlay() {
   const [visible, setVisible] = useState(initiallyVisible);
   const [, setTick] = useState(0);

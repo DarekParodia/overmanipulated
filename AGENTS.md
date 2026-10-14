@@ -44,6 +44,7 @@ agents/             Working rules for agents
 | `bun run db:studio` | Browse the local SQLite database |
 | `bun run config:check -- <path>` | Validate a server `config.json` (defaults filled in, `ADS_ENABLED` applied) before it goes live |
 | `bun run config:schema` | Regenerate `config/config.schema.json` after changing `apps/server/src/config.ts` |
+| `bun run perf:server` | Server tick benchmark: 150 versus rooms with spectators, ms per tick and bytes/s |
 | `bun run test:e2e` | Playwright multiplayer tests, desktop + mobile (starts server and preview itself) |
 | `bun run check` | lint + design lint + typecheck + test + validate — **must pass before every push** |
 | `docker compose up --build` | Production-like stack (Caddy + server), see `docs/deploy.md` |

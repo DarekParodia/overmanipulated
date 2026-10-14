@@ -10,7 +10,8 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 | --- | --- |
 | `bun run perf:budget` | Builds the client and measures the first-load transfer (`tools/perf/check-bundle.ts`). Part of `bun run check`. |
 | `bun tools/perf/check-bundle.ts [dist]` | Same measurement on an existing build, with a per-file table. |
-| `bun run test:e2e` | `e2e/performance.spec.ts`: 4 players and 7 folders on the high preset stay under the draw-call and triangle budgets (desktop 150, mobile 100, 100k triangles) in four rooms: level 1, the 24×14 rooms of level 5 and level 6, and endless with all ten stations (S7-66). Each case prints its counters. |
+| `bun run test:e2e` | `e2e/performance.spec.ts`: 4 players and 7 folders on the high preset stay under the draw-call and triangle budgets (desktop 150, mobile 100, 100k triangles) in four rooms: level 1, the 24×14 rooms of level 5 and level 6, and endless with all ten stations (S7-66); a spectator of a 4 v 4 versus match on level 1 and in endless, both canvases summed (S7-92). Each case prints its counters. |
+| `bun run perf:server` | Server tick bench (`tools/perf/server-tick.ts`, S7-92): 150 versus rooms of 4 + 4 scripted players, 8 spectators in 50 of them; prints ms per tick and bytes per second, and warns when the mean tick passes the 25 ms target (`TICK_TARGET_MS`, half the tick). `--level <id>`, `--rooms`, `--spectated`, `--ticks`, `--coop`. Not part of `check` (it measures the machine). |
 | `?debug` or F3 | Perf overlay: fps, frame time, draw calls, triangles, particles, quality preset, adaptive step, DPR cap. |
 
 ## First load
@@ -228,7 +229,66 @@ newsroom, the spectator's page set to high and capped, SwiftShader):
 | Phone 640×360, one view | 1 | 28 | 12.6k | 28 % of 100 calls |
 
 Two canvases cost twice the per-view draw calls (about 30 each on the capped preset), which
-leaves room for 4 + 4 players and a busy belt in each newsroom; S7-92 adds the 4 v 4 perf case.
+leaves room for 4 + 4 players and a busy belt in each newsroom; the 4 v 4 case is measured below
+(S7-92).
+
+## Versus and spectators (S7-92)
+
+### A spectator's frame
+
+`e2e/performance.spec.ts` (spectator cases): eight scripted players join over raw WebSockets from
+the test process (`e2e/ws-bots.ts`, no browser pages), alternate into Kurier and Głos, walk and
+tap interact at 20 Hz; the Widownia is open. The spectator's page asks for the high preset (the
+spectator cap makes it medium, DPR 1.5, no shadows, no motes), joins by code with „Oglądaj”, and
+after 4 s of the match reads each canvas's counters from `perfStats.views` (`window.__perf` with
+`?debug`) and counts the avatars in each canvas's scene (`window.__scenes`, keyed like the
+views): four in each. One folder or two is on the floor of each newsroom by then. SwiftShader,
+counters only:
+
+| Room | Desktop 1366×768, two canvases: draw calls / triangles (each) | Phone (Pixel 7), one canvas | Budget used |
+| --- | --- | --- | --- |
+| level 1, 4 v 4 | 68 / 36.4k (34 / 18.2k) | 34 / 18.2k | desktop 45 % of 150 calls, phone 34 % of 100 |
+| endless (24×14, 10 stations), 4 v 4 | 82 / 53.1k (41 / 26.6k) | 40 / 26.6k | desktop 55 % of 150 calls and 53 % of 100k triangles, phone 40 % of 100 |
+
+Each avatar is two skinned draws (body and outline hull) and the capped preset has no shadow
+pass, so a full newsroom adds 8 calls per canvas. Seven floor folders in each newsroom would add
+about 7 more per canvas (one box each), still under 100 calls for both canvases on a desktop. No
+change is needed.
+
+### Server tick
+
+`bun run perf:server` builds every room in one `RoomRegistry` with the real sim, embargo,
+snapshots and spectator topic, feeds each player one scripted input per tick (a compass direction
+per second, interact every 2 s, work held half the time), plays 20 warm-up ticks and times 200
+`registry.tick()` calls. The hub only counts bytes: a publish costs its length once per subscriber,
+as Bun's `publish` sends it, so the socket writes themselves are not in the time. Run seeds are
+fixed (seed 92), so the bytes repeat exactly; the times are wall clock in this sandbox (4 vCPU
+shared with other jobs, so they vary by about ±30 % between runs).
+
+| 150 rooms, 50 with 8 spectators | Mean tick | p95 | Egress total | One room | One room + 8 spectators | One spectator |
+| --- | --- | --- | --- | --- | --- | --- |
+| versus 4 v 4, level 1 | 5.7–9.9 ms | 9–18 ms | 52 MB/s | 264 KB/s | 536 KB/s | 34 KB/s |
+| versus 4 v 4, endless | 7.9–10.4 ms | 12–20 ms | 88 MB/s | 447 KB/s | 902 KB/s | 57 KB/s |
+| co-op 4, level 1 (baseline) | 3.7 ms | 6 ms | 23 MB/s | 119 KB/s | 242 KB/s | 15 KB/s |
+| co-op 4, endless (baseline) | 3.2 ms | 5 ms | 41 MB/s | 211 KB/s | 425 KB/s | 27 KB/s |
+
+At `MAX_ROOMS` (300 versus rooms, 100 of them watched, endless): mean 20.4 ms, p95 28.5 ms, with
+one 0.6 s outlier (a garbage collection) in 200 ticks. Handing the 1,200 scripted inputs to the
+registry costs a further 0.3–1.2 ms a tick, outside `tick()`.
+
+What it means:
+
+- **CPU holds.** The mean tick stays under 25 ms (half the 50 ms tick) at 150 versus rooms, and
+  at the 300-room cap too, so `MAX_ROOMS` stays 300; no config change is proposed. A versus room
+  costs about twice a co-op room (two sims, two snapshot streams), as the design expected.
+- **Egress is the real ceiling.** A full versus room sends about 0.26 MB/s on level 1 and 0.45 MB/s
+  in endless (about 33–56 KB/s per player: a 1.6–2.8 KB snapshot 20 times a second); a full Widownia
+  doubles it (both newsrooms' snapshots at 10 Hz to each spectator). The design's estimate of
+  „about 1 MB/s for 8 + 8” holds as an upper bound (0.54–0.90 MB/s). 150 full versus rooms need
+  about 435–735 Mbit/s, more than a small VPS uplink: an operator on 100 Mbit/s (about 12 MB/s)
+  should size `rooms.maxRooms` by the uplink divided by these per-room figures, not by CPU.
+- Nothing goes to the spectator topic of a room without a connected spectator (the bench's quiet
+  rooms receive no spectator bytes; `server-tick.test.ts` checks it).
 
 ### The 24×14 rooms (S7-66)
 
