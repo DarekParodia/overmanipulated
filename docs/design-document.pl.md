@@ -147,14 +147,14 @@ Gra ma kampanię z 6 poziomów i tryb nieskończony. Akcja toczy się w fikcyjny
 | 2. Wybory samorządowe | Kampania na prezydenta miasta | Archiwum, werdykt „z kontekstem” | Zmyślony cytat, wyrwanie z kontekstu, fałszywy sondaż |
 | 3. Afera w szkole | Viral o dyrektorze liceum | Telefon do źródła, zdarzenie „To już wszędzie jest!” | Plotka bez źródła, screen bez linku, presja społeczna |
 | 4. Zdrowie | Nowy suplement i „cudowne badanie” | Biblioteka danych | Zmanipulowana statystyka, fałszywy ekspert, korelacja jako przyczyna |
-| 5. Głęboka podróbka | Nagranie burmistrza | Skaner AI, Stenogram, Metadane, zdarzenie „Telefon od szefa”; większa sala (24×14) | Deepfake audio i wideo, obraz z AI, wycięty cytat |
-| 6. Atak | Skoordynowana kampania przed referendum | Nalot botów, sprostowania, Mapa, Inne media; większa sala (24×14) | Sieć botów, astroturfing, hashtag tworzony sztucznie |
+| 5. Głęboka podróbka | Nagranie burmistrza | Skaner AI, Stenogram, Metadane, zdarzenie „Telefon od szefa”; większa sala (24×14), siedem stanowisk | Deepfake audio i wideo, obraz z AI, wycięty cytat |
+| 6. Atak | Skoordynowana kampania przed referendum | Nalot botów, sprostowania, Mapa, Inne media; większa sala (24×14), osiem stanowisk | Sieć botów, astroturfing, hashtag tworzony sztucznie |
 
 Przed kampanią jest poziom 0 „Makieta”: próbny dyżur z samouczkiem.
 
-**Worek stanowisk.** Kolejność teczek nie jest stała. Każdy poziom ma pulę historii, a gra przy każdym briefingu rozdaje je na nowo: stanowiska, które rozstrzygają historie z puli, idą na zmianę pełnymi, przetasowanymi rundami, a do każdego miejsca na taśmie trafia inna historia, którą wskazane stanowisko rozstrzyga. Dzięki temu nie tworzy się kolejka do jednego stanowiska, a powtórka poziomu to nowe rozdanie. Dwie pierwsze teczki są zawsze proste (jeden dowód, bez pilnych), a teczki z kilkoma dowodami pojawiają się najwcześniej jako piąte. Przewodnik „co dalej” kieruje najpierw do stanowiska, które wskazał worek. Poziomy 5 i 6 mają jeszcze stałą kolejność teczek; dołączą do worka razem z nowymi stanowiskami.
+**Worek stanowisk.** Kolejność teczek nie jest stała. Każdy poziom ma pulę historii, a gra przy każdym briefingu rozdaje je na nowo: stanowiska, które rozstrzygają historie z puli, idą na zmianę pełnymi, przetasowanymi rundami, a do każdego miejsca na taśmie trafia inna historia, którą wskazane stanowisko rozstrzyga. Dzięki temu nie tworzy się kolejka do jednego stanowiska, a powtórka poziomu to nowe rozdanie. Dwie pierwsze teczki są zawsze proste (jeden dowód, bez pilnych), a teczki z kilkoma dowodami pojawiają się najwcześniej jako piąte. Przewodnik „co dalej” kieruje najpierw do stanowiska, które wskazał worek. Z worka rozdają wszystkie poziomy, także 5 i 6 w większej sali.
 
-Tryb nieskończony rozdaje zgłoszenia ze wszystkich poziomów tym samym workiem (każde stanowisko ma swoją talię historii) i przyspiesza z każdą minutą. Ma tablicę wyników dla pokoju.
+Tryb nieskończony toczy się w sali 24×14 ze wszystkimi dziesięcioma stanowiskami. Rozdaje zgłoszenia ze wszystkich poziomów tym samym workiem (każde stanowisko ma swoją talię historii) i przyspiesza z każdą minutą. Ma tablicę wyników dla pokoju.
 
 ### Rodzaje materiałów
 

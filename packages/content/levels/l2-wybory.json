@@ -49,9 +49,9 @@
     "gapS": 24,
     "lastSpawnS": 340,
     "deadlineS": {
-      "normal": 55,
-      "important": 60,
-      "urgent": 45
+      "normal": 50,
+      "important": 55,
+      "urgent": 40
     }
   }
 }

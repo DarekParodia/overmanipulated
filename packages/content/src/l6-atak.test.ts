@@ -350,7 +350,7 @@ describe('l6 Atak on the bag', () => {
       firstAtS: 4,
       gapS: 27,
       lastSpawnS: 382,
-      deadlineS: { normal: 55, important: 55, urgent: 40 },
+      deadlineS: { normal: 58, important: 58, urgent: 43 },
     });
     expect(file.bag?.starShares).toBeUndefined();
     expect(file.schedule).toBeUndefined();

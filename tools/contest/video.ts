@@ -14,6 +14,7 @@ import {
   faceTowards,
   gameInfo,
   joinRoom,
+  openExtraPlayer,
   openPlayer,
   selectLevel,
   setReady,
@@ -40,6 +41,8 @@ async function waitForFolder(host: Awaited<ReturnType<typeof openPlayer>>, story
 export async function main() {
   const stack = await startStack({ briefingMs: 6000 });
   const browser = await launchBrowser();
+  // The guest only fills a seat, in its own browser (see openExtraPlayer).
+  const crowd = await launchBrowser();
   const tmp = outPath('.video-tmp');
   await rm(tmp, { recursive: true, force: true });
   await mkdir(tmp, { recursive: true });
@@ -54,13 +57,7 @@ export async function main() {
       profile,
     );
     const code = await createRoom(host);
-    const guest = await openPlayer(
-      browser,
-      stack.baseUrl,
-      'Łukasz',
-      { viewport: VIEWPORT },
-      profile,
-    );
+    const guest = await openExtraPlayer(crowd, stack.baseUrl, 'Łukasz', profile);
     await joinRoom(guest, code);
     await selectLevel(host, 'l1-burza');
     await setReady(guest);
@@ -182,6 +179,7 @@ export async function main() {
     }
     await rename(path, outPath('gameplay.raw.webm'));
   } finally {
+    await crowd.close();
     await browser.close();
     await stack.stop();
     await rm(tmp, { recursive: true, force: true });

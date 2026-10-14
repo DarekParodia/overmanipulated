@@ -24,6 +24,25 @@ Wskazówka: nie każda teczka jest fałszywa, a „pilne” nie znaczy „prawdz
 - **Gwiazdki.** Jedna za przetrwanie z dodatnim wynikiem, dwie i trzy za 55% i 80% najlepszego wyniku możliwego w danym rozdaniu. Teczki rozdaje worek stanowisk, więc każda rozgrywka jest inna; briefing pokazuje liczbę teczek i progi.
 - **Poziom trudności.** „Łatwy”: więcej czasu, łagodniejsze kary, dodatkowa pomyłka w minigrach. „Normalny”: tak, jak zaprojektowaliśmy. „Trudny”: mniej czasu, więcej teczek, wyższe kary. „Ekspert”: jeszcze ciaśniej, bez podpowiedzi i bez pokazywania odpowiedzi po nieudanej minigrze. Postęp i tablica wyników liczą się osobno dla każdego poziomu trudności.
 
+## Stanowiska
+
+Każde stanowisko to jedna technika weryfikacji i jedna krótka minigra. Kampania odsłania je po kolei, a tryb bez końca ma wszystkie dziesięć w jednej sali.
+
+| Stanowisko | Co sprawdza | Od poziomu |
+| --- | --- | --- |
+| Lupa obrazu | Czy zdjęcie pojawiło się wcześniej i gdzie | 1 |
+| Kartoteka źródeł | Autor, domena, historia konta | 1 |
+| Archiwum | Daty, poprzednie wersje stron, usunięte treści | 2 |
+| Telefon | Źródło pierwotne, świadek, ekspert | 3 |
+| Biblioteka danych | Czy statystyka zgadza się ze źródłem | 4 |
+| Skaner AI | Ślady generowania lub edycji (tylko wskazówka, nie dowód) | 5 |
+| Stenogram | Czy cytat nie jest wycięty | 5 |
+| Metadane | Kiedy, czym i gdzie powstał plik | 5 |
+| Mapa | Gdzie zrobiono zdjęcie | 6 |
+| Inne media | Co podają niezależne redakcje (kopia to nie potwierdzenie) | 6 |
+
+Poziomy 5 i 6 dzieją się w większej sali (24×14): poziom 5 ma siedem stanowisk, poziom 6 osiem. Gdy ktoś pierwszy raz otwiera stanowisko, gra pokazuje kartę z jego opisem; później wraca ona pod przyciskiem „?” (klawisz H).
+
 ## Role i zdolności
 
 W poczekalni każdy wybiera jedną z sześciu ról albo „Bez roli”. Role się nie wykluczają: dwie osoby mogą mieć tę samą. Rola daje stałą **premię** i jedną **zdolność**, którą włącza się klawiszem **R** (pad: **RB**, telefon: czwarty przycisk). Po użyciu zdolność odnawia się przez 60 sekund. Cel wybiera gra, a karta teczki, której dotyczy zdolność, ma niebieski przerywany obrys.

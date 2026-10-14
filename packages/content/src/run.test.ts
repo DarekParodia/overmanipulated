@@ -161,9 +161,9 @@ describe('prepareRun and applyDifficulty', () => {
       fixed.schedule.map((spawn) => spawn.storyId),
     );
     expect(easy.stars).toEqual(fixed.stars);
-    // The first l6 folder gets 55 s (bag deadlines 55/55/40); Easy scales it by 1.3, rounded.
-    expect(fixed.schedule[0]?.deadlineS).toBe(55);
-    expect(easy.schedule[0]?.deadlineS).toBe(72);
+    // The first l6 folder gets 58 s (bag deadlines 58/58/43); Easy scales it by 1.3, rounded.
+    expect(fixed.schedule[0]?.deadlineS).toBe(58);
+    expect(easy.schedule[0]?.deadlineS).toBe(75);
     expect(prepareRun(fixed, { seed: 1, difficulty: 'easy' }, LEVELS, STORIES).level).toEqual(easy);
   });
 

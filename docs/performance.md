@@ -10,7 +10,7 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 | --- | --- |
 | `bun run perf:budget` | Builds the client and measures the first-load transfer (`tools/perf/check-bundle.ts`). Part of `bun run check`. |
 | `bun tools/perf/check-bundle.ts [dist]` | Same measurement on an existing build, with a per-file table. |
-| `bun run test:e2e` | `e2e/performance.spec.ts`: 4 players and 7 folders on the high preset stay under the draw-call and triangle budgets (desktop 150, mobile 100, 100k triangles). |
+| `bun run test:e2e` | `e2e/performance.spec.ts`: 4 players and 7 folders on the high preset stay under the draw-call and triangle budgets (desktop 150, mobile 100, 100k triangles) in four rooms: level 1, the 24×14 rooms of level 5 and level 6, and endless with all ten stations (S7-66). Each case prints its counters. |
 | `?debug` or F3 | Perf overlay: fps, frame time, draw calls, triangles, particles, quality preset, adaptive step, DPR cap. |
 
 ## First load
@@ -63,6 +63,7 @@ components per station kind with `React.lazy`.
 | Task | Game route gzip | Share of `gameMax` | Game chunk gzip |
 | --- | --- | --- | --- |
 | S7-56 (all ten minigames) | 814 KB | 51 % | 301 KB |
+| S7-66 (M4 done: abilities, ten stations, endless room) | 822 KB | 51 % | 303 KB |
 
 Real transfer in headless Chromium (webm audio, brotli estimate, whole flow menu, lobby, briefing,
 match): menu 434 KB, everything 1.7 MB brotli. The 10 MB limit is met about seven times over.
@@ -179,6 +180,24 @@ Audit of the 38 visible renderables on high:
 - Particles: one `InstancedMesh` for the whole pool.
 
 Result: no change needed; the e2e test keeps it that way.
+
+### The 24×14 rooms (S7-66)
+
+Same setup (4 players, 7 folders, measured page on high, the three other players small on low),
+from `e2e/performance.spec.ts`; "cut" is the last adaptive step:
+
+| Room | Stations | Desktop 1366×768: draw calls / triangles | Phone (Pixel 7): draw calls / triangles | Cut (desktop) |
+| --- | --- | --- | --- | --- |
+| level 1 (20×12) | 2 | 60 / 32.7k | 60 / 33.6k | 35 / 15.1k |
+| level 5 (24×14) | 7 | 68 / 43.0k | 65 / 40.7k | 39 / 20.3k |
+| level 6 (24×14) | 8 | 70 / 45.0k | 66 / 42.0k | 40 / 21.2k |
+| endless (24×14) | 10 | 74 / 49.9k | 69 / 46.2k | 42 / 23.2k |
+
+The heaviest room, endless on high, uses 49 % of the desktop draw-call budget (150), 69 % of the
+phone budget (100) and half of the 100k triangles. Each extra station costs about 2 calls (its merged
+mesh in the main and the shadow pass) and 2k triangles; the bigger room adds the rest. Phones draw
+a few calls less in the big rooms, probably because the phone camera frames the room differently
+and frustum culling drops a few props. No instancing change is needed.
 
 ## Textures and models: not applicable
 
