@@ -50,6 +50,10 @@ menu 592 KB gzip (588 KB without the dialog: the shared code moves from the entr
 the entry still loads, which compresses 4 KB worse), game 814 KB gzip, first load (menu + game +
 extras) 1.38 MB gzip.
 
+S7-103 („O grze”): the dialog adds 18 KB raw, 6 KB gzip to the extras route (now 28 KB raw,
+9 KB gzip); `CREDITS.md` and the voice sprite are fetched only when its Zasoby tab opens and are
+not counted. Menu 597 KB gzip, first load 1.39 MB gzip.
+
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
 
@@ -76,6 +80,22 @@ by `net/runtime.ts`, so it sits in the menu chunk. Loading it with the game chun
 A manual vendor chunk for three.js was tried and rejected: rolldown then hoisted shared modules
 (react, zustand) into it and the menu route imported three.js. The default split already keeps
 three.js out of the menu.
+
+## Ads (Stage 7)
+
+Ads are off unless the operator enables them for a host (`docs/deploy.md`, AdSense operator
+checklist), and every budget above is measured and enforced with ads off:
+`bun run perf:budget` measures our own build, and `e2e/performance.spec.ts` runs with the
+default config, where the e2e ad guard (`guardAdRequests` in `e2e/helpers.ts`) fails any test
+that requests a Google ad host. Google's script and creatives are **outside the budget**, since
+the game cannot size them, and kept away from the frames that matter:
+
+- they load only on an ad host, only on an ad screen (main menu, lobby, results; the spectator view once S7-91 places its slot)
+  and only when a placement's viewport gate matches, so phones never load them;
+- never during play: requests are paused (`pauseAdRequests`) on every other screen and no ad
+  is on screen, so a match pays no network or frame cost for new ads;
+- our own ads code (`apps/client/src/ads/`: loader, slot, pause guard) is a few KB in the menu
+  route and counted there.
 
 ## Loading screen and preloading
 

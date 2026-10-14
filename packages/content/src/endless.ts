@@ -1,9 +1,10 @@
 // Endless mode (S4-11): a pure, seeded generator for a level that never ends by the clock. The
-// whole schedule is built up front from the stories of every campaign level that all six
-// stations can solve, so the server only has to hand the result to the simulation. Since S7-22 it
-// deals on the station bag: whole shuffled rounds over the stations that decide a pool story,
-// each slot drawing from its station's own deck, with the difficulty scaling the spawn interval
-// and every deadline. Stations, stories, timing and events each draw from their own RNG stream.
+// whole schedule is built up front from the stories of every campaign level that the endless
+// stations (all ten since S7-64) can solve, so the server only has to hand the result to the
+// simulation. Since S7-22 it deals on the station bag: whole shuffled rounds over the stations
+// that decide a pool story, each slot drawing from its station's own deck, with the difficulty
+// scaling the spawn interval and every deadline. Stations, stories, timing and events each draw
+// from their own RNG stream.
 import {
   createRng,
   DEFAULT_DIFFICULTY,
@@ -15,6 +16,7 @@ import {
   type Rng,
   requiredStampsOf,
   type SimLevelEvent,
+  STATION_KINDS,
   type StationKind,
   type StoryBook,
   scaledDeadlineS,
@@ -33,12 +35,13 @@ import type { Level, Story } from './schema.ts';
 export type EndlessLevel = Level & { endless: true };
 
 /**
- * 24 x 14: all six stations (I A R along the top wall, P S L along the bottom), the conveyor,
- * two put-down tables beside the desk, and four spawns.
+ * 24 x 14: all ten stations (I A R Q E along the top wall, P S L G X along the bottom), the
+ * conveyor, two put-down tables beside the desk, and four spawns. Station signs on a row stay at
+ * least STATION_SIGN_MIN_GAP_COLUMNS apart (3 on the back wall, 4 on the front).
  */
 export const ENDLESS_LAYOUT: readonly string[] = [
   '########################',
-  '#CCCCCC.=I==A==R=......#',
+  '#CCCCCC.=I==A==R==Q==E=#',
   '#......................#',
   '#..T....1......2....T..#',
   '#......................#',
@@ -47,20 +50,14 @@ export const ENDLESS_LAYOUT: readonly string[] = [
   '#......................#',
   '#...3..............4...#',
   '#......................#',
-  '#..=P=....=S=....=L=...#',
+  '#.=P=.=S=.=L=.=G=.=X=..#',
   '#......................#',
   '#.==................==.#',
   '########################',
 ];
 
-export const ENDLESS_STATIONS: readonly StationKind[] = [
-  'imageSearch',
-  'archive',
-  'sourceRegistry',
-  'phone',
-  'aiScanner',
-  'dataLibrary',
-];
+/** Endless runs every station (S7-64). */
+export const ENDLESS_STATIONS: readonly StationKind[] = [...STATION_KINDS];
 
 /** Seed used for the level shown before a run starts (lobby card, briefing). */
 export const ENDLESS_PREVIEW_SEED = 0;

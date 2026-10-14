@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { startCaptions } from './a11y/caption-store.ts';
+import { AboutHost } from './about/AboutHost.tsx';
 import { useAdRequestPause } from './ads/use-ad-pause.ts';
 import { PerfOverlay } from './debug/PerfOverlay.tsx';
 import { EncyclopediaScreen } from './encyclopedia/EncyclopediaScreen.tsx';
@@ -11,12 +12,15 @@ import { HowToPlayHost } from './howto/HowToPlayHost.tsx';
 import { useMenuNavigation } from './input/menu-nav.ts';
 import { GameGate } from './loading/GameGate.tsx';
 import { startPreload } from './loading/preload.ts';
+import { startProfileTracking } from './net/profile-tracking.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
+import { ProfileHost } from './profile/ProfileHost.tsx';
 import { Briefing } from './screens/Briefing.tsx';
 import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
 import { SettingsPanel } from './screens/SettingsPanel.tsx';
 import { Styleguide } from './screens/Styleguide.tsx';
+import { SpectateSummary } from './spectate/SpectateSummary.tsx';
 import { useApp } from './store/app.ts';
 import { usePublicConfig } from './store/public-config.ts';
 import { applySettingsToDocument, useSettings } from './store/settings.ts';
@@ -40,6 +44,7 @@ export function App() {
     const disconnectOutputs = feedback.connect({ playSound, vibrate });
     const stopGameplayFeedback = startGameplayFeedback();
     const stopCaptions = startCaptions();
+    const stopProfileTracking = startProfileTracking();
     document.addEventListener('visibilitychange', handleVisibilityReturn);
     return () => {
       unsubscribeSettings();
@@ -47,6 +52,7 @@ export function App() {
       disconnectOutputs();
       stopGameplayFeedback();
       stopCaptions();
+      stopProfileTracking();
       document.removeEventListener('visibilitychange', handleVisibilityReturn);
     };
   }, []);
@@ -65,11 +71,14 @@ export function App() {
       {screen === 'lobby' && <Lobby />}
       {screen === 'briefing' && <Briefing />}
       {screen === 'game' && <GameGate />}
+      {screen === 'spectate' && <SpectateSummary />}
       {screen === 'styleguide' && <Styleguide />}
       <SettingsPanel />
       <EncyclopediaScreen />
       {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
       <HowToPlayHost />
+      <ProfileHost />
+      <AboutHost />
       <PerfOverlay />
     </>
   );

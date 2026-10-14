@@ -1,0 +1,50 @@
+/*
+ * Role ability markers in the world (S7-42). Player markers sit beside the body at hip height,
+ * clear of the name tag and of a ping bubble over the head; the pass-target ring lies flat on
+ * the floor under the teammate. Blue means armed / your target, orange a running call (one
+ * meaning per colour).
+ */
+.wrap {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Beside the body: shifted right in screen space, so it never covers the player or the name. */
+.head {
+  display: block;
+  transform: translateX(2.25rem);
+}
+
+.ring {
+  --ring-size: 2.25rem;
+  background: var(--surface);
+  box-shadow: var(--pop-pressed);
+}
+
+/* A dashed blue ellipse on the floor, outlined in navy inside and out. */
+.floor {
+  display: block;
+  width: 4.5rem;
+  height: 2rem;
+  border: 0.25rem dashed var(--blue);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 var(--stroke) var(--outline),
+    inset 0 0 0 var(--stroke) var(--outline);
+  animation: breathe 1.6s var(--ease-out) infinite alternate;
+}
+
+@keyframes breathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.12);
+  }
+}
+
+/* Static under reduced motion and no-flash: the ring still shows, it just does not move. */
+:root[data-reduced-motion="true"] .floor,
+:root[data-no-flash="true"] .floor {
+  animation: none;
+}

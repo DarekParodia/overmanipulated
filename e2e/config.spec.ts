@@ -119,3 +119,38 @@ test('without a message there is no banner', async ({ page }) => {
   await expect(page.locator('[data-ad-placement]')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Zgody reklamowe' })).toHaveCount(0);
 });
+
+// S7-75: „Prywatność” under the menu card opens the privacy note the game server renders (no ads
+// here, so no ads section) in the same tab, and the note leads back to the game. Keyboard on
+// desktop, a tap on the phone; the link keeps the 48 px target.
+test('the privacy link opens the note and leads back to the game', async ({ page }, testInfo) => {
+  guardAdRequests(page.context());
+  await serveMotd(page, null);
+  await openMenu(page, false);
+  const link = page.getByTestId('menu-footer').getByRole('link', { name: 'Prywatność' });
+  await expect(link).toHaveAttribute('href', '/prywatnosc');
+  await link.scrollIntoViewIfNeeded();
+  const box = await link.boundingBox();
+  expect(box?.height ?? 0).toBeGreaterThanOrEqual(48);
+
+  if (testInfo.project.use.hasTouch) {
+    await link.tap();
+  } else {
+    await link.focus();
+    await page.keyboard.press('Enter');
+  }
+  await expect(page).toHaveURL(/\/prywatnosc$/);
+  await expect(page).toHaveTitle('Prywatność w grze „Redakcja na Ostatnią Chwilę”');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+    'Prywatność w grze „Redakcja na Ostatnią Chwilę”',
+  );
+  await expect(page.getByText('Pod tym adresem nie ma reklam.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Reklamy' })).toHaveCount(0);
+  // No horizontal page scroll: the wide table scrolls inside its own box.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    page.viewportSize()?.width ?? 0,
+  );
+
+  await page.getByRole('link', { name: '← Wróć do gry' }).click();
+  await expect(page.getByLabel('Twój podpis')).toBeVisible();
+});

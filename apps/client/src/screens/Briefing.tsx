@@ -3,8 +3,9 @@
 // who is ready. Since S7-25 it also names the room's difficulty and the dealt run: its folders,
 // the points two and three stars take, and the share rule behind them. The card spins in and
 // slaps onto the desk (a fade under reduced motion); any tap or key skips the intro. One main
-// action: the yellow "Gotowy!". The stations new today are chips that open their help card in
-// „Jak grać” (S7-97), which closes by itself when the level starts.
+// action: the yellow "Gotowy!". Spectators (S7-84) read the same card without it: "Oglądasz".
+// The stations new today are chips that open their help card in „Jak grać” (S7-97), which
+// closes by itself when the level starts.
 import { getLevel, LEVELS } from '@redakcja/content';
 import { BRIEFING_DURATION_MS, ENDLESS_LEVEL_ID, type StationKind } from '@redakcja/shared';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,7 +14,7 @@ import { emitCue } from '../fx/feedback.ts';
 import { useHowTo } from '../howto/store.ts';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { skipBriefing } from '../net/session.ts';
-import { useApp } from '../store/app.ts';
+import { selfKind, useApp } from '../store/app.ts';
 import { levelNumber, newStations } from '../store/progress.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
@@ -71,6 +72,7 @@ export function Briefing() {
   }, [intro]);
 
   const skippedBy = briefing?.skippedBy ?? [];
+  const spectator = selfKind(room, playerId) === 'spectator';
   const isReady = pressed || (playerId !== null && skippedBy.includes(playerId));
 
   function finishIntro() {
@@ -81,7 +83,7 @@ export function Briefing() {
   }
 
   function ready() {
-    if (isReady) {
+    if (isReady || spectator) {
       return;
     }
     finishIntro();
@@ -342,7 +344,12 @@ export function Briefing() {
             })}
           </ul>
           <div ref={readyButton} className={styles.action}>
-            {isReady ? (
+            {spectator ? (
+              <p className={styles.waiting} role="status" data-testid="briefing-watching">
+                <Icon name="eye" size={26} />
+                {pl.spectate.watching}
+              </p>
+            ) : isReady ? (
               <p className={styles.waiting} role="status">
                 <Icon name="check" size={26} />
                 {pl.briefing.waiting}

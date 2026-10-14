@@ -21,6 +21,7 @@ import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
+import type { Accessory } from '../store/profile-model.ts';
 import { listPl, pluralPl } from './plural.ts';
 
 /**
@@ -75,6 +76,10 @@ export const pl = {
     motdClose: 'Zamknij komunikat',
     /** Footer link (S7-74): reopens Google's ad consent message. */
     adConsent: 'Zgody reklamowe',
+    /** Offered next to `matchInProgress` (S7-84): watch the same room from the Widownia. */
+    watchAction: 'Oglądaj',
+    /** Footer link (S7-75): the privacy note at /prywatnosc, in the same tab. */
+    privacy: 'Prywatność',
   },
   /** Ads (S7-73): the frame's label, also its name for screen readers. */
   ads: {
@@ -292,6 +297,8 @@ export const pl = {
   },
   // --- Stage 2 gameplay. Shared vocabulary first, then one namespace per feature. ----------
   vocab: {
+    /** Versus newsrooms by team index (S7-84): 0 Kurier, 1 Głos. */
+    teams: ['Kurier', 'Głos'],
     storyTypes: {
       photo: 'Zdjęcie',
       quote: 'Cytat',
@@ -502,6 +509,12 @@ export const pl = {
       targetLabel: 'Cel twojej zdolności',
       /** The folder card carried by a Ratownik with the rescue left. */
       rescueLabel: 'Chroni ją koło ratunkowe',
+      /** World markers over players (S7-42); they show icons only, these are their names. */
+      marker: {
+        armed: (nick: string, ability: string) => `${nick}: ${ability} uzbrojona`,
+        calling: (nick: string) => `${nick} dzwoni`,
+        passTarget: (nick: string) => `Podasz teczkę: ${nick}`,
+      },
     },
     /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
@@ -2107,6 +2120,21 @@ export const pl = {
       abilityReady: 'Zdolność gotowa',
     },
   },
+  /**
+   * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
+   * screen (S7-90/91) builds on these.
+   */
+  spectate: {
+    title: 'Widownia',
+    watching: 'Oglądasz',
+    waiting: 'Czekamy na pierwszy obraz…',
+    leave: 'Wyjdź',
+    /** One newsroom's line on the watch screen: name, points and credibility. */
+    teamLine: (team: string, score: number, credibility: number) =>
+      `${team}: ${score} pkt, wiarygodność ${credibility}`,
+    /** The single newsroom of a co-op match. */
+    coopTeam: 'Redakcja',
+  },
   // --- S7-96 „Jak grać”: the help dialog with the intro, the stations and the controls. ---
   howTo: {
     /** The entry button (main menu corner, lobby, settings). */
@@ -2133,6 +2161,78 @@ export const pl = {
     back: 'Wróć',
     /** Opened from the in-game menu: practice waits until the level is over. */
     practiceInGame: 'Ćwiczenia po wydaniu',
+  },
+  // --- S7-103 „O grze”: authors, licence, privacy, version; asset credits; libraries. ---
+  about: {
+    /** The main-menu footer link. */
+    open: 'O grze',
+    title: 'O grze',
+    tabsLabel: 'Działy',
+    tabs: { game: 'Gra', credits: 'Zasoby', libraries: 'Biblioteki' },
+    close: 'Gotowe',
+    /** Gamepad only, as in „Jak grać”. */
+    padHint: 'Y zmienia dział',
+    authors: 'Autorzy',
+    licence: 'Licencja',
+    licenceSummary:
+      'Kod, grafika, dźwięki i teksty gry są chronione prawem autorskim: bez pisemnej zgody autora nie wolno ich kopiować ani rozpowszechniać. Biblioteki i zasoby z innych źródeł mają własne licencje – patrz „Zasoby” i „Biblioteki”.',
+    privacy: 'Prywatność',
+    privacyBody:
+      'Co gra zapisuje, na jak długo i po co – wszystko w notce o prywatności. Bez kont i bez e-maili.',
+    privacyLink: 'Notka o prywatności',
+    version: 'Wersja',
+    versionLine: (version: string, protocol: number) => `${version} · protokół ${protocol}`,
+    creditsLoading: 'Wczytuję listę zasobów…',
+    creditsError: 'Nie udało się wczytać listy zasobów. Sprawdź połączenie.',
+    retry: 'Spróbuj ponownie',
+    voiceHeading: 'Głos lektora',
+    /** Until the volunteer's recording ships (docs/voice-recording.pl.md). */
+    voicePending: 'Czekamy na nagranie ochotnika. Do tego czasu wprowadzenie ma tylko napisy.',
+    voiceCredit: (speaker: string, licence: string) => `${speaker} – licencja ${licence}.`,
+    librariesLead: 'Gra powstała dzięki otwartemu oprogramowaniu. Dziękujemy jego autorom!',
+    libraryColumns: { name: 'Biblioteka', licence: 'Licencja' },
+    sides: { client: 'W przeglądarce', server: 'Na serwerze gry' },
+  },
+  // --- S7-104 Profil: this browser's statistics and the preferred look. ---
+  profile: {
+    /** The main-menu footer link. */
+    open: 'Profil',
+    title: 'Profil',
+    close: 'Gotowe',
+    lookTitle: 'Wygląd',
+    noNickname: 'Bez podpisu',
+    previewLabel: (nickname: string) => `Podgląd: ${nickname}`,
+    colorLabel: 'Kolor gracza',
+    /** Colour name and its shape (S5-05), so the choice never rests on colour alone. */
+    colors: ['Pomarańczowy, koło', 'Niebieski, kwadrat', 'Morski, trójkąt', 'Różowy, romb'],
+    accessoryLabel: 'Dodatek',
+    accessories: {
+      none: 'Bez dodatku',
+      scarf: 'Szalik',
+      bowTie: 'Muszka',
+      pressCard: 'Legitymacja prasowa',
+    } satisfies Record<Accessory, string>,
+    statsTitle: 'Statystyki',
+    stats: {
+      levels: 'Rozegrane wydania',
+      wins: 'Wygrane',
+      accuracy: 'Trafne werdykty',
+      favouriteRole: 'Ulubiona rola',
+      stamps: 'Zebrane pieczątki',
+      minigameFails: 'Nieudane zadania',
+    },
+    percent: (n: number) => `${n}\u00a0%`,
+    /** No verdict or no finished level with a role yet. */
+    none: '–',
+    starsTitle: 'Gwiazdki',
+    starsOf: (stars: number, max: number) => `${stars} z\u00a0${max}`,
+    starsLabel: (difficulty: string, stars: number, max: number) =>
+      `${difficulty}: ${stars} z\u00a0${max} ${pluralPl(max, 'gwiazdki', 'gwiazdek', 'gwiazdek')}`,
+    localOnly: 'Zapisane tylko w tej przeglądarce.',
+    clear: 'Wyczyść statystyki',
+    clearConfirm: 'Na pewno? Wyczyść',
+    clearCancel: 'Anuluj',
+    cleared: 'Statystyki wyczyszczone.',
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   encyclopedia: {

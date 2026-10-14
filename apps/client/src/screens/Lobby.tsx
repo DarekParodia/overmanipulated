@@ -18,7 +18,7 @@ import {
   setRole,
   startGame,
 } from '../net/session.ts';
-import { useApp } from '../store/app.ts';
+import { type UiError, useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
@@ -29,8 +29,23 @@ import { PlayerCard } from './lobby/PlayerCard.tsx';
 import { ReadyToggle } from './lobby/ReadyToggle.tsx';
 import { RolePasses } from './lobby/RolePasses.tsx';
 
-/** Server errors a lobby action can answer with; shown next to the main action. */
-const LOBBY_ERRORS = new Set(['notReady', 'notHost', 'unknownLevel']);
+/**
+ * Server errors a lobby action can answer with; shown next to the main action. The room actions
+ * of S7-77 (teams, Widownia, name, kick) add theirs (S7-84).
+ */
+export const LOBBY_ERRORS: ReadonlySet<UiError> = new Set<UiError>([
+  'notReady',
+  'notHost',
+  'unknownLevel',
+  'teamFull',
+  'teamEmpty',
+  'spectatorsFull',
+  'spectatorsOff',
+  'invalidTarget',
+  'invalidName',
+  'kickCooldown',
+  'featureDisabled',
+]);
 
 /** Clears a previous lobby error before the next action, so a stale reason never lingers. */
 function act(action: () => void): void {

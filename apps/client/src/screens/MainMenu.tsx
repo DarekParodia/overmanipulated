@@ -1,8 +1,10 @@
 // Title screen (design-rules §5): the game logo on the sky, one centred panel with the
 // nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner;
 // minor links sit in the footer under the card and, with ads on, a „Reklama” rail on the left.
+// A versus match already under way (`matchInProgress`) offers to watch it instead (S7-84).
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { useAbout } from '../about/store.ts';
 import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -10,7 +12,8 @@ import { useHowTo } from '../howto/store.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
-import { usePublicConfig } from '../store/public-config.ts';
+import { useProfile } from '../store/profile.ts';
+import { useFeature, usePublicConfig } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Field } from '../ui/Field.tsx';
@@ -28,6 +31,8 @@ export function MainMenu() {
   const error = useApp((s) => s.error);
   const connection = useApp((s) => s.connection);
   const setSettingsOpen = useApp((s) => s.setSettingsOpen);
+  const lastJoinCode = useApp((s) => s.lastJoinCode);
+  const spectators = useFeature('spectators');
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -70,8 +75,17 @@ export function MainMenu() {
     joinRoom(name, code);
   }
 
+  function watch() {
+    const name = validNickname();
+    if (name && lastJoinCode) {
+      joinRoom(name, lastJoinCode, 'spectator');
+    }
+  }
+
   const serverError = error ? pl.errors[error] : null;
   const message = localError ?? serverError;
+  const canWatch =
+    localError === null && error === 'matchInProgress' && spectators && lastJoinCode !== null;
 
   return (
     <main className={styles.page}>
@@ -145,6 +159,16 @@ export function MainMenu() {
             {message}
           </p>
         )}
+        {canWatch && (
+          <Button
+            icon={<Icon name="eye" size={26} />}
+            disabled={busy}
+            data-testid="menu-watch"
+            onClick={watch}
+          >
+            {pl.menu.watchAction}
+          </Button>
+        )}
         {health && health !== 'ok' && (
           <p className={styles.error} role="status">
             <Icon name="expired" size={22} />
@@ -153,7 +177,29 @@ export function MainMenu() {
         )}
       </section>
 
-      <MenuFooter className={styles.footer} />
+      <MenuFooter
+        className={styles.footer}
+        profile={
+          <Button
+            variant="ghost"
+            icon={<Icon name="trophy" size={22} />}
+            data-testid="open-profile"
+            onClick={() => useProfile.getState().show()}
+          >
+            {pl.profile.open}
+          </Button>
+        }
+        about={
+          <Button
+            variant="ghost"
+            icon={<Icon name="heart" size={22} />}
+            data-testid="open-about"
+            onClick={() => useAbout.getState().show()}
+          >
+            {pl.about.open}
+          </Button>
+        }
+      />
 
       {/* Fixed left rail; renders nothing without ads, on phones or below 1180×680 (S7-74). */}
       <AdSlot placement="menu" />

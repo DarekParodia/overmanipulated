@@ -77,14 +77,16 @@ type AbilityEvent = Extract<GameplayEvent, { kind: 'ability' }>;
 
 /**
  * Cue of a role ability's stage (S7-36): arming and disarming are shared, Telefon z terenu has a
- * cue per stage, every other ability is heard when its effect lands.
+ * cue per stage, every other ability is heard when its effect lands. A teammate arming or
+ * disarming is nobody else's business (S7-42): null, so only the presser hears it; the armed
+ * badge over the head shows it to everyone.
  */
-export function abilityCue(event: AbilityEvent): CueId {
-  if (event.stage === 'armed') {
-    return 'ability.armed';
-  }
-  if (event.stage === 'disarmed') {
-    return 'ability.disarmed';
+export function abilityCue(event: AbilityEvent, localPlayerId: string | null): CueId | null {
+  if (event.stage === 'armed' || event.stage === 'disarmed') {
+    if (event.playerId !== localPlayerId) {
+      return null;
+    }
+    return event.stage === 'armed' ? 'ability.armed' : 'ability.disarmed';
   }
   switch (event.ability) {
     case 'fieldCall':
@@ -104,11 +106,16 @@ export function abilityCue(event: AbilityEvent): CueId {
   }
 }
 
-/** The cue for a gameplay event. `truthOf` looks up a story's truth (for wrong verdicts). */
+/**
+ * The cue for a gameplay event, or null when the event is silent for this client (a teammate's
+ * arm / disarm). `truthOf` looks up a story's truth (for wrong verdicts); `localPlayerId` is this
+ * client's player.
+ */
 export function cueForEvent(
   event: GameplayEvent,
   truthOf: (storyId: string) => Truth | undefined,
-): CueId {
+  localPlayerId: string | null,
+): CueId | null {
   switch (event.kind) {
     case 'folderSpawned':
       return 'folder.arrive';
@@ -141,7 +148,7 @@ export function cueForEvent(
     case 'raidResolved':
       return 'event.raidResolved';
     case 'ability':
-      return abilityCue(event);
+      return abilityCue(event, localPlayerId);
     case 'folderRescued':
       return 'role.rescue';
     case 'ping':

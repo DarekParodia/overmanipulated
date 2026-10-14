@@ -19,4 +19,6 @@ bun run dev:client   # client on http://localhost:5173
 bun run test:e2e     # multiplayer end-to-end tests (desktop + mobile)
 ```
 
-Deployment: [`docs/deploy.md`](docs/deploy.md).
+Deployment: [`docs/deploy.md`](docs/deploy.md). Runtime settings (feature flags, message of the
+day, ads) live in `config/config.json` (copy `config/config.example.json`; hot-reloaded, every key
+documented in `docs/deploy.md`).
