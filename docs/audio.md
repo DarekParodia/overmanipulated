@@ -2,7 +2,7 @@
 
 All sound effects and music are synthesised from oscillators and filtered noise (no samples,
 nothing to license). The one exception is the intro voiceover (see Voice): speech, made by
-`synth_voice.py` from a volunteer recording or an audited TTS voice. Generators live in
+`synth_voice.py` from a volunteer recording (pending, see Voice). Generators live in
 `tools/audio/` and need `numpy` and `ffmpeg`.
 
 | Script | Produces |
@@ -10,6 +10,7 @@ nothing to license). The one exception is the intro voiceover (see Voice): speec
 | `synth_placeholders.py` | `public/assets/audio/sfx.{webm,mp3}` (one sprite) and `src/fx/audio/sfx-sprite.json` |
 | `synth_music.py` | `public/assets/audio/music/*.{webm,mp3}` and `src/fx/audio/music-manifest.json` |
 | `synth_voice.py` | `public/assets/voice/intro.{webm,mp3}` and the voice sprite `public/assets/voice/intro.json` (see Voice) |
+| `voice-script.ts` (bun) | The clip table of `docs/voice-recording.pl.md` (the volunteer's recording script) |
 | `measure.py` | Decodes the shipped files and prints peak/RMS per file and per bus; exits non-zero on clipping, missing files, out-of-window buses or a payload over budget |
 
 Run the generators, then `python3 tools/audio/measure.py`. Sprite offsets change whenever a sound's
@@ -112,31 +113,43 @@ uses the bus: the intro subtitles every line, so voice lines are not cues and ne
 
 The lines come from the intro script (S7-99, `apps/client/src/intro/intro-script.ts`, words in
 `pl.intro.voice`): 17 clips, ids such as `welcome` or `pickup.touch`.
-`bun tools/audio/intro-lines.ts` prints them as JSON (`{clipId: {subtitle, tts}}`) for the
+`bun tools/audio/intro-lines.ts` prints them as JSON (`{clipId: {subtitle, tts, textSha1}}`) for the
 generator; `tts` is the subtitle with plain spaces, no quotes and the key names respelled
 (`PRONOUNCE`), and `textSha1`, the sha1 of the subtitle's words (`voiceText`: NFC, runs of spaces
 collapsed, so typographic spacing never makes a clip stale).
 
 ### Generating the voice (`synth_voice.py`)
 
-**Status: not generated yet.** No TTS voice passed the licence audit, and the generator cannot
-reach the Piper voice host from the build sandbox (huggingface.co is denied by the egress policy).
-Until the files exist the intro runs on subtitles and fallback timing alone: `loadIntroVoice()`
-(`intro/voice-sprite.ts`) finds no sprite and resolves false, `measure.py` reports the voice as not
-generated, and `voice-sync.test.ts` only checks that no audio ships without its sprite. To ship
-the voice, run the generator on a machine with the takes (or with access to the model host) and
-commit the three files together:
+**Status: waiting for the volunteer recording ([`docs/voice-recording.pl.md`](voice-recording.pl.md)).**
+The voice is a volunteer recording released under CC0 (user decision 2026-10-13, Decision log): no
+TTS voice passed the licence audit below, so none is generated. Until the files exist the intro
+runs on subtitles and fallback timing alone: `loadIntroVoice()` (`intro/voice-sprite.ts`) finds no
+sprite and resolves false, `measure.py` reports the voice as not generated, and
+`voice-sync.test.ts` only checks that no audio ships without its sprite.
+
+`docs/voice-recording.pl.md` (Polish) is the guide for the volunteer and the teacher: who may
+record (a parent or guardian also signs for a minor), the table of the 17 clips, the recording
+requirements (WAV, mono, 44.1 or 48 kHz, 16 or 24-bit, one `<clipId>.wav` per clip, about
+2 min 15 s of speech at most), re-recording rules, how to send the takes, and the CC0 dedication
+and consent form. Its clip table (file, who hears it, exact subtitle, key-name respellings from
+`PRONOUNCE`, rough length at `INTRO_WORD_MS` per word) is a generated section:
+`bun tools/audio/voice-script.ts` rewrites it from the line export, and `voice-script.test.ts`
+fails while it is stale. Once the takes are in, run the generator and commit the three files
+together with the CREDITS row:
 
 ```
-python3 tools/audio/synth_voice.py --recordings DIR --voice LABEL   # volunteer takes, CC0
-python3 tools/audio/measure.py && bun test apps/client/src/intro
+python3 tools/audio/synth_voice.py --recordings DIR --licence self-recorded-CC0 --credit 'NAME'
+python3 tools/audio/measure.py && bun test apps/client/src/intro tools/audio
 ```
 
 `DIR/<clipId>.wav` holds one take per clip (17: the ids `bun tools/audio/intro-lines.ts` prints).
-The volunteer releases the takes under CC0 and is named in CREDITS.md. `--model PATH --voice LABEL
---licence L [--credit TEXT]` uses an offline Piper voice instead (`pip install piper-tts==1.8.0`),
-and `--voice NAME` downloads one listed in the tool's `VOICES` table, checked against pinned
-SHA-256 values; both only for a voice whose whole chain passed the audit below.
+The sprite's `voice` label defaults to the neutral `ochotnik-1` (`--voice LABEL` overrides it;
+never the volunteer's name); `NAME` is the credit the
+volunteer chose on the form (`anonimowy ochotnik` when anonymous). The raw WAVs and the signed
+form never go into the repository. `--model PATH --voice LABEL --licence L [--credit TEXT]` uses
+an offline Piper voice instead (`pip install piper-tts==1.8.0`), and `--voice NAME` downloads one
+listed in the tool's `VOICES` table, checked against pinned SHA-256 values; both only for a voice
+whose whole chain passed the audit below.
 
 Every take gets the same treatment: silence below -45 dBFS trimmed (40 ms kept around speech),
 10 ms fades, -20 dBFS RMS over the audible part with the peak at or under -3 dBFS. Clips are

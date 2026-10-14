@@ -278,6 +278,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Sprite lektora | voice sprite (`VoiceSprite`, `voiceSpriteSchema`, `loadVoiceSprite`, `loadIntroVoice`; `intro/voice-sprite.ts`) | `/assets/voice/intro.json` beside `intro.{webm,mp3}`: per clip `startMs`, `durationMs`, `textSha1`; written by `tools/audio/synth_voice.py`; optional (no sprite → subtitles and fallback timing) |
 | Licencja głosu | voice licence (`VOICE_LICENCES`) | `CC0-1.0`, `CC-BY-4.0`, `MIT` or `self-recorded-CC0` (a volunteer recording released under CC0); nothing non-commercial can ship |
 | Nagranie lektora | voice recording (`synth_voice.py --recordings DIR`) | One take per clip, `DIR/<clipId>.wav`, released under CC0 by the volunteer; replaces TTS with one command |
+| Scenariusz nagrania | voice script (`tools/audio/voice-script.ts`, `docs/voice-recording.pl.md`) | The volunteer's guide: the generated 17-clip table (file, who hears it, exact subtitle, key-name respellings, rough length), recording rules and the CC0 consent form; `voice-script.test.ts` fails while the table is stale |
 
 ## Server config and ads (Stage 7)
 
