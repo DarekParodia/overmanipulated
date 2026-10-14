@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { useGuidance } from '../guidance/store.ts';
 import { resetTutorial } from '../guidance/tutorial-store.ts';
+import { useHowTo } from '../howto/store.ts';
 import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { KeyCap } from '../stations/kit.tsx';
 import { resetStationHelp } from '../stations/station-help-store.ts';
@@ -249,7 +250,11 @@ const DEVICE_ICON: Record<ControlDevice, IconName> = {
 };
 const DEVICES: readonly ControlDevice[] = ['keyboard', 'gamepad', 'touch'];
 
-export function ControlsTab() {
+/**
+ * The bindings for one device. In the settings (`howToEntry`) it ends with „Jak grać?” (S7-96);
+ * „Jak grać” shows the same tab without it.
+ */
+export function ControlsTab({ howToEntry = false }: { howToEntry?: boolean }) {
   const current = useApp((s) => s.inputDevice);
   const [device, setDevice] = useState<ControlDevice>(current);
   return (
@@ -288,6 +293,22 @@ export function ControlsTab() {
         ))}
       </dl>
       <p className={styles.note}>{pl.settings.controlsMenuNote}</p>
+      {howToEntry && (
+        <div>
+          <Button
+            icon={<Icon name="question" size={24} />}
+            data-testid="settings-how-to"
+            onClick={() =>
+              // Over a match there is no practice round: the player is still in play.
+              useHowTo
+                .getState()
+                .show('intro', { practiceAllowed: useApp.getState().screen !== 'game' })
+            }
+          >
+            {pl.howTo.open}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

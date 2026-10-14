@@ -1,10 +1,13 @@
 // Drawn controls shared by the first-game tutorial, the station help card and the intro: key caps,
 // gamepad buttons, the d-pad, touch thumb-button labels and the tutorial's step drawings. They
 // are pictures, not inputs, so screen readers skip them where the text next to them says it all.
+import { abilityOf, type Role } from '@redakcja/shared';
 import type { ReactNode } from 'react';
+import { abilityKeyCap } from '../screens/settings-model.ts';
 import type { InputDevice } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
+import { RoleIcon } from '../ui/icons/RoleIcon.tsx';
 import styles from './ControlsArt.module.css';
 import type { TutorialStepId } from './tutorial.ts';
 
@@ -66,8 +69,31 @@ export function Control({ action, device }: { action: 'interact' | 'work'; devic
   return action === 'interact' ? <Key>E</Key> : <Key wide>{pl.settings.keySpace}</Key>;
 }
 
+/** The role ability's control: R, RB or the fourth thumb button with its own label. */
+export function AbilityControl({ role, device }: { role: Role | null; device: InputDevice }) {
+  const ability = abilityOf(role);
+  if (device === 'touch') {
+    return (
+      <TouchButton>{ability ? pl.touch.ability[ability] : pl.touch.abilityGeneric}</TouchButton>
+    );
+  }
+  if (device === 'gamepad') {
+    return <PadButton>{abilityKeyCap('gamepad')}</PadButton>;
+  }
+  return <Key>{abilityKeyCap('keyboard')}</Key>;
+}
+
 /** The drawing for one tutorial step (or the closing "well done" card). */
-export function Illustration({ id, device }: { id: TutorialStepId | 'done'; device: InputDevice }) {
+export function Illustration({
+  id,
+  device,
+  role = null,
+}: {
+  id: TutorialStepId | 'done';
+  device: InputDevice;
+  /** The local player's role: the ability step draws its icon. */
+  role?: Role | null;
+}) {
   switch (id) {
     case 'move':
       if (device === 'keyboard') {
@@ -119,6 +145,13 @@ export function Illustration({ id, device }: { id: TutorialStepId | 'done'; devi
           <span className={`${styles.verdict} ${styles.reject}`}>
             <Icon name="reject" size={30} />
           </span>
+        </span>
+      );
+    case 'ability':
+      return (
+        <span className={styles.pair}>
+          {role !== null && <RoleIcon role={role} size={40} />}
+          <AbilityControl role={role} device={device} />
         </span>
       );
     case 'done':

@@ -1,9 +1,9 @@
 // The intro voice sprite (S7-100): which part of `/assets/voice/intro.{webm,mp3}` holds each
 // narrator clip, who spoke it, under which licence, and the sha1 of the subtitle it was made from.
 // `tools/audio/synth_voice.py` writes it next to the audio as `/assets/voice/intro.json`; it is
-// never edited by hand. The voice is optional: until the files are generated (the voice model
-// host is unreachable from the build sandbox, docs/audio.md) there is no sprite, `loadIntroVoice`
-// resolves false and the intro runs on subtitles and fallback timing alone.
+// never edited by hand. The voice is optional: until the files are generated from the volunteer
+// recording (docs/voice-recording.pl.md) there is no sprite, `loadIntroVoice` resolves false and
+// the intro runs on subtitles and fallback timing alone.
 //
 // The sprite is fetched at runtime, not imported: the build cannot import a file that may not
 // exist, and the json stays next to the audio it describes and out of the JS bundle.

@@ -1,10 +1,23 @@
 import { describe, expect, it } from 'bun:test';
-import { parseLayout, type StationKind } from '@redakcja/shared';
-import { decidingStations, isPinned, pinnedCounts } from './bag.ts';
-import { checkLayout, validateContent } from './checks.ts';
+import {
+  BAG_PREVIEW_SEED,
+  DIFFICULTIES,
+  MULTI_STAMP_EXTRA_DEADLINE_MS,
+  parseLayout,
+  type StationKind,
+} from '@redakcja/shared';
+import {
+  bagSlotTimes,
+  decidingStations,
+  generateBagLevel,
+  isPinned,
+  pinnedCounts,
+  starThresholds,
+} from './bag.ts';
+import { checkBag, checkLayout, maxLevelScore, validateContent } from './checks.ts';
 import { LEVEL_FILES, STORY_FILES } from './files.ts';
 import { getLevel, STORIES } from './index.ts';
-import type { Story } from './schema.ts';
+import { levelFileSchema, type Story } from './schema.ts';
 
 // S7-57: level 5 moves to a 24×14 room with Stenogram and Metadane, every l5 story gets a stamp
 // for both, and four stories are retargeted to them.
@@ -18,7 +31,9 @@ const PINNED: readonly [string, StationKind][] = [
   ['l5-burmistrz-morsuje', 'archive'],
   ['l5-falszywy-profil-urzedu', 'sourceRegistry'],
 ];
-const NEW_IDS = new Set(PINNED.map(([id]) => id));
+// S7-60: the eighth new story, pinned to the Lupa obrazu.
+const PINNED_S7_60: readonly [string, StationKind][] = [['l5-basen-zamkniety', 'imageSearch']];
+const NEW_IDS = new Set([...PINNED, ...PINNED_S7_60].map(([id]) => id));
 const level = getLevel('l5-deepfake');
 const stations = level?.stations ?? [];
 const l5Stories = STORIES.filter((story) => story.id.startsWith('l5-'));
@@ -87,19 +102,19 @@ describe('l5 Głęboka podróbka room (S7-57)', () => {
       [{ file: 'levels/l5-deepfake.json', data: LEVEL_FILES['levels/l5-deepfake.json'] }],
       [{ file: 'stories/l5-deepfake.json', data: STORY_FILES['stories/l5-deepfake.json'] }],
     );
-    // Endless deck warnings depend on the whole campaign, not on this level. The S7-59 stories
-    // wait for the S7-60 bag pool, so they are not scheduled yet.
+    // Endless deck warnings depend on the whole campaign, not on this level. Since S7-60 every
+    // l5 story is in the bag pool or an event, so none is left unscheduled.
     expect(
       issues
         .filter((issue) => issue.file !== 'endless')
         .map((issue) => `${issue.severity}: ${issue.message}`),
-    ).toEqual(PINNED.map(([id]) => `warning: story "${id}" is not scheduled in any level`));
+    ).toEqual([]);
   });
 });
 
 describe('l5 Stenogram and Metadane stamps (S7-57)', () => {
-  it('covers all 24 l5 stories, each with one stamp per level station', () => {
-    expect(l5Stories).toHaveLength(24);
+  it('covers all 25 l5 stories, each with one stamp per level station', () => {
+    expect(l5Stories).toHaveLength(25);
     for (const s of l5Stories) {
       expect({ id: s.id, stations: s.stamps.map((stamp) => stamp.station).sort() }).toEqual({
         id: s.id,
@@ -118,14 +133,11 @@ describe('l5 Stenogram and Metadane stamps (S7-57)', () => {
     expect(deciding('l5-wywiad-radio')).toEqual(['phone', 'transcript']);
     expect(deciding('l5-burmistrz-na-jachcie')).toEqual(['sourceRegistry', 'metadata']);
     expect(deciding('l5-zdjecie-sprzed-lat')).toEqual(['imageSearch', 'archive', 'metadata']);
-    for (const id of [
-      'l5-wyciety-cytat',
-      'l5-wywiad-radio',
-      'l5-burmistrz-na-jachcie',
-      'l5-zdjecie-sprzed-lat',
-    ]) {
+    for (const id of ['l5-wyciety-cytat', 'l5-wywiad-radio', 'l5-zdjecie-sprzed-lat']) {
       expect(story(id).requiredStamps).toBe(1);
     }
+    // S7-60 makes the yacht photo a two-proof pick (registry + Metadane).
+    expect(story('l5-burmistrz-na-jachcie').requiredStamps).toBe(2);
     expect(story('l5-wyciety-cytat').debrief.tool.startsWith('Stenogram:')).toBe(true);
     expect(story('l5-wywiad-radio').debrief.tool).toContain('Stenogram');
     expect(story('l5-burmistrz-na-jachcie').debrief.tool).toContain('Metadane');
@@ -180,26 +192,28 @@ describe('l5 Stenogram and Metadane stamps (S7-57)', () => {
   });
 });
 
-describe('l5 new stories (S7-59)', () => {
-  // The bag pool S7-60 deals from: every l5 story that no level event spawns.
-  const eventIds = new Set(
-    (level?.events ?? []).flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId])),
-  );
-  const pool = l5Stories.filter((s) => !eventIds.has(s.id));
+// The bag pool: every l5 story that no level event spawns.
+const eventIds = new Set(
+  (level?.events ?? []).flatMap((event) => (event.kind === 'outage' ? [] : [event.storyId])),
+);
+const pool = l5Stories.filter((s) => !eventIds.has(s.id));
 
+function expectPinned(id: string, station: StationKind): void {
+  const s = story(id);
+  expect(s.reviewed).toBe(false);
+  expect(s.requiredStamps).toBe(1);
+  expect(s.stamps.map((stamp) => stamp.station)).toEqual(stations);
+  expect(decidingStations(s, stations)).toEqual([station]);
+  expect(isPinned(s, stations)).toBe(true);
+  // Only the proof looks decisive, so no other station promises more than it gives.
+  expect(s.stamps.filter((stamp) => stamp.relevance === 'decisive').map((x) => x.station)).toEqual([
+    station,
+  ]);
+}
+
+describe('l5 new stories (S7-59)', () => {
   for (const [id, station] of PINNED) {
-    it(`pins ${id} to ${station}`, () => {
-      const s = story(id);
-      expect(s.reviewed).toBe(false);
-      expect(s.requiredStamps).toBe(1);
-      expect(s.stamps.map((stamp) => stamp.station)).toEqual(stations);
-      expect(decidingStations(s, stations)).toEqual([station]);
-      expect(isPinned(s, stations)).toBe(true);
-      // Only the proof looks decisive, so no other station promises more than it gives.
-      expect(
-        s.stamps.filter((stamp) => stamp.relevance === 'decisive').map((x) => x.station),
-      ).toEqual([station]);
-    });
+    it(`pins ${id} to ${station}`, () => expectPinned(id, station));
   }
 
   it('follows the cluster C table: types, truths and techniques', () => {
@@ -223,18 +237,116 @@ describe('l5 new stories (S7-59)', () => {
 
   it('keeps about a third of the new stories true', () => {
     expect(PINNED.filter(([id]) => story(id).truth === 'true')).toHaveLength(2);
-    expect(pool).toHaveLength(22);
-    expect(pool.filter((s) => s.truth === 'true')).toHaveLength(7);
+  });
+});
+
+describe('l5 on the bag with two-proof picks (S7-60)', () => {
+  const file = levelFileSchema.parse(LEVEL_FILES['levels/l5-deepfake.json']);
+  const bag = file.bag;
+  if (!bag) {
+    throw new Error('l5 has no bag');
+  }
+  const byId = new Map(STORIES.map((s) => [s.id, s]));
+
+  for (const [id, station] of PINNED_S7_60) {
+    it(`pins ${id} to ${station}`, () => expectPinned(id, station));
+  }
+
+  it('adds a doctored photo the AI scanner calls authentic', () => {
+    const s = story('l5-basen-zamkniety');
+    expect([s.type, s.truth, s.priority, s.technique]).toEqual([
+      'photo',
+      'false',
+      'important',
+      'zmanipulowane-zdjecie',
+    ]);
+    expect(stampOf(s, 'aiScanner')?.relevance).toBe('misleading');
+    expect(stampOf(s, 'metadata')?.relevance).toBe('irrelevant');
+    expect(s.debrief.tool.startsWith('Lupa obrazu:')).toBe(true);
   });
 
-  it('gives the l5 pool at least 3 pinned stories on Stenogram, Metadane, archive and registry', () => {
+  it('deals the level from a bag of the 23 non-event l5 stories, 7 of them true', () => {
+    expect(bag).toMatchObject({
+      firstAtS: 4,
+      gapS: 26,
+      lastSpawnS: 340,
+      deadlineS: { normal: 60, important: 60, urgent: 45 },
+    });
+    expect(bag.starShares).toBeUndefined();
+    expect(file.schedule).toBeUndefined();
+    expect(file.stars).toBeUndefined();
+    expect([...bag.pool].sort()).toEqual(pool.map((s) => s.id).sort());
+    expect(pool).toHaveLength(23);
+    expect(pool.filter((s) => s.truth === 'true')).toHaveLength(7);
+    // The events stay: two boss calls and the AI scanner outage.
+    expect(file.events).toEqual([
+      { kind: 'bossCall', atS: 90, storyId: 'l5-boss-obwodnica', deadlineS: 45 },
+      { kind: 'outage', atS: 170, station: 'aiScanner', durationS: 20 },
+      { kind: 'bossCall', atS: 250, storyId: 'l5-boss-dymisja', deadlineS: 45 },
+    ]);
+  });
+
+  it('pins at least 3 pool stories on each of the six bag stations', () => {
     expect(Object.fromEntries(pinnedCounts(pool, stations))).toEqual({
-      imageSearch: 2,
+      imageSearch: 3,
       sourceRegistry: 3,
       phone: 4,
       archive: 3,
       transcript: 3,
       metadata: 3,
     });
+  });
+
+  it('asks two proofs on wolne-tempo and burmistrz-na-jachcie, never on the AI scanner', () => {
+    const tempo = story('l5-wolne-tempo');
+    expect(tempo.requiredStamps).toBe(2);
+    expect(decidingStations(tempo, stations)).toEqual(['imageSearch', 'archive']);
+    const yacht = story('l5-burmistrz-na-jachcie');
+    expect(yacht.requiredStamps).toBe(2);
+    expect(decidingStations(yacht, stations)).toEqual(['sourceRegistry', 'metadata']);
+    expect(isPinned(tempo, stations)).toBe(false);
+    expect(isPinned(yacht, stations)).toBe(false);
+    // Its second justifying stamp is the hint-only AI scanner, so it stays a one-proof story.
+    expect(story('l5-nagranie-podatek').requiredStamps).toBe(1);
+    expect(pool.filter((s) => s.requiredStamps > 1).map((s) => s.id)).toEqual([
+      'l5-wolne-tempo',
+      'l5-burmistrz-na-jachcie',
+    ]);
+  });
+
+  it('serves the Normal preview run: 13 folders from 4 s, every 26 s, stars 230 / 330', () => {
+    expect(level).toEqual(generateBagLevel(file, STORIES, BAG_PREVIEW_SEED, 'normal'));
+    expect(level?.schedule.map((spawn) => spawn.atS)).toEqual([
+      4, 30, 56, 82, 108, 134, 160, 186, 212, 238, 264, 290, 316,
+    ]);
+    expect(new Set(level?.schedule.map((spawn) => spawn.storyId)).size).toBe(13);
+    expect(level?.stars).toEqual({ two: 230, three: 330 });
+    expect(level ? maxLevelScore(level, byId) : 0).toBe(415);
+  });
+
+  it('passes the bag checks with no issue: 11, 13, 15 and 17 folders by difficulty', () => {
+    expect(DIFFICULTIES.map((d) => bagSlotTimes(bag, d).length)).toEqual([11, 13, 15, 17]);
+    const issues: string[] = [];
+    checkBag({ ...file, bag }, byId, (path, severity, message) =>
+      issues.push(`${severity} ${path.join('.')}: ${message}`),
+    );
+    expect(issues).toEqual([]);
+  });
+
+  it('ends every dealt folder with the level and takes the stars from the default shares', () => {
+    for (const difficulty of DIFFICULTIES) {
+      for (const seed of [0, 1, 7, 0xffffffff]) {
+        const dealt = generateBagLevel(file, STORIES, seed, difficulty);
+        const ids = dealt.schedule.map((spawn) => spawn.storyId);
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(ids.every((id) => bag.pool.includes(id))).toBe(true);
+        for (const spawn of dealt.schedule) {
+          const extraProofs = (byId.get(spawn.storyId)?.requiredStamps ?? 1) - 1;
+          const extraS = (extraProofs * MULTI_STAMP_EXTRA_DEADLINE_MS) / 1000;
+          expect(spawn.atS + spawn.deadlineS + extraS).toBeLessThanOrEqual(file.durationS);
+        }
+        expect(dealt.stars).toEqual(starThresholds(maxLevelScore(dealt, byId)));
+      }
+    }
   });
 });

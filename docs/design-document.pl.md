@@ -199,7 +199,7 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 
 | Ekran | Co zawiera |
 | --- | --- |
-| Menu główne | Graj, Dołącz kodem, Encyklopedia technik, Ustawienia |
+| Menu główne | Graj, Dołącz kodem, Jak grać?, Encyklopedia technik, Ustawienia |
 | Lobby | Kod pokoju, lista graczy, wybór roli i koloru postaci, przycisk gotowości |
 | Wybór poziomu | Mapa kampanii z gwiazdkami, opis tematu dnia |
 | Briefing | Krótka zapowiedź poziomu i nowej mechaniki, 15–20 sekund |
@@ -208,6 +208,7 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 | Stół redakcyjny | Teczka z pieczątkami, trzy przyciski werdyktu, wskazanie uzasadniającej pieczątki |
 | Kolegium redakcyjne | Lista zgłoszeń z poziomu, wyjaśnienia, głosowanie na „wpadkę dnia”, gwiazdki |
 | Encyklopedia technik | Odblokowywane karty technik manipulacji i narzędzi weryfikacji, z przykładami z gry |
+| Jak grać | Okno pomocy z trzema działami: Wprowadzenie, Stanowiska (jak działa każde z dziesięciu), Sterowanie; otwierane z menu głównego, lobby i ustawień |
 
 ### Materiały do zgłoszenia konkursowego
 

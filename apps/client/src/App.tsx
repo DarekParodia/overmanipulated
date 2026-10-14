@@ -7,6 +7,7 @@ import { initAudio, playSound } from './fx/audio/audio-manager.ts';
 import { feedback } from './fx/feedback.ts';
 import { startGameplayFeedback } from './fx/gameplay-feedback.ts';
 import { vibrate } from './fx/haptics.ts';
+import { HowToPlayHost } from './howto/HowToPlayHost.tsx';
 import { useMenuNavigation } from './input/menu-nav.ts';
 import { GameGate } from './loading/GameGate.tsx';
 import { startPreload } from './loading/preload.ts';
@@ -67,6 +68,8 @@ export function App() {
       {screen === 'styleguide' && <Styleguide />}
       <SettingsPanel />
       <EncyclopediaScreen />
+      {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
+      <HowToPlayHost />
       <PerfOverlay />
     </>
   );

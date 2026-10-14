@@ -31,6 +31,7 @@ game may require a specific device.
 | Minigames, desk, menus | Keys / mouse | D-pad + buttons | Tap, drag, swipe |
 | In-game menu (pauses a solo level) | Esc (when nothing else owns the input and the tutorial card is not up) | Start (button 9) | Menu button top-right |
 | Station help in a station overlay (the card shows by itself on a station's first use; while it is up, Enter / A, Esc / B and H / Select close the card, never the station) | H | Select / Back (button 8) | Purple '?' in the overlay header |
+| „Jak grać” dialog (main menu corner, lobby, settings → Sterowanie): switch tab / back from a station card / close | Tab + Enter on the tabs / Esc / Esc | Y / B / B | Tap a tab / „Rozumiem” / „Gotowe” |
 
 - The **last used device** decides which prompts are shown (key caps, pad glyphs or touch icons).
   Minigame key hints exist for all three devices; on touch the chip names the gesture
