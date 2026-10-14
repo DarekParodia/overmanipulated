@@ -104,6 +104,25 @@ Gra zapisuje w przeglądarce (pamięć lokalna, nie ciasteczka), na urządzeniu 
 Te dane nigdy nie opuszczają urządzenia, poza pseudonimem wysyłanym do pokoju. Można je
 usunąć, czyszcząc dane witryny w przeglądarce.
 
+## Głos lektora w intro
+
+Intro gry czyta lektor: ochotnik, który nagrał 17 krótkich kwestii i oddał nagranie do domeny
+publicznej (CC0). Gra nie nagrywa graczy i nie korzysta z mikrofonu. Głos ochotnika to jego dane
+osobowe, dlatego:
+
+- ochotnik nagrywa po podpisaniu formularza zgody, a osoba poniżej 18 lat także za zgodą rodzica
+  lub opiekuna prawnego;
+- ochotnik wybiera, czy w grze widnieje jego imię i nazwisko, pseudonim, czy podpis
+  „anonimowy ochotnik”;
+- oryginalne nagrania i formularz są przechowywane poza repozytorium gry, tylko tak długo, jak
+  głos jest w grze;
+- zgodę można wycofać w każdej chwili, pisząc do administratora (niżej). Najpóźniej w ciągu
+  miesiąca nagranie i podpis znikają z bieżącej wersji gry, a oryginały są usuwane. Kopii
+  pobranych wcześniej przez inne osoby (CC0) i starszych wersji w historii repozytorium projekt
+  nie może usunąć.
+
+Instrukcja nagrania i pełny tekst formularza: `docs/voice-recording.pl.md`.
+
 ## Treści w grze
 
 Wszystkie historie w grze są **fikcyjne**: miasto Nowe Brzegi, wymyślone osoby, firmy

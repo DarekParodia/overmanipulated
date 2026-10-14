@@ -6,7 +6,12 @@
 // scanner never is one). A dealt folder's bag station (`folder.bagStation`, S7-24) comes first
 // among the stations it would point at anyway, so flex stories spread over the stations the bag
 // planned instead of drifting back to the busiest one.
+// With a role, a ready ability that would help right now takes the hint (S7-45): Przedłużenie
+// for a warned folder in hand, Telefon z terenu instead of the walk to the phone and Druga
+// szansa at a locked station. The bubble hides on Ekspert with every other hint.
 import {
+  type Ability,
+  type AbilityPreview,
   countsAsProof,
   type Desk,
   type Fixture,
@@ -17,6 +22,7 @@ import {
   type TileMap,
 } from '@redakcja/shared';
 import type { NextFolderState } from '../hud/hud-model.ts';
+import { abilityKeyCap } from '../screens/settings-model.ts';
 import type { InputDevice } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 
@@ -43,6 +49,8 @@ export type NextStepKind =
   | 'openDesk'
   /** The verdict sheet is open. */
   | 'verdict'
+  /** The local role ability would help right now: press it (S7-45). */
+  | 'ability'
   /** Nothing to do: no folders anywhere (says when the next scheduled folder comes). */
   | 'wait';
 
@@ -51,6 +59,16 @@ export type NextStep = {
   text: string;
   /** Fixtures to mark in the scene, most useful first. */
   targetFixtureIds: string[];
+  /** The ability an `ability` step names (its icon in the bubble). */
+  ability?: Ability;
+};
+
+/** The local player's role ability as the hint reads it. */
+export type NextStepAbility = {
+  ability: Ability;
+  preview: AbilityPreview;
+  /** The ability's key on the current device (`abilityHintKey`). */
+  key: string;
 };
 
 /**
@@ -78,6 +96,8 @@ export type NextStepInput = {
   /** The next scheduled folder (`nextFolderState`): the wait hint counts down to it, and a full
    * belt turns the conveyor pick-up into „Taśma pełna”. */
   next: NextFolderState;
+  /** The local role ability; absent without a role. */
+  ability?: NextStepAbility;
 };
 
 /** Steps during which another piece of UI (overlay, work prompt) already says what to do. */
@@ -90,7 +110,27 @@ export const HERE_KINDS: ReadonlySet<NextStepKind> = new Set([
   'work',
   'openDesk',
   'lockout',
+  'ability',
 ]);
+
+/** The ability's key for a hint: R / RB, or the touch button's own label in quotes. */
+export function abilityHintKey(device: InputDevice, ability: Ability): string {
+  return device === 'touch'
+    ? pl.guidance.abilityTouchKey(pl.touch.ability[ability])
+    : abilityKeyCap(device);
+}
+
+/** The ability's `now` preview, when the local ability is this one and acts at once. */
+function readyNow(input: NextStepInput, ability: Ability) {
+  const local = input.ability;
+  return local?.ability === ability && local.preview.kind === 'now'
+    ? { key: local.key, preview: local.preview }
+    : undefined;
+}
+
+function abilityStep(ability: Ability, text: string, targetFixtureIds: string[] = []): NextStep {
+  return { ...step('ability', text, targetFixtureIds), ability };
+}
 
 function step(kind: NextStepKind, text: string, targetFixtureIds: string[] = []): NextStep {
   return { kind, text, targetFixtureIds };
@@ -198,6 +238,11 @@ function deskTargets(input: NextStepInput): string[] {
 
 function carryingStep(input: NextStepInput, folder: Folder): NextStep {
   const { guidance } = pl;
+  // Przedłużenie on the warned folder in hand beats any walk.
+  const extend = readyNow(input, 'extendDeadline');
+  if (extend && folder.warned && extend.preview.folderId === folder.id) {
+    return abilityStep('extendDeadline', guidance.hint.abilityExtend(extend.key));
+  }
   const story = input.story(folder.storyId);
   const target = input.targetFixtureId;
   const targetFree =
@@ -219,6 +264,11 @@ function carryingStep(input: NextStepInput, folder: Folder): NextStep {
   }
   if (targetFree && visit.some((f) => f.id === target)) {
     return step('dropHere', guidance.hint.dropHere[input.device], [target]);
+  }
+  // A reporter heading for the phone calls from the field instead.
+  const call = readyNow(input, 'fieldCall');
+  if (call && call.preview.folderId === folder.id && visit.some((f) => f.station === 'phone')) {
+    return abilityStep('fieldCall', guidance.hint.abilityCall(call.key));
   }
   return step(
     'toStation',
@@ -244,7 +294,10 @@ function stepAtTarget(input: NextStepInput, target: Fixture): NextStep | undefin
       return step('lockout', pl.events.hint.stationDown, [target.id]);
     }
     if (station?.phase === 'lockout') {
-      return step('lockout', guidance.hint.lockout, [target.id]);
+      const second = readyNow(input, 'secondChance');
+      return second?.preview.stationId === target.id
+        ? abilityStep('secondChance', guidance.hint.abilitySecond(second.key), [target.id])
+        : step('lockout', guidance.hint.lockout, [target.id]);
     }
     if (missingStamp(folder, input.story(folder.storyId), target.station)) {
       return step('work', guidance.hint.work(workKey), [target.id]);
@@ -353,6 +406,7 @@ export function sameStep(a: NextStep | null, b: NextStep | null): boolean {
   return (
     a.kind === b.kind &&
     a.text === b.text &&
+    a.ability === b.ability &&
     a.targetFixtureIds.length === b.targetFixtureIds.length &&
     a.targetFixtureIds.every((id, i) => b.targetFixtureIds[i] === id)
   );

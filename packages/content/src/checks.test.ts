@@ -657,6 +657,8 @@ describe('validate CLI', () => {
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([]);
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([]);
+    // S7-63: every l6 story is in the l6 bag pool or spawned by an event.
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l6-'))).toEqual([]);
     // The S7-59 stories wait for the l5 bag pool (S7-60).
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l5-'))).toEqual([
       'l5-cytat-z-sesji',

@@ -10,7 +10,8 @@ export function placementFor(kind: NextStepKind | undefined): GuidancePlacement 
   if (kind === 'minigame' || kind === 'verdict') {
     return 'overlay';
   }
-  if (kind === 'working' || kind === 'lockout') {
+  // An ability hint can show at a locked station: lifted above its lockout plate too.
+  if (kind === 'working' || kind === 'lockout' || kind === 'ability') {
     return 'prompt';
   }
   return 'free';
