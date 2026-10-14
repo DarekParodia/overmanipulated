@@ -113,10 +113,16 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
       onCreated={({ gl, scene }) => {
         gl.toneMapping = NoToneMapping;
         gl.outputColorSpace = SRGBColorSpace;
+        const debug = new URLSearchParams(window.location.search).has('debug');
+        if (debug) {
+          // Every canvas's scene by its view key (the spectator perf e2e counts avatars, S7-92).
+          const target = window as unknown as { __scenes?: Record<string, unknown> };
+          target.__scenes = { ...target.__scenes, [viewKey]: scene };
+        }
         if (!primary) {
           return;
         }
-        if (new URLSearchParams(window.location.search).has('debug')) {
+        if (debug) {
           // Dev aid: inspect the scene from the console or end-to-end tests.
           (window as unknown as { __scene?: unknown; __quality?: unknown }).__scene = scene;
           (window as unknown as { __quality?: unknown }).__quality = useQuality;

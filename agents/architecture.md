@@ -210,6 +210,9 @@ apps/server/drizzle/   generated SQL migrations (committed)
 - Budget: **60 FPS on Intel UHD 620** (Chrome, Edge, Firefox) and on mid-range phones (never
   below 30 FPS), ≤ 100k triangles, ~150 draw calls on desktop / ~100 on mobile, repeated
   furniture via instancing, ≤ 10 MB initial download with a progress bar for assets.
+- Server: one tick of every room must stay under half the 50 ms tick; `bun run perf:server`
+  measures 150 full versus rooms with spectators (`docs/performance.md`). Egress, not CPU, is what
+  limits the rooms one server can hold.
 - Quality presets (`low` / `medium` / `high`) control shadows, DPR (capped ≤ 1.5 on phones),
   particle cap and ambient effects; adaptive quality steps down when frame time rises. Details in
   [`platforms.md`](platforms.md).
@@ -226,7 +229,9 @@ apps/server/drizzle/   generated SQL migrations (committed)
   context: `useOverlay` and `ViewHtml` (drei `Html`) re-provide the view, and every `<Canvas>`
   renders its own `GameViewProvider`. `GameCanvas({ view, primary, viewKey })`: only the primary
   canvas detects the preset, adapts quality and installs the debug hooks; each canvas reports its
-  renderer counters under `perfStats.views[viewKey]` and the overlay shows the sum. A spectator
+  renderer counters under `perfStats.views[viewKey]` and the overlay shows the sum; with `?debug`,
+  `window.__perf` (the counters) and `window.__scenes[viewKey]` (each canvas's scene) let the
+  perf e2e check every canvas (S7-92). A spectator
   view (`createWatchView`; the spectate store holds one per team) samples
   `SPECTATOR_INTERPOLATION_DELAY_MS` (250 ms) behind and has guidance off; a cue with `silent`
   keeps everything but its sound and loops. The intro's view (`kind: 'intro'`,

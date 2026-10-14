@@ -40,12 +40,31 @@ function lobbyOf(page: Page): Lobby {
   };
 }
 
-/** The spectator's page, on the high preset (capped to medium on the spectate screen). */
-async function openWatcher(browser: Browser, options: BrowserContextOptions): Promise<Player> {
+/** The spectator's page, with its real spectator events held back on demand (`holdEvents`). */
+type Watcher = Player & { holdEvents(): void };
+
+/**
+ * The spectator's page, on the high preset (capped to medium on the spectate screen). Its socket
+ * goes through a pass-through route; after `holdEvents()` the real match's `spectatorEvent`s no
+ * longer reach it, so the rows a test injects stay the only new rows in the feed (under load the
+ * real match's expiries would push them out of the few visible rows).
+ */
+async function openWatcher(browser: Browser, options: BrowserContextOptions): Promise<Watcher> {
   const context = await browser.newContext(options);
   trackContext(context);
   await context.addInitScript(() => {
     localStorage.setItem('redakcja.settings.v1', JSON.stringify({ quality: 'high' }));
+  });
+  let held = false;
+  await context.routeWebSocket(/\/ws$/, (socket) => {
+    const server = socket.connectToServer();
+    socket.onMessage((message) => server.send(message));
+    server.onMessage((message) => {
+      if (held && typeof message === 'string' && message.includes('"type":"spectatorEvent"')) {
+        return;
+      }
+      socket.send(message);
+    });
   });
   const page = await context.newPage();
   page.on('pageerror', (error) => {
@@ -53,7 +72,14 @@ async function openWatcher(browser: Browser, options: BrowserContextOptions): Pr
   });
   await page.goto('/?debug');
   await page.getByLabel('Twój podpis').fill('Widz');
-  return { page, nickname: 'Widz', touch: options.hasTouch === true };
+  return {
+    page,
+    nickname: 'Widz',
+    touch: options.hasTouch === true,
+    holdEvents: () => {
+      held = true;
+    },
+  };
 }
 
 async function startMatch(host: Player, players: readonly Player[]): Promise<void> {
@@ -286,6 +312,8 @@ test('versus: a mid-match spectator sees both newsrooms and can switch them', as
     );
     await expect(watcher.page.getByTestId('follow-card')).toHaveCount(0);
   };
+  // From here on only the injected events reach the feed (the real match's would crowd them out).
+  watcher.holdEvents();
   await receive(watcher.page, {
     type: 'spectatorEvent',
     tick: 120,
@@ -325,6 +353,9 @@ test('versus: a mid-match spectator sees both newsrooms and can switch them', as
     },
   });
   await expect(ours).toHaveCount(2);
+  const kurierRow = ours.and(watcher.page.locator('[data-team="0"]'));
+  await expect(kurierRow).toHaveAttribute('data-kind', 'masked');
+  await expect(kurierRow).toContainText('Kurier: werdykt');
   await nothingTold();
   for (const [team, folderId, id] of [
     [1, 'f901', lukasz],
@@ -340,7 +371,6 @@ test('versus: a mid-match spectator sees both newsrooms and can switch them', as
   await expect(glosRow).toHaveAttribute('data-kind', 'verdict');
   await expect(glosRow).toContainText('Łukasz: trafny werdykt');
   await expect(glosRow).toContainText('+25');
-  const kurierRow = ours.and(watcher.page.locator('[data-team="0"]'));
   await expect(kurierRow).toContainText('Zośka: trafny werdykt');
   await expect(ours.and(watcher.page.locator('[data-kind="masked"]'))).toHaveCount(0);
 
