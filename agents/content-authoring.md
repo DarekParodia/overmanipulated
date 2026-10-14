@@ -91,7 +91,9 @@ has no `stars`). Event stories always stay in `events`, never in the pool.
   greybox left out): shuffled rounds over the endless stations that decide a story, and each slot
   draws from its station's *deck* (the stories that station decides; a flex story sits in several
   decks), never the previous folder's story. Keep every non-hint endless deck at
-  `ENDLESS_MIN_DECK` stories or more, so a station does not repeat itself.
+  `ENDLESS_MIN_DECK` stories or more, so a station does not repeat itself. Endless runs all ten
+  stations (S7-64), but only l5 stories decide at Stenogram and Metadane and only l6 stories at
+  Mapa and Inne media: retargeting or dropping one of those stories can thin a new station's deck.
 
 ## Writing guidance
 

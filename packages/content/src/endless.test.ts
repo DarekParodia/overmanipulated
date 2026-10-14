@@ -9,6 +9,7 @@ import {
   NORMAL_TUNING,
   parseLayout,
   type SimLevel,
+  STATION_KINDS,
   scaledDeadlineS,
   step,
   TICK_MS,
@@ -77,7 +78,17 @@ describe('generateEndlessLevel', () => {
   it('deals whole shuffled rounds over the stations that decide a pool story', () => {
     const pool = endlessStoryPool(LEVELS, STORIES);
     const stations = bagStations(pool, ENDLESS_STATIONS);
-    expect(stations).toEqual(['imageSearch', 'archive', 'sourceRegistry', 'phone', 'dataLibrary']);
+    expect(stations).toEqual([
+      'imageSearch',
+      'archive',
+      'sourceRegistry',
+      'phone',
+      'dataLibrary',
+      'geolocation',
+      'transcript',
+      'crossCheck',
+      'metadata',
+    ]);
     const { schedule } = generate(6);
     const byId = new Map(pool.map((story) => [story.id, story]));
     for (const spawn of schedule) {
@@ -91,6 +102,18 @@ describe('generateEndlessLevel', () => {
       const dealt = schedule.slice(round, round + stations.length).map((spawn) => spawn.station);
       expect([...dealt].sort()).toEqual([...stations].sort());
     }
+  });
+
+  it('gives each M4 station a deck of at least four stories, from l5 and l6', () => {
+    const decks = endlessDecks(endlessStoryPool(LEVELS, STORIES));
+    for (const station of ['geolocation', 'transcript', 'crossCheck', 'metadata'] as const) {
+      const deck = decks.get(station) ?? [];
+      expect(deck.length).toBeGreaterThanOrEqual(4);
+      for (const story of deck) {
+        expect(story.id).toMatch(/^l[56]-/);
+      }
+    }
+    expect(decks.has('aiScanner')).toBe(false);
   });
 
   it('scales event deadlines on their own stream, keeping event times and kinds', () => {
@@ -108,15 +131,31 @@ describe('generateEndlessLevel', () => {
     }
   });
 
-  it('returns an endless level with a huge duration and a layout holding all six stations', () => {
+  it('returns an endless level with a huge duration and a layout holding all ten stations', () => {
     const level = generate(1);
     expect(level.id).toBe(ENDLESS_LEVEL_ID);
     expect(level.endless).toBe(true);
     expect(level.durationS).toBe(ENDLESS.durationS);
     const map = parseLayout(level.layout);
     const placed = map.fixtures.flatMap((f) => (f.station ? [f.station] : []));
-    expect([...placed].sort()).toEqual([...ENDLESS_STATIONS].sort());
-    expect(level.stations).toEqual([...ENDLESS_STATIONS]);
+    expect(placed).toHaveLength(10);
+    expect([...placed].sort()).toEqual([...STATION_KINDS].sort());
+    expect(level.stations).toEqual([...STATION_KINDS]);
+    // Back wall I A R Q E, front row P S L G X.
+    expect(
+      map.fixtures.flatMap((f) => (f.station ? [`${f.row}:${f.col}:${f.station}`] : [])),
+    ).toEqual([
+      '1:9:imageSearch',
+      '1:12:archive',
+      '1:15:sourceRegistry',
+      '1:18:transcript',
+      '1:21:metadata',
+      '10:3:phone',
+      '10:7:aiScanner',
+      '10:11:dataLibrary',
+      '10:15:geolocation',
+      '10:19:crossCheck',
+    ]);
     expect(map.fixtures.some((f) => f.kind === 'desk')).toBe(true);
     expect(map.fixtures.filter((f) => f.kind === 'table').length).toBeGreaterThanOrEqual(2);
     expect(map.fixtures.some((f) => f.kind === 'conveyor')).toBe(true);
@@ -148,7 +187,7 @@ describe('generateEndlessLevel', () => {
     expect(endlessDeadlineS(3000)).toBe(ENDLESS.minDeadlineS);
   });
 
-  it('only schedules known stories that the six stations can solve', () => {
+  it('only schedules known stories that the ten stations can solve', () => {
     const level = generate(5);
     const byId = new Map(STORIES.map((s) => [s.id, s]));
     const ids = [
@@ -223,7 +262,7 @@ describe('generateEndlessLevel', () => {
     expect(numbers).toEqual([...numbers].sort((a, b) => a - b));
   });
 
-  it('draws a multi-stamp story only when the six stations give all its proofs', () => {
+  it('draws a multi-stamp story only when the endless stations give all its proofs', () => {
     const original = STORIES.find((s) => s.id.startsWith('l1-') && s.justifyingStamps.length === 1);
     if (!original) {
       throw new Error('level 1 needs a story with one justifying stamp');

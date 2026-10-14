@@ -6,6 +6,7 @@ import {
   ENDLESS,
   ENDLESS_LEVEL_ID,
   PROTOCOL_VERSION,
+  STATION_KINDS,
   step,
 } from '@redakcja/shared';
 import { createFakeHub, type FakeConnection } from '../__fixtures__/fake-transport.ts';
@@ -93,11 +94,12 @@ describe('endless mode in a room', () => {
     expect(phaseOf(host)).toBe('playing');
     const state = registry.inspect(codeOf(host));
     expect(state?.levelId).toBe(ENDLESS_LEVEL_ID);
-    // All six stations exist in the running game.
+    // All ten stations exist in the running game (S7-64).
     const kinds = Object.values(state?.game.stations ?? {}).map((s) => s.kind);
-    expect(new Set(kinds).size).toBe(6);
+    expect(new Set(kinds).size).toBe(10);
+    expect(new Set(kinds).size).toBe(STATION_KINDS.length);
     registry.tick();
-    expect(host.last('snapshot')?.stations).toHaveLength(6);
+    expect(host.last('snapshot')?.stations).toHaveLength(10);
     expect(host.last('snapshot')?.timeLeftMs).toBeGreaterThan(ENDLESS.durationS * 900);
   });
 
