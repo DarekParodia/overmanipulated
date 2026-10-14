@@ -5,8 +5,8 @@
 // celebrations, ping emotes and ability reactions (also on remote players), hand IK that holds a
 // carried folder and reaches for fixtures, a head that leads turns and looks at the station in
 // use, footsteps timed to the foot contacts of the clips, and the procedural layer (lean, squash
-// & stretch, spawn pop, hop with landing squash, wobble). A white name pill outlined in the player's colour floats
-// above the head.
+// & stretch, spawn pop, hop with landing squash, wobble). A white name pill outlined in the
+// player's colour floats above the head.
 
 import { useFrame } from '@react-three/fiber';
 import {
