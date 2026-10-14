@@ -53,11 +53,13 @@ export default defineConfig({
       command: 'bun apps/server/src/index.ts',
       url: `http://localhost:${serverPort}/health`,
       // A short briefing keeps the start-to-HUD tests quick even without pressing "Gotowy!".
+      // e2e/server-config.json turns the room browser on (off by default, S7-88).
       env: {
         PORT: serverPort,
         DATABASE_PATH: ':memory:',
         LOG_LEVEL: 'silent',
         BRIEFING_MS: '1500',
+        CONFIG_PATH: 'e2e/server-config.json',
       },
       reuseExistingServer: !process.env.CI,
     },

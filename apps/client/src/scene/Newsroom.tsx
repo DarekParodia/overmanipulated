@@ -15,8 +15,7 @@ import {
   RepeatWrapping,
   SRGBColorSpace,
 } from 'three';
-import { useGameView } from '../net/view-context.tsx';
-import { useApp } from '../store/app.ts';
+import { useGameView, viewLevelId } from '../net/view-context.tsx';
 import { colors } from '../ui/tokens.ts';
 import { Decor } from './Decor.tsx';
 import { useGeometries } from './geometry.ts';
@@ -165,7 +164,7 @@ export function Newsroom({ shadows }: { shadows: boolean }) {
   const view = useGameView();
   const { width, height } = view.runtime.map;
   const floor = useMemo(createFloorTexture, []);
-  const theme = useMemo(() => themeForLevel(useApp.getState().room?.levelId ?? ''), []);
+  const theme = useMemo(() => themeForLevel(viewLevelId(view)), [view]);
   const blocks = useMemo(() => collectBlocks(view.runtime.map), [view]);
   const g = useGeometries(() => ({
     back: wallGeometry(BACK_WALL_HEIGHT, theme),

@@ -42,7 +42,7 @@ export function CameraRig() {
     () =>
       view.feedback.connect({
         // A spectator watches calmly: no camera shake (S7-90).
-        ...(view.kind === 'player'
+        ...(view.kind !== 'spectator'
           ? { addTrauma: (amount: number) => hitCamera(view.camera, amount) }
           : {}),
         screenX: (position) => {
@@ -60,8 +60,10 @@ export function CameraRig() {
       mapW: view.runtime.map.width,
       mapH: view.runtime.map.height,
       local: view.render.local,
+      // Only a player has the HUD over the scene: the intro's stage (S7-101) and a spectator view
+      // (S7-90) start right under their own frame.
       topInsetPx: view.kind === 'player' ? useHudBand.getState().px : 0,
-      backRoom: view.kind === 'player' ? FIT_BACK_ROOM : SPECTATOR_FIT_BACK_ROOM,
+      backRoom: view.kind === 'spectator' ? SPECTATOR_FIT_BACK_ROOM : FIT_BACK_ROOM,
     });
     const k = 1 - Math.exp(-FOLLOW_SMOOTHING * delta);
     focus.current.lerp(tmp.set(framing.target.x, 0, framing.target.z), k);

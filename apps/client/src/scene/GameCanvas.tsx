@@ -65,9 +65,9 @@ function viewId(view: GameView): number {
 
 const uncapped = (profile: QualityProfile): QualityProfile => profile;
 
-/** The quality cap of a view: none for the player, `spectatorProfile` for a spectator. */
-function capFor(playing: boolean): (profile: QualityProfile) => QualityProfile {
-  return playing ? uncapped : spectatorProfile;
+/** The quality cap of a view: `spectatorProfile` for a spectator, none for the player or intro. */
+function capFor(view: GameView): (profile: QualityProfile) => QualityProfile {
+  return view.kind === 'spectator' ? spectatorProfile : uncapped;
 }
 
 export type GameCanvasProps = {
@@ -85,7 +85,7 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
   const playing = view.kind === 'player';
   // The store holds the capped profile while spectating, so the props that read it (motes,
   // small props, particles) follow the cap too; capping here as well covers a stale store.
-  const fit = capFor(playing);
+  const fit = capFor(view);
   const profile = fit(useQuality((s) => s.profile));
   const chosen = useSettings((s) => s.quality);
   // A preset picked in settings is final (auto off). Back on "auto" the detected preset returns.
@@ -94,14 +94,14 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
       return;
     }
     const coarse = isCoarsePointer();
-    const cap = capFor(playing);
+    const cap = capFor(view);
     if (chosen) {
       useQuality.getState().choose(cap(profileFor(chosen, coarse, window.devicePixelRatio)), false);
     } else if (perfStats.gpu) {
       const preset = detectPreset(perfStats.gpu, coarse, deviceHints());
       useQuality.getState().choose(cap(profileFor(preset, coarse, window.devicePixelRatio)), true);
     }
-  }, [chosen, primary, playing]);
+  }, [chosen, primary, view]);
 
   return (
     <Canvas
@@ -152,8 +152,10 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
  */
 function ViewScene({ playing, profile }: { playing: boolean; profile: QualityProfile }) {
   // World props (and the sun's shadow box) read the view's map once; remount them when a level
-  // with another map starts.
-  const levelId = useApp((s) => s.room?.levelId ?? '');
+  // with another map starts. The intro (S7-101) wears its own level, every other view the room's.
+  const view = useGameView();
+  const roomLevelId = useApp((s) => s.room?.levelId ?? '');
+  const levelId = view.levelId ?? roomLevelId;
   return (
     <>
       <Driver />

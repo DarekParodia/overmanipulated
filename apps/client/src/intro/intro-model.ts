@@ -42,6 +42,20 @@ export function sceneDurationMs(text: string, clipMs: number | null): number {
   return clipMs === null ? fallbackMs(text) : clipMs + INTRO_END_GRACE_MS;
 }
 
+/**
+ * Every scene's length for the player (S7-101): the scene whose clip is playing (`voiced`) lasts
+ * its clip plus the grace time, every other one its fallback reading time.
+ */
+export function sceneDurations(
+  lines: readonly string[],
+  voiced: number | null,
+  clipMs: number | null,
+): number[] {
+  return lines.map((line, index) =>
+    index === voiced ? sceneDurationMs(line, clipMs) : fallbackMs(line),
+  );
+}
+
 export type IntroState = {
   /** The scene on stage. */
   index: number;
@@ -63,6 +77,8 @@ export type IntroAction =
   | { type: 'tick'; now: number }
   | { type: 'next'; now: number }
   | { type: 'prev'; now: number }
+  /** Plays the current scene again from its start (the voice was just unlocked, S7-101). */
+  | { type: 'restart'; now: number }
   | { type: 'togglePause'; now: number }
   | { type: 'skip' };
 
@@ -91,7 +107,8 @@ export function sceneElapsedMs(state: IntroState, now: number): number {
 /**
  * The intro timeline. `durations` are the scenes' lengths (`sceneDurationMs`) in order. A
  * scene moves on `INTRO_GAP_MS` after its clip ends or once its duration has run, pauses
- * excluded. Next and Back restart the target scene and clear a pause; Skip finishes at once.
+ * excluded. Next and Back restart the target scene and clear a pause, as Restart does for the
+ * current one; Skip finishes at once.
  */
 export function introReducer(
   state: IntroState,
@@ -113,6 +130,8 @@ export function introReducer(
       return advance(state, action.now, durations.length);
     case 'prev':
       return sceneAt(Math.max(0, state.index - 1), action.now);
+    case 'restart':
+      return sceneAt(state.index, action.now);
     case 'togglePause': {
       if (state.pausedAt === null) {
         return { ...state, pausedAt: action.now };
@@ -164,6 +183,14 @@ export function subtitleChunks(text: string, durationMs: number): SubtitleChunk[
     before += weights[index] ?? 0;
     return { text: part, atMs };
   });
+}
+
+/**
+ * The chunk index on screen `elapsedMs` into a scene: chunks are timed over the clip while it
+ * plays (so the subtitles follow the voice), else over the fallback reading time.
+ */
+export function subtitleIndexAt(text: string, clipMs: number | null, elapsedMs: number): number {
+  return chunkIndexAt(subtitleChunks(text, clipMs ?? fallbackMs(text)), elapsedMs);
 }
 
 /** Index of the chunk on screen `elapsedMs` into the scene. */

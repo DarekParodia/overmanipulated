@@ -13,6 +13,15 @@ import { loadVoice, type VoiceClips } from '../fx/audio/voice.ts';
 /** Where the generator writes the sprite json (beside `VOICE_SOURCES`). */
 export const VOICE_SPRITE_URL = '/assets/voice/intro.json';
 
+/** Set by vite.config: whether the build has the sprite. Undefined outside a build (tests). */
+declare const __INTRO_VOICE__: boolean | undefined;
+
+/**
+ * Whether this build ships the voice (S7-101). False until the volunteer recording is generated:
+ * then nothing asks for the sprite, so a missing voice leaves no failed request in the console.
+ */
+export const VOICE_SHIPPED: boolean = typeof __INTRO_VOICE__ === 'boolean' ? __INTRO_VOICE__ : true;
+
 /**
  * Licences a shipped voice may carry (agents/game-feel.md asset rule). A non-commercial or
  * research-only chain (CC BY-NC, the Blizzard 2013 Lessac licence) has no value here, so the
@@ -86,6 +95,14 @@ export async function loadVoiceSprite(get: FetchJson = fetchJson): Promise<Voice
   } catch {
     return null;
   }
+}
+
+/** `loadVoiceSprite`, or null at once when the build ships no voice (`VOICE_SHIPPED`). */
+export function loadShippedVoiceSprite(
+  get: FetchJson = fetchJson,
+  shipped: boolean = VOICE_SHIPPED,
+): Promise<VoiceSprite | null> {
+  return shipped ? loadVoiceSprite(get) : Promise.resolve(null);
 }
 
 /**

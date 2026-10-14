@@ -65,6 +65,8 @@ export type ViewLookup = {
   readonly render: RenderState;
   /** The view's local player (player view) or followed player (spectator view). */
   subjectId(): string | null;
+  /** The view's own players (the intro); the room's when left out. */
+  readonly roster?: readonly { id: string; colorIndex: number }[];
 };
 
 /** A view events are routed to: its lookup, its listeners and its feedback. */
@@ -123,8 +125,8 @@ function folderPosition(view: ViewLookup, folderId: string): Point | undefined {
 
 /** Context for a cue about a player: their colour, and whether they are someone else. */
 function aboutPlayer(view: ViewLookup, playerId: string): CueContext {
-  const room = useApp.getState().room;
-  const colorIndex = room?.players.find((p) => p.id === playerId)?.colorIndex ?? 0;
+  const players = view.roster ?? useApp.getState().room?.players;
+  const colorIndex = players?.find((p) => p.id === playerId)?.colorIndex ?? 0;
   return { playerId, color: playerColor(colorIndex), remote: playerId !== view.subjectId() };
 }
 
