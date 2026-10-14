@@ -241,50 +241,42 @@
   }
 }
 
-/* Short landscape phones: tighter rows so seven fields, the footer and the task fit. */
+/*
+ * Short landscape phones (640×360): the seven fields, the footer and the key hints share one
+ * 3 × 3 grid under the task line, filled column by column so up/down on keyboard and pad follows
+ * the reading order and ends on „Odłóż kartę”. The card keeps its box (subgrid, for the nudge)
+ * but loses its frame, and the „!” flag moves onto the tile's corner so values get the width.
+ */
 @media (max-height: 430px) {
-  /* Footer moves to a narrow column on the right so the whole card fits without scrolling. */
   .root {
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--space-2) var(--space-3);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto repeat(3, auto);
+    gap: var(--space-1) var(--space-2);
   }
 
-  .root > :first-child,
-  .root > ul {
+  .root > :first-child {
+    grid-row: 1;
     grid-column: 1 / -1;
   }
 
-  /* The outcome takes the footer's column, so the revealed rows stay visible. */
-  .result {
-    max-width: 13rem;
-  }
-
-  .result > div {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-2);
-    text-align: center;
-  }
-
-  .foot {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-end;
-  }
-
-  .file {
-    min-height: 3.25rem;
-    padding: var(--space-2) var(--space-4);
-    font-size: var(--text-lg);
-  }
-
-  .count {
-    text-align: center;
-    font-size: var(--text-sm);
+  .card,
+  .fields {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
   }
 
   .card {
-    padding: var(--space-2);
+    grid-row: 2 / -1;
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+
+  .fields {
+    grid-row: 1 / -1;
+    grid-auto-flow: column;
   }
 
   .kind {
@@ -293,15 +285,64 @@
 
   .field {
     min-height: var(--touch-target);
-    padding: 2px 2.25rem 2px var(--space-2);
+    padding: 2px var(--space-1) 2px var(--space-2);
     border-radius: var(--radius-sm);
-  }
-
-  .fields {
-    gap: var(--space-1) var(--space-2);
   }
 
   .fieldValue {
     font-size: var(--text-sm);
+    overflow-wrap: break-word;
+  }
+
+  .flag {
+    top: -0.375rem;
+    right: -0.375rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0;
+    font-size: var(--text-sm);
+  }
+
+  /* The footer takes the cell under the last field, the hints the one under it. */
+  .foot {
+    grid-row: 3;
+    grid-column: 3;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  .file {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-3);
+    font-size: var(--text-lg);
+  }
+
+  .count {
+    text-align: center;
+    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
+  }
+
+  .root > .hints {
+    grid-row: 4;
+    grid-column: 3;
+    align-content: center;
+  }
+
+  /* The outcome takes the footer's and the hints' cells, so the revealed rows stay visible. */
+  .result {
+    grid-row: 3 / 5;
+    grid-column: 3;
+    align-self: center;
+  }
+
+  .result > div {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    text-align: center;
   }
 }

@@ -3,7 +3,8 @@
 // (≥ 48 px both ways), nothing sticks out of the minigame or scrolls the page sideways, and the
 // round is solved from the root's `data-answer`, so the check does not depend on the authored
 // pools or on which outcome the seed rolls. In the station overlay every button sits above the
-// fold of its scrolling body; only the key hints may need a scroll (Decision log, S7-15).
+// fold of its scrolling body; at 640×360 the hints fit too (station-hints.spec.ts checks that the
+// body of every minigame does not scroll there).
 import { type BrowserContextOptions, expect, type Locator, test } from '@playwright/test';
 import {
   closePlayers,

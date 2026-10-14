@@ -191,7 +191,7 @@ export function SourceRegistry({ seed, story, stamp, device, difficulty, onDone 
         </div>
       )}
 
-      {playing && <KeyHints hints={t.keys} device={device} />}
+      {playing && <KeyHints hints={t.keys} device={device} className={styles.hints} />}
     </div>
   );
 }

@@ -135,6 +135,7 @@ export function Transcript({
       data-phase={phase}
     >
       <TaskLine
+        className={styles.taskLine}
         aside={
           <Mistakes used={state.mistakes} max={state.maxMistakes} testId="transcript-mistakes" />
         }
@@ -244,7 +245,9 @@ export function Transcript({
         </div>
       </div>
 
-      {playing && <KeyHints hints={judging ? t.judgeKeys : t.keys} device={device} />}
+      {playing && (
+        <KeyHints hints={judging ? t.judgeKeys : t.keys} device={device} className={styles.hints} />
+      )}
     </div>
   );
 }

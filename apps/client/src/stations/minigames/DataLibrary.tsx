@@ -223,7 +223,7 @@ export function DataLibrary({
         </div>
       </div>
 
-      {playing && <KeyHints hints={t.keys} device={device} />}
+      {playing && <KeyHints hints={t.keys} device={device} className={styles.hints} />}
     </div>
   );
 }
