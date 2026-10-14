@@ -493,6 +493,41 @@ Re-run: `bun run balance --levels l0-greybox,l1-burza,l2-wybory,l3-afera,l4-zdro
 `bun run balance --levels l2-wybory,l5-deepfake,l6-atak,endless --difficulty easy,normal,hard,expert
 --crew-sizes 3 --seeds 24 --endless-seeds 8 --md`.
 
+### l2 check after S7-66 (follow-up, more seeds)
+
+The S7-66 row for l2 read „average ×3 reaches 3 stars on Normal in 4 % of runs” (it was 40–58 %
+before the retune), so l2 was re-checked against the intent on the merged state with more seeds:
+l1–l3 on all four difficulties with crews of three at **120 seeds** (5760 runs), Normal l1–l4
+with crews of three and four at 120 seeds (2880 runs), and the whole matrix (l0–l6 and endless,
+all difficulties, crews of three and four, 40 seeds per campaign level and 8 per endless crew,
+6912 runs, 3.3 min on 4 workers). No bot watchdog fired.
+
+**Every intent check passes; no retune.** The 4 % was seed noise: at 24 seeds one run is 4
+points, and the first 40 seeds give 5 %, but 120 seeds give **18 % (×3) and 26 % (×4)**, inside
+the „3 stars mostly experts” band the L1 check spells out (average ≤ 30 %, experts ≥ 50 %; experts
+get 97 % on l2). Average ×3, win / 2+ stars / 3 stars / score share, 120 seeds:
+
+| Level | Easy | Normal | Hard | Expert |
+| --- | --- | --- | --- | --- |
+| l1 | 100 / 100 / 65 / 87 | 100 / 93 / 24 / 76 | 100 / 68 / 0 / 60 | 97 / 38 / 0 / 48 |
+| l2 | 100 / 99 / 69 / 84 | 100 / 81 / 18 / 65 | 100 / 41 / 1 / 50 | 96 / 10 / 0 / 35 |
+| l3 | 100 / 100 / 62 / 82 | 100 / 80 / 14 / 65 | 100 / 44 / 1 / 51 | 93 / 6 / 0 / 35 |
+
+- Ladder: l2 never does better on a harder difficulty (win 100 ≥ 100 ≥ 100 ≥ 96 %, share 84 ≥
+  65 ≥ 50 ≥ 35 %); Easy rookies win l2 93 %, Hard average 100 %, Expert experts reach 2+ stars
+  99 % and the average crew wins 96 %.
+- Neighbours on Normal: score share l1 76 % > l2 65 % = l3 65 % > l4 58 % (40-seed matrix:
+  76 > 65 > 65 > 58 > 52 > 52 % for l1–l6), so „no level 8 points easier than the one before”
+  holds; l2 and l3 are equally hard for the average crew. For rookies and mixed crews l2 is a
+  little harder than l3 (rookies win 55 % vs 60 %, mixed score share 44 % vs 51 %), with l1's
+  50 s deadlines since S7-66. Within the intent (the checks rank levels by the average crew), so
+  left alone; a playtest question below.
+- Experts stay ≤ 97 % of max (l2 94 %), thresholds 55 % / 80 % of the run max (206 / 301 of
+  376 on Normal), busiest station 37 %, endless 8.5 min.
+
+Re-run: `bun run balance --levels l1-burza,l2-wybory,l3-afera --no-endless --difficulty
+easy,normal,hard,expert --crew-sizes 3 --seeds 120 --md`.
+
 ## Open points for the playtests
 
 - Does a first-time crew really win level 1 (the rookie model says 92 %), and the tutorial (88 %)?
@@ -507,7 +542,8 @@ Re-run: `bun run balance --levels l0-greybox,l1-burza,l2-wybory,l3-afera,l4-zdro
   the 4 s first spawn can feel like a pile-up.
 - Abilities: do students press them at all, and at the right moment? The bots arm Ekspertyza and
   Druga szansa as soon as they can. Watch Podaj teczkę (not modelled) and whether the average crew
-  gets 3 stars on level 2 (bots after S7-66: 4 % ×3, 33 % ×4).
+  gets 3 stars on level 2 (bots after S7-66, 120 seeds: 18 % ×3, 26 % ×4), and whether level 2
+  feels harder than level 3 to first-time crews (bot rookies win l2 55 %, l3 60 % on Normal).
 - Replace the model numbers in `tools/balance/models.ts` with measured values (minigame durations,
   failure rates, reading time) and re-run.
 
