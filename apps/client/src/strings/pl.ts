@@ -502,6 +502,12 @@ export const pl = {
       targetLabel: 'Cel twojej zdolności',
       /** The folder card carried by a Ratownik with the rescue left. */
       rescueLabel: 'Chroni ją koło ratunkowe',
+      /** World markers over players (S7-42); they show icons only, these are their names. */
+      marker: {
+        armed: (nick: string, ability: string) => `${nick}: ${ability} uzbrojona`,
+        calling: (nick: string) => `${nick} dzwoni`,
+        passTarget: (nick: string) => `Podasz teczkę: ${nick}`,
+      },
     },
     /** Verdict toasts take their titles from `outcome.title`. */
     toast: {
