@@ -2,7 +2,8 @@
 // menu when the `roomBrowser` flag is on. A search field („Kod, nazwa lub gospodarz”) and three
 // filters (mode, status, difficulty; behind a „Filtry” toggle on phones), the rooms as a radio
 // list (blue selection) with every summary field, and one yellow „Dołącz” (only for a room with
-// a free seat in its lobby) plus a white „Oglądaj” (only for a room whose Widownia has a seat).
+// a free seat in its lobby) plus a white „Oglądaj” (only for a room whose Widownia has a seat);
+// neither shows until a room is picked.
 // An empty nickname brings the nickname field into the dialog. The list polls every 8 s while
 // open and visible (`useRoomList`). Keyboard (Tab, arrows in the list, Enter, Esc), gamepad
 // (menu-nav: d-pad, A, B) and touch all work; a full-screen sheet on phones.
@@ -25,8 +26,8 @@ import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
-import { Field } from '../ui/Field.tsx';
 import fieldStyles from '../ui/Field.module.css';
+import { Field } from '../ui/Field.tsx';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './RoomBrowser.module.css';
 import {
@@ -201,7 +202,8 @@ function RoomBrowserSheet() {
           <div className={styles.name}>
             <Field
               label={pl.menu.bylineLabel}
-              placeholder={pl.menu.bylinePlaceholder}
+              // Phones hide the label to keep one row: the placeholder must say what goes in.
+              placeholder={pl.menu.bylineLabel}
               value={nickname}
               maxLength={NICKNAME_MAX_LENGTH}
               autoComplete="nickname"
@@ -332,8 +334,16 @@ function RoomBrowserSheet() {
               <Icon name="expired" size={22} />
               {pl.rooms.problems[list.problem]}
             </p>
+          ) : room ? (
+            !room.canJoinAsPlayer &&
+            !room.canSpectate && (
+              <p className={styles.stale} data-testid="room-no-seat">
+                <Icon name="lock" size={22} />
+                {pl.rooms.noSeat}
+              </p>
+            )
           ) : (
-            !room && list.rooms.length > 0 && <p className={styles.soft}>{pl.rooms.pick}</p>
+            list.rooms.length > 0 && <p className={styles.soft}>{pl.rooms.pick}</p>
           )}
         </div>
         {room?.canSpectate && (
@@ -346,15 +356,17 @@ function RoomBrowserSheet() {
             {pl.rooms.watch}
           </Button>
         )}
-        <Button
-          variant="primary"
-          big
-          disabled={busy || !room?.canJoinAsPlayer}
-          data-testid="room-join"
-          onClick={() => enter('player')}
-        >
-          {pl.rooms.join}
-        </Button>
+        {room?.canJoinAsPlayer && (
+          <Button
+            variant="primary"
+            big
+            disabled={busy}
+            data-testid="room-join"
+            onClick={() => enter('player')}
+          >
+            {pl.rooms.join}
+          </Button>
+        )}
       </footer>
     </div>
   );

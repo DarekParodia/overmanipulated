@@ -5,7 +5,7 @@
 // finds the room by „3b”, signs in the dialog and joins. Desktop at 1366×768 (keyboard) and a
 // touch phone at 640×360 (filters behind „Filtry”).
 import { expect, type Page, test, type WebSocketRoute } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, PHONE, trackContext } from './helpers.ts';
+import { closePlayers, createRoom, DESKTOP, PHONE, rosterRow, trackContext } from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -50,12 +50,13 @@ test('a public room is found by „3b” and joined', async ({ browser }, testIn
   const entry = guest.getByTestId('open-room-browser');
   await expect(entry).toBeVisible();
   await expect(guest.getByTestId('menu-watch-code')).toBeVisible();
+  await guest.screenshot({ path: testInfo.outputPath('menu.png'), scale: 'css' });
   await tap(guest, touch, entry);
 
   const dialog = guest.getByTestId('room-browser');
   await expect(dialog).toBeVisible();
-  // Nothing picked yet: the yellow „Dołącz” waits for a room.
-  await expect(dialog.getByTestId('room-join')).toBeDisabled();
+  // Nothing picked yet: no „Dołącz” until a room is picked.
+  await expect(dialog.getByTestId('room-join')).toHaveCount(0);
 
   // Filters: shown on desktop, behind „Filtry” on the phone. „Na punkty” has no room to offer.
   const filters = dialog.getByTestId('room-filters');
@@ -113,7 +114,7 @@ test('a public room is found by „3b” and joined', async ({ browser }, testIn
 
   await expect(guest.getByTestId('room-code')).toHaveText(code);
   await expect(dialog).toBeHidden();
-  await expect(host.getByText('Olek')).toBeVisible();
+  await expect(rosterRow({ page: host, nickname: 'Ewa', touch: false }, 'Olek')).toBeVisible();
 });
 
 test('the dialog closes with Esc and stops asking for rooms', async ({ browser }, testInfo) => {

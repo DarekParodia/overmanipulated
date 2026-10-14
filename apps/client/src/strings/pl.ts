@@ -2167,6 +2167,8 @@ export const pl = {
     } satisfies Record<RoomListProblem, string>,
     retry: 'Spróbuj jeszcze raz',
     pick: 'Wybierz pokój z listy.',
+    /** The picked room has no free seat and no open Widownia. */
+    noSeat: 'Brak wolnych miejsc.',
   },
   /**
    * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate

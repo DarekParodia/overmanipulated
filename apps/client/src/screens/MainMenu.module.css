@@ -80,7 +80,14 @@
 
 /* With the spectators flag: the code, „Dołącz” and the eye that watches the code (S7-88). */
 .joinWatch {
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+/* The eye is icon only: a chunky square-ish button, so the code keeps its room. */
+.joinWatch > button:last-child {
+  padding-inline: var(--space-3);
+  /* As tall as „Dołącz” next to it (its text line, padding and bold outline). */
+  min-height: calc(var(--text-xl) * 1.12 + 2 * var(--space-3) + 2 * var(--stroke-bold));
 }
 
 .error {
@@ -102,6 +109,13 @@
 
 /* Landscape phones: logo on the left, the panel on the right, everything on one screen. */
 @media (max-height: 520px) and (orientation: landscape) {
+  /* The narrow panel column: the code on its own line, „Dołącz” and the eye under it. */
+  .joinWatch {
+    grid-template-columns: 1fr auto;
+  }
+  .joinWatch > :first-child {
+    grid-column: 1 / -1;
+  }
   .page {
     grid-template-columns: 1fr minmax(0, 24rem);
     align-items: center;

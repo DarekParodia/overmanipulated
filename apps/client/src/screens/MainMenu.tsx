@@ -164,6 +164,7 @@ export function MainMenu() {
               big
               disabled={busy}
               icon={<Icon name="eye" size={28} label={pl.menu.watchByCode} />}
+              title={pl.menu.watchByCode}
               data-testid="menu-watch-code"
               onClick={() => joinByCode('spectator')}
             />

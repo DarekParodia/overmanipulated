@@ -138,9 +138,7 @@ function problemOf(error: unknown): RoomListProblem {
 }
 
 function sameFilters(a: RoomListFilters, b: RoomListFilters): boolean {
-  return (
-    a.q === b.q && a.mode === b.mode && a.status === b.status && a.difficulty === b.difficulty
-  );
+  return a.q === b.q && a.mode === b.mode && a.status === b.status && a.difficulty === b.difficulty;
 }
 
 export function createRoomListPoller<Timer>(deps: RoomListPollerDeps<Timer>): RoomListPoller {
@@ -174,9 +172,7 @@ export function createRoomListPoller<Timer>(deps: RoomListPollerDeps<Timer>): Ro
 
   /** Waits out what is left of the current interval since the last request started. */
   function remainingMs(): number {
-    return lastStartedAt === null
-      ? 0
-      : Math.max(0, lastStartedAt + state.delayMs - deps.now());
+    return lastStartedAt === null ? 0 : Math.max(0, lastStartedAt + state.delayMs - deps.now());
   }
 
   function request(): void {
