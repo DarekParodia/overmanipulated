@@ -151,7 +151,7 @@ Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, 
 | Niezależne źródło | `isIndependent(card)` | An agency or newsroom card with its own reporter (not an echo). Only these count |
 | Potwierdzają / Zaprzeczają / Za mało źródeł | `confirmed` / `denied` / `unconfirmed` (`Conclusion`, `conclude(cards)`) | Any independent denial → denied; ≥ `CROSS_CHECK_CONFIRMATIONS` (2) independent confirmations → confirmed; else unconfirmed |
 
-## Roles (`RoleId`)
+## Roles (`Role`)
 
 Passives and abilities live in `ROLE_PERKS` (`RolePerk`, S7-36): `fasterAt` × `workFactor` is the
 passive, `ability` the active one (R / RB / the fourth touch button).
@@ -164,6 +164,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Redaktor prowadzący | `managingEditor` | — | Przedłużenie |
 | Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
 | Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
+| Bez roli | no role (`role: null`, `pl.lobbyRoles.noRole`) | — („Bez premii”) | — („Bez zdolności”) |
 
 | Polish | English | Notes |
 | --- | --- | --- |
@@ -172,6 +173,11 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Panel roli | role detail panel (`data-testid="role-detail"`, `roleSummary`, `roleSummaryNote`) | Under the passes: the checked (or hovered / pad-focused) role's passive with its stations on the level, the ability with the device's key and cooldown, and „Ta premia / Ta zdolność nie działa na tym poziomie.” when a perk does nothing there |
 
 ## Abilities (`Ability`, Stage 7)
+
+Every ability is pressed with R / RB / the fourth touch button, whose one-word label is
+`pl.touch.ability` (Ekspert, Dzwoń, +20 s, Szansa, Podaj). All cooldowns are 60 s (`ABILITY`,
+kept after the S7-46 bot data). Player-facing copy: design document „Role”, contest
+`how-to-play.pl.md` „Role i zdolności” and the role cards (S7-47).
 
 | Polish | English | Notes |
 | --- | --- | --- |

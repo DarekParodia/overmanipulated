@@ -183,6 +183,10 @@ describe('smoke run, ads off (base CSP)', () => {
     const results = await runSmoke(stack.baseUrl, { snapshots: 5 });
     expect(results.filter((r) => r.status === 'fail')).toEqual([]);
     expect(results.map((r) => r.name)).toContain('start level and receive snapshots');
+    expect(byName(results, 'role ability round trip')).toMatchObject({
+      status: 'pass',
+      detail: 'Ekspertyza armed, crew state in the snapshot',
+    });
     // The stand-in sends no X-Content-Type-Options, so that is a warning, not a failure.
     expect(byName(results, 'GET / (HTML)')?.status).toBe('warn');
     expect(byName(results, 'GET /api/config')?.detail).toBe('ads off, revision 0');
