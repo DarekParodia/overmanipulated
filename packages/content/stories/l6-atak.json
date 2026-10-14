@@ -201,6 +201,7 @@
       }
     ],
     "justifyingStamps": ["l6-apel-mieszkancow-archive", "l6-apel-mieszkancow-phone"],
+    "requiredStamps": 2,
     "technique": "astroturfing",
     "debrief": {
       "what": "Apel wygląda na głos mieszkańców, ale przygotowała go agencja na zlecenie komitetu. Poparcie dla linii 12 jest prawdziwe, tylko skala wygląda na większą.",
@@ -270,6 +271,7 @@
       }
     ],
     "justifyingStamps": ["l6-sondaz-pracowni-source", "l6-sondaz-pracowni-data"],
+    "requiredStamps": 2,
     "technique": "none",
     "debrief": {
       "what": "Rzetelny sondaż z jawną metodologią i uczciwie podanym marginesem błędu.",
@@ -830,6 +832,7 @@
       "l6-hashtag-12-to-koniec-data",
       "l6-hashtag-12-to-koniec-media"
     ],
+    "requiredStamps": 3,
     "technique": "sztuczny-hashtag",
     "debrief": {
       "what": "Hasztag sztucznie wypromowany przez niewielką grupę kont, a nie wyraz opinii miasta.",
@@ -1664,6 +1667,282 @@
       "technique": "Brak manipulacji. Anonimowy blog i niepewny wynik skanera AI nie przesądzają o fałszu – liczy się to, co da się sprawdzić w źródłach.",
       "tool": "Archiwum: wycinek z 2009 r. potwierdza oba fakty. Rejestr źródeł i skaner AI tylko budziły wątpliwości.",
       "realWorld": "Historyczne ciekawostki często krążą bez podanego źródła. Cyfrowe archiwa gazet i bibliotek pozwalają szybko je sprawdzić, zanim uznamy je za plotkę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-komisja-w-bibliotece",
+    "type": "post",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Komisja nr 7 przeniesiona: głosujemy w bibliotece, nie w szkole",
+    "body": "Rada Osiedla Zatoka: w Szkole Podstawowej nr 2 pękła rura. W niedzielę komisja nr 7 pracuje w Bibliotece Miejskiej przy ul. Lipowej 4.",
+    "source": "Profil „Rada Osiedla Zatoka”",
+    "stamps": [
+      {
+        "id": "l6-komisja-w-bibliotece-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-archive",
+        "station": "archive",
+        "text": "Archiwum: od 15 lat komisja nr 7 zawsze pracowała w szkole.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-source",
+        "station": "sourceRegistry",
+        "text": "Prawdziwy profil rady osiedla, ale rada nie organizuje głosowania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-phone",
+        "station": "phone",
+        "text": "Biuro wyborcze urzędu potwierdza: awaria w szkole, komisja nr 7 w bibliotece przy Lipowej 4.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (91%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak liczb do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-map",
+        "station": "geolocation",
+        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, to świeży komunikat.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-komisja-w-bibliotece-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa zmiana lokalu: w szkole pękła rura, więc komisja nr 7 pracuje w niedzielę w bibliotece.",
+      "technique": "Brak manipulacji. Zmiana brzmi podejrzanie, bo przez lata było inaczej, ale urząd ją potwierdza.",
+      "tool": "Telefon: biuro wyborcze potwierdza awarię i nowy adres. Archiwum pokazywało tylko, gdzie komisja pracowała wcześniej.",
+      "realWorld": "Lokale wyborcze czasem zmieniają się w ostatniej chwili, na przykład po awarii. Zmianę potwierdza urząd, a na drzwiach starego lokalu wisi kartka z nowym adresem."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-strajk-kierowcow",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Kierowcy strajkują! W niedzielę dwunastka nie wyjedzie",
+    "body": "Wpis „od kierowców”: „W niedzielę od rana stoimy w zajezdni. Do lokali nie dojedziecie, przekażcie dalej!”.",
+    "source": "Profil „Kierowcy NB – nieoficjalnie”",
+    "stamps": [
+      {
+        "id": "l6-strajk-kierowcow-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-archive",
+        "station": "archive",
+        "text": "Archiwum: profil od maja pisał tylko o zmianach w rozkładach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-source",
+        "station": "sourceRegistry",
+        "text": "Profil ma 2 tys. obserwujących, piszą tam prawdziwi kierowcy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-strajk-kierowcow-phone",
+        "station": "phone",
+        "text": "Związek zawodowy kierowców i Zarząd Transportu: żadnego strajku, w niedzielę wszystkie kursy.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-strajk-kierowcow-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (84%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o strajkach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-map",
+        "station": "geolocation",
+        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-media",
+        "station": "crossCheck",
+        "text": "Dwa portale przepisały wpis, nikt nie dzwonił do przewoźnika.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-strajk-kierowcow-phone"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Fałszywy alarm: żadnego strajku nie ma, w niedzielę dwunastka jeździ zwykłym rozkładem.",
+      "technique": "Plotka bez źródła: anonimowy wpis „od kierowców” i prośba o przekazanie dalej mają zniechęcić ludzi do wyjścia na głosowanie.",
+      "tool": "Telefon: związek zawodowy kierowców i Zarząd Transportu zaprzeczają. Popularny profil kierowców to jeszcze nie dowód.",
+      "realWorld": "Przed głosowaniem krążą plotki o utrudnieniach, które mają zniechęcić do pójścia do lokalu. Strajk zapowiada związek zawodowy, a przewoźnik ogłasza zmiany w rozkładzie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-spoznienia-dwunastki",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Co drugi kurs dwunastki spóźniony! Czas z tym skończyć",
+    "body": "Grafika komitetu „Tak dla zmian”: „Według Zarządu Transportu 48% kursów linii 12 spóźnia się ponad 5 minut”.",
+    "source": "Grafika komitetu „Tak dla zmian”",
+    "stamps": [
+      {
+        "id": "l6-spoznienia-dwunastki-image",
+        "station": "imageSearch",
+        "text": "Grafika zrobiona dziś, bez starszych kopii w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych grafik tego komitetu o spóźnieniach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-source",
+        "station": "sourceRegistry",
+        "text": "Komitet jest zarejestrowany, a raport Zarządu Transportu istnieje.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-phone",
+        "station": "phone",
+        "text": "Zarząd Transportu: raport jest na stronie, rzecznik oddzwoni jutro.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (88%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-data",
+        "station": "dataLibrary",
+        "text": "Tabela Zarządu Transportu: 48% spóźnień ma linia 21. Linia 12 – 9%.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-map",
+        "station": "geolocation",
+        "text": "Grafika bez zdjęcia miejsca, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, grafika krąży tylko w grupach.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-spoznienia-dwunastki-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Liczba jest prawdziwa, ale dotyczy innej linii: 48% spóźnień ma linia 21, a dwunastka – 9%.",
+      "technique": "Zmanipulowana statystyka: prawdziwa liczba z prawdziwej tabeli, tylko z innego wiersza. Powołanie się na urząd ma ją uwiarygodnić.",
+      "tool": "Biblioteka danych: tabela Zarządu Transportu pokazuje 9% spóźnień linii 12. Zarejestrowany komitet niczego nie przesądza.",
+      "realWorld": "Liczby w kampaniach bywają prawdziwe, ale z innego roku, miejsca albo wiersza tabeli. Warto otworzyć oryginalne zestawienie i znaleźć dokładnie tę komórkę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-najdrozsza-linia",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Dwunastka to najdroższa linia w mieście: 2,1 mln zł rocznie",
+    "body": "Wpis komitetu „Tak dla zmian”: „Żadna linia nie kosztuje tyle co dwunastka. Czas przestać przepalać pieniądze!”.",
+    "source": "Profil komitetu „Tak dla zmian”",
+    "stamps": [
+      {
+        "id": "l6-najdrozsza-linia-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych tekstów o kosztach linii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-source",
+        "station": "sourceRegistry",
+        "text": "Komitet jest zarejestrowany, a kwota pochodzi z budżetu miasta.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-najdrozsza-linia-phone",
+        "station": "phone",
+        "text": "Biuro skarbnika: kwota z budżetu, bez komentarza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (93%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-data",
+        "station": "dataLibrary",
+        "text": "Tabela: 2,1 mln zł się zgadza, ale to najdłuższa trasa. Na kilometr kosztuje tyle co inne linie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-najdrozsza-linia-map",
+        "station": "geolocation",
+        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-media",
+        "station": "crossCheck",
+        "text": "Jeden portal powtarza kwotę za wpisem, bez porównania.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-najdrozsza-linia-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Kwota jest prawdziwa, ale dwunastka to najdłuższa trasa w mieście. Na kilometr kosztuje tyle co inne linie.",
+      "technique": "Zmanipulowana statystyka: sama suma bez porównania z długością trasy robi z najdłuższej linii „najdroższą”.",
+      "tool": "Biblioteka danych: koszt na kilometr pokazuje, że dwunastka nie odstaje od innych linii. Publikujemy z tym kontekstem.",
+      "realWorld": "Duże kwoty robią wrażenie, ale bez przeliczenia na kilometr, mieszkańca czy pasażera nie mówią, czy coś jest drogie."
     },
     "reviewed": false
   },
