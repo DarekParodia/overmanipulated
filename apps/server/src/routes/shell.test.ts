@@ -23,7 +23,32 @@ const TEMPLATE = `<!doctype html>
   </body>
 </html>`;
 
-const SHELL: ShellAssets = { indexHtml: TEMPLATE, supportsNonce: true };
+/** A privacy note with every block the real one uses (docs/privacy.pl.md). */
+const PRIVACY_MD = `[← Wróć do gry](/)
+
+# Prywatność
+
+Administrator: **{{operator.name|[do uzupełnienia]}}**, {{operator.contact|brak kontaktu}}.
+
+<!-- ads -->
+## Reklamy
+<!-- ads-limited -->
+Reklamy ograniczone, bez ciasteczek.
+<!-- /ads-limited -->
+<!-- ads-cookies -->
+Reklamy mogą używać ciasteczek.
+<!-- /ads-cookies -->
+<!-- /ads -->
+<!-- no-ads -->
+Na tej stronie nie ma reklam.
+<!-- /no-ads -->
+`;
+
+const SHELL: ShellAssets = {
+  indexHtml: TEMPLATE,
+  supportsNonce: true,
+  privacyMarkdown: PRIVACY_MD,
+};
 
 const ADS_HOST = 'bronsie.drkp.dev';
 const ADS_ON = {
@@ -165,7 +190,10 @@ describe('HTML shell', () => {
 
   it('a shell built without the nonce placeholder never turns on ads', async () => {
     const page = TEMPLATE.replaceAll(` nonce="${P}"`, '');
-    const { app, get } = setup({ ads: ADS_ON }, { indexHtml: page, supportsNonce: false });
+    const { app, get } = setup(
+      { ads: ADS_ON },
+      { indexHtml: page, supportsNonce: false, privacyMarkdown: PRIVACY_MD },
+    );
     const res = await get('/', ADS_HOST);
     expect(res.headers.get('content-security-policy')).toBe(BASE_CSP);
     expect(embedded(await res.text()).ads).toEqual({ enabled: false });
@@ -253,6 +281,90 @@ describe('/ads.txt', () => {
   it('is 404 (never the SPA page) when no lines are configured, with or without a shell', async () => {
     for (const shell of [SHELL, null]) {
       const res = await setup({}, shell).get('/ads.txt');
+      expect(res.status).toBe(404);
+      expect(res.headers.get('content-type') ?? '').not.toContain('text/html');
+    }
+  });
+});
+
+describe('/prywatnosc', () => {
+  const OPERATOR = { name: 'XIV LO w Nowych Brzegach' };
+
+  it('renders the note with operator values, the base CSP and no-cache', async () => {
+    const { get } = setup({ site: { operator: OPERATOR } });
+    const res = await get('/prywatnosc');
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/html');
+    expect(res.headers.get('content-security-policy')).toBe(BASE_CSP);
+    expect(res.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(res.headers.get('cache-control')).toBe('no-cache');
+    const html = await res.text();
+    expect(html).toContain('<title>Prywatność</title>');
+    expect(html).toContain('<h1>Prywatność</h1>');
+    expect(html).toContain('<a href="/">← Wróć do gry</a>');
+    // A set value replaces its fallback; an unset one shows the fallback from the note.
+    expect(html).toContain('<strong>XIV LO w Nowych Brzegach</strong>, brak kontaktu.');
+    expect(html).not.toContain('<script');
+  });
+
+  it('shows the ads section only where ads run for the host', async () => {
+    const { get } = setup({ site: { operator: OPERATOR }, ads: ADS_ON });
+    const onAdsHost = await (await get('/prywatnosc', ADS_HOST)).text();
+    expect(onAdsHost).toContain('<div data-block="ads"><h2>Reklamy</h2>');
+    expect(onAdsHost).toContain(
+      '<div data-block="ads-limited"><p>Reklamy ograniczone, bez ciasteczek.</p></div>',
+    );
+    expect(onAdsHost).not.toContain('ads-cookies');
+    expect(onAdsHost).not.toContain('nie ma reklam');
+
+    const elsewhere = await (await get('/prywatnosc', 'localhost')).text();
+    expect(elsewhere).not.toContain('Reklamy');
+    expect(elsewhere).toContain(
+      '<div data-block="no-ads"><p>Na tej stronie nie ma reklam.</p></div>',
+    );
+    // The page itself never runs ads, whatever the host.
+    const res = await get('/prywatnosc', ADS_HOST);
+    expect(res.headers.get('content-security-policy')).toBe(BASE_CSP);
+  });
+
+  it('non-personalised ads for adults show the cookies text instead', async () => {
+    const { get } = setup({
+      ads: { ...ADS_ON, mode: 'nonPersonalized', ageTreatment: 'unspecified' },
+    });
+    const html = await (await get('/prywatnosc', ADS_HOST)).text();
+    expect(html).toContain(
+      '<div data-block="ads-cookies"><p>Reklamy mogą używać ciasteczek.</p></div>',
+    );
+    expect(html).not.toContain('ads-limited');
+  });
+
+  it('turning ads off with a reload drops the ads section on the next visit', async () => {
+    const { get, swap } = setup({ ads: ADS_ON });
+    expect(await (await get('/prywatnosc', ADS_HOST)).text()).toContain('data-block="ads"');
+    swap({ ads: { ...ADS_ON, enabled: false } });
+    const html = await (await get('/prywatnosc', ADS_HOST)).text();
+    expect(html).not.toContain('data-block="ads"');
+    expect(html).toContain('data-block="no-ads"');
+  });
+
+  it('escapes markup in operator values', async () => {
+    const { get } = setup({ site: { operator: { name: '<script>alert(1)</script>' } } });
+    const html = await (await get('/prywatnosc')).text();
+    expect(html).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(html).not.toContain('<script');
+  });
+
+  it('works without a client build, and is 404 without the note', async () => {
+    const devShell: ShellAssets = {
+      indexHtml: null,
+      supportsNonce: false,
+      privacyMarkdown: PRIVACY_MD,
+    };
+    const dev = setup({}, devShell);
+    expect((await dev.get('/prywatnosc')).status).toBe(200);
+    expect((await dev.get('/')).status).toBe(404);
+    for (const shell of [{ ...SHELL, privacyMarkdown: null }, null]) {
+      const res = await setup({}, shell).get('/prywatnosc');
       expect(res.status).toBe(404);
       expect(res.headers.get('content-type') ?? '').not.toContain('text/html');
     }

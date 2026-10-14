@@ -433,14 +433,24 @@ export async function runSmoke(
     if (response.status !== 200 || !type.includes('html')) {
       throw new Error(`HTTP ${response.status}, ${type}`);
     }
-    if (/<h1\b/.test(html)) {
-      return 'privacy page';
+    if (!/<h1\b/.test(html) || embeddedConfig(html).kind !== 'missing') {
+      throw new Error('not the privacy page (no heading, or the game shell instead)');
     }
-    // Until the privacy page route lands (S7-75) the path renders the HTML shell.
-    if (embeddedConfig(html).kind !== 'missing') {
-      return 'HTML shell (privacy page route not deployed yet)';
+    if (/<script\b/i.test(html)) {
+      throw new Error('the privacy page carries a script');
     }
-    throw new Error('HTML without a heading or the game shell');
+    const csp = response.headers.get('content-security-policy');
+    if (csp?.includes("'strict-dynamic'")) {
+      throw new Error('the privacy page got the ads CSP; it never shows ads');
+    }
+    // The ads text follows the same per-host decision as /api/config.
+    const adsSection = html.includes('data-block="ads"');
+    if (apiConfig && apiConfig.ads.enabled !== adsSection) {
+      throw new Error(
+        `ads section ${adsSection ? 'shown' : 'missing'} but /api/config has ads ${apiConfig.ads.enabled ? 'on' : 'off'}`,
+      );
+    }
+    return `privacy page, ads section ${adsSection ? 'shown' : 'hidden'}`;
   });
 
   await check('GET /manifest.webmanifest', async () => {
