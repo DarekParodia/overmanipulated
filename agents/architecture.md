@@ -62,12 +62,18 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   and never hand-writes `fetch` URLs or response types.
 - The game itself stays on the WebSocket. Do not move real-time traffic (input, snapshots,
   verdicts) to REST.
-- Room broadcasting uses Bun's native pub/sub: `ws.raw.subscribe(roomTopic)` on join, then
-  `server.publish(roomTopic, …)`. One topic per room.
-- Rooms are in memory; 4-letter codes from an unambiguous alphabet (no `O/0`, `I/1`).
-  Max 4 players. A disconnected player's slot is held for 60 s for reconnection.
-- Fixed **20 Hz** tick loop per active room: drain queued inputs → `step` → broadcast snapshot and
-  events. Empty rooms are destroyed.
+- Room broadcasting uses Bun's native pub/sub: `ws.raw.subscribe(topic)` on join, then
+  `server.publish(topic, …)`. Each room has three kinds of topic (`roomTopics`, `topicsFor`):
+  `room:CODE` for everyone (`roomState`, `gameStarted`), `room:CODE:t0` / `:t1` for one team's
+  players (its snapshots, events and `levelEnd`) and `room:CODE:spec` for spectators. A co-op
+  room plays as team 0.
+- Rooms are in memory; 4-letter codes from an unambiguous alphabet (no `O/0`, `I/1`). A room
+  holds members (players and spectators) and one newsroom (`TeamRun`, one sim) per team: one in
+  co-op, two in versus, at most 4 players each. A disconnected member's slot is held for 60 s for
+  reconnection; its token resumes exactly that member.
+- Fixed **20 Hz** tick loop per active room: drain queued inputs per team → build one `SimContext`
+  → `step` every team in lockstep → publish each team's events and snapshot (`publishTeam`
+  encodes once for the team and spectator topics). Empty rooms are destroyed.
 - **Run lifecycle** (Stage 7): the lobby holds the selected level as `getLevel` serves it and the
   room's difficulty (host only, lobby only). Every briefing, replays included, deals the run with
   `prepareRun` from a fresh **run seed** (never sent to clients) and the room's difficulty;
