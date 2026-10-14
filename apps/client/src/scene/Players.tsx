@@ -1,8 +1,8 @@
-import { useApp } from '../store/app.ts';
+import { useViewRoster } from '../net/view-context.tsx';
 import { PlayerAvatar } from './PlayerAvatar.tsx';
 
 export function Players({ shadows }: { shadows: boolean }) {
-  const players = useApp((s) => s.room?.players ?? []);
+  const players = useViewRoster();
   return (
     <>
       {players.map((player) => (

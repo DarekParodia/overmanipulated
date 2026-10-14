@@ -1933,6 +1933,17 @@ export const pl = {
     /** The chip shown while the browser still blocks audio; subtitles run on regardless. */
     soundLocked: 'Stuknij, by włączyć głos',
     scene: (n: number, total: number) => `Scena ${n} z ${total}`,
+    /** S7-101: the name tag of the reporter on the intro's stage. */
+    reporter: 'Ty',
+    /** The stamp chip on the stations and desk callouts. */
+    proof: 'Dowód',
+    /** After the last scene or „Pomiń”, in „Jak grać”. */
+    ended: 'Koniec wprowadzenia',
+    replay: 'Obejrzyj jeszcze raz',
+    /** Over the stage while paused. */
+    paused: 'Pauza',
+    /** The stage's accessible name. */
+    stageLabel: 'Scena wprowadzenia',
     voice: {
       welcome:
         'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
@@ -2193,8 +2204,6 @@ export const pl = {
     tabsLabel: 'Działy pomocy',
     tabs: { intro: 'Wprowadzenie', stations: 'Stanowiska', controls: 'Sterowanie' },
     close: 'Gotowe',
-    /** The intro tab until the animated intro lands (S7-101): the narrator's lines to read. */
-    introLabel: 'Wprowadzenie krok po kroku',
     stationsLabel: 'Stanowiska redakcji',
     stationsLead: 'Wybierz stanowisko i zobacz, jak działa.',
     /** Gamepad only: the north button walks the tabs, as in the settings. */

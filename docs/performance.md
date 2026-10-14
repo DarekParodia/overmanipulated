@@ -55,6 +55,18 @@ S7-103 („O grze”): the dialog adds 18 KB raw, 6 KB gzip to the extras route 
 9 KB gzip); `CREDITS.md` and the voice sprite are fetched only when its Zasoby tab opens and are
 not counted. Menu 597 KB gzip, first load 1.39 MB gzip.
 
+S7-101 (the intro player): the player, its subtitles and the welcome art ride in the „Jak grać”
+chunk (extras now 73 KB raw, 23 KB gzip); the in-engine stage is a lazy `IntroStage` chunk
+(8 KB raw, 3 KB gzip) loaded when the player mounts, and the renderer, three.js, the shared sim
+and the HUD cards it borrows are the game route's chunks, so they are counted once there. The
+intro's canvas is not the primary one (no preset probe, no adaptive quality); its mini room is
+10×6 tiles with one character, so it stays far under the scene budgets. Rolldown keeps the
+shared package's modules together, so the sim subsystems the intro steps (`step` and what it
+runs) moved into a chunk the menu loads, about 8 KB gzip. To pay for it, the design reference
+page (`?styleguide`, every minigame) became a lazy chunk in the same change: menu 573 KB gzip,
+290 KB of it JS and CSS (was 321 KB; guard 340 KB). Game route 864 KB gzip (54 % of `gameMax`;
+the styleguide counts there, being a lazy import of the entry), first load 1.43 MB gzip.
+
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
 
