@@ -164,7 +164,7 @@ export function Lobby() {
             data-testid="open-how-to"
             onClick={() => useHowTo.getState().show('intro')}
           >
-            {pl.howTo.open}
+            <span className={styles.actionLabel}>{pl.howTo.open}</span>
           </Button>
           <Button
             icon={<Icon name="book" size={24} />}

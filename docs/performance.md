@@ -44,8 +44,11 @@ Measured (production build, mp3 = worst case):
 | Game (added by first match) | 1.64 MB | 814 KB | 760 KB |
 | **First load, both** | **2.95 MB** | **1.35 MB** | **1.26 MB** |
 
-S7-96 (the „Jak grać” shell, the first extra): extras route 10 KB raw, 3 KB gzip; menu 583 KB
-gzip, game 814 KB gzip, first load (menu + game + extras) 1.37 MB gzip.
+S7-96 (the „Jak grać” shell, the first extra): extras route 10 KB raw, 3 KB gzip (the dialog's
+own code and CSS; the station help card and the controls tab it shows are already in the menu);
+menu 592 KB gzip (588 KB without the dialog: the shared code moves from the entry into a chunk
+the entry still loads, which compresses 4 KB worse), game 814 KB gzip, first load (menu + game +
+extras) 1.38 MB gzip.
 
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
