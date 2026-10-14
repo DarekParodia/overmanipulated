@@ -91,7 +91,9 @@ has no `stars`). Event stories always stay in `events`, never in the pool.
   greybox left out): shuffled rounds over the endless stations that decide a story, and each slot
   draws from its station's *deck* (the stories that station decides; a flex story sits in several
   decks), never the previous folder's story. Keep every non-hint endless deck at
-  `ENDLESS_MIN_DECK` stories or more, so a station does not repeat itself.
+  `ENDLESS_MIN_DECK` stories or more, so a station does not repeat itself. Endless runs all ten
+  stations (S7-64), but only l5 stories decide at Stenogram and Metadane and only l6 stories at
+  Mapa and Inne media: retargeting or dropping one of those stories can thin a new station's deck.
 
 ## Writing guidance
 
@@ -131,7 +133,10 @@ just saw. None of the four stations is hint-only.
   when the claim is about the time, place or device of the shot. A `misleading` stamp gives a
   harmless reason for a wrong time or place on a true story, or says the data match on an
   untrue one (metadata are easy to edit).
-- **Mapa** (`geolocation`) is decisive only for photos and video with a place claim.
+- **Mapa** (`geolocation`) is decisive only for photos and video with a place claim. An
+  `irrelevant` stamp shows a photo from the captioned district (the minigame always has a photo),
+  so its text says the place matches the caption but settles nothing: „Miejsce z podpisu się
+  zgadza, ale godzin mapa nie sprawdzi.” Never „no photo” or „nothing to look for on the map”.
 - **Inne media** (`crossCheck`): `irrelevant` and `misleading` stamps read as „no independent
   coverage”, e.g. „Nikt jeszcze o tym nie pisze.” or „Trzy portale to powtarzają – same kopie
   wpisu.”

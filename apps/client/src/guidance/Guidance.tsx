@@ -2,6 +2,7 @@
 // first-game tutorial card while the tutorial runs. Neither blocks input: the game keeps
 // running underneath and only the skip button takes pointer events.
 import { abilityOf } from '@redakcja/shared';
+import { ABILITY_ICON } from '../abilities/ability-icons.ts';
 import { useGame } from '../net/game-store.ts';
 import { isCoarsePointer } from '../scene/quality.ts';
 import { useApp } from '../store/app.ts';
@@ -29,6 +30,8 @@ const HINT_ICONS: Record<NextStepKind, IconName> = {
   openDesk: 'publish',
   verdict: 'publish',
   wait: 'clock',
+  // Replaced by the ability's own icon (the chip's picture) when the step names it.
+  ability: 'bolt',
 };
 
 export function Guidance() {
@@ -74,7 +77,7 @@ function HintBubble() {
       data-kind={step.kind}
     >
       <span className={styles.bubbleIcon}>
-        <Icon name={HINT_ICONS[step.kind]} size={28} />
+        <Icon name={step.ability ? ABILITY_ICON[step.ability] : HINT_ICONS[step.kind]} size={28} />
       </span>
       {/* Keyed so each new hint pops in. */}
       <span

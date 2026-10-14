@@ -3,7 +3,11 @@
 Summary of the technical design from the design document, plus the invariants agents must keep.
 
 ```
-Browser (React + R3F)  ──https/wss:443──▶  Caddy  ──▶  Bun server: Hono (/ws, /api) + rooms + 20 Hz loop
+Browser (React + R3F)  ──https/wss:443──▶  TLS proxy ──▶ Caddy (static build, headers)
+        │                                                  │ everything but /assets, manifest, icons
+        │                                                  ▼
+        │                     Bun server: Hono (/ws, /api, HTML shell, /ads.txt, /prywatnosc)
+        │                                 + rooms + 20 Hz loop + config.json (hot reload)
         │                                                              │
         │                                                     Drizzle ──▶ SQLite file
         └──── @redakcja/shared ◀───────────────────────────────────────┘
@@ -55,8 +59,14 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
     AdSense verification meta tag. The CSP comes from `shell/csp.ts`: the base policy (identical
     to the Caddyfile's, guarded by `tools/deploy/caddyfile.test.ts`) or, only where ads run for the
     request host, Google's strict nonce + `'strict-dynamic'` policy in script-src. `/ads.txt`
-    serves `ads.adsTxt`. Reserved prefixes (`/api`, `/ws`, `/health`, `/assets`) and file-like
-    paths 404. Without a client build (dev) the shell is off and those paths 404.
+    serves `ads.adsTxt` (404 while empty). `GET /prywatnosc` renders `docs/privacy.pl.md`
+    (`shell/privacy-page.ts`, markdown-lite from `@redakcja/shared`) with the base CSP and no
+    script; its ads blocks follow the same per-host ads decision as the shell. Reserved prefixes
+    (`/api`, `/ws`, `/health`, `/assets`) and file-like paths 404. Without a client build (dev)
+    the shell is off and those paths 404; `/prywatnosc` still works.
+  - Header ownership: the server sets CSP, `Referrer-Policy`, COOP and `Cache-Control` on the
+    pages it renders; Caddy adds the fixed security headers everywhere and the base CSP only as a
+    default (`?`). See `docs/deploy.md` ("Headers and CSP modes").
 - REST input is validated with `@hono/zod-validator` and the shared Zod schemas. The app exports
   `type AppType = typeof routes` so the client calls REST through Hono's typed RPC client (`hc`)
   and never hand-writes `fetch` URLs or response types.
@@ -87,9 +97,16 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   refused (exit 1 at start, old config kept at reload). The registry reads
   `RegistryOptions.settings()` (`maxRooms`, `defaultDifficulty`, feature flags) at every room
   creation, so running rooms are never changed by a reload. Never read `config.json` elsewhere.
+  Precedence: a setting is env or `config.json`, never both; the one overlap, `ADS_ENABLED`, is
+  written into the raw JSON before validation, so it wins but cannot bypass a rule (`ads.signOff`).
+  Every key, its default and when it applies: `docs/deploy.md` ("Configuration"); a docs test
+  (`tools/deploy/deploy-docs.test.ts`) fails when a key is added without a row there.
+- **Client address**: the server reads only `X-Real-IP` (set by Caddy from `trusted_proxies`),
+  else the socket address (`client-address.ts`); never `X-Forwarded-For`.
 - Every incoming message is parsed with the Zod schema from `shared/protocol`; invalid messages are
   dropped and logged, never crash the room.
-- Exposed only behind Caddy on port 443 (`/ws` and `/api` paths); never on a public custom port.
+- Exposed only behind Caddy on port 443 (every path except the static build output: `/ws`,
+  `/api`, `/health`, the HTML shell, `/ads.txt`, `/prywatnosc`); never on a public custom port.
 
 Suggested layout:
 
@@ -97,8 +114,10 @@ Suggested layout:
 apps/server/src/
   index.ts        Bun.serve bootstrap (reads env and config.json, runs migrations, starts server)
   config.ts       config.json schema and the hot-reloading ConfigStore; paths.ts holds defaults
+  public-config.ts  per-host public config (ads decision, MOTD window), room settings
   app.ts          Hono app, mounts routes, exports AppType
-  routes/         health.ts, ws.ts, api/*.ts
+  routes/         health.ts, ws.ts, api/*.ts, shell.ts (mounted last)
+  shell/          HTML shell render, CSP modes, privacy page
   rooms/          room registry, codes, join/leave, reconnect
   loop.ts         20 Hz tick loop
   db/             client.ts, schema.ts, queries/*.ts
@@ -128,6 +147,14 @@ apps/server/drizzle/   generated SQL migrations (committed)
 - **Privacy**: no accounts, no personal data. Store only the nickname the player typed, room code
   and game results. Nothing that identifies a student (no IP, user agent, email). Leaderboard
   entries expire (retention set in `constants.ts`).
+- **Ads are the one third party** (Stage 7, off by default): Google AdSense only on hosts in
+  `ads.domains`, only on ad screens, never in play or on phones, and only limited ads (no cookies
+  or storage) while the audience may be under 18 (`adModeAllowed`). No other external script,
+  font or analytics. `docs/privacy.pl.md` must describe what the game does; its `ads` blocks
+  switch with the host's ads decision.
+- **The public config is its own schema** (`publicConfigSchema` in `@redakcja/shared`), derived
+  field by field per request host (`apps/server/src/public-config.ts`), never a pick of the
+  server config: sign-off, ads.txt lines, CSP extras and ad domains never reach a client.
 
 ## Protocol (`packages/shared/src/protocol.ts`)
 

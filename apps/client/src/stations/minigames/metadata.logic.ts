@@ -96,13 +96,14 @@ export function metadataOutcome(
 /**
  * The field a technique's file gives away, when the technique implies one (keys are technique
  * ids and their aliases from `techniques.json`): an old photo under a new caption carries its old
- * date; a generated image was never shot by any device; a deepfake video was put together in a
- * video editor (S7-59). So the puzzle agrees with the Metadane stamp of such a story, which names
- * that field.
+ * date; a photo from another place carries that place; a generated image was never shot by any
+ * device; a deepfake video was put together in a video editor (S7-59). So the puzzle agrees with
+ * the Metadane stamp of such a story, which names that field.
  */
 export const TECHNIQUE_FIELD: Readonly<Record<string, MetadataField>> = {
   'stare-zdjecie-nowy-podpis': 'taken',
   'zdjecie-w-zlym-czasie': 'taken',
+  'zdjecie-z-innego-miejsca': 'place',
   'obraz-wygenerowany-ai': 'device',
   'deepfake-wideo': 'software',
 };

@@ -224,12 +224,12 @@ function abilityContext(event: Extract<GameplayEvent, { kind: 'ability' }>): Cue
   };
 }
 
-/** Feedback for each gameplay event. */
+/** Feedback for each gameplay event; events silent for this client (a teammate arming) skip. */
 function playEventCue(event: GameplayEvent): void {
-  emitCue(
-    cueForEvent(event, (storyId) => getStory(storyId)?.truth),
-    contextFor(event),
-  );
+  const cue = cueForEvent(event, (storyId) => getStory(storyId)?.truth, useApp.getState().playerId);
+  if (cue !== null) {
+    emitCue(cue, contextFor(event));
+  }
 }
 
 // Dev aid: fire events and cues from the console or end-to-end tests (`?debug`).

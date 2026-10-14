@@ -1,9 +1,10 @@
 // Stage 5 character polish (S5-02): stride matching, role fidgets, ping emotes, celebrations,
-// hand IK, look-at, foot contacts and footstep gating.
+// hand IK, look-at, foot contacts and footstep gating; ability reactions (S7-42).
 import { describe, expect, it } from 'bun:test';
 import { PING_KINDS, roleSchema } from '@redakcja/shared';
 import { Quaternion, Vector3 } from 'three';
 import {
+  abilityReaction,
   celebrationForRole,
   createCharacterController,
   createFidgetTimer,
@@ -41,7 +42,7 @@ import {
 } from './hands.ts';
 import { HEAD_LEAD_MAX, headLook, turnTowards, wrapAngle } from './look.ts';
 import { createCharacterRig } from './rig.ts';
-import { CELEBRATION_CLIPS, roleClips, UPPER_CLIPS } from './role-clips.ts';
+import { ABILITY_CLIPS, CELEBRATION_CLIPS, roleClips, UPPER_CLIPS } from './role-clips.ts';
 
 const still = { moving: false, speedFraction: 0, carrying: false, working: false };
 const origin = (): Vec3 => ({ x: 0, y: 0, z: 0 });
@@ -117,6 +118,61 @@ describe('role clips and triggers', () => {
     expect(gestureForTrigger('cheer', { team: true, role: 'archivist' })).toBe('cheerArchive');
     expect(gestureForTrigger('cheer', { team: false, role: 'archivist' })).toBe('cheer');
     expect(gestureForTrigger('cheer')).toBe('cheer');
+  });
+});
+
+describe('ability reactions (S7-42)', () => {
+  type AbilityEvent = Parameters<typeof abilityReaction>[0];
+  const event = (fields: Omit<AbilityEvent, 'kind' | 'playerId'>): AbilityEvent => ({
+    kind: 'ability',
+    playerId: 'p1',
+    ...fields,
+  });
+
+  it('adds the ability clips to the upper layer', () => {
+    expect([...ABILITY_CLIPS]).toEqual(['abilityPower', 'abilityThrow', 'abilityCall']);
+    for (const name of ABILITY_CLIPS) {
+      expect(UPPER_CLIPS).toContain(name);
+    }
+    // The call clip lasts as long as the call (ABILITY.fieldCall.callMs).
+    expect(roleClips().abilityCall.duration).toBe(6);
+    // The left arm keeps holding a carried folder through the call.
+    const bones = roleClips().abilityCall.tracks.map((t) => t.name.split('.')[0]);
+    expect(bones).toContain('armR');
+    expect(bones).not.toContain('armL');
+  });
+
+  it('pumps for an ability that arms or lands, and only on its user', () => {
+    const armed = event({ ability: 'expertise', stage: 'armed' });
+    expect(abilityReaction(armed, 'p1')).toEqual({ kind: 'play', clip: 'abilityPower' });
+    expect(abilityReaction(armed, 'p2')).toBeNull();
+    for (const ability of ['expertise', 'secondChance', 'extendDeadline'] as const) {
+      expect(abilityReaction(event({ ability, stage: 'done' }), 'p1')).toEqual({
+        kind: 'play',
+        clip: 'abilityPower',
+      });
+    }
+    expect(abilityReaction(event({ ability: 'secondChance', stage: 'disarmed' }), 'p1')).toBeNull();
+  });
+
+  it('holds the phone for a field call and puts it away when the call ends', () => {
+    const call = (stage: AbilityEvent['stage']) =>
+      abilityReaction(event({ ability: 'fieldCall', stage, folderId: 'f1' }), 'p1');
+    expect(call('started')).toEqual({ kind: 'play', clip: 'abilityCall' });
+    expect(call('done')).toEqual({ kind: 'stop', clip: 'abilityCall' });
+    expect(call('cancelled')).toEqual({ kind: 'stop', clip: 'abilityCall' });
+  });
+
+  it('throws on the passer and catches on the receiver of Podaj teczkę', () => {
+    const pass = event({
+      ability: 'passFolder',
+      stage: 'done',
+      folderId: 'f1',
+      targetPlayerId: 'p2',
+    });
+    expect(abilityReaction(pass, 'p1')).toEqual({ kind: 'play', clip: 'abilityThrow' });
+    expect(abilityReaction(pass, 'p2')).toEqual({ kind: 'catch' });
+    expect(abilityReaction(pass, 'p3')).toBeNull();
   });
 });
 
@@ -210,6 +266,29 @@ describe('controller layers', () => {
     expect(rig.bones.legL.quaternion.angleTo(new Quaternion())).toBeGreaterThan(0.05);
     for (let i = 0; i < 60; i++) {
       controller.update(moving, DT, DT);
+    }
+    expect(controller.upperClip).toBeNull();
+    controller.dispose();
+    rig.dispose();
+  });
+
+  it('raises the phone to the ear and fades it out when the call stops early', () => {
+    const { rig, controller } = setup('reporter');
+    controller.playUpper('abilityCall');
+    for (let i = 0; i < 30; i++) {
+      controller.update(still, DT, DT);
+    }
+    expect(controller.upperClip).toBe('abilityCall');
+    // The right arm hangs along -y at rest; at the ear it points up.
+    const tip = new Vector3(0, -1, 0).applyQuaternion(rig.bones.armR.quaternion);
+    expect(tip.y).toBeGreaterThan(0.3);
+    // Stopping another clip changes nothing; stopping the call fades it out quickly.
+    controller.stopUpper('emoteMine');
+    controller.update(still, DT, DT);
+    expect(controller.upperClip).toBe('abilityCall');
+    controller.stopUpper('abilityCall');
+    for (let i = 0; i < 9; i++) {
+      controller.update(still, DT, DT);
     }
     expect(controller.upperClip).toBeNull();
     controller.dispose();

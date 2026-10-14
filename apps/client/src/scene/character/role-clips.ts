@@ -4,6 +4,7 @@
 // player. Celebrations are full-body gestures like `cheer`. Arm poses are written as pointing
 // directions in torso space (+x forward, +y up, +z left) through `armL`/`armR`, which is far
 // easier to author than Euler angles for a one-bone arm; `armR` mirrors the left-arm numbers.
+import { ABILITY } from '@redakcja/shared';
 import { AnimationClip, Euler, type KeyframeTrack, Quaternion } from 'three';
 import { clip, hipsY, REST_POSE, type Rot, rot } from './clips.ts';
 import { aimQuaternion } from './hands.ts';
@@ -227,6 +228,60 @@ function emoteMine(): AnimationClip {
   ]);
 }
 
+// --- Role ability reactions (S7-42): upper body, so a walking player keeps walking -------------
+
+/** Ekspertyza, Druga szansa, Przedłużenie (done or armed): a quick double fist pump. */
+function abilityPower(): AnimationClip {
+  const low = { armL: armL(0.55, 0.15, -0.25), armR: armR(0.55, 0.15, -0.25) };
+  const up = { armL: armL(0.25, 0.9, 0.05), armR: armR(0.25, 0.9, 0.05) };
+  return upper('abilityPower', 1.0, [
+    [0.12, { ...low, head: head(0, -0.08), torso: [0, 0, -0.06] }],
+    [0.3, { ...up, head: head(0, 0.2), torso: [0, 0, 0.05] }],
+    [0.45, { ...low, head: head(0, 0.05), torso: [0, 0, -0.02] }],
+    [0.62, { ...up, head: head(0, 0.22), torso: [0, 0, 0.05] }],
+    [0.82, { ...low, head: head(0, 0.05) }],
+  ]);
+}
+
+/** Podaj teczkę: both hands swing back, then push the folder forward and up in an arc. */
+function abilityThrow(): AnimationClip {
+  const back = { armL: armL(-0.35, -0.55, 0.2), armR: armR(-0.35, -0.55, 0.2) };
+  const release = { armL: armL(0.85, 0.45, -0.1), armR: armR(0.85, 0.45, -0.1) };
+  return upper('abilityThrow', 0.9, [
+    [0.14, { ...back, torso: [0, 0, -0.12], head: head(0, -0.05) }],
+    [0.32, { ...release, torso: [0, 0, 0.14], head: head(0, 0.15) }],
+    [0.5, { ...release, torso: [0, 0, 0.1], head: head(0, 0.12) }],
+    [0.75, { armL: armL(0.4, -0.6, 0.1), armR: armR(0.4, -0.6, 0.1), head: head(0, 0.04) }],
+  ]);
+}
+
+/**
+ * Telefon z terenu: the right hand holds a phone to the ear for the whole call
+ * (`ABILITY.fieldCall.callMs`), with a few nods. The left arm has no track, so a carried folder
+ * stays in that hand's pose. The controller stops it early when the call ends.
+ */
+function abilityCall(): AnimationClip {
+  const duration = ABILITY.fieldCall.callMs / 1000;
+  const ear = armR(0.12, 0.72, -0.2);
+  const nod = (pitch: number): Rot => head(-0.15, pitch, 0.12);
+  // Keys at fractions of the call, so the clip follows a retuned call length.
+  const keys: readonly [number, Pose][] = [
+    [0.05, { armR: ear, head: nod(0) }],
+    [0.2, { armR: ear, head: nod(0.1) }],
+    [0.25, { armR: ear, head: nod(-0.05) }],
+    [0.3, { armR: ear, head: nod(0.1) }],
+    [0.5, { armR: ear, head: nod(0), torso: [0, -0.1, 0] }],
+    [0.7, { armR: ear, head: nod(0.08), torso: [0, 0.1, 0] }],
+    [0.75, { armR: ear, head: nod(-0.05) }],
+    [0.93, { armR: ear, head: nod(0) }],
+  ];
+  return upper(
+    'abilityCall',
+    duration,
+    keys.map(([at, pose]) => [at * duration, pose] as const),
+  );
+}
+
 // --- Level-win celebrations: one flavour per role ----------------------------------------------
 
 /** Hip heights of the two jumps every celebration shares. */
@@ -328,8 +383,10 @@ export const FIDGET_CLIPS = [
   'idleRescuer',
 ] as const;
 export const EMOTE_CLIPS = ['emoteArchive', 'emoteFake', 'emoteMine'] as const;
-/** Upper-body layer clips: fidgets and ping emotes. */
-export const UPPER_CLIPS = [...FIDGET_CLIPS, ...EMOTE_CLIPS] as const;
+/** Role ability reactions (S7-42). */
+export const ABILITY_CLIPS = ['abilityPower', 'abilityThrow', 'abilityCall'] as const;
+/** Upper-body layer clips: fidgets, ping emotes and ability reactions. */
+export const UPPER_CLIPS = [...FIDGET_CLIPS, ...EMOTE_CLIPS, ...ABILITY_CLIPS] as const;
 export type UpperClip = (typeof UPPER_CLIPS)[number];
 
 /** Full-body role celebrations (level win). */
@@ -347,7 +404,7 @@ export type RoleClips = Record<UpperClip | CelebrationClip, AnimationClip>;
 
 let cached: RoleClips | null = null;
 
-/** Fidget, emote and celebration clips (built once, shared by every character). */
+/** Fidget, emote, ability and celebration clips (built once, shared by every character). */
 export function roleClips(): RoleClips {
   cached ??= {
     idlePhoto: idlePhoto(),
@@ -359,6 +416,9 @@ export function roleClips(): RoleClips {
     emoteArchive: emoteArchive(),
     emoteFake: emoteFake(),
     emoteMine: emoteMine(),
+    abilityPower: abilityPower(),
+    abilityThrow: abilityThrow(),
+    abilityCall: abilityCall(),
     cheerPhoto: cheerPhoto(),
     cheerArchive: cheerArchive(),
     cheerReporter: cheerReporter(),

@@ -399,9 +399,11 @@ describe('tutorial', () => {
     expect(advanceTutorial(1, 'pickedUp')).toBe(2);
     expect(advanceTutorial(1, 'stampApplied')).toBe(4);
     expect(advanceTutorial(3, 'pickedUp')).toBe(3);
-    expect(advanceTutorial(4, 'verdict')).toBe(TUTORIAL_DONE);
+    // The verdict leads to the role ability step (S7-45), the last one.
+    expect(advanceTutorial(4, 'verdict')).toBe(5);
     expect(advanceTutorial(1, 'teamVerdict')).toBe(1);
-    expect(advanceTutorial(4, 'teamVerdict')).toBe(TUTORIAL_DONE);
+    expect(advanceTutorial(4, 'teamVerdict')).toBe(5);
+    expect(advanceTutorial(5, 'abilityUsed')).toBe(TUTORIAL_DONE);
   });
 
   test('events count only for the local player, except the verdict', () => {

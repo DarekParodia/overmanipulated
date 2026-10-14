@@ -31,23 +31,25 @@ Zespół wygrywa poziom, jeśli przed końcem czasu zdobędzie co najmniej 1 gwi
 ### Przygotowanie
 
 1. Jeden gracz zakłada pokój i dostaje 4-literowy kod. Pozostali wpisują go na stronie gry. Nie trzeba zakładać konta, wystarczy pseudonim.
-2. Każdy wybiera rolę. Role dają premię, ale nie blokują żadnego stanowiska, więc zespół może grać w dowolnym składzie.
+2. Każdy wybiera jedną z sześciu ról albo gra „Bez roli”. Rola daje stałą premię i jedną zdolność, ale nie blokuje żadnego stanowiska. Kilka osób może mieć tę samą rolę, więc zespół może grać w dowolnym składzie.
 3. Gospodarz wybiera poziom z kampanii i poziom trudności (patrz „Poziomy trudności”). Przed startem gracze widzą krótki „briefing redakcyjny”: temat dnia, nowe mechaniki, liczbę teczek w tym rozdaniu i progi gwiazdek.
 
 ### Role
 
-| Rola | Premia | Typowe zadanie |
-| --- | --- | --- |
-| Fotoedytor | Analiza obrazu 40% szybciej (Lupa obrazu, Skaner AI, Mapa, Metadane) | Wyszukiwanie obrazem, wykrywanie edycji i AI |
-| Archiwista | Archiwum i Stenogram 40% szybciej | Sprawdzanie dat, starych wersji stron, kontekstu |
-| Reporter | Telefon do źródła bez kolejki; Telefon i Inne media 40% szybciej | Dotarcie do źródła pierwotnego i świadków |
-| Redaktor prowadzący | Może przedłużyć termin jednego zgłoszenia na poziom | Decyzje na stole redakcyjnym, koordynacja |
+| Rola | Premia | Zdolność (R / RB / przycisk) | Typowe zadanie |
+| --- | --- | --- | --- |
+| Fotoedytor | Lupa obrazu, Skaner AI, Mapa i Metadane 40% szybciej | **Ekspertyza:** minigra przy obrazie (Lupa obrazu, Skaner AI, Mapa, Metadane) rozwiązana od razu | Wyszukiwanie obrazem, wykrywanie edycji i AI |
+| Archiwista | Archiwum i Stenogram 40% szybciej | **Ekspertyza:** minigra przy dokumentach (Archiwum, Biblioteka danych, Stenogram) rozwiązana od razu | Sprawdzanie dat, starych wersji stron, kontekstu |
+| Reporter | Telefon i Inne media 40% szybciej; Telefon do źródła bez kolejki | **Telefon z terenu:** niesiona teczka dostaje pieczątkę Telefonu po 6 sekundach rozmowy, bez chodzenia do aparatu | Dotarcie do źródła pierwotnego i świadków |
+| Redaktor prowadzący | brak | **Przedłużenie:** +20 sekund dla niesionej teczki (bez niej: teczki na obsługiwanym stole, a potem najpilniejszej) | Decyzje na stole redakcyjnym, koordynacja |
+| Wszechstronny | Każde stanowisko 20% szybciej | **Druga szansa:** zablokowane po pomyłce stanowisko od razu otwiera minigrę jeszcze raz, bez kary czasu | Zastępstwo przy każdym stanowisku |
+| Ratownik | **Koło ratunkowe:** raz na poziom teczka, której czas kończy się w jego rękach, dostaje +20 sekund | **Podaj teczkę:** niesiona teczka trafia od razu do najbliższej wolnej osoby z zespołu (do 6 pól) | Donoszenie teczek, ratowanie terminów |
 
-Przy 3 graczach rolę Redaktora prowadzącego przejmuje dowolny gracz przy stole redakcyjnym, bez premii.
+R to zdolność roli (na padzie RB, na ekranie dotykowym czwarty przycisk z nazwą zdolności). Cel wybiera gra: gracz nie musi niczego wskazywać, a karta teczki, której dotyczy zdolność, ma niebieski przerywany obrys. Ekspertyzę i Drugą szansę można też uzbroić z wyprzedzeniem: zadziałają przy najbliższej okazji (po przytrzymaniu pracy przy stanowisku swojej rodziny albo po nieudanej minigrze), a drugie naciśnięcie je rozbraja. Po użyciu zdolność się odnawia przez 60 sekund, licząc od chwili, w której zadziałała. Naciśnięcie, które niczego by nie zmieniło (np. Telefon z terenu bez teczki albo na poziomie bez Telefonu), nie zużywa zdolności. Gracz „Bez roli” nie ma premii ani zdolności. W poczekalni panel roli pokazuje, czy premia i zdolność działają na wybranym poziomie.
 
 ### Sterowanie
 
-WASD lub strzałki to ruch, E to podniesienie i odłożenie teczki, Spacja to praca na stanowisku (przytrzymanie), Q to szybki sygnał dla zespołu („Potrzebuję Archiwum!”, „Fałszywka!”, „Biorę to”). Obsługiwany jest też gamepad.
+WASD lub strzałki to ruch, E to podniesienie i odłożenie teczki, Spacja to praca na stanowisku (przytrzymanie), R to zdolność roli, Q to szybki sygnał dla zespołu („Potrzebuję Archiwum!”, „Fałszywka!”, „Biorę to”). Obsługiwany jest też gamepad (RB to zdolność roli) i ekran dotykowy (czwarty przycisk).
 
 ### Pętla rozgrywki
 
@@ -190,7 +192,7 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 ### Styl graficzny
 
 - **Świat:** low-poly, ciepłe kolory papieru i drewna, akcenty w czerwieni redakcyjnej. Teczki mają kolor zależny od typu materiału, a ikona na wierzchu pokazuje, co jest w środku.
-- **Postacie:** proste, przerysowane figurki redaktorów z akcesorium roli (aparat, okulary archiwisty, notes, krawat).
+- **Postacie:** proste, przerysowane figurki redaktorów z akcesorium roli (aparat, okulary archiwisty, notes, krawat, pas z narzędziami, koło ratunkowe z gwizdkiem).
 - **Interfejs:** motyw gazetowy, czcionka szeryfowa w nagłówkach i bezszeryfowa w treści, pieczątki jako główny element wizualny.
 - **Dźwięk:** szum redakcji, dzwonek nowego zgłoszenia, stuk pieczątki, alarm przy kończącym się czasie.
 - **Dostępność:** paleta bezpieczna dla daltonistów (typ materiału rozpoznawalny też po ikonie, nie tylko kolorze), skalowanie tekstu, tryb bez migania.
@@ -199,7 +201,7 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 
 | Ekran | Co zawiera |
 | --- | --- |
-| Menu główne | Graj, Dołącz kodem, Encyklopedia technik, Ustawienia |
+| Menu główne | Graj, Dołącz kodem, Jak grać?, Encyklopedia technik, Ustawienia |
 | Lobby | Kod pokoju, lista graczy, wybór roli i koloru postaci, przycisk gotowości |
 | Wybór poziomu | Mapa kampanii z gwiazdkami, opis tematu dnia |
 | Briefing | Krótka zapowiedź poziomu i nowej mechaniki, 15–20 sekund |
@@ -208,6 +210,7 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 | Stół redakcyjny | Teczka z pieczątkami, trzy przyciski werdyktu, wskazanie uzasadniającej pieczątki |
 | Kolegium redakcyjne | Lista zgłoszeń z poziomu, wyjaśnienia, głosowanie na „wpadkę dnia”, gwiazdki |
 | Encyklopedia technik | Odblokowywane karty technik manipulacji i narzędzi weryfikacji, z przykładami z gry |
+| Jak grać | Okno pomocy z trzema działami: Wprowadzenie, Stanowiska (jak działa każde z dziesięciu), Sterowanie; otwierane z menu głównego, lobby i ustawień |
 
 ### Materiały do zgłoszenia konkursowego
 

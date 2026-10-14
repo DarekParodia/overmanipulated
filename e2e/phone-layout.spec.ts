@@ -380,3 +380,25 @@ test('the folder queue fits between the pill and the menu button', async ({
     });
   }
 });
+
+// S7-75: the main-menu footer („Prywatność”) sits in the scroll flow under both columns: a 48 px
+// target inside the screen's width, under the card, never on top of it.
+test('the menu footer link is reachable under the card', async ({ browser }, testInfo) => {
+  const { page } = await open(browser, testInfo);
+  const link = page.getByTestId('menu-footer').getByRole('link', { name: 'Prywatność' });
+  await link.scrollIntoViewIfNeeded();
+  await expect(link).toBeInViewport();
+  const linkBox = await link.boundingBox();
+  const field = await page.getByLabel('Twój podpis').boundingBox();
+  const width = page.viewportSize()?.width ?? 0;
+  expect(linkBox).not.toBeNull();
+  expect(field).not.toBeNull();
+  if (!linkBox || !field) return;
+  expect(linkBox.height).toBeGreaterThanOrEqual(48);
+  expect(linkBox.x).toBeGreaterThanOrEqual(0);
+  expect(linkBox.x + linkBox.width).toBeLessThanOrEqual(width);
+  expect(linkBox.y).toBeGreaterThan(field.y + field.height);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+    width,
+  );
+});

@@ -186,7 +186,8 @@ stated):
 ## Results (S7-35, crews of three, 24 seeds)
 
 Per cell: win % / 2+ stars % / 3 stars % / score as % of the run's best. Folders and thresholds are
-the mean over the dealt runs; l5 and l6 still play authored schedules (fixed thresholds) until M4.
+the mean over the dealt runs; l5 and l6 still played authored schedules (fixed thresholds) here;
+l5 has dealt from a bag since S7-60 (see *l5 on the bag* below).
 
 | Level | Difficulty | Folders (mean) | Stars at | Rookie ×3 | Average ×3 | Expert ×3 | Mixed ×3 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -334,6 +335,42 @@ at most twice a level and Podaj teczkę is not modelled, so the bots give no rea
 Re-run: `bun run balance --levels l0-greybox,l1-burza,l2-wybory,l3-afera,l4-zdrowie,l5-deepfake,l6-atak,endless
 --seeds 12 --endless-seeds 6 --crew-sizes 3,4 --difficulty normal --roles mixed|rescue|generalists
 [--no-abilities] --md`.
+
+## l5 on the bag (S7-60, crews of three, 24 seeds)
+
+Level 5 deals from a bag of its 23 non-event stories (two of them ask for two proofs) over six bag
+stations; the boss calls and the AI scanner outage stay. The scope's bag `{4, 24, 340, 60/60/45}`
+cost the average crew 5 points of score share against the old authored schedule on Normal (47 %
+vs 52 %), because every folder in the 24×14 room needs a longer walk. A wider gap gives 13 Normal
+folders instead of 15 (11 / 13 / 15 / 17 by difficulty) and pinned target 3 either way:
+
+| `gapS` | Normal stars at | Average ×3 Normal | Average ×3 Easy | Average ×3 Expert |
+| --- | --- | --- | --- | --- |
+| 24 | 248 / 361 of 452 | 100 / 38 / 0 / 47 | 100 / 67 / 0 / 61 | 96 / 0 / 0 / 22 |
+| **26 (kept)** | 220 / 320 of 400 | 100 / 42 / 0 / 49 | 100 / 92 / 17 / 66 | 88 / 0 / 0 / 21 |
+| 28 | 220 / 320 of 400 | 100 / 46 / 0 / 49 | 100 / 80 / 13 / 65 | 92 / 4 / 0 / 22 |
+
+The `gapS` sweep above ran before the bots pressed abilities (S7-46 policies, equal to today's
+`--no-abilities`). `gapS` 26 keeps the ladder there (l4 58 % > l5 49 % ≥ l6 48 % for the average
+crew on Normal) and the last Normal slot at 316 s, so a two-proof folder still ends by 396 s.
+Full l5 rows at `gapS` 26 with abilities pressed (`--roles mixed`; folders are 13 / 15 / 17 / 19
+with both boss calls):
+
+| Level | Difficulty | Stars at | Rookie ×3 | Average ×3 | Expert ×3 | Mixed ×3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| l5 | easy | 190 / 276 of 345 | 96 / 0 / 0 / 16 | 100 / 88 / 21 / 69 | 100 / 100 / 92 / 91 | 100 / 29 / 0 / 51 |
+| l5 | normal | 220 / 320 of 400 | 46 / 0 / 0 / -1 | 100 / 50 / 0 / 51 | 100 / 100 / 92 / 88 | 100 / 0 / 0 / 38 |
+| l5 | hard | 248 / 361 of 452 | 8 / 0 / 0 / -12 | 100 / 29 / 0 / 41 | 100 / 100 / 62 / 82 | 100 / 8 / 0 / 35 |
+| l5 | expert | 280 / 406 of 508 | 0 / 0 / 0 / -19 | 96 / 0 / 0 / 27 | 100 / 100 / 58 / 79 | 100 / 0 / 0 / 25 |
+
+Every intent check for l5 passes (thresholds 55 % / 80 % of the run maximum, expert crew ≤ 88 % of
+max; on Normal the score-share ladder reads l4 57 % > l5 51 %, and l6 52 % stays within the
+8-point allowance). The station spread falls from 3.5 to 2.8 on Normal: the six bag stations are
+11–17 % busy and only the hint-only AI scanner (6 %) is below that; Ekspertyza takes effect 2.6
+times a run. Reproduce with `bun run balance --levels l4-zdrowie,l5-deepfake,l6-atak --difficulty
+easy,normal,hard,expert --crew-sizes 3 --seeds 24 --md` (1152 runs, no watchdog fired; the one
+failing check, the l6 win-rate ladder, is the authored l6 and S7-63's). S7-66 re-runs the whole
+matrix for M4.
 
 ## Open points for the playtests
 
