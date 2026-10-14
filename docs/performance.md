@@ -23,12 +23,18 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
   download them; the script skips them by reading the ranges.
 - **Game route** (added by the first match): the lazy `GameScreen` chunk (three.js, the scene, the
   stations), its CSS, the SFX sprite and the two level music layers.
+- **Extras route** (S7-96, what a first session may open on top): the lazy dialogs whose manifest
+  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`),
+  the chunks they import and load later, and the intro voice in `assets/voice` (one audio format
+  plus its sprite json). Chunks the menu or the game route already counted are not counted
+  again, and the extras never count as game, so a new lazy dialog does not eat `gameMax`.
 - Text files are measured gzip -9 and brotli -11 (Caddy serves `zstd gzip`); fonts and audio are
   already compressed. Audio ships as webm (Opus) with an mp3 fallback; the larger set must fit.
 
-Limits enforced (`BUDGET` in the script): 10 MB total (the project rule, also checked against the
-uncompressed sum), plus regression guards that trip long before it: menu route 700 KB gzip, menu
-JS+CSS 320 KB gzip (this catches three.js leaking into the menu bundle), game route 1.6 MB gzip.
+Limits enforced (`BUDGET` in the script): 10 MB total for menu + game + extras (the project rule,
+also checked against the uncompressed sum), plus regression guards that trip long before it: menu
+route 700 KB gzip, menu JS+CSS 320 KB gzip (this catches three.js leaking into the menu bundle),
+game route 1.6 MB gzip, extras route 1 MB gzip.
 
 Measured (production build, mp3 = worst case):
 
@@ -37,6 +43,9 @@ Measured (production build, mp3 = worst case):
 | Menu (first screen) | 1.31 MB | 573 KB | 528 KB |
 | Game (added by first match) | 1.64 MB | 814 KB | 760 KB |
 | **First load, both** | **2.95 MB** | **1.35 MB** | **1.26 MB** |
+
+S7-96 (the „Jak grać” shell, the first extra): extras route 10 KB raw, 3 KB gzip; menu 583 KB
+gzip, game 814 KB gzip, first load (menu + game + extras) 1.37 MB gzip.
 
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).

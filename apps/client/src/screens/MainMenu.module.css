@@ -141,6 +141,11 @@
     left: max(var(--space-2), env(safe-area-inset-left));
     right: auto;
   }
+  /* Three icon buttons („Jak grać?”, Encyklopedia, Ustawienia) stay square-ish and clear of the
+     panel at 640×360; the 48 px touch target is kept. */
+  .corner button {
+    padding-inline: var(--space-3);
+  }
 }
 
 @media (max-width: 520px) and (orientation: portrait) {

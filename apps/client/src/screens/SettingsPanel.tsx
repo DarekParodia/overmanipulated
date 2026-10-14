@@ -231,7 +231,7 @@ function SettingsContent({
         {tab === 'display' && <DisplayTab />}
         {tab === 'access' && <AccessTab />}
         {tab === 'touch' && <TouchTab />}
-        {tab === 'controls' && <ControlsTab />}
+        {tab === 'controls' && <ControlsTab howToEntry />}
       </div>
 
       <footer className={styles.footer}>

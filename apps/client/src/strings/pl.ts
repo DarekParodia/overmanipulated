@@ -2073,6 +2073,21 @@ export const pl = {
       abilityReady: 'Zdolność gotowa',
     },
   },
+  // --- S7-96 „Jak grać”: the help dialog with the intro, the stations and the controls. ---
+  howTo: {
+    /** The entry button (main menu corner, lobby, settings). */
+    open: 'Jak grać?',
+    title: 'Jak grać',
+    tabsLabel: 'Działy pomocy',
+    tabs: { intro: 'Wprowadzenie', stations: 'Stanowiska', controls: 'Sterowanie' },
+    close: 'Gotowe',
+    /** The intro tab until the animated intro lands (S7-101): the narrator's lines to read. */
+    introLabel: 'Wprowadzenie krok po kroku',
+    stationsLabel: 'Stanowiska redakcji',
+    stationsLead: 'Wybierz stanowisko i zobacz, jak działa.',
+    /** Gamepad only: the north button walks the tabs, as in the settings. */
+    padHint: 'Y zmienia dział',
+  },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   encyclopedia: {
     title: 'Encyklopedia technik',
