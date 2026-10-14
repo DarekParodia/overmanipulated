@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, test } from '@playwright/test';
 import {
   closePlayers,
   createRoom,
@@ -29,6 +29,46 @@ const MINIGAMES = [
 ] as const;
 
 const HIDE_PERF = '[data-testid="perf-overlay"] { display: none !important; }';
+
+/**
+ * What does not fit the station overlay without scrolling: the body's overflow, and every
+ * button or hint row that sticks out of the body's visible box or the viewport (1 px slack).
+ */
+async function misfits(overlay: Locator): Promise<string[]> {
+  return overlay.evaluate((frame) => {
+    const body = frame.querySelector<HTMLElement>('[data-testid="overlay-body"]');
+    if (!body) {
+      return ['no overlay body'];
+    }
+    const out: string[] = [];
+    if (body.scrollHeight > body.clientHeight + 1) {
+      out.push(`body scrolls ${body.scrollHeight - body.clientHeight} px`);
+    }
+    const box = body.getBoundingClientRect();
+    const top = Math.max(0, box.top);
+    const bottom = Math.min(window.innerHeight, box.bottom);
+    const left = Math.max(0, box.left);
+    const right = Math.min(window.innerWidth, box.right);
+    for (const el of body.querySelectorAll('button, [data-testid="key-hints"]')) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) {
+        continue;
+      }
+      if (
+        rect.top < top - 1 ||
+        rect.bottom > bottom + 1 ||
+        rect.left < left - 1 ||
+        rect.right > right + 1
+      ) {
+        const id = el.getAttribute('data-testid') ?? el.textContent;
+        out.push(
+          `${id}: ${Math.round(rect.left)},${Math.round(rect.top)}..${Math.round(rect.right)},${Math.round(rect.bottom)}`,
+        );
+      }
+    }
+    return out;
+  });
+}
 
 type Hook = {
   localPlayerId(): string | null;
@@ -108,7 +148,12 @@ test('every minigame shows key hints for the device in use', async ({ browser },
     }
     const hints = overlay.getByTestId('key-hints');
     await expect(hints).toHaveAttribute('data-device', touch ? 'touch' : 'keyboard');
-    // At 360 px tall the hints may sit below the fold of the overlay's scrolling body.
+    if (touch) {
+      // Short-phone layouts (Backlog → S7-15, S7-56): at 640×360 the overlay body does not
+      // scroll, and every button and the hint row lie inside the body and the viewport.
+      expect(await misfits(overlay), `${kind} at 640×360`).toEqual([]);
+    }
+    // On desktop Kartoteka's hints still sit below the fold at 1366×768 (Backlog).
     await hints.scrollIntoViewIfNeeded();
     await expect(hints.locator('li').first()).toBeInViewport({ ratio: 0.9 });
     await page.screenshot({

@@ -30,6 +30,13 @@
 
   .claim {
     grid-area: claim;
+    gap: 2px;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .mismatch {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-4);
   }
 
   .tableWrap {
@@ -291,15 +298,36 @@
   }
 }
 
-/* Short landscape phones: tighter tiles so title, table, button and task fit without scrolling. */
+/*
+ * Short landscape phones (640×360): tighter tiles, and the key hints move into the claim's column
+ * between the figure and „Nie pasuje”, so the task, the table, the button and the hints fit
+ * without scrolling. `.body` lends its children to the root grid; the areas match the wide
+ * layout above.
+ */
 @media (max-height: 430px) {
-  .root,
+  .root {
+    grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+    grid-template-areas:
+      "task task"
+      "claim table"
+      "hints table"
+      "foot table";
+    grid-template-rows: auto auto 1fr auto;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .root > :first-child {
+    grid-area: task;
+  }
+
   .body {
-    gap: var(--space-2);
+    display: contents;
   }
 
   .claim {
-    padding: var(--space-2);
+    grid-area: claim;
+    gap: 2px;
+    padding: var(--space-1) var(--space-2);
   }
 
   .claimFigure {
@@ -307,7 +335,13 @@
   }
 
   .tableWrap {
-    padding: var(--space-1) var(--space-2) var(--space-2);
+    grid-area: table;
+    align-self: start;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .caption {
+    padding-bottom: 0;
   }
 
   .table {
@@ -319,9 +353,19 @@
     font-size: var(--text-md);
   }
 
+  .foot {
+    grid-area: foot;
+    align-self: end;
+  }
+
   .mismatch {
-    min-height: 3.25rem;
-    padding: var(--space-2) var(--space-4);
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-4);
     font-size: var(--text-lg);
+  }
+
+  .root > .hints {
+    grid-area: hints;
+    align-content: center;
   }
 }

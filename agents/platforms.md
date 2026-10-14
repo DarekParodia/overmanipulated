@@ -52,6 +52,11 @@ game may require a specific device.
 - Overlays (stations, desk): half screen on desktop, full-width bottom sheet or full screen on
   phones; the 3D scene keeps running behind.
 - Text scaling setting must not break any layout down to 640×360.
+- Station minigames fit a 640×360 landscape phone without scrolling, key hints included: each
+  minigame has a short-phone layout (`@media (max-height: 430px)`) that puts the hint row where
+  the layout has room (beside the task line, under one column, in a free grid cell) instead of
+  pinning it over the controls; desktop sizes keep their own layout. `e2e/station-hints.spec.ts`
+  checks every minigame.
 - Never rely on hover to reveal information.
 
 ## Browser behaviour on mobile

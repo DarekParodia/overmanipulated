@@ -205,10 +205,29 @@
   background: var(--red);
 }
 
-/* Short landscape phones: smaller readout, buttons in a row of icon + word. */
+/*
+ * Short landscape phones (640×360): smaller readout, buttons in a row of icon + word, and the key
+ * hints up beside the task, so the gauge, the answers and the hints fit without scrolling.
+ */
 @media (max-height: 430px) {
   .root {
-    gap: var(--space-2);
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-3);
+  }
+
+  .root > * {
+    grid-column: 1 / -1;
+  }
+
+  .root > .taskLine {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: center;
+  }
+
+  .root > .hints {
+    grid-row: 1;
+    grid-column: 2;
   }
 
   .gauge {

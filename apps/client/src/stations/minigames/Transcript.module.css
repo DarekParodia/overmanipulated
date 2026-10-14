@@ -305,8 +305,9 @@
 
 /*
  * Short landscape phones (640×360): the clip becomes a strip across the top with the answers
- * beside it, and the record takes the full width, so its 2×2 lines wrap to two or three rows
- * and everything fits without scrolling.
+ * beside it (its „Cytat w teczce” title goes, the quote marks say it), and the record takes the
+ * full width without its sheet frame, so its 2×2 lines wrap to two or three rows and the record,
+ * the answers and the key hints fit without scrolling.
  */
 @media (max-height: 430px) {
   @container (min-width: 34rem) {
@@ -325,14 +326,21 @@
     }
   }
 
-  .root,
+  .root {
+    gap: var(--space-1);
+  }
+
   .body {
     gap: var(--space-2);
   }
 
   .clip {
-    gap: var(--space-1);
-    padding: var(--space-2);
+    align-content: center;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .clip > .title {
+    display: none;
   }
 
   .quote {
@@ -341,7 +349,10 @@
 
   .record {
     gap: var(--space-1);
-    padding: var(--space-1) var(--space-2) var(--space-2);
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
   }
 
   .grid,
@@ -358,5 +369,36 @@
     min-height: var(--touch-target);
     padding: var(--space-1) var(--space-3);
     font-size: var(--text-md);
+  }
+
+  /* Judging: the one key hint moves up into the task line, between the task and the mistake
+     marks, so a long clip squeezed beside the two judge buttons still fits. */
+  .root[data-phase="judge"] {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: var(--space-3);
+  }
+
+  .root[data-phase="judge"] > * {
+    grid-column: 1 / -1;
+  }
+
+  .root[data-phase="judge"] > .taskLine {
+    display: contents;
+  }
+
+  .root[data-phase="judge"] > .taskLine > p {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: center;
+  }
+
+  .root[data-phase="judge"] > .taskLine > :not(p) {
+    grid-row: 1;
+    grid-column: 3;
+  }
+
+  .root[data-phase="judge"] > .hints {
+    grid-row: 1;
+    grid-column: 2;
   }
 }

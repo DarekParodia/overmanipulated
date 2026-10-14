@@ -103,7 +103,7 @@ export function AiScanner({ seed, story, device, revealOnFail, onDone }: Minigam
 
   return (
     <div className={styles.root} data-testid="ai-scanner">
-      <TaskLine>{typeset(t.task)}</TaskLine>
+      <TaskLine className={styles.taskLine}>{typeset(t.task)}</TaskLine>
 
       <div className={styles.gauge}>
         <p
@@ -182,7 +182,7 @@ export function AiScanner({ seed, story, device, revealOnFail, onDone }: Minigam
         </div>
       )}
 
-      {playing && <KeyHints hints={t.keys} device={device} />}
+      {playing && <KeyHints hints={t.keys} device={device} className={styles.hints} />}
     </div>
   );
 }

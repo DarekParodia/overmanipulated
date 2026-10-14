@@ -116,7 +116,7 @@ export function OverlayFrame({
         </button>
       </header>
       <div className={styles.content}>
-        <div className={styles.body} inert={cover ? true : undefined}>
+        <div className={styles.body} inert={cover ? true : undefined} data-testid="overlay-body">
           {children}
         </div>
         {cover && <div className={styles.cover}>{cover}</div>}
