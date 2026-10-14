@@ -2,7 +2,8 @@
 // network sees). Usage:
 //   bun run smoke -- https://gra.example.pl [--insecure] [--strict]
 //
-// Checks, in order: /api/health, /health, /api/config, the HTML page and every script/stylesheet
+// Checks, in order: /api/health, /health, /api/config, /api/rooms (200 with the roomBrowser flag
+// on, else 404), the HTML page and every script/stylesheet
 // it links, response headers (warnings; failures with --strict), the HTML shell the game server
 // renders (embedded config, CSP mode, nonce rotation), /ads.txt, /prywatnosc and the manifest,
 // then a full game flow over `wss://…/ws`: heartbeat, create room, second player joins by code,
@@ -17,6 +18,7 @@ import {
   type PublicConfig,
   parseServerMessage,
   publicConfigSchema,
+  roomListResponseSchema,
   type ServerMessage,
 } from '../../packages/shared/src/index.ts';
 
@@ -271,6 +273,29 @@ export async function runSmoke(
     }
     apiConfig = parsed.data;
     return `ads ${parsed.data.ads.enabled ? 'on' : 'off'}, revision ${parsed.data.revision}`;
+  });
+
+  // The room browser (S7-83) exists only while the public config says so.
+  await check('GET /api/rooms', async () => {
+    const config = apiConfig as PublicConfig | null;
+    if (!config) {
+      throw new Error('needs /api/config to know whether the room browser is on');
+    }
+    const response = await get('/api/rooms?limit=5');
+    if (!config.features.roomBrowser) {
+      if (response.status !== 404) {
+        throw new Error(`HTTP ${response.status} with the room browser off, expected 404`);
+      }
+      return 'room browser off (404)';
+    }
+    if (response.status !== 200) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const parsed = roomListResponseSchema.safeParse(await response.json());
+    if (!parsed.success) {
+      throw new Error(`not a room list: ${parsed.error.issues[0]?.message ?? 'schema'}`);
+    }
+    return `room browser on, ${parsed.data.total} public room(s)`;
   });
 
   let assets: string[] = [];

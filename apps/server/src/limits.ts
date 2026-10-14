@@ -14,6 +14,24 @@ export const JOINS_PER_MINUTE_PER_IP = 120;
 export const ROOMS_PER_MINUTE_PER_IP = 20;
 /** Rooms alive at once; keeps memory bounded on a small VPS. */
 export const MAX_ROOMS = 300;
+/**
+ * How long a browser (`clientId`) the host kicked may not rejoin that room (S7-82): 10 minutes.
+ * Not an IP ban, which would lock out the whole class behind one address.
+ */
+export const KICK_REJOIN_COOLDOWN_MS = 10 * 60 * 1000;
+
+// --- Room browser, GET /api/rooms (S7-83) --------------------------------------------------
+
+/**
+ * Room-list requests per IP per minute (token bucket: this burst, refilled evenly over a minute).
+ * A whole school shares one NAT address: 35 students each polling every 8 s is ~260 a minute,
+ * and two classes in the lab at once stay under 600. A script hammering the list does not.
+ */
+export const ROOM_LIST_PER_MINUTE_PER_IP = 600;
+/** The unfiltered public room list is rebuilt at most this often; filters run over the copy. */
+export const ROOM_LIST_CACHE_MS = 2000;
+/** The room-list limiter forgets idle addresses once every this many requests (no timer). */
+export const ROOM_LIST_PRUNE_EVERY = 256;
 
 // --- config.json (S7-68) -------------------------------------------------------------------
 

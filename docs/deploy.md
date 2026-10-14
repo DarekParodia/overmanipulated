@@ -135,7 +135,7 @@ main-menu visit (at most once a minute) or reload; a running match never changes
 | `site.operator.name` | unset | yes, next `/prywatnosc` | Who runs this server (≤ 120 characters), named in the privacy note. Unset: the note shows „[do uzupełnienia…]” |
 | `site.operator.contact` | unset | yes, next `/prywatnosc` | Contact for privacy questions (≤ 200 characters), e.g. an e-mail address |
 | `site.operator.hosting` | unset | yes, next `/prywatnosc` | Where the server runs (≤ 200 characters), e.g. the hosting company and country |
-| `features.roomBrowser` | `false` | yes, next menu visit | Public room list. Off by default: rooms of minors are never listed publicly unless the operator opts in |
+| `features.roomBrowser` | `false` | yes, next menu visit | Public room list (`GET /api/rooms`, 404 while off; public rooms only, cached 2 s, 600 requests a minute per address). Off by default: rooms of minors are never listed publicly unless the operator opts in |
 | `features.versus` | `true` | yes, next menu visit / new room | „Na punkty” (versus) mode. Gates entry points only: a running match keeps going |
 | `features.spectators` | `true` | yes, next join | Spectator joins (the host still opens the Widownia per room) |
 | `features.intro` | `true` | yes, next menu visit | The intro: its entry in „Jak grać” and its autoplay before the first training |
@@ -246,6 +246,7 @@ numbers are generous: they stop scripts, not students.
 | Message rate per socket | 60/s sustained, burst 200 (gameplay input is 20/s) | Socket closed with code 1008 |
 | Joins (create or join) per IP | 120 per minute | `invalidMessage` error ("too many requests") |
 | New rooms per IP | 20 per minute | `invalidMessage` error |
+| Room-list requests (`GET /api/rooms`) per IP | 600 per minute; the list itself is rebuilt at most every 2 s | HTTP 429 `{"error":"too many requests"}` |
 | Rooms alive at once | 300 | `roomFull` ("server is busy") for new rooms |
 | Players per room | 4 | `roomFull` |
 | Every message | validated with Zod | `invalidMessage` |
@@ -400,7 +401,8 @@ bun run smoke -- https://gra.example.pl --strict   # security-header warnings be
 ```
 
 It uses only the public URL, like a school network would: `/api/health`, `/health`, the leaderboard
-endpoint, `/api/config`, the HTML page and every script/stylesheet it links (cache header,
+endpoint, `/api/config`, `/api/rooms` (a valid room list when `features.roomBrowser` is on,
+404 when it is off), the HTML page and every script/stylesheet it links (cache header,
 compression, security headers), the HTML shell (the embedded config parses and agrees with
 `/api/config`; the CSP mode matches it: ads on needs `'strict-dynamic'` with a `'nonce-…'` equal to
 the module script's nonce, ads off needs `script-src 'self'` without `'unsafe-eval'`; a second

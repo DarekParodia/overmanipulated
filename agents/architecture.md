@@ -51,7 +51,11 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   - `GET /health`: liveness, plus a DB check.
   - `GET /ws`: WebSocket upgrade for the game protocol.
   - `/api/*`: REST endpoints (leaderboard, content preview for the supervisor, room stats, and
-    `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`).
+    `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`;
+    `GET /api/rooms`: the room browser's list of public rooms, 404 while the `roomBrowser` flag is
+    off; `registry.listRooms` filters a summary list it rebuilds at most every `ROOM_LIST_CACHE_MS`,
+    see `apps/server/src/rooms/room-list.ts`, and the route limits each address to
+    `ROOM_LIST_PER_MINUTE_PER_IP`).
     An unknown `/api/*` path is a JSON 404, never HTML.
   - Mounted last (`routes/shell.ts`): `/`, SPA paths and `/index.html` render the **HTML shell**
     from the built client `index.html` (`shell/`): a per-request CSP nonce replaces Vite's
@@ -93,6 +97,13 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   stats and (at the results) level ends. In versus the server-side embargo
   (`spectator-embargo.ts`) masks a verdict or expiry until both newsrooms closed its `spawnKey`
   or the level ended, and `matchStats` counts only what the Widownia was shown.
+- **Lobby administration** (Stage 7, host only, any phase): `setVisibility` (rooms are private;
+  public needs the `roomBrowser` flag), `setRoomName` (the shared name filter answers
+  `invalidName`), `transferHost` (to a connected member, never self) and `kick` (never self):
+  the target gets `error kicked`, leaves for good (its token is dropped) and its socket closes
+  with `CLOSE_KICKED` (4002). The room remembers the target's browser `clientId` for
+  `KICK_REJOIN_COOLDOWN_MS` (10 min, `limits.ts`) and answers its joins with `kickCooldown`;
+  there is no IP ban, because a class shares one address.
 - **Run lifecycle** (Stage 7): the lobby holds the selected level as `getLevel` serves it and the
   room's difficulty (host only, lobby only). Every briefing, replays included, deals the run with
   `prepareRun` from a fresh **run seed** (never sent to clients) and the room's difficulty;

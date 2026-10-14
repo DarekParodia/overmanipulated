@@ -1,8 +1,18 @@
 import { describe, expect, it } from 'bun:test';
-import { leaderboardResponseSchema, PROTOCOL_VERSION, publicConfigSchema } from '@redakcja/shared';
+import {
+  DEFAULT_DIFFICULTY,
+  DEFAULT_FEATURE_FLAGS,
+  type FeatureFlags,
+  leaderboardResponseSchema,
+  PROTOCOL_VERSION,
+  publicConfigSchema,
+  type RoomListResponse,
+  roomListResponseSchema,
+} from '@redakcja/shared';
 import { createFakeHub } from '../__fixtures__/fake-transport.ts';
+import { createRoomHarness } from '../__fixtures__/room-helpers.ts';
 import { createApp } from '../app.ts';
-import { staticConfigStore } from '../config.ts';
+import { DEFAULT_SERVER_CONFIG, staticConfigStore } from '../config.ts';
 import { openDatabase } from '../db/client.ts';
 import { recordBlunderVote } from '../db/queries/blunder-votes.ts';
 import { insertLeaderboardEntry } from '../db/queries/leaderboard.ts';
@@ -226,5 +236,274 @@ describe('REST routes', () => {
   it('returns 404 for unknown routes', async () => {
     const { app } = setup();
     expect((await app.request('/api/nope')).status).toBe(404);
+  });
+});
+
+/**
+ * The room browser on: a harness registry and the app share one clock, which drives the list
+ * cache and the per-address limiter. `features` overrides the flags both read.
+ */
+function roomBrowser(features: Partial<FeatureFlags> = {}) {
+  const flags: FeatureFlags = {
+    ...DEFAULT_FEATURE_FLAGS,
+    roomBrowser: true,
+    spectators: true,
+    ...features,
+  };
+  const harness = createRoomHarness({
+    settings: () => ({ maxRooms: 50, features: flags, defaultDifficulty: DEFAULT_DIFFICULTY }),
+  });
+  const app = createApp({
+    db: openDatabase(':memory:'),
+    registry: harness.registry,
+    devLatencyMs: 0,
+    config: () => ({ ...DEFAULT_SERVER_CONFIG, features: flags }),
+    now: () => harness.clock.time,
+  });
+
+  /** A room hosted by `nickname`, made public unless `visibility` says otherwise. */
+  function room(
+    nickname: string,
+    options: { visibility?: 'public' | 'private'; name?: string } = {},
+  ) {
+    const host = harness.join(nickname, { clientId: `${nickname}-browser-0001`.padEnd(16, 'x') });
+    const code = harness.welcomeOf(host).roomCode;
+    if ((options.visibility ?? 'public') === 'public') {
+      harness.lobby(host, { kind: 'setVisibility', visibility: 'public' });
+    }
+    if (options.name !== undefined) {
+      harness.lobby(host, { kind: 'setRoomName', name: options.name });
+    }
+    return { host, code };
+  }
+
+  async function list(query = '', ip = '10.0.0.1'): Promise<RoomListResponse> {
+    const res = await app.request(`/api/rooms${query}`, { headers: { 'x-real-ip': ip } });
+    expect(res.status).toBe(200);
+    return roomListResponseSchema.parse(await res.json());
+  }
+
+  /** Past the list cache, so the next request sees the rooms as they are now. */
+  function expireCache() {
+    harness.clock.time += 2000;
+  }
+
+  return { harness, app, room, list, expireCache };
+}
+
+describe('GET /api/rooms', () => {
+  it('is 404 while the roomBrowser flag is off (the default)', async () => {
+    const { app } = setup();
+    const res = await app.request('/api/rooms');
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: 'not found' });
+
+    const off = roomBrowser({ roomBrowser: false });
+    off.room('Ola');
+    expect((await off.app.request('/api/rooms?limit=5')).status).toBe(404);
+    // A bad query is still a 404, not a 400: the route does not exist.
+    expect((await off.app.request('/api/rooms?limit=0')).status).toBe(404);
+  });
+
+  it('lists public rooms only, and only while someone is connected', async () => {
+    const browser = roomBrowser();
+    const listed = browser.room('Ola');
+    browser.room('Bartek', { visibility: 'private' });
+    const dropped = browser.room('Celina');
+    browser.harness.registry.handleDisconnect(dropped.host, false);
+
+    const body = await browser.list();
+    expect(body.total).toBe(1);
+    expect(body.rooms.map((r) => r.code)).toEqual([listed.code]);
+    expect(browser.harness.registry.roomCount).toBe(3);
+  });
+
+  it('describes a room with every summary field', async () => {
+    const browser = roomBrowser();
+    const { host, code } = browser.room('Ola', { name: '3B Piątek' });
+    browser.harness.lobby(host, { kind: 'setSpectatorsAllowed', allowed: true });
+    browser.harness.join('Bartek', { code });
+    browser.harness.join('Widz', { code, as: 'spectator' });
+
+    expect(await browser.list()).toEqual({
+      rooms: [
+        {
+          code,
+          name: '3B Piątek',
+          hostNickname: 'Ola',
+          levelId: 'l0-greybox',
+          mode: 'coop',
+          difficulty: 'normal',
+          players: 2,
+          maxPlayers: 4,
+          spectators: 1,
+          spectatorsAllowed: true,
+          inGame: false,
+          canJoinAsPlayer: true,
+          canSpectate: true,
+          createdAt: 1_700_000_000_000,
+        },
+      ],
+      total: 1,
+    });
+  });
+
+  it('masks a blocked host nickname, seats 8 in versus and closes full rooms', async () => {
+    const browser = roomBrowser();
+    const { host, code } = browser.room('kurw4 7');
+    browser.harness.lobby(host, { kind: 'setMode', mode: 'versus' });
+    for (const nickname of ['B', 'C', 'D', 'E', 'F', 'G', 'H']) {
+      browser.harness.join(`Gracz ${nickname}`, { code });
+    }
+    expect((await browser.list()).rooms[0]).toMatchObject({
+      hostNickname: '*******',
+      mode: 'versus',
+      players: 8,
+      maxPlayers: 8,
+      spectators: 0,
+      // The Widownia is closed by default.
+      spectatorsAllowed: false,
+      canJoinAsPlayer: false,
+      canSpectate: false,
+    });
+  });
+
+  it('offers spectating only while the spectators flag is on and the Widownia has room', async () => {
+    const off = roomBrowser({ spectators: false });
+    const first = off.room('Ola');
+    off.harness.lobby(first.host, { kind: 'setSpectatorsAllowed', allowed: true });
+    expect((await off.list()).rooms[0]).toMatchObject({
+      spectatorsAllowed: false,
+      canSpectate: false,
+    });
+
+    const full = roomBrowser();
+    const second = full.room('Ola');
+    full.harness.lobby(second.host, { kind: 'setSpectatorsAllowed', allowed: true });
+    for (let i = 1; i <= 8; i++) {
+      full.harness.join(`Widz ${i}`, { code: second.code, as: 'spectator' });
+    }
+    expect((await full.list()).rooms[0]).toMatchObject({
+      spectators: 8,
+      spectatorsAllowed: true,
+      canSpectate: false,
+    });
+  });
+
+  it('searches the code, name and host nickname with Polish letters folded', async () => {
+    const browser = roomBrowser();
+    const named = browser.room('Ola', { name: '3B Piątek' });
+    browser.harness.clock.time += 10;
+    const lukasz = browser.room('Łukasz Żółć');
+    const codes = async (q: string) =>
+      (await browser.list(`?q=${encodeURIComponent(q)}`)).rooms.map((r) => r.code);
+
+    expect(await codes('piatek')).toEqual([named.code]);
+    expect(await codes('3b PIĄTEK')).toEqual([named.code]);
+    expect(await codes('lukasz zolc')).toEqual([lukasz.code]);
+    expect(await codes('ŻÓŁĆ')).toEqual([lukasz.code]);
+    expect(await codes(named.code.toLowerCase())).toEqual([named.code]);
+    expect(await codes('   ')).toEqual([lukasz.code, named.code]);
+    expect(await browser.list('?q=nikt')).toEqual({ rooms: [], total: 0 });
+    // Longer than the search box allows.
+    expect((await browser.app.request(`/api/rooms?q=${'a'.repeat(25)}`)).status).toBe(400);
+  });
+
+  it('filters by mode, level, difficulty and status', async () => {
+    const browser = roomBrowser();
+    const coop = browser.room('Ola');
+    browser.harness.clock.time += 10;
+    const versus = browser.room('Bartek');
+    browser.harness.lobby(versus.host, { kind: 'setMode', mode: 'versus' });
+    browser.harness.lobby(versus.host, { kind: 'selectLevel', levelId: 'l1-burza' });
+    browser.harness.lobby(versus.host, { kind: 'setDifficulty', difficulty: 'hard' });
+    browser.harness.clock.time += 10;
+    const playing = browser.room('Celina');
+    browser.harness.startPastBriefing(playing.host);
+    browser.expireCache();
+    const codes = async (query: string) => (await browser.list(query)).rooms.map((r) => r.code);
+
+    expect(await codes('?mode=versus')).toEqual([versus.code]);
+    expect(await codes('?mode=coop')).toEqual([coop.code, playing.code]);
+    expect(await codes('?levelId=l1-burza')).toEqual([versus.code]);
+    expect(await codes('?difficulty=hard')).toEqual([versus.code]);
+    expect(await codes('?difficulty=normal')).toEqual([coop.code, playing.code]);
+    expect(await codes('?status=inGame')).toEqual([playing.code]);
+    expect(await codes('?status=open')).toEqual([versus.code, coop.code]);
+    expect(await codes('?mode=coop&status=open')).toEqual([coop.code]);
+    expect((await browser.app.request('/api/rooms?mode=solo')).status).toBe(400);
+    expect((await browser.app.request('/api/rooms?status=closed')).status).toBe(400);
+  });
+
+  it('lists joinable rooms first, then the newest, up to the limit', async () => {
+    const browser = roomBrowser();
+    const oldest = browser.room('Ola');
+    browser.harness.clock.time += 10;
+    const middle = browser.room('Bartek');
+    browser.harness.clock.time += 10;
+    const newest = browser.room('Celina');
+    browser.harness.startPastBriefing(newest.host);
+    browser.expireCache();
+
+    const all = await browser.list();
+    expect(all.rooms.map((r) => r.code)).toEqual([middle.code, oldest.code, newest.code]);
+    expect(all.total).toBe(3);
+    const two = await browser.list('?limit=2');
+    expect(two.rooms.map((r) => r.code)).toEqual([middle.code, oldest.code]);
+    expect(two.total).toBe(3);
+    expect((await browser.app.request('/api/rooms?limit=51')).status).toBe(400);
+  });
+
+  it('closes the player seat of a room in the playing phase', async () => {
+    const browser = roomBrowser();
+    const { host } = browser.room('Ola');
+    browser.harness.startPastBriefing(host);
+    expect((await browser.list()).rooms[0]).toMatchObject({
+      players: 1,
+      inGame: true,
+      canJoinAsPlayer: false,
+    });
+  });
+
+  it('serves 30 polls from one IP within 10 s and rebuilds the list at most 5 times', async () => {
+    const browser = roomBrowser();
+    browser.room('Ola');
+    const before = browser.harness.registry.roomListBuilds;
+    for (let poll = 0; poll < 30; poll++) {
+      expect((await browser.list('', '203.0.113.7')).total).toBe(1);
+      browser.harness.clock.time += 333;
+    }
+    expect(browser.harness.registry.roomListBuilds - before).toBe(5);
+  });
+
+  it('shows a change once the 2 s cache expires', async () => {
+    const browser = roomBrowser();
+    browser.room('Ola');
+    expect((await browser.list()).total).toBe(1);
+    browser.room('Bartek');
+    browser.harness.clock.time += 1999;
+    expect((await browser.list()).total).toBe(1);
+    browser.harness.clock.time += 1;
+    expect((await browser.list()).total).toBe(2);
+  });
+
+  it('answers request 601 from one IP with 429 while another IP still gets 200', async () => {
+    const browser = roomBrowser();
+    browser.room('Ola');
+    for (let i = 0; i < 600; i++) {
+      const res = await browser.app.request('/api/rooms', {
+        headers: { 'x-real-ip': '198.51.100.1' },
+      });
+      expect(res.status).toBe(200);
+    }
+    const limited = await browser.app.request('/api/rooms', {
+      headers: { 'x-real-ip': '198.51.100.1' },
+    });
+    expect(limited.status).toBe(429);
+    expect(await limited.json()).toEqual({ error: 'too many requests' });
+    expect((await browser.list('', '198.51.100.2')).total).toBe(1);
+    // The bucket refills 10 a second.
+    browser.harness.clock.time += 100;
+    expect((await browser.list('', '198.51.100.1')).total).toBe(1);
   });
 });
