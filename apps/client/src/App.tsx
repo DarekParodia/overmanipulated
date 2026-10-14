@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { startCaptions } from './a11y/caption-store.ts';
+import { AboutHost } from './about/AboutHost.tsx';
 import { useAdRequestPause } from './ads/use-ad-pause.ts';
 import { PerfOverlay } from './debug/PerfOverlay.tsx';
 import { EncyclopediaScreen } from './encyclopedia/EncyclopediaScreen.tsx';
@@ -77,6 +78,7 @@ export function App() {
       {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
       <HowToPlayHost />
       <ProfileHost />
+      <AboutHost />
       <PerfOverlay />
     </>
   );

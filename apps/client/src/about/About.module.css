@@ -1,0 +1,379 @@
+/*
+ * „O grze” (S7-103): the „Jak grać” shell (HowToPlay.module.css) — a white panel over a dimmed
+ * screen; the header holds the title, the tab switch and the one yellow „Gotowe”; the body
+ * scrolls and takes the focus so the keyboard and the pad can scroll it. Landscape phones get a
+ * full-screen sheet with the tabs on their own row (as does any window narrower than 900 px).
+ */
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: min(62rem, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--outline-a50);
+}
+
+.sheet {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  height: min(42rem, calc(100dvh - 2 * var(--space-4)));
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  overflow: hidden;
+}
+
+.dialog[open] .sheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.08em;
+  min-width: 0;
+}
+
+/* Blue is information (design-rules §3); purple stays for help. */
+.title svg {
+  flex: none;
+  margin-top: -0.12em;
+  --icon-fill: var(--blue);
+}
+
+.tabs {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  overflow-x: auto;
+  /* Room for the pop shadow and the focus ring of the active tab. */
+  padding: var(--space-1) var(--space-1) var(--space-2);
+}
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Room for pop shadows and focus rings at the edges. */
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+}
+
+.body:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: -4px;
+}
+
+.padHint {
+  margin: 0;
+  justify-self: center;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* --- Content --------------------------------------------------------------------------------- */
+
+.column {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 46rem;
+  margin-inline: auto;
+  font-size: var(--text-md);
+  line-height: var(--leading-body);
+}
+
+.column p {
+  margin: 0;
+}
+
+.section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+}
+
+.sectionTitle svg {
+  flex: none;
+  --icon-fill: var(--blue);
+}
+
+.authors {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+
+.strong {
+  font-weight: 800;
+}
+
+.version {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.lead {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.note,
+.error p {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.note {
+  color: var(--text-soft);
+}
+
+.error {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--stroke) solid var(--red);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.error svg {
+  flex: none;
+  --icon-fill: var(--red);
+}
+
+/* Markdown-lite (Markdown.tsx): the asset credits. */
+.markdown {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.mdHeading {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+}
+
+h4.mdHeading {
+  font-size: var(--text-md);
+}
+
+.mdParagraph {
+  margin: 0;
+}
+
+.mdList {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.link {
+  color: var(--blue-dark);
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.link:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.code {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunk);
+  font-family: var(--font-body);
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+
+.tableWrap {
+  container-type: inline-size;
+  overflow-x: auto;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  vertical-align: top;
+  /* break-word, not anywhere: long paths wrap without squeezing a short column to letters. */
+  overflow-wrap: break-word;
+}
+
+.table th {
+  font-family: var(--font-display);
+  font-weight: 800;
+  background: var(--surface-soft);
+  border-bottom: var(--stroke) solid var(--outline);
+}
+
+.table tr + tr td {
+  border-top: var(--stroke) solid var(--surface-sunk);
+}
+
+/* A narrow document table (phones): every row becomes a card, each cell under its column's name. */
+@container (max-width: 40rem) {
+  .stack thead {
+    display: none;
+  }
+  .stack tr,
+  .stack td {
+    display: block;
+  }
+  .stack td {
+    padding-block: var(--space-1);
+  }
+  .stack td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-family: var(--font-display);
+    font-weight: 800;
+    color: var(--text-soft);
+  }
+  .stack tr {
+    padding-block: var(--space-2);
+  }
+  .stack tr + tr {
+    border-top: var(--stroke) solid var(--outline);
+  }
+  .stack tr + tr td {
+    border-top: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] .sheet {
+    animation: none;
+  }
+}
+
+:global(html[data-reduced-motion="true"]) .dialog[open] .sheet {
+  animation: none;
+}
+
+/* --- Small screens --------------------------------------------------------------------------- */
+
+/* Narrow windows: the tabs get a row of their own under the title and „Gotowe”. */
+@media (max-width: 900px) {
+  .title {
+    margin-right: auto;
+  }
+  .tabs {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Landscape phones (640×360): a full-screen sheet. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    gap: var(--space-2);
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-4), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-4), env(safe-area-inset-left));
+    border-radius: 0;
+    border-width: 0;
+    box-shadow: none;
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .tabs {
+    padding: 0 var(--space-1) var(--space-1);
+  }
+  .column {
+    gap: var(--space-3);
+  }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    border-radius: 0;
+    padding: var(--space-4);
+  }
+}

@@ -4,6 +4,7 @@
 // A versus match already under way (`matchInProgress`) offers to watch it instead (S7-84).
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { useAbout } from '../about/store.ts';
 import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -186,6 +187,16 @@ export function MainMenu() {
             onClick={() => useProfile.getState().show()}
           >
             {pl.profile.open}
+          </Button>
+        }
+        about={
+          <Button
+            variant="ghost"
+            icon={<Icon name="heart" size={22} />}
+            data-testid="open-about"
+            onClick={() => useAbout.getState().show()}
+          >
+            {pl.about.open}
           </Button>
         }
       />
