@@ -14,6 +14,15 @@ export type Profile = {
   met?: Record<string, string[]>;
   /** Settings overrides stored in localStorage (merged by the app). */
   settings?: Record<string, unknown>;
+  /**
+   * The first-time intro (S7-102) autoplays in a training lobby; it counts as seen unless this is
+   * false, so a new room's lobby is free to photograph.
+   */
+  introSeen?: boolean;
+  /** Station kinds whose first-use help card (S7-95) was already read. */
+  stationHelpSeen?: readonly string[];
+  /** The local player profile (S7-104): counters, favourite role and look. */
+  playerProfile?: Record<string, unknown>;
 };
 
 export const ALL_STARS: Record<string, number> = {
@@ -49,6 +58,15 @@ export async function openPlayer(
     }
     if (p.settings) {
       set('redakcja.settings.v1', p.settings);
+    }
+    if (p.introSeen !== false) {
+      localStorage.setItem('redakcja.intro.seen.v1', '1');
+    }
+    if (p.stationHelpSeen) {
+      set('redakcja.stationHelp.v1', p.stationHelpSeen);
+    }
+    if (p.playerProfile) {
+      set('redakcja.profile.v1', p.playerProfile);
     }
   }, profile);
   const page = await context.newPage();

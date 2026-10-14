@@ -30,7 +30,7 @@ const SMALL: BrowserContextOptions = { viewport: { width: 640, height: 360 } };
 
 type Lobby = { send(action: Record<string, unknown>): Promise<void> };
 
-/** A lobby action sent through the `?debug` session hook (the lobby UI for it is S7-86). */
+/** A lobby action sent through the `?debug` session hook, as the lobby's buttons send it. */
 function lobbyOf(page: Page): Lobby {
   return {
     send: (action) =>

@@ -1,7 +1,7 @@
 // S7-88: the room browser. The e2e server runs with `features.roomBrowser` on
-// (e2e/server-config.json). A host opens a room, names it „3B piątek” and makes it public; until
-// the lobby UI for both lands (S7-86) the spec sends the host's lobby actions over the page's own
-// WebSocket, exactly as the lobby will. A guest who has not signed yet opens „Publiczne pokoje”,
+// (e2e/server-config.json). A host opens a room, names it „3B piątek” and makes it public; the
+// spec sends those lobby actions over the page's own WebSocket, the same messages the lobby's
+// room settings (S7-86) send. A guest who has not signed yet opens „Publiczne pokoje”,
 // finds the room by „3b”, signs in the dialog and joins. Desktop at 1366×768 (keyboard) and a
 // touch phone at 640×360 (filters behind „Filtry”).
 import { expect, type Page, test, type WebSocketRoute } from '@playwright/test';

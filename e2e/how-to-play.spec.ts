@@ -41,6 +41,20 @@ test('„Jak grać” opens from the menu, the settings and the lobby', async ({
     const corner = await page.getByRole('button', { name: 'Ustawienia' }).boundingBox();
     const card = await page.getByRole('button', { name: 'Otwórz pokój' }).boundingBox();
     expect((corner?.x ?? 0) + (corner?.width ?? 0)).toBeLessThan(card?.x ?? 0);
+  } else {
+    // On a 1366×768 laptop the labelled corner row sits above the logo, not over its clock
+    // sticker (S7-106).
+    const corner = await page.getByTestId('open-how-to').boundingBox();
+    // The sticker is a tilted, ticking circle: its top is its centre less its radius, not the
+    // top of its (rotated) bounding box.
+    const stickerTop = await page
+      .locator('h1 [aria-hidden="true"]')
+      .first()
+      .evaluate((el) => {
+        const box = el.getBoundingClientRect();
+        return box.top + box.height / 2 - (el as HTMLElement).offsetHeight / 2;
+      });
+    expect((corner?.y ?? 0) + (corner?.height ?? 0)).toBeLessThanOrEqual(stickerTop);
   }
 
   // Main menu corner: opens on the intro player (S7-101); „Pomiń” ends it on its end card (on a

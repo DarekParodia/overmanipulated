@@ -59,7 +59,7 @@ WASD lub strzałki to ruch, E to podniesienie i odłożenie teczki, Spacja to pr
 2. **Gracz podnosi teczkę i niesie ją na stanowisko.** Każde stanowisko to minigra trwająca 3–8 sekund (patrz niżej). Po ukończeniu na teczce pojawia się pieczątka z wynikiem, np. „Zdjęcie znalezione w sieci w 2019 r.”.
 3. **Zbieranie dowodów.** Pieczątka jest dowodem, gdy rozstrzyga sprawę i uzasadnia właściwy werdykt. Zwykła teczka potrzebuje jednego dowodu. Od poziomu 4 zdarzają się teczki z kilkoma dowodami: wymagają 2–3 dowodów z różnych stanowisk, mają na karcie znaczek „k/N” (ile dowodów już jest, ile trzeba) i dostają 20 sekund więcej na każdy dowód ponad pierwszy. Skaner AI daje tylko wskazówkę: jego pieczątka nigdy nie liczy się jako dowód. Nie każde stanowisko pomaga przy każdym typie materiału. Zły dobór narzędzia kosztuje czas, a nie punkty.
 4. **Stół redakcyjny.** Gracz kładzie teczkę na stole i wybiera werdykt: Publikuj, Odrzuć albo Publikuj z kontekstem. Przy werdykcie wskazuje tyle pieczątek, ile dowodów wymaga teczka (zwykle jedną). To blokuje zgadywanie.
-5. **Wynik.** Gra natychmiast pokazuje efekt. Przy błędzie pokazuje też, co dokładnie przeoczono.
+5. **Wynik.** Gra od razu pokazuje przy stole, jak poszło („Dobrze!”, „Słaby dowód”, „Fałszywka w druku!”), punkty, zmianę Wiarygodności i premie. Przy trafnym werdykcie podaje stanowisko, którego dowód zadziałał. Po błędzie mówi, jaki werdykt był właściwy i które stanowisko rozstrzyga sprawę. Wskazuje też, czy rozstrzygający dowód był już w teczce („Dowód był w teczce”), czy nikt go nie sprawdził („Nie sprawdzono”). Teczka jest już zamknięta, więc to omówienie decyzji, a nie podpowiedź do minigry; pełne wyjaśnienie każdej teczki daje Kolegium po poziomie.
 
 ### Stanowiska weryfikacji
 
@@ -231,8 +231,8 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 ### Styl graficzny
 
 - **Świat:** low-poly, ciepłe kolory papieru i drewna, akcenty w czerwieni redakcyjnej. Teczki mają kolor zależny od typu materiału, a ikona na wierzchu pokazuje, co jest w środku.
-- **Postacie:** proste, przerysowane figurki redaktorów z akcesorium roli (aparat, okulary archiwisty, notes, krawat, pas z narzędziami, koło ratunkowe z gwizdkiem).
-- **Interfejs:** motyw gazetowy, czcionka szeryfowa w nagłówkach i bezszeryfowa w treści, pieczątki jako główny element wizualny.
+- **Postacie:** proste, przerysowane figurki redaktorów z akcesorium roli (aparat, okulary archiwisty, notes, krawat, pas z narzędziami, koło ratunkowe z gwizdkiem). Gracz wybiera w profilu ulubiony kolor i dodatek (szalik, muszka, legitymacja prasowa).
+- **Interfejs:** styl komiksowy: jasne płaskie kolory, grube granatowe kontury, twarde cienie, czcionki Baloo 2 (nagłówki, przyciski) i Nunito (treść); pieczątki i teczki jako główny element wizualny; jedna żółta akcja na ekran.
 - **Dźwięk:** szum redakcji, dzwonek nowego zgłoszenia, stuk pieczątki, alarm przy kończącym się czasie.
 - **Dostępność:** paleta bezpieczna dla daltonistów (typ materiału rozpoznawalny też po ikonie, nie tylko kolorze), skalowanie tekstu, tryb bez migania.
 
@@ -240,19 +240,21 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 
 | Ekran | Co zawiera |
 | --- | --- |
-| Menu główne | Graj, Dołącz kodem, Oglądaj kodem (oko obok „Dołącz”), Publiczne pokoje (gdy operator włączy listę), Jak grać?, Encyklopedia technik, Ustawienia; w stopce Profil i Prywatność |
-| Lobby | Kod pokoju; nazwa i widoczność pokoju; tryb gry (Razem / Na punkty); lista graczy (w pojedynku dwie kolumny: Kurier i Głos); pasek Widowni z przełącznikiem „Widownia otwarta”; wybór roli i koloru postaci, przycisk gotowości. Gospodarz otwiera opcje gracza: przeniesienie do drugiej redakcji, na widownię lub do gry, przekazanie gospodarza, usunięcie z pokoju. „Szczegóły” poziomu dla wszystkich |
+| Menu główne | Graj, Dołącz kodem, Oglądaj kodem (oko obok „Dołącz”), Publiczne pokoje (gdy operator włączy listę), Jak grać?, Encyklopedia technik, Ustawienia; komunikat redakcji od operatora; w stopce Profil, O grze i Prywatność |
+| Lobby | Kod pokoju; nazwa i widoczność pokoju; tryb gry (Razem / Na punkty); poziom trudności; lista graczy (w pojedynku dwie kolumny: Kurier i Głos); pasek Widowni z przełącznikiem „Widownia otwarta”; wybór roli z panelem premii i zdolności, kolor i dodatek postaci z profilu, przycisk gotowości. Przy treningu wprowadzenie odtwarza się samo za pierwszym razem. Gospodarz otwiera opcje gracza: przeniesienie do drugiej redakcji, na widownię lub do gry, przekazanie gospodarza, usunięcie z pokoju. „Szczegóły” poziomu dla wszystkich |
 | Wybór poziomu | Mapa kampanii z gwiazdkami, opis tematu dnia |
-| Briefing | Krótka zapowiedź poziomu i nowej mechaniki, 15–20 sekund |
-| Rozgrywka | Scena 3D redakcji; u góry kolejka zgłoszeń z licznikami czasu; z boku wskaźnik Wiarygodności i punkty; nad graczami ikony sygnałów |
-| Minigra stanowiska | Nakładka 2D na pół ekranu, scena w tle dalej żyje i reszta zespołu się porusza |
+| Briefing | Krótka zapowiedź poziomu i nowej mechaniki, liczba teczek w rozdaniu i progi gwiazdek, kafelki „Nowe dziś” prowadzące do pomocy stanowiska; 15–20 sekund |
+| Rozgrywka | Scena 3D redakcji; u góry kolejka zgłoszeń z licznikami czasu i karta „następna teczka”; wskaźnik czasu, punktów i Wiarygodności (na telefonie jeden pasek); żeton zdolności roli; jeden przycisk menu w prawym górnym rogu (pomoc, ustawienia, wyjście; w grze solo pauza); nad graczami ikony sygnałów |
+| Minigra stanowiska | Nakładka 2D na pół ekranu, scena w tle dalej żyje i reszta zespołu się porusza. Przy pierwszej wizycie na stanowisku karta „Jak to działa?” (zegar minigry czeka, termin teczki biegnie); potem pod „?” (H / Select) |
 | Stół redakcyjny | Teczka z pieczątkami, trzy przyciski werdyktu, wskazanie uzasadniającej pieczątki |
-| Kolegium redakcyjne | Lista zgłoszeń z poziomu, wyjaśnienia, głosowanie na „wpadkę dnia”, gwiazdki; w pojedynku zwycięzca, karty obu redakcji i werdykt rywali przy każdej teczce |
+| Wyniki poziomu | Gwiazdki z progami i liczba punktów do następnej gwiazdki, przy porażce jej powód, Wiarygodność, tabela „za co punkty” (werdykty, premie, kary) |
+| Kolegium redakcyjne | Karta każdej teczki: werdykt wasz i właściwy, jedna linijka „za co punkty” (np. „Ważna teczka, trafny werdykt: +20 pkt”), zmiana Wiarygodności, przy błędzie dowód, który rozstrzygał, i gdzie był; wyjaśnienia, głosowanie na „wpadkę dnia”; teczki niedokończone na koniec poziomu; w pojedynku zwycięzca, karty obu redakcji i werdykt rywali przy każdej teczce |
 | Publiczne pokoje | Lista publicznych pokoi z wyszukiwarką i filtrami (tryb, stan pokoju, poziom trudności); „Dołącz” i „Oglądaj” przy wybranym pokoju; tylko gdy operator włączy listę |
 | Widownia | Jedna albo obie redakcje na żywo (telefon: jedna, przełączana stuknięciem), tablica wyników, śledzenie gracza z kartą jego pracy, relacja „Na żywo”, statystyki graczy; po meczu wyniki obu redakcji i ich Kolegium do przeglądania |
 | Encyklopedia technik | Odblokowywane karty technik manipulacji i narzędzi weryfikacji, z przykładami z gry |
 | Jak grać | Okno pomocy z trzema działami: Wprowadzenie, Stanowiska (jak działa każde z dziesięciu, z przyciskiem „Wypróbuj” – ćwiczenie bez punktów i bez serwera), Sterowanie; otwierane z menu głównego, lobby, ustawień, kafelków „Nowe dziś” na odprawie i z menu w grze („Pomoc: stanowiska”, tam bez ćwiczeń) |
 | Wprowadzenie | Około 75-sekundowe wprowadzenie z napisami (lektor, gdy jest nagranie): naczelny opowiada w 11 scenach, jak działa redakcja – sceny z rozgrywką to prawdziwa gra na małej makiecie, reszta to rysunki z elementów interfejsu (dowody, wiarygodność, role, zespół, Kolegium); Wstecz, Pauza, Dalej, Pomiń. Odtwarza się samo raz na przeglądarkę, gdy gracz pierwszy raz wejdzie do pokoju z treningiem; potem w „Jak grać” i w Ustawieniach („Obejrzyj wprowadzenie”) |
+| O grze | Autorzy i licencja, użyte zasoby (czcionki, dźwięki, głos) i biblioteki, prywatność, wersja gry z numerem protokołu; otwierane ze stopki menu głównego |
 | Profil | Statystyki z tej przeglądarki (rozegrane i wygrane wydania, trafne werdykty, ulubiona rola, pieczątki, nieudane zadania), gwiazdki na każdym poziomie trudności, wybór koloru i dodatku postaci, czyszczenie statystyk; otwierany ze stopki menu głównego |
 
 ### Materiały do zgłoszenia konkursowego
@@ -277,14 +279,15 @@ Przeglądarka łączy się wyłącznie przez Caddy na porcie 443, co omija bloka
 | UI | React 19 | Menu, lobby, nakładki, minigry, Kolegium |
 | Scena 3D | three.js + @react-three/fiber + @react-three/drei | Redakcja, postacie, teczki, kamera |
 | Stan klienta | Zustand | Stan UI i ostatni snapshot z serwera |
-| Sieć | Bun.serve z WebSocket (pub/sub na pokój) | Pokoje, synchronizacja stanu, bez dodatkowych bibliotek |
+| Sieć | Hono na Bun.serve: REST (`/api`) i WebSocket z pub/sub Buna na pokój | Pokoje, synchronizacja stanu, konfiguracja, lista pokoi |
+| Baza danych | Drizzle ORM na SQLite (`bun:sqlite`) | Tablica wyników i głosy; stan gry zostaje w pamięci |
 | Walidacja | Zod | Wiadomości sieciowe i pliki treści |
 | Dźwięk | Howler.js | Efekty i muzyka, obsługa blokady autoplay |
-| Modele 3D | Blender → glTF (.glb), optymalizacja gltf-transform | Lekkie modele, jeden format |
-| Bazowe assety | Kenney (CC0) + własne | Szybki start bez problemów licencyjnych |
+| Modele 3D | Proceduralne modele low-poly w kodzie (three.js), scalone siatki | Bez plików modeli, mało wywołań rysowania |
+| Bazowe assety | Własne: dźwięki i muzyka generowane skryptami, tekstury w kodzie; czcionki na licencji OFL | Bez problemów licencyjnych (lista w `apps/client/public/assets/CREDITS.md`) |
 | Jakość kodu | Biome | Lint i formatowanie w jednym narzędziu |
 | Testy | bun test + Playwright | Logika gry jednostkowo, multiplayer end-to-end w kilku kartach przeglądarki |
-| CI/CD | Forgejo Actions | Lint, typecheck, testy, build, obraz Dockera, deploy |
+| CI/CD | GitHub Actions | Lint, typecheck, testy, walidacja treści, build, testy e2e |
 | Hosting | Docker Compose: Caddy + serwer Bun | Statyczny klient, reverse proxy, automatyczny TLS (wymagany dla wss) |
 
 ### Struktura repozytorium
@@ -294,37 +297,43 @@ redakcja/
 ├── package.json            # bun workspaces: apps/*, packages/*
 ├── biome.json
 ├── tsconfig.base.json
-├── docker-compose.yml      # caddy + server
-├── Caddyfile
-├── .forgejo/workflows/ci.yml
+├── docker-compose.yml      # caddy + serwer
+├── Caddyfile, Dockerfile
+├── config/                 # przykładowy config.json serwera i jego schemat
+├── .github/workflows/ci.yml
 ├── apps/
 │   ├── client/             # Vite + React + R3F
 │   │   ├── src/
 │   │   │   ├── scene/      # redakcja, postacie, teczki, kamera
-│   │   │   ├── stations/   # minigry stanowisk (komponenty 2D)
-│   │   │   ├── screens/    # menu, lobby, briefing, kolegium
+│   │   │   ├── stations/   # minigry stanowisk (komponenty 2D) i pomoc stanowisk
+│   │   │   ├── screens/    # menu, lobby, briefing
+│   │   │   ├── debrief/    # wyniki i Kolegium
+│   │   │   ├── howto/, intro/, about/, profile/   # Jak grać, wprowadzenie, O grze, Profil
+│   │   │   ├── rooms/, spectate/                  # lista pokoi, Widownia
 │   │   │   ├── net/        # klient WebSocket, interpolacja, predykcja
-│   │   │   ├── input/      # klawiatura, gamepad
+│   │   │   ├── input/      # klawiatura, gamepad, dotyk
+│   │   │   ├── fx/         # katalog efektów: animacje, dźwięki, cząsteczki
 │   │   │   └── store/      # zustand
-│   │   └── public/assets/  # .glb, tekstury, dźwięki
-│   └── server/             # Bun.serve
+│   │   └── public/assets/  # dźwięki, muzyka, CREDITS.md
+│   └── server/             # Hono na Bun.serve
 │       └── src/
-│           ├── rooms/      # tworzenie pokoi, kody, dołączanie
+│           ├── rooms/      # pokoje, kody, dołączanie, redakcje, widzowie
+│           ├── routes/     # REST: konfiguracja, wyniki, lista pokoi
+│           ├── db/         # Drizzle + SQLite, migracje
 │           ├── loop.ts     # pętla 20 ticków na sekundę
 │           └── index.ts
 ├── packages/
-│   ├── shared/             # logika gry wspólna dla obu stron
-│   │   ├── sim/            # ruch, kolizje, stanowiska, punktacja
+│   ├── shared/src/         # logika gry wspólna dla obu stron
+│   │   ├── sim/            # ruch, stanowiska, zdolności, punktacja
 │   │   ├── protocol.ts     # typy i schematy zod wiadomości
 │   │   └── constants.ts    # czasy, punkty, balans
 │   └── content/            # treści gry
-│       ├── schema.ts       # schemat zgłoszenia i poziomu
-│       ├── levels/         # level-1.json … level-6.json
-│       ├── stories/        # zgłoszenia (JSON) + obrazy
-│       └── validate.ts     # skrypt sprawdzający treści w CI
-├── tools/
-│   └── level-editor/       # prosty edytor układu redakcji (opcjonalny)
-└── docs/                   # dokumentacja konkursowa, zrzuty ekranu
+│       ├── src/schema.ts   # schemat zgłoszenia i poziomu
+│       ├── levels/         # l0-greybox.json … l6-atak.json
+│       ├── stories/        # zgłoszenia (JSON)
+│       └── src/validate.ts # skrypt sprawdzający treści w CI
+├── tools/                  # balans, wydajność, dźwięk, materiały konkursowe, wdrożenie
+└── docs/                   # dokumentacja, materiały konkursowe, zrzuty ekranu
 ```
 
 ### Model sieciowy
@@ -387,9 +396,9 @@ Pełna gra multiplayer 3D to duży projekt, więc kolejność prac zakłada, że
 | II.a Kreatywność | Kooperacja pod presją czasu zamiast quizu; gracz przechodzi proces weryfikacji, nie zgaduje odpowiedzi |
 | II.b Spójność | Presja czasu w grze to ta sama presja, której używa dezinformacja; mechanika jest lekcją |
 | III.a Jasność zasad | Jeden cel, trzy werdykty, tabela punktacji, gwiazdki, warunek porażki |
-| III.b Atrakcyjność mechaniki | Dynamiczny co-op, role, zdarzenia losowe, tryb nieskończony z wynikami; opcjonalny pojedynek dwóch redakcji na tym samym rozdaniu i Widownia dla reszty klasy |
+| III.b Atrakcyjność mechaniki | Dynamiczny co-op, role ze zdolnościami, dziesięć minigier, cztery poziomy trudności, zdarzenia losowe, tryb nieskończony z wynikami; opcjonalny pojedynek dwóch redakcji na tym samym rozdaniu i Widownia dla reszty klasy |
 | V.a Kompletność wizualizacji | Plan redakcji, zrzuty wszystkich ekranów, karty ról, przykładowe teczki, nagranie |
-| V.b Estetyka i spójność | Gazetowy styl UI i pieczątki spójne z tematem redakcji |
+| V.b Estetyka i spójność | Jednolity styl komiksowy; pieczątki i teczki spójne z tematem redakcji |
 
 ### Otwarte pytania
 

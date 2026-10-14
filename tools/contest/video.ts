@@ -6,6 +6,7 @@
 // minutes); everything else is real play through the keyboard.
 import { mkdir, rename, rm } from 'node:fs/promises';
 import { STORIES } from '../../packages/content/src/index.ts';
+import { STATION_KINDS } from '../../packages/shared/src/index.ts';
 import { launchBrowser, outPath, pl } from './lib/common.ts';
 import {
   ALL_STARS,
@@ -24,18 +25,32 @@ import {
 import { startStack } from './lib/stack.ts';
 
 const VIEWPORT = { width: 1366, height: 768 };
-const TARGET_STORY = 'l1-zalana-ulica';
+/**
+ * The station bag (S7-20) deals each run anew, so the video takes the first level-1 folder on
+ * the belt that Lupa obrazu decides with one proof, whichever story it is.
+ */
+const LUPA_STORIES = new Set(
+  STORIES.filter(
+    (s) =>
+      s.id.startsWith('l1-') &&
+      s.requiredStamps === 1 &&
+      s.stamps.some((st) => st.station === 'imageSearch' && s.justifyingStamps.includes(st.id)),
+  ).map((s) => s.id),
+);
 
-async function waitForFolder(host: Awaited<ReturnType<typeof openPlayer>>, storyId: string) {
-  for (let i = 0; i < 120; i++) {
+async function waitForFolder(host: Awaited<ReturnType<typeof openPlayer>>) {
+  for (let i = 0; i < 240; i++) {
     const info = await gameInfo(host);
-    const folder = info.folders.find((f) => f.storyId === storyId && f.location.kind === 'fixture');
-    if (folder) {
-      return { folder, info };
+    const folder = info.folders.find(
+      (f) => LUPA_STORIES.has(f.storyId) && f.location.kind === 'fixture',
+    );
+    const story = STORIES.find((s) => s.id === folder?.storyId);
+    if (folder && story) {
+      return { folder, info, story };
     }
     await host.page.waitForTimeout(500);
   }
-  throw new Error(`folder ${storyId} never arrived`);
+  throw new Error('no folder for Lupa obrazu arrived');
 }
 
 export async function main() {
@@ -47,7 +62,8 @@ export async function main() {
   await rm(tmp, { recursive: true, force: true });
   await mkdir(tmp, { recursive: true });
   try {
-    const profile = { progress: ALL_STARS, tutorialDone: true };
+    // Every station's first-use help card already read (S7-95): the minigame shows straight away.
+    const profile = { progress: ALL_STARS, tutorialDone: true, stationHelpSeen: STATION_KINDS };
     // The recorded player needs its own context with video enabled.
     const host = await openPlayer(
       browser,
@@ -67,7 +83,8 @@ export async function main() {
     await confirmBriefing([host, guest]);
 
     // Carry the folder: conveyor -> Lupa obrazu -> desk.
-    const { folder, info } = await waitForFolder(host, TARGET_STORY);
+    const { folder, info, story } = await waitForFolder(host);
+    const verdictName = pl.vocab.verdicts[story.correctVerdict];
     const belt = info.fixtures.find((f) => f.id === folder.location.fixtureId);
     const lupa = info.fixtures.find((f) => f.station === 'imageSearch');
     const desk = info.fixtures.find((f) => f.kind === 'desk');
@@ -103,9 +120,7 @@ export async function main() {
     await host.page.keyboard.press('KeyE');
     await host.page.waitForTimeout(400);
     await host.page.keyboard.down('Space');
-    await host.page
-      .getByRole('button', { name: pl.vocab.verdicts.publishWithContext })
-      .waitFor({ timeout: 10_000 });
+    await host.page.getByRole('button', { name: verdictName }).waitFor({ timeout: 10_000 });
     await host.page.keyboard.up('Space');
     await host.page.waitForTimeout(1500);
     await host.page
@@ -113,7 +128,7 @@ export async function main() {
       .first()
       .click();
     await host.page.waitForTimeout(900);
-    await host.page.getByRole('button', { name: pl.vocab.verdicts.publishWithContext }).click();
+    await host.page.getByRole('button', { name: verdictName }).click();
     await host.page.waitForTimeout(3500);
     await host.page.keyboard.press('Escape');
 

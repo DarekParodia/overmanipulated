@@ -45,8 +45,13 @@ agents/             Working rules for agents
 | `bun run config:check -- <path>` | Validate a server `config.json` (defaults filled in, `ADS_ENABLED` applied) before it goes live |
 | `bun run config:schema` | Regenerate `config/config.schema.json` after changing `apps/server/src/config.ts` |
 | `bun run perf:server` | Server tick benchmark: 150 versus rooms with spectators, ms per tick and bytes/s |
-| `bun run test:e2e` | Playwright multiplayer tests, desktop + mobile (starts server and preview itself) |
-| `bun run check` | lint + design lint + typecheck + test + validate — **must pass before every push** |
+| `bun run perf:budget` | Client build plus the bundle-size budget (menu, game and extras routes) |
+| `bun run balance` | Bot balance harness per level and difficulty (`docs/balance.md`) |
+| `bun run smoke` | Smoke test of a running stack (shell, headers, `/api/config`, WebSocket), see `docs/deploy.md` |
+| `bun run contest:build` | Contest materials in `docs/contest/` (`-- --screenshots`, `-- --video`, `-- --all`) |
+| `bun run review:export` / `review:apply` | Content review sheet for the supervisor and applying its verdicts |
+| `bun run test:e2e` | Playwright multiplayer tests, projects desktop, mobile and phone-small (640×360); starts server and preview itself |
+| `bun run check` | lint + design lint + typecheck + test + validate + perf budget — **must pass before every push** |
 | `docker compose up --build` | Production-like stack (Caddy + server), see `docs/deploy.md` |
 
 Dev URLs: `http://localhost:5173` (game), `?styleguide` (design reference page), `?debug` or

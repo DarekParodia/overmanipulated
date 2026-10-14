@@ -66,7 +66,7 @@ APP_GIT_SHA=$(git rev-parse --short HEAD) docker compose up -d --build
 ```
 
 `APP_GIT_SHA` is optional: it puts the commit into the version „O grze” shows
-(`0.0.0+1a2b3c4 · protokół 7`); without it the version reads `+dev`. The build context has no
+(`0.0.0+1a2b3c4 · protokół 8`); without it the version reads `+dev`. The build context has no
 `.git`, so the sha comes in as a build argument, the same for both images.
 
 Rooms live in memory, so a restart ends running matches. Deploy outside lesson hours.
@@ -502,6 +502,40 @@ date and tester. The matrix comes from `agents/platforms.md`.
 
 Targets: 60 FPS on the laptop and never below 30 FPS on the mid-range phone for the whole
 level; text readable at 640×360; no console errors; sound unlocks after the first tap on iOS.
+
+## Stage 7 release checklist (outside the dev sandbox)
+
+Stage 7 (protocol 8) was built and tested in a sandbox without Docker, a public domain, an
+AdSense account or a microphone. These steps are left for a person, in this order (S7-106):
+
+1. **Deploy smoke on the real stack.** On the host: `git pull`,
+   `APP_GIT_SHA=$(git rev-parse --short HEAD) docker compose up -d --build`, then from a laptop
+   `bun run smoke -- https://<domain> --strict`. It must pass with no warnings: the
+   server-rendered shell and CSP (M5), the role ability (M3) and a spectator's sync (M6) are part
+   of its game flow. Open the game once on a laptop and a phone: „O grze” must show
+   `protokół 8` and the commit's sha, the intro must autoplay in a new training room and „Pomiń”
+   must end it. Run the "Local production-like test" above in ads mode too if ads will ever be
+   on.
+2. **Content review.** All 165 stories are `reviewed: false`. The subject-matter supervisor reads
+   `bun run review:export` (`docs/review/stories-for-review.md`), fills the CSV, and
+   `bun run review:apply` writes the verdicts back; nothing goes to a class before that (first
+   lesson checklist, step 3).
+3. **Intro voice (S7-100, still open).** A volunteer records the 17 clips with the consent form
+   (`docs/voice-recording.pl.md`, CC0), then `synth_voice.py --recordings DIR` builds
+   `apps/client/public/assets/voice/intro.{webm,mp3,json}`; commit them with the CREDITS row and
+   tick S7-100. Until then the intro runs on subtitles and fallback timing, and „O grze” says
+   the voice is pending.
+4. **Ads (optional).** Ads stay off until the whole "AdSense operator checklist" above is done:
+   the AdSense account and site approval, `ads.txt`, Google's certified CMP with non-personalised
+   ads, and only then `ads.signOff` in `config.json`. The server refuses ads without the
+   sign-off.
+5. **Device matrix** (above) for the Stage 7 screens: the intro and „Jak grać” on a phone, the
+   first-use station help, a „Na punkty” 2 v 2 with a spectator on the projector, the room
+   browser if `features.roomBrowser` is on.
+6. **Contest materials.** Fill in the deploy address and the playtest and review results in
+   `docs/contest/how-to-play.pl.md` and `criteria-mapping.pl.md`. The committed gameplay video
+   was recorded under software WebGL; for a smoother take rerun
+   `bun run contest:build -- --video` on a machine with a GPU (optional).
 
 ## First lesson: ops checklist
 

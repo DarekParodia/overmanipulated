@@ -48,8 +48,11 @@ give each its own ports so no run talks to another checkout's build:
 
 Playwright projects: `desktop` (1366×768), `mobile` (Pixel 7 landscape, 863×360) and
 `phone-small` (the same phone at 640×360, the smallest supported screen). `phone-small` runs only
-`e2e/phone-layout.spec.ts`, the phone HUD checks, which `mobile` runs too and `desktop` skips; put
-new phone-layout checks there rather than overriding the viewport per test.
+the specs its `testMatch` in `playwright.config.ts` lists: `phone-layout` (the phone HUD checks,
+which `mobile` runs too and `desktop` skips), `abilities`, `spectate`, `lobby-manage`,
+`versus-hud` and `lobby-look`. Put new phone-layout checks in `phone-layout.spec.ts` rather than
+overriding the viewport per test; other specs that must hold at 640×360 open their own context at
+that size on the touch projects (most specs do, e.g. `intro`, `how-to-play`, `about`, `profile`).
 
 The e2e tests read avatar positions from the scene exposed as `window.__scene` when the page is
 opened with `?debug`; avatar groups are named `player:<nickname>`.

@@ -5,6 +5,7 @@
 1. Otwórz adres gry w przeglądarce (komputer lub telefon, bez instalacji i konta): **[uzupełnić adres wdrożenia]**. Lokalnie: `bun install`, `bun run dev:server`, `bun run dev:client`, potem `http://localhost:5173`.
 2. Wpisz pseudonim w polu „Twój podpis”.
 3. Jedna osoba wybiera **„Otwórz pokój”** i dostaje czteroliterowy kod. Pozostałe wpisują kod w polu „Kod pokoju” i wybierają **„Dołącz”**. Najlepiej grać w 3–4 osoby; można też zacząć w 2 osoby (np. dwie karty przeglądarki).
+4. Za pierwszym razem w nowym pokoju odtworzy się **wprowadzenie**: około 75 sekund animacji z napisami (Wstecz, Pauza, Dalej, „Pomiń”). Potem można je obejrzeć jeszcze raz w **„Jak grać?”** w menu głównym, gdzie są też opisy dziesięciu stanowisk z rundą próbną **„Wypróbuj”** i ściąga ze sterowania. Głos lektora dojdzie, gdy będzie gotowe nagranie; do tego czasu wprowadzenie ma tylko napisy.
 
 ## Ścieżka na 2 minuty
 
@@ -41,7 +42,7 @@ Każde stanowisko to jedna technika weryfikacji i jedna krótka minigra. Kampani
 | Mapa | Gdzie zrobiono zdjęcie | 6 |
 | Inne media | Co podają niezależne redakcje (kopia to nie potwierdzenie) | 6 |
 
-Poziomy 5 i 6 dzieją się w większej sali (24×14): poziom 5 ma siedem stanowisk, poziom 6 osiem. Gdy ktoś pierwszy raz otwiera stanowisko, gra pokazuje kartę z jego opisem; później wraca ona pod przyciskiem „?” (klawisz H).
+Poziomy 5 i 6 dzieją się w większej sali (24×14): poziom 5 ma siedem stanowisk, poziom 6 osiem. Gdy ktoś pierwszy raz otwiera stanowisko, gra pokazuje kartę „Jak to działa?” z krokami i sterowaniem; zegar minigry czeka, aż gracz ją zamknie (termin teczki biegnie dalej). Później karta wraca pod przyciskiem „?” (klawisz H, pad: Select). Briefing pokazuje nowe stanowiska poziomu jako kafelki „Nowe dziś”, które otwierają ich opis.
 
 ## Role i zdolności
 
@@ -67,10 +68,14 @@ Ekspertyzę i Drugą szansę można uzbroić z wyprzedzeniem: zadziałają przy 
 | Praca na stanowisku, stół (trzymaj) | Spacja | X | przycisk „Pracuj” |
 | Zdolność roli | R | RB | czwarty przycisk (nazwa zdolności, np. „Podaj”) |
 | Szybki sygnał dla zespołu | Q | (zob. Ustawienia) | przycisk „Sygnał” |
+| Pomoc stanowiska (karta „Jak to działa?”) | H | Select | przycisk „?” |
 | Wyjście z okna stanowiska | Esc | B | przycisk zamknięcia |
+| Menu gry (pomoc, ustawienia, wyjście; w grze solo pauza) | Esc | Start | przycisk menu w prawym górnym rogu |
 | Menu i minigry | strzałki, Enter | krzyżak, A | stuknięcie |
 
-Pełna ściąga jest w **Ustawienia → Sterowanie**. Na telefonie gra działa tylko poziomo. Ustawienia dostępności: mniej ruchu, bez migania, napisy do dźwięków, sterowanie dla leworęcznych.
+Pełna ściąga jest w **Ustawienia → Sterowanie** i w **„Jak grać?” → Sterowanie**. Na telefonie gra działa tylko poziomo. Ustawienia dostępności: mniej ruchu, bez migania, napisy do dźwięków, sterowanie dla leworęcznych, ponowne wprowadzenie i karty pomocy stanowisk od nowa.
+
+W stopce menu głównego są jeszcze **Profil** (statystyki zapisane tylko w tej przeglądarce, kolor i dodatek postaci widoczne dla innych w pokoju), **O grze** (autorzy, licencja, zasoby, biblioteki, wersja) i **Prywatność**.
 
 ## Na punkty i Widownia (opcjonalnie)
 
@@ -79,7 +84,7 @@ Gra jest przede wszystkim kooperacyjna. Dwa dodatki pozwalają jednak zagrać ca
 - **Na punkty.** Gospodarz przełącza w poczekalni „Tryb gry” na „Na punkty”. Gracze dzielą się na dwie redakcje, **Kurier** (granatowa tarcza z literą K) i **Głos** (biała pieczęć z literą G), po 1–4 osoby. Obie grają ten sam poziom z tym samym rozdaniem teczek, każda w swojej sali. Żeton pod punktami pokazuje wynik rywali. Wygrywa więcej punktów, a redakcja, której Wiarygodność spadnie do zera albo która opuści mecz, przegrywa od razu. Równe punkty to remis. Pojedynek w trybie bez końca trwa 10 minut. Pojedynek nie zapisuje gwiazdek ani tablicy wyników. W Kolegium przy każdej teczce widać werdykt własny i werdykt rywali. W trakcie meczu nowi gracze nie dołączają: mogą oglądać.
 - **Widownia.** Gospodarz zaznacza w poczekalni „Widownia otwarta”. Kto ma kod, wpisuje go w menu i wybiera oko obok „Dołącz” („Oglądaj pokój o tym kodzie”); w pokoju jest do 8 miejsc dla widzów. Gracze widzą komunikat „Widz dołączył”. Widz widzi obie redakcje obok siebie (telefon: jedną, przełączaną stuknięciem), tablicę wyników, relację „Na żywo” i statystyki graczy; strzałki ← / → (pad: krzyżak albo RB, dotyk: znaczek gracza na tabliczce redakcji) włączają śledzenie gracza, Esc (pad: B) je kończy, a Q (pad: Y, dotyk: „Statystyki”) otwiera statystyki. W pojedynku widz poznaje wynik werdyktu dopiero wtedy, gdy obie redakcje zamkną tę samą teczkę, więc nie może podpowiadać.
 - **Szybka próba w jednej przeglądarce:** karta 1 otwiera pokój i wybiera „Na punkty”, karta 2 dołącza kodem (trafia do Głosu), gospodarz zaznacza „Widownia otwarta”, karta 3 wpisuje kod i wybiera oko. Gospodarz klika „Do składu!”.
-- **Publiczne pokoje.** Pokój jest zawsze prywatny (tylko z kodem). Lista publicznych pokoi w menu jest domyślnie wyłączona; pojawia się tylko, gdy włączy ją operator serwera. Wtedy gospodarz może oznaczyć pokój jako publiczny i nadać mu nazwę.
+- **Publiczne pokoje.** Pokój jest zawsze prywatny (tylko z kodem). Lista publicznych pokoi w menu jest domyślnie wyłączona; pojawia się tylko, gdy włączy ją operator serwera. Wtedy gospodarz może oznaczyć pokój jako publiczny i nadać mu nazwę, a inni znajdą go w menu pod „Publiczne pokoje” (wyszukiwarka i filtry: tryb, stan pokoju, poziom trudności) i dołączą albo zaczną oglądać jednym przyciskiem.
 
 ## Dla prowadzącego
 

@@ -215,7 +215,7 @@ kept after the S7-46 bot data). Player-facing copy: design document „Role”, 
 | Dokumenty | `documents` | `archive`, `dataLibrary`, `transcript` |
 | Źródła | `sources` | `sourceRegistry`, `phone`, `crossCheck` |
 
-## Random events (`EventKind`)
+## Random events (`LevelEventKind`)
 
 | Polish | English |
 | --- | --- |
@@ -245,20 +245,27 @@ kept after the S7-46 bot data). Player-facing copy: design document „Role”, 
 | Pokazanie odpowiedzi po porażce | answer reveal (`revealOnFail`, `revealsOnFail`) | A failed round shows the right answer (cell, result, card or reading); off on Ekspert and at stations that keep their card (`MINIGAME_STABLE_SEED_STATIONS`) |
 | Podpowiedzi (efektywne) | effective hints (`effectiveHints`, `useEffectiveHints`) | The „co dalej” hints the game shows: the player setting AND `DIFFICULTY[d].hints`, so none on Ekspert; drives the hint bubble, scene markers and the evidence badge; the tutorial is unaffected |
 
-## Screens (`ScreenId`)
+## Screens (`ScreenId`) and dialogs
+
+`ScreenId` (`store/app.ts`) names the full-screen routes; everything else is an overlay or a
+dialog over one of them.
 
 | Polish | English |
 | --- | --- |
-| Menu główne | `mainMenu` |
-| Lobby | `lobby` |
-| Wybór poziomu | `levelSelect` |
-| Briefing | `briefing` |
-| Rozgrywka | `game` |
-| Minigra stanowiska | `stationOverlay` |
-| Stół redakcyjny | `deskOverlay` |
-| Kolegium redakcyjne | `debrief` |
-| Encyklopedia technik | `encyclopedia` |
-| Ustawienia | `settings` |
+| Menu główne | `mainMenu` (screen) |
+| Lobby | `lobby` (screen) |
+| Wybór poziomu | the lobby's level card (`screens/lobby/LevelCard.tsx`), not a screen of its own |
+| Briefing | `briefing` (screen) |
+| Rozgrywka | `game` (screen) |
+| Widownia (ekran widza) | `spectate` (screen, `spectate/`) |
+| Minigra stanowiska | station overlay (`StationOverlay`) |
+| Stół redakcyjny | desk overlay (`DeskOverlay`) |
+| Wyniki poziomu | results (`ResultsPlate`, `ResultsSummary`; `VersusResults` in versus) |
+| Kolegium redakcyjne | debrief (`debrief/Kolegium.tsx`, `DebriefCard`) |
+| Encyklopedia technik | encyclopedia (`EncyclopediaScreen`) |
+| Ustawienia | settings (`SettingsPanel`) |
+| Menu gry | game menu (`GameMenu`), row below |
+| Jak grać, O grze, Profil, Publiczne pokoje | dialogs (`HowToPlayDialog`, `AboutDialog`, `ProfileDialog`, `RoomBrowserDialog`), rows below |
 
 ## Client / game feel
 
@@ -303,7 +310,7 @@ kept after the S7-46 bot data). Player-facing copy: design document „Role”, 
 | Tekst dla lektora | TTS text (`ttsText`, `PRONOUNCE`, `tools/audio/intro-lines.ts`) | A subtitle as the voice says it: plain spaces, no quotes, key names respelled („klawiszem er”) |
 | Sprite lektora | voice sprite (`VoiceSprite`, `voiceSpriteSchema`, `loadVoiceSprite`, `loadIntroVoice`; `intro/voice-sprite.ts`) | `/assets/voice/intro.json` beside `intro.{webm,mp3}`: per clip `startMs`, `durationMs`, `textSha1`; written by `tools/audio/synth_voice.py`; optional (no sprite → subtitles and fallback timing) |
 | Licencja głosu | voice licence (`VOICE_LICENCES`) | `CC0-1.0`, `CC-BY-4.0`, `MIT` or `self-recorded-CC0` (a volunteer recording released under CC0); nothing non-commercial can ship |
-| Nagranie lektora | voice recording (`synth_voice.py --recordings DIR`) | One take per clip, `DIR/<clipId>.wav`, released under CC0 by the volunteer; replaces TTS with one command |
+| Nagranie lektora | voice recording (`synth_voice.py --recordings DIR`) | One take per clip, `DIR/<clipId>.wav`, released under CC0 by the volunteer; builds the voice sprite with one command (no TTS voice passed the licence audit) |
 | Scenariusz nagrania | voice script (`tools/audio/voice-script.ts`, `docs/voice-recording.pl.md`) | The volunteer's guide: the generated 17-clip table (file, who hears it, exact subtitle, key-name respellings, rough length), recording rules and the CC0 consent form; `voice-script.test.ts` fails while the table is stale |
 
 ## Server config and ads (Stage 7)
@@ -353,7 +360,7 @@ kept after the S7-46 bot data). Player-facing copy: design document „Role”, 
 | Wynik redakcji | team score (`teamScoreSchema`, `TeamScore`, `snapshot.scoreboard`) | One newsroom's `{team, score, credibility, resolved, expired, connected}`; versus snapshots carry both, for the rival chip and the spectator scoreboard |
 | Embargo na werdykty (widownia) | spectator embargo (`spectatorEvent`, `verdictMasked`, `verdictRevealed`; pure rules in `spectator-embargo.ts`: `SpectatorEmbargo`, `createEmbargo`, `openSpawnKey`, `closeSpawnKey`, `maskForSpectators`, `release`, `releaseAll`, `HeldResult`) | In versus a spectator sees a closed folder as `verdictMasked` (who, which `spawnKey`, verdict or expiry; never the verdict, outcome, reason or points) until both newsrooms closed that key or the level ended, then `verdictRevealed` with the result. Players never receive `spectatorEvent`. In co-op every event passes through |
 | Statystyki meczu | match stats (`playerStatsSchema`, `PlayerStats`, `matchStats`, `levelEnd.stats`; `match-stats.ts`: `emptyPlayerStats`, `applyStatsEvent`, `teamScoreOf`) | Per player: verdicts, correct, wrong, stamps, minigame fails, abilities (stage `done`); sent to spectators at 1 Hz (`SPECTATOR_STATS_INTERVAL_TICKS`) and in `levelEnd`. `applyStatsEvent` is the only accumulator |
-| Wynik pojedynku | versus summary (`versusSummarySchema`, `VersusSummary`, `levelEnd.versus`, `versusEndReason`) | `{winnerTeam (null on a draw), reason: score / credibility / forfeit / draw, teams, rivalResults}`; `rivalResults` pair with the team's own results by `spawnKey` |
+| Wynik pojedynku | versus summary (`versusSummarySchema`, `VersusSummary`, `levelEnd.versus`, `VersusEndReason`) | `{winnerTeam (null on a draw), reason: score / credibility / forfeit / draw, teams, rivalResults}`; `rivalResults` pair with the team's own results by `spawnKey` |
 | Rozstrzygnięcie pojedynku | `versusOutcome` (`TeamStanding`, `VersusResult`, `byScore`), `matchDurationMs` (`versus.ts`) | A newsroom with credibility 0 or a forfeit is out; the last one in wins (`forfeit` / `credibility`); all out on one tick or time up → higher score (`score`), equal top scores → `draw`. Endless versus lasts `VERSUS.endlessDurationS` (600 s) |
 | Filtr nazw | name filter (`isAcceptableName`, `maskName`, `NAME_MASK_CHAR`, `name-filter.ts`) | Small Polish blocklist for room names (`invalidName`) and host nicknames in the room browser (masked to `*`); matched after `foldSearch` with look-alike digits, repeated letters and split letters folded |
 | Lista pokoi | room browser list (`roomSummarySchema`, `RoomSummary`, `roomListQuerySchema`, `roomListResponseSchema`, `roomListStatusSchema`: `any` / `open` / `inGame`, `rooms.ts`) | What `GET /api/rooms` returns for a public room: code, name, masked host nickname, level, mode, difficulty, counts and seats, `canJoinAsPlayer`, `canSpectate`, `createdAt` |

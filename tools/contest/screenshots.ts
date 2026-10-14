@@ -7,8 +7,21 @@
 // `?debug` game hook (`window.__game`), which pins state over the server's snapshots.
 // Run through `bun run contest:build` (or `bun tools/contest/screenshots.ts`).
 import { type Browser, type BrowserContextOptions, devices, type Page } from '@playwright/test';
-import { getStory, LEVELS, STORIES, TECHNIQUES } from '../../packages/content/src/index.ts';
-import type { StationKind } from '../../packages/shared/src/index.ts';
+import {
+  getStory,
+  LEVELS,
+  STORIES,
+  starThresholds,
+  TECHNIQUES,
+} from '../../packages/content/src/index.ts';
+import {
+  CREDIBILITY,
+  CREDIBILITY_MAX,
+  CREDIBILITY_START,
+  SCORE,
+  STATION_KINDS,
+  type StationKind,
+} from '../../packages/shared/src/index.ts';
 import { launchBrowser, outPath, pl, writeOut } from './lib/common.ts';
 import {
   ALL_STARS,
@@ -53,11 +66,40 @@ const defineShot = (key: string, title: string, caption: string) => {
 };
 
 const S = {
-  menu: defineShot('menu', 'Menu główne', 'Pseudonim i kod pokoju. Bez konta, bez instalacji.'),
+  menu: defineShot(
+    'menu',
+    'Menu główne',
+    'Podpis i kod pokoju albo lista publicznych pokoi. Bez konta, bez instalacji.',
+  ),
+  roomBrowser: defineShot(
+    'lista-pokoi',
+    'Publiczne pokoje',
+    'Pokoje są prywatne, dopóki gospodarz ich nie upubliczni. Wyszukiwarka, filtry trybu i trudności.',
+  ),
+  howToIntro: defineShot(
+    'jak-grac-wprowadzenie',
+    'Jak grać: wprowadzenie',
+    'Animowana scenka z napisami: teczka, pieczątka, werdykt. Włącza się sama przed pierwszym treningiem.',
+  ),
+  howToStations: defineShot(
+    'jak-grac-stanowiska',
+    'Jak grać: stanowiska',
+    'Dziesięć stanowisk z instrukcją i rundą próbną „Wypróbuj”.',
+  ),
+  about: defineShot(
+    'o-grze',
+    'O grze',
+    'Autorzy, licencja, użyte zasoby i biblioteki oraz wersja gry.',
+  ),
+  profile: defineShot(
+    'profil',
+    'Profil',
+    'Statystyki zapisane tylko w tej przeglądarce oraz kolor i dodatek postaci.',
+  ),
   settingsSound: defineShot(
     'ustawienia-dzwiek',
     'Ustawienia: dźwięk',
-    'Głośność ogólna, muzyki i efektów oraz wyciszenie.',
+    'Głośność ogólna, muzyki, efektów i lektora oraz wyciszenie.',
   ),
   settingsDisplay: defineShot(
     'ustawienia-obraz',
@@ -67,7 +109,7 @@ const S = {
   settingsAccess: defineShot(
     'ustawienia-ulatwienia',
     'Ustawienia: ułatwienia',
-    'Mniej ruchu, bez migania, napisy do dźwięków i podpowiedzi „co dalej”.',
+    'Mniej ruchu, bez migania, napisy do dźwięków, podpowiedzi „co dalej” i ponowne wprowadzenie.',
   ),
   settingsControls: defineShot(
     'ustawienia-sterowanie',
@@ -87,7 +129,12 @@ const S = {
   lobby: defineShot(
     'lobby',
     'Poczekalnia',
-    'Kod pokoju, cztery miejsca przy biurkach, sześć ról z premią i zdolnością, gotowość graczy.',
+    'Kod pokoju, cztery miejsca, sześć ról z premią i zdolnością, poziom trudności, gotowość graczy.',
+  ),
+  lobbyVersus: defineShot(
+    'poczekalnia-pojedynek',
+    'Poczekalnia: pojedynek',
+    'Tryb „Na punkty”: dwie redakcje grają te same teczki, każda w swojej sali.',
   ),
   lobbyLevels: defineShot(
     'lobby-poziomy',
@@ -124,6 +171,11 @@ const S = {
     'rozgrywka-zdolnosc',
     'Zdolność roli',
     'Redaktor prowadzący nacisnął R (na telefonie czwarty przycisk): teczka ma 20 sekund więcej, a zdolność się odnawia.',
+  ),
+  gameMenu: defineShot(
+    'menu-gry',
+    'Menu gry',
+    'Jeden przycisk w rogu: pomoc, ustawienia, wyjście. W grze solo także pauza.',
   ),
   hudSix: defineShot(
     'rozgrywka-poziom-6',
@@ -179,6 +231,11 @@ const S = {
     'stanowisko-mapa',
     'Mapa',
     'Minigra: znajdź dzielnicę, w której stoją oba budynki ze zdjęcia.',
+  ),
+  stationHelp: defineShot(
+    'pomoc-stanowiska',
+    'Pomoc stanowiska',
+    'Przy pierwszej wizycie karta z instrukcją. Zegar minigry stoi, termin teczki biegnie.',
   ),
   deskEvidence: defineShot(
     'stol-dowod',
@@ -255,6 +312,11 @@ const S = {
     'Tryb bez końca: wyniki',
     'Wynik, czas przetrwania i tablica najlepszych wyników.',
   ),
+  spectate: defineShot(
+    'widownia',
+    'Widownia',
+    'Reszta klasy ogląda pojedynek: wynik obu redakcji i relacja „Na żywo”; na komputerze obie sale obok siebie, na telefonie jedna z przełącznikiem.',
+  ),
 };
 
 /** Folder-result fields the screenshot fixtures share (protocol v3). */
@@ -271,6 +333,65 @@ const FIXTURE_REASON = {
   wrong: 'publishedFake',
   expired: 'expired',
 } as const;
+
+type FixtureOutcome = 'correct' | 'wrong' | 'expired';
+type FixtureStory = (typeof STORIES)[number];
+
+/**
+ * Folder results of a finished run whose totals add up the way the server scores them (design
+ * doc „Punktacja”): a correct verdict pays by priority or context, a wrong one is a published fake
+ * (pick a story whose correct verdict is reject), an expired folder costs the penalty. The score
+ * is their sum and the credibility runs from the start and stays within 0–100, so the results'
+ * points table has no unexplained „Inne” row. The best possible score pays every folder its
+ * correct verdict plus the speed bonus.
+ */
+function fixtureRun(stories: readonly FixtureStory[], outcomes: readonly FixtureOutcome[]) {
+  let credibility = CREDIBILITY_START;
+  let score = 0;
+  let maxScore = 0;
+  const results = stories.map((s, i) => {
+    const outcome = outcomes[i] ?? 'correct';
+    const context = s.correctVerdict === 'publishWithContext';
+    const important = s.priority !== 'normal';
+    const correct = context
+      ? {
+          reason: 'correctWithContext',
+          score: SCORE.correctWithContext,
+          cred: CREDIBILITY.correctWithContext,
+        }
+      : important
+        ? {
+            reason: 'correctImportant',
+            score: SCORE.correctImportant,
+            cred: CREDIBILITY.correctImportant,
+          }
+        : { reason: 'correctNormal', score: SCORE.correctNormal, cred: 0 };
+    const scored =
+      outcome === 'correct'
+        ? correct
+        : outcome === 'wrong'
+          ? { reason: 'publishedFake', score: SCORE.publishedFake, cred: CREDIBILITY.publishedFake }
+          : { reason: 'expired', score: SCORE.expired, cred: CREDIBILITY.expired };
+    maxScore += correct.score + SCORE.speedBonus;
+    score += scored.score;
+    credibility = Math.min(CREDIBILITY_MAX, Math.max(0, credibility + scored.cred));
+    return {
+      ...outcomeBase,
+      folderId: `r${i}`,
+      spawnKey: `s${i}`,
+      storyId: s.id,
+      outcome,
+      reason: scored.reason,
+      justifyingStampIds: outcome === 'expired' ? [] : s.justifyingStamps.slice(0, 1),
+      verdict: outcome === 'expired' ? null : outcome === 'wrong' ? 'publish' : s.correctVerdict,
+      scoreDelta: scored.score,
+      credibilityDelta: scored.cred,
+      // The cited stamp was in the folder; the other deciding proofs never were.
+      missedStampIds: outcome === 'wrong' ? s.justifyingStamps.slice(1) : [],
+    };
+  });
+  return { results, score, credibility, maxScore };
+}
 
 /**
  * A story with a stamp for the station, from l6 when it has one, else from any level (l5 stamps
@@ -318,7 +439,7 @@ async function injectScene(
     const state = g.getState();
     const folders: any[] = [];
     const base = { stamps: [] as string[], spawnedAtMs: 0, deadlineMs: 600000, warned: false };
-    // A station kind the level lacks (l6 has six of the ten) joins as an extra station off the
+    // A station kind the level lacks (l6 has eight of the ten) joins as an extra station off the
     // map: the overlay needs only its state.
     const kinds = state.stations.map((st: any) => st.kind);
     const extra =
@@ -395,6 +516,29 @@ async function clearScene(page: Page): Promise<void> {
   });
 }
 
+/** A lobby action sent through the `?debug` session hook, as the lobby's own buttons send it. */
+async function lobbyAction(page: Page, action: Record<string, unknown>): Promise<void> {
+  await page.evaluate((a) => {
+    (window as unknown as { __session: { lobby(a: unknown): void } }).__session.lobby(a);
+  }, action);
+  await page.waitForTimeout(300);
+}
+
+/** A profile after a few weeks of play (S7-104), so its dialog has figures to show. */
+const PLAYER_PROFILE = {
+  levels: 14,
+  wins: 11,
+  verdicts: 96,
+  correct: 81,
+  wrong: 9,
+  stamps: 143,
+  minigameFails: 12,
+  abilities: 23,
+  roleLevels: { managingEditor: 6, photoEditor: 4, archivist: 2, rescuer: 2 },
+  color: 3,
+  accessory: 'scarf',
+};
+
 async function emit(page: Page, event: unknown): Promise<void> {
   await page.evaluate((e) => (window as unknown as { __game: any }).__game.emit(e), event);
 }
@@ -423,7 +567,14 @@ async function shootDevice(
       missing.push(key);
     }
   };
-  const veteran = { progress: ALL_STARS, tutorialDone: true, met: seededMet() };
+  // The players who only fill seats keep no preferred look, so the room gives each a colour.
+  const crew = {
+    progress: ALL_STARS,
+    tutorialDone: true,
+    met: seededMet(),
+    stationHelpSeen: STATION_KINDS,
+  };
+  const veteran = { ...crew, playerProfile: PLAYER_PROFILE };
   const touch = device.options.hasTouch === true;
 
   // --- Menu, settings, encyclopedia (one veteran browser) --------------------------------
@@ -460,6 +611,35 @@ async function shootDevice(
     await first.click({ timeout: 4000 });
     await take(solo.page, S.encyclopediaCard, 900);
   });
+  await solo.page.keyboard.press('Escape');
+  await solo.page.keyboard.press('Escape');
+  await solo.page.waitForTimeout(400);
+  await attempt(S.howToIntro, async () => {
+    await solo.page.getByTestId('open-how-to').click();
+    const dialog = solo.page.getByTestId('how-to-play');
+    await dialog.getByTestId('intro-player').waitFor({ timeout: 8000 });
+    // Into the second scene: the folder on the belt, with its subtitle.
+    await take(solo.page, S.howToIntro, 7000);
+    await dialog.getByTestId('intro-skip').click();
+  });
+  await attempt(S.howToStations, async () => {
+    const dialog = solo.page.getByTestId('how-to-play');
+    await dialog.getByTestId('how-to-tab-stations').click({ timeout: 4000 });
+    await take(solo.page, S.howToStations, 700);
+    await dialog.getByTestId('how-to-close').click();
+  });
+  await attempt(S.about, async () => {
+    await solo.page.getByTestId('menu-footer').getByTestId('open-about').click();
+    await solo.page.getByTestId('about').waitFor({ timeout: 4000 });
+    await take(solo.page, S.about, 700);
+    await solo.page.keyboard.press('Escape');
+  });
+  await attempt(S.profile, async () => {
+    await solo.page.getByTestId('menu-footer').getByTestId('open-profile').click();
+    await solo.page.getByTestId('profile').waitFor({ timeout: 4000 });
+    await take(solo.page, S.profile, 900);
+    await solo.page.keyboard.press('Escape');
+  });
   await solo.context.close();
 
   // --- Room A: lobby, briefing and level 1 -----------------------------------------------
@@ -467,7 +647,7 @@ async function shootDevice(
   const code = await createRoom(host);
   const guests: Player[] = [];
   for (const name of ['Łukasz', 'Ola', 'Kuba']) {
-    const guest = await openExtraPlayer(crowd, baseUrl, name, veteran);
+    const guest = await openExtraPlayer(crowd, baseUrl, name, crew);
     await joinRoom(guest, code);
     guests.push(guest);
   }
@@ -514,6 +694,13 @@ async function shootDevice(
     await host.page.locator('[data-extended]').first().waitFor({ timeout: 4000 });
     await take(host.page, S.hudAbility, 600);
   });
+  await attempt(S.gameMenu, async () => {
+    const button = host.page.getByTestId('game-menu-button');
+    await (touch ? button.tap() : button.click());
+    await host.page.getByTestId('game-menu').waitFor({ timeout: 4000 });
+    await take(host.page, S.gameMenu, 600);
+    await host.page.keyboard.press('Escape');
+  });
   for (const player of [host, ...guests]) {
     await player.context.close();
   }
@@ -521,7 +708,7 @@ async function shootDevice(
   // --- Room B: level 6, injected scenes --------------------------------------------------
   const six = await openPlayer(browser, baseUrl, 'Zośka', device.options, veteran);
   const sixCode = await createRoom(six);
-  const mate = await openExtraPlayer(crowd, baseUrl, 'Łukasz', veteran);
+  const mate = await openExtraPlayer(crowd, baseUrl, 'Łukasz', crew);
   await joinRoom(mate, sixCode);
   await selectLevel(six, 'l6-atak');
   await setReady(mate);
@@ -552,6 +739,21 @@ async function shootDevice(
       await clearScene(six.page);
     });
   }
+  await attempt(S.stationHelp, async () => {
+    // Stenogram unseen again: its overlay opens on the first-use help card.
+    await six.page.evaluate(
+      (kinds) => localStorage.setItem('redakcja.stationHelp.v1', JSON.stringify(kinds)),
+      STATION_KINDS.filter((kind) => kind !== 'transcript'),
+    );
+    const story = storyForStation('transcript');
+    if (!story) {
+      throw new Error('no story for a transcript station');
+    }
+    await injectScene(six.page, { station: { kind: 'transcript', folderStoryId: story.id } });
+    await six.page.getByTestId('station-help-card').waitFor({ timeout: 6000 });
+    await take(six.page, S.stationHelp, 900);
+    await clearScene(six.page);
+  });
 
   // Desk: a story with a decisive stamp, evidence picked, then good and bad outcomes.
   const deskStory = getStory('l2-cytat-o-liceach') ?? STORIES[0];
@@ -692,55 +894,37 @@ async function shootDevice(
   }
 
   // Results and the Kolegium (debrief) for a finished level 1.
-  const l1Stories = STORIES.filter((s) => s.id.startsWith('l1-')).slice(0, 5);
-  const outcomes: ('correct' | 'wrongJustification' | 'wrong' | 'expired')[] = [
-    'correct',
-    'correct',
-    'wrong',
-    'correct',
-    'expired',
-  ];
+  // Fourteen l1 folders: one fake published (the third card, the Kolegium's „błąd” shot) and one
+  // urgent folder lost; two stars on the run's own thresholds.
+  const l1Stories = STORIES.filter((s) => s.id.startsWith('l1-')).slice(0, 14);
+  const l1Run = fixtureRun(
+    l1Stories,
+    l1Stories.map((s, i) =>
+      i === 2 ? 'wrong' : s.id === 'l1-ostrzezenie-burzowe' ? 'expired' : 'correct',
+    ),
+  );
+  const l1Level = LEVELS.find((level) => level.id === 'l1-burza');
+  const l1Thresholds = starThresholds(l1Run.maxScore, l1Level?.bag?.starShares);
   await attempt(S.results, async () => {
     await six.page.evaluate(
-      ({ results }) => {
+      ({ run, thresholds }) => {
         (window as unknown as { __game: any }).__game.setState({
           levelEnd: {
             type: 'levelEnd',
             levelId: 'l1-burza',
             difficulty: 'normal',
             won: true,
-            stars: 2,
-            // Two stars on l1 need 205 (starThresholds below).
-            score: 215,
-            credibility: 85,
-            results,
+            stars: run.score >= thresholds.three ? 3 : run.score >= thresholds.two ? 2 : 1,
+            score: run.score,
+            credibility: run.credibility,
+            results: run.results,
             lossReason: null,
-            starThresholds: { two: 205, three: 320 },
-            maxScore: 375,
+            starThresholds: thresholds,
+            maxScore: run.maxScore,
           },
         });
       },
-      {
-        results: l1Stories.map((s, i) => ({
-          ...outcomeBase,
-          folderId: `r${i}`,
-          spawnKey: `s${i}`,
-          storyId: s.id,
-          outcome: outcomes[i],
-          reason: FIXTURE_REASON[outcomes[i] ?? 'correct'],
-          justifyingStampIds: outcomes[i] === 'expired' ? [] : s.justifyingStamps.slice(0, 1),
-          verdict:
-            outcomes[i] === 'expired'
-              ? null
-              : outcomes[i] === 'wrong'
-                ? 'publish'
-                : s.correctVerdict,
-          scoreDelta: outcomes[i] === 'correct' ? 20 : outcomes[i] === 'wrong' ? -20 : -5,
-          credibilityDelta: outcomes[i] === 'correct' ? 5 : outcomes[i] === 'wrong' ? -25 : -5,
-          // The cited stamp was in the folder; the other deciding proofs never were.
-          missedStampIds: outcomes[i] === 'wrong' ? s.justifyingStamps.slice(1) : [],
-        })),
-      },
+      { run: l1Run, thresholds: l1Thresholds },
     );
     await take(six.page, S.results, 3500);
   });
@@ -775,21 +959,15 @@ async function shootDevice(
   await confirmBriefing([endless]);
   await attempt(S.endlessHud, async () => take(endless.page, S.endlessHud, 6000));
   await attempt(S.endlessResults, async () => {
-    const results = STORIES.filter((s) => s.id.startsWith('l3-'))
-      .slice(0, 4)
-      .map((s, i) => ({
-        ...outcomeBase,
-        folderId: `e${i}`,
-        spawnKey: `s${i}`,
-        storyId: s.id,
-        outcome: i === 3 ? 'wrong' : 'correct',
-        reason: i === 3 ? FIXTURE_REASON.wrong : FIXTURE_REASON.correct,
-        justifyingStampIds: s.justifyingStamps.slice(0, 1),
-        verdict: i === 3 ? 'publish' : s.correctVerdict,
-        scoreDelta: i === 3 ? -20 : 20,
-        credibilityDelta: i === 3 ? -25 : 5,
-        missedStampIds: i === 3 ? s.justifyingStamps : [],
-      }));
+    // A long endless run from l2–l4 folders: after the eighteenth folder the team publishes
+    // every fake it gets, and the 32nd folder takes the credibility bar to zero.
+    const pool = STORIES.filter((s) => /^l[234]-/.test(s.id)).slice(0, 32);
+    const run = fixtureRun(
+      pool,
+      pool.map((s, i) =>
+        s.correctVerdict === 'reject' && i >= 18 ? 'wrong' : i % 11 === 5 ? 'expired' : 'correct',
+      ),
+    );
     await endless.page.evaluate((r) => {
       (window as unknown as { __game: any }).__game.setState({
         levelEnd: {
@@ -798,19 +976,89 @@ async function shootDevice(
           difficulty: 'normal',
           won: false,
           stars: 0,
-          score: 640,
+          score: r.score,
           credibility: 0,
-          results: r,
+          results: r.results,
           lossReason: 'credibility',
           starThresholds: null,
           maxScore: null,
           survivedS: 212,
         },
       });
-    }, results);
+    }, run);
     await take(endless.page, S.endlessResults, 3500);
   });
   await endless.context.close();
+
+  // --- Room D: room browser, versus lobby and the Widownia ---------------------------------
+  // Ola hosts a public versus room („3B piątek”) open to spectators; Marta a second public room
+  // so the list has more than one row. Zośka (photographed) finds the room in the browser, joins
+  // Ola's newsroom for the lobby shot, then moves to the Widownia and watches Ola against Kuba.
+  const rival = await openExtraPlayer(crowd, baseUrl, 'Ola', crew);
+  const versusCode = await createRoom(rival);
+  for (const action of [
+    { kind: 'setRoomName', name: '3B piątek' },
+    { kind: 'setVisibility', visibility: 'public' },
+    { kind: 'setSpectatorsAllowed', allowed: true },
+    { kind: 'setMode', mode: 'versus' },
+    // The extra player's small page has no room for the level tiles.
+    { kind: 'selectLevel', levelId: 'l1-burza' },
+  ]) {
+    await lobbyAction(rival.page, action);
+  }
+  const other = await openExtraPlayer(crowd, baseUrl, 'Marta', crew);
+  await createRoom(other);
+  for (const action of [
+    { kind: 'setRoomName', name: 'Kółko dziennikarskie' },
+    { kind: 'setVisibility', visibility: 'public' },
+  ]) {
+    await lobbyAction(other.page, action);
+  }
+  // Kuba joins first (Głos), so Zośka lands in Kurier with Ola and leaves it to Kuba's rival
+  // when she moves to the Widownia: both newsrooms keep a player and the match can start.
+  const kuba = await openExtraPlayer(crowd, baseUrl, 'Kuba', crew);
+  await joinRoom(kuba, versusCode);
+  await setReady(kuba);
+  const watcher = await openPlayer(browser, baseUrl, 'Zośka', device.options, veteran);
+  await attempt(S.roomBrowser, async () => {
+    await watcher.page.getByTestId('open-room-browser').click();
+    const dialog = watcher.page.getByTestId('room-browser');
+    const row = dialog.getByTestId(`room-row-${versusCode}`);
+    // The server caches the list for 2 s and the dialog asks every 8 s.
+    await row.waitFor({ timeout: 20_000 });
+    await row.click();
+    await dialog.getByTestId('room-join').waitFor({ timeout: 4000 });
+    await take(watcher.page, S.roomBrowser, 600);
+    await dialog.getByTestId('room-join').click();
+  });
+  // „Dołącz” in the browser joins the picked room; if that shot failed, join by code instead.
+  const joined = await watcher.page
+    .getByTestId('room-code')
+    .waitFor({ timeout: 10_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!joined) {
+    await watcher.page.keyboard.press('Escape');
+    await joinRoom(watcher, versusCode);
+  }
+  await setReady(watcher);
+  await attempt(S.lobbyVersus, async () => {
+    await watcher.page.evaluate(() => window.scrollTo(0, 0));
+    await take(watcher.page, S.lobbyVersus, 900);
+  });
+  await attempt(S.spectate, async () => {
+    await lobbyAction(watcher.page, { kind: 'setSpectator', spectator: true });
+    await rival.page.getByRole('button', { name: 'Do składu!' }).click({ timeout: 8000 });
+    for (const player of [rival, kuba]) {
+      await player.page.getByRole('button', { name: 'Gotowy!' }).click({ timeout: 20_000 });
+    }
+    await watcher.page.getByTestId('spectate-screen').waitFor({ timeout: 90_000 });
+    await watcher.page.getByTestId('spectate-score-1').waitFor({ timeout: 30_000 });
+    await take(watcher.page, S.spectate, 9000);
+  });
+  for (const player of [watcher, rival, other, kuba]) {
+    await player.context.close();
+  }
 
   // --- First-game tutorial (a browser that has never played) -----------------------------
   const newbie = await openPlayer(browser, baseUrl, 'Zośka', device.options, {});

@@ -1,0 +1,4 @@
+{
+  "$schema": "../../config/config.schema.json",
+  "features": { "roomBrowser": true }
+}

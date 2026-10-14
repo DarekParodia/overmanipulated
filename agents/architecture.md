@@ -209,6 +209,10 @@ apps/server/drizzle/   generated SQL migrations (committed)
 - JSON on the wire at first. Keep messages small (no full content in snapshots — send story ids;
   the client already has content bundled). Switching to msgpack must not change types.
 - Bump `PROTOCOL_VERSION` in `constants.ts` on breaking changes; the server rejects mismatches.
+  It is 8 after Stage 7. Bump at most once per deploy unit (milestone) that changes the
+  WebSocket wire; REST, HTML and config changes never bump it (ledger:
+  [`docs/design/stage7/protocol.md`](../docs/design/stage7/protocol.md)). „O grze” shows the
+  number next to the build version.
 
 ## Netcode (client)
 

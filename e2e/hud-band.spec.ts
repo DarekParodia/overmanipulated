@@ -70,6 +70,13 @@ const QUEUE = '[data-testid="hud-queue"]';
 const MENU = '[data-testid="game-menu-button"]';
 const CAPTIONS = 'section[aria-label="Napisy dźwięków"]';
 
+/**
+ * The band is measured from layout offsets (`hud/hud-band.ts`, so CSS transforms never move it),
+ * which are whole pixels, while bounding boxes keep fractions (a pill 107.19 px tall measures as
+ * 107): an edge may pass the band by less than a pixel.
+ */
+const SUBPIXEL = 1;
+
 /** Pill, queue and menu button sit inside the band; captions start under it. */
 async function expectBand(page: Page): Promise<number> {
   await expect.poll(() => band(page)).toBeGreaterThan(0);
@@ -77,9 +84,9 @@ async function expectBand(page: Page): Promise<number> {
   const pill = await box(page, PILL);
   const queue = await box(page, QUEUE);
   const menu = await box(page, MENU);
-  expect(pill.bottom).toBeLessThanOrEqual(px);
-  expect(queue.bottom).toBeLessThanOrEqual(px);
-  expect(menu.bottom).toBeLessThanOrEqual(px);
+  expect(pill.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
+  expect(queue.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
+  expect(menu.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
   expect(overlaps(queue, pill)).toBe(false);
   expect(overlaps(queue, menu)).toBe(false);
   const captions = await box(page, CAPTIONS);

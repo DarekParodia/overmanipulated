@@ -1,8 +1,8 @@
 // S7-24: the room's difficulty reaches the client's minigame and guidance rules. On Ekspert a
 // minigame clock starts at 15 s, the data library fails on the first mistake and shows no
-// answer, the „co dalej” bubble stays away and a two-proof folder card shows only „×2”. Until
-// the lobby picker lands (S7-25) the spec sends the host's `setDifficulty` over the page's own
-// WebSocket, so the server deals the run on Ekspert exactly as the picker will.
+// answer, the „co dalej” bubble stays away and a two-proof folder card shows only „×2”. The
+// spec sends the host's `setDifficulty` over the page's own WebSocket, the same message the lobby
+// picker (S7-25) sends, so the server deals the run on Ekspert; the picker has its own spec.
 import { expect, type Page, test, type WebSocketRoute } from '@playwright/test';
 import {
   closePlayers,

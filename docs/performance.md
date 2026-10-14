@@ -74,6 +74,10 @@ seen flag and the autoplay rule (`intro/intro-store.ts`, under 1 KB); the voice 
 when the player mounts, so no voice code joins the menu. Menu 575 KB gzip, 291 KB of it JS and
 CSS (guard 340 KB); first load 1.43 MB gzip.
 
+S7-106 (Stage 7 close-out, `bun run perf:budget`): menu 589 KB gzip, game 876 KB gzip, extras
+(help, intro, about, profile, rooms) 99 KB raw, 29 KB gzip; first load 3.30 MB raw, 1.46 MB gzip
+(limit 10 MB).
+
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
 
@@ -89,6 +93,7 @@ components per station kind with `React.lazy`.
 | S7-56 (all ten minigames) | 814 KB | 51 % | 301 KB |
 | S7-66 (M4 done: abilities, ten stations, endless room) | 822 KB | 51 % | 303 KB |
 | S7-90 (spectate screen I: views, layout, scoreboard; the lazy styleguide counts here since S7-101) | 868 KB | 53 % | 305 KB |
+| S7-106 (Stage 7 done: M7 dialogs, intro, look) | 876 KB | 55 % | 277 KB (largest chunk) |
 
 Real transfer in headless Chromium (webm audio, brotli estimate, whole flow menu, lobby, briefing,
 match): menu 434 KB, everything 1.7 MB brotli. The 10 MB limit is met about seven times over.
@@ -112,7 +117,7 @@ default config, where the e2e ad guard (`guardAdRequests` in `e2e/helpers.ts`) f
 that requests a Google ad host. Google's script and creatives are **outside the budget**, since
 the game cannot size them, and kept away from the frames that matter:
 
-- they load only on an ad host, only on an ad screen (main menu, lobby, results; the spectator view once S7-91 places its slot)
+- they load only on an ad host, only on an ad screen (main menu, lobby, results, and a spectator's stats sheet and match results, S7-91)
   and only when a placement's viewport gate matches, so phones never load them;
 - never during play: requests are paused (`pauseAdRequests`) on every other screen and no ad
   is on screen, so a match pays no network or frame cost for new ads;

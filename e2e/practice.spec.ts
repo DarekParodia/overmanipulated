@@ -257,8 +257,10 @@ test('a briefing station chip opens its card; the level start closes the help', 
   const chip = page.locator('[data-testid^="briefing-station-"]').first();
   const kind = ((await chip.getAttribute('data-testid')) ?? '').replace('briefing-station-', '');
   expect(kind).not.toBe('');
-  const chipBox = await chip.boundingBox();
-  expect(chipBox?.height ?? 0).toBeGreaterThanOrEqual(44);
+  // The briefing paper spins in (S5 motion): measure the chip once it has landed, not mid-turn.
+  await expect
+    .poll(async () => (await chip.boundingBox())?.height ?? 0, { timeout: 10_000 })
+    .toBeGreaterThanOrEqual(44);
   await press(chip, touch);
 
   const dialog = page.getByTestId('how-to-play');

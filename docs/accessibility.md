@@ -52,6 +52,19 @@ The lobby plays the intro on its own once per browser (a new training room); „
 „Gotowe” end it and it does not come back; the settings (Ułatwienia → „Obejrzyj wprowadzenie”)
 and „Jak grać?” replay it.
 
+### Station help (S7-95, S7-97)
+
+The first time a browser opens a station, its overlay starts on the station's help card: a
+question, up to three numbered steps, the device's own controls drawn as key caps, pad buttons or
+touch gestures (`guidance/ControlsArt.tsx`), and what the stamp proves. While the card is open the
+minigame's clock waits (client only); the folder's deadline does not, and the card says so
+(„Termin teczki biegnie dalej”), so a slow reader loses no attempt. „Rozumiem” (Enter / A / tap)
+starts the minigame; '?' in the overlay header (H / Select) brings the card back at any time, and
+Ułatwienia → „Pokaż pomoc stanowisk od nowa” shows every card again. The same cards, with a
+„Wypróbuj” practice round that sends nothing to the server, live in „Jak grać” → Stanowiska and
+in the in-game menu („Pomoc: stanowiska”, without practice). The text follows `textScale`; at
+640×360 the card scrolls inside the overlay instead of clipping.
+
 ## Colour blindness
 
 `a11y/colorblind.ts` simulates protanopia, deuteranopia and tritanopia (Machado 2009) and measures
@@ -120,12 +133,14 @@ page at 640×360 (also at scale 1); nothing is clipped, it scrolls.
 
 `input/menu-nav.ts` (mounted once in `App`) turns the pad's d-pad / left stick into spatial focus
 moves between the real controls of the main menu, lobby, briefing and any open `<dialog>`
-(settings, leaderboard): A presses, B closes the dialog or presses the `data-nav-back` button (the
+(settings, leaderboard, „Jak grać”, „O grze”, Profil, „Publiczne pokoje”, the lobby sheets): A presses, B closes the dialog or presses the `data-nav-back` button (the
 `back` variant of `Button`), left / right change a slider. Up / down fall back to document order
 when nothing lies above or below, so no control is out of reach. Screens with their own handlers
 (briefing intro, results, station overlays) win and pass what they do not use. The focus ring is
 the global blue ring; after pad moves `:root[data-pad-nav]` forces it even when the last pointer
-was a mouse. Keyboard (Tab, Enter) and touch keep working natively. Pure logic is tested in
+was a mouse. In the tabbed dialogs („Jak grać”, „O grze”, Ustawienia) Y moves to the next tab,
+shown as a pad-only hint („Y zmienia dział”). Keyboard (Tab, Enter, Esc) and touch keep working
+natively. Pure logic is tested in
 `input/menu-nav.test.ts`.
 
 ## Haptics

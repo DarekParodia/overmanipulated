@@ -63,6 +63,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `folder.pickup` / `folder.drop` | `folderPickedUp` / `folderPutDown` | `hop` / `place` squash | paper rustle / paper slap | paper flutter / dust | light tick (own player only) | ● |
 | `station.workStart` / `station.workCancel` | `workStarted` / `workCancelled` | `workStart` / `workStop` pose | key clack, then typewriter loop (`keys`, per station) until cancel / minigame / stamp; stops if the station snapshot stops working | ink puff in player colour / dust; progress ring (station unit) | — | ● |
 | `station.denied` | station busy or wrong item | head shake | "nope" blip | red outline pulse | — | ● |
+|  | *Not a cue in `cues.ts` (S7-106 check):* a busy station refuses silently; the guidance hint says where to go instead | | | | | |
 | `minigame.start` / `minigame.fail` | `minigameStarted` / `minigameFailed` | `workStop` / `wobble` | paper whoosh / fail blips | paper flutter / smoke wisp | — / light tick | ● |
 | `stamp.applied` | `stampApplied` (at the station; at the reporter for `via: 'fieldCall'`) | `stampSlam` + 60 ms hit-stop (`fx/time-scale.ts`) | heavy thud | paper bits + ink splat | small shake, thud | ●● |
 | `desk.open` / `desk.close` | `deskOpened` / `deskClosed` | `deskOpen` / `deskClose` | drawer knock / soft back | dust | — | ● |
@@ -80,6 +81,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `desk.justify` | justifying stamp picked on the desk | slip pulled out, tab appears | click | — | light tick (mobile) | ● |
 | `desk.unjustify` | evidence stamp deselected on the desk (multi-stamp pick, S7-19) | slip pushed back, numbered tick goes | soft back | — | light tick (mobile) | ● |
 | `credibility.low` | credibility < 30 | — | heartbeat layer | vignette | — | ●● |
+|  | *Not a cue in `cues.ts` (S7-106 check):* state-driven instead, a red vignette (`fx/screen/screen-fx-model.ts`, `CREDIBILITY_LOW`) and the gauge's „Wiarygodność spada!” label; the music's pressure layer follows low credibility | | | | | |
 | `level.lastSeconds` | timer crosses 30 s left | `timerPulse` (steady under no-flash) | clock strike over a low pulse; music → pressure layer (music unit) | timer pulses (HUD) | light tick | ●● |
 | `level.win` / `level.lose` | `levelEnd` message | `cheer` / `slump` | win / lose stinger; all loops stop | confetti / falling papers at the local player | thud / buzz | ●●● |
 | `versus.leadTaken` / `versus.leadLost` | versus: the lead changes hands between two snapshots' scoreboards (client-derived in the rival chip, `leadCue` in `hud/versus-model.ts`): taken from behind or a tie / lost from ahead or a tie; a fall back to a tie is silent; at most one per `VERSUS.leadCueCooldownMs` (5 s); none for the first standings of a match or after the level end (S7-89) | `versusLead`: the rival chip bumps (lead taken) or shakes (lead lost); none under reduced motion | chime (`chime`, sfx 0.7) / low sting (`lowsting`, sfx 0.5) | — (DOM chip; caption „Prowadzicie!” / „Rywale prowadzą”) | light tick | ●● |
@@ -128,6 +130,25 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `room.spectatorJoined` | someone new is in `roomState.spectators` (a join or a move to the Widownia; never the local member; a spectator away from the lobby hears nothing; S7-86) | lobby: a new eye chip pops into the Widownia strip; in game: a blue „Widz dołączył” toast with an eye in the verdict-toast stack | soft join chime (`join`, ui bus, 0.5) | — (DOM) | — | ● |
 | `spectate.follow` | a spectator follows a player or stops (← / →, A / D, d-pad, RB, a chip tap; Esc, B or the FollowCard's ✗; S7-91) | the view's camera glides after the player (`CameraRig` smoothing at the follow zoom, never a cut); their plate chip and name tag get the blue selection ring and the FollowCard appears in their view | paper slide (`slide`, ui bus, 0.6) | — (DOM; caption skipped: the spectator's own press, the ring moves) | — | ● |
 | `spectate.feed` | a new top row in the spectators' event feed (one cue per new top row, so a burst of reveals is one sound; rows already there when the screen opens make none; S7-91) | `feedPop`: the row slides in from the left (a fade under reduced motion; nothing blinks) | soft tick (`tick`, ui bus, 0.3) | — (DOM; caption skipped: the row is the words) | — | ● |
+
+Rows for cues that predate the table's upkeep (added by the S7-106 catalogue check, values from
+`cues.ts`):
+
+| Cue | Trigger | Animation | Sound | Particles / visual | Shake / haptic | Sev. |
+| --- | --- | --- | --- | --- | --- | --- |
+| `player.reconnect` / `player.leave` | a player comes back within the grace time / leaves the room | — | join chime (quieter) / leave | ink puff ×8 / — | — | ● |
+| `player.stepRemote` | another player walking | — | soft steps at 40 % of the own steps' volume | dust puffs | — | ● |
+| `player.start` / `player.stop` | the own avatar starts / stops moving | `squash` | — | dust ×4 / — | — | ● |
+| `game.start` | the level starts (briefing over, HUD in) | — | start sting (`start`) | — | small shake, thud | ●● |
+| `ui.copy` | „Skopiuj kod” in the lobby or the in-game menu | — | copy (`copy`, ui bus) | — (the button says „Skopiowano!”) | tick | ● |
+| `lobby.ready` | the local player ticks „Gotowy” | — | stamp (quiet, ui bus) | — | tick | ● |
+| `ping.open` / `ping.send` | the ping picker opens (Q, pad, „Sygnał”) / a ping is sent | — | hover / click (ui bus) | — (the bubble comes with `ping.*`) | tick / — | ● |
+| `phone.ring` / `phone.hold` / `phone.connect` / `phone.wrong` | Telefon minigame: the call rings / the hold queue pips / the right person answers / a wrong number | — (the minigame's own states) | ring / three hold pips / chime / back | — (DOM overlay) | tick / — / success / error | ● |
+| `aiScanner.scan` / `aiScanner.answer` / `aiScanner.wrong` | Skaner AI minigame: the needle settles / an answer is stamped / a wrong answer | — (the minigame's own states) | hover / stamp / back | — (DOM overlay) | — / thud / error | ● |
+| `dataLibrary.right` / `dataLibrary.mistake` | Biblioteka danych minigame: the number matched / a wrong pick | — (the minigame's own states) | stamp / back | — (DOM overlay) | thud / error | ● |
+| `endless.tempo` | endless: the tempo steps up (`Tempo ×N` chip) | `tempoUp` chip pop | ping (`ping3`) | — | tick | ●● |
+| `endless.over` / `endless.record` | endless ends / a new room record on its results | `shrug` / — | chime, every loop stops / win | paper flutter ×12 / confetti ×40 | alarm / success | ●●● |
+| `encyclopedia.unlock` | a technique card is unlocked (Kolegium „Nowa karta” chip) | chip pop | chime (ui bus) | — | tick | ●● |
 
 Add a row here when you add a cue, in the same commit.
 
