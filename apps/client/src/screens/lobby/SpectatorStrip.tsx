@@ -58,11 +58,8 @@ export function SpectatorStrip({
           <Checkbox
             label={pl.lobbyRoom.spectatorsAllowed}
             checked={spectatorsAllowed}
-            onChange={(allowed) => {
-              if (!disabled) {
-                onAllowed(allowed);
-              }
-            }}
+            disabled={disabled}
+            onChange={onAllowed}
           />
         </div>
       ) : (

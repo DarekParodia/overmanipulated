@@ -111,9 +111,10 @@ test('lobby: name, mode switch, newsroom columns, Widownia and the start', async
   await late.page.getByRole('button', { name: 'Dołącz' }).click();
   await expect(late.page.getByRole('alert')).toHaveText(/Pojedynek trwa\. Możesz go oglądać\./);
   await late.page.getByTestId('menu-watch').click();
-  for (const player of [host, guest]) {
-    await expect(player.page.getByText('Widz dołączył')).toBeVisible();
-  }
+  // Both at once: the toast lives 3 s, too short to check one page after the other under load.
+  await Promise.all(
+    [host, guest].map((player) => expect(player.page.getByText('Widz dołączył')).toBeVisible()),
+  );
 });
 
 test('lobby at 640×360: one row of settings, two columns and the sticky start', async ({
