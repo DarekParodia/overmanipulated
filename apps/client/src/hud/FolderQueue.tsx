@@ -108,7 +108,7 @@ export function FolderQueue() {
  * orange band with the conveyor and 'Taśma pełna' while a due folder waits for a free tile.
  * `wide` (an empty queue) says it in words. The label is static: no per-second announcements.
  */
-function GhostCard({ next, wide }: { next: NextFolderState; wide: boolean }) {
+export function GhostCard({ next, wide }: { next: NextFolderState; wide: boolean }) {
   const full = next.kind === 'full';
   const seconds = next.kind === 'in' ? Math.ceil(next.ms / 1000) : 0;
   const text = full

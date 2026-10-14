@@ -21,6 +21,7 @@ import type {
 import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
+import type { RoomListProblem } from '../rooms/room-list-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import type { Accessory } from '../store/profile-model.ts';
@@ -82,6 +83,9 @@ export const pl = {
     watchAction: 'Oglądaj',
     /** `matchInProgress` when „Oglądaj” is offered next to it (S7-86). */
     matchInProgressWatch: 'Pojedynek trwa. Możesz go oglądać.',
+    /** Room browser (S7-88): the entry under the join row, and the eye next to „Dołącz”. */
+    browseRooms: 'Publiczne pokoje',
+    watchByCode: 'Oglądaj pokój o tym kodzie',
     /** Footer link (S7-75): the privacy note at /prywatnosc, in the same tab. */
     privacy: 'Prywatność',
   },
@@ -1982,6 +1986,17 @@ export const pl = {
     /** The chip shown while the browser still blocks audio; subtitles run on regardless. */
     soundLocked: 'Stuknij, by włączyć głos',
     scene: (n: number, total: number) => `Scena ${n} z ${total}`,
+    /** S7-101: the name tag of the reporter on the intro's stage. */
+    reporter: 'Ty',
+    /** The stamp chip on the stations and desk callouts. */
+    proof: 'Dowód',
+    /** After the last scene or „Pomiń”, in „Jak grać”. */
+    ended: 'Koniec wprowadzenia',
+    replay: 'Obejrzyj jeszcze raz',
+    /** Over the stage while paused. */
+    paused: 'Pauza',
+    /** The stage's accessible name. */
+    stageLabel: 'Scena wprowadzenia',
     voice: {
       welcome:
         'Witaj w redakcji Kuriera Nowobrzeskiego! Jestem naczelnym. Czas goni, a na taśmę ciągle wpadają nowe teczki.',
@@ -2176,6 +2191,51 @@ export const pl = {
       abilityReady: 'Zdolność gotowa',
     },
   },
+  /** Room browser (S7-88): the public rooms, opened from the main menu when the flag is on. */
+  rooms: {
+    title: 'Publiczne pokoje',
+    close: 'Zamknij listę pokoi',
+    searchLabel: 'Szukaj pokoju',
+    searchPlaceholder: 'Kod, nazwa lub gospodarz',
+    /** The phone toggle that shows the filters; `n` filters narrow the list. */
+    filters: (n: number) => (n > 0 ? `Filtry (${n})` : 'Filtry'),
+    filterLabels: { mode: 'Tryb gry', status: 'Stan pokoju', difficulty: 'Poziom trudności' },
+    any: 'Wszystkie',
+    modes: { coop: 'Razem', versus: 'Na punkty' } satisfies Record<RoomMode, string>,
+    statuses: { open: 'Czekają', inGame: 'W grze' },
+    /** A room without a name is called after its host. */
+    untitled: (host: string) => `Pokój: ${host}`,
+    host: (host: string) => `Gospodarz: ${host}`,
+    code: (code: string) => `Kod ${code}`,
+    players: (players: number, max: number) => `${players}/${max}`,
+    playersLabel: (players: number, max: number) => `Gracze: ${players} z ${max}`,
+    spectatorsLabel: (spectators: number) => `Widzowie: ${spectators}`,
+    spectatorsClosed: 'Widownia zamknięta',
+    inGame: 'W grze',
+    full: 'Komplet',
+    age: (minutes: number) => (minutes < 1 ? 'Nowy' : `${minutes} min`),
+    ageLabel: (minutes: number) =>
+      minutes < 1 ? 'Otwarty przed chwilą' : `Otwarty ${minutes} min temu`,
+    join: 'Dołącz',
+    watch: 'Oglądaj',
+    loading: 'Szukam pokoi…',
+    empty: 'Nie ma teraz publicznych pokoi.',
+    emptyHint: 'Otwórz własny albo dołącz kodem.',
+    filteredEmpty: 'Nic tu nie pasuje.',
+    clearFilters: 'Pokaż wszystkie',
+    /** Shown when the server found more rooms than it sends. */
+    more: (shown: number, total: number) => `Widać ${shown} z ${total}. Zawęź szukanie.`,
+    problems: {
+      offline: 'Brak połączenia z serwerem.',
+      busy: 'Za dużo zapytań. Zaraz spróbuję znowu.',
+      unavailable: 'Lista pokoi jest teraz wyłączona.',
+      failed: 'Nie udało się pobrać listy.',
+    } satisfies Record<RoomListProblem, string>,
+    retry: 'Spróbuj jeszcze raz',
+    pick: 'Wybierz pokój z listy.',
+    /** The picked room has no free seat and no open Widownia. */
+    noSeat: 'Brak wolnych miejsc.',
+  },
   /**
    * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
    * screen (S7-90/91) builds on these.
@@ -2199,8 +2259,6 @@ export const pl = {
     tabsLabel: 'Działy pomocy',
     tabs: { intro: 'Wprowadzenie', stations: 'Stanowiska', controls: 'Sterowanie' },
     close: 'Gotowe',
-    /** The intro tab until the animated intro lands (S7-101): the narrator's lines to read. */
-    introLabel: 'Wprowadzenie krok po kroku',
     stationsLabel: 'Stanowiska redakcji',
     stationsLead: 'Wybierz stanowisko i zobacz, jak działa.',
     /** Gamepad only: the north button walks the tabs, as in the settings. */

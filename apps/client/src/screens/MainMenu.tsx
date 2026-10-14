@@ -2,6 +2,8 @@
 // nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner;
 // minor links sit in the footer under the card and, with ads on, a „Reklama” rail on the left.
 // A versus match already under way (`matchInProgress`) offers to watch it instead (S7-84).
+// With the `spectators` flag an eye next to „Dołącz” watches the typed code; with `roomBrowser`
+// „Publiczne pokoje” under the join row opens the room browser (S7-88).
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
 import { useAbout } from '../about/store.ts';
@@ -11,6 +13,7 @@ import { requestMusic } from '../fx/audio/music.ts';
 import { useHowTo } from '../howto/store.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
+import { useRoomBrowser } from '../rooms/store.ts';
 import { useApp } from '../store/app.ts';
 import { useProfile } from '../store/profile.ts';
 import { useFeature, usePublicConfig } from '../store/public-config.ts';
@@ -33,6 +36,7 @@ export function MainMenu() {
   const setSettingsOpen = useApp((s) => s.setSettingsOpen);
   const lastJoinCode = useApp((s) => s.lastJoinCode);
   const spectators = useFeature('spectators');
+  const roomBrowser = useFeature('roomBrowser');
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -62,8 +66,7 @@ export function MainMenu() {
     }
   }
 
-  function join(event: FormEvent) {
-    event.preventDefault();
+  function joinByCode(as: 'player' | 'spectator') {
     const name = validNickname();
     if (!name) {
       return;
@@ -72,7 +75,12 @@ export function MainMenu() {
       setLocalError(pl.menu.needCode);
       return;
     }
-    joinRoom(name, code);
+    joinRoom(name, code, as);
+  }
+
+  function join(event: FormEvent) {
+    event.preventDefault();
+    joinByCode('player');
   }
 
   function watch() {
@@ -136,7 +144,7 @@ export function MainMenu() {
           <span>{pl.menu.or}</span>
         </p>
 
-        <form className={styles.join} onSubmit={join}>
+        <form className={`${styles.join} ${spectators ? styles.joinWatch : ''}`} onSubmit={join}>
           <Field
             label={pl.menu.joinCodeLabel}
             large
@@ -152,7 +160,29 @@ export function MainMenu() {
           <Button type="submit" big disabled={busy}>
             {pl.menu.joinAction}
           </Button>
+          {spectators && (
+            <Button
+              big
+              disabled={busy}
+              icon={<Icon name="eye" size={28} label={pl.menu.watchByCode} />}
+              title={pl.menu.watchByCode}
+              data-testid="menu-watch-code"
+              onClick={() => joinByCode('spectator')}
+            />
+          )}
         </form>
+
+        {roomBrowser && (
+          <Button
+            wide
+            icon={<Icon name="globe" size={26} />}
+            disabled={busy}
+            data-testid="open-room-browser"
+            onClick={() => useRoomBrowser.getState().show()}
+          >
+            {pl.menu.browseRooms}
+          </Button>
+        )}
 
         {message && (
           <p className={styles.error} role="alert">

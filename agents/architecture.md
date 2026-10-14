@@ -229,7 +229,14 @@ apps/server/drizzle/   generated SQL migrations (committed)
   renderer counters under `perfStats.views[viewKey]` and the overlay shows the sum. A spectator
   view (`createWatchView`; the spectate store holds one per team) samples
   `SPECTATOR_INTERPOLATION_DELAY_MS` (250 ms) behind and has guidance off; a cue with `silent`
-  keeps everything but its sound and loops.
+  keeps everything but its sound and loops. The intro's view (`kind: 'intro'`,
+  `intro/intro-view.ts`, S7-101) runs the shared `step` locally on a mini layout
+  (`intro/intro-sim.ts`) at the scene time its player reads, with its own `roster` (the scripted
+  reporter) and `levelId` (the training theme); scene files read players with
+  `useViewRoster()` / `viewRoster(view)` and the theme with `viewLevelId(view)`, which fall back
+  to the room. Nothing connects audio, haptics or captions to a view's feedback but the player's,
+  so the intro's cues are particles and animation only. „In-engine” means exactly this: rendered
+  live by the game's own sim and renderer, never a video file.
 - Models are glTF (`.glb`), optimised with gltf-transform, stored in `apps/client/public/assets/`.
   Base assets from Kenney (CC0) or self-made; record the source and licence of every asset in
   `apps/client/public/assets/CREDITS.md`.

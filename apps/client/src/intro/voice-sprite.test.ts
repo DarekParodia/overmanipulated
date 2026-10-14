@@ -2,8 +2,10 @@ import { describe, expect, it } from 'bun:test';
 import type { VoiceClips } from '../fx/audio/voice.ts';
 import {
   loadIntroVoice,
+  loadShippedVoiceSprite,
   loadVoiceSprite,
   VOICE_LICENCES,
+  VOICE_SHIPPED,
   VOICE_SPRITE_URL,
   voiceClips,
   voiceSpriteSchema,
@@ -116,5 +118,19 @@ describe('loadVoiceSprite / loadIntroVoice', () => {
       () => Promise.resolve(false),
     );
     expect(failed).toBe(false);
+  });
+
+  it('asks for nothing when the build ships no voice (S7-101)', async () => {
+    const asked: string[] = [];
+    const get = (url: string) => {
+      asked.push(url);
+      return Promise.resolve(SPRITE);
+    };
+    expect(await loadShippedVoiceSprite(get, false)).toBeNull();
+    expect(asked).toEqual([]);
+    expect((await loadShippedVoiceSprite(get, true))?.voice).toBe('volunteer-a');
+    expect(asked).toEqual([VOICE_SPRITE_URL]);
+    // Outside a Vite build the define is missing and the sprite may be fetched.
+    expect(VOICE_SHIPPED).toBe(true);
   });
 });

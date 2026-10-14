@@ -12,10 +12,9 @@ import { abilityOf, type Role } from '@redakcja/shared';
 import { useMemo, useRef } from 'react';
 import type { Group } from 'three';
 import { useLevelClock } from '../hud/use-level-clock.ts';
-import { useGameView, useViewGame } from '../net/view-context.tsx';
+import { useGameView, useViewGame, useViewRoster } from '../net/view-context.tsx';
 import { CHARACTER_HEIGHT } from '../scene/character/rig.ts';
 import { ViewHtml } from '../scene/ViewHtml.tsx';
-import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { ProgressRing } from '../ui/ProgressRing.tsx';
@@ -35,7 +34,7 @@ const FLOOR_RING_HEIGHT = 0.02;
 export function AbilityMarkers() {
   const view = useGameView();
   const crew = useViewGame((s) => s.crew);
-  const players = useApp((s) => s.room?.players);
+  const players = useViewRoster();
   const { elapsedMs } = useLevelClock(view.store);
   const local = useLocalAbility(view.runtime, view.store);
   const roles = useMemo(

@@ -43,12 +43,16 @@ test('„Jak grać” opens from the menu, the settings and the lobby', async ({
     expect((corner?.x ?? 0) + (corner?.width ?? 0)).toBeLessThan(card?.x ?? 0);
   }
 
-  // Main menu corner: opens on the intro, with the narrator's lines to read.
+  // Main menu corner: opens on the intro player (S7-101); „Pomiń” ends it on its end card (on a
+  // phone the tabs hide while it plays and come back then).
   await press(page.getByTestId('open-how-to'), touch);
   await expect(dialog.getByRole('heading', { name: 'Jak grać' })).toBeVisible();
-  await expect(dialog.getByTestId('how-to-tab-intro')).toHaveAttribute('aria-pressed', 'true');
-  await expect(dialog.getByTestId('how-to-panel-intro').getByRole('listitem')).toHaveCount(11);
+  await expect(dialog.getByTestId('intro-player')).toHaveAttribute('data-scene', 'welcome');
+  await expect(dialog.getByTestId('intro-subtitle')).toContainText('Witaj w redakcji');
   await expectFits(page, dialog);
+  await press(dialog.getByTestId('intro-skip'), touch);
+  await expect(dialog.getByTestId('intro-end')).toBeVisible();
+  await expect(dialog.getByTestId('how-to-tab-intro')).toHaveAttribute('aria-pressed', 'true');
 
   // Stanowiska: ten tiles; one opens its help card, „Rozumiem” goes back to the grid.
   await press(dialog.getByTestId('how-to-tab-stations'), touch);
