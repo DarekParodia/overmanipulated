@@ -21,6 +21,7 @@ import {
   type ClientId,
   type ClientMessage,
   COMMAND_QUEUE_MAX,
+  closeSpawnKey,
   conveyorBlocked,
   createEmbargo,
   createGameState,
@@ -42,12 +43,16 @@ import {
   type LevelOutcome,
   type LobbyAction,
   MAX_ROOM_PLAYERS,
+  MAX_SPECTATORS,
   MAX_TEAM_PLAYERS,
   MAX_TEAMS,
+  type MatchStatsMessage,
   type MemberKind,
   MINIGAME_MIN_SOLVE_MS,
+  maskForSpectators,
   matchDurationMs,
   nextScheduledSpawn,
+  openSpawnKey,
   PLAYER_COLOR_COUNT,
   type PlayerCommand,
   type PlayerInput,
@@ -61,12 +66,16 @@ import {
   type RoomPhase,
   type RoomVisibility,
   type RunSummary,
+  release,
+  releaseAll,
   removePlayer as removeSimPlayer,
   type ServerMessage,
   type SimContext,
   type SnapshotMessage,
   SPECTATOR_SNAPSHOT_INTERVAL_TICKS,
+  SPECTATOR_STATS_INTERVAL_TICKS,
   type SpectatorEmbargo,
+  type SpectatorEvent,
   simTuning,
   spawnPoint,
   step,
@@ -151,8 +160,8 @@ type Room = {
   /** A solo player has the in-game menu open: the level is not stepped (S7-10). */
   paused: boolean;
   /**
-   * Room settings on the wire since protocol 7 (S7-77). Every room is co-op, private, unnamed and
-   * without a Widownia until the lobby actions that change them land (S7-80..S7-82).
+   * Room settings on the wire since protocol 7 (S7-77). A room starts co-op, private and unnamed;
+   * its Widownia is closed unless a spectator created the room (S7-81).
    */
   mode: RoomMode;
   visibility: RoomVisibility;
@@ -162,6 +171,11 @@ type Room = {
   createdAt: number;
   /** Every player's counters of the current level, folded with `applyStatsEvent`. */
   stats: Map<string, PlayerStats>;
+  /**
+   * The same counters folded over what the Widownia was shown: in versus a verdict counts once
+   * its result is revealed, so `matchStats` never gives an embargoed outcome away (S7-81).
+   */
+  spectatorStats: Map<string, PlayerStats>;
   /** How the versus match ended; null while it runs and in co-op (S7-80). */
   outcome: VersusResult | null;
   /** What the spectator topic still holds back of the current level (S7-81). */
@@ -201,6 +215,21 @@ function requireLevel(id: string): Level {
   }
   return level;
 }
+
+/**
+ * Lobby actions only a player takes; a spectator's are ignored, so spectators never hold up the
+ * ready, briefing or vote gates (S7-81).
+ */
+const PLAYER_ACTIONS: ReadonlySet<LobbyAction['kind']> = new Set([
+  'setRole',
+  'setReady',
+  'skipBriefing',
+  'voteBlunder',
+  'setPaused',
+]);
+
+/** One `spectatorEvent` as the Widownia gets it: the team it happened in and the event. */
+type SpectatorItem = { team: TeamIndex; event: SpectatorEvent };
 
 /** A connection's (or a reconnect token's) one member of one room. */
 type Membership = { roomCode: string; memberId: string };
@@ -370,6 +399,34 @@ export function versusLevelOutcome(
   return { won, stars: 0, lossReason: credibility <= 0 ? 'credibility' : 'score' };
 }
 
+/** Folds events into players' counters (`applyStatsEvent` is the only rule). */
+function foldStats(stats: Map<string, PlayerStats>, events: readonly GameEvent[]): void {
+  for (const event of events) {
+    const playerId = 'playerId' in event ? event.playerId : null;
+    const current = typeof playerId === 'string' ? stats.get(playerId) : undefined;
+    if (current) {
+      stats.set(current.playerId, applyStatsEvent(current, event));
+    }
+  }
+}
+
+/**
+ * What a spectator event counts for in the Widownia's stats: a game event as itself, a revealed
+ * verdict as the verdict it was, a masked one (or a revealed expiry) as nothing.
+ */
+function shownStatsEvent(event: SpectatorEvent): GameEvent | null {
+  if (event.kind === 'verdictMasked') {
+    return null;
+  }
+  if (event.kind === 'verdictRevealed') {
+    const { playerId, verdict } = event.result;
+    return playerId !== null && verdict !== null
+      ? { ...event.result, kind: 'verdictResult', playerId, verdict }
+      : null;
+  }
+  return event;
+}
+
 /** Fresh lobby newsrooms for the room's mode, without players. */
 function freshTeams(room: Pick<Room, 'map' | 'mode'>): [TeamRun, ...TeamRun[]] {
   const run = (): TeamRun => ({ game: createGameState({ map: room.map }), forfeited: false });
@@ -478,14 +535,111 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
   }
 
-  /** A game event to its newsroom's players (spectators get `spectatorEvent`s, S7-81). */
-  function publishTeamEvent(room: Room, team: TeamIndex, event: GameEvent): void {
+  /**
+   * A game event to its newsroom's players and, while the level is played, to the Widownia as a
+   * `spectatorEvent` through the embargo. `before` is the team's sim before the step that made
+   * the event (a resolved botRaid wave's folders are gone after it).
+   */
+  function publishTeamEvent(
+    room: Room,
+    team: TeamIndex,
+    event: GameEvent,
+    before: GameState = teamRun(room, team).game,
+  ): void {
     publishTeam(
       room,
       team,
       { type: 'event', tick: teamRun(room, team).game.tick, team, event },
       false,
     );
+    if (room.phase === 'playing') {
+      feedSpectators(room, team, event, before);
+    }
+  }
+
+  /**
+   * One team event for the Widownia (S7-81). In versus the embargo turns a verdict or an expiry
+   * into `verdictMasked` and then reveals every held result whose spawn key both newsrooms have
+   * now closed; a resolved botRaid wave closes its other folders' keys as well, since the wave is
+   * one result. The embargo and the shown counters move even with nobody watching, so a
+   * spectator who arrives later is never shown an embargoed result.
+   */
+  function feedSpectators(room: Room, team: TeamIndex, event: GameEvent, before: GameState): void {
+    const game = teamRun(room, team).game;
+    const masked = maskForSpectators(room.embargo, team, event, game.results);
+    room.embargo = masked.embargo;
+    const items: SpectatorItem[] = [{ team, event: masked.event }];
+    const closedKeys = masked.event.kind === 'verdictMasked' ? [masked.event.spawnKey] : [];
+    if (room.embargo.teams > 1) {
+      if (event.kind === 'folderSpawned') {
+        const key = game.folders[event.folderId]?.spawnKey;
+        if (key !== undefined) {
+          room.embargo = openSpawnKey(room.embargo, team, key);
+        }
+      } else if (event.kind === 'raidResolved') {
+        for (const folderId of event.folderIds) {
+          const key = before.folders[folderId]?.spawnKey;
+          if (key !== undefined) {
+            room.embargo = closeSpawnKey(room.embargo, team, key);
+            closedKeys.push(key);
+          }
+        }
+      }
+    }
+    for (const key of closedKeys) {
+      const released = release(room.embargo, key);
+      room.embargo = released.embargo;
+      items.push(...released.revealed);
+    }
+    showSpectators(room, game.tick, items);
+  }
+
+  /** Counts what the Widownia is shown and, while a spectator is connected, publishes it. */
+  function showSpectators(room: Room, tick: number, items: readonly SpectatorItem[]): void {
+    const live = hasConnectedSpectator(room);
+    for (const item of items) {
+      const shown = shownStatsEvent(item.event);
+      if (shown) {
+        foldStats(room.spectatorStats, [shown]);
+      }
+      if (live) {
+        hub.publish(
+          roomTopics.spectators(room.code),
+          encodeMessage({ type: 'spectatorEvent', tick, team: item.team, event: item.event }),
+        );
+      }
+    }
+  }
+
+  /** The Widownia's 1 Hz counters: what it was shown, and every newsroom's standing. */
+  function matchStatsOf(room: Room): MatchStatsMessage {
+    return {
+      type: 'matchStats',
+      tick: room.teams[0].game.tick,
+      players: [...room.spectatorStats.values()].slice(0, MAX_ROOM_PLAYERS),
+      teams: teamScoresOf(room),
+    };
+  }
+
+  /**
+   * A spectator arriving (or switching over) mid-level or at the results gets the current
+   * picture at once: each newsroom's snapshot and the counters, plus each `levelEnd` at the
+   * results. The briefing has nothing to show yet.
+   */
+  function syncSpectator(room: Room, connection: Connection): void {
+    if (room.phase !== 'playing' && room.phase !== 'results') {
+      return;
+    }
+    const scoreboard = scoreboardOf(room);
+    room.teams.forEach((_, team) => {
+      send(connection, snapshotOf(room, team, scoreboard));
+    });
+    send(connection, matchStatsOf(room));
+    if (room.phase === 'results') {
+      room.teams.forEach((_, team) => {
+        send(connection, levelEndFor(room, team));
+      });
+    }
   }
 
   function broadcastRoomState(room: Room): void {
@@ -549,16 +703,17 @@ export function createRoomRegistry(options: RegistryOptions) {
     room: Room,
     nickname: string,
     connection: Connection,
+    kind: MemberKind,
     team: TeamIndex,
     clientId: ClientId | undefined,
   ): RoomMember {
     const member: RoomMember = {
       id: `p${room.nextPlayerNumber++}`,
-      kind: 'player',
+      kind,
       team,
       ...(clientId === undefined ? {} : { clientId }),
       nickname,
-      colorIndex: freeColorIndex(room, team),
+      colorIndex: kind === 'player' ? freeColorIndex(room, team) : 0,
       reconnectToken: generateReconnectToken(),
       connection: null,
       disconnectedAt: null,
@@ -570,7 +725,7 @@ export function createRoomRegistry(options: RegistryOptions) {
     };
     room.members.set(member.id, member);
     tokens.set(member.reconnectToken, { roomCode: room.code, memberId: member.id });
-    if (room.phase === 'playing') {
+    if (room.phase === 'playing' && kind === 'player') {
       const run = teamRun(room, team);
       run.game = addPlayer(
         run.game,
@@ -579,6 +734,7 @@ export function createRoomRegistry(options: RegistryOptions) {
         member.role,
       );
       room.stats.set(member.id, emptyPlayerStats(member.id, team));
+      room.spectatorStats.set(member.id, emptyPlayerStats(member.id, team));
     }
     attach(room, member, connection);
     return member;
@@ -602,12 +758,12 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
 
     if (message.as === 'spectator') {
-      rejectSpectatorJoin(connection, message);
+      joinAsSpectator(connection, message);
       return;
     }
 
     if (message.roomCode === undefined) {
-      createRoom(connection, message);
+      createRoom(connection, message, 'player');
       return;
     }
 
@@ -626,7 +782,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       sendError(connection, 'roomFull');
       return;
     }
-    const player = addToRoom(room, message.nickname, connection, team, message.clientId);
+    const player = addToRoom(room, message.nickname, connection, 'player', team, message.clientId);
     // A shared co-op level never waits for one player's menu.
     room.paused = false;
     log.info('player joined', { room: room.code, player: player.id });
@@ -658,9 +814,16 @@ export function createRoomRegistry(options: RegistryOptions) {
       publishTeamEvent(room, member.team, { kind: 'playerReconnected', playerId: member.id });
     }
     broadcastRoomState(room);
+    if (member.kind === 'spectator') {
+      syncSpectator(room, connection);
+    }
   }
 
-  function createRoom(connection: Connection, message: JoinMessage): void {
+  /**
+   * A new room with the joiner as host. A spectator creates it with the Widownia open (a teacher
+   * on a projector) and watches from the start.
+   */
+  function createRoom(connection: Connection, message: JoinMessage, kind: MemberKind): void {
     const settings = options.settings?.();
     if (rooms.size >= (options.maxRooms ?? settings?.maxRooms ?? MAX_ROOMS)) {
       log.warn('room limit reached', { rooms: rooms.size });
@@ -689,35 +852,61 @@ export function createRoomRegistry(options: RegistryOptions) {
       mode,
       visibility: 'private',
       name: null,
-      spectatorsAllowed: false,
+      spectatorsAllowed: kind === 'spectator',
       createdAt: wallClock(),
       stats: new Map(),
+      spectatorStats: new Map(),
       outcome: null,
       embargo: createEmbargo(1),
     };
     rooms.set(code, room);
-    const player = addToRoom(room, message.nickname, connection, 0, message.clientId);
-    room.hostId = player.id;
-    log.info('room created', { room: code, player: player.id });
+    const host = addToRoom(room, message.nickname, connection, kind, 0, message.clientId);
+    room.hostId = host.id;
+    log.info('room created', { room: code, player: host.id, kind });
     broadcastRoomState(room);
     options.onActive?.();
   }
 
   /**
-   * Spectating is on the wire since protocol 7 but not served yet (S7-81): with the flag off, or
-   * when creating a room as a spectator, the feature is unavailable; an existing room's Widownia
-   * is always closed until the host can open it.
+   * Joins the Widownia (S7-81): in any phase and mode, while the spectators flag is on and the
+   * room's Widownia is open, up to `MAX_SPECTATORS`. Without a code it creates a room hosted by
+   * the spectator. Players are not interrupted: no `playerJoined`, only the roomState list.
    */
-  function rejectSpectatorJoin(connection: Connection, message: JoinMessage): void {
-    if (!featureOn('spectators') || message.roomCode === undefined) {
+  function joinAsSpectator(connection: Connection, message: JoinMessage): void {
+    if (!featureOn('spectators')) {
       sendError(connection, 'featureDisabled', 'spectators are not available');
       return;
     }
-    if (!rooms.has(message.roomCode)) {
+    if (message.roomCode === undefined) {
+      createRoom(connection, message, 'spectator');
+      return;
+    }
+    const room = rooms.get(message.roomCode);
+    if (!room) {
       sendError(connection, 'roomNotFound');
       return;
     }
-    sendError(connection, 'spectatorsOff');
+    if (!room.spectatorsAllowed) {
+      sendError(connection, 'spectatorsOff');
+      return;
+    }
+    if (spectatorsOf(room).length >= MAX_SPECTATORS) {
+      sendError(connection, 'spectatorsFull');
+      return;
+    }
+    const spectator = addToRoom(
+      room,
+      message.nickname,
+      connection,
+      'spectator',
+      0,
+      message.clientId,
+    );
+    // The solo pause is for a room nobody else is in.
+    room.paused = false;
+    log.info('spectator joined', { room: room.code, player: spectator.id });
+    broadcastRoomState(room);
+    syncSpectator(room, connection);
   }
 
   function handleMessage(connection: Connection, message: ClientMessage): void {
@@ -756,6 +945,9 @@ export function createRoomRegistry(options: RegistryOptions) {
   }
 
   function handleLobby(room: Room, member: RoomMember, action: LobbyAction): void {
+    if (member.kind === 'spectator' && PLAYER_ACTIONS.has(action.kind)) {
+      return;
+    }
     switch (action.kind) {
       case 'start': {
         if (member.id !== room.hostId) {
@@ -858,13 +1050,17 @@ export function createRoomRegistry(options: RegistryOptions) {
         setTeam(room, member, action.team, action.playerId);
         return;
       case 'setSpectator':
+        setSpectator(room, member, action.spectator, action.playerId);
+        return;
+      case 'setSpectatorsAllowed':
+        setSpectatorsAllowed(room, member, action.allowed);
+        return;
       case 'setVisibility':
       case 'setRoomName':
-      case 'setSpectatorsAllowed':
       case 'kick':
       case 'transferHost':
-        // On the wire since protocol 7 (S7-77); served from S7-81..S7-82. Ignored until then,
-        // like any action that does not apply.
+        // On the wire since protocol 7 (S7-77); served from S7-82. Ignored until then, like any
+        // action that does not apply.
         return;
       case 'backToLobby':
         if (member.id !== room.hostId) {
@@ -971,6 +1167,98 @@ export function createRoomRegistry(options: RegistryOptions) {
     broadcastRoomState(room);
   }
 
+  /**
+   * Host, any phase: opens or closes the Widownia. Opening it needs the spectators flag;
+   * closing it keeps the spectators already watching.
+   */
+  function setSpectatorsAllowed(room: Room, member: RoomMember, allowed: boolean): void {
+    if (member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    if (allowed && !featureOn('spectators')) {
+      reject(member, 'featureDisabled', 'spectators are not available');
+      return;
+    }
+    if (room.spectatorsAllowed === allowed) {
+      return;
+    }
+    room.spectatorsAllowed = allowed;
+    broadcastRoomState(room);
+  }
+
+  /**
+   * Lobby or results: a member moves between playing and watching (the host may move anyone).
+   * To the Widownia needs the spectators flag, a free seat and, for a guest moving themselves,
+   * an open Widownia; the player's team is kept for the way back. Back to playing takes the
+   * kept team when it has a seat, else `pickTeam`, and the lowest free colour there.
+   */
+  function setSpectator(
+    room: Room,
+    member: RoomMember,
+    spectator: boolean,
+    playerId: string | undefined,
+  ): void {
+    if (room.phase !== 'lobby' && room.phase !== 'results') {
+      return;
+    }
+    const targetId = playerId ?? member.id;
+    if (targetId !== member.id && member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    const target = room.members.get(targetId);
+    if (!target) {
+      reject(member, 'invalidTarget');
+      return;
+    }
+    if ((target.kind === 'spectator') === spectator) {
+      return;
+    }
+    const before = topicsFor(room.code, target);
+    if (spectator) {
+      if (!featureOn('spectators')) {
+        reject(member, 'featureDisabled', 'spectators are not available');
+        return;
+      }
+      if (!room.spectatorsAllowed && member.id !== room.hostId) {
+        reject(member, 'spectatorsOff');
+        return;
+      }
+      if (spectatorsOf(room).length >= MAX_SPECTATORS) {
+        reject(member, 'spectatorsFull');
+        return;
+      }
+      target.kind = 'spectator';
+      target.colorIndex = 0;
+      // A spectator holds no vote in the results.
+      room.blunderVotes.delete(target.id);
+    } else {
+      const kept =
+        target.team < teamTotal(room) && playersOf(room, target.team).length < MAX_TEAM_PLAYERS
+          ? target.team
+          : null;
+      const team = kept ?? pickTeam(room);
+      if (team === null) {
+        reject(member, 'teamFull');
+        return;
+      }
+      target.colorIndex = freeColorIndex(room, team);
+      target.team = team;
+      target.kind = 'player';
+    }
+    target.ready = false;
+    syncTopics(room.code, target, before);
+    log.info(spectator ? 'member now spectating' : 'member now playing', {
+      room: room.code,
+      player: target.id,
+    });
+    broadcastRoomState(room);
+    if (spectator && target.connection) {
+      syncSpectator(room, target.connection);
+    }
+  }
+
   /** The first newsroom of the mode without a connected player, or null when all have one. */
   function emptyTeam(room: Room): TeamIndex | null {
     for (let team = 0; team < teamTotal(room); team++) {
@@ -983,14 +1271,17 @@ export function createRoomRegistry(options: RegistryOptions) {
 
   /**
    * The in-game menu pauses a solo level (S7-10): only while playing a co-op room with exactly
-   * one connected player (a versus clock never stops). S7-81 also refuses it while spectators
-   * are present. Resuming is always accepted. Anything else is ignored, like other out-of-phase
-   * actions.
+   * one connected player and no connected spectator (a versus clock never stops; a watched match
+   * does not wait for a menu). Resuming is always accepted. Anything else is ignored, like other
+   * out-of-phase actions.
    */
   function setPaused(room: Room, paused: boolean): void {
     if (
       paused &&
-      (room.phase !== 'playing' || room.mode !== 'coop' || connectedPlayerCount(room) !== 1)
+      (room.phase !== 'playing' ||
+        room.mode !== 'coop' ||
+        connectedPlayerCount(room) !== 1 ||
+        hasConnectedSpectator(room))
     ) {
       return;
     }
@@ -1104,6 +1395,7 @@ export function createRoomRegistry(options: RegistryOptions) {
     };
     room.teams = teamTotal(room) > 1 ? [build(0), build(1)] : [build(0)];
     room.stats = new Map(playersOf(room).map((p) => [p.id, emptyPlayerStats(p.id, p.team)]));
+    room.spectatorStats = new Map(room.stats);
     room.outcome = null;
     room.embargo = createEmbargo(room.teams.length);
     for (const m of room.members.values()) {
@@ -1288,19 +1580,23 @@ export function createRoomRegistry(options: RegistryOptions) {
       // Versus anti-cheat: a scripted instant answer counts as a failure (off in co-op).
       ...(room.mode === 'versus' ? { minSolveMs: MINIGAME_MIN_SOLVE_MS } : {}),
     };
-    const events = room.teams.map((run, team) => {
-      const result = stepGame(run.game, inputs[team] ?? {}, commands[team] ?? [], ctx);
+    const stepped = room.teams.map((run, team) => {
+      const before = run.game;
+      const result = stepGame(before, inputs[team] ?? {}, commands[team] ?? [], ctx);
       run.game = result.state;
-      countStats(room, result.events);
-      return result.events;
+      foldStats(room.stats, result.events);
+      return { before, events: result.events };
     });
-    room.teams.forEach((_, team) => {
-      for (const event of events[team] ?? []) {
-        publishTeamEvent(room, team, event);
+    stepped.forEach(({ before, events }, team) => {
+      for (const event of events) {
+        publishTeamEvent(room, team, event, before);
       }
     });
-    const spectatorFrame = room.teams[0].game.tick % SPECTATOR_SNAPSHOT_INTERVAL_TICKS === 0;
-    publishSnapshots(room, spectatorFrame);
+    const stepTick = room.teams[0].game.tick;
+    publishSnapshots(room, stepTick % SPECTATOR_SNAPSHOT_INTERVAL_TICKS === 0);
+    if (stepTick % SPECTATOR_STATS_INTERVAL_TICKS === 0 && hasConnectedSpectator(room)) {
+      hub.publish(roomTopics.spectators(room.code), encodeMessage(matchStatsOf(room)));
+    }
     if (room.mode === 'versus') {
       // The match rules decide every tick: credibility, forfeit, time (600 s in endless).
       room.outcome = matchOutcome(room);
@@ -1339,11 +1635,8 @@ export function createRoomRegistry(options: RegistryOptions) {
     return room.teams.every((run) => run.game.ended !== null) ? byScore(standings) : null;
   }
 
-  /** Both newsrooms' standings for versus snapshots and `levelEnd`; undefined in co-op. */
-  function scoreboardOf(room: Room): TeamScore[] | undefined {
-    if (room.mode !== 'versus') {
-      return undefined;
-    }
+  /** Every newsroom's standing (connected = its connected players). */
+  function teamScoresOf(room: Room): TeamScore[] {
     return room.teams.map((run, team) =>
       teamScoreOf(
         run.game,
@@ -1353,15 +1646,9 @@ export function createRoomRegistry(options: RegistryOptions) {
     );
   }
 
-  /** Folds a team's events into the players' counters (`applyStatsEvent` is the only rule). */
-  function countStats(room: Room, events: readonly GameEvent[]): void {
-    for (const event of events) {
-      const playerId = 'playerId' in event ? event.playerId : null;
-      const stats = typeof playerId === 'string' ? room.stats.get(playerId) : undefined;
-      if (stats) {
-        room.stats.set(stats.playerId, applyStatsEvent(stats, event));
-      }
-    }
+  /** Both newsrooms' standings for versus snapshots and `levelEnd`; undefined in co-op. */
+  function scoreboardOf(room: Room): TeamScore[] | undefined {
+    return room.mode === 'versus' ? teamScoresOf(room) : undefined;
   }
 
   function publishSnapshots(room: Room, toSpectators: boolean): void {
@@ -1501,6 +1788,10 @@ export function createRoomRegistry(options: RegistryOptions) {
       });
     }
     const game = room.teams[0].game;
+    // The level is over: the Widownia gets every result still held, before the level ends.
+    const flushed = releaseAll(room.embargo);
+    room.embargo = flushed.embargo;
+    showSpectators(room, game.tick, flushed.revealed);
     const outcome = game.ended ?? { won: false, stars: 0, lossReason: null };
     room.phase = 'results';
     log.info('level ended', {
