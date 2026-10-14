@@ -1,0 +1,477 @@
+/*
+ * Room browser (S7-88): the „O grze” shell — a white panel over a dimmed screen. Header (title,
+ * close), the search row, the filters, the scrolling room list and a footer with one yellow
+ * „Dołącz”. Landscape phones get a full-screen sheet and the filters behind a „Filtry” toggle.
+ */
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: min(60rem, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--outline-a50);
+}
+
+.sheet {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  height: min(44rem, calc(100dvh - 2 * var(--space-4)));
+  padding: var(--space-4) var(--space-5) var(--space-4);
+  overflow: hidden;
+}
+
+.dialog[open] .sheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.08em;
+  min-width: 0;
+}
+
+/* Blue is information (design-rules §3). */
+.title svg {
+  flex: none;
+  margin-top: -0.12em;
+  --icon-fill: var(--blue);
+}
+
+/* --- Search, nickname and the phone filter toggle -------------------------------------------- */
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.search {
+  position: relative;
+  flex: 2 1 16rem;
+  min-width: 0;
+}
+
+.searchIcon {
+  position: absolute;
+  left: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  color: var(--text-soft);
+  pointer-events: none;
+}
+
+.searchInput.searchInput {
+  padding-left: calc(var(--space-3) + 24px + var(--space-2));
+}
+
+.name {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+/* Desktop shows the filters all the time; only phones need the toggle. */
+.filterToggle {
+  display: none;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  min-width: 0;
+  /* Room for the pop shadow of the active segment and its focus ring. */
+  padding: var(--space-1) var(--space-1) var(--space-2);
+}
+
+.filters > fieldset {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* --- List ------------------------------------------------------------------------------------ */
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Room for pop shadows and focus rings at the edges. */
+  padding: var(--space-1) var(--space-2) var(--space-2);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "icon title chips"
+    "icon meta chips";
+  align-items: center;
+  column-gap: var(--space-3);
+  min-height: 3.5rem;
+  padding: var(--space-2) var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out);
+}
+
+.row:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.row:has(.native:focus-visible) {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* The picked room: blue is selection / information (design-rules §3). */
+.rowOn {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.rowOn:has(.native:focus-visible) {
+  outline-color: var(--outline);
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.modeIcon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.rowTitle {
+  grid-area: title;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  padding-top: 0.1em;
+}
+
+.rowMeta {
+  grid-area: meta;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  opacity: 0.85;
+}
+
+.chips {
+  grid-area: chips;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  max-width: 30rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.15em var(--space-2) 0;
+  min-height: 2rem;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip svg {
+  flex: none;
+  margin-top: -0.15em;
+}
+
+.chipOff {
+  background: var(--surface-sunk);
+  color: var(--text-soft);
+}
+
+/* --- States ---------------------------------------------------------------------------------- */
+
+.state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-5) var(--space-3);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  text-align: center;
+}
+
+.state p {
+  margin: 0;
+}
+
+.state svg {
+  --icon-fill: var(--blue);
+}
+
+.soft {
+  margin: 0;
+  color: var(--text-soft);
+  font-weight: 700;
+}
+
+.problem {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--stroke) solid var(--red);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.problem p {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.problem svg {
+  flex: none;
+  --icon-fill: var(--red);
+}
+
+.more {
+  margin: var(--space-2) 0 0;
+  text-align: center;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* --- Footer ---------------------------------------------------------------------------------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.footerNote {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.error,
+.stale {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-weight: 800;
+}
+
+.error {
+  color: var(--red-dark);
+}
+
+.stale {
+  color: var(--text-soft);
+}
+
+.error svg,
+.stale svg {
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] .sheet {
+    animation: none;
+  }
+}
+
+:global(html[data-reduced-motion="true"]) .dialog[open] .sheet {
+  animation: none;
+}
+
+/* --- Small screens --------------------------------------------------------------------------- */
+
+/* Narrow windows: the chips go under the title and the host line. */
+@media (max-width: 900px) {
+  .row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "icon title"
+      "icon meta"
+      "icon chips";
+    row-gap: var(--space-1);
+  }
+  .chips {
+    justify-content: flex-start;
+    max-width: none;
+  }
+}
+
+/* Landscape phones (640×360): a full-screen sheet; the filters fold behind „Filtry (n)”. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    gap: var(--space-2);
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-4), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-4), env(safe-area-inset-left));
+    border-radius: 0;
+    border-width: 0;
+    box-shadow: none;
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .tools {
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+  }
+  .search {
+    flex: 1 1 10rem;
+  }
+  .name {
+    flex: 1 1 9rem;
+  }
+  /* The nickname label would push the row down: the placeholder says it instead. */
+  .name label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .filterToggle {
+    display: inline-flex;
+    flex: none;
+  }
+  .filters:not([data-open="true"]) {
+    display: none;
+  }
+  .row {
+    min-height: 3rem;
+    padding: var(--space-1) var(--space-2);
+    column-gap: var(--space-2);
+  }
+  .modeIcon {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  .rowTitle {
+    font-size: var(--text-md);
+  }
+  .chip {
+    min-height: 1.75rem;
+  }
+  .state {
+    padding: var(--space-3);
+  }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    border-radius: 0;
+    padding: var(--space-4);
+  }
+  .filterToggle {
+    display: inline-flex;
+  }
+  .filters:not([data-open="true"]) {
+    display: none;
+  }
+  .footer {
+    flex-wrap: wrap;
+  }
+}

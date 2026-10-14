@@ -15,6 +15,7 @@ import { startPreload } from './loading/preload.ts';
 import { startProfileTracking } from './net/profile-tracking.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
 import { ProfileHost } from './profile/ProfileHost.tsx';
+import { RoomBrowserHost } from './rooms/RoomBrowserHost.tsx';
 import { Briefing } from './screens/Briefing.tsx';
 import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
@@ -74,6 +75,7 @@ export function App() {
       {screen === 'spectate' && <SpectateSummary />}
       {screen === 'styleguide' && <Styleguide />}
       <SettingsPanel />
+      <RoomBrowserHost />
       <EncyclopediaScreen />
       {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
       <HowToPlayHost />

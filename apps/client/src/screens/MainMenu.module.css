@@ -78,6 +78,11 @@
   gap: var(--space-3);
 }
 
+/* With the spectators flag: the code, „Dołącz” and the eye that watches the code (S7-88). */
+.joinWatch {
+  grid-template-columns: 1fr auto auto;
+}
+
 .error {
   display: flex;
   align-items: center;
@@ -154,5 +159,11 @@
   }
   .join {
     grid-template-columns: 1fr;
+  }
+  .joinWatch {
+    grid-template-columns: 1fr auto;
+  }
+  .joinWatch > :first-child {
+    grid-column: 1 / -1;
   }
 }

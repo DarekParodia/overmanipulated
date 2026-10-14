@@ -237,6 +237,12 @@ const icons = {
   ],
   /** Question mark: "not sure". */
   question: [{ d: 'M8.5 9a3.5 3.5 0 1 1 5.2 3c-1.2.7-1.7 1.3-1.7 2.5' }, { d: 'M12 18.5h.01' }],
+  // --- S7-88 room browser ------------------------------------------------------------------
+  /** A plain magnifier on a handle: the room browser's search field (not the Lupa station). */
+  search: [
+    { d: 'M3.5 10a6.5 6.5 0 1 0 13 0a6.5 6.5 0 1 0-13 0Z', fill: 'tint' },
+    { d: 'M15 15l5.5 5.5' },
+  ],
   // --- Endless mode (S4-11) ----------------------------------------------------------------
   /** Endless mode: a lying eight. */
   infinity: [

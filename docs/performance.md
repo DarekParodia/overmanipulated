@@ -24,7 +24,8 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 - **Game route** (added by the first match): the lazy `GameScreen` chunk (three.js, the scene, the
   stations), its CSS, the SFX sprite and the two level music layers.
 - **Extras route** (S7-96, what a first session may open on top): the lazy dialogs whose manifest
-  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`),
+  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`,
+  `src/rooms/` for the room browser, S7-88),
   the chunks they import and load later, and the intro voice in `assets/voice` (one audio format
   plus its sprite json). Chunks the menu or the game route already counted are not counted
   again, and the extras never count as game, so a new lazy dialog does not eat `gameMax`.
