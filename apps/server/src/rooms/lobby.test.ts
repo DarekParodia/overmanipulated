@@ -360,18 +360,25 @@ describe('results and back to lobby', () => {
 
   it("sends why the level was lost, the level's star thresholds and its best score", () => {
     const host = join('Ala');
-    // l6 keeps its authored schedule and stars until S7-63 (l5 moved to the bag in S7-60).
+    // Every campaign level deals from a bag since S7-60 and S7-63, so the thresholds and best
+    // score are those of the run dealt for the room's seed.
     lobby(host, { kind: 'selectLevel', levelId: 'l6-atak' });
     endOutcome = { won: false, stars: 0, lossReason: 'credibility' };
     playToResults(host);
+    const run = registry.inspect(welcomeOf(host).roomCode)?.run;
+    if (!run?.summary.stars) {
+      throw new Error('a campaign run has star thresholds');
+    }
+    const dealt = prepareLevelRun('l6-atak', { seed: run.seed, difficulty: 'normal' });
+    expect(dealt && runSummary(dealt)).toEqual(run.summary);
     expect(host.last('levelEnd')).toMatchObject({
       levelId: 'l6-atak',
       difficulty: 'normal',
       won: false,
       stars: 0,
       lossReason: 'credibility',
-      starThresholds: { two: 250, three: 360 },
-      maxScore: 450,
+      starThresholds: run.summary.stars,
+      maxScore: run.summary.maxScore,
     });
   });
 

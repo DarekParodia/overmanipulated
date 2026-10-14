@@ -652,10 +652,10 @@ describe('validate CLI', () => {
     // Decisive stamps that do not justify (S7-21 warning): S7-33 cleaned up l4, S7-58 cleaned l6.
     const decisiveNotJustifying = [...out.matchAll(/decisive stamp "([^"]+)" does not justify/g)];
     expect(decisiveNotJustifying.map((match) => match[1])).toEqual([]);
-    // New stories wait for their level's bag pool: since S7-31, S7-33 and S7-60 every l3, l4
-    // and l5 story is in its level's pool (or an event).
+    // New stories wait for their level's bag pool: since S7-31, S7-33, S7-60 and S7-63 every
+    // l3, l4, l5 and l6 story is in its level's pool (or spawned by an event).
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
-    for (const prefix of ['l3-', 'l4-', 'l5-']) {
+    for (const prefix of ['l3-', 'l4-', 'l5-', 'l6-']) {
       expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith(prefix))).toEqual(
         [],
       );

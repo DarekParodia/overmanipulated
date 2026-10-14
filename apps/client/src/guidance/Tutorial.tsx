@@ -2,7 +2,9 @@
 // does (tutorial.ts). The wording and the drawn controls follow the input device in use. The
 // card never takes input except for its skip button, so the game keeps running underneath.
 // It can also be skipped without the pointer: Esc on the keyboard, B twice or a held
-// Back/Select on a gamepad (buttons the game itself does not use).
+// Back/Select on a gamepad (buttons the game itself does not use). With a role, the last step
+// shows the role's icon and its ability (S7-45); without one it is left out of the dots.
+import type { Role } from '@redakcja/shared';
 import { useEffect, useRef } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { firstGamepad } from '../input/gamepad-access.ts';
@@ -16,6 +18,8 @@ import styles from './Guidance.module.css';
 import { placementFor } from './placement.ts';
 import { useGuidance } from './store.ts';
 import {
+  ABILITY_STEP,
+  abilityStepText,
   PAD_SKIP_BUTTONS,
   PAD_SKIP_START,
   padSkipStep,
@@ -28,7 +32,7 @@ import { useTutorial } from './tutorial-store.ts';
 /** How long the closing "well done" card stays. */
 const DONE_CARD_MS = 2600;
 
-function stepText(id: TutorialStepId, device: InputDevice): string {
+function stepText(id: TutorialStepId, device: InputDevice, role: Role | null): string {
   const { tutorial, workKey } = pl.guidance;
   switch (id) {
     case 'move':
@@ -41,6 +45,8 @@ function stepText(id: TutorialStepId, device: InputDevice): string {
       return tutorial.minigame;
     case 'verdict':
       return tutorial.verdict;
+    case 'ability':
+      return abilityStepText(role, device);
   }
 }
 
@@ -122,6 +128,8 @@ function SkipKeys({ device }: { device: InputDevice }) {
 
 export function Tutorial({ step }: { step: number }) {
   const device = useApp((s) => s.inputDevice);
+  const role = useApp((s) => s.room?.players.find((p) => p.id === s.playerId)?.role ?? null);
+  const hasRole = useTutorial((s) => s.hasRole);
   const kind = useGuidance((s) => s.step?.kind);
   const skip = useTutorial((s) => s.skip);
   const close = useTutorial((s) => s.close);
@@ -146,8 +154,10 @@ export function Tutorial({ step }: { step: number }) {
   }, [done, close]);
 
   const id = done ? 'done' : (TUTORIAL_STEPS[step] ?? 'move');
-  const text = id === 'done' ? pl.guidance.tutorial.done : stepText(id, device);
-  const total = TUTORIAL_STEPS.length;
+  const text = id === 'done' ? pl.guidance.tutorial.done : stepText(id, device, role);
+  // Without a role the ability step never comes: it is not drawn as a dot either.
+  const steps = hasRole ? TUTORIAL_STEPS : TUTORIAL_STEPS.slice(0, ABILITY_STEP);
+  const total = steps.length;
 
   return (
     <section
@@ -158,7 +168,7 @@ export function Tutorial({ step }: { step: number }) {
       data-step={id}
     >
       <div className={styles.art}>
-        <Illustration id={id} device={device} />
+        <Illustration id={id} device={device} role={role} />
       </div>
       <div className={styles.cardBody}>
         <p className={styles.cardMeta}>
@@ -169,7 +179,7 @@ export function Tutorial({ step }: { step: number }) {
               role="img"
               aria-label={pl.guidance.tutorial.step(step + 1, total)}
             >
-              {TUTORIAL_STEPS.map((s, i) => (
+              {steps.map((s, i) => (
                 <span
                   key={s}
                   className={`${styles.dot} ${i < step ? styles.dotDone : ''} ${i === step ? styles.dotNow : ''}`}
