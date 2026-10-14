@@ -99,10 +99,10 @@ These are the design-rules §1.3/§5 amendments, each made by the task that caus
 ## 3. Simulation model (consolidated)
 
 ### Context and tick order
-- **`SimContext`** = `{dtMs, map, level, stories, tuning: SimTuning, absent?: ReadonlySet<string>, minSolveMs?: number}`.
+- **`SimContext`** = `{dtMs, map, level, stories, tuning: SimTuning, absent?: ReadonlySet<string>, minSolveMs?: Readonly<Record<StationKind, number>>}`.
   - `tuning` (M2) is required; `testContext` defaults it to `NORMAL_TUNING`.
   - `absent` (M3) lists disconnected players.
-  - `minSolveMs` (M6) is set by the registry in versus only; 0 means off.
+  - `minSolveMs` (M6) is set by the registry in versus only (`MINIGAME_MIN_SOLVE_MS`, per station kind); absent means off. The sim keeps each round's open time in `GameState.minigameOpenedMs` (S7-80 Decision log).
 - **Subsystem order** from M3: `stepAbilities` → `stepFolders` → `stepStations` → `stepDesk` → `stepPings` → `stepEvents` → `stepScoring`.
 
 ### State and result fields
