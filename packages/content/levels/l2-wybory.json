@@ -24,85 +24,34 @@
     "####################"
   ],
   "stations": ["imageSearch", "archive", "sourceRegistry"],
-  "schedule": [
-    {
-      "atS": 4,
-      "storyId": "l2-debata-w-ratuszu",
-      "deadlineS": 60
-    },
-    {
-      "atS": 28,
-      "storyId": "l2-cytat-o-liceach",
-      "deadlineS": 60
-    },
-    {
-      "atS": 52,
-      "storyId": "l2-podatki-wyrwane-z-kontekstu",
-      "deadlineS": 65
-    },
-    {
-      "atS": 76,
-      "storyId": "l2-sondaz-bez-pracowni",
-      "deadlineS": 60
-    },
-    {
-      "atS": 100,
-      "storyId": "l2-ankieta-na-stu-osobach",
-      "deadlineS": 60
-    },
-    {
-      "atS": 124,
-      "storyId": "l2-wiec-na-rynku",
-      "deadlineS": 60
-    },
-    {
-      "atS": 148,
-      "storyId": "l2-puste-krzesla",
-      "deadlineS": 60
-    },
-    {
-      "atS": 172,
-      "storyId": "l2-sciezki-rowerowe",
-      "deadlineS": 60
-    },
-    {
-      "atS": 196,
-      "storyId": "l2-uciety-wywiad",
-      "deadlineS": 60
-    },
-    {
-      "atS": 220,
-      "storyId": "l2-metro-do-brzegow",
-      "deadlineS": 60
-    },
-    {
-      "atS": 244,
-      "storyId": "l2-sondaz-pracowni",
-      "deadlineS": 45
-    },
-    {
-      "atS": 268,
-      "storyId": "l2-nagranie-z-parkingu",
-      "deadlineS": 45
-    },
-    {
-      "atS": 292,
-      "storyId": "l2-rezygnacja-kandydata",
-      "deadlineS": 45
-    },
-    {
-      "atS": 316,
-      "storyId": "l2-frekwencja-wyborcza",
-      "deadlineS": 45
-    },
-    {
-      "atS": 340,
-      "storyId": "l2-przerobione-banery",
-      "deadlineS": 55
+  "bag": {
+    "pool": [
+      "l2-debata-w-ratuszu",
+      "l2-cytat-o-liceach",
+      "l2-podatki-wyrwane-z-kontekstu",
+      "l2-sondaz-bez-pracowni",
+      "l2-ankieta-na-stu-osobach",
+      "l2-wiec-na-rynku",
+      "l2-puste-krzesla",
+      "l2-sciezki-rowerowe",
+      "l2-uciety-wywiad",
+      "l2-metro-do-brzegow",
+      "l2-sondaz-pracowni",
+      "l2-nagranie-z-parkingu",
+      "l2-rezygnacja-kandydata",
+      "l2-frekwencja-wyborcza",
+      "l2-przerobione-banery",
+      "l2-debata-w-liceum",
+      "l2-plaza-w-kampanii",
+      "l2-wycinka-w-parku"
+    ],
+    "firstAtS": 4,
+    "gapS": 24,
+    "lastSpawnS": 340,
+    "deadlineS": {
+      "normal": 50,
+      "important": 55,
+      "urgent": 40
     }
-  ],
-  "stars": {
-    "two": 206,
-    "three": 300
   }
 }

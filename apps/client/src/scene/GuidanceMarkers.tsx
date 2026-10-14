@@ -7,15 +7,18 @@ import { fixtureById } from '@redakcja/shared';
 import { useRef } from 'react';
 import { BackSide, type Group } from 'three';
 import { BUSY_KINDS, HERE_KINDS } from '../guidance/next-step.ts';
-import { useGuidance } from '../guidance/store.ts';
-import { useGame } from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
+import { effectiveHintsOf } from '../guidance/store.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { surfaceHeight } from './entities.ts';
 import { cone, cylinder, merge, mergePainted, ring, useGeometries } from './geometry.ts';
 
-/** Enough for every station of the largest level (six kinds). */
+/**
+ * Enough for every hint target: the stations still holding a missing proof (no story has more
+ * than three justifying stamps) or the desks. Not one per station: endless has ten (S7-64), but
+ * while a proof is missing the hint never points at a station whose stamp would not prove it.
+ */
 const POOL = 6;
 /** Arrow centre height above the fixture surface: the tip stays clear of the station dials. */
 const ARROW_LIFT = 1.35;
@@ -28,6 +31,7 @@ function arrowParts() {
 }
 
 export function GuidanceMarkers() {
+  const view = useGameView();
   const roots = useRef<(Group | null)[]>([]);
   const arrows = useRef<(Group | null)[]>([]);
   const g = useGeometries(() => ({
@@ -40,8 +44,9 @@ export function GuidanceMarkers() {
   }));
 
   useFrame(({ clock }) => {
-    const { step, hintsEnabled } = useGuidance.getState();
-    const ended = useGame.getState().levelEnd !== null;
+    const { step } = view.guidance.getState();
+    const hintsEnabled = effectiveHintsOf(view.guidance);
+    const ended = view.store.getState().levelEnd !== null;
     const ids =
       !hintsEnabled || ended || !step || BUSY_KINDS.has(step.kind) ? [] : step.targetFixtureIds;
     const reducedMotion = useSettings.getState().reducedMotion;
@@ -56,7 +61,7 @@ export function GuidanceMarkers() {
         continue;
       }
       const id = ids[i];
-      const fixture = id ? fixtureById(runtime.map, id) : undefined;
+      const fixture = id ? fixtureById(view.runtime.map, id) : undefined;
       if (!fixture) {
         root.visible = false;
         continue;

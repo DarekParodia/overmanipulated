@@ -215,3 +215,108 @@ describe('reduce', () => {
     expect(state.circled[flagged]).toBe(true);
   });
 });
+
+describe('initialState with the retry memory (S7-14)', () => {
+  // Seed 2 on an untrue post with a decisive stamp: warning signs on fields 0, 2 and 5.
+  const card = generateCard(2, story({ type: 'post', truth: 'false' }), stamp('decisive'));
+  const none = [false, false, false, false, false, false, false];
+  const flags = [true, false, true, false, false, true, false];
+
+  it('builds the card for that seed', () => {
+    expect(card.seed).toBe(2);
+    expect(card.fields.map((f) => f.flagged)).toEqual(flags);
+  });
+
+  it('starts a card seen for the first time with nothing circled', () => {
+    const state = initialState(card);
+    expect(state.circled).toEqual(none);
+    expect(state.retry).toBe(false);
+  });
+
+  it('restores the circled warning signs of the same card', () => {
+    const state = initialState(card, {
+      seed: 2,
+      circled: [true, false, false, false, false, true, false],
+    });
+    expect(state.circled).toEqual([true, false, false, false, false, true, false]);
+    expect(state.retry).toBe(true);
+    expect(state.outcome).toBe('playing');
+  });
+
+  it('ignores the memory of another card', () => {
+    const state = initialState(card, {
+      seed: 3,
+      circled: [true, false, true, false, false, true, false],
+    });
+    expect(state.circled).toEqual(none);
+    expect(state.retry).toBe(false);
+  });
+
+  it('starts mistakes and struck fields fresh and keeps no circle on a clean field', () => {
+    const [played] = run(initialState(card), [
+      { type: 'toggle', index: 0 },
+      { type: 'toggle', index: 1 },
+      { type: 'file' },
+    ]);
+    expect(played.mistakes).toBe(2);
+    expect(played.struck).toEqual([false, true, false, false, false, false, false]);
+    expect(played.outcome).toBe('failure');
+    const retried = initialState(card, {
+      seed: 2,
+      circled: [true, true, false, true, false, false, false],
+    });
+    expect(retried.circled).toEqual([true, false, false, false, false, false, false]);
+    expect(retried.struck).toEqual(none);
+    expect(retried.mistakes).toBe(0);
+    expect(retried.missing).toBe(false);
+    expect(retried.cursor).toBe(0);
+    expect(retried.outcome).toBe('playing');
+  });
+
+  it('files a retried card once the remaining warning signs are circled', () => {
+    const restored = initialState(card, {
+      seed: 2,
+      circled: [true, false, false, false, false, false, false],
+    });
+    const [state, effects] = run(restored, [
+      { type: 'toggle', index: 2 },
+      { type: 'toggle', index: 5 },
+      { type: 'file' },
+    ]);
+    expect(effects).toEqual(['circle', 'circle', 'filed']);
+    expect(state.outcome).toBe('success');
+  });
+});
+
+describe('mistake limit per difficulty (S7-24)', () => {
+  it('allows 3 mistakes on Łatwy, 2 on Normalny and Trudny, 1 on Ekspert', () => {
+    const card = flaggedCard();
+    expect(initialState(card, undefined, 'easy').maxMistakes).toBe(3);
+    expect(initialState(card).maxMistakes).toBe(2);
+    expect(initialState(card, undefined, 'hard').maxMistakes).toBe(2);
+    expect(initialState(card, undefined, 'expert').maxMistakes).toBe(1);
+  });
+
+  it('fails on the first mistake on Ekspert', () => {
+    const card = flaggedCard();
+    const [state, effects] = run(initialState(card, undefined, 'expert'), [
+      { type: 'file' },
+      { type: 'file' },
+    ]);
+    expect(effects).toEqual(['failed', null]);
+    expect(state.mistakes).toBe(1);
+    expect(state.outcome).toBe('failure');
+  });
+
+  it('survives two mistakes on Łatwy and fails on the third', () => {
+    const card = flaggedCard();
+    const clean = card.fields.findIndex((f) => !f.flagged);
+    const [state, effects] = run(initialState(card, undefined, 'easy'), [
+      { type: 'file' },
+      { type: 'toggle', index: clean },
+      { type: 'file' },
+    ]);
+    expect(effects).toEqual(['missing', 'mistake', 'failed']);
+    expect(state.outcome).toBe('failure');
+  });
+});

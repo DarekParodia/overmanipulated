@@ -1,0 +1,486 @@
+/*
+ * „Profil” (S7-104): a white panel over a dimmed screen, like „Jak grać”. The header holds the
+ * title and the one yellow „Gotowe”; the body scrolls and has two columns — the look and the
+ * statistics — side by side, one under the other on a portrait phone. Selection is blue with a
+ * tick (design-rules §3); the player colours appear only as the player's mark and glyph.
+ */
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: min(62rem, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--outline-a50);
+}
+
+.sheet {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  max-height: calc(100dvh - 2 * var(--space-4));
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  overflow: hidden;
+}
+
+.dialog[open] .sheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.08em;
+  min-width: 0;
+}
+
+.title svg {
+  flex: none;
+  margin-top: -0.12em;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  align-items: start;
+  gap: var(--space-5);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Room for pop shadows and focus rings at the edges. */
+  padding: var(--space-1) var(--space-2) var(--space-2);
+}
+
+.look,
+.stats {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+}
+
+/* --- Wygląd ------------------------------------------------------------------------------- */
+
+.preview {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+}
+
+.previewArt {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 6.5rem;
+  height: 5.5rem;
+}
+
+.previewAccessory {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  color: var(--outline);
+}
+
+.previewName {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+}
+
+.swatches,
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.swatch,
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+  border: var(--outline-border);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.swatch {
+  width: 4rem;
+  height: 4rem;
+  border-radius: var(--radius-md);
+}
+
+.chip {
+  padding: 0.15em var(--space-3) 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  line-height: var(--leading-snug);
+}
+
+.chipGlyph {
+  display: inline-flex;
+  margin-top: -0.15em;
+  color: var(--outline);
+}
+
+.swatch:active,
+.chip:active {
+  transform: translateY(3px);
+  box-shadow: var(--pop-pressed);
+}
+
+.swatch:has(.native:focus-visible),
+.chip:has(.native:focus-visible) {
+  outline: 4px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* Chosen: a blue frame and a tick, never colour alone. */
+.chosen {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.chosen .chipGlyph {
+  color: var(--outline);
+}
+
+.tick {
+  position: absolute;
+  top: -0.55rem;
+  right: -0.55rem;
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--outline);
+}
+
+.tick svg {
+  stroke-width: 3.5;
+}
+
+.native {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+/* A colour another player of your newsroom holds (S7-105): sunk, dashed, crossed out. */
+.taken {
+  cursor: not-allowed;
+  background: var(--surface-sunk);
+  border-style: dashed;
+  border-color: var(--text-faint);
+  box-shadow: none;
+}
+
+.taken:active {
+  transform: none;
+  box-shadow: none;
+}
+
+.taken > svg {
+  opacity: 0.45;
+}
+
+.takenMark {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--outline);
+  pointer-events: none;
+}
+
+.takenMark svg {
+  stroke-width: 3.5;
+}
+
+.takenNote {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* --- Statystyki --------------------------------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.tile {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--pop);
+}
+
+.tileLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.tileIcon {
+  display: inline-flex;
+  flex: none;
+  color: var(--outline);
+}
+
+.tileValue {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.tileWord {
+  font-size: var(--text-md);
+  padding-top: 0.2em;
+  overflow-wrap: anywhere;
+}
+
+.stars {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.starRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 2rem;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.starCount {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.starIcon {
+  margin-top: -0.15em;
+  --icon-fill: var(--yellow);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.note svg {
+  flex: none;
+}
+
+.clear {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.status {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.status:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] .sheet {
+    animation: none;
+  }
+  .swatch,
+  .chip {
+    transition: none;
+  }
+}
+
+:global(html[data-reduced-motion="true"]) .dialog[open] .sheet {
+  animation: none;
+}
+
+:global(html[data-reduced-motion="true"]) .swatch,
+:global(html[data-reduced-motion="true"]) .chip {
+  transition: none;
+}
+
+/* --- Small screens ------------------------------------------------------------------------ */
+
+/* Landscape phones (640×360): a full-screen sheet; the two columns stay, the body scrolls. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    max-height: none;
+    gap: var(--space-2);
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-4), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-4), env(safe-area-inset-left));
+    border-radius: 0;
+    border-width: 0;
+    box-shadow: none;
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .body {
+    gap: var(--space-4);
+  }
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tileValue {
+    font-size: var(--text-xl);
+  }
+  .tileValue.tileWord {
+    font-size: var(--text-md);
+  }
+  .stars {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .swatch {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    padding: var(--space-4);
+  }
+  .body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

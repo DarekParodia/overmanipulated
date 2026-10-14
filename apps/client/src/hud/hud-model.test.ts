@@ -1,6 +1,16 @@
 import { describe, expect, test } from 'bun:test';
-import { CREDIBILITY, DEADLINE_WARNING_MS, type Folder, SCORE } from '@redakcja/shared';
 import {
+  CREDIBILITY,
+  DEADLINE_WARNING_MS,
+  type Folder,
+  type FolderReason,
+  folderReasonSchema,
+  SCORE,
+} from '@redakcja/shared';
+import { effectiveHints } from '../guidance/store.ts';
+import { pl } from '../strings/pl.ts';
+import {
+  evidenceBadge,
   expiredToast,
   formatClock,
   formatCountdown,
@@ -9,14 +19,25 @@ import {
   isDeadlineWarning,
   locationKind,
   locationLabel,
+  nextFolderState,
   pushToast,
   type StoryInfo,
   sortQueue,
+  spectatorToast,
   verdictToast,
 } from './hud-model.ts';
 
 function folder(id: string, deadlineMs: number, location: Folder['location']): Folder {
-  return { id, storyId: 's', location, stamps: [], spawnedAtMs: 0, deadlineMs, warned: false };
+  return {
+    id,
+    spawnKey: 's0',
+    storyId: 's',
+    location,
+    stamps: [],
+    spawnedAtMs: 0,
+    deadlineMs,
+    warned: false,
+  };
 }
 
 const onConveyor = { kind: 'fixture', fixtureId: 'conveyor-0' } as const;
@@ -72,6 +93,28 @@ describe('queue', () => {
   });
 });
 
+describe('next folder', () => {
+  const next = { atMs: 20_000, sinceMs: 3000 };
+
+  test('counts down to the next scheduled folder', () => {
+    expect(nextFolderState(next, false, 12_500)).toEqual({ kind: 'in', ms: 7500 });
+    expect(nextFolderState(next, false, 3000)).toEqual({ kind: 'in', ms: 17_000 });
+  });
+
+  test('never counts below zero when the clock runs past the due time', () => {
+    expect(nextFolderState(next, false, 20_000)).toEqual({ kind: 'in', ms: 0 });
+    expect(nextFolderState(next, false, 20_250)).toEqual({ kind: 'in', ms: 0 });
+  });
+
+  test('says the belt is full while a due folder waits', () => {
+    expect(nextFolderState(next, true, 21_000)).toEqual({ kind: 'full' });
+  });
+
+  test('says nothing once the schedule is used up', () => {
+    expect(nextFolderState(null, false, 200_000)).toEqual({ kind: 'none' });
+  });
+});
+
 describe('formatting', () => {
   test('clock rounds up and pads seconds', () => {
     expect(formatClock(0)).toBe('0:00');
@@ -110,29 +153,52 @@ describe('toasts', () => {
   } as const;
 
   test('a published fake reads as such, in red', () => {
-    const slip = verdictToast({ ...base, verdict: 'publish', outcome: 'wrong' }, story, 0);
-    expect(slip.title).toBe('Fałszywka!');
+    const slip = verdictToast({ ...base, outcome: 'wrong', reason: 'publishedFake' }, story, 0);
+    expect(slip.title).toBe('Fałszywka w druku!');
     expect(slip.tone).toBe('bad');
     expect(slip.mark).toBe('reject');
     expect(slip.headline).toBe(story.headline);
   });
 
-  test('a rejected truth and a correct verdict', () => {
-    expect(verdictToast({ ...base, verdict: 'reject', outcome: 'wrong' }, story, 0).title).toBe(
-      'To była prawda!',
-    );
+  test('a wrong verdict is titled by what happened, not by the verdict', () => {
+    const wrong = (reason: FolderReason) =>
+      verdictToast({ ...base, outcome: 'wrong', reason }, story, 0).title;
+    expect(wrong('rejectedTrue')).toBe('To była prawda!');
+    // Rejecting a misleading story: it needed context, it was not true.
+    expect(wrong('rejectedContextStory')).toBe('Wystarczył kontekst');
+    expect(wrong('publishedWithoutContext')).toBe('Bez kontekstu!');
+    expect(wrong('contextOnTrue')).toBe('Kontekst niepotrzebny');
+  });
+
+  test('a correct verdict and a weak proof', () => {
     const good = verdictToast(
-      { ...base, verdict: 'reject', outcome: 'correct', scoreDelta: 30 },
+      { ...base, outcome: 'correct', reason: 'correctNormal', scoreDelta: 30 },
       undefined,
       1,
     );
     expect(good.title).toBe('Dobrze!');
     expect(good.tone).toBe('good');
+    expect(good.mark).toBe('publish');
     expect(good.headline).toBe('Teczka bez opisu');
+    const weak = verdictToast(
+      { ...base, outcome: 'wrongJustification', reason: 'incompleteProof', scoreDelta: 5 },
+      story,
+      2,
+    );
+    expect(weak.title).toBe('Za mało dowodów');
+    expect(weak.tone).toBe('caution');
+  });
+
+  test('toast, desk and Kolegium share one title per reason', () => {
+    for (const reason of folderReasonSchema.options) {
+      const slip = verdictToast({ ...base, outcome: 'wrong', reason }, story, 0);
+      expect(slip.title).toBe(pl.outcome.title[reason]);
+    }
   });
 
   test('expiry follows the scoring table, free for unverifiable non-urgent stories', () => {
     const penalized = expiredToast({ folderId: 'f', storyId: 's' }, story, 0);
+    expect(penalized.title).toBe('Teczka przepadła');
     expect(penalized.scoreDelta).toBe(SCORE.expired);
     expect(penalized.credibilityDelta).toBe(CREDIBILITY.expired);
     const free = expiredToast(
@@ -140,19 +206,134 @@ describe('toasts', () => {
       { ...story, truth: 'unverifiable' },
       1,
     );
+    expect(free.title).toBe(pl.outcome.title.expiredUnpenalized);
     expect(free.scoreDelta).toBeNull();
     expect(free.credibilityDelta).toBe(0);
+  });
+
+  test("expiry deltas scale with the room's penalty factor, like the sim (S7-24)", () => {
+    const at = (factor: number) => expiredToast({ folderId: 'f', storyId: 's' }, story, 0, factor);
+    expect(at(0.5).scoreDelta).toBe(-3);
+    expect(at(0.5).credibilityDelta).toBe(-3);
+    expect(at(1).scoreDelta).toBe(-5);
+    expect(at(1.25).scoreDelta).toBe(-6);
+    expect(at(1.5).scoreDelta).toBe(-8);
+    expect(at(1.5).credibilityDelta).toBe(-8);
+    const free = expiredToast(
+      { folderId: 'f', storyId: 's' },
+      { ...story, truth: 'unverifiable' },
+      1,
+      1.5,
+    );
+    expect(free.scoreDelta).toBeNull();
+    expect(free.credibilityDelta).toBe(0);
+  });
+
+  test('announces a new spectator in blue with an eye and no points (S7-86)', () => {
+    expect(spectatorToast({ id: 'p7', nickname: 'Ola' }, 4)).toEqual({
+      id: 'spectator:p7:4',
+      title: 'Widz dołączył',
+      headline: 'Ola',
+      scoreDelta: null,
+      credibilityDelta: 0,
+      tone: 'info',
+      mark: 'eye',
+    });
   });
 
   test('keeps at most three, newest first', () => {
     let list = pushToast(
       [],
-      verdictToast({ ...base, verdict: 'publish', outcome: 'wrong' }, story, 0),
+      verdictToast({ ...base, outcome: 'wrong', reason: 'publishedFake' }, story, 0),
       3,
     );
     for (let i = 1; i < 5; i++) {
       list = pushToast(list, expiredToast({ folderId: `f${i}`, storyId: 's' }, story, i), 3);
     }
     expect(list.map((t) => t.id)).toEqual(['f4:4', 'f3:3', 'f2:2']);
+  });
+});
+
+describe('evidence badge', () => {
+  // Proofs from the archive and the registry; the AI scanner justifies but is only a hint.
+  const multi: StoryInfo = {
+    ...story,
+    requiredStamps: 2,
+    stamps: [
+      { id: 'm-image', station: 'imageSearch', text: '' },
+      { id: 'm-ai', station: 'aiScanner', text: '' },
+      { id: 'm-archive', station: 'archive', text: '' },
+      { id: 'm-registry', station: 'sourceRegistry', text: '' },
+    ],
+    justifyingStamps: ['m-ai', 'm-archive', 'm-registry'],
+  };
+  const stamped = (stamps: string[]) => ({ stamps });
+
+  test('none on a one-proof folder or an unknown story', () => {
+    expect(evidenceBadge(stamped(['m-archive']), story, true)).toBeNull();
+    expect(evidenceBadge(stamped([]), { ...multi, requiredStamps: 1 }, true)).toBeNull();
+    expect(evidenceBadge(stamped([]), undefined, true)).toBeNull();
+  });
+
+  test('hints on: proofs on the folder out of N, capped at N', () => {
+    expect(evidenceBadge(stamped([]), multi, true)).toEqual({ have: 0, need: 2 });
+    expect(evidenceBadge(stamped(['m-image', 'm-archive']), multi, true)).toEqual({
+      have: 1,
+      need: 2,
+    });
+    expect(evidenceBadge(stamped(['m-archive', 'm-registry']), multi, true)).toEqual({
+      have: 2,
+      need: 2,
+    });
+    expect(
+      evidenceBadge(stamped(['m-archive', 'm-registry']), { ...multi, requiredStamps: 1 }, true),
+    ).toBeNull();
+  });
+
+  test('the AI scanner and repeated ids never count', () => {
+    expect(evidenceBadge(stamped(['m-ai', 'm-archive', 'm-archive']), multi, true)).toEqual({
+      have: 1,
+      need: 2,
+    });
+  });
+
+  test('capped at N when the folder holds more proofs', () => {
+    const three: StoryInfo = {
+      ...multi,
+      stamps: [...(multi.stamps ?? []), { id: 'm-phone', station: 'phone', text: '' }],
+      justifyingStamps: ['m-archive', 'm-registry', 'm-phone'],
+    };
+    expect(evidenceBadge(stamped(['m-archive', 'm-registry', 'm-phone']), three, true)).toEqual({
+      have: 2,
+      need: 2,
+    });
+  });
+
+  test('hints off: only N, so nothing tells which stamps decide', () => {
+    expect(evidenceBadge(stamped(['m-archive']), multi, false)).toEqual({ have: null, need: 2 });
+    expect(evidenceBadge(stamped([]), { ...multi, requiredStamps: 3 }, false)).toEqual({
+      have: null,
+      need: 3,
+    });
+  });
+
+  test('Ekspert: the effective hints are off, so the chip shows ×2 (S7-24)', () => {
+    const folderWithOne = stamped(['m-archive']);
+    expect(evidenceBadge(folderWithOne, multi, effectiveHints(true, 'expert'))).toEqual({
+      have: null,
+      need: 2,
+    });
+    expect(pl.hud.evidenceShortNeed(2)).toBe('×2');
+    expect(evidenceBadge(folderWithOne, multi, effectiveHints(true, 'hard'))).toEqual({
+      have: 1,
+      need: 2,
+    });
+  });
+
+  test('a story without stamp facts counts no proof', () => {
+    expect(evidenceBadge(stamped(['m-archive']), { ...story, requiredStamps: 2 }, true)).toEqual({
+      have: 0,
+      need: 2,
+    });
   });
 });

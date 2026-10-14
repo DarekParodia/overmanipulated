@@ -1,0 +1,318 @@
+/*
+ * „Jak grać” (S7-96): a white panel over a dimmed screen. The header holds the title, the tab
+ * switch and the one yellow „Gotowe”; the body scrolls. Landscape phones get a full-screen sheet
+ * with the tabs on their own row
+ * (they get it in any window narrower than 900 px).
+ */
+.dialog {
+  padding: 0;
+  border: none;
+  background: transparent;
+  width: min(62rem, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow: visible;
+}
+
+.dialog::backdrop {
+  background: var(--outline-a50);
+}
+
+.sheet {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  height: min(42rem, calc(100dvh - 2 * var(--space-4)));
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  overflow: hidden;
+}
+
+.dialog[open] .sheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+  padding-top: 0.08em;
+  min-width: 0;
+}
+
+/* Purple is help (design-rules §3). */
+.title svg {
+  flex: none;
+  margin-top: -0.12em;
+  --icon-fill: var(--purple);
+}
+
+.tabs {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  overflow-x: auto;
+  /* Room for the pop shadow and the focus ring of the active tab. */
+  padding: var(--space-1) var(--space-1) var(--space-2);
+}
+
+.body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Room for pop shadows and focus rings at the edges. */
+  padding: var(--space-1) var(--space-2) var(--space-2);
+}
+
+.padHint {
+  margin: 0;
+  justify-self: center;
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* --- Wprowadzenie ---------------------------------------------------------------------------- */
+
+/* The intro player (intro/Intro.module.css) fills the panel; it never scrolls. */
+.bodyIntro {
+  overflow: hidden;
+}
+
+/* --- Stanowiska ------------------------------------------------------------------------------ */
+
+.stations {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.lead {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 6rem;
+  padding: var(--space-3) var(--space-2);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-bounce),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.tile svg {
+  --icon-fill: var(--purple);
+}
+
+.tile:hover,
+.tile:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--pop-lg);
+}
+
+.tile:active {
+  transform: translateY(2px);
+  box-shadow: var(--pop-pressed);
+}
+
+.tile:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.card {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+}
+
+/* In a match (the in-game menu): no practice, said in words with a lock, never colour alone. */
+.practiceOff {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* --- Wypróbuj (S7-97) ------------------------------------------------------------------------ */
+
+/* The practice round: the station frame fills the dialog, at a match overlay's width. */
+.dialog[data-practice] {
+  width: min(46rem, calc(100vw - 2 * var(--space-4)));
+}
+
+.practiceSheet {
+  display: flex;
+  height: min(42rem, calc(100dvh - 2 * var(--space-4)));
+}
+
+.dialog[open] .practiceSheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] .sheet,
+  .dialog[open] .practiceSheet {
+    animation: none;
+  }
+  .tile {
+    transition: none;
+  }
+}
+
+:global(html[data-reduced-motion="true"]) .dialog[open] .sheet,
+:global(html[data-reduced-motion="true"]) .dialog[open] .practiceSheet {
+  animation: none;
+}
+
+:global(html[data-reduced-motion="true"]) .tile {
+  transition: none;
+}
+
+/* --- Small screens --------------------------------------------------------------------------- */
+
+/* Narrow windows: the tabs get a row of their own under the title and „Gotowe”. */
+@media (max-width: 900px) {
+  .title {
+    margin-right: auto;
+  }
+  .tabs {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* Landscape phones (640×360): a full-screen sheet. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .dialog {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    gap: var(--space-2);
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-4), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-4), env(safe-area-inset-left));
+    border-radius: 0;
+    border-width: 0;
+    box-shadow: none;
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .tabs {
+    padding: 0 var(--space-1) var(--space-1);
+  }
+  /* The intro's stage needs the row while it plays (S7-101). */
+  .tabs[data-intro-playing] {
+    display: none;
+  }
+  .grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+  .tile {
+    min-height: 4.5rem;
+    padding: var(--space-2) var(--space-1);
+  }
+  .card {
+    gap: var(--space-2);
+  }
+  .practiceOff {
+    font-size: var(--text-sm);
+  }
+  .dialog[data-practice] {
+    width: 100vw;
+  }
+  .practiceSheet {
+    height: 100dvh;
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-2), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-2), env(safe-area-inset-left));
+  }
+}
+
+@media (max-width: 640px) and (orientation: portrait) {
+  .dialog,
+  .dialog[data-practice] {
+    width: 100vw;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+  }
+  .sheet {
+    height: 100dvh;
+    border-radius: 0;
+    padding: var(--space-4);
+  }
+  .practiceSheet {
+    height: 100dvh;
+    padding: var(--space-2);
+  }
+}

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { defaultSettings } from '../store/settings.ts';
 import {
+  abilityKeyCap,
   controlRows,
   keyLabel,
   nextTab,
@@ -39,6 +40,7 @@ describe('defaults', () => {
       [d.musicVolume, sliderSpecs.volume],
       [d.sfxVolume, sliderSpecs.volume],
       [d.uiVolume, sliderSpecs.volume],
+      [d.voiceVolume, sliderSpecs.volume],
       [d.textScale, sliderSpecs.textScale],
       [d.rumbleIntensity, sliderSpecs.rumbleIntensity],
       [d.touchScale, sliderSpecs.touchScale],
@@ -78,8 +80,31 @@ describe('controls help', () => {
         'interact',
         'work',
         'ping',
+        'ability',
+        'stationHelp',
       ]);
     }
+  });
+
+  test("station help is H, Select and the overlay header '?' (S7-95)", () => {
+    const help = (device: 'keyboard' | 'gamepad' | 'touch') =>
+      controlRows(device).find((r) => r.action === 'stationHelp')?.options;
+    expect(help('keyboard')).toEqual([['H']]);
+    expect(help('gamepad')).toEqual([['Select']]);
+    expect(help('touch')).toEqual([['?']]);
+  });
+
+  test('the role ability is R, RB and the fourth touch button (S7-39)', () => {
+    const ability = (device: 'keyboard' | 'gamepad' | 'touch') =>
+      controlRows(device).find((r) => r.action === 'ability')?.options;
+    expect(ability('keyboard')).toEqual([['R']]);
+    expect(ability('gamepad')).toEqual([['RB']]);
+    expect(ability('touch')).toEqual([['Zdolność']]);
+  });
+
+  test('the HUD chip shows the same caps (S7-40)', () => {
+    expect(abilityKeyCap('keyboard')).toBe('R');
+    expect(abilityKeyCap('gamepad')).toBe('RB');
   });
 
   test('key labels', () => {

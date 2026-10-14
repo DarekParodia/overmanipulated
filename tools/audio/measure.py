@@ -4,6 +4,8 @@
   - every music file (webm and mp3 are both decoded and must agree within 1.5 dB),
   - every sprite sound, with the level it actually has in the game: file level + the cue's
     `volume` (apps/client/src/fx/cues.ts), grouped by the cue's bus,
+  - the intro voiceover (S7-100), when it has been generated: every clip of the sprite, its
+    loudness against the voice window, and both files against the voice size cap,
   - the total payload size per format.
 
 Exits non-zero when a file is missing, clips (peak above -0.3 dBFS), is silent, or a bus is out
@@ -24,9 +26,11 @@ AUDIO = ROOT / "apps/client/public/assets/audio"
 SPRITE = ROOT / "apps/client/src/fx/audio/sfx-sprite.json"
 MANIFEST = ROOT / "apps/client/src/fx/audio/music-manifest.json"
 CUES = ROOT / "apps/client/src/fx/cues.ts"
+VOICE = ROOT / "apps/client/public/assets/voice"
+VOICE_MAX_BYTES = 700_000  # apps/client/src/intro/voice-sprite.ts
 RATE = 24000
 # Allowed spread (dB) of the in-game RMS of a bus' one-shots around its median.
-WINDOWS = {"ui": (-40.0, -17.0), "sfx": (-42.0, -14.0), "music": (-26.0, -17.0)}
+WINDOWS = {"ui": (-40.0, -17.0), "sfx": (-42.0, -14.0), "music": (-26.0, -17.0), "voice": (-24.0, -16.0)}
 
 
 def db(x):
@@ -45,6 +49,47 @@ def decode(path):
 def levels(signal):
     active = signal[np.abs(signal) > 0.05 * (np.max(np.abs(signal)) or 1)]
     return db(np.max(np.abs(signal))), db(np.sqrt(np.mean(signal**2))), db(np.sqrt(np.mean(active**2)))
+
+
+def measure_voice(problems):
+    """The intro voiceover is optional (docs/audio.md, Voice): skipped until generated."""
+    sprite_path = VOICE / "intro.json"
+    if not sprite_path.exists():
+        print("== voice: not generated (the intro runs on subtitles and fallback timing) ==")
+        for ext in ("webm", "mp3"):
+            if (VOICE / f"intro.{ext}").exists():
+                problems.append(f"voice intro.{ext} ships without intro.json")
+        return
+    clips = json.loads(sprite_path.read_text())["clips"]
+    lo, hi = WINDOWS["voice"]
+    print(f"== voice (rms over the audible part per clip; window {lo}..{hi}) ==")
+    tracks = {}
+    for ext in ("webm", "mp3"):
+        path = VOICE / f"intro.{ext}"
+        if not path.exists():
+            problems.append(f"missing voice {path.name}")
+            continue
+        size = path.stat().st_size
+        print(f"  intro.{ext}: {size / 1024:.0f} KiB")
+        if size > VOICE_MAX_BYTES:
+            problems.append(f"voice intro.{ext} is {size} bytes, over {VOICE_MAX_BYTES}")
+        tracks[ext] = decode(path)
+    if not tracks:
+        return
+    signal = tracks.get("webm", next(iter(tracks.values())))
+    for cid, clip in clips.items():
+        a = int(clip["startMs"] / 1000 * RATE)
+        b = int((clip["startMs"] + clip["durationMs"]) / 1000 * RATE)
+        peak, _, active = levels(signal[a:b])
+        print(f"  {cid:16s} peak {peak:6.1f}  rms {active:6.1f}")
+        if peak > -0.3:
+            problems.append(f"voice {cid}: peak {peak:.1f} dBFS")
+        if not lo <= active <= hi:
+            problems.append(f"voice {cid}: {active:.1f} dB outside {lo}..{hi}")
+    if "webm" in tracks and "mp3" in tracks:
+        webm_rms, mp3_rms = levels(tracks["webm"])[1], levels(tracks["mp3"])[1]
+        if abs(webm_rms - mp3_rms) > 1.5:
+            problems.append("voice: webm/mp3 loudness differ")
 
 
 def main():
@@ -103,6 +148,8 @@ def main():
             if sid not in ("roomtone", "ambchatter") and not lo <= v <= hi:
                 problems.append(f"{bus}/{sid}: {v:.1f} dB outside {lo}..{hi}")
     print(f"  music  n={len(music_rms):2d}  min {min(music_rms):6.1f}  median {np.median(music_rms):6.1f}  max {max(music_rms):6.1f}  (window {WINDOWS['music'][0]}..{WINDOWS['music'][1]})")
+
+    measure_voice(problems)
 
     print("== payload ==")
     for ext in ("webm", "mp3"):

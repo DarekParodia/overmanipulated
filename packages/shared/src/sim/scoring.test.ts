@@ -1,18 +1,21 @@
 import { describe, expect, it } from 'bun:test';
+import { type SimTuning, simTuning } from '../difficulty.ts';
+import { type Folder, folderResultSchema } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
-import { runStep, TEST_MAP, testContext } from './__fixtures__/greybox.ts';
+import { runStep, TEST_MAP, testContext, testFolder } from './__fixtures__/greybox.ts';
 import type { SimFrame } from './frame.ts';
-import { applyCredibility, starsFor, stepScoring } from './scoring.ts';
+import { applyCredibility, scalePenalty, starsFor, stepScoring } from './scoring.ts';
 import { createGameState, type GameState } from './state.ts';
 
-function frameWith(events: GameEvent[]): SimFrame {
-  return { ctx: testContext(), intents: {}, commands: [], events };
+function frameWith(events: GameEvent[], tuning?: SimTuning): SimFrame {
+  return { ctx: testContext(tuning ? { tuning } : {}), intents: {}, commands: [], events };
 }
 
 const expired = (folderId: string, storyId: string, stamps: string[] = []): GameEvent => ({
   kind: 'folderExpired',
   stamps,
   folderId,
+  spawnKey: testFolder(folderId).spawnKey,
   storyId,
 });
 
@@ -22,6 +25,20 @@ const base = (overrides: Partial<GameState> = {}): GameState => ({
   ...overrides,
 });
 
+const NO_BONUS = { speed: 0, multiStamp: 0, bossCall: 0 };
+
+/** A folder still in play on a conveyor tile. */
+function inPlay(id: string, storyId: string, stamps: string[] = [], tag?: Folder['tag']): Folder {
+  return testFolder(id, {
+    storyId,
+    location: { kind: 'fixture', fixtureId: `conveyor-${id}` },
+    stamps,
+    spawnedAtMs: 1000,
+    deadlineMs: 200_000,
+    ...(tag ? { tag } : {}),
+  });
+}
+
 describe('stepScoring — expiry', () => {
   it('takes 5 points and 5 credibility for an expired folder', () => {
     const next = stepScoring(base(), frameWith([expired('f1', 't-true')]));
@@ -30,11 +47,16 @@ describe('stepScoring — expiry', () => {
     expect(next.results).toEqual([
       {
         folderId: 'f1',
+        spawnKey: 's1',
         storyId: 't-true',
         outcome: 'expired',
+        reason: 'expired',
         verdict: null,
         scoreDelta: -5,
         credibilityDelta: -5,
+        justifyingStampIds: [],
+        requiredStamps: 1,
+        bonuses: NO_BONUS,
         missedStampIds: ['t-true-image'],
       },
     ]);
@@ -46,6 +68,7 @@ describe('stepScoring — expiry', () => {
     expect(next.credibility).toBe(100);
     expect(next.results[0]).toMatchObject({
       outcome: 'expired',
+      reason: 'expiredUnpenalized',
       scoreDelta: 0,
       credibilityDelta: 0,
     });
@@ -61,6 +84,44 @@ describe('stepScoring — expiry', () => {
     const state = base();
     const next = stepScoring(state, frameWith([{ kind: 'gameStarted' }]));
     expect(next).toBe(state);
+  });
+
+  it('takes 8 points and 8 credibility on expert, 3 and 3 on easy', () => {
+    const expert = stepScoring(base(), frameWith([expired('f1', 't-true')], simTuning('expert')));
+    expect(expert.score).toBe(-8);
+    expect(expert.credibility).toBe(92);
+    expect(expert.results[0]).toMatchObject({ scoreDelta: -8, credibilityDelta: -8 });
+    const easy = stepScoring(base(), frameWith([expired('f1', 't-true')], simTuning('easy')));
+    expect(easy.results[0]).toMatchObject({ scoreDelta: -3, credibilityDelta: -3 });
+  });
+
+  it('keeps an unpenalised expiry at zero on expert', () => {
+    const next = stepScoring(
+      base(),
+      frameWith([expired('f1', 't-unverifiable')], simTuning('expert')),
+    );
+    expect(next.results[0]).toMatchObject({
+      reason: 'expiredUnpenalized',
+      scoreDelta: 0,
+      credibilityDelta: 0,
+    });
+  });
+});
+
+describe('scalePenalty', () => {
+  it('rounds a half away from zero on both signs', () => {
+    expect(scalePenalty(5, 1.5)).toBe(8);
+    expect(scalePenalty(-5, 1.5)).toBe(-8);
+    expect(scalePenalty(-25, 1.5)).toBe(-38);
+    expect(scalePenalty(-25, 0.5)).toBe(-13);
+    expect(scalePenalty(-5, 0.5)).toBe(-3);
+  });
+
+  it('keeps whole products, zero and the Normal factor unchanged', () => {
+    expect(scalePenalty(-20, 1.5)).toBe(-30);
+    expect(scalePenalty(-10, 1.25)).toBe(-13);
+    expect(scalePenalty(-20, 1)).toBe(-20);
+    expect(scalePenalty(0, 1.5)).toBe(0);
   });
 });
 
@@ -92,15 +153,16 @@ describe('stepScoring — level end', () => {
   it('ends the level on time-out with stars by score', () => {
     const end = (score: number) =>
       stepScoring(base({ elapsedMs: 120_000, score }), frameWith([])).ended;
-    expect(end(10)).toEqual({ won: true, stars: 1 });
-    expect(end(30)).toEqual({ won: true, stars: 2 });
-    expect(end(60)).toEqual({ won: true, stars: 3 });
+    expect(end(10)).toEqual({ won: true, stars: 1, lossReason: null });
+    expect(end(30)).toEqual({ won: true, stars: 2, lossReason: null });
+    expect(end(60)).toEqual({ won: true, stars: 3, lossReason: null });
   });
 
   it('loses on time-out without a positive score', () => {
     expect(stepScoring(base({ elapsedMs: 120_000, score: 0 }), frameWith([])).ended).toEqual({
       won: false,
       stars: 0,
+      lossReason: 'score',
     });
   });
 
@@ -110,11 +172,11 @@ describe('stepScoring — level end', () => {
       frameWith([expired('f1', 't-true')]),
     );
     expect(next.credibility).toBe(0);
-    expect(next.ended).toEqual({ won: false, stars: 0 });
+    expect(next.ended).toEqual({ won: false, stars: 0, lossReason: 'credibility' });
   });
 
   it('sets the outcome only once', () => {
-    const ended = { won: true, stars: 3 };
+    const ended = { won: true, stars: 3, lossReason: null };
     const state = base({ elapsedMs: 120_000, score: 0, ended });
     expect(stepScoring(state, frameWith([])).ended).toBe(ended);
   });
@@ -123,8 +185,88 @@ describe('stepScoring — level end', () => {
     let state = base({ elapsedMs: 120_000 - 50, score: 35 });
     const last = runStep(state);
     state = last.state;
-    expect(state.ended).toEqual({ won: true, stars: 2 });
+    expect(state.ended).toEqual({ won: true, stars: 2, lossReason: null });
     const after = runStep(state);
     expect(after.state).toBe(state);
+  });
+});
+
+describe('stepScoring — folders left when the level ends', () => {
+  it('records one unfinished result per folder still in play', () => {
+    const folders = {
+      f1: inPlay('f1', 't-true'),
+      f2: inPlay('f2', 't-false', ['t-false-image', 't-false-archive']),
+    };
+    const next = stepScoring(base({ elapsedMs: 120_000, score: 10, folders }), frameWith([]));
+    expect(next.ended).toEqual({ won: true, stars: 1, lossReason: null });
+    expect(next.score).toBe(10);
+    expect(next.credibility).toBe(100);
+    expect(next.results).toEqual([
+      {
+        folderId: 'f1',
+        spawnKey: 's1',
+        storyId: 't-true',
+        outcome: 'unfinished',
+        reason: 'unfinished',
+        verdict: null,
+        scoreDelta: 0,
+        credibilityDelta: 0,
+        justifyingStampIds: [],
+        requiredStamps: 1,
+        bonuses: NO_BONUS,
+        missedStampIds: ['t-true-image'],
+      },
+      {
+        folderId: 'f2',
+        spawnKey: 's2',
+        storyId: 't-false',
+        outcome: 'unfinished',
+        reason: 'unfinished',
+        verdict: null,
+        scoreDelta: 0,
+        credibilityDelta: 0,
+        justifyingStampIds: [],
+        requiredStamps: 1,
+        bonuses: NO_BONUS,
+        missedStampIds: [],
+      },
+    ]);
+    for (const result of next.results) {
+      expect(folderResultSchema.safeParse(result).success).toBe(true);
+    }
+  });
+
+  it('records a bot raid wave in play once', () => {
+    const tag = { kind: 'botRaid', raidId: 'raid1' } as const;
+    const folders = {
+      f1: inPlay('f1', 't-false', [], tag),
+      f2: inPlay('f2', 't-false', [], tag),
+      f3: inPlay('f3', 't-false', [], tag),
+    };
+    const next = stepScoring(base({ elapsedMs: 120_000, folders }), frameWith([]));
+    expect(next.ended).toEqual({ won: false, stars: 0, lossReason: 'score' });
+    expect(next.results).toHaveLength(1);
+    expect(next.results[0]).toMatchObject({ folderId: 'f1', outcome: 'unfinished' });
+  });
+
+  it('records nothing while the level runs, and nothing twice', () => {
+    const folders = { f1: inPlay('f1', 't-true') };
+    expect(stepScoring(base({ folders }), frameWith([])).results).toEqual([]);
+    const ended = { won: true, stars: 1, lossReason: null };
+    const over = base({ elapsedMs: 120_000, score: 10, folders, ended });
+    expect(stepScoring(over, frameWith([])).results).toEqual([]);
+  });
+
+  it('records the folders left when credibility runs out', () => {
+    const folders = { f2: inPlay('f2', 't-false') };
+    const next = stepScoring(
+      base({ credibility: 5, folders }),
+      frameWith([expired('f1', 't-true')]),
+    );
+    expect(next.ended).toEqual({ won: false, stars: 0, lossReason: 'credibility' });
+    expect(next.results.map((r) => [r.folderId, r.outcome])).toEqual([
+      ['f1', 'expired'],
+      ['f2', 'unfinished'],
+    ]);
   });
 });

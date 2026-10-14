@@ -4,7 +4,7 @@
 // instanced orange-brown decorative desks with drawers. Wall art and the rug come from Decor.tsx,
 // interactive fixtures (conveyor, stations, desk, tables) from Fixtures.tsx.
 
-import { fixtureAt, tileAt } from '@redakcja/shared';
+import { fixtureAt, type TileMap, tileAt } from '@redakcja/shared';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import {
   type BufferGeometry,
@@ -15,8 +15,7 @@ import {
   RepeatWrapping,
   SRGBColorSpace,
 } from 'three';
-import { runtime } from '../net/session.ts';
-import { useApp } from '../store/app.ts';
+import { useGameView, viewLevelId } from '../net/view-context.tsx';
 import { colors } from '../ui/tokens.ts';
 import { Decor } from './Decor.tsx';
 import { useGeometries } from './geometry.ts';
@@ -69,15 +68,15 @@ function createFloorTexture(): CanvasTexture {
 
 type Block = { x: number; z: number; height: number };
 
-function collectBlocks() {
-  const { width, height } = runtime.map;
+function collectBlocks(map: TileMap) {
+  const { width, height } = map;
   const back: Block[] = [];
   const side: Block[] = [];
   const front: Block[] = [];
   const desks: Block[] = [];
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      const kind = tileAt(runtime.map, col, row);
+      const kind = tileAt(map, col, row);
       const at = { x: col + 0.5, z: row + 0.5 };
       if (kind === 'wall') {
         if (row === 0) {
@@ -87,7 +86,7 @@ function collectBlocks() {
         } else {
           side.push({ ...at, height: SIDE_WALL_HEIGHT });
         }
-      } else if (kind === 'furniture' && !fixtureAt(runtime.map, col, row)) {
+      } else if (kind === 'furniture' && !fixtureAt(map, col, row)) {
         desks.push({ ...at, height: DESK_HEIGHT });
       }
     }
@@ -162,10 +161,11 @@ function Instances({
 }
 
 export function Newsroom({ shadows }: { shadows: boolean }) {
-  const { width, height } = runtime.map;
+  const view = useGameView();
+  const { width, height } = view.runtime.map;
   const floor = useMemo(createFloorTexture, []);
-  const theme = useMemo(() => themeForLevel(useApp.getState().room?.levelId ?? ''), []);
-  const blocks = useMemo(collectBlocks, []);
+  const theme = useMemo(() => themeForLevel(viewLevelId(view)), [view]);
+  const blocks = useMemo(() => collectBlocks(view.runtime.map), [view]);
   const g = useGeometries(() => ({
     back: wallGeometry(BACK_WALL_HEIGHT, theme),
     side: wallGeometry(SIDE_WALL_HEIGHT, theme),

@@ -1,0 +1,404 @@
+/*
+ * Inne media: the folder's claim on a manila strip, five white coverage cards (3 + 2) and three
+ * white answer buttons. No yellow: a yellow answer would hint at the solution (design-rules
+ * §1.1), and no green/red on the answers. Cards are not interactive. After the round the cards
+ * that count lift, copies get a red „kopia” stamp and satire / anonymous cards fade (dashed).
+ * On wide panels the claim takes the free sixth cell next to the second row of cards.
+ */
+.root {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-3);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* The claim strip above the cards. */
+.board {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* --- The folder's claim ----------------------------------------------------------------- */
+
+.claim {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  color: var(--text);
+}
+
+.claimTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.claimText {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+/* --- Coverage cards: 3 + 2 -------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Wide: three cards, then two cards with the folder's claim in the free sixth cell, so the
+   round fits 1280×720 even when outlet names wrap. */
+@container (min-width: 34rem) {
+  .board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cards {
+    display: contents;
+  }
+
+  .claim {
+    grid-row: 2;
+    grid-column: 3;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 3px 0 var(--outline);
+  color: var(--text);
+  transition:
+    opacity var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out);
+}
+
+.card > p {
+  margin: 0;
+}
+
+.outlet {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.badge,
+.stance {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-2);
+  border: 2px solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  white-space: nowrap;
+}
+
+.badge {
+  background: var(--surface-sunk);
+}
+
+.stance {
+  background: var(--surface);
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text-soft);
+}
+
+.source > svg {
+  flex: none;
+}
+
+/* After the round: what counts lifts; satire and anonymous fade; copies fade and get a stamp. */
+.card[data-reveal="counts"] {
+  border-width: var(--stroke-bold);
+  box-shadow: var(--pop);
+  transform: translateY(-3px);
+}
+
+.card[data-reveal="copy"],
+.card[data-reveal="fade"] {
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.card[data-reveal="copy"] > p,
+.card[data-reveal="fade"] > p {
+  opacity: 0.45;
+}
+
+.copy {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--red);
+  border-radius: var(--radius-sm);
+  color: var(--red-dark);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  text-transform: uppercase;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  animation: stamp var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes stamp {
+  from {
+    transform: translate(-50%, -50%) rotate(-8deg) scale(1.6);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(-8deg) scale(1);
+    opacity: 1;
+  }
+}
+
+:global(:root[data-reduced-motion="true"]) .copy {
+  animation: none;
+}
+
+:global(:root[data-reduced-motion="true"]) .card {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .copy {
+    animation: none;
+  }
+
+  .card {
+    transition: none;
+  }
+}
+
+/* --- The three answers ------------------------------------------------------------------ */
+
+.foot {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+/* The outcome banner takes the whole row. */
+.foot > [role="status"] {
+  grid-column: 1 / -1;
+}
+
+.answer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 3.5rem;
+  padding: var(--space-2) var(--space-2);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.answer > svg {
+  flex: none;
+}
+
+.answer:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: var(--pop-pressed);
+}
+
+/* Keyboard/gamepad cursor: blue outline and a lift. */
+.answer[data-focused="true"],
+.answer:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 0;
+  transform: translateY(-2px);
+}
+
+/* Wrong: struck out in red (no second penalty). */
+.answer[data-struck="true"] {
+  background: var(--surface-sunk);
+  border-color: var(--red-dark);
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 3px;
+}
+
+/* Narrow panels: the answers keep one row with a smaller label. */
+@container (max-width: 34rem) {
+  .answer {
+    font-size: var(--text-md);
+    gap: var(--space-1);
+  }
+}
+
+/*
+ * Short landscape phones (640×360): everything must fit without scrolling, the key hints too. The
+ * cards keep three lines (outlet, kind + stance mark, source), the stance word hides behind its
+ * ✓ / ✗ mark (the card's label still names it), the claim moves into the free sixth cell and the
+ * key hints move up into the task line, between the task and the mistake mark.
+ */
+@media (max-height: 430px) {
+  .root {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: var(--space-1) var(--space-3);
+  }
+
+  .root > * {
+    grid-column: 1 / -1;
+  }
+
+  .taskLine {
+    display: contents;
+  }
+
+  .taskLine > p {
+    grid-row: 1;
+    grid-column: 1;
+    align-self: center;
+  }
+
+  .taskLine > :not(p) {
+    grid-row: 1;
+    grid-column: 3;
+  }
+
+  .root > .hints {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-1);
+  }
+
+  .cards {
+    display: contents;
+  }
+
+  .claim {
+    grid-row: 2;
+    grid-column: 3;
+    display: block;
+    padding: 2px var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .claimTitle {
+    display: none;
+  }
+
+  .claimText {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    font-size: var(--text-sm);
+  }
+
+  .card {
+    gap: 2px;
+    padding: 2px var(--space-1);
+  }
+
+  .card[data-reveal="counts"] {
+    border-width: var(--stroke);
+    transform: none;
+  }
+
+  .outlet {
+    overflow: hidden;
+    font-size: var(--text-sm);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .meta {
+    flex-wrap: nowrap;
+  }
+
+  .stance {
+    padding: 0 var(--space-1);
+  }
+
+  .stanceWord {
+    display: none;
+  }
+
+  .source {
+    white-space: nowrap;
+  }
+
+  .copy {
+    font-size: var(--text-md);
+  }
+
+  .foot {
+    gap: var(--space-2);
+  }
+
+  .answer {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-md);
+  }
+}

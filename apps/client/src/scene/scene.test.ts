@@ -7,10 +7,12 @@ import {
   atlasCell,
   CARRY_HEIGHT,
   CARRY_REACH,
+  conveyorIndicator,
   FOLDER_SIZE,
   folderLook,
   folderPlacement,
   isFirstDeskTile,
+  lockoutFraction,
   MAX_STAMP_MARKS,
   restingYaw,
   SURFACE_HEIGHT,
@@ -24,6 +26,7 @@ const fixtures = new Map(GREYBOX_MAP.fixtures.map((f) => [f.id, f]));
 function folder(location: Folder['location'], stamps: string[] = []): Folder {
   return {
     id: 'f1',
+    spawnKey: 's0',
     storyId: STORIES[0]?.id ?? 'missing',
     location,
     stamps,
@@ -150,6 +153,61 @@ describe('station indicator', () => {
     expect(
       stationIndicator(station({ phase: 'lockout', lockoutMs: MINIGAME_FAIL_LOCKOUT_MS / 2 })),
     ).toEqual({ kind: 'lockout', fraction: 0.5 });
+  });
+
+  it('drains a difficulty-scaled lockout against the announced total', () => {
+    const locked = station({ phase: 'lockout', lockoutMs: 4500 });
+    expect(stationIndicator(locked, undefined, 6000)).toEqual({ kind: 'lockout', fraction: 0.75 });
+    expect(stationIndicator(locked, undefined, 1500)).toEqual({ kind: 'lockout', fraction: 1 });
+    // Without an announced total (e.g. after a reconnect) the Normal 3 s lockout stands in.
+    expect(lockoutFraction(1500, undefined)).toBe(0.5);
+    expect(lockoutFraction(4500, undefined)).toBe(1);
+    expect(lockoutFraction(0, 0)).toBe(0);
+  });
+});
+
+describe('conveyor indicator', () => {
+  const next = { atMs: 20_000, sinceMs: 12_000 };
+
+  it('fills the ring from the previous due time to the next one', () => {
+    expect(conveyorIndicator(next, 12_000, false)).toEqual({
+      kind: 'incoming',
+      fraction: 0,
+      seconds: 8,
+    });
+    expect(conveyorIndicator(next, 14_000, false)).toEqual({
+      kind: 'incoming',
+      fraction: 0.25,
+      seconds: 6,
+    });
+    expect(conveyorIndicator(next, 19_100, false)).toEqual({
+      kind: 'incoming',
+      fraction: 0.8875,
+      seconds: 1,
+    });
+  });
+
+  it('starts part-filled after a held spawn and never overfills', () => {
+    // The previous folder was due at 12 s but came at 15 s: the ring starts at 3/8.
+    expect(conveyorIndicator(next, 15_000, false)).toMatchObject({ fraction: 0.375 });
+    expect(conveyorIndicator(next, 21_000, false)).toEqual({
+      kind: 'incoming',
+      fraction: 1,
+      seconds: 0,
+    });
+  });
+
+  it('is a full ring when two folders are due at the same moment', () => {
+    expect(conveyorIndicator({ atMs: 30_000, sinceMs: 30_000 }, 29_000, false)).toEqual({
+      kind: 'incoming',
+      fraction: 1,
+      seconds: 1,
+    });
+  });
+
+  it('says the belt is full, and nothing once the schedule is used up', () => {
+    expect(conveyorIndicator(next, 21_000, true)).toEqual({ kind: 'full' });
+    expect(conveyorIndicator(null, 200_000, false)).toEqual({ kind: 'none' });
   });
 });
 

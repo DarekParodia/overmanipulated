@@ -1,10 +1,11 @@
-// Pure helpers behind the debrief (Kolegium): one card per story in order of arrival, and the
-// blunder-of-the-day vote tallies with this player's optimistic vote. Free of React and of the
-// content module so they are unit-tested directly.
+// Pure helpers behind the debrief (Kolegium): the card and story shapes (the cards themselves
+// come from `kolegiumCards` in results-model.ts) and the blunder-of-the-day vote tallies with
+// this player's optimistic vote. Free of React and of the content module so they are
+// unit-tested directly.
 import type {
   BlunderVote,
   FolderOutcome,
-  FolderResult,
+  FolderReason,
   LobbyPlayer,
   StationKind,
   Verdict,
@@ -15,72 +16,39 @@ export type DebriefStory = {
   headline: string;
   correctVerdict?: Verdict;
   stamps?: readonly { id: string; station: StationKind; text: string }[];
+  /** The stamps that prove the verdict; without them the cited and missed ones stand in. */
+  justifyingStamps?: readonly string[];
   debrief?: { what: string; technique: string; tool: string; realWorld: string };
 };
 
 export type DebriefStoryLookup = (storyId: string) => DebriefStory | undefined;
 
-export type MissedStamp = { id: string; station: StationKind; text: string };
+/** Where a deciding proof was when the folder closed: cited at the desk, only in the folder, or
+ * never collected. */
+export type ProofStatus = 'cited' | 'collected' | 'missing';
+
+/** One row of 'Dowód, który rozstrzygał': a justifying, non-hint stamp of the story. */
+export type ProofRow = { id: string; station: StationKind; text: string; status: ProofStatus };
 
 export type DebriefCard = {
   storyId: string;
   folderId: string;
   headline: string | null;
   outcome: FolderOutcome;
+  /** Why the folder ended that way; picks the card's title (`pl.outcome.title`). */
+  reason: FolderReason;
   /** The team's verdict; null when the folder expired. */
   verdict: Verdict | null;
   correctVerdict: Verdict | null;
   scoreDelta: number;
   debrief: DebriefStory['debrief'] | null;
-  missedStamps: MissedStamp[];
+  /**
+   * The story's deciding proof and where each one was, for a folder that did not end `correct`;
+   * null for a correct one (the section is hidden). Hint-only stamps (the AI scanner) are never
+   * proof, and a stamp from a station the level does not have is left out unless it was used.
+   */
+  proof: ProofRow[] | null;
 };
-
-/** Folder ids are `f<n>` in spawn order; anything else sorts after them, in list order. */
-function arrivalNumber(folderId: string): number {
-  const match = /^f(\d+)$/.exec(folderId);
-  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
-}
-
-/**
- * One card per story, in the order the folders arrived (results come in resolution order).
- * A story that came twice keeps its first folder.
- */
-export function debriefCards(
-  results: readonly FolderResult[],
-  lookup: DebriefStoryLookup,
-): DebriefCard[] {
-  const ordered = results
-    .map((result, index) => ({ result, index }))
-    .sort(
-      (a, b) =>
-        arrivalNumber(a.result.folderId) - arrivalNumber(b.result.folderId) || a.index - b.index,
-    );
-  const seen = new Set<string>();
-  const cards: DebriefCard[] = [];
-  for (const { result } of ordered) {
-    if (seen.has(result.storyId)) {
-      continue;
-    }
-    seen.add(result.storyId);
-    const story = lookup(result.storyId);
-    const stamps = story?.stamps ?? [];
-    cards.push({
-      storyId: result.storyId,
-      folderId: result.folderId,
-      headline: story?.headline ?? null,
-      outcome: result.outcome,
-      verdict: result.verdict,
-      correctVerdict: story?.correctVerdict ?? null,
-      scoreDelta: result.scoreDelta,
-      debrief: story?.debrief ?? null,
-      missedStamps: result.missedStampIds.flatMap((id) => {
-        const stamp = stamps.find((s) => s.id === id);
-        return stamp ? [{ id: stamp.id, station: stamp.station, text: stamp.text }] : [];
-      }),
-    });
-  }
-  return cards;
-}
 
 /**
  * The votes to show: the server's, with this player's pending vote in place of their server

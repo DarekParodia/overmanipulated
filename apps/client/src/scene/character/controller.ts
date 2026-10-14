@@ -2,13 +2,13 @@
 //   1. base loops (idle, walk, run, carry, work) blended by weights that follow the state; the
 //      locomotion playback rate is matched to the ground speed so feet do not slide;
 //   2. full-body one-shot gestures (stamp, cheer, role celebrations, facepalm, shrug, slump);
-//   3. an upper-body layer (role fidgets after standing still, ping emotes) sampled by hand and
-//      laid over the arms, head and torso so legs keep walking;
+//   3. an upper-body layer (role fidgets after standing still, ping emotes, ability reactions)
+//      sampled by hand and laid over the arms, head and torso so legs keep walking;
 //   4. look-at (the head leads the body's turns and follows the interaction target);
 //   5. hand IK (hands meet around a carried folder, reach for a fixture when putting down).
 // Weights are set directly every update instead of using crossFadeTo, so state changes mid-fade
 // never leave a layer stuck. The pure rules are exported for tests.
-import type { PingKind, Role } from '@redakcja/shared';
+import type { GameEvent, PingKind, Role } from '@redakcja/shared';
 import { PLAYER_SPEED_TILES_PER_S } from '@redakcja/shared';
 import {
   type AnimationAction,
@@ -170,6 +170,10 @@ export function celebrationForRole(role: Role | null): BodyGesture {
       return 'cheerReporter';
     case 'managingEditor':
       return 'cheerManager';
+    case 'generalist':
+      return 'cheerGeneral';
+    case 'rescuer':
+      return 'cheerRescuer';
     default:
       return 'cheer';
   }
@@ -185,6 +189,10 @@ export function fidgetForRole(role: Role | null): UpperClip | null {
       return 'idleReporter';
     case 'managingEditor':
       return 'idleManager';
+    case 'generalist':
+      return 'idleGeneral';
+    case 'rescuer':
+      return 'idleRescuer';
     default:
       return null;
   }
@@ -199,6 +207,48 @@ export function emoteForPing(ping: PingKind): UpperClip {
     case 'mine':
       return 'emoteMine';
   }
+}
+
+/** What a character does about a role ability event (S7-42). */
+export type AbilityReaction =
+  | { kind: 'play'; clip: UpperClip }
+  | { kind: 'stop'; clip: UpperClip }
+  /** The receiver of Podaj teczkę reaches out to catch the folder. */
+  | { kind: 'catch' };
+
+/**
+ * The reaction of player `playerId` to an ability event: a power pump when an ability arms or
+ * lands (Ekspertyza, Druga szansa, Przedłużenie), the phone at the ear while Telefon z terenu
+ * dials (stopped when the call ends either way), a throw for the passer and a catch for the
+ * receiver of Podaj teczkę. Null for everyone else and for a disarm.
+ */
+export function abilityReaction(
+  event: Extract<GameEvent, { kind: 'ability' }>,
+  playerId: string,
+): AbilityReaction | null {
+  if (event.ability === 'passFolder') {
+    if (event.stage !== 'done') {
+      return null;
+    }
+    if (event.playerId === playerId) {
+      return { kind: 'play', clip: 'abilityThrow' };
+    }
+    return event.targetPlayerId === playerId ? { kind: 'catch' } : null;
+  }
+  if (event.playerId !== playerId) {
+    return null;
+  }
+  if (event.ability === 'fieldCall') {
+    if (event.stage === 'started') {
+      return { kind: 'play', clip: 'abilityCall' };
+    }
+    return event.stage === 'done' || event.stage === 'cancelled'
+      ? { kind: 'stop', clip: 'abilityCall' }
+      : null;
+  }
+  return event.stage === 'armed' || event.stage === 'done'
+    ? { kind: 'play', clip: 'abilityPower' }
+    : null;
 }
 
 /**
@@ -292,7 +342,7 @@ export function mixerInterval(preset: QualityPreset, onScreen: boolean, distance
 const BLEND_RATE = 12;
 /** Locomotion rate follows its target a little slower, so the cadence never jumps. */
 const RATE_SMOOTHING = 14;
-/** A cancelled fidget fades out within this long. */
+/** A cancelled fidget (or a stopped upper clip) fades out within this long. */
 const FIDGET_CANCEL_S = 0.18;
 /** Duration of a hand reach (picking up / putting down). */
 export const REACH_S = 0.55;
@@ -329,8 +379,13 @@ export type ControllerOptions = {
 export type CharacterController = {
   /** Starts a full-body gesture from the beginning (a repeated trigger restarts it). */
   play(gesture: BodyGesture): void;
-  /** Starts an upper-body clip (fidget or emote) from the beginning. */
+  /** Starts an upper-body clip (fidget, emote or ability reaction) from the beginning. */
   playUpper(clip: UpperClip): void;
+  /**
+   * Fades the upper-body clip out within a moment (the end of a field call); with `clip`, only
+   * when that clip is the one playing.
+   */
+  stopUpper(clip?: UpperClip): void;
   /** Reaches both hands for a point (torso space) for REACH_S seconds. */
   reachFor(target: Vec3): void;
   /**
@@ -396,6 +451,8 @@ export function createCharacterController(
   let upperName: UpperClip | null = null;
   let upperTime = 0;
   let upperIsFidget = false;
+  /** stopUpper fades the clip out like a cancelled fidget. */
+  let upperStopping = false;
   let upperCancel = 1;
   let reachT = Number.POSITIVE_INFINITY;
   const reachTarget: Vec3 = { x: 0, y: 0, z: 0 };
@@ -418,6 +475,7 @@ export function createCharacterController(
     upperName = name;
     upperTime = 0;
     upperIsFidget = fidget;
+    upperStopping = false;
     upperCancel = 1;
   }
 
@@ -426,7 +484,7 @@ export function createCharacterController(
       return 0;
     }
     const duration = extra[upperName].duration;
-    return gestureWeight(upperTime, duration) * (upperIsFidget ? upperCancel : 1);
+    return gestureWeight(upperTime, duration) * (upperIsFidget || upperStopping ? upperCancel : 1);
   }
 
   /** Lays the upper-body clip over the mixer's pose. */
@@ -508,6 +566,11 @@ export function createCharacterController(
     playUpper(name) {
       startUpper(name, false);
     },
+    stopUpper(name) {
+      if (upperName && (name === undefined || name === upperName)) {
+        upperStopping = true;
+      }
+    },
     reachFor(point) {
       reachTarget.x = point.x;
       reachTarget.y = point.y;
@@ -568,7 +631,7 @@ export function createCharacterController(
         !state.working &&
         gesture === null &&
         (upperName === null || upperIsFidget);
-      if (upperName && upperIsFidget && !canFidget) {
+      if (upperName && ((upperIsFidget && !canFidget) || upperStopping)) {
         upperCancel = Math.max(0, upperCancel - dt / FIDGET_CANCEL_S);
       }
       const idleFor = upperName === null && gesture === null;
@@ -580,7 +643,8 @@ export function createCharacterController(
       }
       if (upperName) {
         upperTime += dt;
-        if (upperTime >= extra[upperName].duration || (upperIsFidget && upperCancel <= 0)) {
+        const cancelled = (upperIsFidget || upperStopping) && upperCancel <= 0;
+        if (upperTime >= extra[upperName].duration || cancelled) {
           upperName = null;
         }
       }

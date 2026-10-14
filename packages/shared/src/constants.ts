@@ -1,9 +1,16 @@
 // Balance and engine constants shared by client and server.
 // Change values here, never inline (AGENTS.md rule 6).
-import type { Role, StationKind } from './domain.ts';
+import {
+  type Ability,
+  type Difficulty,
+  type Role,
+  STATION_KINDS,
+  type StationFamily,
+  type StationKind,
+} from './domain.ts';
 
 /** Bump on any breaking change to the wire protocol; the server rejects mismatched clients. */
-export const PROTOCOL_VERSION = 2;
+export const PROTOCOL_VERSION = 8;
 
 // --- Simulation timing ---------------------------------------------------------------------
 
@@ -13,7 +20,10 @@ export const TICK_MS = 1000 / TICK_RATE_HZ;
 
 // --- Rooms ---------------------------------------------------------------------------------
 
-export const MAX_PLAYERS = 4;
+/** Players in one newsroom (one sim): a co-op room, or one versus team (S7-77). */
+export const MAX_TEAM_PLAYERS = 4;
+/** The per-sim cap (snapshot players, crew, spawns); an alias of `MAX_TEAM_PLAYERS`. */
+export const MAX_PLAYERS = MAX_TEAM_PLAYERS;
 export const ROOM_CODE_LENGTH = 4;
 /** Letters only, without the easily confused I and O. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -23,6 +33,33 @@ export const NICKNAME_MIN_LENGTH = 1;
 export const NICKNAME_MAX_LENGTH = 16;
 /** Number of distinct player colours; colour index is assigned per room slot. */
 export const PLAYER_COLOR_COUNT = 4;
+
+// --- Stage 7: rooms, versus, spectators (S7-77) -----------------------------------------------
+
+/** Newsrooms in one room: 1 in co-op, 2 in versus (team 0 Kurier, team 1 Głos). */
+export const MAX_TEAMS = 2;
+/** Players in one room across both teams (4v4). */
+export const MAX_ROOM_PLAYERS = MAX_TEAMS * MAX_TEAM_PLAYERS;
+/** Spectators (Widownia) in one room, on top of the players. */
+export const MAX_SPECTATORS = 8;
+/** A room's display name, after trimming. */
+export const ROOM_NAME_MAX_LENGTH = 24;
+/** The room browser's search text, after trimming. */
+export const ROOM_SEARCH_MAX_LENGTH = 24;
+/** Public rooms `GET /api/rooms` returns at most. */
+export const ROOM_LIST_MAX = 50;
+/** The browser-scoped client id sent on join (kick cooldown), in characters. */
+export const CLIENT_ID_LENGTH = { min: 16, max: 64 } as const;
+/** Spectators get every 2nd snapshot of each team (10 Hz at 20 Hz ticks). */
+export const SPECTATOR_SNAPSHOT_INTERVAL_TICKS = 2;
+/** Spectators get live match stats every 20 ticks (1 Hz). */
+export const SPECTATOR_STATS_INTERVAL_TICKS = 20;
+export const VERSUS = {
+  /** Endless has no natural end: a versus endless match lasts this long. */
+  endlessDurationS: 600,
+  /** The lead-change cue fires at most this often. */
+  leadCueCooldownMs: 5000,
+} as const;
 
 // --- Movement ------------------------------------------------------------------------------
 
@@ -50,6 +87,11 @@ export const MAX_CLIENT_MESSAGE_BYTES = 4096;
 export const LEADERBOARD_RETENTION_DAYS = 90;
 export const LEADERBOARD_DEFAULT_LIMIT = 10;
 
+// --- Stage 7: public config (S7-67) ----------------------------------------------------------
+
+/** Longest operator message of the day (MOTD): at most two lines in the menu column at 640 px. */
+export const MOTD_MAX_CHARS = 140;
+
 // --- Level and scoring (design doc, "Punktacja") -------------------------------------------
 
 export const CREDIBILITY_START = 100;
@@ -61,6 +103,8 @@ export const SCORE = {
   correctImportant: 20,
   correctWithContext: 30,
   speedBonus: 5,
+  /** Paid once per proof beyond the first on a fully proven multi-stamp folder (Stage 7). */
+  multiStampBonus: 10,
   publishedFake: -20,
   rejectedTrue: -10,
   expired: -5,
@@ -79,6 +123,12 @@ export const CREDIBILITY = {
 export const SPEED_BONUS_REMAINING_FRACTION = 0.5;
 /** A correct verdict justified by a stamp that does not justify it earns this share of points. */
 export const WRONG_JUSTIFICATION_SCORE_FACTOR = 0.5;
+/** Most distinct justifying stamps a story can require, and a verdict can cite (Stage 7). */
+export const MAX_REQUIRED_STAMPS = 3;
+/** Extra folder time per proof beyond the first, added when a multi-stamp folder spawns. */
+export const MULTI_STAMP_EXTRA_DEADLINE_MS = 20_000;
+/** Campaign level number from which stories may require more than one proof (earlier: warning). */
+export const MULTI_STAMP_FIRST_LEVEL = 4;
 
 // --- Folders, stations, desk ---------------------------------------------------------------
 
@@ -86,8 +136,6 @@ export const WRONG_JUSTIFICATION_SCORE_FACTOR = 0.5;
 export const INTERACTION_REACH_TILES = 1.1;
 /** A folder enters the "deadline warning" state with this much time left. */
 export const DEADLINE_WARNING_MS = 10_000;
-/** Managing editor: one deadline extension per level, by this much. */
-export const DEADLINE_EXTENSION_MS = 20_000;
 
 /** Hold-to-work time at each station before its minigame opens (design doc: 3–8 s). */
 export const STATION_WORK_MS = {
@@ -97,21 +145,226 @@ export const STATION_WORK_MS = {
   phone: 6000,
   aiScanner: 3000,
   dataLibrary: 5000,
+  geolocation: 4000,
+  transcript: 5000,
+  crossCheck: 4000,
+  metadata: 4000,
 } as const satisfies Record<StationKind, number>;
 
-/** Role bonus: work time multiplier at the role's stations ("40% faster"). */
-export const ROLE_WORK_TIME_FACTOR = 0.6;
-export const ROLE_STATIONS = {
-  photoEditor: ['imageSearch', 'aiScanner'],
-  archivist: ['archive'],
-  reporter: ['phone'],
-  managingEditor: [],
-} as const satisfies Record<Role, readonly StationKind[]>;
+// --- Stage 7: roles, station families, abilities (S7-36) --------------------------------------
+
+/**
+ * The family of every station kind. In Stage 7 families only gate Ekspertyza (a photo editor's
+ * covers the image stations, an archivist's the documents); role passives keep explicit lists.
+ */
+export const STATION_FAMILY = {
+  imageSearch: 'image',
+  aiScanner: 'image',
+  geolocation: 'image',
+  metadata: 'image',
+  archive: 'documents',
+  dataLibrary: 'documents',
+  transcript: 'documents',
+  sourceRegistry: 'sources',
+  phone: 'sources',
+  crossCheck: 'sources',
+} as const satisfies Record<StationKind, StationFamily>;
+
+/** What a role brings: its passive work bonus, its active ability and its special rules. */
+export type RolePerk = {
+  /** Stations where the role's hold-to-work time is multiplied by `workFactor` (the passive). */
+  fasterAt: readonly StationKind[];
+  /** Work-time multiplier at `fasterAt` stations ("40% faster" is 0.6); 1 elsewhere. */
+  workFactor: number;
+  /** The role's active ability (R / RB / the fourth touch button). */
+  ability: Ability;
+  /** The station family the role's Ekspertyza covers; null for roles without Ekspertyza. */
+  expertiseFamily: StationFamily | null;
+  /** The phone minigame starts without the queue (client-side, design doc). */
+  skipsPhoneQueue: boolean;
+  /** Koło ratunkowe: deadline rescues of a carried folder per level (0 without the perk). */
+  rescuesPerLevel: number;
+};
+
+export const ROLE_PERKS = {
+  photoEditor: {
+    fasterAt: ['imageSearch', 'aiScanner', 'geolocation', 'metadata'],
+    workFactor: 0.6,
+    ability: 'expertise',
+    expertiseFamily: 'image',
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  archivist: {
+    fasterAt: ['archive', 'transcript'],
+    workFactor: 0.6,
+    ability: 'expertise',
+    expertiseFamily: 'documents',
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  reporter: {
+    fasterAt: ['phone', 'crossCheck'],
+    workFactor: 0.6,
+    ability: 'fieldCall',
+    expertiseFamily: null,
+    skipsPhoneQueue: true,
+    rescuesPerLevel: 0,
+  },
+  managingEditor: {
+    fasterAt: [],
+    workFactor: 1,
+    ability: 'extendDeadline',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  generalist: {
+    fasterAt: STATION_KINDS,
+    workFactor: 0.8,
+    ability: 'secondChance',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 0,
+  },
+  rescuer: {
+    fasterAt: [],
+    workFactor: 1,
+    ability: 'passFolder',
+    expertiseFamily: null,
+    skipsPhoneQueue: false,
+    rescuesPerLevel: 1,
+  },
+} as const satisfies Record<Role, RolePerk>;
+
+/**
+ * Ability tuning. Every cooldown starts at 60 s and is retuned only from bot data (S7-46); the
+ * cooldown starts when the effect happens, not when an ability is armed.
+ * - fieldCall.callMs: how long Telefon z terenu dials before the phone stamp lands;
+ * - extendDeadline.addMs: time Przedłużenie adds to a folder (a botRaid wave moves together);
+ * - secondChance.rangeTiles: how far a locked station may be for an immediate Druga szansa;
+ * - passFolder.rangeTiles: how far Podaj teczkę reaches a free teammate;
+ * - passFolder.flightMs: how long the client draws the folder's arc to the receiver (cosmetic: the
+ *   folder is in the receiver's hands at once in the simulation).
+ */
+export const ABILITY = {
+  expertise: { cooldownMs: 60_000 },
+  fieldCall: { cooldownMs: 60_000, callMs: 6000 },
+  extendDeadline: { cooldownMs: 60_000, addMs: 20_000 },
+  secondChance: { cooldownMs: 60_000, rangeTiles: 2.5 },
+  passFolder: { cooldownMs: 60_000, rangeTiles: 6, flightMs: 450 },
+} as const satisfies Record<Ability, { cooldownMs: number } & Record<string, number>>;
+
+/** Koło ratunkowe: time added to a folder that reaches its deadline in a Ratownik's hands. */
+export const RESCUE_ADD_MS = 20_000;
+/** Abilities are first ready this long after the level (or a mid-game join) starts. */
+export const ABILITY_FIRST_READY_MS = 0;
 
 /** A failed minigame blocks the station for this long ("failure costs time"). */
 export const MINIGAME_FAIL_LOCKOUT_MS = 3000;
 /** Client-side time limit for one minigame attempt; running out counts as a failure. */
 export const MINIGAME_TIME_LIMIT_MS = 20_000;
+/**
+ * Stations whose minigame keeps its puzzle for a folder after a failure or a cancel (S7-13): the
+ * Kartoteka shows the same card again. Elsewhere every retry gets a fresh puzzle.
+ */
+export const MINIGAME_STABLE_SEED_STATIONS: readonly StationKind[] = ['sourceRegistry'];
+/**
+ * Versus only (S7-77, enforced from S7-80): a minigame success reported sooner than this after the
+ * minigame opened counts as a failure. Each value sits below a quick classmate's honest solve
+ * (the phone allows for the reporter, who skips the queue), so only scripted answers trip it.
+ */
+export const MINIGAME_MIN_SOLVE_MS = {
+  imageSearch: 1200,
+  archive: 1500,
+  sourceRegistry: 1200,
+  phone: 1000,
+  aiScanner: 600,
+  dataLibrary: 1000,
+  geolocation: 1000,
+  transcript: 1200,
+  crossCheck: 1200,
+  metadata: 1000,
+} as const satisfies Record<StationKind, number>;
+
+// --- Stage 7: difficulty (S7-16) -------------------------------------------------------------
+// Pure helpers that apply a preset live in `difficulty.ts`. Normal is the identity: every factor
+// is 1, so Normal plays exactly like the authored levels. Rewards are never scaled.
+
+/** One difficulty's tuning. Factors multiply the Normal value; read through `difficulty.ts`. */
+export type DifficultyPreset = {
+  /** Folder time (`deadlineS`) of scheduled and event folders. */
+  readonly deadlineFactor: number;
+  /** Time between scheduled folders, so a smaller factor means more folders per level. */
+  readonly spawnGapFactor: number;
+  /** Hold-to-work time at a station. */
+  readonly workTimeFactor: number;
+  /** Station lockout after a failed minigame. */
+  readonly lockoutFactor: number;
+  /** Score and credibility penalties (wrong verdicts, expiry, corrections). */
+  readonly penaltyFactor: number;
+  /** Time limit of one minigame attempt. */
+  readonly minigameTimeFactor: number;
+  /** Added to the mistake limit of minigames that allow more than one mistake. */
+  readonly extraMistakes: number;
+  /** Whether the "what next" hints may show (the player's setting must allow them too). */
+  readonly hints: boolean;
+  /** Whether a failed minigame reveals its answer. */
+  readonly revealOnFail: boolean;
+};
+
+/** Difficulty presets, checked by the balance pass (S7-35, docs/balance.md "Difficulties"). */
+export const DIFFICULTY = {
+  easy: {
+    deadlineFactor: 1.3,
+    spawnGapFactor: 1.2,
+    workTimeFactor: 0.8,
+    lockoutFactor: 0.5,
+    penaltyFactor: 0.5,
+    minigameTimeFactor: 1.5,
+    extraMistakes: 1,
+    hints: true,
+    revealOnFail: true,
+  },
+  normal: {
+    deadlineFactor: 1,
+    spawnGapFactor: 1,
+    workTimeFactor: 1,
+    lockoutFactor: 1,
+    penaltyFactor: 1,
+    minigameTimeFactor: 1,
+    extraMistakes: 0,
+    hints: true,
+    revealOnFail: true,
+  },
+  hard: {
+    deadlineFactor: 0.85,
+    spawnGapFactor: 0.9,
+    workTimeFactor: 1.15,
+    lockoutFactor: 1.5,
+    penaltyFactor: 1.25,
+    minigameTimeFactor: 0.85,
+    extraMistakes: 0,
+    hints: true,
+    revealOnFail: true,
+  },
+  expert: {
+    deadlineFactor: 0.75,
+    spawnGapFactor: 0.8,
+    workTimeFactor: 1.25,
+    lockoutFactor: 2,
+    penaltyFactor: 1.5,
+    minigameTimeFactor: 0.75,
+    extraMistakes: -1,
+    hints: false,
+    revealOnFail: false,
+  },
+} as const satisfies Record<Difficulty, DifficultyPreset>;
+
+/** New rooms start here; the room keeps its difficulty across level changes. */
+export const DEFAULT_DIFFICULTY: Difficulty = 'normal';
+/** A difficulty never lowers a minigame's mistake limit below this. */
+export const MINIGAME_MIN_MISTAKES = 1;
 
 // --- Pings ---------------------------------------------------------------------------------
 
@@ -152,6 +405,26 @@ export const CONTENT_TRUE_STORY_SHARE = { min: 0.25, max: 0.45 } as const;
 export const CONTENT_TWO_STARS_SHARE = { min: 0.35, max: 0.65 } as const;
 /** Three-star threshold as a share of the level's maximum score (≈ 80%). */
 export const CONTENT_THREE_STARS_SHARE = { min: 0.65, max: 0.95 } as const;
+
+// --- Stage 7: station bag and star shares (S7-16) --------------------------------------------
+
+/**
+ * Star thresholds of a generated run, as shares of its maximum score (balance intent 55 % / 80 %);
+ * a level's `starShares` may override them within the CONTENT_*_STARS_SHARE ranges.
+ */
+export const STAR_SHARES = { two: 0.55, three: 0.8 } as const;
+/** Star thresholds are rounded to a multiple of this many points. */
+export const STAR_THRESHOLD_STEP = 5;
+/** Chance that a bag slot tries stories decidable at several stations before single-station ones. */
+export const BAG_FLEX_CHANCE = 0.3;
+/** The first this many folders get single-proof, non-urgent stories when the pool allows. */
+export const BAG_OPENING_SLOTS = 2;
+/** Multi-stamp stories are drawn only from this slot index (0-based) on, when the pool allows. */
+export const BAG_MULTI_STAMP_MIN_SLOT = 4;
+/** Floor of a bag folder's deadline after difficulty scaling and the fit-the-level clamp (s). */
+export const BAG_MIN_DEADLINE_S = 30;
+/** Seed of the Normal run `LEVELS` and `getLevel` show for a bag level (lobby, briefing, tools). */
+export const BAG_PREVIEW_SEED = 0;
 
 // --- S2-11 Pings (client picker) -----------------------------------------------------------
 
@@ -243,7 +516,7 @@ export const ENDLESS = {
   firstSpawnS: 4,
   startIntervalS: 18,
   minIntervalS: 7,
-  intervalFactorPerMinute: 0.9,
+  intervalFactorPerMinute: 0.88,
   /** Each interval is randomised by up to this fraction either way. */
   intervalJitter: 0.15,
   startDeadlineS: 80,
@@ -261,6 +534,8 @@ export const ENDLESS = {
   /** `levelEnd.results` keeps at most this many (the latest) entries in a long run. */
   maxResultsSent: 512,
 } as const;
+/** Endless: every station deck should hold at least this many stories (fewer → validator warning). */
+export const ENDLESS_MIN_DECK = 4;
 // --- S4-01: phone station minigame ------------------------------------------------------------
 
 /** Numbers in the phone book the player picks from. */
@@ -303,6 +578,49 @@ export const DATA_LIBRARY_ROWS = 3;
 export const DATA_LIBRARY_YEARS = 3;
 /** Chance that the claimed figure is altered, for a folder without a data-library stamp. */
 export const DATA_LIBRARY_ALTERED_CHANCE = 0.6;
+
+// --- Stage 7: Mapa (geolocation) minigame (S7-48, played from S7-55) --------------------------
+
+export const GEOLOCATION_MAX_MISTAKES = 2;
+/** The town map: 12 district tiles. */
+export const GEOLOCATION_MAP = { columns: 4, rows: 3 } as const;
+/** Without a geolocation stamp: chance the photo is not from the captioned place. */
+export const GEOLOCATION_PROBLEM_CHANCE = 0.5;
+/** A photo not from the captioned place comes from another district (else another town). */
+export const GEOLOCATION_OTHER_DISTRICT_SHARE = 0.5;
+
+// --- Stage 7: Stenogram (transcript) minigame (S7-48, played from S7-53) ----------------------
+
+export const TRANSCRIPT_MAX_MISTAKES = 2;
+/** Lines of the full record; fits 640x360 as a 2x2 grid of lines at least 48 px tall. */
+export const TRANSCRIPT_LINES = 4;
+/** Without a transcript stamp: chance the clip is cut or absent. */
+export const TRANSCRIPT_PROBLEM_CHANCE = 0.5;
+
+// --- Stage 7: Inne media (crossCheck) minigame (S7-48, played from S7-54) ---------------------
+
+/** Three answers; like aiScanner and phone, one wrong pick fails. */
+export const CROSS_CHECK_MAX_MISTAKES = 1;
+export const CROSS_CHECK_CARDS = 5;
+/** Independent confirmations needed for „Potwierdzają”. */
+export const CROSS_CHECK_CONFIRMATIONS = 2;
+/**
+ * Without a crossCheck stamp: chance that independent media already cover a true story
+ * (confirm it) or an untrue one (deny it); otherwise nobody has checked it yet.
+ */
+export const CROSS_CHECK_COVERAGE_CHANCE = 0.5;
+
+// --- Stage 7: Metadane (metadata) minigame (S7-48, played from S7-52) -------------------------
+
+export const METADATA_MAX_MISTAKES = 2;
+/** File fields compared with the claim: taken, device, software, place. */
+export const METADATA_FIELDS = 4;
+/** Without a metadata stamp: weights of the three puzzle outcomes. */
+export const METADATA_NO_STAMP_WEIGHTS = {
+  consistent: 0.4,
+  contradiction: 0.4,
+  stripped: 0.2,
+} as const;
 
 // --- S4-05..S4-09: level event presentation (client) -----------------------------------------
 

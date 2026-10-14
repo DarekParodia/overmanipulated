@@ -1,0 +1,56 @@
+/* Ad frame (S7-73): a plain white card with the standard outline and a small "Reklama" label.
+   The creative inside is third-party (exempt from tokens), the frame is not. Rails sit at least
+   --space-ad-gap (>= AD_MIN_GAP_PX) from every control; their viewport gates are in placements.ts. */
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+/* Google found no ad: no empty frame. */
+.rail:has(ins[data-ad-status="unfilled"]) {
+  display: none;
+}
+
+.label {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* Fixed size from AD_PLACEMENTS (inline width and height): no layout shift. */
+.unit {
+  display: inline-block;
+}
+
+.menu,
+.results {
+  position: fixed;
+}
+
+.menu {
+  top: 50%;
+  translate: 0 -50%;
+  left: max(var(--space-4), env(safe-area-inset-left));
+}
+
+/* Bottom-right, so the HUD's round menu button (top-right, dimmed under the results backdrop)
+   stays >= AD_MIN_GAP_PX above the rail; the 900 px height gate in placements.ts guarantees it. */
+.results {
+  right: max(var(--space-4), env(safe-area-inset-right));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+}
+
+.lobby {
+  justify-self: center;
+  margin-top: var(--space-ad-gap);
+}
+
+.spectator {
+  justify-self: center;
+}

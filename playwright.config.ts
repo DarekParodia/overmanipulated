@@ -7,6 +7,14 @@ const launchOptions = executablePath ? { executablePath } : {};
 // reuses another checkout's servers.
 const serverPort = process.env.E2E_SERVER_PORT ?? '3000';
 const webPort = process.env.E2E_WEB_PORT ?? '4173';
+const baseURL = `http://localhost:${webPort}`;
+// The first-time intro (S7-102) autoplays when a player opens a training room. Every context
+// starts with it seen, so a spec's lobby is free to use; intro.spec clears it to test the
+// autoplay. `browser.newContext()` in a spec gets this too.
+const introSeen = {
+  cookies: [],
+  origins: [{ origin: baseURL, localStorage: [{ name: 'redakcja.intro.seen.v1', value: '1' }] }],
+};
 
 export default defineConfig({
   testDir: './e2e',
@@ -17,7 +25,8 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [['github'], ['list']] : 'list',
   use: {
-    baseURL: `http://localhost:${webPort}`,
+    baseURL,
+    storageState: introSeen,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     launchOptions,
@@ -25,6 +34,8 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
+      // Phone-only checks (S7-12).
+      testIgnore: /phone-layout\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 }, launchOptions },
     },
     {
@@ -34,23 +45,38 @@ export default defineConfig({
         launchOptions,
       },
     },
+    {
+      // The smallest supported phone (S7-12): the phone layout checks at 640×360, the role
+      // ability button there (S7-47), the spectate screen's team switch (S7-90), the lobby
+      // manage and level details sheets (S7-87), the versus rival chip and results (S7-89) and the
+      // lobby look (S7-105).
+      name: 'phone-small',
+      testMatch: /(phone-layout|abilities|spectate|lobby-manage|versus-hud|lobby-look)\.spec\.ts/,
+      use: {
+        ...devices['Pixel 7 landscape'],
+        viewport: { width: 640, height: 360 },
+        launchOptions,
+      },
+    },
   ],
   webServer: [
     {
       command: 'bun apps/server/src/index.ts',
       url: `http://localhost:${serverPort}/health`,
       // A short briefing keeps the start-to-HUD tests quick even without pressing "Gotowy!".
+      // e2e/server-config.json turns the room browser on (off by default, S7-88).
       env: {
         PORT: serverPort,
         DATABASE_PATH: ':memory:',
         LOG_LEVEL: 'silent',
         BRIEFING_MS: '1500',
+        CONFIG_PATH: 'e2e/server-config.json',
       },
       reuseExistingServer: !process.env.CI,
     },
     {
       command: `bun run build && cd apps/client && bunx vite preview --port ${webPort} --strictPort`,
-      url: `http://localhost:${webPort}`,
+      url: baseURL,
       env: { GAME_SERVER: `localhost:${serverPort}` },
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,

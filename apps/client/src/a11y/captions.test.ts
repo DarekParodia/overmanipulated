@@ -70,6 +70,35 @@ describe('caption table', () => {
     expect(captionFor('ui.click', false)).toBeNull();
   });
 
+  it('says the belt is full in words (S7-09)', () => {
+    expect(captionFor('folder.beltFull', false)).toEqual({
+      icon: 'conveyor',
+      text: 'Taśma pełna',
+      tone: 'warn',
+    });
+  });
+
+  it('leaves the pause to the menu sheet, which says „Pauza” (S7-10)', () => {
+    expect(captionTable['game.paused']).toEqual({ skip: 'visual-elsewhere' });
+  });
+
+  it('captions a new spectator and leaves the lobby switches to the screen (S7-86)', () => {
+    expect(captionFor('room.spectatorJoined', false)).toEqual({
+      icon: 'eye',
+      text: 'Nowy widz',
+      tone: 'info',
+    });
+    expect(captionTable['lobby.modeSwitch']).toEqual({ skip: 'visual-elsewhere' });
+    expect(captionTable['lobby.teamSwitch']).toEqual({ skip: 'visual-elsewhere' });
+    expect(captionTable['lobby.lookChanged']).toEqual({ skip: 'visual-elsewhere' });
+  });
+
+  it('leaves the spectate cues to the screen: the ring moves, the feed row is the words (S7-91)', () => {
+    expect(captionTable['spectate.follow']).toEqual({ skip: 'ui' });
+    expect(captionTable['spectate.feed']).toEqual({ skip: 'visual-elsewhere' });
+    expect(captionFor('spectate.feed', false)).toBeNull();
+  });
+
   it('keeps muted-by-design decorative cues out of the stack', () => {
     expect(captionFor('ambience.phone', false)).toBeNull();
     expect(captionFor('player.step', false)).toBeNull();

@@ -1,21 +1,32 @@
 // The level section of the lobby. The host sees the campaign map (S3-04): a path of big level
 // tiles — number (or „Trening”), title, best stars from this browser or a lock — and picks one
-// (native radios under the tiles). Guests see the chosen level read-only: title plus two chips
-// (minutes, folders).
+// (native radios under the tiles). Guests see the chosen level read-only: title plus chips
+// (minutes, folders, and the room's difficulty, which the host picks next to the card, S7-25).
+// The folder count is the dealt run's when there is one, else what the room's difficulty deals.
+// Tile stars and the endless best are the ones earned on the room's difficulty; the locks follow
+// the best stars across every difficulty (S7-26). „Szczegóły” opens the level details for
+// everyone (S7-87).
 import { getLevel, LEVELS } from '@redakcja/content';
-import { ENDLESS_LEVEL_ID } from '@redakcja/shared';
+import { type Difficulty, ENDLESS_LEVEL_ID } from '@redakcja/shared';
 import { useId } from 'react';
 import { endlessUnlocked } from '../../endless/endless-model.ts';
 import { emitCue } from '../../fx/feedback.ts';
-import { campaignTiles, useEndlessBest, useProgress } from '../../store/progress.ts';
+import { campaignTiles, endlessBestOn, useEndlessBest, useProgress } from '../../store/progress.ts';
 import { pl } from '../../strings/pl.ts';
+import { Button } from '../../ui/Button.tsx';
 import { Icon } from '../../ui/icons/Icon.tsx';
 import styles from './LevelCard.module.css';
+import { levelCardFolders } from './level-card-model.ts';
 
 export type LevelCardProps = {
   levelId: string;
+  difficulty: Difficulty;
+  /** Folders of the dealt run (`roomState.run`); null counts what `difficulty` deals. */
+  runFolders: number | null;
   isHost: boolean;
   onSelect(levelId: string): void;
+  /** Opens „Szczegóły” of the chosen level (S7-87), for guests and the host. */
+  onDetails?: () => void;
   disabled?: boolean;
 };
 
@@ -25,18 +36,49 @@ function keepInView(tile: HTMLElement | null): void {
   tile?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
-export function LevelCard({ levelId, isHost, onSelect, disabled = false }: LevelCardProps) {
+export function LevelCard({
+  levelId,
+  difficulty,
+  runFolders,
+  isHost,
+  onSelect,
+  onDetails,
+  disabled = false,
+}: LevelCardProps) {
   const groupName = useId();
   const best = useProgress((s) => s.best);
-  const endlessBest = useEndlessBest((s) => s.best);
+  const endlessBest = useEndlessBest((s) => endlessBestOn(s.best, difficulty));
   const endless = levelId === ENDLESS_LEVEL_ID;
   const level = getLevel(levelId);
+  // Guests cannot change the difficulty, so they read it here; the host has the picker.
+  const difficultyChip = !isHost && (
+    // Keyed by the difficulty, so the chip pops again when the host picks another one.
+    <span
+      key={difficulty}
+      className={`${styles.chip} ${styles.difficultyChip}`}
+      data-testid="difficulty-chip"
+    >
+      <Icon name="gauge" size={22} />
+      {pl.difficulty.chip(pl.difficulty.names[difficulty])}
+    </span>
+  );
+  const detailsButton = onDetails && (
+    <Button
+      icon={<Icon name="search" size={22} />}
+      data-testid="level-details-open"
+      onClick={onDetails}
+    >
+      {pl.levelDetails.open}
+    </Button>
+  );
   const chips = endless ? (
     <p className={styles.chips}>
       <span className={styles.chip}>
         <Icon name="infinity" size={22} />
         {pl.endless.pitch}
       </span>
+      {difficultyChip}
+      {!isHost && detailsButton}
     </p>
   ) : (
     level && (
@@ -45,10 +87,12 @@ export function LevelCard({ levelId, isHost, onSelect, disabled = false }: Level
           <Icon name="clock" size={22} />
           {pl.lobbyRoles.levelMinutes(Math.round(level.durationS / 60))}
         </span>
-        <span className={styles.chip}>
+        <span className={styles.chip} data-testid="level-folders">
           <Icon name="article" size={22} />
-          {pl.lobbyRoles.levelFolders(level.schedule.length)}
+          {pl.lobbyRoles.levelFolders(levelCardFolders(level, difficulty, runFolders))}
         </span>
+        {difficultyChip}
+        {!isHost && detailsButton}
       </p>
     )
   );
@@ -65,12 +109,12 @@ export function LevelCard({ levelId, isHost, onSelect, disabled = false }: Level
           {endless ? pl.endless.title : (level?.title ?? levelId)}
         </h2>
         {chips}
-        {LEVELS.length > 1 && <p className={styles.hostOnly}>{pl.lobbyRoles.levelHostOnly}</p>}
+        <p className={styles.hostOnly}>{pl.lobbyRoles.levelHostOnly}</p>
       </section>
     );
   }
 
-  const tiles = campaignTiles(LEVELS, best);
+  const tiles = campaignTiles(LEVELS, best, difficulty);
   const endlessLocked = !endlessUnlocked(LEVELS, best);
   const endlessScore = endlessBest ? String(endlessBest.score) : null;
   return (
@@ -83,6 +127,8 @@ export function LevelCard({ levelId, isHost, onSelect, disabled = false }: Level
         {pl.campaign.title}
       </h2>
       {chips}
+      {/* Its own slot: on phones the host's chips give way to the tiles, this button stays. */}
+      {detailsButton && <div className={styles.details}>{detailsButton}</div>}
       <fieldset className={styles.path} disabled={disabled}>
         <legend className="visually-hidden">{pl.lobbyRoles.levelPick}</legend>
         {tiles.map((tile) => {

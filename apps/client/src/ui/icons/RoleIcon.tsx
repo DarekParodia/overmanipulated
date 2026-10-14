@@ -1,7 +1,8 @@
 // Role marks for press passes and the duty roster, in the same cartoon style as Icon.tsx
 // (24×24 grid, 2.5 px round strokes, optional `--icon-fill` tint). Each role shows the accessory
 // its character is known by: loupe over a print (photo editor), reading glasses (archivist),
-// notebook and pencil (reporter), tie (managing editor). An empty pass marks "no role".
+// notebook and pencil (reporter), tie (managing editor), a multi-tool with a pencil blade and a
+// loupe ring (generalist), a lifebuoy (rescuer). An empty pass marks "no role".
 import type { Role } from '@redakcja/shared';
 import { ICON_STROKE, type IconPart, IconPaths } from './Icon.tsx';
 
@@ -30,6 +31,21 @@ const paths: Record<RoleIconName, readonly IconPart[]> = {
     { d: 'M10 4h4l-.8 3.5h-2.4Z', fill: 'tint' },
     { d: 'M10.8 7.5L9 16.5l3 4 3-4-1.8-9Z', fill: 'tint' },
     { d: 'M6.5 3l3.5 1M17.5 3L14 4' },
+  ],
+  generalist: [
+    { d: 'M4 15h13.5a2.25 2.25 0 0 1 0 4.5H4a2.25 2.25 0 0 1 0-4.5Z', fill: 'tint' },
+    { d: 'M5 15l5-8.5 2.6 1.5L8 15', fill: 'tint' },
+    { d: 'M10 6.5l1.8-2.8.8 4.3' },
+    { d: 'M15 9.5a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z', fill: 'tint' },
+    { d: 'M17 12.3l-1 2.7' },
+  ],
+  rescuer: [
+    // Outer and inner circles wind in opposite directions, so the tint fills only the ring.
+    {
+      d: 'M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0-17 0ZM8 12a4 4 0 1 1 8 0a4 4 0 1 1-8 0Z',
+      fill: 'tint',
+    },
+    { d: 'M9.2 9.2L6 6M14.8 9.2L18 6M9.2 14.8L6 18M14.8 14.8L18 18' },
   ],
   none: [{ d: 'M5 3.5h14v17H5Z', fill: 'tint' }, { d: 'M9 12h6' }],
 };

@@ -3,7 +3,8 @@
 import type { HapticPattern } from './haptics.ts';
 import type { ParticlePresetId } from './particles/presets.ts';
 
-export type AudioBus = 'ui' | 'sfx' | 'music';
+/** `voice` carries only the intro voiceover (fx/audio/voice.ts); no cue plays on it. */
+export type AudioBus = 'ui' | 'sfx' | 'music' | 'voice';
 
 export type SoundLayer = {
   /** One id, or several to pick from at random (variation). */
@@ -61,7 +62,18 @@ export type AnimationTrigger =
   | 'tempoUp'
   // S4-05 level events.
   /** A level event starts or ends (banner / badges listen via the game event feed). */
-  | 'eventAnnounce';
+  | 'eventAnnounce'
+  // S7-40 role abilities (HUD chip and touch button).
+  /** The local ability came off its cooldown: the chip / button bumps once. */
+  | 'abilityReady'
+  /** A local press that cannot do anything: the chip / button shakes (none with reduced motion). */
+  | 'abilityDenied'
+  // S7-89 versus.
+  /** The rival chip pops (lead taken) or shakes (lead lost); none with reduced motion. */
+  | 'versusLead'
+  // S7-91 spectate screen.
+  /** A new row slides into the spectators' event feed (`value`: its id); a fade with reduced motion. */
+  | 'feedPop';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -134,6 +146,15 @@ export const cues = {
     shake: 0.25,
     haptic: 'thud',
   },
+  /**
+   * The solo player's in-game menu holds the level still (`paused` rising edge, fx/
+   * gameplay-feedback.ts); the menu sheet shows the „Pauza” chip and the sheet slides in.
+   */
+  'game.paused': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
+  },
   'stamp.applied': {
     severity: 2,
     sound: { ids: ['stamp'], bus: 'sfx', rateJitter: 0.05 },
@@ -178,11 +199,14 @@ export const cues = {
     severity: 1,
     sound: { ids: ['tick'], bus: 'sfx', volume: 0.45, rateJitter: 0.03 },
   },
-  'folder.deadlineExtended': {
+  /**
+   * A scheduled folder is due but every conveyor tile holds one (`conveyorFull` rising edge, fx/
+   * gameplay-feedback.ts); the ghost card and the conveyor sign turn orange.
+   */
+  'folder.beltFull': {
     severity: 1,
-    sound: { ids: ['arrive'], bus: 'sfx', volume: 0.45, rateJitter: 0.04 },
-    particles: { preset: 'paperFlutter', count: 4 },
-    animation: ['hop', 'cardHop'],
+    sound: { ids: ['hmm'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
   },
   'folder.expired': {
     severity: 2,
@@ -249,6 +273,7 @@ export const cues = {
     haptic: 'success',
     animation: ['cheer', 'scorePop'],
   },
+  /** Right verdict on weak or too little proof (`weakProof` / `incompleteProof`). */
   'verdict.wrongJustification': {
     severity: 2,
     sound: { ids: ['hmm'], bus: 'sfx', volume: 0.75 },
@@ -323,6 +348,44 @@ export const cues = {
     animation: 'slump',
     loop: 'stopAll',
   },
+  // --- S7-89 versus: the lead changing hands (rival chip) and the match result stingers, which
+  // replace `level.win` / `level.lose` when the level end carries a versus summary. ---
+  'versus.leadTaken': {
+    severity: 2,
+    sound: { ids: ['chime'], bus: 'sfx', volume: 0.7 },
+    haptic: 'tick',
+    animation: 'versusLead',
+  },
+  'versus.leadLost': {
+    severity: 2,
+    sound: { ids: ['lowsting'], bus: 'sfx', volume: 0.5 },
+    haptic: 'tick',
+    animation: 'versusLead',
+  },
+  'versus.win': {
+    severity: 3,
+    sound: { ids: ['fanfare'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'confetti', count: 40 },
+    extraParticles: { preset: 'starBurst' },
+    haptic: 'success',
+    animation: 'cheer',
+    loop: 'stopAll',
+  },
+  'versus.lose': {
+    severity: 3,
+    sound: { ids: ['lose'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'paperBits', count: 24 },
+    haptic: 'thud',
+    animation: 'slump',
+    loop: 'stopAll',
+  },
+  'versus.draw': {
+    severity: 2,
+    sound: { ids: ['hmm'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'inkPuff', count: 12 },
+    animation: 'shrug',
+    loop: 'stopAll',
+  },
   // --- Station overlay and desk sheet (S2-03, S2-07). Placeholder sounds until the sound pass.
   'station.open': { severity: 1, sound: { ids: ['copy'], bus: 'ui', volume: 0.6 }, haptic: 'tick' },
   'minigame.success': {
@@ -333,6 +396,12 @@ export const cues = {
   'desk.justify': {
     severity: 1,
     sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
+  // S7-19: a cited stamp taken back out of a multi-stamp pick.
+  'desk.unjustify': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', volume: 0.7 },
     haptic: 'tick',
   },
   // --- Pings (S2-11). Placeholder sounds until the sound pass adds one per ping type. ------
@@ -401,6 +470,49 @@ export const cues = {
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.6, rateJitter: 0.05 },
     haptic: 'tick',
   },
+  // S7-86 lobby room settings: the host switches the mode, a player changes newsroom (the cards
+  // pop into their new column), someone starts watching (lobby, and a toast in the game).
+  'lobby.modeSwitch': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.8 },
+    haptic: 'tick',
+  },
+  'lobby.teamSwitch': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'tick',
+  },
+  // S7-87 host manage sheet: the host role moves (a crown pops onto the new host's card); a
+  // kicked member lands on the menu with the reason.
+  'lobby.hostChanged': {
+    severity: 1,
+    sound: { ids: ['chime'], bus: 'ui', volume: 0.6 },
+  },
+  'lobby.kicked': {
+    severity: 2,
+    sound: { ids: ['buzzer'], bus: 'ui' },
+    haptic: 'thud',
+  },
+  // S7-105: another player changed their look in the lobby (the accessory badge pops).
+  'lobby.lookChanged': {
+    severity: 1,
+    sound: { ids: ['hover'], bus: 'ui', volume: 0.6, rateJitter: 0.1 },
+  },
+  'room.spectatorJoined': {
+    severity: 1,
+    sound: { ids: ['join'], bus: 'ui', volume: 0.5 },
+  },
+  // S7-91 spectate screen: a spectator follows a player (the camera glides after them; their
+  // chip and name tag get a blue ring) or stops; a new row comes into the event feed.
+  'spectate.follow': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
+  },
+  'spectate.feed': {
+    severity: 1,
+    sound: { ids: ['tick'], bus: 'ui', volume: 0.3 },
+    animation: 'feedPop',
+  },
   // S3-03 briefing: the newspaper card whooshes in and slaps onto the desk; "Gotowy!" stamps.
   'briefing.intro': {
     severity: 1,
@@ -425,6 +537,12 @@ export const cues = {
   'debrief.mark': {
     severity: 1,
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.75, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
+  // S7-06: each row of the 'Za co punkty' table ticks in as its points count up.
+  'debrief.row': {
+    severity: 1,
+    sound: { ids: ['tick'], bus: 'ui', volume: 0.5, rateJitter: 0.04 },
     haptic: 'tick',
   },
   'debrief.vote': {
@@ -493,6 +611,60 @@ export const cues = {
     haptic: 'thud',
   },
   'dataLibrary.mistake': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
+  // S7-52 Metadane minigame: the contradicting field (or „Zgadza się” / „Brak danych”) found, or
+  // a wrong pick struck through. DOM overlay only, so no particles.
+  'metadata.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'metadata.mistake': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
+  // S7-53 Stenogram minigame: the clip's line found in the record (the highlighter sweeps it),
+  // the round solved (the right judgement or „Nie ma w zapisie”), or a wrong pick struck
+  // through. DOM overlay only, so no particles.
+  'transcript.find': {
+    severity: 1,
+    sound: { ids: ['click'], bus: 'ui', volume: 0.8, rateJitter: 0.06 },
+    haptic: 'tick',
+  },
+  'transcript.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'transcript.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
+  // S7-55 Mapa minigame: the district (or „Nie ma na mapie”) found and pinned, or a wrong pick
+  // struck through with a red pencil line. DOM overlay only, so no particles.
+  'geolocation.found': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'geolocation.miss': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
+    haptic: 'error',
+  },
+  // S7-54 Inne media minigame: the right answer (copies then get a „kopia” stamp), or a wrong
+  // answer struck through (one wrong answer fails). DOM overlay only, so no particles.
+  'crossCheck.right': {
+    severity: 1,
+    sound: { ids: ['stamp'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'thud',
+  },
+  'crossCheck.wrong': {
     severity: 1,
     sound: { ids: ['back'], bus: 'ui', rateJitter: 0.05 },
     haptic: 'error',
@@ -591,6 +763,102 @@ export const cues = {
     sound: { ids: ['evzap'], bus: 'sfx', volume: 0.3, rateJitter: 0.15 },
     particles: { preset: 'sparks', count: 5 },
     extraParticles: { preset: 'smoke', count: 2 },
+  },
+  // --- S7-36 role abilities and Koło ratunkowe; final sounds since S7-42 (`abready`, `abpower`,
+  // `abthrow`). A teammate's arm / disarm plays no cue (`cueForEvent` returns null). ---
+  /** Ekspertyza or Druga szansa waits armed for its trigger. */
+  'ability.armed': {
+    severity: 1,
+    sound: { ids: ['abpower'], bus: 'sfx', volume: 0.5 },
+    particles: { preset: 'inkPuff', count: 6 },
+    haptic: 'tick',
+  },
+  /** A second press put the armed ability away. */
+  'ability.disarmed': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'sfx', volume: 0.4 },
+    particles: { preset: 'dust', count: 2 },
+  },
+  /**
+   * A local ability press with nothing to do: no role, cooling, blocked or a call running
+   * (S7-39, read from the shared preview since S7-40). Only the presser hears it; the chip or
+   * the touch button shakes.
+   */
+  'ability.denied': {
+    severity: 1,
+    sound: { ids: ['back'], bus: 'ui' },
+    haptic: 'tick',
+    animation: 'abilityDenied',
+  },
+  /**
+   * The local ability is ready again (client-derived from the crew cooldown, S7-40): two soft
+   * rising ticks and a bump of the chip or the button.
+   */
+  'ability.ready': {
+    severity: 1,
+    sound: { ids: ['abready'], bus: 'ui', volume: 0.6 },
+    haptic: 'tick',
+    animation: 'abilityReady',
+  },
+  /** Ekspertyza solved the station's task: the stamp lands without a minigame. */
+  'ability.expertise': {
+    severity: 2,
+    sound: { ids: ['abpower'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'starBurst' },
+    extraParticles: { preset: 'inkPuff', count: 6 },
+    haptic: 'success',
+  },
+  /** Telefon z terenu starts dialling while the reporter walks. */
+  'ability.call.start': {
+    severity: 1,
+    sound: { ids: ['ping3'], bus: 'sfx', volume: 0.7 },
+    particles: { preset: 'inkPuff', count: 4 },
+    haptic: 'tick',
+  },
+  /** The field call got through (`stamp.applied` slams the stamp itself). */
+  'ability.call.done': {
+    severity: 1,
+    sound: { ids: ['ping3'], bus: 'sfx', volume: 0.5, rateJitter: 0.04 },
+    particles: { preset: 'paperBits', count: 8 },
+  },
+  /** The field call was cut: the folder left the reporter's hands or is gone. */
+  'ability.call.dropped': {
+    severity: 1,
+    sound: { ids: ['fail'], bus: 'sfx', volume: 0.5 },
+    particles: { preset: 'smoke', count: 4 },
+    animation: 'wobble',
+  },
+  /** Przedłużenie: +20 s for a folder (and its raid wave). */
+  'ability.extendDeadline': {
+    severity: 1,
+    sound: { ids: ['arrive'], bus: 'sfx', volume: 0.6, rateJitter: 0.04 },
+    particles: { preset: 'paperFlutter', count: 6 },
+    haptic: 'success',
+    animation: ['hop', 'cardHop'],
+  },
+  /** Druga szansa: the lockout is gone and the minigame opens again. */
+  'ability.secondChance': {
+    severity: 1,
+    sound: { ids: ['evback'], bus: 'sfx', volume: 0.5 },
+    particles: { preset: 'sparks', count: 6 },
+    haptic: 'tick',
+  },
+  /** Podaj teczkę: the folder flies (450 ms arc, scene/Folders.tsx) into a teammate's hands. */
+  'ability.pass': {
+    severity: 1,
+    sound: { ids: ['abthrow'], bus: 'sfx', volume: 0.8, rateJitter: 0.06 },
+    particles: { preset: 'paperFlutter', count: 3 },
+    haptic: 'tick',
+    animation: 'hop',
+  },
+  /** Koło ratunkowe: a folder at its deadline in a Ratownik's hands got more time. */
+  'role.rescue': {
+    severity: 2,
+    sound: { ids: ['evclear'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'starBurst' },
+    shake: 0.15,
+    haptic: 'success',
+    animation: ['hop', 'cardHop'],
   },
   // --- S5-04 technique encyclopedia: a new card pops into the collection (DOM animation lives
   // in encyclopedia/NewCardToast, this is its sound and buzz). ---

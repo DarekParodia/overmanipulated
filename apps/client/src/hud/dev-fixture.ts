@@ -1,27 +1,79 @@
 // Dev-only HUD fixture (vite dev server + ?debug): `window.__hud` fills the game store with a
 // believable mid-level state and plays verdict events, so the HUD and the results page can be
 // reviewed before the gameplay units spawn real folders. Never installed in production builds.
-import type { Folder, FolderResult, GameEvent, LevelEndMessage } from '@redakcja/shared';
-import { type GameplayEvent, handleGameEvent } from '../net/game-events.ts';
+import type {
+  CrewSnapshot,
+  Folder,
+  FolderResult,
+  GameEvent,
+  LevelEndMessage,
+  NextFolder,
+  TeamIndex,
+  TeamScore,
+} from '@redakcja/shared';
+import type { GameplayEvent } from '../net/game-events.ts';
 import { useGame } from '../net/game-store.ts';
+import { handleGameEvent } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { registerHudStory } from './story-lookup.ts';
 
 type VerdictEvent = Extract<GameEvent, { kind: 'verdictResult' }>;
 
 export type HudDevApi = {
-  /** Loads folders, score, credibility and timers; snapshots then only advance the clock. */
-  play(options?: { timeLeftMs?: number; score?: number; credibility?: number }): void;
-  set(patch: { score?: number; credibility?: number; timeLeftMs?: number }): void;
+  /**
+   * Loads folders, score, credibility and timers; snapshots then only advance the clock.
+   * `folders` keeps only the first N fixture folders (fewer than three leave a slot for the
+   * next-folder ghost card).
+   */
+  play(options?: {
+    timeLeftMs?: number;
+    score?: number;
+    credibility?: number;
+    folders?: number;
+  }): void;
+  set(patch: {
+    score?: number;
+    credibility?: number;
+    timeLeftMs?: number;
+    nextFolder?: NextFolder | null;
+    conveyorFull?: boolean;
+    /** Ability state per player (S7-36), e.g. a cooling or armed ability for the HUD chip. */
+    crew?: readonly CrewSnapshot[];
+    /** Versus standings (S7-89): both newsrooms, for the rival chip; null hides it. */
+    scoreboard?: readonly TeamScore[] | null;
+  }): void;
   verdict(patch?: Partial<VerdictEvent>): void;
   expire(storyId?: string): void;
   end(won: boolean, stars: number): void;
+  /**
+   * Ends a versus match for this player's newsroom (team 0) with the fixture results: the rival
+   * got the same folders but one, and decided some of them differently (S7-89).
+   */
+  endVersus(winnerTeam: TeamIndex | null): void;
   /** Gives the store back to the server's snapshots. */
   release(): void;
 };
 
 const FIXTURE_ELAPSED_MS = 120_000;
+/** l0's schedule at the fixture time: a folder came at 120 s, the next one comes at 140 s. */
+const FIXTURE_NEXT_FOLDER: NextFolder = { atMs: 140_000, sinceMs: 120_000 };
+/** The l0 greybox level's star thresholds and best possible score. */
+const FIXTURE_STARS = { two: 120, three: 190 };
+const FIXTURE_MAX_SCORE = 240;
 const URGENT_STORY = 'l0-dev-pilny-komunikat';
+/** A multi-stamp story (S7-19) so the folder card's evidence chip shows "1/2". */
+const MULTI_STORY = 'l0-dev-dwa-dowody';
+
+/** The local player with a ready ability, no call and no rescues (S7-36). */
+function fixtureCrewMember(playerId: string): CrewSnapshot {
+  return {
+    id: playerId,
+    abilityReadyAtMs: 0,
+    abilityArmed: false,
+    fieldCall: null,
+    rescuesLeft: 0,
+  };
+}
 
 function fixtureFolders(playerId: string): Folder[] {
   const at = FIXTURE_ELAPSED_MS;
@@ -33,6 +85,8 @@ function fixtureFolders(playerId: string): Folder[] {
     stamps: string[],
   ): Folder => ({
     id,
+    // `f-3` was the schedule's third folder (s2).
+    spawnKey: `s${Number(id.slice(2)) - 1}`,
     storyId,
     location,
     stamps,
@@ -42,12 +96,15 @@ function fixtureFolders(playerId: string): Folder[] {
   });
   return [
     folder('f-1', URGENT_STORY, { kind: 'fixture', fixtureId: 'conveyor-0' }, 7_400, []),
-    folder('f-2', 'l0-zalany-rynek', { kind: 'carried', playerId }, 21_000, [
-      'l0-zalany-rynek-image',
-    ]),
-    folder('f-3', 'l0-nocny-autobus', { kind: 'fixture', fixtureId: 'archive-0' }, 48_000, [
-      'l0-nocny-autobus-source',
-      'l0-nocny-autobus-archive',
+    // Przedłużenie gave the carried folder 20 s (S7-40: the card's hourglass "+20" chip).
+    {
+      ...folder('f-2', 'l0-zalany-rynek', { kind: 'carried', playerId }, 21_000, [
+        'l0-zalany-rynek-image',
+      ]),
+      extendedMs: 20_000,
+    },
+    folder('f-3', MULTI_STORY, { kind: 'fixture', fixtureId: 'archive-0' }, 48_000, [
+      `${MULTI_STORY}-archive`,
     ]),
     folder('f-4', 'l0-zalany-rynek', { kind: 'fixture', fixtureId: 'desk-0' }, 75_000, [
       'l0-zalany-rynek-image',
@@ -63,24 +120,39 @@ function fixtureResults(): FolderResult[] {
     folderId: string,
     storyId: string,
     outcome: FolderResult['outcome'],
+    reason: FolderResult['reason'],
     verdict: FolderResult['verdict'],
     scoreDelta: number,
     credibilityDelta: number,
+    speed = 0,
+    missedStampIds: string[] = [],
   ): FolderResult => ({
     folderId,
+    spawnKey: `s${Number(folderId.slice(2)) - 1}`,
     storyId,
     outcome,
+    reason,
     verdict,
     scoreDelta,
     credibilityDelta,
-    missedStampIds: [],
+    justifyingStampIds: verdict === null ? [] : [`${storyId}-image`],
+    requiredStamps: 1,
+    bonuses: { speed, multiStamp: 0, bossCall: 0 },
+    missedStampIds,
   });
+  // The results design fixture (S7-05): its totals add up to 15 points. The missed stamps give
+  // the Kolegium's proof section every status (S7-07).
   return [
-    result('f-1', 'l0-zalany-rynek', 'correct', 'reject', 25, 5),
-    result('f-2', 'l0-nocny-autobus', 'correct', 'publish', 15, 0),
-    result('f-3', URGENT_STORY, 'wrong', 'publish', -20, -25),
-    result('f-4', 'l0-nocny-autobus', 'wrongJustification', 'publish', 5, 0),
-    result('f-5', 'l0-zalany-rynek', 'expired', null, -5, -5),
+    result('f-1', 'l0-zalany-rynek', 'correct', 'correctImportant', 'reject', 25, 5, 5),
+    result('f-2', 'l0-nocny-autobus', 'correct', 'correctNormal', 'publish', 10, 0),
+    result('f-3', URGENT_STORY, 'wrong', 'publishedFake', 'publish', -20, -25),
+    result('f-4', 'l0-nocny-autobus', 'wrongJustification', 'weakProof', 'publish', 5, 0),
+    result('f-5', 'l0-zalany-rynek', 'expired', 'expired', null, -5, -5, 0, [
+      'l0-zalany-rynek-archive',
+    ]),
+    result('f-6', 'l0-nocny-autobus', 'unfinished', 'unfinished', null, 0, 0, 0, [
+      'l0-nocny-autobus-source',
+    ]),
   ];
 }
 
@@ -93,6 +165,18 @@ export function installHudDevFixture(): (() => void) | undefined {
     type: 'post',
     priority: 'urgent',
     truth: 'false',
+  });
+  registerHudStory(MULTI_STORY, {
+    headline: 'Dwa raporty o korkach na moście',
+    type: 'article',
+    priority: 'important',
+    truth: 'false',
+    requiredStamps: 2,
+    stamps: [
+      { id: `${MULTI_STORY}-archive`, station: 'archive', text: 'Raport z 2019 r.' },
+      { id: `${MULTI_STORY}-source`, station: 'sourceRegistry', text: 'Konto założone wczoraj' },
+    ],
+    justifyingStamps: [`${MULTI_STORY}-archive`, `${MULTI_STORY}-source`],
   });
   const original = useGame.getState().applySnapshot;
   let serverElapsed: number | null = null;
@@ -122,7 +206,11 @@ export function installHudDevFixture(): (() => void) | undefined {
         timeLeftMs: options.timeLeftMs ?? 95_000,
         score: options.score ?? 145,
         credibility: options.credibility ?? 70,
-        folders: fixtureFolders(useApp.getState().playerId ?? 'p-dev'),
+        folders: fixtureFolders(useApp.getState().playerId ?? 'p-dev').slice(0, options.folders),
+        nextFolder: FIXTURE_NEXT_FOLDER,
+        conveyorFull: false,
+        crew: [fixtureCrewMember(useApp.getState().playerId ?? 'p-dev')],
+        paused: false,
         levelEnd: null,
       });
     },
@@ -130,37 +218,101 @@ export function installHudDevFixture(): (() => void) | undefined {
       useGame.setState(patch);
     },
     verdict(patch = {}) {
+      const n = serial++;
       const event: VerdictEvent = {
         kind: 'verdictResult',
-        folderId: `dev-${serial++}`,
+        folderId: `dev-${n}`,
+        spawnKey: `s${n}`,
         storyId: 'l0-zalany-rynek',
         playerId: useApp.getState().playerId ?? 'p-dev',
         verdict: 'reject',
-        justifyingStampId: 'l0-zalany-rynek-image',
         outcome: 'correct',
+        reason: 'correctImportant',
         scoreDelta: 25,
         credibilityDelta: 5,
-        speedBonus: true,
+        justifyingStampIds: ['l0-zalany-rynek-image'],
+        requiredStamps: 1,
+        bonuses: { speed: 5, multiStamp: 0, bossCall: 0 },
         missedStampIds: [],
         ...patch,
       };
       handleGameEvent(event satisfies GameplayEvent);
     },
     expire(storyId = 'l0-nocny-autobus') {
-      handleGameEvent({ kind: 'folderExpired', folderId: `dev-${serial++}`, storyId, stamps: [] });
+      const n = serial++;
+      handleGameEvent({
+        kind: 'folderExpired',
+        folderId: `dev-${n}`,
+        spawnKey: `s${n}`,
+        storyId,
+        stamps: [],
+      });
     },
     end(won, stars) {
       const state = useGame.getState();
+      const results = fixtureResults();
       const message: LevelEndMessage = {
         type: 'levelEnd',
         levelId: 'l0-greybox',
+        difficulty: 'normal',
         won,
         stars,
-        score: state.score,
+        // The results' own sum, so the totals need no 'Inne' row.
+        score: results.reduce((sum, result) => sum + result.scoreDelta, 0),
         credibility: state.credibility,
-        results: fixtureResults(),
+        results,
+        lossReason: won ? null : state.credibility <= 0 ? 'credibility' : 'score',
+        starThresholds: FIXTURE_STARS,
+        maxScore: FIXTURE_MAX_SCORE,
       };
       state.setLevelEnd(message);
+    },
+    endVersus(winnerTeam) {
+      const state = useGame.getState();
+      const results = fixtureResults();
+      const score = results.reduce((sum, result) => sum + result.scoreDelta, 0);
+      const rivalScore = winnerTeam === null ? score : winnerTeam === 0 ? score - 30 : score + 30;
+      // The rival never got f-6 (its belt was full) and judged f-2 the other way.
+      const rivalResults = results
+        .filter((result) => result.folderId !== 'f-6')
+        .map((result) =>
+          result.folderId === 'f-2'
+            ? {
+                ...result,
+                outcome: 'wrong' as const,
+                reason: 'rejectedTrue' as const,
+                verdict: 'reject' as const,
+              }
+            : result,
+        );
+      const team = (index: TeamIndex, points: number): TeamScore => ({
+        team: index,
+        score: points,
+        credibility: index === 0 ? state.credibility : 55,
+        resolved: 4,
+        expired: 1,
+        connected: 2,
+      });
+      state.setLevelEnd({
+        type: 'levelEnd',
+        levelId: 'l0-greybox',
+        difficulty: 'normal',
+        won: winnerTeam === 0,
+        stars: 0,
+        score,
+        credibility: state.credibility,
+        results,
+        lossReason: winnerTeam === 1 ? 'score' : null,
+        starThresholds: FIXTURE_STARS,
+        maxScore: FIXTURE_MAX_SCORE,
+        team: 0,
+        versus: {
+          winnerTeam,
+          reason: winnerTeam === null ? 'draw' : 'score',
+          teams: [team(0, score), team(1, rivalScore)],
+          rivalResults,
+        },
+      });
     },
     release() {
       useGame.setState({ applySnapshot: original });

@@ -32,6 +32,7 @@ const name = (id: string | undefined) => (id ? 'Lupa obrazu' : 'Stanowisko');
 function folder(id: string, extra: Partial<Folder> = {}): Folder {
   return {
     id,
+    spawnKey: 's0',
     storyId: 'story',
     location: { kind: 'fixture', fixtureId: 'conveyor-0' },
     stamps: [],
@@ -203,6 +204,7 @@ describe('guidance for tagged folders', () => {
       targetFixtureId: null,
       device: 'keyboard',
       story: (id) => (id === 'story' ? story : undefined),
+      next: { kind: 'none' },
       ...partial,
     };
   }

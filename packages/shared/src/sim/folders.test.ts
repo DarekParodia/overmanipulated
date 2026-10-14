@@ -1,9 +1,19 @@
 import { describe, expect, it } from 'bun:test';
+import { TICK_MS } from '../constants.ts';
 import type { Folder, FolderLocation } from '../entities.ts';
 import type { GameEvent } from '../protocol.ts';
-import { runStep, TEST_LEVEL, TEST_MAP, testContext, testInput } from './__fixtures__/greybox.ts';
-import type { SimLevel } from './content.ts';
-import { stepFolders } from './folders.ts';
+import {
+  MULTI_STAMP_STORY,
+  runStep,
+  TEST_LEVEL,
+  TEST_MAP,
+  TEST_STORIES,
+  testContext,
+  testFolder,
+  testInput,
+} from './__fixtures__/greybox.ts';
+import type { SimLevel, SimStory } from './content.ts';
+import { conveyorBlocked, multiStampExtraMs, nextScheduledSpawn, stepFolders } from './folders.ts';
 import type { PlayerIntent, SimContext, SimFrame } from './frame.ts';
 import { addPlayer, carriedFolder, createGameState, type GameState } from './state.ts';
 import type { PlayerInput } from './step.ts';
@@ -37,16 +47,7 @@ function withPlayers(spots: Record<string, Spot>, state = createGameState({ map:
 }
 
 function folder(id: string, location: FolderLocation, overrides: Partial<Folder> = {}): Folder {
-  return {
-    id,
-    storyId: 't-true',
-    location,
-    stamps: [],
-    spawnedAtMs: 0,
-    deadlineMs: 60_000,
-    warned: false,
-    ...overrides,
-  };
+  return testFolder(id, { location, ...overrides });
 }
 
 function withFolders(state: GameState, ...folders: Folder[]): GameState {
@@ -286,6 +287,7 @@ describe('stepFolders: spawning', () => {
     const { state, events } = runFolders(at(1000), [], testContext());
     expect(state.folders.f1).toEqual({
       id: 'f1',
+      spawnKey: 's0',
       storyId: 't-true',
       location: onFixture('conveyor-0'),
       stamps: [],
@@ -308,6 +310,10 @@ describe('stepFolders: spawning', () => {
     expect(state.folders.f12?.location).toEqual(onFixture('conveyor-3'));
     expect(state.folders.f12?.deadlineMs).toBe(55_000);
     expect(state.nextSpawnIndex).toBe(3);
+    // Spawn keys follow the schedule index, not the folder number.
+    expect(
+      [state.folders.f10, state.folders.f11, state.folders.f12].map((f) => f?.spawnKey),
+    ).toEqual(['s0', 's1', 's2']);
   });
 
   it('waits for a free conveyor tile instead of skipping the spawn', () => {
@@ -328,8 +334,9 @@ describe('stepFolders: spawning', () => {
     expect(events).toEqual([
       { kind: 'folderSpawned', folderId: 'f5', storyId: 't-true', fixtureId: 'conveyor-2' },
     ]);
-    // The deadline counts from the actual arrival.
+    // The deadline counts from the actual arrival; the key still names the schedule entry.
     expect(state.folders.f5?.deadlineMs).toBe(63_000);
+    expect(state.folders.f5?.spawnKey).toBe('s0');
   });
 
   it('skips schedule entries whose story is unknown', () => {
@@ -345,6 +352,192 @@ describe('stepFolders: spawning', () => {
     expect(events).toEqual([
       { kind: 'folderSpawned', folderId: 'f1', storyId: 't-false', fixtureId: 'conveyor-0' },
     ]);
+    // The skipped entry keeps its index: the folder is the schedule's second entry.
+    expect(state.folders.f1?.spawnKey).toBe('s1');
+  });
+
+  it("copies a dealt entry's slot station to the folder as bagStation (S7-23)", () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [
+        { atS: 1, storyId: 't-true', deadlineS: 30, station: 'archive' },
+        { atS: 1, storyId: 't-false', deadlineS: 30 },
+      ],
+    };
+    const { state } = runFolders(at(1000), [], testContext({ level }));
+    expect(state.folders.f1).toEqual({
+      id: 'f1',
+      spawnKey: 's0',
+      storyId: 't-true',
+      location: onFixture('conveyor-0'),
+      stamps: [],
+      spawnedAtMs: 1000,
+      deadlineMs: 31_000,
+      warned: false,
+      bagStation: 'archive',
+    });
+    // An authored entry has no slot station, so its folder carries none.
+    expect(state.folders.f2 && 'bagStation' in state.folders.f2).toBe(false);
+  });
+
+  it('gives level-event folders no bagStation', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [],
+      events: [{ kind: 'viral', atS: 1, storyId: 't-true', deadlineS: 60 }],
+    };
+    const { state } = runStep(at(1000 - TICK_MS), {}, [], testContext({ level }));
+    expect(state.folders.f1?.tag).toEqual({ kind: 'viral' });
+    expect(state.folders.f1 && 'bagStation' in state.folders.f1).toBe(false);
+  });
+});
+
+describe('stepFolders: multi-stamp folders (S7-18)', () => {
+  /** m2 with a third proof from the source registry: the desk must cite all three. */
+  const M3: SimStory = {
+    ...MULTI_STAMP_STORY,
+    id: 'm3',
+    stamps: [
+      { id: 'm3-image', station: 'imageSearch', relevance: 'decisive' },
+      { id: 'm3-archive', station: 'archive', relevance: 'decisive' },
+      { id: 'm3-source', station: 'sourceRegistry', relevance: 'decisive' },
+    ],
+    justifyingStamps: ['m3-image', 'm3-archive', 'm3-source'],
+    requiredStamps: 3,
+  };
+  const stories = { ...TEST_STORIES, m3: M3 };
+  const at1000 = { ...createGameState({ map: TEST_MAP }), elapsedMs: 1000 };
+
+  it('adds 20 s per proof beyond the first to the deadline', () => {
+    expect(multiStampExtraMs({})).toBe(0);
+    expect(multiStampExtraMs({ requiredStamps: 1 })).toBe(0);
+    expect(multiStampExtraMs(MULTI_STAMP_STORY)).toBe(20_000);
+    expect(multiStampExtraMs(M3)).toBe(40_000);
+  });
+
+  it('spawns N = 2 at 1000 ms with 60 s due at 81000 and N = 3 due at 101000', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [
+        { atS: 1, storyId: 'm2', deadlineS: 60 },
+        { atS: 1, storyId: 'm3', deadlineS: 60 },
+        { atS: 1, storyId: 't-true', deadlineS: 60 },
+      ],
+    };
+    const { state } = runFolders(at1000, [], testContext({ level, stories }));
+    expect(state.folders.f1).toMatchObject({
+      storyId: 'm2',
+      spawnedAtMs: 1000,
+      deadlineMs: 81_000,
+    });
+    expect(state.folders.f2).toMatchObject({ storyId: 'm3', deadlineMs: 101_000 });
+    // A classic folder keeps its schedule time.
+    expect(state.folders.f3).toMatchObject({ storyId: 't-true', deadlineMs: 61_000 });
+  });
+
+  it('gives a level-event folder the same extra time', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [],
+      events: [{ kind: 'viral', atS: 1, storyId: 'm2', deadlineS: 60 }],
+    };
+    const before = { ...at1000, elapsedMs: 1000 - TICK_MS };
+    const { state } = runStep(before, {}, [], testContext({ level, stories }));
+    expect(state.folders.f1).toMatchObject({
+      storyId: 'm2',
+      tag: { kind: 'viral' },
+      spawnedAtMs: 1000,
+      deadlineMs: 81_000,
+    });
+  });
+});
+
+describe('nextScheduledSpawn and conveyorBlocked', () => {
+  const at = (elapsedMs: number, state = createGameState({ map: TEST_MAP })) => ({
+    ...state,
+    elapsedMs,
+  });
+  const fullBelt = (elapsedMs: number) =>
+    withFolders(
+      at(elapsedMs),
+      folder('f1', onFixture('conveyor-0')),
+      folder('f2', onFixture('conveyor-1')),
+      folder('f3', onFixture('conveyor-2')),
+      folder('f4', onFixture('conveyor-3')),
+    );
+
+  it('walks TEST_LEVEL: 1000 → 5000 → 10000 → null, each since the previous spawn', () => {
+    const ctx = testContext();
+    const start = createGameState({ map: TEST_MAP });
+    expect(nextScheduledSpawn(start, ctx)).toEqual({ atMs: 1000, sinceMs: 0 });
+    const first = runFolders(at(1000, start), [], ctx).state;
+    expect(nextScheduledSpawn(first, ctx)).toEqual({ atMs: 5000, sinceMs: 1000 });
+    const second = runFolders(at(5000, first), [], ctx).state;
+    expect(nextScheduledSpawn(second, ctx)).toEqual({ atMs: 10_000, sinceMs: 5000 });
+    const third = runFolders(at(10_000, second), [], ctx).state;
+    expect(third.nextSpawnIndex).toBe(3);
+    expect(nextScheduledSpawn(third, ctx)).toBeNull();
+  });
+
+  it('skips entries whose story is missing, as spawning does', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [
+        { atS: 1, storyId: 'missing', deadlineS: 30 },
+        { atS: 2.5, storyId: 't-false', deadlineS: 30 },
+        { atS: 3, storyId: 'missing', deadlineS: 30 },
+        { atS: 4, storyId: 't-true', deadlineS: 30 },
+        { atS: 6, storyId: 'missing', deadlineS: 30 },
+      ],
+    };
+    const ctx = testContext({ level });
+    const start = createGameState({ map: TEST_MAP });
+    expect(nextScheduledSpawn(start, ctx)).toEqual({ atMs: 2500, sinceMs: 0 });
+    expect(nextScheduledSpawn({ ...start, nextSpawnIndex: 2 }, ctx)).toEqual({
+      atMs: 4000,
+      sinceMs: 2500,
+    });
+    expect(nextScheduledSpawn({ ...start, nextSpawnIndex: 4 }, ctx)).toBeNull();
+  });
+
+  it('never announces level-event folders', () => {
+    const level: SimLevel = {
+      ...TEST_LEVEL,
+      schedule: [{ atS: 10, storyId: 't-true', deadlineS: 60 }],
+      events: [{ kind: 'viral', atS: 2, storyId: 't-false', deadlineS: 30 }],
+    };
+    const ctx = testContext({ level });
+    let state = createGameState({ map: TEST_MAP });
+    expect(nextScheduledSpawn(state, ctx)).toEqual({ atMs: 10_000, sinceMs: 0 });
+    while (state.elapsedMs < 2000) {
+      state = runStep(state, {}, [], ctx).state;
+    }
+    expect(Object.values(state.folders).map((f) => f.storyId)).toEqual(['t-false']);
+    expect(nextScheduledSpawn(state, ctx)).toEqual({ atMs: 10_000, sinceMs: 0 });
+    const eventsOnly = testContext({ level: { ...level, schedule: [] } });
+    expect(nextScheduledSpawn(state, eventsOnly)).toBeNull();
+  });
+
+  it('keeps announcing a held entry with its due time while the belt is full', () => {
+    const ctx = testContext();
+    const held = runFolders({ ...fullBelt(1000), nextFolderNumber: 5 }, [], ctx).state;
+    expect(held.nextSpawnIndex).toBe(0);
+    expect(nextScheduledSpawn(held, ctx)).toEqual({ atMs: 1000, sinceMs: 0 });
+    expect(conveyorBlocked(held, ctx)).toBe(true);
+  });
+
+  it('is blocked only when every conveyor tile is full and an entry is due', () => {
+    const ctx = testContext();
+    expect(conveyorBlocked(fullBelt(1000), ctx)).toBe(true);
+    // Full belt, nothing due yet.
+    expect(conveyorBlocked(fullBelt(999), ctx)).toBe(false);
+    // Due, but one tile is free (the next tick spawns onto it).
+    const { f4: _free, ...three } = fullBelt(1000).folders;
+    expect(conveyorBlocked({ ...fullBelt(1000), folders: three }, ctx)).toBe(false);
+    // Full belt, schedule used up.
+    expect(conveyorBlocked({ ...fullBelt(60_000), nextSpawnIndex: 3 }, ctx)).toBe(false);
+    // Empty belt at the start.
+    expect(conveyorBlocked(at(0), ctx)).toBe(false);
   });
 });
 
@@ -373,7 +566,7 @@ describe('stepFolders: deadlines', () => {
       const { state: next, events } = runFolders(state);
       expect(next.folders.f1).toBeUndefined();
       expect(events).toEqual([
-        { kind: 'folderExpired', folderId: 'f1', storyId: 't-false', stamps: [] },
+        { kind: 'folderExpired', folderId: 'f1', spawnKey: 's1', storyId: 't-false', stamps: [] },
       ]);
       expect(next.score).toBe(state.score);
       expect(next.credibility).toBe(state.credibility);

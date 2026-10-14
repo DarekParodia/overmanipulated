@@ -2,25 +2,14 @@
 // the debrief cards, each step with a sound cue. Any tap or key finishes it at once; with
 // reduced motion everything is shown from the start without the sequence.
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { revealPlan } from './results-model.ts';
 
-/** Waits for the panel's pop-in before the first star. */
-export const REVEAL_START_MS = 520;
-export const REVEAL_STAR_MS = 420;
-export const REVEAL_PAUSE_MS = 260;
-export const REVEAL_MARK_MS = 380;
-
-/** When each step happens, in ms after mount: `stars` star steps, then `marks` mark steps. */
+/**
+ * When each step happens, in ms after mount: `stars` star steps, then `marks` mark steps (the
+ * results reveal without its progress line and totals rows, see `revealPlan`).
+ */
 export function revealTimes(stars: number, marks: number): number[] {
-  const times: number[] = [];
-  for (let i = 0; i < stars; i++) {
-    times.push(REVEAL_START_MS + i * REVEAL_STAR_MS);
-  }
-  const marksStart =
-    stars > 0 ? REVEAL_START_MS + stars * REVEAL_STAR_MS + REVEAL_PAUSE_MS : REVEAL_START_MS;
-  for (let i = 0; i < marks; i++) {
-    times.push(marksStart + i * REVEAL_MARK_MS);
-  }
-  return times;
+  return revealPlan({ stars, rows: 0, marks, progress: false }).map((step) => step.atMs);
 }
 
 export type Reveal = {

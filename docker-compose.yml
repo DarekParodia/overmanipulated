@@ -1,4 +1,5 @@
-# Production stack: Caddy (static client, reverse proxy, HTTP only) + Bun game server.
+# Production stack: Caddy (static files, reverse proxy, HTTP only) + Bun game server (game socket,
+# API and the HTML shell). Both images come from one build: always `up -d --build` both.
 # TLS is terminated by an external reverse proxy that forwards to port 8080 (see docs/deploy.md).
 # Usage: docker compose up -d --build
 # Sized for a small VPS (1 vCPU / 1 GB RAM): a 4-player room is a few MB. No mem_limit, cpus or
@@ -17,6 +18,10 @@ services:
     build:
       context: .
       target: server
+      # The sha „O grze” shows (S7-103). Both images must get the same value: the server's HTML
+      # shell names the web image's hashed chunks. `APP_GIT_SHA=$(git rev-parse --short HEAD)`.
+      args:
+        APP_GIT_SHA: ${APP_GIT_SHA:-}
     restart: unless-stopped
     init: true
     # The server stops accepting sockets and closes the database on SIGTERM; 15 s is plenty.
@@ -25,8 +30,17 @@ services:
       PORT: "3000"
       DATABASE_PATH: /data/redakcja.sqlite
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Operator config (features, MOTD, ads; docs/deploy.md "Config"). A missing file means the
+      # defaults. Saving it reloads the server, as does `docker compose kill -s SIGHUP server`.
+      CONFIG_PATH: /app/config/config.json
+      # Ads kill switch from .env: `false` turns ads off whatever config.json says. No value here:
+      # unset in .env means unset in the container (config.json decides).
+      ADS_ENABLED:
     volumes:
       - db:/data
+      # The directory, not the file: editors save by rename, which a file mount would not see.
+      # config.json must be readable by the container user (uid of `bun`): chmod 644.
+      - ./config:/app/config:ro
     expose:
       - "3000"
     security_opt:
@@ -39,12 +53,18 @@ services:
     build:
       context: .
       target: web
+      args:
+        APP_GIT_SHA: ${APP_GIT_SHA:-}
     restart: unless-stopped
     init: true
     stop_grace_period: 15s
     depends_on:
       server:
         condition: service_healthy
+    environment:
+      # Addresses of the external TLS proxy whose X-Forwarded-For Caddy believes (Caddyfile
+      # `trusted_proxies`). private_ranges fits a proxy on this host; see docs/deploy.md.
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-private_ranges}
     ports:
       # The external reverse proxy (TLS) connects here. Bound on all interfaces as requested on
       # the caddy branch: firewall port 8080 so only that proxy can reach it.

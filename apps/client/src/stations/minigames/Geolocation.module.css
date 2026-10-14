@@ -1,0 +1,352 @@
+/*
+ * Mapa: the folder's photo (a white-bordered print with a caption sticker) and the „Nie ma na
+ * mapie” button on the left, the town map (4×3 white district tiles, each with a name and two
+ * landmark glyphs) on the right. No yellow: a yellow answer would hint at the solution
+ * (design-rules §1.1). A wrong pick is struck out in red; the found district gets a pin.
+ */
+.root {
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-3);
+  user-select: none;
+  touch-action: manipulation;
+}
+
+/* Narrow: photo, map, result stacked. */
+.body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* Wide / landscape: photo and the button left, the map right, the result under both. */
+@container (min-width: 34rem) {
+  .body {
+    grid-template-columns: minmax(9rem, 13rem) minmax(0, 1fr);
+    grid-template-areas:
+      "side map"
+      "foot foot";
+    align-items: start;
+  }
+
+  .side {
+    grid-area: side;
+  }
+
+  .map {
+    grid-area: map;
+  }
+
+  .foot {
+    grid-area: foot;
+  }
+}
+
+.side {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* --- The photo -------------------------------------------------------------------------- */
+
+.photo {
+  position: relative;
+  margin: 0;
+  padding: var(--space-1);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--pop);
+  transform: rotate(-1deg);
+}
+
+.photoArt {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* The caption sticker: where the folder says the photo was taken. */
+.caption {
+  position: absolute;
+  left: 50%;
+  bottom: calc(-1 * var(--space-2));
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: calc(100% - var(--space-2));
+  padding: 1px var(--space-2);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+  color: var(--text);
+  white-space: nowrap;
+  transform: translateX(-50%) rotate(1deg);
+}
+
+.caption > svg {
+  flex: none;
+  color: var(--text-soft);
+}
+
+/* --- The map ---------------------------------------------------------------------------- */
+
+.map {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background: var(--sky);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+}
+
+.tile,
+.notHere {
+  position: relative;
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  box-shadow: 0 3px 0 var(--outline);
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.tile {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 4.5rem;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+.district {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  line-height: 1.1;
+}
+
+.glyphs {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.glyph {
+  display: block;
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.notHere {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 3.5rem;
+  margin-top: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-width: var(--stroke-bold);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: 1.1;
+}
+
+.notHere > svg {
+  flex: none;
+}
+
+.tile:disabled,
+.notHere:disabled {
+  cursor: default;
+}
+
+.tile:not(:disabled):active,
+.notHere:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: var(--pop-pressed);
+}
+
+/* Keyboard/gamepad cursor: blue outline and a lift. */
+.tile[data-focused="true"],
+.tile:focus-visible,
+.notHere[data-focused="true"],
+.notHere:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 0;
+  transform: translateY(-2px);
+}
+
+/* Wrong: struck out with a red pencil line (no second penalty). */
+.tile[data-struck="true"],
+.notHere[data-struck="true"] {
+  background: var(--surface-sunk);
+  border-color: var(--red-dark);
+  color: var(--text-faint);
+  text-decoration: line-through;
+  text-decoration-color: var(--red);
+  text-decoration-thickness: 3px;
+}
+
+.tile[data-struck="true"]::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 50%;
+  height: 3px;
+  background: var(--red);
+  border-radius: var(--radius-pill);
+  transform: rotate(-18deg);
+}
+
+.tile[data-struck="true"] .glyphs {
+  opacity: 0.45;
+}
+
+/* Found: a thick outline and the pin; „Nie ma na mapie” right gets the same outline. */
+.tile[data-found="true"],
+.notHere[data-found="true"] {
+  border-width: var(--stroke-bold);
+  animation: pop var(--motion-base) var(--ease-bounce) both;
+}
+
+/* A failure shows the right answer dashed (unless the difficulty hides it). */
+.tile[data-revealed="true"],
+.notHere[data-revealed="true"] {
+  border-style: dashed;
+  outline: 3px solid var(--red);
+  outline-offset: 0;
+}
+
+.pin {
+  position: absolute;
+  top: -0.9rem;
+  right: -0.3rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  animation: drop var(--motion-base) var(--ease-bounce) both;
+}
+
+/* The banner takes the whole row under the photo and the map. */
+.foot {
+  display: grid;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.85);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes drop {
+  from {
+    opacity: 0;
+    transform: translateY(-1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:global(:root[data-reduced-motion="true"]) .pin,
+:global(:root[data-reduced-motion="true"]) .tile[data-found="true"],
+:global(:root[data-reduced-motion="true"]) .notHere[data-found="true"] {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pin,
+  .tile[data-found="true"],
+  .notHere[data-found="true"] {
+    animation: none;
+  }
+}
+
+/*
+ * Short landscape phones (640×360): a narrower photo column and 3 × 56 px rows, so the photo, the
+ * button and the whole map fit under the task line; every tile stays ≥ 48 px tall. The key hints
+ * sit under the map and the photo column runs down beside them. `.body` lends its children to
+ * the root grid; the areas match the wide layout above.
+ */
+@media (max-height: 430px) {
+  .root {
+    grid-template-columns: minmax(8rem, 11rem) minmax(0, 1fr);
+    grid-template-areas:
+      "task task"
+      "side map"
+      "side hints";
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .root > :first-child {
+    grid-area: task;
+  }
+
+  .body {
+    display: contents;
+  }
+
+  .side {
+    grid-area: side;
+    align-self: start;
+  }
+
+  .map {
+    grid-area: map;
+    gap: var(--space-1);
+    padding: var(--space-1);
+  }
+
+  /* After the round (no hints): the result under both columns. */
+  .foot {
+    grid-row: 4;
+    grid-column: 1 / -1;
+  }
+
+  .root > .hints {
+    grid-area: hints;
+  }
+
+  .tile {
+    min-height: 3.5rem;
+    padding: 2px var(--space-1);
+  }
+
+  .glyph {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  /* The caption keeps its words; the icon goes so „Podpis: Nadrzecze” fits the photo. */
+  .caption > svg {
+    display: none;
+  }
+
+  .notHere {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-sm);
+  }
+}

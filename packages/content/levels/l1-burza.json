@@ -24,22 +24,40 @@
     "####################"
   ],
   "stations": ["imageSearch", "sourceRegistry"],
-  "schedule": [
-    { "atS": 4, "storyId": "l1-brak-pradu", "deadlineS": 55 },
-    { "atS": 25, "storyId": "l1-zalana-ulica", "deadlineS": 65 },
-    { "atS": 47, "storyId": "l1-falszywa-straz-miejska", "deadlineS": 40 },
-    { "atS": 70, "storyId": "l1-kaczki-na-boisku", "deadlineS": 55 },
-    { "atS": 92, "storyId": "l1-drzewo-na-szkole", "deadlineS": 60 },
-    { "atS": 114, "storyId": "l1-zamkniete-szkoly", "deadlineS": 60 },
-    { "atS": 136, "storyId": "l1-kajaki-zamiast-biletow", "deadlineS": 65 },
-    { "atS": 158, "storyId": "l1-ostrzezenie-burzowe", "deadlineS": 40 },
-    { "atS": 180, "storyId": "l1-oplata-za-prad", "deadlineS": 55 },
-    { "atS": 202, "storyId": "l1-piorun-nad-ratuszem", "deadlineS": 65 },
-    { "atS": 224, "storyId": "l1-wal-puszcza", "deadlineS": 40 },
-    { "atS": 246, "storyId": "l1-dworzec-pod-woda", "deadlineS": 55 },
-    { "atS": 268, "storyId": "l1-falszywy-ratusz", "deadlineS": 55 },
-    { "atS": 290, "storyId": "l1-zalany-przejazd", "deadlineS": 40 },
-    { "atS": 312, "storyId": "l1-zalane-piwnice", "deadlineS": 50 }
-  ],
-  "stars": { "two": 205, "three": 320 }
+  "bag": {
+    "pool": [
+      "l1-brak-pradu",
+      "l1-zalana-ulica",
+      "l1-falszywa-straz-miejska",
+      "l1-kaczki-na-boisku",
+      "l1-drzewo-na-szkole",
+      "l1-zamkniete-szkoly",
+      "l1-kajaki-zamiast-biletow",
+      "l1-ostrzezenie-burzowe",
+      "l1-oplata-za-prad",
+      "l1-piorun-nad-ratuszem",
+      "l1-wal-puszcza",
+      "l1-dworzec-pod-woda",
+      "l1-falszywy-ratusz",
+      "l1-zalany-przejazd",
+      "l1-zalane-piwnice",
+      "l1-tecza-nad-portem",
+      "l1-zerwany-dach-hali",
+      "l1-rekin-na-ulicy",
+      "l1-zerwany-most",
+      "l1-grad-jak-jajka"
+    ],
+    "firstAtS": 4,
+    "gapS": 20,
+    "lastSpawnS": 312,
+    "deadlineS": {
+      "normal": 50,
+      "important": 55,
+      "urgent": 40
+    },
+    "starShares": {
+      "two": 0.55,
+      "three": 0.85
+    }
+  }
 }

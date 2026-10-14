@@ -1,16 +1,22 @@
 import { describe, expect, it } from 'bun:test';
-import { type Folder, gameEventSchema } from '@redakcja/shared';
+import { type CrewSnapshot, type Folder, gameEventSchema } from '@redakcja/shared';
 import { loadSettings } from '../store/settings.ts';
 import { animateCharacter, createAnimator } from './animation/procedural.ts';
 import { stepSpring } from './animation/spring.ts';
 import { createLoopManager } from './audio/loops.ts';
 import sprite from './audio/sfx-sprite.json';
 import { addTrauma, createShake, stepShake } from './camera/shake.ts';
-import { type Cue, cueIds, cues } from './cues.ts';
+import { type Cue, type CueId, cueIds, cues } from './cues.ts';
 import { TICK_FAST_MS, TICK_SLOW_MS, tickIntervalMs, urgentTimeLeft } from './deadline-ticker.ts';
 import { cueForEvent, type GameplayEvent, wrongVerdictCue } from './event-cues.ts';
 import { createFeedback, resolveCue } from './feedback.ts';
-import { crossedLastSeconds } from './gameplay-feedback.ts';
+import {
+  abilityJustReady,
+  beltJustFilled,
+  crossedLastSeconds,
+  justPaused,
+  levelEndCue,
+} from './gameplay-feedback.ts';
 import { createPool, scaleAt, spawn, stepPool } from './particles/pool.ts';
 import { particleCapacity, particlePresets } from './particles/presets.ts';
 import { createHitStop, HIT_STOP_SCALE, timeScaleAt, triggerHitStop } from './time-scale.ts';
@@ -110,6 +116,48 @@ describe('cue resolution respects settings', () => {
     calls.length = 0;
     fb.emit('stamp.applied', { position: { x: 1, y: 1 } });
     expect(calls).toEqual([]);
+  });
+
+  it('mutes only the sound and the loops of a silent cue (S7-85)', () => {
+    const calls: string[] = [];
+    const fb = createFeedback(
+      () => ({ ...defaults, reducedMotion: false }),
+      () => 'high',
+    );
+    fb.connect({
+      playSound: (ids) => calls.push(`sound:${ids[0]}`),
+      spawnParticles: (preset) => calls.push(`particles:${preset}`),
+      addTrauma: () => calls.push('shake'),
+      startLoop: (key, loop) => calls.push(`start:${key}:${loop}`),
+      stopLoop: (key) => calls.push(`stop:${key ?? 'all'}`),
+    });
+    fb.onAnimation((trigger) => calls.push(`anim:${trigger}`));
+    fb.onCue((id) => calls.push(`caption:${id}`));
+    fb.emit('stamp.applied', { position: { x: 1, y: 1 }, loopKey: 'phone-0', silent: true });
+    fb.emit('station.workStart', { loopKey: 'phone-0', silent: true });
+    fb.emit('level.win', { silent: true });
+    expect(calls).toEqual([
+      'caption:stamp.applied',
+      'particles:paperBits',
+      'particles:inkSplat',
+      'shake',
+      'anim:stampSlam',
+      'caption:station.workStart',
+      'anim:workStart',
+      'caption:level.win',
+      'anim:cheer',
+    ]);
+    calls.length = 0;
+    fb.emit('stamp.applied', { position: { x: 1, y: 1 }, loopKey: 'phone-0' });
+    expect(calls).toEqual([
+      'caption:stamp.applied',
+      'sound:stamp',
+      'stop:phone-0',
+      'particles:paperBits',
+      'particles:inkSplat',
+      'shake',
+      'anim:stampSlam',
+    ]);
   });
 });
 
@@ -215,8 +263,7 @@ const everyEvent: GameplayEvent[] = [
     location: { kind: 'fixture', fixtureId: 'table-0' },
   },
   { kind: 'deadlineWarning', folderId: 'f1' },
-  { kind: 'folderExpired', folderId: 'f1', storyId: 's1', stamps: [] },
-  { kind: 'deadlineExtended', folderId: 'f1', playerId: player },
+  { kind: 'folderExpired', folderId: 'f1', spawnKey: 's0', storyId: 's1', stamps: [] },
   { kind: 'workStarted', stationId: 'imageSearch-0', playerId: player },
   { kind: 'workCancelled', stationId: 'imageSearch-0', playerId: player },
   {
@@ -227,32 +274,129 @@ const everyEvent: GameplayEvent[] = [
     folderId: 'f1',
     seed: 1,
   },
-  { kind: 'minigameFailed', stationId: 'imageSearch-0', playerId: player, folderId: 'f1' },
+  {
+    kind: 'minigameFailed',
+    stationId: 'imageSearch-0',
+    playerId: player,
+    folderId: 'f1',
+    lockoutMs: 3000,
+  },
   {
     kind: 'stampApplied',
     stationId: 'imageSearch-0',
     playerId: player,
     folderId: 'f1',
     stampId: 'x',
+    via: 'minigame',
+  },
+  {
+    kind: 'stampApplied',
+    stationId: 'phone-0',
+    playerId: player,
+    folderId: 'f1',
+    stampId: 'x',
+    via: 'fieldCall',
   },
   { kind: 'deskOpened', deskId: 'desk-0', playerId: player, folderId: 'f1' },
   { kind: 'deskClosed', deskId: 'desk-0', playerId: player },
   {
     kind: 'verdictResult',
     folderId: 'f1',
+    spawnKey: 's0',
     storyId: 's1',
     playerId: player,
     verdict: 'publish',
-    justifyingStampId: 'x',
     outcome: 'correct',
+    reason: 'correctNormal',
     scoreDelta: 100,
     credibilityDelta: 0,
-    speedBonus: false,
+    justifyingStampIds: ['x'],
+    requiredStamps: 1,
+    bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
     missedStampIds: [],
   },
   { kind: 'ping', playerId: player, ping: 'needArchive' },
   { kind: 'levelEvent', event: 'viral', phase: 'start', folderIds: ['f1'] },
   { kind: 'raidResolved', raidId: 'r1', byFolderId: 'f1', folderIds: ['f1', 'f2'] },
+  { kind: 'ability', playerId: player, ability: 'expertise', stage: 'armed' },
+  {
+    kind: 'folderRescued',
+    playerId: player,
+    folderId: 'f1',
+    addedMs: 20_000,
+    folderIds: ['f1'],
+  },
+];
+
+/** Every ability stage the simulation reports (S7-36), with the cue each one plays. */
+const abilityStages: [Extract<GameplayEvent, { kind: 'ability' }>, CueId][] = [
+  [{ kind: 'ability', playerId: player, ability: 'expertise', stage: 'armed' }, 'ability.armed'],
+  [
+    { kind: 'ability', playerId: player, ability: 'secondChance', stage: 'disarmed' },
+    'ability.disarmed',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'expertise',
+      stage: 'done',
+      stationId: 'imageSearch-0',
+      folderId: 'f1',
+    },
+    'ability.expertise',
+  ],
+  [
+    { kind: 'ability', playerId: player, ability: 'fieldCall', stage: 'started', folderId: 'f1' },
+    'ability.call.start',
+  ],
+  [
+    { kind: 'ability', playerId: player, ability: 'fieldCall', stage: 'done', folderId: 'f1' },
+    'ability.call.done',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'fieldCall',
+      stage: 'cancelled',
+      folderId: 'f1',
+      reason: 'dropped',
+    },
+    'ability.call.dropped',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'extendDeadline',
+      stage: 'done',
+      folderId: 'f1',
+      addedMs: 20_000,
+    },
+    'ability.extendDeadline',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'secondChance',
+      stage: 'done',
+      stationId: 'archive-0',
+    },
+    'ability.secondChance',
+  ],
+  [
+    {
+      kind: 'ability',
+      playerId: player,
+      ability: 'passFolder',
+      stage: 'done',
+      folderId: 'f1',
+      targetPlayerId: 'p2',
+    },
+    'ability.pass',
+  ],
 ];
 
 describe('gameplay event cues', () => {
@@ -262,15 +406,58 @@ describe('gameplay event cues', () => {
     const sessionKinds = ['playerJoined', 'playerLeft', 'playerReconnected', 'gameStarted'];
     expect([...kinds].sort()).toEqual(all.filter((k) => !sessionKinds.includes(k)).sort());
     for (const event of everyEvent) {
-      const cue: Cue = cues[cueForEvent(event, () => 'true')];
+      const id = cueForEvent(event, () => 'true', player);
+      if (id === null) {
+        throw new Error(`no cue for ${event.kind}`);
+      }
+      const cue: Cue = cues[id];
       expect(cue.sound).toBeDefined();
       // Audio-only information does not exist: particles or an animation trigger too.
       expect(cue.particles !== undefined || cue.animation !== undefined).toBe(true);
     }
     for (const ping of ['needArchive', 'fake', 'mine'] as const) {
-      expect(cueForEvent({ kind: 'ping', playerId: player, ping }, () => undefined)).toBe(
+      expect(cueForEvent({ kind: 'ping', playerId: player, ping }, () => undefined, player)).toBe(
         `ping.${ping}`,
       );
+    }
+  });
+
+  it('gives every ability stage and a rescue a cue with sound and a visual layer (S7-36)', () => {
+    for (const [event, id] of abilityStages) {
+      expect(cueForEvent(event, () => undefined, player)).toBe(id);
+      const cue: Cue = cues[id];
+      expect(cue.sound).toBeDefined();
+      expect(cue.particles !== undefined || cue.animation !== undefined).toBe(true);
+    }
+    const rescued = everyEvent.find((e) => e.kind === 'folderRescued');
+    expect(rescued && cueForEvent(rescued, () => undefined, player)).toBe('role.rescue');
+  });
+
+  it("keeps a teammate's arm and disarm silent, but not what the ability does (S7-42)", () => {
+    for (const [event, id] of abilityStages) {
+      const silent = event.stage === 'armed' || event.stage === 'disarmed';
+      expect(cueForEvent(event, () => undefined, 'p2')).toBe(silent ? null : id);
+    }
+    // A client without a player id hears nobody's arming.
+    const armed: GameplayEvent = {
+      kind: 'ability',
+      playerId: player,
+      ability: 'expertise',
+      stage: 'armed',
+    };
+    expect(cueForEvent(armed, () => undefined, null)).toBeNull();
+  });
+
+  it('plays the ability sounds of the sprite (S7-42)', () => {
+    expect(cues['ability.ready'].sound.ids).toEqual(['abready']);
+    expect(cues['ability.ready'].sound.bus).toBe('ui');
+    expect(cues['ability.armed'].sound.ids).toEqual(['abpower']);
+    expect(cues['ability.expertise'].sound.ids).toEqual(['abpower']);
+    expect(cues['ability.pass'].sound.ids).toEqual(['abthrow']);
+    const map = sprite as unknown as Record<string, [number, number, boolean]>;
+    for (const id of ['abready', 'abpower', 'abthrow']) {
+      expect(map[id]?.[2]).toBe(false);
+      expect(map[id]?.[1]).toBeGreaterThan(100);
     }
   });
 
@@ -279,14 +466,14 @@ describe('gameplay event cues', () => {
     if (verdict?.kind !== 'verdictResult') {
       throw new Error('fixture missing');
     }
-    expect(cueForEvent(verdict, () => 'true')).toBe('verdict.correct');
-    expect(cueForEvent({ ...verdict, verdict: 'publishWithContext' }, () => 'misleading')).toBe(
-      'verdict.contextCorrect',
-    );
-    expect(cueForEvent({ ...verdict, outcome: 'wrongJustification' }, () => 'true')).toBe(
+    expect(cueForEvent(verdict, () => 'true', player)).toBe('verdict.correct');
+    expect(
+      cueForEvent({ ...verdict, verdict: 'publishWithContext' }, () => 'misleading', player),
+    ).toBe('verdict.contextCorrect');
+    expect(cueForEvent({ ...verdict, outcome: 'wrongJustification' }, () => 'true', player)).toBe(
       'verdict.wrongJustification',
     );
-    expect(cueForEvent({ ...verdict, outcome: 'wrong' }, () => 'false')).toBe(
+    expect(cueForEvent({ ...verdict, outcome: 'wrong' }, () => 'false', player)).toBe(
       'verdict.fakePublished',
     );
     expect(wrongVerdictCue('publishWithContext', 'unverifiable')).toBe('verdict.fakePublished');
@@ -422,6 +609,7 @@ describe('loop manager', () => {
 describe('deadline ticker', () => {
   const folder = (deadlineMs: number, warned: boolean): Folder => ({
     id: `f${deadlineMs}`,
+    spawnKey: 's0',
     storyId: 's',
     location: { kind: 'floor', x: 1, y: 1 },
     stamps: [],
@@ -454,5 +642,112 @@ describe('level timer', () => {
     expect(crossedLastSeconds(40_000, 0)).toBe(false);
     // Resuming after a reconnect at 12 s left is not a fresh crossing.
     expect(crossedLastSeconds(45_000, 12_000)).toBe(false);
+  });
+});
+
+describe('level-end stinger', () => {
+  const versus = (winnerTeam: 0 | 1 | null) => ({
+    winnerTeam,
+    reason: winnerTeam === null ? ('draw' as const) : ('score' as const),
+    teams: [],
+    rivalResults: [],
+  });
+
+  it('plays the match result in versus, from the team’s own side (S7-89)', () => {
+    expect(levelEndCue({ won: true, team: 1, versus: versus(1) }, false)).toBe('versus.win');
+    expect(levelEndCue({ won: false, team: 1, versus: versus(0) }, false)).toBe('versus.lose');
+    expect(levelEndCue({ won: false, team: 0, versus: versus(null) }, true)).toBe('versus.draw');
+  });
+
+  it('keeps the co-op and endless stingers', () => {
+    expect(levelEndCue({ won: true }, false)).toBe('level.win');
+    expect(levelEndCue({ won: false }, false)).toBe('level.lose');
+    expect(levelEndCue({ won: false }, true)).toBe('endless.over');
+  });
+});
+
+describe('full belt', () => {
+  it('alerts once, when the belt fills up', () => {
+    expect(beltJustFilled(false, true)).toBe(true);
+    expect(beltJustFilled(true, true)).toBe(false);
+    expect(beltJustFilled(true, false)).toBe(false);
+    expect(beltJustFilled(false, false)).toBe(false);
+  });
+
+  it('is a quiet ui-bus alert with a light tick', () => {
+    expect(cues['folder.beltFull']).toEqual({
+      severity: 1,
+      sound: { ids: ['hmm'], bus: 'ui', volume: 0.6 },
+      haptic: 'tick',
+    });
+  });
+});
+
+describe('solo pause (S7-10)', () => {
+  it('sounds once, when the server starts holding the level', () => {
+    expect(justPaused(false, true)).toBe(true);
+    expect(justPaused(true, true)).toBe(false);
+    expect(justPaused(true, false)).toBe(false);
+    expect(justPaused(false, false)).toBe(false);
+  });
+
+  it('is a soft ui-bus slide with a light tick', () => {
+    expect(cues['game.paused']).toEqual({
+      severity: 1,
+      sound: { ids: ['slide'], bus: 'ui', volume: 0.6 },
+      haptic: 'tick',
+    });
+  });
+});
+
+describe('role ability ready (S7-40)', () => {
+  const member = (abilityReadyAtMs: number, extra: Partial<CrewSnapshot> = {}): CrewSnapshot => ({
+    id: 'p1',
+    abilityReadyAtMs,
+    abilityArmed: false,
+    fieldCall: null,
+    rescuesLeft: 0,
+    ...extra,
+  });
+
+  it('fires once, on the snapshot where the cooldown runs out', () => {
+    expect(
+      abilityJustReady(
+        { member: member(70_000), elapsedMs: 69_950 },
+        { member: member(70_000), elapsedMs: 70_000 },
+      ),
+    ).toBe(true);
+    // Still cooling, already ready, or a cooldown that just started: no cue.
+    expect(
+      abilityJustReady(
+        { member: member(70_000), elapsedMs: 69_900 },
+        { member: member(70_000), elapsedMs: 69_950 },
+      ),
+    ).toBe(false);
+    expect(
+      abilityJustReady(
+        { member: member(70_000), elapsedMs: 70_000 },
+        { member: member(70_000), elapsedMs: 70_050 },
+      ),
+    ).toBe(false);
+    expect(
+      abilityJustReady(
+        { member: member(0), elapsedMs: 10_000 },
+        { member: member(70_050), elapsedMs: 10_050 },
+      ),
+    ).toBe(false);
+    expect(
+      abilityJustReady({ member: undefined, elapsedMs: 0 }, { member: member(0), elapsedMs: 50 }),
+    ).toBe(false);
+  });
+
+  it('is a quiet ui-bus abready with the chip bump; a denied press shakes the chip', () => {
+    expect(cues['ability.ready']).toEqual({
+      severity: 1,
+      sound: { ids: ['abready'], bus: 'ui', volume: 0.6 },
+      haptic: 'tick',
+      animation: 'abilityReady',
+    });
+    expect(cues['ability.denied'].animation).toBe('abilityDenied');
   });
 });

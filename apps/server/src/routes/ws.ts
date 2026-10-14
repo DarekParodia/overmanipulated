@@ -1,9 +1,9 @@
 // WebSocket endpoint for live gameplay. Parses every message with the shared Zod schemas and
 // hands it to the room registry. Optional artificial latency for netcode testing in dev.
-import { getConnInfo, upgradeWebSocket } from '@hono/bun';
+import { upgradeWebSocket } from '@hono/bun';
 import { MAX_CLIENT_MESSAGE_BYTES, parseClientMessage } from '@redakcja/shared';
 import type { ServerWebSocket } from 'bun';
-import type { Context } from 'hono';
+import { clientAddress } from '../client-address.ts';
 import {
   CLOSE_RATE_LIMITED,
   JOINS_PER_MINUTE_PER_IP,
@@ -24,15 +24,6 @@ export function delayed(latencyMs: number, fn: () => void): void {
   } else {
     fn();
   }
-}
-
-/**
- * Client address. Behind Caddy the proxy sets X-Forwarded-For (the game server is never exposed
- * directly); otherwise the socket's own address is used.
- */
-function clientAddress(c: Context): string {
-  const forwarded = c.req.header('x-forwarded-for')?.split(',')[0]?.trim();
-  return forwarded || getConnInfo(c).remote.address || 'unknown';
 }
 
 export function createWsHandler(deps: WsDeps) {

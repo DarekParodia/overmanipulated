@@ -1,6 +1,7 @@
 // Pure helpers for the station overlay and the desk sheet: focus movement for keyboard/gamepad
 // navigation, stable seeds for stamp drawings and number formatting. Kept free of React so they
 // can be unit-tested.
+import { hashText } from '@redakcja/shared';
 import type { NavIntent } from '../input/ui-nav.ts';
 
 /** Focusable items laid out in rows; each item is an id. Rows may differ in length. */
@@ -49,12 +50,7 @@ export function moveFocus(
 
 /** Stable 31-bit seed from a string id (FNV-1a), for seeded stamp rotation and ink. */
 export function seedFromId(id: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < id.length; i++) {
-    hash ^= id.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return (hash >>> 0) % 0x7fffffff;
+  return (hashText(id) >>> 0) % 0x7fffffff;
 }
 
 /** Signed integer with a typographic minus („−5”, „+12”, „0”). */
@@ -82,4 +78,58 @@ export function formatCountdown(ms: number): string {
   const minutes = Math.floor(total / 60);
   const seconds = total % 60;
   return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+/**
+ * A minigame clock that can stop (S7-95): the round started at `startedAt`, earlier pauses add
+ * up to `pausedTotal`, and `pausedAt` is set while it is stopped (the first-use help card).
+ */
+export type MinigameClockState = {
+  startedAt: number;
+  pausedTotal: number;
+  pausedAt: number | null;
+};
+
+/** A clock started at `now`, stopped from the start when `paused`. */
+export function startMinigameClock(now: number, paused: boolean): MinigameClockState {
+  return { startedAt: now, pausedTotal: 0, pausedAt: paused ? now : null };
+}
+
+/** Stops the clock at `now`; a stopped clock stays as it is. */
+export function pauseMinigameClock(clock: MinigameClockState, now: number): MinigameClockState {
+  return clock.pausedAt === null ? { ...clock, pausedAt: now } : clock;
+}
+
+/** Starts a stopped clock again at `now`; the stop adds to `pausedTotal`. */
+export function resumeMinigameClock(clock: MinigameClockState, now: number): MinigameClockState {
+  if (clock.pausedAt === null) {
+    return clock;
+  }
+  return {
+    ...clock,
+    pausedTotal: clock.pausedTotal + Math.max(0, now - clock.pausedAt),
+    pausedAt: null,
+  };
+}
+
+/** Time the minigame has run at `now`, without the stops (never negative). */
+export function minigameElapsed(
+  now: number,
+  startedAt: number,
+  pausedTotal: number,
+  pausedAt: number | null,
+): number {
+  return Math.max(0, (pausedAt ?? now) - startedAt - pausedTotal);
+}
+
+/**
+ * Time left on a round of `timeLimitMs` after `elapsedMs`. A resumed round (the Kartoteka after a
+ * cancel, S7-14) starts with `resumeMs` instead of the full limit.
+ */
+export function minigameRemaining(
+  timeLimitMs: number,
+  elapsedMs: number,
+  resumeMs?: number,
+): number {
+  return Math.max(0, (resumeMs ?? timeLimitMs) - elapsedMs);
 }

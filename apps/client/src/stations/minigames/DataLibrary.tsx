@@ -1,7 +1,7 @@
 // Data library minigame („Biblioteka danych”, S4-03). A figure quoted in the story is compared
 // with the ORIGINAL TABLE: tap the matching cell, or report „nie pasuje” when the figure was
-// changed. Rules and puzzle generation are pure, in dataLibrary.logic.ts.
-import { DATA_LIBRARY_MAX_MISTAKES } from '@redakcja/shared';
+// changed. Rules and puzzle generation are pure, in dataLibrary.logic.ts. A failure shows the
+// right cell and why the figure fits or not, unless the difficulty hides the answer (Ekspert).
 import { useEffect, useRef, useState } from 'react';
 import type { CueId } from '../../fx/cues.ts';
 import { emitCue } from '../../fx/feedback.ts';
@@ -43,9 +43,19 @@ const NUDGE: Keyframe[] = [
   { transform: 'translateX(0)' },
 ];
 
-export function DataLibrary({ seed, story, stamp, device, onDone }: MinigameProps) {
+export function DataLibrary({
+  seed,
+  story,
+  stamp,
+  device,
+  difficulty,
+  revealOnFail,
+  onDone,
+}: MinigameProps) {
   // The puzzle is fixed for the lifetime of this round (the overlay remounts per round).
-  const [state, setState] = useState(() => initialState(generatePuzzle(seed, story, stamp)));
+  const [state, setState] = useState(() =>
+    initialState(generatePuzzle(seed, story, stamp), difficulty),
+  );
   const stateRef = useRef(state);
   const tableRef = useRef<HTMLDivElement>(null);
   const onDoneRef = useRef(onDone);
@@ -103,13 +113,7 @@ export function DataLibrary({ seed, story, stamp, device, onDone }: MinigameProp
   return (
     <div className={styles.root} data-testid="data-library" data-verdict={puzzle.verdict}>
       <TaskLine
-        aside={
-          <Mistakes
-            used={state.mistakes}
-            max={DATA_LIBRARY_MAX_MISTAKES}
-            testId="library-mistakes"
-          />
-        }
+        aside={<Mistakes used={state.mistakes} max={state.maxMistakes} testId="library-mistakes" />}
       >
         {typeset(t.task)}
       </TaskLine>
@@ -151,7 +155,11 @@ export function DataLibrary({ seed, story, stamp, device, onDone }: MinigameProp
                   {values.map((value, c) => {
                     const struck = state.struck[r]?.[c] ?? false;
                     const right = outcome === 'success' && answer?.row === r && answer.col === c;
-                    const revealed = outcome === 'failure' && answer?.row === r && answer.col === c;
+                    const revealed =
+                      revealOnFail &&
+                      outcome === 'failure' &&
+                      answer?.row === r &&
+                      answer.col === c;
                     return (
                       // biome-ignore lint/suspicious/noArrayIndexKey: fixed grid of columns
                       <td key={c}>
@@ -207,13 +215,15 @@ export function DataLibrary({ seed, story, stamp, device, onDone }: MinigameProp
               title={outcome === 'success' ? t.right : t.wrong}
               testId="library-verdict"
             >
-              <p>{typeset(t.reasons[puzzle.verdict])}</p>
+              {(outcome === 'success' || revealOnFail) && (
+                <p>{typeset(t.reasons[puzzle.verdict])}</p>
+              )}
             </OutcomeBanner>
           )}
         </div>
       </div>
 
-      {playing && <KeyHints hints={t.keys} device={device} />}
+      {playing && <KeyHints hints={t.keys} device={device} className={styles.hints} />}
     </div>
   );
 }

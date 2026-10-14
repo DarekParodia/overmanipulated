@@ -30,6 +30,7 @@
   grid-area: chips;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-2);
 }
 
@@ -53,18 +54,41 @@
   margin-top: -0.1em;
 }
 
+/* The guests' difficulty chip pops when the host changes it (motion tokens honour reduced motion). */
+.difficultyChip {
+  animation: difficulty-pop var(--motion-base) var(--ease-bounce) both;
+}
+
+@keyframes difficulty-pop {
+  0% {
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .hostOnly {
   grid-area: hostOnly;
   font-size: var(--text-sm);
   color: var(--text-soft);
 }
 
-/* Host: the campaign map. Title and the chosen level's chips on top, the tile path below. */
+/* Host: the campaign map. Title, the chosen level's chips and „Szczegóły” on top, the tile path
+   below. */
 .map {
+  grid-template-columns: auto 1fr auto;
   grid-template-areas:
-    "title chips"
-    "path path";
+    "title chips details"
+    "path path path";
   row-gap: var(--space-1);
+}
+
+.details {
+  grid-area: details;
 }
 
 .mapTitle {
@@ -245,7 +269,8 @@
   }
   /* The tiles speak for themselves on a phone; the sticky action bar stays short. */
   .map {
-    grid-template-areas: "path path";
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "path details";
   }
   .mapTitle,
   .map .chips {

@@ -1,36 +1,58 @@
-// Results screen at the end of a level: a big won/lost headline on a green or red ribbon, three
-// big stars, points and credibility, and the Kolegium — one debrief card per story with the
-// blunder-of-the-day vote. Stars and verdict marks reveal one by one with sound (any tap or key
-// finishes the reveal). The host's yellow button takes the team back to the newsroom; guests
-// see a waiting line.
+// Results screen at the end of a level: a big won/lost headline on a green or red ribbon with
+// the reason under it, the summary (three stars with what each takes, points to the next star,
+// points and credibility, the 'Za co punkty' table) and the Kolegium — one debrief card per
+// folder (per story in endless) with the blunder-of-the-day vote. On phones the summary is the
+// Kolegium's first page. Stars, the progress line, the table rows and the verdict marks reveal
+// one by one with sound (any tap or key finishes the reveal). The host's yellow button takes the
+// team back to the newsroom; guests see a waiting line. Versus (S7-89): a won / lost / drawn
+// ribbon with the reason and both newsrooms' points, the two team cards instead of the stars, this
+// newsroom's table, and the rival's verdict on each Kolegium card (paired by spawn key); no stars,
+// progress or leaderboard.
 import { getStory } from '@redakcja/content';
 import { ENDLESS_LEVEL_ID, type LevelEndMessage } from '@redakcja/shared';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
-import { debriefCards } from '../debrief/debrief-model.ts';
+import { AdSlot } from '../ads/AdSlot.tsx';
 import { Kolegium, useBlunderVotes } from '../debrief/Kolegium.tsx';
+import {
+  kolegiumCards,
+  lossReasonOf,
+  type RevealStepKind,
+  resultTotals,
+  revealedByKind,
+  revealPlan,
+  starProgress,
+} from '../debrief/results-model.ts';
 import { PHONE_QUERY, useMediaQuery } from '../debrief/use-media-query.ts';
-import { revealTimes, useReveal } from '../debrief/use-reveal.ts';
+import { useReveal } from '../debrief/use-reveal.ts';
 import { NewCardChip, useNewCards } from '../encyclopedia/NewCardChip.tsx';
 import { formatSurvived, survivedSeconds } from '../endless/endless-model.ts';
 import { LeaderboardList, type OwnRun, Segmented } from '../endless/Leaderboard.tsx';
+import type { CueId } from '../fx/cues.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { useGame } from '../net/game-store.ts';
 import { backToLobby, leaveRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
-import { useEndlessBest } from '../store/progress.ts';
+import { endlessBestOn, useEndlessBest } from '../store/progress.ts';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
-import { Icon } from '../ui/icons/Icon.tsx';
+import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import { HudGlyph } from './HudGlyph.tsx';
 import { formatScore } from './hud-model.ts';
 import { RatingStar } from './RatingStar.tsx';
 import styles from './ResultsPlate.module.css';
+import { ResultsSummary, STAR_COUNT } from './ResultsSummary.tsx';
 import { hudStory } from './story-lookup.ts';
+import { TeamCards, VersusScoreLine } from './VersusResults.tsx';
+import {
+  pairRivalResults,
+  teamCardsOf,
+  type VersusResultKind,
+  versusVerdict,
+} from './versus-model.ts';
 
-const STAR_COUNT = 3;
 type EndlessTab = 'debrief' | 'room' | 'global';
 
 /**
@@ -38,7 +60,9 @@ type EndlessTab = 'debrief' | 'room' | 'global';
  * mounts the effect twice, and says whether it is a new record.
  */
 function useEndlessRun(levelEnd: LevelEndMessage, roomCode: string | null, enabled: boolean) {
-  const best = useEndlessBest((s) => s.best);
+  // The run's own difficulty: every difficulty keeps its own best (S7-26).
+  const { difficulty } = levelEnd;
+  const best = useEndlessBest((s) => endlessBestOn(s.best, difficulty));
   const [newRecord, setNewRecord] = useState(false);
   const recorded = useRef(false);
   const survivedS = survivedSeconds(
@@ -53,16 +77,31 @@ function useEndlessRun(levelEnd: LevelEndMessage, roomCode: string | null, enabl
       return;
     }
     recorded.current = true;
-    if (useEndlessBest.getState().record({ score, survivedS })) {
+    if (useEndlessBest.getState().record(difficulty, { score, survivedS })) {
       setNewRecord(true);
       emitCue('endless.record');
     }
-  }, [enabled, score, survivedS]);
+  }, [enabled, difficulty, score, survivedS]);
   const own: OwnRun | null = roomCode ? { roomCode, score, survivedS } : null;
   return { survivedS, best, newRecord, own };
 }
 
 const VOTE_KEY = { keyboard: 'Q', gamepad: 'Y', touch: null } as const;
+
+/** Versus ribbon: colour class and the disc's icon per match result (S7-89). */
+const VERSUS_RIBBON = {
+  win: { tone: 'won', icon: 'trophy' },
+  lose: { tone: 'lost', icon: 'reject' },
+  draw: { tone: 'draw', icon: 'equal' },
+} as const satisfies Record<VersusResultKind, { tone: string; icon: IconName }>;
+
+/** The sound of each reveal step; the progress line comes in silently. */
+const STEP_CUE = {
+  star: 'debrief.star',
+  progress: null,
+  row: 'debrief.row',
+  mark: 'debrief.mark',
+} as const satisfies Record<RevealStepKind, CueId | null>;
 
 /** Content story for the debrief; dev-fixture stories only have a headline. */
 function debriefStory(storyId: string) {
@@ -76,22 +115,93 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
   const reducedMotion = useSettings((s) => s.reducedMotion);
   const paged = useMediaQuery(PHONE_QUERY);
   const footer = useRef<HTMLElement>(null);
-  const cards = useMemo(() => debriefCards(levelEnd.results, debriefStory), [levelEnd.results]);
+  // Versus: the match from this newsroom's side; the endless run's figures, record and
+  // leaderboard are co-op only (a versus match writes neither).
+  const versus = levelEnd.versus ?? null;
+  const ownTeam = levelEnd.team ?? 0;
+  const match = versus ? versusVerdict(versus, ownTeam) : null;
+  const teams = versus ? teamCardsOf(versus.teams, ownTeam) : null;
+  const endless = levelEnd.levelId === ENDLESS_LEVEL_ID && !versus;
+  // The level's stations as the game left them: proof from a station the level lacks is left
+  // out of the Kolegium's proof section.
+  const [levelStations] = useState(() => useGame.getState().stations.map((s) => s.kind));
+  // One card per folder, so card points add up to the score; endless groups them per story.
+  // The folders still in play at the end come last.
+  const cards = useMemo(
+    () =>
+      kolegiumCards(levelEnd.results, debriefStory, endless ? 'story' : 'folder', levelStations),
+    [levelEnd.results, endless, levelStations],
+  );
+  const totals = useMemo(
+    () => resultTotals(levelEnd.results, levelEnd.score),
+    [levelEnd.results, levelEnd.score],
+  );
+  const rivals = useMemo(
+    () => (versus ? pairRivalResults(cards, versus.rivalResults) : undefined),
+    [versus, cards],
+  );
+  const progress = useMemo(
+    () =>
+      endless || versus || levelEnd.starThresholds === null
+        ? null
+        : starProgress(
+            levelEnd.score,
+            levelEnd.won,
+            levelEnd.stars,
+            levelEnd.starThresholds,
+            levelEnd.maxScore,
+          ),
+    [endless, versus, levelEnd],
+  );
+  const lede = match
+    ? pl.versus.reasons[match.reason]
+    : endless
+      ? pl.endless.lede
+      : pl.results.lede[lossReasonOf(levelEnd) ?? 'won'];
+  // Page index: on phones page 0 is the summary and card i is page i + 1.
   const [current, setCurrent] = useState(0);
   const votes = useBlunderVotes();
-  const endless = levelEnd.levelId === ENDLESS_LEVEL_ID;
   const roomCode = useApp((s) => s.room?.roomCode ?? null);
   const run = useEndlessRun(levelEnd, roomCode, endless);
   const [tab, setTab] = useState<EndlessTab>('debrief');
   const showCards = !endless || tab === 'debrief';
+  const offset = paged ? 1 : 0;
+  const pages = cards.length + offset;
+  const cardIndex = current - offset;
+  // Turning the phone (or resizing) changes what the page index means: start over.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the layout switches
+  useEffect(() => setCurrent(0), [paged]);
 
-  // Stars first, then the marks; on phones only the visible card's mark is part of the show.
-  const markSteps = paged ? Math.min(1, cards.length) : cards.length;
-  const times = useMemo(() => revealTimes(levelEnd.stars, markSteps), [levelEnd.stars, markSteps]);
-  const reveal = useReveal(times, reducedMotion, (step) =>
-    emitCue(step < levelEnd.stars ? 'debrief.star' : 'debrief.mark'),
+  // Stars, the progress line, the totals rows, then the marks. On phones the rows are on the
+  // summary page and each card's mark shows when it is paged to.
+  const plan = useMemo(
+    () =>
+      revealPlan({
+        stars: endless || versus ? 0 : levelEnd.stars,
+        rows: totals.rows.length,
+        marks: paged ? 0 : cards.length,
+        progress: progress !== null,
+      }),
+    [endless, versus, levelEnd.stars, totals.rows.length, paged, cards.length, progress],
   );
-  const markShown = (index: number) => reveal.done || reveal.revealed > levelEnd.stars + index;
+  const times = useMemo(() => plan.map((step) => step.atMs), [plan]);
+  const reveal = useReveal(times, reducedMotion, (index) => {
+    const step = plan[index];
+    const cue = step ? STEP_CUE[step.kind] : null;
+    if (cue) {
+      emitCue(cue);
+    }
+  });
+  const shown = revealedByKind(plan, reveal.revealed);
+  const markShown = (index: number) => reveal.done || shown.mark > index;
+  const summaryReveal = {
+    stars: shown.star,
+    progress: shown.progress > 0,
+    rows: shown.row,
+    instant: reveal.instant,
+  };
+  // Keyboard and gamepad cannot open the explainer, so it starts open for them.
+  const explainOpen = !paged || device !== 'touch';
   // S5-04: the techniques met in this debrief unlock encyclopedia cards.
   const newCards = useNewCards(
     levelEnd.results.map((result) => result.storyId),
@@ -113,7 +223,7 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
   }, [reveal.done, reveal.finish]);
 
   const move = (delta: number) =>
-    setCurrent((index) => Math.max(0, Math.min(cards.length - 1, index + delta)));
+    setCurrent((index) => Math.max(0, Math.min(pages - 1, index + delta)));
 
   useInputCapture(true);
   useNavIntent((intent) => {
@@ -132,7 +242,7 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
     } else if (intent === 'right' || intent === 'down') {
       move(1);
     } else if (intent === 'alt') {
-      const card = cards[current];
+      const card = cards[cardIndex];
       if (card) {
         emitCue('debrief.vote');
         votes.vote(card.storyId);
@@ -145,104 +255,143 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
       ?.focus({ preventScroll: true });
   }, []);
 
+  const figures = (
+    <dl className={styles.figures}>
+      <div className={styles.figure}>
+        <dt>
+          <HudGlyph name="star" size={28} fill="var(--yellow)" label={pl.results.score} />
+        </dt>
+        <dd>{formatScore(levelEnd.score)}</dd>
+      </div>
+      <div className={styles.figure}>
+        <dt>
+          <HudGlyph name="shield" size={28} fill="var(--green)" label={pl.results.credibility} />
+        </dt>
+        <dd>{levelEnd.credibility}</dd>
+      </div>
+    </dl>
+  );
+  const endlessFigures = (
+    <>
+      <dl className={`${styles.figures} ${styles.endlessFigures}`}>
+        <div className={styles.figure}>
+          <dt>
+            <Icon name="clock" size={28} />
+            <span className={styles.caption}>{pl.endless.survived}</span>
+          </dt>
+          <dd data-testid="endless-survived">{formatSurvived(run.survivedS)}</dd>
+        </div>
+        <div className={`${styles.figure} ${run.newRecord ? styles.record : ''}`}>
+          <dt>
+            <Icon
+              name="trophy"
+              size={28}
+              style={{ '--icon-fill': 'var(--yellow)' } as CSSProperties}
+            />
+            <span className={styles.caption}>{pl.endless.best}</span>
+          </dt>
+          <dd data-testid="endless-best">{run.best ? formatScore(run.best.score) : '–'}</dd>
+        </div>
+      </dl>
+      {run.newRecord && (
+        <p className={styles.recordChip} role="status">
+          <Icon name="star" size={20} style={{ '--icon-fill': 'var(--yellow)' } as CSSProperties} />
+          {pl.endless.newRecord}
+        </p>
+      )}
+    </>
+  );
+
+  const ribbon = match ? VERSUS_RIBBON[match.result] : null;
+  const tone = ribbon
+    ? styles[ribbon.tone]
+    : endless
+      ? styles.endless
+      : levelEnd.won
+        ? styles.won
+        : styles.lost;
+  const ribbonIcon: IconName = ribbon
+    ? ribbon.icon
+    : endless
+      ? 'trophy'
+      : levelEnd.won
+        ? 'publish'
+        : 'reject';
+  const teamCards = teams && versus && <TeamCards teams={teams} winnerTeam={versus.winnerTeam} />;
+
   return (
     <div className={styles.backdrop} onPointerDownCapture={reveal.done ? undefined : reveal.finish}>
       <article
-        className={`${styles.panel} ${endless ? styles.endless : levelEnd.won ? styles.won : styles.lost} ${reveal.instant ? styles.instant : ''}`}
+        className={`${styles.panel} ${tone} ${reveal.instant ? styles.instant : ''}`}
         data-testid="results"
+        data-reveal={reveal.instant ? 'instant' : reveal.done ? 'done' : 'running'}
+        data-versus={match?.result}
         aria-labelledby="results-headline"
       >
         <header className={styles.ribbon}>
           <span className={styles.ribbonMark}>
-            <Icon name={endless ? 'trophy' : levelEnd.won ? 'publish' : 'reject'} size={30} />
+            <Icon name={ribbonIcon} size={30} />
           </span>
           <div>
             <h1 id="results-headline" className={styles.headline}>
-              {endless
-                ? typeset(pl.endless.headline(formatScore(levelEnd.score)))
-                : levelEnd.won
-                  ? pl.results.wonHeadline
-                  : pl.results.lostHeadline}
+              {match
+                ? pl.versus.headline[match.result]
+                : endless
+                  ? typeset(pl.endless.headline(formatScore(levelEnd.score)))
+                  : levelEnd.won
+                    ? pl.results.wonHeadline
+                    : pl.results.lostHeadline}
             </h1>
-            <p className={styles.lede}>
-              {typeset(
-                endless ? pl.endless.lede : levelEnd.won ? pl.results.wonLede : pl.results.lostLede,
-              )}
-            </p>
+            <p className={styles.lede}>{typeset(lede)}</p>
           </div>
           {paged && showCards && <NewCardChip cardIds={newCards} compact />}
+          {/* Desktop: points and credibility sit in the ribbon, leaving the column to the table;
+              in versus both newsrooms' points. */}
+          {!paged && teams && (
+            <div className={styles.ribbonScore}>
+              <VersusScoreLine teams={teams} />
+            </div>
+          )}
+          {!paged && !endless && !teams && <div className={styles.ribbonFigures}>{figures}</div>}
         </header>
 
         <div className={styles.summary}>
-          {endless ? (
-            <>
-              <dl className={styles.figures}>
-                <div className={styles.figure}>
-                  <dt>
-                    <Icon name="clock" size={28} />
-                    <span className={styles.caption}>{pl.endless.survived}</span>
-                  </dt>
-                  <dd data-testid="endless-survived">{formatSurvived(run.survivedS)}</dd>
-                </div>
-                <div className={`${styles.figure} ${run.newRecord ? styles.record : ''}`}>
-                  <dt>
-                    <Icon
-                      name="trophy"
-                      size={28}
-                      style={{ '--icon-fill': 'var(--yellow)' } as CSSProperties}
+          {paged ? (
+            teams ? (
+              <VersusScoreLine teams={teams} />
+            ) : endless ? (
+              endlessFigures
+            ) : (
+              <>
+                <div
+                  className={styles.stars}
+                  role="img"
+                  aria-label={pl.results.stars(levelEnd.stars)}
+                >
+                  {Array.from({ length: STAR_COUNT }, (_, i) => (
+                    <RatingStar
+                      // biome-ignore lint/suspicious/noArrayIndexKey: the three stars are positional
+                      key={i}
+                      earned={i < levelEnd.stars && shown.star > i}
+                      delayMs={0}
                     />
-                    <span className={styles.caption}>{pl.endless.best}</span>
-                  </dt>
-                  <dd data-testid="endless-best">{run.best ? formatScore(run.best.score) : '–'}</dd>
+                  ))}
                 </div>
-              </dl>
-              {run.newRecord && (
-                <p className={styles.recordChip} role="status">
-                  <Icon
-                    name="star"
-                    size={20}
-                    style={{ '--icon-fill': 'var(--yellow)' } as CSSProperties}
-                  />
-                  {pl.endless.newRecord}
-                </p>
-              )}
-            </>
+                {figures}
+              </>
+            )
           ) : (
-            <>
-              <div
-                className={styles.stars}
-                role="img"
-                aria-label={pl.results.stars(levelEnd.stars)}
-              >
-                {Array.from({ length: STAR_COUNT }, (_, i) => (
-                  <RatingStar
-                    // biome-ignore lint/suspicious/noArrayIndexKey: the three stars are positional
-                    key={i}
-                    earned={i < levelEnd.stars && reveal.revealed > i}
-                    delayMs={0}
-                  />
-                ))}
-              </div>
-              <dl className={styles.figures}>
-                <div className={styles.figure}>
-                  <dt>
-                    <HudGlyph name="star" size={28} fill="var(--yellow)" label={pl.results.score} />
-                  </dt>
-                  <dd>{formatScore(levelEnd.score)}</dd>
-                </div>
-                <div className={styles.figure}>
-                  <dt>
-                    <HudGlyph
-                      name="shield"
-                      size={28}
-                      fill="var(--green)"
-                      label={pl.results.credibility}
-                    />
-                  </dt>
-                  <dd>{levelEnd.credibility}</dd>
-                </div>
-              </dl>
-            </>
+            <ResultsSummary
+              variant="column"
+              lede={lede}
+              progress={progress}
+              maxScore={levelEnd.maxScore}
+              totals={totals}
+              {...(endless ? { figures: endlessFigures } : {})}
+              {...(teamCards ? { teams: teamCards } : {})}
+              reveal={summaryReveal}
+              explainOpen={explainOpen}
+            />
           )}
         </div>
 
@@ -273,18 +422,39 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
           </h2>
           {!showCards ? (
             <div className={styles.board}>
-              <LeaderboardList key={tab} scope={tab} roomCode={roomCode} own={run.own} />
+              <LeaderboardList
+                key={tab}
+                scope={tab}
+                difficulty={levelEnd.difficulty}
+                roomCode={roomCode}
+                own={run.own}
+              />
             </div>
           ) : (
             <Kolegium
               cards={cards}
               paged={paged}
-              current={Math.min(current, Math.max(0, cards.length - 1))}
-              onCurrent={setCurrent}
+              current={Math.min(cardIndex, Math.max(0, cards.length - 1))}
+              onCurrent={(index) => setCurrent(index + offset)}
               marked={markShown}
               instant={reveal.instant}
               voteKey={reveal.done ? VOTE_KEY[device] : null}
               votes={votes}
+              {...(rivals ? { rivals } : {})}
+              lead={
+                paged && (
+                  <ResultsSummary
+                    variant="page"
+                    lede={lede}
+                    progress={progress}
+                    maxScore={levelEnd.maxScore}
+                    totals={totals}
+                    {...(teamCards ? { teams: teamCards } : {})}
+                    reveal={summaryReveal}
+                    explainOpen={explainOpen}
+                  />
+                )
+              }
             />
           )}
         </section>
@@ -293,7 +463,7 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
           <Button variant="ghost" back icon={<Icon name="leave" size={22} />} onClick={leaveRoom}>
             {pl.game.leave}
           </Button>
-          {paged && showCards && cards.length > 1 && (
+          {paged && showCards && pages > 1 && (
             <div className={styles.pager}>
               <button
                 type="button"
@@ -308,13 +478,14 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
                 <Icon name="arrow" size={24} style={{ transform: 'scaleX(-1)' }} />
               </button>
               <span className={styles.pagePosition} aria-live="polite">
-                {pl.debrief.position(current + 1, cards.length)}
+                {current === 0 && <span className={styles.pageName}>{pl.results.summaryPage}</span>}
+                <span>{pl.debrief.position(current + 1, pages)}</span>
               </span>
               <button
                 type="button"
                 className={styles.pageButton}
                 aria-label={pl.debrief.next}
-                disabled={current >= cards.length - 1}
+                disabled={current >= pages - 1}
                 onClick={() => {
                   emitCue('ui.click');
                   move(1);
@@ -336,6 +507,8 @@ export function ResultsPlate({ levelEnd }: { levelEnd: LevelEndMessage }) {
           )}
         </footer>
       </article>
+      {/* Side rail beside the panel from 1780 px wide; none on laptops or phones (S7-74). */}
+      <AdSlot placement="results" />
     </div>
   );
 }

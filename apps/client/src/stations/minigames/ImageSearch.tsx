@@ -1,8 +1,9 @@
 // Image search minigame, „Lupa obrazu” (S2-04). The submitted photo with red rings around 2–3
 // fragments, a loupe that magnifies one fragment, and reverse-image-search result cards. The player picks the result that shows every marked fragment
 // (tap it, drag the loupe onto it, or arrows + confirm), then reads off where and when it was
-// published. Two wrong picks fail the attempt. Puzzle rules live in imageSearch.logic.ts.
-import { IMAGE_SEARCH_MAX_MISTAKES } from '@redakcja/shared';
+// published. Two wrong picks fail the attempt (the room's difficulty moves the limit, S7-24); a
+// failure then outlines the right result, unless the difficulty hides the answer (Ekspert).
+// Puzzle rules live in imageSearch.logic.ts.
 import { memo, type PointerEvent, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { emitCue } from '../../fx/feedback.ts';
 import { type NavIntent, useNavIntent } from '../../input/ui-nav.ts';
@@ -38,6 +39,8 @@ const t = pl.minigames.imageSearch;
 
 /** Pause after the failing pick so the player sees the strike before the overlay closes. */
 const FAIL_REVEAL_MS = 700;
+/** The same pause when the right result is outlined too: long enough to find it. */
+const FAIL_ANSWER_MS = 1400;
 /** After a match the note stays readable this long, then the result is reported on its own. */
 const SOLVE_REVEAL_MS = 2500;
 /** Share of the time limit at which a solved puzzle reports at once, before the overlay times out. */
@@ -211,10 +214,18 @@ function dateText(date: ResultDate): string {
   return formatDate(new Date(date.year, date.month - 1, date.day));
 }
 
-export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameProps) {
+export function ImageSearch({
+  seed,
+  stamp,
+  device,
+  difficulty,
+  revealOnFail,
+  timeUsed,
+  onDone,
+}: MinigameProps) {
   const matchYear = yearFromText(stamp?.text);
   const puzzle = useMemo(() => createPuzzle(seed, matchYear ?? undefined), [seed, matchYear]);
-  const [play, setPlay] = useState<PlayState>(initialPlay);
+  const [play, setPlay] = useState<PlayState>(() => initialPlay(difficulty));
   const playRef = useRef(play);
   playRef.current = play;
 
@@ -233,9 +244,10 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
     if (!play.failed) {
       return;
     }
-    const timer = setTimeout(() => reportRef.current(false), FAIL_REVEAL_MS);
+    const hold = revealOnFail ? FAIL_ANSWER_MS : FAIL_REVEAL_MS;
+    const timer = setTimeout(() => reportRef.current(false), hold);
     return () => clearTimeout(timer);
-  }, [play.failed]);
+  }, [play.failed, revealOnFail]);
   useEffect(() => {
     if (!play.solved) {
       return;
@@ -295,7 +307,7 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
       cycleFragment();
     } else if (intent === 'confirm') {
       choose(state.cursor);
-    } else if (intent !== 'back') {
+    } else if (intent !== 'back' && intent !== 'ability' && intent !== 'help') {
       const cursor = moveCursor(state.cursor, intent, puzzle.results.length);
       if (cursor !== state.cursor) {
         const next = { ...state, cursor };
@@ -383,7 +395,7 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
       data-state={play.solved ? 'solved' : play.failed ? 'failed' : 'playing'}
       aria-label={pl.vocab.stations.imageSearch}
     >
-      <TaskLine aside={<Mistakes used={play.mistakes} max={IMAGE_SEARCH_MAX_MISTAKES} />}>
+      <TaskLine aside={<Mistakes used={play.mistakes} max={play.maxMistakes} />}>
         {typeset(t.task)}
       </TaskLine>
 
@@ -462,11 +474,13 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
             const ruledOut = play.ruledOut.includes(index);
             const missing = ruledOut ? missingFragments(puzzle, index) : [];
             const isFound = play.solved && index === puzzle.answer;
+            const revealed = revealOnFail && play.failed && index === puzzle.answer;
             const classes = [
               styles.result,
               showCursor && index === play.cursor && !isOver(play) ? styles.cursor : '',
               ruledOut ? styles.ruledOut : '',
               isFound ? styles.found : '',
+              revealed ? styles.revealed : '',
               dragging && over === index ? styles.dropTarget : '',
             ];
             return (
@@ -476,6 +490,7 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
                   className={classes.join(' ')}
                   data-result={index}
                   data-testid={`image-search-result-${index}`}
+                  data-revealed={revealed || undefined}
                   aria-label={`${t.result(index + 1)}: ${t.published(result.site, dateText(result.date))}`}
                   aria-disabled={ruledOut || isOver(play)}
                   onClick={() => choose(index)}
@@ -513,7 +528,7 @@ export function ImageSearch({ seed, stamp, device, timeUsed, onDone }: MinigameP
         </ol>
       </div>
 
-      {!isOver(play) && <KeyHints hints={t.keys} device={device} />}
+      {!isOver(play) && <KeyHints hints={t.keys} device={device} className={styles.hints} />}
 
       {dragging && selectedShape && (
         <div

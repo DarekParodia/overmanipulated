@@ -4,6 +4,7 @@
 // player. Celebrations are full-body gestures like `cheer`. Arm poses are written as pointing
 // directions in torso space (+x forward, +y up, +z left) through `armL`/`armR`, which is far
 // easier to author than Euler angles for a one-bone arm; `armR` mirrors the left-arm numbers.
+import { ABILITY } from '@redakcja/shared';
 import { AnimationClip, Euler, type KeyframeTrack, Quaternion } from 'three';
 import { clip, hipsY, REST_POSE, type Rot, rot } from './clips.ts';
 import { aimQuaternion } from './hands.ts';
@@ -152,6 +153,33 @@ function idleManager(): AnimationClip {
   ]);
 }
 
+/** Generalist twirls a pencil in front of the chest, then looks round for the next queue. */
+function idleGeneral(): AnimationClip {
+  const low = armR(0.6, -0.2, -0.3);
+  const twirl = armR(0.6, 0.05, -0.15);
+  return upper('idleGeneral', 3.2, [
+    [0.35, { armR: low, head: head(0, -0.2) }],
+    [0.6, { armR: twirl, head: head(0, -0.18) }],
+    [0.85, { armR: low, head: head(0, -0.2) }],
+    [1.1, { armR: twirl, head: head(0, -0.18) }],
+    [1.5, { armR: low, head: head(0.6, 0), torso: [0, 0.18, 0] }],
+    [2.1, { armR: low, head: head(-0.6, 0), torso: [0, -0.18, 0] }],
+    [2.7, { armR: armR(0.1, -1, 0.1), head: head(0, 0) }],
+  ]);
+}
+
+/** Rescuer shades the eyes with one hand and scans the room from side to side. */
+function idleRescuer(): AnimationClip {
+  const shade = armR(0.45, 0.62, -0.25);
+  return upper('idleRescuer', 3.4, [
+    [0.45, { armR: shade, head: head(0, 0.12) }],
+    [1.05, { armR: shade, head: head(0.55, 0.12), torso: [0, 0.2, 0] }],
+    [1.85, { armR: shade, head: head(-0.55, 0.12), torso: [0, -0.2, 0] }],
+    [2.45, { armR: shade, head: head(0, 0.1), torso: [0, 0, 0] }],
+    [2.95, { armR: armR(0.1, -1, 0.1), head: head(0, 0) }],
+  ]);
+}
+
 // --- Ping emotes: short, readable at phone size ------------------------------------------------
 
 /** needArchive: points at the shelves with a double jab. */
@@ -198,6 +226,60 @@ function emoteMine(): AnimationClip {
     [0.7, { armR: wave, head: head(0, 0.1), torso: [0, 0, 0.04] }],
     [0.95, { armR: up, head: head(0, 0.08) }],
   ]);
+}
+
+// --- Role ability reactions (S7-42): upper body, so a walking player keeps walking -------------
+
+/** Ekspertyza, Druga szansa, Przedłużenie (done or armed): a quick double fist pump. */
+function abilityPower(): AnimationClip {
+  const low = { armL: armL(0.55, 0.15, -0.25), armR: armR(0.55, 0.15, -0.25) };
+  const up = { armL: armL(0.25, 0.9, 0.05), armR: armR(0.25, 0.9, 0.05) };
+  return upper('abilityPower', 1.0, [
+    [0.12, { ...low, head: head(0, -0.08), torso: [0, 0, -0.06] }],
+    [0.3, { ...up, head: head(0, 0.2), torso: [0, 0, 0.05] }],
+    [0.45, { ...low, head: head(0, 0.05), torso: [0, 0, -0.02] }],
+    [0.62, { ...up, head: head(0, 0.22), torso: [0, 0, 0.05] }],
+    [0.82, { ...low, head: head(0, 0.05) }],
+  ]);
+}
+
+/** Podaj teczkę: both hands swing back, then push the folder forward and up in an arc. */
+function abilityThrow(): AnimationClip {
+  const back = { armL: armL(-0.35, -0.55, 0.2), armR: armR(-0.35, -0.55, 0.2) };
+  const release = { armL: armL(0.85, 0.45, -0.1), armR: armR(0.85, 0.45, -0.1) };
+  return upper('abilityThrow', 0.9, [
+    [0.14, { ...back, torso: [0, 0, -0.12], head: head(0, -0.05) }],
+    [0.32, { ...release, torso: [0, 0, 0.14], head: head(0, 0.15) }],
+    [0.5, { ...release, torso: [0, 0, 0.1], head: head(0, 0.12) }],
+    [0.75, { armL: armL(0.4, -0.6, 0.1), armR: armR(0.4, -0.6, 0.1), head: head(0, 0.04) }],
+  ]);
+}
+
+/**
+ * Telefon z terenu: the right hand holds a phone to the ear for the whole call
+ * (`ABILITY.fieldCall.callMs`), with a few nods. The left arm has no track, so a carried folder
+ * stays in that hand's pose. The controller stops it early when the call ends.
+ */
+function abilityCall(): AnimationClip {
+  const duration = ABILITY.fieldCall.callMs / 1000;
+  const ear = armR(0.12, 0.72, -0.2);
+  const nod = (pitch: number): Rot => head(-0.15, pitch, 0.12);
+  // Keys at fractions of the call, so the clip follows a retuned call length.
+  const keys: readonly [number, Pose][] = [
+    [0.05, { armR: ear, head: nod(0) }],
+    [0.2, { armR: ear, head: nod(0.1) }],
+    [0.25, { armR: ear, head: nod(-0.05) }],
+    [0.3, { armR: ear, head: nod(0.1) }],
+    [0.5, { armR: ear, head: nod(0), torso: [0, -0.1, 0] }],
+    [0.7, { armR: ear, head: nod(0.08), torso: [0, 0.1, 0] }],
+    [0.75, { armR: ear, head: nod(-0.05) }],
+    [0.93, { armR: ear, head: nod(0) }],
+  ];
+  return upper(
+    'abilityCall',
+    duration,
+    keys.map(([at, pose]) => [at * duration, pose] as const),
+  );
 }
 
 // --- Level-win celebrations: one flavour per role ----------------------------------------------
@@ -264,10 +346,47 @@ function cheerManager(): AnimationClip {
   ]);
 }
 
-export const FIDGET_CLIPS = ['idlePhoto', 'idleArchive', 'idleReporter', 'idleManager'] as const;
+/** Generalist gives two thumbs up on both hops. */
+function cheerGeneral(): AnimationClip {
+  const thumbs = { armL: armL(0.6, 0.35, 0.25), armR: armR(0.6, 0.35, 0.25) };
+  const pump = { armL: armL(0.6, 0.6, 0.2), armR: armR(0.6, 0.6, 0.2) };
+  return full('cheerGeneral', 1.5, [
+    [CT[0], { ...thumbs, head: head(0, 0.1) }, hop(0)],
+    [CT[1], { ...pump, head: head(0, 0.2) }, hop(1)],
+    [CT[2], { ...thumbs, head: head(0, 0.15) }, hop(2)],
+    [CT[3], { ...pump, head: head(0, 0.2) }, hop(3)],
+    [CT[4], { ...thumbs, head: head(0, 0.2) }, hop(4)],
+    [CT[5], { ...thumbs, head: head(0, 0.1) }, hop(5)],
+  ]);
+}
+
+/** Rescuer swings an arm as if throwing the ring, then jumps into a V. */
+function cheerRescuer(): AnimationClip {
+  const windUp = armR(-0.6, 0.3, 0.6);
+  const release = armR(0.9, 0.4, -0.1);
+  return full('cheerRescuer', 1.5, [
+    [CT[0], { armR: windUp, torso: [0, -0.25, 0], head: head(-0.2, 0.05) }, hop(0)],
+    [CT[1], { armR: release, torso: [0, 0.25, 0], head: head(0.15, 0.1) }, 0],
+    [CT[2], { armR: release, torso: [0, 0.1, 0], head: head(0, 0.15) }, 0],
+    [CT[3], { armL: V_L, armR: V_R, head: head(0, 0.2) }, hop(3)],
+    [CT[4], { armL: V_L, armR: V_R, head: head(0, 0.25) }, hop(4)],
+    [CT[5], { armL: V_L, armR: V_R, head: head(0, 0.1) }, hop(5)],
+  ]);
+}
+
+export const FIDGET_CLIPS = [
+  'idlePhoto',
+  'idleArchive',
+  'idleReporter',
+  'idleManager',
+  'idleGeneral',
+  'idleRescuer',
+] as const;
 export const EMOTE_CLIPS = ['emoteArchive', 'emoteFake', 'emoteMine'] as const;
-/** Upper-body layer clips: fidgets and ping emotes. */
-export const UPPER_CLIPS = [...FIDGET_CLIPS, ...EMOTE_CLIPS] as const;
+/** Role ability reactions (S7-42). */
+export const ABILITY_CLIPS = ['abilityPower', 'abilityThrow', 'abilityCall'] as const;
+/** Upper-body layer clips: fidgets, ping emotes and ability reactions. */
+export const UPPER_CLIPS = [...FIDGET_CLIPS, ...EMOTE_CLIPS, ...ABILITY_CLIPS] as const;
 export type UpperClip = (typeof UPPER_CLIPS)[number];
 
 /** Full-body role celebrations (level win). */
@@ -276,6 +395,8 @@ export const CELEBRATION_CLIPS = [
   'cheerArchive',
   'cheerReporter',
   'cheerManager',
+  'cheerGeneral',
+  'cheerRescuer',
 ] as const;
 export type CelebrationClip = (typeof CELEBRATION_CLIPS)[number];
 
@@ -283,20 +404,27 @@ export type RoleClips = Record<UpperClip | CelebrationClip, AnimationClip>;
 
 let cached: RoleClips | null = null;
 
-/** Fidget, emote and celebration clips (built once, shared by every character). */
+/** Fidget, emote, ability and celebration clips (built once, shared by every character). */
 export function roleClips(): RoleClips {
   cached ??= {
     idlePhoto: idlePhoto(),
     idleArchive: idleArchive(),
     idleReporter: idleReporter(),
     idleManager: idleManager(),
+    idleGeneral: idleGeneral(),
+    idleRescuer: idleRescuer(),
     emoteArchive: emoteArchive(),
     emoteFake: emoteFake(),
     emoteMine: emoteMine(),
+    abilityPower: abilityPower(),
+    abilityThrow: abilityThrow(),
+    abilityCall: abilityCall(),
     cheerPhoto: cheerPhoto(),
     cheerArchive: cheerArchive(),
     cheerReporter: cheerReporter(),
     cheerManager: cheerManager(),
+    cheerGeneral: cheerGeneral(),
+    cheerRescuer: cheerRescuer(),
   };
   return cached;
 }

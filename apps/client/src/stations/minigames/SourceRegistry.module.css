@@ -129,12 +129,6 @@
   outline-color: var(--blue);
 }
 
-/* Revealed after a failure: the rows the player should have marked, dashed. */
-.field[data-missed="true"] {
-  border-style: dashed;
-  border-color: var(--red-dark);
-}
-
 .flag {
   position: absolute;
   top: 50%;
@@ -247,50 +241,116 @@
   }
 }
 
-/* Short landscape phones: tighter rows so seven fields, the footer and the task fit. */
-@media (max-height: 430px) {
-  /* Footer moves to a narrow column on the right so the whole card fits without scrolling. */
+/*
+ * Landscape screens from a 640×360 phone up to desktops: the seven fields, the footer and the key
+ * hints share one 3 × 3 grid under the task line (the account / website chip above it), filled
+ * column by column so up/down on keyboard and pad follows the reading order and ends on „Odłóż
+ * kartę”. The card keeps its box (subgrid, for the nudge) but loses its frame, and the „!” flag
+ * sits on the tile's corner so values get the width. Fits 1280×720 and 640×360 without scrolling.
+ */
+@media (min-width: 40rem) {
   .root {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: auto auto repeat(3, auto);
     gap: var(--space-2) var(--space-3);
   }
 
-  .root > :first-child,
-  .root > ul {
+  .root > :first-child {
+    grid-row: 1;
     grid-column: 1 / -1;
   }
 
-  /* The outcome takes the footer's column, so the revealed rows stay visible. */
-  .result {
-    max-width: 13rem;
+  .card,
+  .fields {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    grid-template-rows: subgrid;
   }
 
-  .result > div {
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-2);
-    text-align: center;
+  .card {
+    grid-row: 2 / -1;
+    padding: 0;
+    background: none;
+    border: 0;
   }
 
+  .kind {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
+  .fields {
+    grid-row: 2 / -1;
+    grid-auto-flow: column;
+  }
+
+  /* A long handle or address breaks inside its tile instead of widening it. */
+  .field {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .fieldValue {
+    overflow-wrap: break-word;
+  }
+
+  .flag {
+    top: -0.375rem;
+    right: -0.375rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-top: 0;
+    font-size: var(--text-sm);
+  }
+
+  /* The footer takes the cell under the last field, the hints the one under it. */
   .foot {
+    grid-row: 4;
+    grid-column: 3;
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
-    justify-content: flex-end;
+    justify-content: center;
+    gap: var(--space-1);
   }
 
   .file {
     min-height: 3.25rem;
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-2) var(--space-3);
     font-size: var(--text-lg);
   }
 
   .count {
     text-align: center;
-    font-size: var(--text-sm);
+    line-height: var(--leading-snug);
   }
 
-  .card {
-    padding: var(--space-2);
+  .root > .hints {
+    grid-row: 5;
+    grid-column: 3;
+    align-content: center;
+  }
+
+  /* The outcome takes the footer's and the hints' cells, so the revealed rows stay visible. */
+  .result {
+    grid-row: 4 / 6;
+    grid-column: 3;
+    align-self: center;
+  }
+
+  .result > div {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    text-align: center;
+  }
+}
+
+/* Short landscape phones (640×360): no chip, slimmer tiles and text. */
+@media (max-height: 430px) {
+  .root {
+    gap: var(--space-1) var(--space-2);
   }
 
   .kind {
@@ -299,15 +359,24 @@
 
   .field {
     min-height: var(--touch-target);
-    padding: 2px 2.25rem 2px var(--space-2);
+    padding: 2px var(--space-1) 2px var(--space-2);
     border-radius: var(--radius-sm);
   }
 
-  .fields {
-    gap: var(--space-1) var(--space-2);
+  .fieldValue {
+    font-size: var(--text-sm);
   }
 
-  .fieldValue {
+  .foot {
+    gap: 2px;
+  }
+
+  .file {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .count {
     font-size: var(--text-sm);
   }
 }

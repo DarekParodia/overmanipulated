@@ -1,6 +1,8 @@
 // Guidance during play: the purple "what next" hint bubble at the bottom centre, replaced by the
 // first-game tutorial card while the tutorial runs. Neither blocks input: the game keeps
 // running underneath and only the skip button takes pointer events.
+import { abilityOf } from '@redakcja/shared';
+import { ABILITY_ICON } from '../abilities/ability-icons.ts';
 import { useGame } from '../net/game-store.ts';
 import { isCoarsePointer } from '../scene/quality.ts';
 import { useApp } from '../store/app.ts';
@@ -10,7 +12,7 @@ import { typeset } from '../strings/typography.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './Guidance.module.css';
 import { BUSY_KINDS, type NextStepKind } from './next-step.ts';
-import { useGuidance } from './store.ts';
+import { useEffectiveHints, useGuidance } from './store.ts';
 import { Tutorial } from './Tutorial.tsx';
 import { useTutorial } from './tutorial-store.ts';
 import { useGuidanceDriver } from './use-guidance-driver.ts';
@@ -28,6 +30,8 @@ const HINT_ICONS: Record<NextStepKind, IconName> = {
   openDesk: 'publish',
   verdict: 'publish',
   wait: 'clock',
+  // Replaced by the ability's own icon (the chip's picture) when the step names it.
+  ability: 'bolt',
 };
 
 export function Guidance() {
@@ -37,12 +41,17 @@ export function Guidance() {
   const device = useApp((s) => s.inputDevice);
   const leftHanded = useSettings((s) => s.leftHanded);
   const touch = device === 'touch' || isCoarsePointer();
+  // The keyboard / gamepad ability chip (S7-40) shows for every player with a role.
+  const hasAbility = useApp(
+    (s) => abilityOf(s.room?.players.find((p) => p.id === s.playerId)?.role ?? null) !== null,
+  );
+  const chipClear = !touch && hasAbility;
   if (ended) {
     return null;
   }
   return (
     <div
-      className={`${styles.dock} ${touch ? styles.touch : ''} ${leftHanded ? styles.leftHanded : ''}`}
+      className={`${styles.dock} ${touch ? styles.touch : ''} ${leftHanded ? styles.leftHanded : ''} ${chipClear ? styles.chipClear : ''}`}
     >
       {tutorialStep !== null ? <Tutorial step={tutorialStep} /> : <HintBubble />}
     </div>
@@ -50,11 +59,15 @@ export function Guidance() {
 }
 
 function HintBubble() {
-  const enabled = useGuidance((s) => s.hintsEnabled);
+  // Off with the setting, and on Ekspert whatever the setting says (S7-24).
+  const enabled = useEffectiveHints();
   const step = useGuidance((s) => s.step);
   if (!enabled || !step || BUSY_KINDS.has(step.kind)) {
     return null;
   }
+  // The wait hint counts down to the next folder (S7-09): it pops in once, not every second,
+  // and screen readers get the static line instead of an announcement per second.
+  const ticking = step.kind === 'wait';
   return (
     <p
       className={styles.bubble}
@@ -64,12 +77,17 @@ function HintBubble() {
       data-kind={step.kind}
     >
       <span className={styles.bubbleIcon}>
-        <Icon name={HINT_ICONS[step.kind]} size={28} />
+        <Icon name={step.ability ? ABILITY_ICON[step.ability] : HINT_ICONS[step.kind]} size={28} />
       </span>
       {/* Keyed so each new hint pops in. */}
-      <span key={step.text} className={styles.bubbleText}>
+      <span
+        key={ticking ? step.kind : step.text}
+        className={styles.bubbleText}
+        aria-hidden={ticking || undefined}
+      >
         {typeset(step.text)}
       </span>
+      {ticking && <span className="visually-hidden">{pl.guidance.hint.wait}</span>}
     </p>
   );
 }

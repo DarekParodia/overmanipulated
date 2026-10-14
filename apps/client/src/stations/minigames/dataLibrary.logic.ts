@@ -11,11 +11,13 @@ import {
   DATA_LIBRARY_MAX_MISTAKES,
   DATA_LIBRARY_ROWS,
   DATA_LIBRARY_YEARS,
+  DEFAULT_DIFFICULTY,
+  type Difficulty,
+  mistakeLimit,
+  type Rng,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
-import { cardHasFlags } from './sourceRegistry.logic.ts';
-
-type Rng = ReturnType<typeof createRng>;
+import { hashText, pick, problemFromStamp, shuffled } from './evidence.ts';
 
 export type MismatchKind = 'wrongYear' | 'wrongRow' | 'wrongUnit' | 'cherryPick' | 'invented';
 export type Verdict = 'match' | MismatchKind;
@@ -59,33 +61,9 @@ export function columnCount(table: DataTable): number {
   return table.years.length + 1;
 }
 
-/** FNV-1a, so the headline and stamp text steer the puzzle without any new content field. */
-export function hashText(text: string): number {
-  let hash = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    hash ^= text.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193);
-  }
-  return hash | 0;
-}
-
-function pick<T>(rng: Rng, items: readonly T[]): T {
-  const item = items[rng.int(items.length)];
-  if (item === undefined) {
-    throw new Error('empty pool');
-  }
-  return item;
-}
-
-/** Fisher–Yates on a copy. */
-function shuffled<T>(rng: Rng, items: readonly T[]): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = rng.int(i + 1);
-    [out[i], out[j]] = [out[j] as T, out[i] as T];
-  }
-  return out;
-}
+// FNV-1a (the shared sim's, through evidence.ts), so the headline and stamp text steer the puzzle
+// without any new content field.
+export { hashText };
 
 function average(values: readonly number[]): number {
   return Math.round(values.reduce((sum, v) => sum + v, 0) / values.length);
@@ -238,9 +216,7 @@ export function generatePuzzle(seed: number, story: Story, stamp: Stamp | undefi
   const col = rng.int(columnCount(table));
   // A decisive stamp on an untrue story (or a misleading one on a true story) means the figure
   // was altered; without a stamp it is random.
-  const altered = stamp
-    ? cardHasFlags(story, stamp, rng)
-    : rng.next() < DATA_LIBRARY_ALTERED_CHANCE;
+  const altered = problemFromStamp(story, stamp) ?? rng.next() < DATA_LIBRARY_ALTERED_CHANCE;
   const wanted: Verdict = altered ? pick(rng, MISMATCH_KINDS) : 'match';
   const claim = makeClaim(rng, table, row, col, wanted);
   return { table, claim, verdict: diagnose(table, claim) };
@@ -260,6 +236,8 @@ export type GameState = {
   struck: boolean[][];
   mismatchStruck: boolean;
   mistakes: number;
+  /** Mistakes that fail the round on this difficulty (`mistakeLimit`, S7-24). */
+  maxMistakes: number;
   outcome: Outcome;
   /** What the player chose last: a cell, or the mismatch button. */
   picked: Cursor | null;
@@ -274,13 +252,17 @@ export type Action =
 /** What just happened, for feedback cues. */
 export type Effect = 'move' | 'right' | 'mistake' | 'failed' | 'blocked';
 
-export function initialState(puzzle: Puzzle): GameState {
+export function initialState(
+  puzzle: Puzzle,
+  difficulty: Difficulty = DEFAULT_DIFFICULTY,
+): GameState {
   return {
     puzzle,
     cursor: { row: 0, col: 0 },
     struck: puzzle.table.values.map((r) => r.map(() => false)),
     mismatchStruck: false,
     mistakes: 0,
+    maxMistakes: mistakeLimit(DATA_LIBRARY_MAX_MISTAKES, difficulty),
     outcome: 'playing',
     picked: null,
   };
@@ -288,7 +270,7 @@ export function initialState(puzzle: Puzzle): GameState {
 
 function wrong(state: GameState, patch: Partial<GameState>): [GameState, Effect] {
   const mistakes = state.mistakes + 1;
-  const failed = mistakes >= DATA_LIBRARY_MAX_MISTAKES;
+  const failed = mistakes >= state.maxMistakes;
   return [
     { ...state, ...patch, mistakes, outcome: failed ? 'failure' : 'playing' },
     failed ? 'failed' : 'mistake',

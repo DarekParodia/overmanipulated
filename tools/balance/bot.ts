@@ -1,19 +1,30 @@
 // A balance bot: plays one crew member through the real simulation by producing the same
 // per-tick inputs and commands a client would send (move, interact, hold work, minigame result,
-// verdict). It sees only the game state, never the sim's RNG. Skill is a SkillProfile; the
-// models are assumptions, see models.ts and docs/balance.md.
+// verdict, role ability). It sees only the game state, never the sim's RNG. Skill is a
+// SkillProfile; the models are assumptions, see models.ts and docs/balance.md.
 import {
-  canExtendDeadline,
+  ABILITY,
+  type Ability,
+  type AbilityPreview,
+  abilityEnvOf,
+  abilityOf,
+  abilityPreview,
   carriedFolder,
+  countsAsProof,
   createRng,
+  type Difficulty,
   type Folder,
   folderOnFixture,
   type GameState,
-  MINIGAME_TIME_LIMIT_MS,
+  MINIGAME_STABLE_SEED_STATIONS,
+  minigameTimeLimitMs,
   PLAYER_SPEED_TILES_PER_S,
   type PlayerCommand,
   type PlayerInput,
+  type Rng,
+  ROLE_PERKS,
   raidOfFolder,
+  requiredStampsOf,
   type SimContext,
   type SimStory,
   type StationKind,
@@ -23,10 +34,13 @@ import {
   workDurationMs,
 } from '../../packages/shared/src/index.ts';
 import {
+  DIFFICULTY_FAIL_FACTOR,
+  MAX_FAIL_CHANCE,
   MINIGAME_BASE_S,
   MINIGAME_DIFFICULTY,
   MINIGAME_FAIL_AT,
   MINIGAME_SPREAD,
+  RETRY_FAIL_FACTOR,
   type SkillProfile,
 } from './models.ts';
 import { directionToFixture, distanceTo, nextWaypoint, walkSeconds } from './nav.ts';
@@ -49,7 +63,9 @@ type Phase =
   | 'collect'
   | 'collectVerify'
   | 'deskWait'
-  | 'think';
+  | 'think'
+  /** Telefon z terenu is dialling: the bot holds the folder and waits for the phone stamp. */
+  | 'calling';
 
 type Target = { fixtureId: string; station: StationKind | null };
 
@@ -60,6 +76,8 @@ type Memory = {
   order: StationKind[];
   direct: Verdict | null;
   recognised: boolean | undefined;
+  /** Stations where a minigame for this folder already failed (for the retry model). */
+  failedAt: Set<StationKind>;
 };
 
 export type BotOutput = {
@@ -75,6 +93,8 @@ const WORK_WATCHDOG_MS = 45_000;
 const DESK_WATCHDOG_MS = 20_000;
 const WAIT_FOR_STATION_MS = 6000;
 const EMERGENCY_MS = 5000;
+/** A field call that has not ended this long after its call time counts as a stall. */
+const CALL_GRACE_MS = 1000;
 const RANK_BONUS_MS = { normal: 0, important: 10_000, urgent: 20_000 } as const;
 
 export class Bot {
@@ -94,17 +114,24 @@ export class Bot {
   private verdictAtMs = 0;
   private readonly memory = new Map<string, Memory>();
   private readonly wanted = new Map<string, boolean>();
-  private readonly rng: ReturnType<typeof createRng>;
-  private readonly extensionUser: boolean;
+  private readonly rng: Rng;
+  private readonly abilityUser: boolean;
+  /** Watchdogs that fired: the bot gave up waiting at a station, a desk or a field call. */
+  stalls = 0;
 
+  /** `pressAbilities` false: the bot never presses its ability (`--no-abilities`). */
   constructor(
     readonly playerId: string,
     private readonly profile: SkillProfile,
     private readonly team: Team,
     seed: number,
+    private readonly difficulty: Difficulty,
+    pressAbilities = true,
   ) {
     this.rng = createRng(seed);
-    this.extensionUser = this.rng.next() < profile.usesExtension;
+    // Drawn either way, so switching presses off leaves every other draw of the run unchanged.
+    const roll = this.rng.next();
+    this.abilityUser = pressAbilities && roll < profile.usesAbility;
   }
 
   /** The next input and commands, given the state after the previous tick. */
@@ -114,7 +141,7 @@ export class Bot {
     if (this.folderId !== null && !(this.folderId in state.folders)) {
       this.reset(now);
     }
-    this.maybeExtend(state, out);
+    this.maybeUseAbility(state, ctx, out);
     this.stepPhase(state, ctx, out);
     return out;
   }
@@ -179,6 +206,11 @@ export class Bot {
           return;
         }
         this.waitSinceMs = null;
+        if (plan.station === 'phone' && this.callsInstead(state, ctx, folder)) {
+          out.commands.push({ kind: 'useAbility' });
+          this.enter('calling', now);
+          return;
+        }
         this.setTarget(plan);
         this.attempts = 0;
         this.enter('walk', now);
@@ -222,13 +254,24 @@ export class Bot {
           return;
         }
         out.work = true;
-        if (station.outageMs > 0 || now - this.phaseSinceMs > WORK_WATCHDOG_MS) {
+        if (station.operatorId !== this.playerId && this.stampLanded(state, ctx, station.kind)) {
+          // An armed Ekspertyza (or a press in the minigame) stamped the folder: no minigame.
+          this.mem(state, ctx)?.visited.add(station.kind);
+          out.work = false;
+          this.enter('collect', now);
+          return;
+        }
+        const stalled = now - this.phaseSinceMs > WORK_WATCHDOG_MS;
+        if (station.outageMs > 0 || stalled) {
+          if (stalled && station.outageMs <= 0) {
+            this.stalls++;
+          }
           out.work = false;
           this.enter('collect', now);
           return;
         }
         if (station.operatorId === this.playerId && station.phase === 'minigame') {
-          this.planMinigame(state, station.kind);
+          this.planMinigame(state, station.kind, this.mem(state, ctx));
           this.enter('minigame', now);
         }
         return;
@@ -257,6 +300,9 @@ export class Bot {
       case 'afterGame': {
         const mem = this.mem(state, ctx);
         const kind = this.target?.station;
+        if (!this.resultSuccess && kind && mem) {
+          mem.failedAt.add(kind);
+        }
         if (this.resultSuccess || ++this.stationFailures >= this.profile.maxStationFailures) {
           if (kind && mem) {
             mem.visited.add(kind);
@@ -293,6 +339,7 @@ export class Bot {
           this.verdictAtMs = now + this.thinkMs(state);
           this.enter('think', now);
         } else if (now - this.phaseSinceMs > DESK_WATCHDOG_MS) {
+          this.stalls++;
           out.work = false;
           this.enter('collect', now);
         }
@@ -311,11 +358,27 @@ export class Bot {
           kind: 'verdict',
           folderId: folder.id,
           verdict: call.verdict,
-          justifyingStampId: call.stampId,
+          justifyingStampIds: call.stampIds.length > 0 ? call.stampIds : ['none'],
         });
         out.work = false;
         // The folder disappears next tick; the bot is free again after a reaction delay.
         this.reset(now);
+        return;
+      }
+      case 'calling': {
+        // Standing still with the folder in hand; the call ends with the phone stamp.
+        const preview = abilityPreview(state, this.playerId, abilityEnvOf(ctx));
+        const timedOut = now - this.phaseSinceMs > ABILITY.fieldCall.callMs + CALL_GRACE_MS;
+        if (preview.kind === 'calling' && !timedOut) {
+          return;
+        }
+        if (timedOut) {
+          this.stalls++;
+        }
+        // The phone is done for this folder either way, so the bot never dials twice.
+        this.mem(state, ctx)?.visited.add('phone');
+        this.enter('decide', now);
+        this.stepPhase(state, ctx, out);
         return;
       }
     }
@@ -381,20 +444,22 @@ export class Bot {
     if (!mem || !story) {
       return this.deskTarget(state, ctx);
     }
-    const held = new Set(folder.stamps);
-    const holdsJustifying = story.justifyingStamps.some((id) => held.has(id));
-    if (holdsJustifying && mem.recognised === undefined) {
+    // Enough proof once the folder holds as many proofs as the story needs; the AI scanner's
+    // stamp is only a hint and never counts (`countsAsProof`).
+    const proofs = folder.stamps.filter((id) => countsAsProof(story, id)).length;
+    const holdsProof = proofs >= requiredStampsOf(story);
+    if (holdsProof && mem.recognised === undefined) {
       mem.recognised = this.rng.next() < this.profile.recognise;
     }
     const waited = this.waitSinceMs === null ? 0 : now - this.waitSinceMs;
     const enough =
       mem.direct !== null ||
-      (holdsJustifying && mem.recognised === true) ||
+      (holdsProof && mem.recognised === true) ||
       mem.visited.size >= this.profile.patience;
 
     let stationChoice: StationKind | 'desk' | 'wait' = 'desk';
     if (!enough) {
-      stationChoice = this.chooseStation(state, ctx, story, mem, waited);
+      stationChoice = this.chooseStation(state, ctx, folder, story, mem, waited);
     }
     if (stationChoice === 'wait') {
       this.waitSinceMs ??= now;
@@ -413,6 +478,7 @@ export class Bot {
   private chooseStation(
     state: GameState,
     ctx: SimContext,
+    folder: Folder,
     story: SimStory,
     mem: Memory,
     waitedMs: number,
@@ -421,8 +487,9 @@ export class Bot {
     if (!me) {
       return 'desk';
     }
+    // Stations whose stamp proves the verdict (never the hint-only AI scanner).
     const justifying = new Set(
-      story.stamps.filter((s) => story.justifyingStamps.includes(s.id)).map((s) => s.station),
+      story.stamps.filter((s) => countsAsProof(story, s.id)).map((s) => s.station),
     );
     const open = ctx.level.stations.filter((kind) => !mem.visited.has(kind));
     const usable = open.filter((kind) => {
@@ -448,11 +515,15 @@ export class Bot {
     const cost = (kind: StationKind): number => {
       const fixture = ctx.map.fixtures.find((f) => f.station === kind);
       const walk = fixture ? walkSeconds(distanceTo(ctx.map, fixture.id, me)) : 99;
-      return walk + workDurationMs(state, this.playerId, kind) / 1000;
+      return walk + workDurationMs(state, this.playerId, kind, ctx.tuning) / 1000;
     };
+    // Like guidance, the folder's bag station comes first among the proof stations.
+    const bagFirst = (k: StationKind) => (k === folder.bagStation ? 0 : 1);
     const ordered = mem.informed
       ? [
-          ...usable.filter((k) => justifying.has(k)).sort((a, b) => cost(a) - cost(b)),
+          ...usable
+            .filter((k) => justifying.has(k))
+            .sort((a, b) => bagFirst(a) - bagFirst(b) || cost(a) - cost(b)),
           ...mem.order.filter((k) => usable.includes(k) && !justifying.has(k)),
         ]
       : mem.order.filter((k) => usable.includes(k));
@@ -510,6 +581,7 @@ export class Bot {
         order,
         direct,
         recognised: undefined,
+        failedAt: new Set(),
       };
       this.memory.set(folder.id, mem);
     }
@@ -520,13 +592,13 @@ export class Bot {
     folder: Folder,
     story: SimStory,
     mem: Memory | undefined,
-  ): { verdict: Verdict; stampId: string } {
+  ): { verdict: Verdict; stampIds: string[] } {
     const held = story.stamps.filter((s) => folder.stamps.includes(s.id));
-    const justifying = held.filter((s) => story.justifyingStamps.includes(s.id));
+    const cited = citeStamps(story, folder.stamps);
     if (mem?.direct) {
-      return { verdict: mem.direct, stampId: held[0]?.id ?? 'none' };
+      return { verdict: mem.direct, stampIds: cited };
     }
-    const holdsJustifying = justifying.length > 0;
+    const holdsJustifying = held.some((s) => story.justifyingStamps.includes(s.id));
     const misled = held.some((s) => s.relevance === 'misleading');
     const p = holdsJustifying
       ? this.profile.verdictAccuracy
@@ -538,59 +610,98 @@ export class Bot {
       const others = VERDICTS.filter((v) => v !== story.correctVerdict);
       verdict = others[this.rng.int(others.length)] as Verdict;
     }
-    let stampId = 'none';
-    if (holdsJustifying && this.rng.next() >= this.profile.wrongJustification) {
-      stampId = (justifying[this.rng.int(justifying.length)] as { id: string }).id;
-    } else if (held.length > 0) {
-      const wrong = held.filter((s) => !story.justifyingStamps.includes(s.id));
-      const pool = wrong.length > 0 ? wrong : held;
-      stampId = (pool[this.rng.int(pool.length)] as { id: string }).id;
+    // A wrong justification: one cited stamp is swapped for a held stamp that proves nothing.
+    const wrong = held.filter(
+      (s) => !story.justifyingStamps.includes(s.id) && !cited.includes(s.id),
+    );
+    const citesJustifying = cited.some((id) => story.justifyingStamps.includes(id));
+    if (citesJustifying && wrong.length > 0 && this.rng.next() < this.profile.wrongJustification) {
+      const swap = wrong[this.rng.int(wrong.length)];
+      if (swap) {
+        cited[cited.length - 1] = swap.id;
+      }
     }
-    return { verdict, stampId };
+    return { verdict, stampIds: cited };
   }
 
-  private planMinigame(state: GameState, kind: StationKind): void {
+  private planMinigame(state: GameState, kind: StationKind, mem: Memory | undefined): void {
     const role = state.crew[this.playerId]?.role ?? null;
     let durationMs =
       MINIGAME_BASE_S[kind] *
       1000 *
       this.profile.minigameSpeed *
       (1 + MINIGAME_SPREAD * (this.rng.next() * 2 - 1));
-    if (kind === 'phone' && role !== 'reporter') {
+    if (kind === 'phone' && !(role && ROLE_PERKS[role].skipsPhoneQueue)) {
       durationMs += 2500 + this.rng.next() * 2000; // the queue (PHONE_QUEUE_MIN/MAX_MS)
     }
-    const failChance = Math.min(0.9, this.profile.minigameFailChance * MINIGAME_DIFFICULTY[kind]);
-    let success = this.rng.next() >= failChance;
+    const retry = mem?.failedAt.has(kind) ?? false;
+    const chance = failChance(this.profile, kind, this.difficulty, retry);
+    let success = this.rng.next() >= chance;
     if (!success) {
       durationMs *= MINIGAME_FAIL_AT;
     }
-    if (durationMs >= MINIGAME_TIME_LIMIT_MS) {
-      durationMs = MINIGAME_TIME_LIMIT_MS;
+    const limitMs = minigameTimeLimitMs(this.difficulty);
+    if (durationMs >= limitMs) {
+      durationMs = limitMs;
       success = false;
     }
     this.resultAtMs = state.elapsedMs + durationMs;
     this.resultSuccess = success;
   }
 
-  /** The managing editor (or anyone allowed) saves a worked folder that is about to expire. */
-  private maybeExtend(state: GameState, out: BotOutput): void {
-    if (
-      !this.extensionUser ||
-      state.deadlineExtensionUsed ||
-      !canExtendDeadline(state, this.playerId)
-    ) {
+  /**
+   * Presses the role ability when the shared preview says a press does something useful, as a
+   * client would (S7-46). Przedłużenie saves a claimed folder that is about to expire; Ekspertyza
+   * and Druga szansa are armed whenever the preview offers `arm`, or pressed `now` at the bot's
+   * own station. Telefon z terenu is pressed from the `decide` phase instead of walking to the
+   * phone (`callsInstead`). Podaj teczkę is not modelled (docs/balance.md).
+   */
+  private maybeUseAbility(state: GameState, ctx: SimContext, out: BotOutput): void {
+    const ability = abilityOf(state.crew[this.playerId]?.role ?? null);
+    if (!this.abilityUser || ability === null) {
       return;
     }
-    for (const folder of Object.values(state.folders)) {
-      if (
-        this.team.claims.has(folder.id) &&
-        folder.deadlineMs - state.elapsedMs < EMERGENCY_MS &&
-        folder.deadlineMs - state.elapsedMs > 0
-      ) {
-        out.commands.push({ kind: 'extendDeadline', folderId: folder.id });
-        return;
-      }
+    const preview = abilityPreview(state, this.playerId, abilityEnvOf(ctx));
+    if (
+      abilityPolicy(ability, preview, this.ownTarget(), (folderId) => this.urgent(state, folderId))
+    ) {
+      out.commands.push({ kind: 'useAbility' });
     }
+  }
+
+  /** The bot's own station and folder, for a `now` press of Ekspertyza or Druga szansa. */
+  private ownTarget(): { stationId: string; folderId: string } | null {
+    return this.target?.station && this.folderId
+      ? { stationId: this.target.fixtureId, folderId: this.folderId }
+      : null;
+  }
+
+  /** A folder the team works on with less than EMERGENCY_MS left (Przedłużenie). */
+  private urgent(state: GameState, folderId: string): boolean {
+    const folder = state.folders[folderId];
+    return (
+      folder !== undefined &&
+      this.team.claims.has(folder.id) &&
+      folder.deadlineMs - state.elapsedMs < EMERGENCY_MS
+    );
+  }
+
+  /** Telefon z terenu instead of the phone station: the preview offers the call for this folder. */
+  private callsInstead(state: GameState, ctx: SimContext, folder: Folder): boolean {
+    if (!this.abilityUser || abilityOf(state.crew[this.playerId]?.role ?? null) !== 'fieldCall') {
+      return false;
+    }
+    const preview = abilityPreview(state, this.playerId, abilityEnvOf(ctx));
+    return preview.kind === 'now' && preview.folderId === folder.id;
+  }
+
+  /** Whether the bot's folder already holds the stamp of a station kind. */
+  private stampLanded(state: GameState, ctx: SimContext, kind: StationKind): boolean {
+    const folder = this.folder(state);
+    const stampId = folder
+      ? ctx.stories[folder.storyId]?.stamps.find((stamp) => stamp.station === kind)?.id
+      : undefined;
+    return folder !== undefined && stampId !== undefined && folder.stamps.includes(stampId);
   }
 
   // --- Helpers ------------------------------------------------------------------------------
@@ -666,4 +777,67 @@ export class Bot {
     out.move = { x: (dx / length) * magnitude, y: (dy / length) * magnitude };
     return false;
   }
+}
+
+/**
+ * Whether a bot presses its ability for a preview (S7-46): Przedłużenie when the `now` target is
+ * urgent; Ekspertyza and Druga szansa on `arm`, or `now` at the bot's own station and folder.
+ * Telefon z terenu is pressed from the plan (`Bot.callsInstead`), Podaj teczkę never.
+ */
+export function abilityPolicy(
+  ability: Ability,
+  preview: AbilityPreview,
+  own: { stationId: string; folderId: string } | null,
+  urgent: (folderId: string) => boolean,
+): boolean {
+  switch (ability) {
+    case 'extendDeadline':
+      return preview.kind === 'now' && preview.folderId !== undefined && urgent(preview.folderId);
+    case 'expertise':
+    case 'secondChance':
+      return (
+        preview.kind === 'arm' ||
+        (preview.kind === 'now' &&
+          own !== null &&
+          preview.stationId === own.stationId &&
+          preview.folderId === own.folderId)
+      );
+    case 'fieldCall':
+    case 'passFolder':
+      return false;
+  }
+}
+
+/**
+ * The stamps a verdict cites: as many as the story needs (`requiredStamps`) or as the folder
+ * holds, proofs first (`countsAsProof`), then other justifying stamps (the AI scanner's hint,
+ * which never counts), then the rest, each group in the story's stamp order.
+ */
+export function citeStamps(story: SimStory, folderStamps: readonly string[]): string[] {
+  const held = story.stamps.filter((s) => folderStamps.includes(s.id)).map((s) => s.id);
+  const rank = (id: string) =>
+    countsAsProof(story, id) ? 0 : story.justifyingStamps.includes(id) ? 1 : 2;
+  const ordered = [...held].sort((a, b) => rank(a) - rank(b));
+  return ordered.slice(0, Math.min(requiredStampsOf(story), ordered.length));
+}
+
+/**
+ * Chance that one minigame attempt fails: the profile's chance × the station's fiddliness × the
+ * difficulty factor, halved again on a retry at a station that keeps its puzzle
+ * (MINIGAME_STABLE_SEED_STATIONS), capped at MAX_FAIL_CHANCE.
+ */
+export function failChance(
+  profile: Pick<SkillProfile, 'minigameFailChance'>,
+  kind: StationKind,
+  difficulty: Difficulty,
+  retry: boolean,
+): number {
+  const retryFactor = retry && MINIGAME_STABLE_SEED_STATIONS.includes(kind) ? RETRY_FAIL_FACTOR : 1;
+  return Math.min(
+    MAX_FAIL_CHANCE,
+    profile.minigameFailChance *
+      MINIGAME_DIFFICULTY[kind] *
+      DIFFICULTY_FAIL_FACTOR[difficulty] *
+      retryFactor,
+  );
 }

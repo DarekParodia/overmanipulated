@@ -2,8 +2,10 @@
 // does (tutorial.ts). The wording and the drawn controls follow the input device in use. The
 // card never takes input except for its skip button, so the game keeps running underneath.
 // It can also be skipped without the pointer: Esc on the keyboard, B twice or a held
-// Back/Select on a gamepad (buttons the game itself does not use).
-import { type ReactNode, useEffect, useRef } from 'react';
+// Back/Select on a gamepad (buttons the game itself does not use). With a role, the last step
+// shows the role's icon and its ability (S7-45); without one it is left out of the dots.
+import type { Role } from '@redakcja/shared';
+import { useEffect, useRef } from 'react';
 import { emitCue } from '../fx/feedback.ts';
 import { firstGamepad } from '../input/gamepad-access.ts';
 import { isInputCaptured } from '../input/ui-nav.ts';
@@ -11,11 +13,13 @@ import { type InputDevice, useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
-import { Icon } from '../ui/icons/Icon.tsx';
+import { Illustration, Key, PadButton } from './ControlsArt.tsx';
 import styles from './Guidance.module.css';
 import { placementFor } from './placement.ts';
 import { useGuidance } from './store.ts';
 import {
+  ABILITY_STEP,
+  abilityStepText,
   PAD_SKIP_BUTTONS,
   PAD_SKIP_START,
   padSkipStep,
@@ -28,7 +32,7 @@ import { useTutorial } from './tutorial-store.ts';
 /** How long the closing "well done" card stays. */
 const DONE_CARD_MS = 2600;
 
-function stepText(id: TutorialStepId, device: InputDevice): string {
+function stepText(id: TutorialStepId, device: InputDevice, role: Role | null): string {
   const { tutorial, workKey } = pl.guidance;
   switch (id) {
     case 'move':
@@ -41,93 +45,8 @@ function stepText(id: TutorialStepId, device: InputDevice): string {
       return tutorial.minigame;
     case 'verdict':
       return tutorial.verdict;
-  }
-}
-
-/** A drawn key cap, gamepad button or touch button label. */
-function Key({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
-  return <span className={`${styles.key} ${wide ? styles.keyWide : ''}`}>{children}</span>;
-}
-
-function PadButton({ children }: { children: ReactNode }) {
-  return <span className={styles.padButton}>{children}</span>;
-}
-
-function TouchButton({ children }: { children: ReactNode }) {
-  return <span className={styles.touchButton}>{children}</span>;
-}
-
-/** The control to press, drawn the way the player sees it on their device. */
-function Control({ action, device }: { action: 'interact' | 'work'; device: InputDevice }) {
-  if (device === 'gamepad') {
-    return <PadButton>{action === 'interact' ? 'A' : 'X'}</PadButton>;
-  }
-  if (device === 'touch') {
-    return <TouchButton>{action === 'interact' ? pl.touch.interact : pl.touch.work}</TouchButton>;
-  }
-  return action === 'interact' ? <Key>E</Key> : <Key wide>Spacja</Key>;
-}
-
-function Illustration({ id, device }: { id: TutorialStepId | 'done'; device: InputDevice }) {
-  switch (id) {
-    case 'move':
-      if (device === 'keyboard') {
-        return (
-          <span className={styles.wasd}>
-            <Key>W</Key>
-            <span className={styles.wasdRow}>
-              <Key>A</Key>
-              <Key>S</Key>
-              <Key>D</Key>
-            </span>
-          </span>
-        );
-      }
-      return (
-        <span className={styles.stick}>
-          <span className={styles.stickKnob} />
-        </span>
-      );
-    case 'pickup':
-      return (
-        <span className={styles.pair}>
-          <Icon name="article" size={40} />
-          <Control action="interact" device={device} />
-        </span>
-      );
-    case 'work':
-      return (
-        <span className={styles.pair}>
-          <Icon name="clock" size={40} />
-          <Control action="work" device={device} />
-        </span>
-      );
-    case 'minigame':
-      return (
-        <span className={styles.pair}>
-          <Icon name="photo" size={44} />
-        </span>
-      );
-    case 'verdict':
-      return (
-        <span className={styles.verdicts}>
-          <span className={`${styles.verdict} ${styles.publish}`}>
-            <Icon name="publish" size={30} />
-          </span>
-          <span className={`${styles.verdict} ${styles.context}`}>
-            <Icon name="publishWithContext" size={30} />
-          </span>
-          <span className={`${styles.verdict} ${styles.reject}`}>
-            <Icon name="reject" size={30} />
-          </span>
-        </span>
-      );
-    case 'done':
-      return (
-        <span className={`${styles.verdict} ${styles.publish} ${styles.doneMark}`}>
-          <Icon name="publish" size={44} />
-        </span>
-      );
+    case 'ability':
+      return abilityStepText(role, device);
   }
 }
 
@@ -195,11 +114,13 @@ function SkipKeys({ device }: { device: InputDevice }) {
       {pl.guidance.tutorial.skipOr}
       {device === 'gamepad' ? (
         <>
-          <PadButton>B</PadButton>
-          <PadButton>B</PadButton>
+          <PadButton size="sm">B</PadButton>
+          <PadButton size="sm">B</PadButton>
         </>
       ) : (
-        <Key wide>Esc</Key>
+        <Key wide size="sm">
+          Esc
+        </Key>
       )}
     </span>
   );
@@ -207,6 +128,8 @@ function SkipKeys({ device }: { device: InputDevice }) {
 
 export function Tutorial({ step }: { step: number }) {
   const device = useApp((s) => s.inputDevice);
+  const role = useApp((s) => s.room?.players.find((p) => p.id === s.playerId)?.role ?? null);
+  const hasRole = useTutorial((s) => s.hasRole);
   const kind = useGuidance((s) => s.step?.kind);
   const skip = useTutorial((s) => s.skip);
   const close = useTutorial((s) => s.close);
@@ -231,8 +154,10 @@ export function Tutorial({ step }: { step: number }) {
   }, [done, close]);
 
   const id = done ? 'done' : (TUTORIAL_STEPS[step] ?? 'move');
-  const text = id === 'done' ? pl.guidance.tutorial.done : stepText(id, device);
-  const total = TUTORIAL_STEPS.length;
+  const text = id === 'done' ? pl.guidance.tutorial.done : stepText(id, device, role);
+  // Without a role the ability step never comes: it is not drawn as a dot either.
+  const steps = hasRole ? TUTORIAL_STEPS : TUTORIAL_STEPS.slice(0, ABILITY_STEP);
+  const total = steps.length;
 
   return (
     <section
@@ -243,7 +168,7 @@ export function Tutorial({ step }: { step: number }) {
       data-step={id}
     >
       <div className={styles.art}>
-        <Illustration id={id} device={device} />
+        <Illustration id={id} device={device} role={role} />
       </div>
       <div className={styles.cardBody}>
         <p className={styles.cardMeta}>
@@ -254,7 +179,7 @@ export function Tutorial({ step }: { step: number }) {
               role="img"
               aria-label={pl.guidance.tutorial.step(step + 1, total)}
             >
-              {TUTORIAL_STEPS.map((s, i) => (
+              {steps.map((s, i) => (
                 <span
                   key={s}
                   className={`${styles.dot} ${i < step ? styles.dotDone : ''} ${i === step ? styles.dotNow : ''}`}

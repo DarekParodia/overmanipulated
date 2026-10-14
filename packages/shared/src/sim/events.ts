@@ -4,11 +4,12 @@
 // Verdict handling of tagged folders lives in desk.ts; raid expiry accounting in scoring.ts;
 // the outage countdown in stations.ts.
 import { EVENTS } from '../constants.ts';
+import type { SimTuning } from '../difficulty.ts';
 import type { Folder, FolderTag } from '../entities.ts';
 import type { SimLevelEvent } from './content.ts';
 import { freeConveyors, spawnFolderAt } from './folders.ts';
 import type { SimFrame } from './frame.ts';
-import { applyCredibility } from './scoring.ts';
+import { applyCredibility, scalePenalty } from './scoring.ts';
 import type { ActiveEvent, GameState } from './state.ts';
 
 /** Shares shown on a viral folder at level time `nowMs` (0 for folders that are not viral). */
@@ -20,10 +21,15 @@ export function viralShares(folder: Pick<Folder, 'tag' | 'spawnedAtMs'>, nowMs: 
   return Math.round(EVENTS.viralSharesStart * EVENTS.viralGrowthPerS ** ageS);
 }
 
-/** Credibility a filed correction gives back (half the loss by default). */
-export const CORRECTION_RECOVER = Math.round(
-  EVENTS.correctionCredibilityLoss * EVENTS.correctionRecoverFraction,
-);
+/** Credibility a correction costs when it starts, scaled by the difficulty (a positive number). */
+export function correctionLoss(tuning: SimTuning): number {
+  return -scalePenalty(-EVENTS.correctionCredibilityLoss, tuning.penaltyFactor);
+}
+
+/** Credibility a filed correction gives back: the recover fraction of the scaled loss. */
+export function correctionRecover(tuning: SimTuning): number {
+  return Math.round(correctionLoss(tuning) * EVENTS.correctionRecoverFraction);
+}
 
 /** Removes an active event and announces its end. Used by desk.ts and scoring.ts as well. */
 export function endActiveEvent(state: GameState, frame: SimFrame, event: ActiveEvent): GameState {
@@ -45,6 +51,7 @@ function tagFor(
   event: Exclude<SimLevelEvent, { kind: 'outage' }>,
   state: GameState,
   index: number,
+  tuning: SimTuning,
 ): FolderTag {
   switch (event.kind) {
     case 'viral':
@@ -54,7 +61,7 @@ function tagFor(
     case 'botRaid':
       return { kind: 'botRaid', raidId: `raid${index + 1}` };
     case 'correction':
-      return { kind: 'correction', recoverCredibility: CORRECTION_RECOVER };
+      return { kind: 'correction', recoverCredibility: correctionRecover(tuning) };
   }
 }
 
@@ -90,6 +97,7 @@ function expireRaids(state: GameState, frame: SimFrame): GameState {
       frame.events.push({
         kind: 'folderExpired',
         folderId: id,
+        spawnKey: folder.spawnKey,
         storyId: folder.storyId,
         stamps: [...folder.stamps],
       });
@@ -164,7 +172,11 @@ function startOutage(
   };
 }
 
-/** Returns null when the conveyor has no room yet. An unknown story is skipped. */
+/**
+ * Returns null when the conveyor has no room yet. An unknown story is skipped. The folders get
+ * spawn keys `e<index>.<waveIndex>`: a newsroom with a fuller belt may get fewer raid folders,
+ * but the keys it gets name the same folders as in any other newsroom.
+ */
 function startFolderEvent(
   state: GameState,
   frame: SimFrame,
@@ -183,12 +195,13 @@ function startFolderEvent(
   if (tiles.length < (event.kind === 'botRaid' ? raidMin : 1) || wanted === 0) {
     return null;
   }
-  const tag = tagFor(event, state, index);
+  const tag = tagFor(event, state, index, frame.ctx.tuning);
   let next = state;
   const folderIds: string[] = [];
-  for (const tile of tiles.slice(0, wanted)) {
+  for (const [waveIndex, tile] of tiles.slice(0, wanted).entries()) {
     folderIds.push(`f${next.nextFolderNumber}`);
     next = spawnFolderAt(next, frame, tile, {
+      spawnKey: `e${index}.${waveIndex}`,
       storyId: event.storyId,
       deadlineS: event.deadlineS,
       tag,
@@ -204,7 +217,7 @@ function startFolderEvent(
   if (event.kind === 'correction') {
     next = {
       ...next,
-      credibility: applyCredibility(next.credibility, -EVENTS.correctionCredibilityLoss),
+      credibility: applyCredibility(next.credibility, -correctionLoss(frame.ctx.tuning)),
     };
   }
   frame.events.push({ kind: 'levelEvent', event: event.kind, phase: 'start', folderIds });

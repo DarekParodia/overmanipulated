@@ -7,13 +7,22 @@ import type { Browser, BrowserContext, BrowserContextOptions, Page } from '@play
 export type Player = { page: Page; context: BrowserContext; nickname: string; touch: boolean };
 
 export type Profile = {
-  /** Levels (id -> stars) already finished; unlocks the campaign map. */
+  /** Levels (id -> stars) already finished on Normal; unlocks the campaign map. */
   progress?: Record<string, number>;
   tutorialDone?: boolean;
   /** Seeded encyclopedia state (technique id -> story ids), see apps/client/src/encyclopedia. */
   met?: Record<string, string[]>;
   /** Settings overrides stored in localStorage (merged by the app). */
   settings?: Record<string, unknown>;
+  /**
+   * The first-time intro (S7-102) autoplays in a training lobby; it counts as seen unless this is
+   * false, so a new room's lobby is free to photograph.
+   */
+  introSeen?: boolean;
+  /** Station kinds whose first-use help card (S7-95) was already read. */
+  stationHelpSeen?: readonly string[];
+  /** The local player profile (S7-104): counters, favourite role and look. */
+  playerProfile?: Record<string, unknown>;
 };
 
 export const ALL_STARS: Record<string, number> = {
@@ -38,7 +47,8 @@ export async function openPlayer(
   await context.addInitScript((p: Profile) => {
     const set = (key: string, value: unknown) => localStorage.setItem(key, JSON.stringify(value));
     if (p.progress) {
-      set('redakcja.progress.v1', p.progress);
+      // Progress v2 (S7-26): stars per difficulty, then per level.
+      set('redakcja.progress.v2', { normal: p.progress });
     }
     if (p.tutorialDone) {
       localStorage.setItem('redakcja.tutorial.done', '1');
@@ -49,6 +59,15 @@ export async function openPlayer(
     if (p.settings) {
       set('redakcja.settings.v1', p.settings);
     }
+    if (p.introSeen !== false) {
+      localStorage.setItem('redakcja.intro.seen.v1', '1');
+    }
+    if (p.stationHelpSeen) {
+      set('redakcja.stationHelp.v1', p.stationHelpSeen);
+    }
+    if (p.playerProfile) {
+      set('redakcja.profile.v1', p.playerProfile);
+    }
   }, profile);
   const page = await context.newPage();
   page.on('pageerror', (error) => console.warn(`[${nickname}] page error: ${error.message}`));
@@ -56,6 +75,31 @@ export async function openPlayer(
   await page.addStyleTag({ content: HIDE_DEBUG_CSS });
   await page.getByLabel('Twój podpis').fill(nickname);
   return { page, context, nickname, touch: options.hasTouch === true };
+}
+
+/** Viewport of a player who only has to be in the room (never photographed or recorded). */
+const EXTRA_VIEWPORT = { width: 480, height: 270 };
+
+/**
+ * Opens a player who only fills a seat: a small canvas on the cheapest preset. Pass a browser
+ * other than the photographed player's. Chromium runs every page's WebGL in one GPU process, so
+ * under software GL the scenes of all pages in a browser compile and draw on one queue: four
+ * full-size players starting a level at once froze each page's main thread for 15–40 s (the
+ * 'HUD within 30 s' timeout of Room A), while a page alone in its browser waits about 5 s.
+ */
+export async function openExtraPlayer(
+  browser: Browser,
+  baseUrl: string,
+  nickname: string,
+  profile: Profile = {},
+): Promise<Player> {
+  return openPlayer(
+    browser,
+    baseUrl,
+    nickname,
+    { viewport: EXTRA_VIEWPORT },
+    { ...profile, settings: { ...profile.settings, quality: 'low' } },
+  );
 }
 
 export async function createRoom(host: Player): Promise<string> {
@@ -112,13 +156,16 @@ export async function startAndBrief(host: Player, others: Player[]): Promise<voi
   }
 }
 
+/** How long a page may take from „Gotowy!” to its HUD (scene compile under software GL). */
+const HUD_TIMEOUT_MS = 60_000;
+
 export async function confirmBriefing(players: Player[]): Promise<void> {
   for (const player of players) {
     await player.page.getByRole('button', { name: 'Gotowy!' }).click();
   }
-  for (const player of players) {
-    await player.page.getByTestId('hud').waitFor({ timeout: 30_000 });
-  }
+  await Promise.all(
+    players.map((player) => player.page.getByTestId('hud').waitFor({ timeout: HUD_TIMEOUT_MS })),
+  );
 }
 
 // --- Game state through the debug hook ----------------------------------------------------

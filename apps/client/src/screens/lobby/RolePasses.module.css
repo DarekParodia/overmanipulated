@@ -16,20 +16,23 @@
   line-height: var(--leading-tight);
 }
 
+/* Seven compact passes in one row on desktop (S7-44). */
 .grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: var(--space-3);
 }
 
 .card {
   position: relative;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   justify-items: center;
+  align-items: start;
   gap: var(--space-1);
+  min-width: 0;
   min-height: var(--touch-target);
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-2) var(--space-1);
   background: var(--surface);
   border: var(--outline-border);
   border-radius: var(--radius-md);
@@ -85,8 +88,8 @@
 .icon {
   display: grid;
   place-items: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3rem;
+  height: 3rem;
   border: var(--outline-border);
   border-radius: 50%;
   background: var(--surface);
@@ -102,18 +105,26 @@
 }
 
 .name {
+  max-width: 100%;
   font-family: var(--font-display);
-  font-size: var(--text-lg);
+  font-size: var(--text-md);
   font-weight: 800;
-  line-height: var(--leading-snug);
+  line-height: var(--leading-tight);
   padding-top: 0.1em;
+  overflow-wrap: break-word;
 }
 
-.bonus {
-  font-size: var(--text-sm);
-  font-weight: 700;
-  line-height: var(--leading-snug);
-  color: var(--text-soft);
+/* Marks of the teammates who picked this role: a small white pill on the top-left corner. */
+.dots {
+  position: absolute;
+  top: calc(-1 * var(--space-2));
+  left: calc(-1 * var(--space-1));
+  display: flex;
+  gap: 2px;
+  padding: 2px var(--space-1);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
 }
 
 .tick {
@@ -122,8 +133,8 @@
   right: calc(-1 * var(--space-2));
   display: grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   border: var(--outline-border);
   border-radius: 50%;
   background: var(--blue);
@@ -135,10 +146,106 @@
   stroke-width: 3.5;
 }
 
-.note {
+/* The detail panel: what the shown role does on this level. */
+.detail {
+  /* Scrolled into view clear of the lobby's sticky action bar on short phones. */
+  scroll-margin-bottom: 6rem;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-md);
+}
+
+.detailName {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+}
+
+.detailIcon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: var(--stroke) solid var(--outline);
+  border-radius: 50%;
+  background: var(--surface-soft);
+}
+
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--text-md);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+
+.lineLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 6.5rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--text-soft);
+}
+
+.lineText strong {
+  font-weight: 800;
+}
+
+.cooldown {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.15em var(--space-2) 0.05em;
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  font-family: var(--font-display);
   font-size: var(--text-sm);
   font-weight: 700;
+  white-space: nowrap;
+}
+
+.chip svg {
+  flex: none;
+  margin-top: -0.1em;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-md);
+  font-weight: 800;
   color: var(--text);
+}
+
+.note svg {
+  flex: none;
 }
 
 @keyframes pop-in {
@@ -153,32 +260,90 @@
   }
 }
 
-/* Short landscape phones: icon beside the name, bonus underneath, smaller icon. */
+/* Below 1100 px a seventh of the width no longer fits „Wszechstronny” on one line. */
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Short landscape phones: four compact row passes (icon beside the name) and a tighter panel
+   without its name row (the checked pass already says it). */
 @media (max-height: 520px) and (orientation: landscape) {
   .title {
     font-size: var(--text-lg);
     margin-bottom: var(--space-2);
   }
   .grid {
-    gap: var(--space-2);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-2) var(--space-3);
   }
   .card {
-    padding: var(--space-2) var(--space-1);
+    grid-template-rows: none;
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: start;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    text-align: left;
   }
   .icon {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
   }
   .icon svg {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
   }
   .name {
-    font-size: var(--text-md);
+    padding-top: 0;
+  }
+  /* Beside the icon the top-left corner would cover it: the marks go to the bottom-right. */
+  .dots {
+    top: auto;
+    left: auto;
+    bottom: calc(-1 * var(--space-2));
+    right: calc(-1 * var(--space-1));
   }
   .tick {
     width: 1.75rem;
     height: 1.75rem;
+  }
+  .detail {
+    /* The sticky level-and-start bar is about 8 rem tall here. */
+    scroll-margin-bottom: 9rem;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+  }
+  .detailName {
+    display: none;
+  }
+  .lineLabel {
+    min-width: 0;
+  }
+}
+
+/* The smallest phones (640×360): a name like „Wszechstronny” does not fit beside the icon in a
+   quarter of the width, so the four passes per row stack the icon over a smaller name again. */
+@media (max-height: 520px) and (orientation: landscape) and (max-width: 720px) {
+  .card {
+    grid-template-columns: none;
+    grid-template-rows: auto 1fr;
+    justify-items: center;
+    align-items: start;
+    gap: 2px;
+    text-align: center;
+  }
+  .icon {
+    width: 2rem;
+    height: 2rem;
+  }
+  .icon svg {
+    width: 22px;
+    height: 22px;
+  }
+  .name {
+    font-size: var(--text-sm);
   }
 }
 

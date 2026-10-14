@@ -1,12 +1,26 @@
 // Endless mode (S4-11) through the registry: select, briefing, play, results, leaderboard row.
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { ENDLESS, ENDLESS_LEVEL_ID, PROTOCOL_VERSION, step } from '@redakcja/shared';
+import { prepareLevelRun, runSummary } from '@redakcja/content';
+import {
+  type Difficulty,
+  ENDLESS,
+  ENDLESS_LEVEL_ID,
+  PROTOCOL_VERSION,
+  STATION_KINDS,
+  step,
+} from '@redakcja/shared';
 import { createFakeHub, type FakeConnection } from '../__fixtures__/fake-transport.ts';
 import { createRoomRegistry, type RoomRegistry } from './registry.ts';
 
 const BRIEFING_MS = 10_000;
 
-type Stored = { roomCode: string; players: string[]; score: number; survivedS: number };
+type Stored = {
+  roomCode: string;
+  players: string[];
+  score: number;
+  survivedS: number;
+  difficulty: Difficulty;
+};
 
 let time = 0;
 let fake: ReturnType<typeof createFakeHub>;
@@ -80,11 +94,12 @@ describe('endless mode in a room', () => {
     expect(phaseOf(host)).toBe('playing');
     const state = registry.inspect(codeOf(host));
     expect(state?.levelId).toBe(ENDLESS_LEVEL_ID);
-    // All six stations exist in the running game.
+    // All ten stations exist in the running game (S7-64).
     const kinds = Object.values(state?.game.stations ?? {}).map((s) => s.kind);
-    expect(new Set(kinds).size).toBe(6);
+    expect(new Set(kinds).size).toBe(10);
+    expect(new Set(kinds).size).toBe(STATION_KINDS.length);
     registry.tick();
-    expect(host.last('snapshot')?.stations).toHaveLength(6);
+    expect(host.last('snapshot')?.stations).toHaveLength(10);
     expect(host.last('snapshot')?.timeLeftMs).toBeGreaterThan(ENDLESS.durationS * 900);
   });
 
@@ -124,25 +139,61 @@ describe('endless mode in a room', () => {
       score: 230,
       credibility: 0,
       survivedS: 754,
+      lossReason: 'credibility',
+      starThresholds: null,
+      maxScore: null,
     });
     expect(guest.last('levelEnd')?.survivedS).toBe(754);
     expect(stored).toEqual([
-      { roomCode: codeOf(host), players: ['Ala', 'Bartek'], score: 230, survivedS: 754 },
+      {
+        roomCode: codeOf(host),
+        players: ['Ala', 'Bartek'],
+        score: 230,
+        survivedS: 754,
+        difficulty: 'normal',
+      },
     ]);
   });
 
-  it('gives every run its own schedule', () => {
+  it('stores the difficulty the run was played on', () => {
     const host = join('Ala');
     selectEndless(host);
+    registry.handleMessage(host, {
+      type: 'lobby',
+      action: { kind: 'setDifficulty', difficulty: 'expert' },
+    });
     startPlaying(host);
-    const first = registry.inspect(codeOf(host))?.game.rng;
+    patch = { credibility: 0, elapsedMs: 61_000, score: 90 };
+    registry.tick();
+    expect(host.last('levelEnd')).toMatchObject({ difficulty: 'expert', survivedS: 61 });
+    expect(stored).toEqual([
+      { roomCode: codeOf(host), players: ['Ala'], score: 90, survivedS: 61, difficulty: 'expert' },
+    ]);
+  });
+
+  it('deals every run its own schedule from a run seed apart from the sim seed', () => {
+    const host = join('Ala');
+    const code = codeOf(host);
+    selectEndless(host);
+    startPlaying(host);
+    // Four draws make the room code; then the run seed (briefing), then the sim seed (start).
+    const first = registry.inspect(code)?.run;
+    expect(first?.seed).toBe(1_073_741_823);
+    expect(registry.inspect(code)?.game.seed).toBe(1_288_490_188);
+    const dealt = prepareLevelRun(ENDLESS_LEVEL_ID, { seed: 1_073_741_823, difficulty: 'normal' });
+    if (!dealt) {
+      throw new Error('endless has no run');
+    }
+    expect(first?.summary).toEqual(runSummary(dealt));
+    expect(first?.summary.stars).toBeNull();
     patch = { credibility: 0 };
     registry.tick();
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'backToLobby' } });
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'start' } });
     registry.handleMessage(host, { type: 'lobby', action: { kind: 'skipBriefing' } });
     expect(phaseOf(host)).toBe('playing');
-    expect(registry.inspect(codeOf(host))?.game.rng).not.toBe(first);
+    expect(registry.inspect(code)?.run?.seed).toBe(1_503_238_552);
+    expect(registry.inspect(code)?.run?.seed).not.toBe(first?.seed);
   });
 
   it('does not store campaign runs and survives a failing write', () => {
@@ -163,7 +214,17 @@ describe('endless mode in a room', () => {
     patch = { credibility: 0 };
     registry.tick();
     const end = host.last('levelEnd');
-    expect(end).toBeDefined();
+    // l0 deals from a bag: the thresholds and best score are the dealt run's (S7-23).
+    const run = registry.inspect(codeOf(host))?.run?.summary;
+    if (!run?.stars) {
+      throw new Error('a campaign run has star thresholds');
+    }
+    expect(end).toMatchObject({
+      levelId: 'l0-greybox',
+      lossReason: 'credibility',
+      starThresholds: run.stars,
+      maxScore: run.maxScore,
+    });
     expect(end && 'survivedS' in end).toBe(false);
     expect(stored).toEqual([]);
   });

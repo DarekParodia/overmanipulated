@@ -25,8 +25,12 @@
     background var(--motion-fast);
 }
 
-.toggle:hover {
-  transform: translateY(-1px);
+/* The 1 px lift only for a real hover pointer and with motion on: with instant transitions the
+   lift can move the box out from under a resting pointer and back every frame (a jitter). */
+@media (hover: hover) {
+  :root:not([data-reduced-motion="true"]) .toggle:hover {
+    transform: translateY(-1px);
+  }
 }
 
 .toggle:active {

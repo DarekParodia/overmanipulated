@@ -8,6 +8,12 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | --- | --- | --- |
 | Zgłoszenie | `story` | Content unit: the claim/material to verify (data) |
 | Teczka | `folder` | In-world object carrying one story; has position, holder, stamps, deadline |
+| Klucz teczki | `spawnKey` | Where a folder came from: `s<scheduleIndex>` or `e<eventIndex>.<waveIndex>`. The same in every newsroom of a match, unlike the per-sim folder id `f<n>` |
+| Ziarno rozgrywki | `seed` (`GameState.seed`) | Constant for one level run; minigame seeds are derived from it |
+| Ziarno minigry | `minigameSeed` (`minigameSeedFor`, `drawMinigameSeed`) | Derived from (seed, spawnKey, station kind, attempt); the client builds the puzzle from it |
+| Podejście | `attempt` (`minigameAttempts`, key `spawnKey:kind`) | Minigame rounds of one station kind on one folder that ended without a stamp (failure or cancel) |
+| Ta sama karta | stable-seed station (`MINIGAME_STABLE_SEED_STATIONS`) | `sourceRegistry`: attempts are not counted, so a retry shows the same Kartoteka card |
+| Pamięć karty | retry memory (`useRetryMemory`, `stations/minigames/retry-memory.ts`) | Client only, per minigame seed: the circled fields and, after a cancel, the clock left (`remainingMs`, at least `KARTOTEKA_RESUME_MIN_MS`); reset on `gameStarted` |
 | Pieczątka | `stamp` | Result of a station on a folder |
 | Stanowisko | `station` | Verification workstation with a minigame |
 | Stół redakcyjny | `editorialDesk` (`desk`) | Where verdicts are made |
@@ -19,14 +25,70 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Gwiazdki | `stars` | 0–3 |
 | Waga: zwykły / ważny / pilny | `priority`: `normal` / `important` / `urgent` | |
 | Licznik czasu | `deadline` / `timeLeftMs` | |
-| Premia za tempo | `speedBonus` | |
+| Premia za tempo | `speedBonus` | Balance value `SCORE.speedBonus`; on a folder result it is `bonuses.speed` |
+| Premie | `bonuses` (`speed`, `multiStamp`, `bossCall`) | Points on top of a folder's base points; base = `scoreDelta − Σ bonuses` |
+| Premia za komplet dowodów | `multiStampBonus` | Balance value `SCORE.multiStampBonus`, paid per proof beyond the first; on a folder result it is `bonuses.multiStamp` |
+| Teczka z kilkoma dowodami | multi-stamp folder | Its story has `requiredStamps` > 1; spawns with `MULTI_STAMP_EXTRA_DEADLINE_MS` more per extra proof (`multiStampExtraMs`), schedule and event folders alike; content warns before level `MULTI_STAMP_FIRST_LEVEL` |
 | Przeterminowane | `expired` | |
+| Wynik teczki | `folderResult` (`FolderResult`) | Outcome, reason, deltas, cited stamps and bonuses of one folder |
+| Powód wyniku | `reason` (`FolderReason`) | Why a folder ended the way it did; 14 values, each belongs to one outcome. Its title `pl.outcome.title[reason]` is shared by the toast, the desk and the Kolegium |
+| Niedokończona (nie zdążyliście) | `unfinished` | Folder still in play when the level ends; 0 points |
+| Słaby dowód | `weakProof` | Reason: a cited stamp is not valid proof; half points |
+| Za mało dowodów | `incompleteProof` | Reason: fewer countable proofs than required, e.g. only the AI scanner cited; half points |
+| Wskazane dowody | `justifyingStampIds` | Stamps cited at the desk with a verdict (1–3) |
+| Wymagane dowody | `requiredStamps` | Distinct justifying, non-hint stamps a story needs; 1 unless set |
+| Rozwiązywalna historia | solvable story (`proofCount`) | The level's stations give at least `requiredStamps` proofs: `proofCount(story, stations)` counts distinct justifying, non-hint stamps from those stations; checked by `checkStoryFitsLevel` and endless `isSolvable` |
+| Stanowisko-podpowiedź | hint-only station (`HINT_ONLY_STATIONS`, `isHintOnly`) | `aiScanner`: its stamp may justify, but never counts as proof (`countsAsProof`) |
+| Stanowisko rozstrzygające (Rozstrzyga) | deciding station (`decidingStations`, S7-20) | A station on the level's map with a justifying, non-hint stamp of the story; the desk result names it after „Rozstrzyga:” |
+| Linie wyniku werdyktu | `deskResultLines` (`DeskResultLine`) | At most two lines under the desk result: `proof`, `weakProof`, `tooFewProofs`, `hintOnly`, `decidedBy`, `correctVerdict`, `proofInFolder`, `notChecked`; the same on every difficulty |
+| Wybór dowodów | evidence pick (`toggleEvidence`, `verdictReady`, `evidenceShortfall` in `stations/desk-model.ts`) | Stamps cited at the desk: one replaces the other for a one-proof story; up to N toggled, in order, for a multi-stamp folder; the verdict opens at `min(N, collected)` |
+| Za mało dowodów (na stole) | `evidenceShortfall` | The folder holds fewer stamps than its story needs proofs; the desk shows an amber line and still allows the verdict |
+| Znaczek dowodów | evidence badge (`evidenceBadge`) | Chip on a multi-stamp folder card: „k/N” proofs with hints on, „×N” without |
+| Zebrane dowody | `justifyingCount` (`hasEnoughProofs`) | Distinct stamps on a folder that count as proof; guidance sends the folder to the desk once it reaches `requiredStamps` |
+| Powód porażki | `lossReason` (`credibility` / `score`) | Why a level was lost; null when won |
+| Progi gwiazdek | `starThresholds` | Scores for two and three stars, sent with `levelEnd` |
+| Udziały gwiazdek | `STAR_SHARES` (level override `starShares`) | Star thresholds of a generated run as shares of its `maxScore`, rounded to `STAR_THRESHOLD_STEP` |
+| Worek stanowisk | station bag (`bag`, constants `BAG_*`) | Run generation: folders are dealt in shuffled rounds over the stations that decide the level's stories |
+| Stanowisko rozstrzygające | deciding station (`decidingStations`) | A station decides a story when the story has a justifying, non-hint stamp from it (`proofCount`); a decisive stamp that does not justify decides nothing. The one rule for the bag, validation and guidance |
+| Stanowiska worka | bag stations (`bagStations`) | The level stations that decide at least one pool story |
+| Historia przypięta / elastyczna | pinned / flex story (`isPinned`, `pinnedCounts`) | Pinned: exactly one deciding station and one required proof. Every other decidable story is flex; multi-stamp stories are always flex |
+| Losowanie z worka | `bagDrawer` | Whole shuffled rounds over a list, never the same item twice in a row; deals the station sequence and endless stories |
+| Kolejka stanowisk | station sequence (`stationSequence`) | The station designated for each folder slot of a run: whole shuffled rounds over the bag stations |
+| Terminy teczek w worku | slot times (`bagSlotTimes`) | `firstAtS + i × gapS × spawnGapFactor` up to `lastSpawnS`, rounded to 0.1 s; harder difficulties get more slots |
+| Dobór historii | story matching (`matchStories`, `assignStories`) | Distinct pool stories for the slots, each decidable at its slot's station (Kuhn's maximum matching with opening and multi-stamp preferences); `assignStories` fills what the pool cannot cover with the least-used story |
+| Pula historii | pool (`bag.pool`, `levelBagSchema`) | The stories a bag level may deal onto the conveyor; event stories stay in `events` |
+| Plik poziomu / poziom rozwiązany | level file (`LevelFile`, `levelFileSchema`) / resolved level (`Level`, `levelSchema`) | A file has a `schedule` with `stars` or a `bag`; a resolved level always has a schedule and stars (bag levels keep their `bag`) |
+| Podgląd poziomu z workiem | bag preview (`resolveLevel`, `BAG_PREVIEW_SEED`) | The Normal run `LEVELS` and `getLevel` serve for a bag level (lobby, briefing, tools) |
+| Rozgrywka (przygotowana) | prepared run (`prepareRun`, `prepareLevelRun`, `PreparedRun`) | The level a room plays for one run seed and difficulty: dealt schedule, deadlines, stars, stories, `maxScore` |
+| Ziarno rozgrywki | run seed (`RunOptions.seed`) | Picks the dealt stations and stories; drawn by the server per briefing, separate from the sim seed |
+| Podsumowanie rozgrywki | run summary (`runSummary`, `RunSummary`) | `{folders, maxScore, stars}` of a prepared run; stars null in endless; `roomState.run` from the briefing through the results, null in the lobby |
+| Stanowisko z worka (teczki) | bag station (`folder.bagStation`, schedule entry `station`) | The station the bag slot designated for a dealt folder, copied from its schedule entry at spawn; absent on event folders and authored schedules. Guidance names it first among the stations it would suggest anyway (S7-24) |
+| Rozdanie z worka | `generateBagLevel` (`bagDeadlineS`) | One run of a bag level: slot times, station sequence, matched stories, scaled and clamped deadlines, stars from the run maximum |
+| Skalowanie terminów | `scaledDeadlineS`, `applyDifficulty` | Deadline × `deadlineFactor`, rounded to whole seconds (Normal unchanged); `applyDifficulty` scales a fixed schedule's deadlines only |
+| Historie poziomu | `levelStoryIds` | The pool of a bag level, otherwise the scheduled ids; never event stories |
+| Talia stanowiska (tryb nieskończony) | station deck (`endlessDecks`) | Endless stories one station can decide; each endless slot draws from its station's deck with `bagDrawer`; should hold at least `ENDLESS_MIN_DECK` (validator warning) |
+| Obciążenie stanowisk | station load (`stationBusyShare`, `loadSpread` in `tools/balance`) | Balance harness: share of level time each station holds a folder or an operator, and the busiest / least busy ratio (the M2 exit measure) |
+| Stanowisko dominujące | dominant station (`dominantStation`, `DOMINANT_BUSY_SHARE`, `DOMINANT_SPREAD`) | Balance harness: a station busy over half the level and over twice the least busy one for an average crew of 3 or 4; the duplicate-station rule (S7-35) adds a second copy only for such a station |
+| Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
+| Za co punkty (podsumowanie punktów) | `resultTotals` (`TotalsRow`) | Results-screen totals: outcome rows with base points and credibility (`correct`, `correction`, `weakProof`, `wrong`, `expired`, `unfinished`), bonus rows (`speed`, `proofs` = multi-stamp, `bossCall`), and an `other` row („Inne”) for results the server capped; Σ rows = Σ `scoreDelta` |
+| Do następnej gwiazdki | `starProgress` (`StarProgress`) | Next star and missing points of a won level, plus thresholds as shares of `maxScore` |
+| Karta Kolegium | `kolegiumCards` (`KolegiumCard`) | One debrief card per folder (campaign, versus); in endless one per story with `count` („×N”), `tally` per outcome and summed points. Folders still in play at the end (`unfinished`) come last, with the hourglass |
+| Uzasadnienie wyniku (karta Kolegium) | `cardWhy` (`pl.outcome.why`) | The Kolegium card's one-line reason: why the folder ended that way, its base points and the bonus suffixes („tempo”, „dowody”, „szef”); a grouped endless card lists its folders per outcome |
+| Dowód, który rozstrzygał | `proof` (`ProofRow`, `ProofStatus`) | Kolegium section on a folder that did not end `correct`: the story's justifying, non-hint stamps with where each was — „wskazany” (`cited`), „w teczce” (`collected`), „nie sprawdzono” (`missing`) |
+| Kolejność odsłaniania | `revealPlan` (`RevealStep`) | Results reveal timing: stars → progress line → totals rows → Kolegium marks |
+| Podsumowanie (wyniki) | `ResultsSummary` (`summaryPage`) | Results summary: stars with what each takes (`starRule`), the progress line (`toNext` / `allStars` / `starsNeedWin`), „Skąd te progi?” and the „Za co punkty” table; the left column on desktop, the Kolegium's first page on phones |
+| Następna teczka | `nextFolder` (`NextFolder`, `nextScheduledSpawn`) | Next scheduled folder in the snapshot: `{atMs, sinceMs}` (due time, previous due time), null when the schedule is used up; event folders are never announced. Shown as the dashed ghost card in a free queue slot (`queueView` ghost `'next'`, `pl.hud.next`) and as the conveyor sign's blue ring with „za N s” (`conveyorIndicator` kind `'incoming'`) |
+| Taśma pełna | `conveyorFull` (`conveyorBlocked`) | Snapshot flag: a scheduled folder is due but waits, because every conveyor tile holds a folder. The ghost card (`'full'`) and the conveyor sign („Pełna”, kind `'full'`) turn orange; cue `folder.beltFull` on the rising edge |
 | Status prawdziwości | `truth` | |
 | Prawda / Fałsz / Zwodnicze / Satyra / Niepotwierdzalne | `true` / `false` / `misleading` / `satire` / `unverifiable` | |
 | Poziom | `level` | |
 | Kampania | `campaign` | |
 | Tryb nieskończony | `endlessMode` | |
 | Pokój, kod pokoju | `room`, `roomCode` | |
+| Pas HUD | `hudBand` (`hud/hud-band.ts`: `bandBottom`, `useHudBand`, `useHudBandMeasure`; CSS `--hud-band`, `--hud-pill-right`) | How far down the top-of-screen HUD reaches: the lowest edge of the elements marked `data-hud-band` (pill, folder queue, menu button, endless tempo chip) that start in the upper half of the screen, capped at `HUD_BAND_MAX_SHARE` of its height. Captions, event banners and verdict toasts start under it; the follow camera frames the room below it (S7-12) |
+| Kadr kamery (cała redakcja / za graczem) | `framing` (`scene/camera-framing.ts`: `computeFraming`, `placeCamera`; fit mode / follow mode) | How the angled camera frames the room: the whole room when its tiles would be at least `MIN_TILE_PX` (40 px), otherwise it follows the local player, clamped to the room and framed under the HUD band with a view offset of half the band (S7-12) |
+| Menu gry | `gameMenu` (`hud/GameMenu.tsx`, `GameMenuButton.tsx`, `useGameMenu`, `pl.gameMenu`) | The in-game menu: one top-right button (Esc, Start) opening a sheet with „Wróć do gry”, settings, fullscreen, room code and „Wyjdź z redakcji” (two presses within `LEAVE_CONFIRM_MS`). Replaces the tool buttons and the room chip |
+| Pauza | `paused` (snapshot, `GameStore.paused`), lobby action `setPaused` | A solo player's open menu holds the level: the registry skips stepping the room. Only while playing with exactly one connected player; anyone joining or reconnecting clears it. With teammates the menu shows „Gra trwa dalej” and nothing pauses |
 | Gospodarz | `host` | |
 | Pseudonim | `nickname` | |
 | Gotowość | `ready` | |
@@ -49,7 +111,11 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | statystyka | `statistic` |
 | artykuł | `article` |
 
-## Stations (`StationId`)
+## Stations (`StationKind`)
+
+`stationKindSchema` / `STATION_KINDS`. Layout letters in `sim/map.ts`: `I A R P S L` and, from
+Stage 7 (S7-48), `G Q X E`. The one-word 3D sign is `pl.vocab.signs`, the hint name
+`pl.guidance.stationShort`.
 
 | Polish | English | Real-world analogue |
 | --- | --- | --- |
@@ -59,17 +125,97 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Telefon | `phone` | Contacting the original source |
 | Skaner AI | `aiScanner` | AI/edit detectors |
 | Biblioteka danych | `dataLibrary` | Official statistics, source reports |
+| Mapa | `geolocation` (letter `G`) | Geolocation with maps and street imagery |
+| Stenogram | `transcript` (letter `Q`, for quote) | Full transcripts and recordings of statements |
+| Inne media (sign: Media) | `crossCheck` (letter `X`) | SIFT „find better coverage”, news agencies, lateral reading |
+| Metadane | `metadata` (letter `E`, for EXIF) | Reading EXIF / file metadata; platforms strip it |
 
-## Roles (`RoleId`)
+Minigame evidence terms (`stations/minigames/evidence.ts`, `metadata.logic.ts`, `transcript.logic.ts`, `geolocation.logic.ts`, `crossCheck.logic.ts`):
 
-| Polish | English | Bonus |
+| Polish | English | Notes |
 | --- | --- | --- |
-| Fotoedytor | `photoEditor` | `imageSearch` (and `aiScanner` image work) 40% faster |
-| Archiwista | `archivist` | `archive` 40% faster |
-| Reporter | `reporter` | Skips the `phone` queue |
-| Redaktor prowadzący | `managingEditor` | Extends one folder's deadline per level |
+| Problem na stanowisku | `problemFromStamp(story, stamp)` | Whether a station's puzzle shows a problem: decisive stamp → the story is untrue; misleading → the story is true; irrelevant → no; no stamp → `null` (the minigame rolls its own chance). Shared by every minigame from S7-52 |
+| Opis w teczce / Dane pliku | `MetadataPuzzle.claim` / `MetadataPuzzle.file` | Metadane: what the folder says about a file (when, device, editing, place) / the file's own four fields (`METADATA_FIELD_IDS`: `taken`, `device`, `software`, `place`) |
+| Sprzeczność | `contradiction` (`MetadataOutcome`) | Exactly one file field contradicts the description |
+| Zgadza się | `consistent` (`MetadataOutcome`; answer `matches`) | No field contradicts the description |
+| Dane usunięte (Brak danych) | `stripped` (`MetadataOutcome`; answer `noData`) | A social site stripped the file data; missing data proves nothing. An irrelevant Metadane stamp always means this |
+| Cytat w teczce / Pełny zapis | `TranscriptPuzzle.clip` / `TranscriptPuzzle.lines` | Stenogram: the quote in the folder / the full record of what was said (`TRANSCRIPT_LINES` numbered lines, with a setting chip) |
+| Skrót (Sens ten sam) | `fair` (`TranscriptVariant`; judgement `same`) | The clip leaves out only filler; the meaning holds |
+| Wycięty cytat (Sens zmieniony) | `cut` (`TranscriptVariant`; judgement `changed`) | The left-out words were the point; the cut flips the meaning. The cut words are `cutWords(line, clip)` |
+| Nie ma w zapisie | `absent` (`TranscriptVariant`; action `notInTranscript`) | Nobody said the clip; a decoy line shares its words but says something else |
+| Szukanie / Ocena | `Phase`: `find` / `judge` | Stenogram's two phases: find the clip's line, then judge the cut |
+| Podpis / Dzielnica / Obiekt | `GeoPuzzle.claimed` / `MapTile` (`district`) / `Landmark` | Mapa: the district the photo's caption names / one of the 12 districts of the town map (`GEOLOCATION_MAP`, 4×3), each with a unique pair of landmarks / one of the ten landmark glyphs (`LANDMARKS`, `landmarks.tsx`), told apart by shape alone |
+| Zgodne miejsce / Inna dzielnica / Inne miasto (Nie ma na mapie) | `match` / `otherDistrict` / `otherTown` (`GeoOutcome`; answer `NOT_HERE` for `otherTown`) | Mapa: the photo is from the captioned district / from another district on the map / from off the map; an off-map photo shares one landmark with a district (a decoy) |
+| Relacja (agencja, redakcja, satyra, anonim, portal-klon) | `CoverageCard` (`OutletKind`: `agency`, `newsroom`, `satire`, `anonymous`, `junk`) | Inne media: what another outlet says about the folder's claim, with its stance (`confirms`, `denies`, `echoes`) and source line |
+| Kopia (pisze to samo, za: …) | `echoes` (`Stance`) | Repeats someone else's post: looks exactly like a confirmation, counts for nothing; gets the „kopia” stamp after the round |
+| Niezależne źródło | `isIndependent(card)` | An agency or newsroom card with its own reporter (not an echo). Only these count |
+| Potwierdzają / Zaprzeczają / Za mało źródeł | `confirmed` / `denied` / `unconfirmed` (`Conclusion`, `conclude(cards)`) | Any independent denial → denied; ≥ `CROSS_CHECK_CONFIRMATIONS` (2) independent confirmations → confirmed; else unconfirmed |
 
-## Random events (`EventKind`)
+## Roles (`Role`)
+
+Passives and abilities live in `ROLE_PERKS` (`RolePerk`, S7-36): `fasterAt` × `workFactor` is the
+passive, `ability` the active one (R / RB / the fourth touch button).
+
+| Polish | English | Bonus (passive) | Ability |
+| --- | --- | --- | --- |
+| Fotoedytor | `photoEditor` | `imageSearch`, `aiScanner`, `geolocation` and `metadata` 40% faster | Ekspertyza (`image` family) |
+| Archiwista | `archivist` | `archive` and `transcript` 40% faster | Ekspertyza (`documents` family) |
+| Reporter | `reporter` | `phone` and `crossCheck` 40% faster; skips the `phone` queue | Telefon z terenu |
+| Redaktor prowadzący | `managingEditor` | — | Przedłużenie |
+| Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
+| Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
+| Bez roli | no role (`role: null`, `pl.lobbyRoles.noRole`) | — („Bez premii”) | — („Bez zdolności”) |
+
+| Polish | English | Notes |
+| --- | --- | --- |
+| Premia (roli) | passive (`RoleSummary.passive`, `pl.lobbyRoles.passiveLabel`) | A role's always-on bonus; „Bez premii” for a role without one or without a role |
+| Przepustki ról | role passes (`RolePasses`, `data-testid="role-pass-<role>"`) | The lobby's 7 native radios (6 roles + „Bez roli”), with the marks of the teammates who picked each (`role-pass-dots`) |
+| Panel roli | role detail panel (`data-testid="role-detail"`, `roleSummary`, `roleSummaryNote`) | Under the passes: the checked (or hovered / pad-focused) role's passive with its stations on the level, the ability with the device's key and cooldown, and „Ta premia / Ta zdolność nie działa na tym poziomie.” when a perk does nothing there |
+
+## Abilities (`Ability`, Stage 7)
+
+Every ability is pressed with R / RB / the fourth touch button, whose one-word label is
+`pl.touch.ability` (Ekspert, Dzwoń, +20 s, Szansa, Podaj). All cooldowns are 60 s (`ABILITY`,
+kept after the S7-46 bot data). Player-facing copy: design document „Role”, contest
+`how-to-play.pl.md` „Role i zdolności” and the role cards (S7-47).
+
+| Polish | English | Notes |
+| --- | --- | --- |
+| Zdolność (roli) | ability (`abilitySchema`, `ABILITY`, `abilityOf`) | A role's active power, sent as the target-free `useAbility` command; the server resolves the target |
+| Odnowienie | cooldown (`ABILITY[a].cooldownMs`, `abilityReadyAtMs`) | Time until the ability is ready again; starts when the effect happens, not when armed |
+| Uzbrojona | armed (`abilityArmed`, stage `armed`) | Ekspertyza and Druga szansa wait for their trigger; a second press disarms |
+| Ekspertyza | `expertise` (`expertiseCovers`) | Solves the running minigame at a station of the role's family at once; armed, it stamps when the next covered hold ends instead of opening the minigame. Stamps with `via: 'expertise'` |
+| Telefon z terenu | `fieldCall` (`FieldCall`) | The carried folder gets its phone stamp after a call while walking |
+| Przedłużenie | `extendDeadline` (`pickExtendTarget`, `extendFolders`) | +20 s for an auto-picked folder: the carried one, else the one on the operated desk, else the most urgent; a botRaid wave moves together. Recorded in `extendedMs`; the speed bonus ignores the added time |
+| Druga szansa | `secondChance` | At a locked station (faced, or nearest within 2.5 tiles) the minigame reopens at once for the presser; armed, the next failed minigame reopens for the same operator. No lockout and no re-hold |
+| Podaj teczkę | `passFolder` (`pickPassTarget`) | The carried folder goes at once to the nearest free teammate within 6 tiles: connected (not in `SimContext.absent`), empty-handed, at no station or desk; ties by join order |
+| Koło ratunkowe | `rescue` (passive; `rescuesLeft`, `RESCUE_ADD_MS`, `folderRescued`) | A folder that reaches its deadline in the rescuer's hands gets +20 s, once per level |
+| Podgląd zdolności | ability preview (`abilityPreview`, `AbilityPreview`, `AbilityView`, `AbilityEnv`) | What a press would do now (`none`, `calling`, `armed`, `cooling`, `blocked`, `arm`, `now` with its target); one function for the sim, the HUD and the bots |
+| Etap zdolności | ability stage (`abilityStageSchema`) | `armed`, `disarmed`, `started`, `done`, `cancelled` in the `ability` event |
+| Stan zdolności załogi | crew ability state (`AbilityState`, `snapshot.crew`, `crewSnapshot`) | `abilityReadyAtMs`, `abilityArmed`, `fieldCall`, `rescuesLeft` per player |
+| Użycie zdolności | ability press (`KEY_BINDINGS.ability` R, `PAD.rb` RB, `touchInput.pressAbility`, nav intent `ability`, `abilityPressOutcome`) | One press sends `useAbility`, or is refused on the client with the `ability.denied` cue when the shared preview says it does nothing (no role, cooling, blocked, a call running) |
+| Żeton zdolności | ability chip (`AbilityChip`, `abilityChipModel`, `data-testid="hud-ability"`) | Bottom-left HUD chip on keyboard and gamepad: ring, key cap, one-word name, status (`ready`, `armed`, `calling`, `cooling`, `blocked`) |
+| Przycisk zdolności | ability button (`AbilityButton`, grid area `ability`, `data-testid="touch-ability"`) | The 4th thumb button on touch; same ring and states as the chip, shown only with a role |
+| Cel zdolności | ability target (`AbilityTarget`, `abilityTargetFolder`, `abilityTargetName`, `data-ability-target`) | What a ready press would act on: the folder card gets a dashed blue outline, a teammate or station is named on the chip |
+| Pierścień postępu | progress ring (`ui/ProgressRing`, `RingTone`) | The round fill shared by the work prompt and the ability chip / button |
+| Podpowiedź zdolności | ability hint (next step kind `ability`, `NextStepAbility`, `abilityHintKey`) | The hint bubble names a ready press that helps now: Przedłużenie for a warned folder in hand („R: +20 s dla teczki”), Telefon z terenu instead of the walk to the phone, Druga szansa at a locked station; the key is R / RB or the touch button's label in quotes; hidden with the other hints on Ekspert |
+| Krok zdolności | tutorial ability step (`'ability'`, `ABILITY_STEP`, signal `abilityUsed`, `skipAbilityStep`) | The 6th tutorial step: the role icon and „R: Ekspertyza – …”; done by the local `ability` event (armed, started, done); skipped without a role, on a level where the ability cannot act (`abilityStepApplies`: Ekspertyza without its family's station, Telefon z terenu without a phone, Podaj teczkę without a connected teammate) or when the ability was used earlier in the run |
+| Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
+| Znacznik zdolności | ability marker (`abilities/AbilityMarkers.tsx`, `abilityMarkers`, `AbilityMarker`, `data-testid="ability-marker"`) | World marker beside a player (hip height, clear of the name tag): `armed` (blue ring with the ability icon) or `call` (phone in a draining orange ring); `passTarget` is the dashed floor ring under the teammate the local Ratownik's Podaj teczkę would reach (S7-42) |
+| Lot teczki | pass arc (`passArcPoint`, `PASS_ARC_LIFT`, `ABILITY.passFolder.flightMs`) | The cosmetic 450 ms arc of a folder handed over with Podaj teczkę; in the simulation it is in the receiver's hands at once |
+| Reakcja na zdolność | ability reaction (`abilityReaction`, `ABILITY_CLIPS`: `abilityPower`, `abilityThrow`, `abilityCall`; `stopUpper`) | The upper-body clip an avatar plays for its own ability event (and the receiver's catch) |
+
+## Station families (`StationFamily`, Stage 7)
+
+`STATION_FAMILY` maps every station kind (`familyStations(family)` lists them back); families only gate Ekspertyza.
+
+| Polish | English | Stations |
+| --- | --- | --- |
+| Obraz | `image` | `imageSearch`, `aiScanner`, `geolocation`, `metadata` |
+| Dokumenty | `documents` | `archive`, `dataLibrary`, `transcript` |
+| Źródła | `sources` | `sourceRegistry`, `phone`, `crossCheck` |
+
+## Random events (`LevelEventKind`)
 
 | Polish | English |
 | --- | --- |
@@ -79,20 +225,47 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Awaria | `outage` |
 | Sprostowanie | `correction` |
 
-## Screens (`ScreenId`)
+## Difficulty (`Difficulty`)
+
+| Polish | English | Notes |
+| --- | --- | --- |
+| Poziom trudności | `difficulty` | Set per room (default `DEFAULT_DIFFICULTY`) by the host in the lobby (`setDifficulty`, resets ready); picks one `DIFFICULTY` preset; on `roomState` and `levelEnd` |
+| Łatwy / Normalny / Trudny / Ekspert | `easy` / `normal` / `hard` / `expert` | `DIFFICULTIES`, easiest first; every Normal factor is 1 |
+| Wybór poziomu trudności | `DifficultyPicker` | The host's four chips in the lobby (S7-25); guests see the read-only „Poziom: …” chip on the level card |
+| To wydanie (briefing) | `briefingRun` (`BriefingRun`) | The briefing's run line: dealt folders, the two- and three-star thresholds and the share rule (thresholds as whole percent of the run's `maxScore`) |
+| Ustawienia poziomu trudności | `DifficultyPreset` | Factors for deadlines, spawn gap, work time, lockout, penalties and minigame time; extra mistakes; hints; answer reveal |
+| Strojenie symulacji | `SimTuning` (`simTuning`, `NORMAL_TUNING`) | The preset part the simulation applies: work time, lockout, penalties |
+| Limit pomyłek | `mistakeLimit` | Mistakes a minigame allows on a difficulty; never below `MINIGAME_MIN_MISTAKES` |
+| Blokada stanowiska | lockout (`failLockoutMs`, `tunedLockoutMs`) | How long a failed minigame blocks its station; announced in `minigameFailed.lockoutMs` |
+| Skalowanie kar | `scalePenalty` (`penaltyFactor`) | Wrong-verdict, expiry and correction penalties × the factor, halves rounded away from zero; rewards are never scaled |
+| Utrata / odzysk przy sprostowaniu | `correctionLoss` / `correctionRecover` | Credibility a correction costs (scaled) and the share of it a filed correction gives back |
+| Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
+| Drabinka trudności | difficulty ladder (`monotonicChecks`, `difficultyChecks`, `DIFFICULTY_TARGETS` in `tools/balance/report.ts`) | Balance checks: the average crew of 3 never wins more, scores a larger share or (endless) lasts longer on a harder difficulty; per-difficulty targets in docs/balance.md |
+| Zasady rundy minigry | round rules (`roundRules`, `RoundRules`) | What the room's difficulty gives one minigame round on the client: `difficulty` (for the mistake limit), `timeLimitMs` and `revealOnFail`; passed in `MinigameProps` |
+| Pokazanie odpowiedzi po porażce | answer reveal (`revealOnFail`, `revealsOnFail`) | A failed round shows the right answer (cell, result, card or reading); off on Ekspert and at stations that keep their card (`MINIGAME_STABLE_SEED_STATIONS`) |
+| Podpowiedzi (efektywne) | effective hints (`effectiveHints`, `useEffectiveHints`) | The „co dalej” hints the game shows: the player setting AND `DIFFICULTY[d].hints`, so none on Ekspert; drives the hint bubble, scene markers and the evidence badge; the tutorial is unaffected |
+
+## Screens (`ScreenId`) and dialogs
+
+`ScreenId` (`store/app.ts`) names the full-screen routes; everything else is an overlay or a
+dialog over one of them.
 
 | Polish | English |
 | --- | --- |
-| Menu główne | `mainMenu` |
-| Lobby | `lobby` |
-| Wybór poziomu | `levelSelect` |
-| Briefing | `briefing` |
-| Rozgrywka | `game` |
-| Minigra stanowiska | `stationOverlay` |
-| Stół redakcyjny | `deskOverlay` |
-| Kolegium redakcyjne | `debrief` |
-| Encyklopedia technik | `encyclopedia` |
-| Ustawienia | `settings` |
+| Menu główne | `mainMenu` (screen) |
+| Lobby | `lobby` (screen) |
+| Wybór poziomu | the lobby's level card (`screens/lobby/LevelCard.tsx`), not a screen of its own |
+| Briefing | `briefing` (screen) |
+| Rozgrywka | `game` (screen) |
+| Widownia (ekran widza) | `spectate` (screen, `spectate/`) |
+| Minigra stanowiska | station overlay (`StationOverlay`) |
+| Stół redakcyjny | desk overlay (`DeskOverlay`) |
+| Wyniki poziomu | results (`ResultsPlate`, `ResultsSummary`; `VersusResults` in versus) |
+| Kolegium redakcyjne | debrief (`debrief/Kolegium.tsx`, `DebriefCard`) |
+| Encyklopedia technik | encyclopedia (`EncyclopediaScreen`) |
+| Ustawienia | settings (`SettingsPanel`) |
+| Menu gry | game menu (`GameMenu`), row below |
+| Jak grać, O grze, Profil, Publiczne pokoje | dialogs (`HowToPlayDialog`, `AboutDialog`, `ProfileDialog`, `RoomBrowserDialog`), rows below |
 
 ## Client / game feel
 
@@ -104,5 +277,138 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | No-flash mode | `noFlash` | Setting; no blinking/strobing |
 | Virtual joystick | `touchJoystick` | Touch movement control |
 | Input device | `inputDevice`: `keyboard` / `gamepad` / `touch` | Last used device drives prompts |
+| Key hints | `KeyHints` (`pl.minigames.<kind>.keys`) | Key-cap chips under a minigame for the device in use; on touch they name the gesture („Stuknij”, „Przesuń”) or the button |
+| Station help (Pomoc stanowiska) | `stationHelp` (`pl.stationHelp.kinds[kind]`) | Per station: `purpose`, `proves`, 2–3 `steps` per device, `realWorld`; one source for the help card (`StationHelpCard`, variants `inPlay` / `full`), practice, lobby details and contest legends |
+| Jak grać (how to play) | `howToPlay`: `HowToPlayDialog`, `useHowTo` (`howto/store.ts`), `HowToTab`: `intro` / `stations` / `controls` | The lazy help dialog: Wprowadzenie, Stanowiska, Sterowanie; opened from the main menu corner, the lobby, the settings (Sterowanie), the briefing's „Nowe dziś” chips and the in-game menu (S7-97) |
+| Wypróbuj (practice round) | `practice` (`PracticeRound`, `PracticeState`: `off` / `playing` / `result`, `practiceStory`, `practiceSeed`; `howto/practice-model.ts`) | A station's minigame played from its card in „Jak grać”, out of play: Normal rules, the n-th story with that station's stamp, seed n + 1, no server and no score; „Udało się!” / „Nie tym razem”, then „Jeszcze raz” or „Wróć”. Off in a match („Ćwiczenia po wydaniu”) |
+| Pomoc: stanowiska (in-game help row) | `gameMenu.stationHelp`, `game-menu-help` | The in-game menu row that opens „Jak grać” on its stations tab with practice off; the level runs on (solo: the menu's pause holds it) |
+| O grze (about) | `about`: `AboutDialog`, `AboutHost`, `useAbout` (`about/store.ts`), `AboutTab`: `game` / `credits` / `libraries`; `APP_INFO` (`about/app-info.ts`), `LIBRARIES` (`about/libraries.ts`) | The lazy dialog with authors, licence, privacy link and version (Gra), the asset credits fetched from `/assets/CREDITS.md` plus the intro voice credit (Zasoby) and the open-source libraries (Biblioteki); opened from the main-menu footer |
+| Wersja gry | `__APP_VERSION__` (`<package version>+<git sha>`; `about/build-info.ts`, vite `define`) | Shown in „O grze” as `0.0.0+1a2b3c4 · protokół N`; the Docker build takes the sha from the `APP_GIT_SHA` build argument |
+| Profil (profile) | `profile`: `useProfile` (`store/profile.ts`, `redakcja.profile.v1`), pure `store/profile-model.ts` (`withEvent`, `withLevelEnd`, `accuracy`, `favouriteRole`), `ProfileDialog` (`profile/`) | This browser's lifetime counters (levels, wins, verdicts, stamps, failed tasks, abilities, levels per role) and the preferred look; a match is tallied with the shared `applyStatsEvent` and added at `levelEnd` (spectators skipped); opened from the main-menu footer |
+| Dodatek (accessory) | `accessory`, `Accessory`: `none` / `scarf` / `bowTie` / `pressBadge` (`accessorySchema`, `ACCESSORIES` in `shared/src/domain.ts`), `lobbyPlayer.accessory`, `AccessoryIcon`, `cosmeticParts` (`scene/character/rig.ts`) | Cosmetic worn by the player's character on the neck or chest: Bez dodatku, Szalik, Muszka, Legitymacja prasowa; chosen in the profile, sent with the join and `setLook` (S7-105), shown as a badge on the lobby card and on the 3D character |
+| Wygląd (look) | `Look` (`lookSchema`: `{color, accessory}`), `join.look`, lobby action `setLook`, `profileLook()`, `net/look-sync.ts`; lobby button „Zmień wygląd” (`change-look`) | The profile's preferred colour and accessory as the room gets them (S7-105); `setLook` is lobby-only |
+| Kolor gracza (player colour) | `playerColor`, `colorIndex` (0–3), profile `color` (null = the room picks), `preferredColor` (server member), `pickColor`, `takenColors`, `freeColorIndex(room, team, preferred)` | One of four player colours, each with its shape (`PlayerMark`); each newsroom hands them out once. A preferred colour is honoured when no teammate holds it, else the lowest free one; in a room the profile crosses out the colours teammates hold („Zajęty w pokoju”) |
+| Ulubiona rola (favourite role) | `favouriteRole(profile)` | The role with most finished levels; a tie goes to the earlier role in `ROLES` |
+| Dodatki (bundle) | extras route (`EXTRAS_SOURCES`, `extrasGraph`, `BUDGET.extrasMax`; `tools/perf/check-bundle.ts`) | Lazy chunks of `src/intro`, `src/howto`, `src/about`, `src/profile` and the intro voice; measured apart from menu and game, 1 MB gzip guard |
+| Polish plural | `pluralPl(n, one, few, many)` | Polish noun form for a count (`strings/plural.ts`) |
+| Audio bus | `AudioBus`: `music` / `sfx` / `ui` / `voice` | Each bus has its own volume slider; effective volume is `busVolume(settings, bus)` (`fx/audio/mix.ts`) |
+| Lektor (intro voiceover) | `voice` bus, `voiceVolume`, `fx/audio/voice.ts` (`loadVoice`, `playVoice`, `voiceStatus`) | Narrator lines of the intro; its own slider 'Lektor'; dips the music to `DUCK_TUNING.voiceDepth` (0.3); silent and skipped when muted, not loaded or locked |
+| Music duck | `Ducker`, `musicDucker`, `DUCK_TUNING` (`fx/audio/duck.ts`) | Short dip of the music bus under a stinger (`depth` 0.45) or a voice line (`voiceDepth` 0.3); the lowest active depth wins |
+| Wprowadzenie (intro) | `intro` (`apps/client/src/intro/`, `pl.intro`) | The narrated walk-through of the game (60–90 s): autoplays once per browser in the training lobby, replayable from „Jak grać?” and the settings |
+| Scena wprowadzenia | intro scene (`IntroScene`, `INTRO_SCENES`, `IntroSceneId`) | One of 11 steps (`welcome` … `end`); its stage is UI-kit art (`kit`) or the live sim (`engine`) |
+| Klip lektora | intro clip (`IntroClip`, `INTRO_CLIPS`, `IntroClipId`) | One narrator line: 8 shared plus 3 × 3 device variants (`pickup.touch`) = 17; the id keys the voice sprite and the line export |
+| Ścieżka sterowania sceny | scripted input track (`IntroTrackId`) | The inputs that drive the local sim in a gameplay scene: `conveyorArrivals`, `pickUpFolder`, `holdWork`, `earnStamp`, `citeAndVerdict` |
+| Odtwarzacz wprowadzenia | intro player (`IntroPlayer`, `IntroInput`, `IntroEnd`; `intro/IntroPlayer.tsx`) | The stage, the subtitle bar, progress dots and Wstecz / Pauza / Dalej / Pomiń; in „Jak grać” → Wprowadzenie (S7-101), ends on a „Koniec wprowadzenia” card with „Obejrzyj jeszcze raz” |
+| Makieta wprowadzenia | intro sim (`intro/intro-sim.ts`: `INTRO_LAYOUT`, `INTRO_TRACKS`, `IntroBeat`, `createIntroRun`, `introTrackStart`) | The mini newsroom (three-tile conveyor, Lupa, Archiwum, one desk) where the shared sim plays the scripted tracks; each track starts where the previous one ends |
+| Widok wprowadzenia | intro view (`GameViewKind` `intro`, `createIntroView`, `IntroClock`; `intro/intro-view.ts`) | The intro's own GameView: the reporter „Ty” (`INTRO_ROSTER`), the training theme, cues without sound; „in-engine” = drawn live by the game's sim and renderer, never a video |
+| Dymek sceny | intro callout (`Callout`, `intro/IntroCallouts.tsx`) | UI-kit picture beside a gameplay scene: the folder cards with „Następna teczka”, the move / pick-up and work controls, Lupa with its stamp, the desk's proof → verdict |
+| Napisy lektora | subtitles (`subtitleChunks`, `SubtitleChunk`) | Always on; one sentence per chunk, timed by its share of characters, at most 2 lines at 640×360 (`INTRO_SUBTITLE_LINE_CHARS`) |
+| Czas bez głosu | fallback timing (`fallbackMs`, `sceneDurationMs`, `introReducer`) | A scene without a voice lasts 400 ms per word, 2.5–12 s; with a voice it moves on 450 ms after the clip ends (at the latest the clip + 1.5 s) |
+| Wprowadzenie obejrzane | intro seen flag (`redakcja.intro.seen.v1`, `introSeen`, `markIntroSeen`, `shouldAutoplayIntro`; `intro/intro-store.ts`) | Set on finishing or skipping (Pomiń, Esc, B, or „Gotowe” over a running intro); switching tabs or the game starting mid-intro does not set it |
+| Autoodtwarzanie wprowadzenia | intro autoplay (`useIntroAutoplay` in `screens/Lobby.tsx`, `HowToOptions.autoplay`) | A player (never a spectator) in a training room who has not seen the intro gets it on its own, in „Jak grać” without the tab bar, at most once per room; it closes when the intro ends. Off with the `intro` feature flag |
+| Obejrzyj wprowadzenie | intro replay (`pl.settings.introAgain`, `settings-intro`) | Ustawienia → Ułatwienia: plays the intro again whether or not it was seen (also „Jak grać?” → Wprowadzenie) |
+| Tekst dla lektora | TTS text (`ttsText`, `PRONOUNCE`, `tools/audio/intro-lines.ts`) | A subtitle as the voice says it: plain spaces, no quotes, key names respelled („klawiszem er”) |
+| Sprite lektora | voice sprite (`VoiceSprite`, `voiceSpriteSchema`, `loadVoiceSprite`, `loadIntroVoice`; `intro/voice-sprite.ts`) | `/assets/voice/intro.json` beside `intro.{webm,mp3}`: per clip `startMs`, `durationMs`, `textSha1`; written by `tools/audio/synth_voice.py`; optional (no sprite → subtitles and fallback timing) |
+| Licencja głosu | voice licence (`VOICE_LICENCES`) | `CC0-1.0`, `CC-BY-4.0`, `MIT` or `self-recorded-CC0` (a volunteer recording released under CC0); nothing non-commercial can ship |
+| Nagranie lektora | voice recording (`synth_voice.py --recordings DIR`) | One take per clip, `DIR/<clipId>.wav`, released under CC0 by the volunteer; builds the voice sprite with one command (no TTS voice passed the licence audit) |
+| Scenariusz nagrania | voice script (`tools/audio/voice-script.ts`, `docs/voice-recording.pl.md`) | The volunteer's guide: the generated 17-clip table (file, who hears it, exact subtitle, key-name respellings, rough length), recording rules and the CC0 consent form; `voice-script.test.ts` fails while the table is stale |
+
+## Server config and ads (Stage 7)
+
+| Polish | English (code) | Notes |
+| --- | --- | --- |
+| Konfiguracja publiczna | `publicConfig` (`PublicConfig`, `publicConfigSchema`, `DEFAULT_PUBLIC_CONFIG`) | What the client may know of the server's `config.json`, derived per request host; its own schema, never a pick of the server config. Served by `GET /api/config` and embedded in the HTML shell (`PUBLIC_CONFIG_ELEMENT_ID`) |
+| Flaga funkcji | `featureFlag` (`FeatureFlags`, `DEFAULT_FEATURE_FLAGS`) | `roomBrowser` (off by default), `versus`, `spectators`, `intro`; gates entry points only, running matches keep going |
+| Komunikat redakcji | `motd` (`motdSchema`) | Operator message in the main menu: stable `id`, `text` ≤ `MOTD_MAX_CHARS`, `tone` `info` / `warning` |
+| Reklama / miejsce reklamy | `ad` / `adPlacement` (`menu`, `lobby`, `results`, `spectator`) | Never during play; `slots` maps a placement to an AdSense ad unit |
+| Odbiorcy reklam (wiek) | `ageTreatment` (`child` / `teen` / `unspecified`) | Age tag on every ad request; default `teen` (`DEFAULT_AD_AGE_TREATMENT`) |
+| Reklamy ograniczone | ads mode `limited` | Google's limited ads: no cookies, no local storage, no personalisation; the only mode accepted while `ageTreatment` is `teen` or `child` (`adModeAllowed`) |
+| Reklamy niespersonalizowane | ads mode `nonPersonalized` | May use cookies, so they need consent; adults only (`ageTreatment: 'unspecified'`). Personalised ads are never offered |
+| Domena / host | `normalizeHost`, `hostAllowed`, `hostnameSchema` | Bare lower-case host without port; ad domains match exactly, never a parent or wildcard |
+| Znacznik nonce CSP | `CSP_NONCE_PLACEHOLDER` | Placeholder Vite writes into the built `index.html`; the HTML shell swaps in a per-request nonce |
+| Powłoka HTML | HTML shell (`renderShell`, `createShellRoutes`, `ShellAssets`) | The built `index.html` the game server renders per request (`apps/server/src/shell/`): nonce, embedded public config, verification meta tag, per-host CSP |
+| Strona zapasowa | static fallback (Caddyfile `handle_errors 502 503 504`) | The static `index.html` of the web image that Caddy serves while the game server is down: menu without the embedded config, base CSP, `no-store`; never for `/ads.txt` or the API |
+| Tryb CSP (bazowy / reklamowy) | `CspMode` (`base` / `ads`) | `base`: the strict same-origin policy, identical to the Caddyfile's; `ads`: nonce + `'strict-dynamic'` in script-src and `Referrer-Policy: strict-origin-when-cross-origin`, only on hosts where ads run |
+| Konfiguracja serwera | `serverConfig` (`serverConfigSchema`, `ServerConfig`, `config/config.json`) | Operator's product settings in `apps/server/src/config.ts`: `site`, `features`, `motd`, `rooms`, `ads`, `csp`. Strict (unknown keys refused); an invalid file stops the start and never replaces a running config |
+| Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |
+| Zgoda na reklamy | `ads.signOff` (`{by, date}`) | Supervisor or legal sign-off recorded in config.json; `ads.enabled: true` is refused without it, also when forced by `ADS_ENABLED` |
+| Wyłącznik reklam | `ADS_ENABLED` (env, `ConfigOverrides.adsEnabled`) | The only env setting that overlaps `config.json`: written into `ads.enabled` before validation at start and on every reload, so `false` always wins and `true` still needs the sign-off |
+| Plik ads.txt | `ads.adsTxt`, `GET /ads.txt` | Operator's ads.txt lines served as text on every host, also while ads are off; empty means 404. AdSense reads the root domain's file first (`docs/deploy.md`, AdSense operator checklist) |
+| Weryfikacja witryny | `ads.verification` | Serves AdSense's `google-adsense-account` meta tag on `ads.domains` pages while ads are still off |
+| Sprawdzenie konfiguracji | `bun run config:check` (`tools/deploy/config-check.ts`, `checkConfig`) | Validates a `config.json` as the server would (with `ADS_ENABLED` applied) and prints the public config per ads host; run before saving the file on the server |
+| Lista kontrolna AdSense | AdSense operator checklist (`docs/deploy.md`) | Steps before `ads.enabled: true` in production: sign-off, root-domain site, ads.txt, Polish consent message without the floating link, Auto ads off, fixed units, config, flag check |
+| Ustawienia pokoi | `RoomSettings` (`RegistryOptions.settings()`, `roomSettings`) | `maxRooms`, `defaultDifficulty` and the feature flags, read by the registry at every room creation, so a reload applies to the next room |
+| Tryb pokoju (Razem / Na punkty) | `roomMode` (`coop` / `versus`, `RoomMode`, lobby action `setMode`) | Razem: one shared newsroom. Na punkty: two newsrooms play the same run side by side; on `roomState.mode`, a new room is co-op (S7-77) |
+| Pojedynek | versus match (`mode: 'versus'`, `VersusResult`, `levelEnd.versus`) | One Na punkty level: two newsrooms on the same run from the lobby to the results; it never writes progress, stars or the leaderboard. Player-facing word in „Pojedynek już trwa” and „Wynik pojedynku” |
+| Wynik minigry od klienta | client-reported minigame result (command `minigameResult {stationId, success}`) | The browser decides a minigame's success and the server trusts it; versus adds only the minimum solve time. Accepted for a classroom game (Decision log, S7-93) |
+| Redakcja w pojedynku (Kurier / Głos) | team (`teamIndex` 0 / 1, `TeamIndex`, `MAX_TEAMS`, lobby action `setTeam`) | One newsroom (one sim) of a room, up to `MAX_TEAM_PLAYERS` (4) players; co-op has team 0 only. On `roomState.players[].team`, `snapshot.team`, `event.team`, `levelEnd.team` |
+| Gracz / widz | member kind (`memberKind`: `player` / `spectator`, `join.as`, lobby action `setSpectator`) | A room member plays in a team or watches; one reconnect token is exactly one member kind. `MAX_ROOM_PLAYERS` (8) players plus `MAX_SPECTATORS` (8) spectators per room |
+| Członek pokoju | room member (`RoomMember {kind, team, clientId?}`, `room.members`) | A player or a spectator of a room, in join order; one reconnect token resumes exactly one member with its current kind and team |
+| Przebieg redakcji | team run (`TeamRun {game, forfeited}`, `room.teams`) | One newsroom's sim inside a room: one in co-op, two in versus, stepped in lockstep with one `SimContext` and one sim seed; `inspect().game` is team 0's |
+| Kanały pokoju | room topics (`roomTopics`, `topicsFor`, `syncTopics`, `publishTeam`) | `room:CODE` (everyone: `roomState`, `gameStarted`), `room:CODE:t0` / `:t1` (a team's players: its snapshots, events, `levelEnd`), `room:CODE:spec` (spectators: every 2nd snapshot of each team, `levelEnd`s, spectator events) |
+| Widownia | `spectatorsAllowed` (lobby action `setSpectatorsAllowed`), `roomState.spectators` (`LobbySpectator`) | The room's spectator seats; off by default, the host opens them (a room a spectator creates starts open, and its host watches). A spectator join to a closed Widownia gets `spectatorsOff`, a full one `spectatorsFull`; `setSpectator` moves a member between playing and watching in the lobby or the results |
+| Odznaka redakcji | `TeamBadge` (`ui/TeamBadge.tsx`, `teamName`), tokens `--team-0` / `--team-1` (+ `-ink`), `teamColors` / `teamColorVars` in `tokens.ts` | Kurier: a navy shield with a white „K”; Głos: a white seal with a navy „G”. Shape and letter, not a meaning colour, tell the newsrooms apart (design-rules §3, S7-86) |
+| Ustawienia pokoju (lobby) | `RoomSettings` (`screens/lobby/RoomSettings.tsx`) | The lobby row with the room name (the host's field, committed on Enter or blur), visibility and mode; guests see the name (or „Pokój: {gospodarz}”) and read-only chips (S7-86) |
+| Kolumny redakcji / „Przejdź tutaj” | `TeamColumns` (`screens/lobby/TeamColumns.tsx`), pure rules in `screens/lobby/lobby-model.ts` (`canJoinTeam`, `unevenTeams`, `startGate`, `emptyTeam`) | Na punkty in the lobby: a column per newsroom with its badge and „n z 4”; a player of the other newsroom moves with „Przejdź tutaj” in its free seat (`setTeam`); „Drużyny są nierówne” never blocks; the start waits for a connected player in each newsroom (`teamEmpty`) |
+| Pasek widowni / „Na widownię” / „Do gry” | `SpectatorStrip` (`screens/lobby/SpectatorStrip.tsx`, `canWatch`, `hasFreeSeat`) | „Widownia: n z 8” with an eye chip per spectator and the host's „Widownia otwarta” switch; a player may watch instead („Na widownię”, `setSpectator(true)`), a spectator takes a seat again („Do gry”; the yellow action of a watching guest) (S7-86) |
+| „Widz dołączył” | cue `room.spectatorJoined`, `joinedSpectators` (`net/room-diff.ts`), `spectatorToast` | Someone new in `roomState.spectators`: a sound and caption („Nowy widz”) in the lobby and the game, plus a blue toast in the game, so players always know they are watched (S7-86) |
+| Synchronizacja widza | spectator sync (`syncSpectator` in `registry.ts`) | What a spectator gets right after its roomState on join, reconnect or a switch to watching: each newsroom's snapshot and `matchStats` while playing, plus each `levelEnd` at the results |
+| Statystyki widowni | shown stats (`room.spectatorStats`) | The `matchStats` counters folded over what the Widownia was shown: in versus a verdict counts once revealed, so the counters never give an embargoed outcome away |
+| Pokój prywatny / publiczny | `roomVisibility` (`private` / `public`, `RoomVisibility`, lobby action `setVisibility`, `pl.vocab.visibility`) | Private rooms are reached by code only (default); public ones are listed in the room browser when the `roomBrowser` flag is on. The lobby (S7-86) offers „Publiczny” only while that flag is on; otherwise the host sees the same read-only „Prywatny” chip as the guests |
+| Nazwa pokoju | `roomName` (`roomNameSchema`, lobby action `setRoomName`) | Optional host-given name: trimmed, 1..`ROOM_NAME_MAX_LENGTH` (24), no control characters; the server's name filter answers `invalidName` |
+| Identyfikator przeglądarki | `clientId` (`clientIdSchema`, `join.clientId`) | Opaque random id (16..64 characters) a browser keeps in localStorage and sends on join, so a kick cooldown follows the browser rather than a class-shared IP |
+| Wynik redakcji | team score (`teamScoreSchema`, `TeamScore`, `snapshot.scoreboard`) | One newsroom's `{team, score, credibility, resolved, expired, connected}`; versus snapshots carry both, for the rival chip and the spectator scoreboard |
+| Embargo na werdykty (widownia) | spectator embargo (`spectatorEvent`, `verdictMasked`, `verdictRevealed`; pure rules in `spectator-embargo.ts`: `SpectatorEmbargo`, `createEmbargo`, `openSpawnKey`, `closeSpawnKey`, `maskForSpectators`, `release`, `releaseAll`, `HeldResult`) | In versus a spectator sees a closed folder as `verdictMasked` (who, which `spawnKey`, verdict or expiry; never the verdict, outcome, reason or points) until both newsrooms closed that key or the level ended, then `verdictRevealed` with the result. Players never receive `spectatorEvent`. In co-op every event passes through |
+| Statystyki meczu | match stats (`playerStatsSchema`, `PlayerStats`, `matchStats`, `levelEnd.stats`; `match-stats.ts`: `emptyPlayerStats`, `applyStatsEvent`, `teamScoreOf`) | Per player: verdicts, correct, wrong, stamps, minigame fails, abilities (stage `done`); sent to spectators at 1 Hz (`SPECTATOR_STATS_INTERVAL_TICKS`) and in `levelEnd`. `applyStatsEvent` is the only accumulator |
+| Wynik pojedynku | versus summary (`versusSummarySchema`, `VersusSummary`, `levelEnd.versus`, `VersusEndReason`) | `{winnerTeam (null on a draw), reason: score / credibility / forfeit / draw, teams, rivalResults}`; `rivalResults` pair with the team's own results by `spawnKey` |
+| Rozstrzygnięcie pojedynku | `versusOutcome` (`TeamStanding`, `VersusResult`, `byScore`), `matchDurationMs` (`versus.ts`) | A newsroom with credibility 0 or a forfeit is out; the last one in wins (`forfeit` / `credibility`); all out on one tick or time up → higher score (`score`), equal top scores → `draw`. Endless versus lasts `VERSUS.endlessDurationS` (600 s) |
+| Filtr nazw | name filter (`isAcceptableName`, `maskName`, `NAME_MASK_CHAR`, `name-filter.ts`) | Small Polish blocklist for room names (`invalidName`) and host nicknames in the room browser (masked to `*`); matched after `foldSearch` with look-alike digits, repeated letters and split letters folded |
+| Lista pokoi | room browser list (`roomSummarySchema`, `RoomSummary`, `roomListQuerySchema`, `roomListResponseSchema`, `roomListStatusSchema`: `any` / `open` / `inGame`, `rooms.ts`) | What `GET /api/rooms` returns for a public room: code, name, masked host nickname, level, mode, difficulty, counts and seats, `canJoinAsPlayer`, `canSpectate`, `createdAt` |
+| Lista pokoi (serwer) | `registry.listRooms`, `summaryOf`, `createRoomListCache`, `queryRoomList`, `compareRoomList` (`apps/server/src/rooms/room-list.ts`), `ROOM_LIST_CACHE_MS`, `ROOM_LIST_PER_MINUTE_PER_IP` | Public rooms with a connected member, rebuilt at most every 2 s; search and filters run over that copy; joinable rooms first, then the newest |
+| Publiczne pokoje (przeglądarka pokoi) | room browser (`RoomBrowserDialog`, `RoomBrowserHost`, `useRoomBrowser`, `useRoomList`, `createRoomListPoller`, `RoomListFilters`, `RoomListProblem`: `offline` / `busy` / `unavailable` / `failed`, `ROOM_LIST_POLL_MS`, `ROOM_LIST_MAX_POLL_MS`; `apps/client/src/rooms/`) | The main-menu dialog behind the `roomBrowser` flag: search, mode / status / difficulty filters, a radio row per public room, yellow „Dołącz” and white „Oglądaj”; polls `GET /api/rooms` every 8 s while open and visible, doubling up to 60 s on 429 |
+| Wyszukiwanie bez ogonków | `foldSearch` | Lower case, diacritics stripped (`ł` → `l`), whitespace collapsed: `foldSearch('Łukasz Żółć') === 'lukasz zolc'`; the room-browser search and the name filter use it |
+| Minimalny czas rozwiązania | `MINIGAME_MIN_SOLVE_MS` (`SimContext.minSolveMs`, `GameState.minigameOpenedMs`, `solvedTooSoon`) | Versus only: a minigame success reported sooner than the kind's minimum after the round opened counts as a failure (anti-cheat, S7-80). The registry sets `minSolveMs` in versus only; the sim records when each station's round opened (sim-only, never in a snapshot) |
+| Walkower | forfeit (`TeamRun.forfeited`, versus reason `forfeit`) | A versus newsroom whose last player left while playing (on purpose, or when the 60 s reconnect grace ran out), or that had no player at the level start: the other newsroom wins at once |
+| Remis | draw (versus reason `draw`, `winnerTeam: null`) | Equal top scores when the match time runs out (or both newsrooms are out on one tick); nobody wins |
+| Pojedynek trwa | `matchInProgress` (error) | A new player cannot join a versus room in the briefing or while playing (the line-up is fixed); joining works again at the results |
+| Pusta redakcja | `teamEmpty` (error, detail `team N`) | The host cannot start versus while a newsroom has no connected player |
+| Żeton rywali | rival chip (`VersusChip`, `data-testid="versus-chip"`) | Versus HUD: the rival newsroom's badge, name and points under the pill (the pill row's last segment on phones), with an arrow up / down while this newsroom leads / trails (S7-89) |
+| Prowadzenie | lead (`LeadState`: `ahead` / `behind` / `tied`, `leadState`, `leadCue`, `standingsOf` in `hud/versus-model.ts`) | Who has more points; a change of lead plays `versus.leadTaken` / `versus.leadLost`, at most once per `VERSUS.leadCueCooldownMs` |
+| Wynik pojedynku dla redakcji | `versusVerdict` (`VersusResultKind`: `win` / `lose` / `draw`, `VersusReasonId`) | The match from one newsroom's side: the results ribbon („Wygrana!”, „Przegrana”, „Remis”) and its reason line (`pl.versus.reasons`) |
+| Werdykt rywali | rival result (`pairRivalResults`, `DebriefCard.rival`) | The rival's result on the same folder, paired by `spawnKey` from `levelEnd.versus.rivalResults` and shown as „Rywale” next to „Wy” on each Kolegium card; „nie mieli” when the rival never got that folder, „w grze” when it still had it at the end |
+| Ładowarka reklam | `ensureAdSense`, `AdLoaderState` (`idle` / `loading` / `ready` / `blocked`), `useAdLoader` (`apps/client/src/ads/adsense.ts`) | Injects Google's script once, when the first `AdSlot` mounts; the request flags (`AD_QUEUE_FLAGS`) are on the queue first. An error or `ADS_LOAD_TIMEOUT_MS` without a load means `blocked`: no ads, no message |
+| Ramka reklamy | `AdSlot` (`placement`) | The white "Reklama" frame around one fixed-size unit (`AD_PLACEMENTS`); renders nothing on phones, with ads off, without a unit for the placement or when the loader is blocked. No cue, never focusable |
+| Ekran reklamowy | `adEligible({screen, levelEnded, spectating})`, `AD_ELIGIBLE_SCREENS` | Main menu, lobby, results of a finished level, a spectator's spectate screen (its unit only in the stats sheet and the spectator results); nowhere else, never in a player's game |
+| Wstrzymanie reklam | `useAdRequestPause`, `setAdRequestsPaused` (`pauseAdRequests`) | Pause guard mounted in `App`: ad requests are paused on every screen that is not an ad screen |
+| Odstęp od reklamy | `--space-ad-gap` (9.5rem), `AD_MIN_GAP_PX` (150) | Clear space between an ad and any control (AdSense game-page guidance) |
+| Znacznik wieku zgody | `data-tag-for-under-age-of-consent` (TFUA), `data-tag-for-age-treatment` (TFAT) | Per-unit tags from `adRequestAttributes`: TFUA in `limited` mode (Google serves limited ads), TFAT `1` child / `2` teen |
+| Zgody reklamowe | `adConsent` (`pl.menu.adConsent`, `openConsentSettings`) | The footer link that reopens Google's consent message (`googlefc.showRevocationMessage`), required by AdSense; shown only while the ad loader is `ready` |
+| Stopka menu | `MenuFooter` (`screens/menu/MenuFooter.tsx`) | Row of minor ghost-button links under the main-menu card, never yellow: the „Profil” (S7-104) and „O grze” (S7-103) slots (S7-96), „Prywatność” always, „Zgody reklamowe” while the ad loader is `ready` |
+| Strona prywatności | privacy page (`GET /prywatnosc`, `renderPrivacyPage`, `privacyFlags`, `privacyVars` in `apps/server/src/shell/privacy-page.ts`; `pl.menu.privacy`) | `docs/privacy.pl.md` rendered by the game server: base CSP, no script, `no-cache`; ads blocks follow the host's ads decision, `{{operator.*}}` come from `site.operator`. Opened from the menu footer in the same tab |
+| Markdown-lite | `parseMarkdownLite`, `MdBlock`, `MdInline`, `markdownTitle` (`packages/shared/src/markdown-lite.ts`) | Pure AST parser for the documents the game serves (headings, paragraphs, lists, tables, bold, code, https or same-site links, `<!-- name -->` conditional blocks, `{{key\|fallback}}`); renderers escape every text |
+| Przycisk-odnośnik | `LinkButton` (`ui/LinkButton.tsx`) | A link styled as a `Button` (never primary) with the `ui.click` cue; opens in the same tab so the gamepad's `click()` works |
+| Strażnik reklam (e2e) | ad guard (`guardAdRequests`, `trackContext(context, { ads })` in `e2e/helpers.ts`) | Every e2e context without an ads config fails its test (in `closePlayers`) if it sends a request to a Google ad host; `openPlayer` and `trackContext` apply it, `guardAdRequests(page.context())` covers Playwright's own `page` fixture; only `ads.spec.ts` opts out |
+| Oglądaj / Oglądasz (ekran widowni) | spectate screen (`ScreenId` `'spectate'`, `joinRoom(nickname, code, 'spectator')`) | Where a spectator lands while a match is played or its results show; the briefing before it is read-only („Oglądasz” instead of „Gotowy!”). On the menu, `matchInProgress` offers „Oglądaj” for the same room when the `spectators` flag is on |
+| Widoki widowni | spectate store (`useSpectate`, `spectateViews`, `teamView`, `SpectateView`) | One GameView per watched newsroom (game store, snapshot buffer, feedback), the spectator event feed, `matchStats` and each team's `levelEnd`; spectator messages go here only, never to `useGame` or the player's gameplay event listeners. A newsroom's sim events go to its own view (`isViewEvent`) |
+| Ekran widowni | spectate screen (`spectate/SpectateScreen.tsx`, in the game chunk; `GameGate which="spectate"`) | One canvas per newsroom on screen, the top-bar scoreboard and a team plate per view, the event feed, follow and the stats sheet; keyboard ← / → / Space / 1 / 2 / Q / Esc, gamepad d-pad / RB / A / B / Y, touch on the plates, chips and scores (agents/platforms.md) |
+| Układ widowni (obok siebie / jeden nad drugim / jeden) | spectate layout (`chooseSpectateLayout` → `'side'` / `'stacked'` / `'single'`, `spectate/spectate-layout.ts`) | Side by side from 1000 px wide at aspect ≥ 1.2, stacked from 700×900, else one newsroom at a time; phones (`isPhoneViewport`) and co-op are always single |
+| Podgląd jednej redakcji | spectate focus (`SpectateFocus`: `'split'` or a team; `nextFocus`, `tapTeam`, `backFocus`, `teamKeyFocus`) | Which newsroom a split shows on its own (the other canvas unmounts), or which one a single layout shows; a phone switches it with one tap on a score in the top bar |
+| Tablica wyników (widownia) | spectator scoreboard (`scoreSides`, `ScoreSide`, `spectate/scoreboard-model.ts`) | The spectate screen's top bar: each newsroom's points and credibility, the clock, a crown for the leader in versus; co-op adds closed and expired folders |
+| Tabliczka redakcji | team plate (`TeamPlate`, with the shared `TeamBadge`) | A spectator view's header: the team's badge (Kurier: navy shield with K; Głos: white seal with G), name and players; in a split it focuses its newsroom |
+| Dźwięk widowni | spectator audio policy (`SPECTATOR_AUDIBLE_CUES`, `SPECTATOR_SFX_GAIN`, `TEAM_PAN`, `spectatorSoundOutput`) | A spectator hears verdict outcomes, expiries, event starts, raids and abilities only, at 0.6 volume, Kurier left and Głos right while both are shown; everything else is silent |
+| Śledź (gracza) | follow (`useSpectate().followed` / `follow`, `spectate/follow-model.ts`: `followOrder`, `stepFollow`, `focusForTeam`; cue `spectate.follow`) | A spectator follows one player: their newsroom's view becomes the subject's (`subjectId`), its camera follows them at the follow zoom (`forceFollow`), their plate chip and name tag get the blue ring. ← / → walk Kurier's players, then Głos's (S7-91) |
+| Karta śledzenia | FollowCard (`spectate/FollowCard.tsx`, `followCard`, `stampStations`) | What the followed player does (carrying, a station's progress or task, a lockout, the desk) and their folder's headline with its stamps as station icons only: never a stamp's text, the truth or a verdict |
+| Na żywo (relacja widowni) | event feed (`spectate/feed-model.ts`: `FeedItem`, `feedItemFor`, `pushFeed`, `SPECTATOR_FEED_MAX`; `spectate/EventFeed.tsx`; cue `spectate.feed`) | The spectators' newest rows (4 on a desktop, 2 on a phone): verdicts, expiries, event starts, raids, abilities, rescues; the visual twin of every sound they hear. A masked result reads „Kurier: werdykt” until its reveal turns it into the full row |
+| Werdykt w poczekalni | pending verdict (`PendingVerdict`, `pendingAfter`) | A versus verdict the embargo still masks: the stats sheet counts it among the verdicts given but not in the accuracy |
+| Arkusz statystyk (widownia) | stats sheet (`spectate/StatsSheet.tsx`, `StatsTables`, `spectate/stats-model.ts`: `statsTeams`, `accuracyOf`) | Per newsroom and player: verdicts (+ pending), accuracy over revealed verdicts, stamps, failed tasks, abilities; from `matchStats` live and `levelEnd.stats` at the end. A side sheet (full screen on phones), Q / Y / „Statystyki” |
+| Wyniki widowni | spectator results (`spectate/SpectatorResults.tsx`, `spectatorRibbon`) | Once every watched newsroom's `levelEnd` is in: the winner (or a draw, or the co-op edition's result), a card per newsroom, the players' final figures and a read-only Kolegium (`readOnly`, no blunder vote) per newsroom |
+| Profil widza (jakość) | `spectatorProfile`, `SPECTATOR_MAX_DPR` | A spectator canvas renders at most on the medium preset, DPR 1.5, no shadows and no motes |
+| Rodzaj członka / własna redakcja | `selfKind(room, playerId)`, `selfTeam(room, playerId)` | Derived from `roomState`: a member listed in `spectators` watches; a player's own team routes their snapshots, events and level end (a message for the other team is dropped) |
+| Usunięcie z pokoju | kick (lobby action `kick`, error `kicked`, `kickCooldown`, close code `CLOSE_KICKED` 4002) | The host removes a member: the client forgets its slot and shows `pl.errors.kicked` on the menu. A rejoin from the same browser (`clientId`) during the cooldown gets `kickCooldown` |
+| Lista usuniętych | kick list (`room.kicked`, `KICK_REJOIN_COOLDOWN_MS` in `limits.ts`) | Per room, in memory: the `clientId`s the host kicked and when each one's 10-minute cooldown ends; expired entries are dropped, and the list goes with the room |
+| Przekaż gospodarza | `transferHost` (lobby action) | The host hands the host role to another connected member (a spectator may host); a disconnected, unknown or own target gets `invalidTarget` |
+| Opcje gracza (arkusz gospodarza) | `MemberSheet` (`screens/lobby/MemberSheet.tsx`), `memberOptions` (`lobby-model.ts`), `MoreButton`; session `kick`, `transferHost`, `setTeam(team, playerId)`, `setSpectator(spectator, playerId)` | The host's sheet behind the round „more” button on every other member's card or Widownia chip: „Przenieś do: …”, „Na widownię” / „Do gry”, „Przekaż gospodarza”, „Usuń z pokoju” with the „Usunąć na pewno?” confirm (S7-87) |
+| Szczegóły poziomu | `LevelDetailsSheet` (`screens/lobby/LevelDetailsSheet.tsx`), `levelDetails(level, mode, difficulty, run)` (`level-details.ts`) | „Szczegóły” of the chosen level for everyone in the lobby: minutes, folders out of the bag's pool, difficulty, stations with their purpose line, events, the star rule as shares (points once a run is dealt), the versus / endless rule and the best local stars per difficulty (S7-87) |
+| Ostatni kod | `lastJoinCode` (`useApp`) | The room code of the last join by code; null after creating a room |
 
 Missing a term? Add it here in the same commit that introduces it.

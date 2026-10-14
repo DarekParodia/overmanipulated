@@ -1,88 +1,11 @@
 import { describe, expect, test } from 'bun:test';
-import type { FolderResult } from '@redakcja/shared';
 import {
   blunderLeader,
-  type DebriefStory,
-  debriefCards,
   effectiveVotes,
   stepCard,
   voteConfirmed,
   votersByStory,
 } from './debrief-model.ts';
-
-function result(folderId: string, storyId: string, patch: Partial<FolderResult> = {}) {
-  return {
-    folderId,
-    storyId,
-    outcome: 'correct',
-    verdict: 'publish',
-    scoreDelta: 10,
-    credibilityDelta: 0,
-    missedStampIds: [],
-    ...patch,
-  } satisfies FolderResult;
-}
-
-const stories: Record<string, DebriefStory> = {
-  'l1-a': {
-    headline: 'Rynek pod wodą',
-    correctVerdict: 'publishWithContext',
-    stamps: [
-      { id: 'l1-a-image', station: 'imageSearch', text: 'Zdjęcie z 2019 r.' },
-      { id: 'l1-a-source', station: 'sourceRegistry', text: 'Konto aktywne od lat.' },
-    ],
-    debrief: {
-      what: 'Stare zdjęcie.',
-      technique: 'Nowy podpis.',
-      tool: 'Lupa.',
-      realWorld: 'Po burzach.',
-    },
-  },
-  'l1-b': { headline: 'Nocny autobus', correctVerdict: 'publish' },
-};
-const lookup = (id: string) => stories[id];
-
-describe('debrief cards', () => {
-  test('orders cards by folder arrival, not by resolution', () => {
-    const cards = debriefCards([result('f10', 'l1-b'), result('f2', 'l1-a')], lookup);
-    expect(cards.map((c) => c.storyId)).toEqual(['l1-a', 'l1-b']);
-  });
-
-  test('keeps one card per story, from its first folder', () => {
-    const cards = debriefCards(
-      [result('f3', 'l1-a', { outcome: 'wrong' }), result('f1', 'l1-a')],
-      lookup,
-    );
-    expect(cards).toHaveLength(1);
-    expect(cards[0]?.folderId).toBe('f1');
-  });
-
-  test('carries the correct verdict, the debrief and the missed stamp texts', () => {
-    const [card] = debriefCards(
-      [
-        result('f1', 'l1-a', {
-          outcome: 'expired',
-          verdict: null,
-          missedStampIds: ['l1-a-image', 'unknown'],
-        }),
-      ],
-      lookup,
-    );
-    expect(card?.verdict).toBeNull();
-    expect(card?.correctVerdict).toBe('publishWithContext');
-    expect(card?.debrief?.technique).toBe('Nowy podpis.');
-    expect(card?.missedStamps).toEqual([
-      { id: 'l1-a-image', station: 'imageSearch', text: 'Zdjęcie z 2019 r.' },
-    ]);
-  });
-
-  test('still shows a card for a story the content does not know', () => {
-    const [card] = debriefCards([result('f1', 'l9-missing')], lookup);
-    expect(card?.headline).toBeNull();
-    expect(card?.debrief).toBeNull();
-    expect(card?.correctVerdict).toBeNull();
-  });
-});
 
 describe('blunder votes', () => {
   const players = [

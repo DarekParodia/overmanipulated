@@ -2,27 +2,30 @@
 // ("Wejście") and each editorial desk run ("Stół") gets a floating white badge with its icon
 // and a one-word name. The badge doubles as the station dial: a chunky ring around it fills
 // green while someone works, shows the operator's colour during a minigame or at a busy desk,
-// and drains red under a cross during a lockout. DOM in one layer over the canvas: no draw
-// calls, crisp text.
+// and drains red under a cross during a lockout. The conveyor's ring fills blue towards the next
+// scheduled folder ("za N s") and turns orange while the belt is full ("Pełna", S7-09). DOM in
+// one layer over the canvas: no draw calls, crisp text.
 
 import { useFrame } from '@react-three/fiber';
-import type { Fixture, Station } from '@redakcja/shared';
+import type { Fixture, Station, TileMap } from '@redakcja/shared';
 import { useMemo } from 'react';
 import { Vector3 } from 'three';
-import { useEvents } from '../events/event-store.ts';
-import { useGame } from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
-import { useApp } from '../store/app.ts';
+import type { GameView } from '../net/game-view.ts';
+import { useGameView, viewRoster } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { playerColorVar } from '../ui/tokens.ts';
-import { type StationIndicator, stationIndicator, surfaceHeight } from './entities.ts';
+import {
+  conveyorIndicator,
+  SIGN_ABOVE,
+  type StationIndicator,
+  stationIndicator,
+  surfaceHeight,
+} from './entities.ts';
 import { screenTransform, useOverlay } from './overlay.ts';
 import styles from './StationIndicators.module.css';
 
-/** Height of the sign's foot above the fixture's surface; the sign rises from there. */
-const SIGN_ABOVE = 0.45;
 const FILL_RATE = 12;
 /** Ring circumference in SVG units (r = 27). */
 const RING_RADIUS = 27;
@@ -44,8 +47,8 @@ type Sign = {
 type RoomPlayers = readonly { id: string; colorIndex: number }[] | undefined;
 
 /** Groups touching fixtures of one kind into runs (conveyor belts, desk blocks). */
-function runsOf(kind: 'conveyor' | 'desk'): Fixture[][] {
-  const left = runtime.map.fixtures.filter((f) => f.kind === kind);
+function runsOf(map: TileMap, kind: 'conveyor' | 'desk'): Fixture[][] {
+  const left = map.fixtures.filter((f) => f.kind === kind);
   const runs: Fixture[][] = [];
   while (left.length > 0) {
     const run = left.splice(0, 1);
@@ -68,9 +71,9 @@ function runsOf(kind: 'conveyor' | 'desk'): Fixture[][] {
   return runs;
 }
 
-function collectSigns(): Sign[] {
+function collectSigns(map: TileMap): Sign[] {
   const signs: Sign[] = [];
-  for (const fixture of runtime.map.fixtures) {
+  for (const fixture of map.fixtures) {
     if (fixture.kind === 'station' && fixture.station) {
       signs.push({
         id: fixture.id,
@@ -83,7 +86,7 @@ function collectSigns(): Sign[] {
     }
   }
   for (const kind of ['conveyor', 'desk'] as const) {
-    for (const run of runsOf(kind)) {
+    for (const run of runsOf(map, kind)) {
       const first = run[0];
       if (!first) {
         continue;
@@ -104,19 +107,24 @@ function collectSigns(): Sign[] {
   return signs;
 }
 
-function indicatorFor(sign: Sign): StationIndicator {
+function indicatorFor(view: GameView, sign: Sign): StationIndicator {
+  const state = view.store.getState();
+  if (sign.kind === 'conveyor') {
+    return conveyorIndicator(state.nextFolder, state.elapsedMs, state.conveyorFull);
+  }
   if (sign.fixtureIds.length === 0) {
     return { kind: 'none' };
   }
-  const state = useGame.getState();
   if (sign.kind === 'desk') {
     const desk = state.desks.find((d) => sign.fixtureIds.includes(d.id) && d.operatorId);
     return desk?.operatorId ? { kind: 'busy', operatorId: desk.operatorId } : { kind: 'none' };
   }
   const station: Station | undefined = state.stations.find((s) => s.id === sign.fixtureIds[0]);
+  const events = view.events.getState();
   return stationIndicator(
     station,
-    station ? useEvents.getState().outageTotals[station.id] : undefined,
+    station ? events.outageTotals[station.id] : undefined,
+    station ? events.lockoutTotals[station.id] : undefined,
   );
 }
 
@@ -132,8 +140,11 @@ function ringColor(indicator: StationIndicator, players: RoomPlayers): string {
   if (indicator.kind === 'lockout') {
     return 'var(--red)';
   }
-  if (indicator.kind === 'down') {
+  if (indicator.kind === 'down' || indicator.kind === 'full') {
     return 'var(--orange)';
+  }
+  if (indicator.kind === 'incoming') {
+    return 'var(--blue)';
   }
   if (indicator.kind === 'working') {
     return 'var(--green)';
@@ -152,9 +163,13 @@ type SignHandle = {
   ring: SVGCircleElement | null;
   /** Seconds left of an outage, written into the name pill while the station is down. */
   seconds: HTMLSpanElement | null;
+  /** Conveyor only: "za N s" until the next scheduled folder, written into the name pill. */
+  incoming: HTMLSpanElement | null;
   shown: {
     /** Outage seconds last written. */
     secondsLeft: number;
+    /** Seconds to the next folder last written. */
+    incomingSeconds: number;
     kind: StationIndicator['kind'];
     fraction: number;
     offset: string;
@@ -193,6 +208,7 @@ function SignBadge({ handle }: { handle: SignHandle }) {
           };
         }}
         className={styles.sign}
+        data-testid="station-sign"
         data-kind={sign.kind}
         data-state="none"
       >
@@ -230,6 +246,23 @@ function SignBadge({ handle }: { handle: SignHandle }) {
         </span>
         <span className={styles.name}>
           <span className={styles.nameUp}>{pl.vocab.signs[sign.kind]}</span>
+          {sign.kind === 'conveyor' && (
+            <>
+              <span
+                className={styles.nameIncoming}
+                ref={(element) => {
+                  handle.incoming = element;
+                  handle.shown = { ...handle.shown, incomingSeconds: -1 };
+                  return () => {
+                    if (handle.incoming === element) {
+                      handle.incoming = null;
+                    }
+                  };
+                }}
+              />
+              <span className={styles.nameFull}>{pl.hud.next.signFull}</span>
+            </>
+          )}
           <span className={styles.nameDown}>
             {pl.events.badge.down}{' '}
             <span
@@ -251,17 +284,25 @@ function SignBadge({ handle }: { handle: SignHandle }) {
 }
 
 /** Updates one sign's ring from the game state; DOM writes only when something changed. */
-function updateSign(handle: SignHandle, delta: number, players: RoomPlayers): void {
+function updateSign(view: GameView, handle: SignHandle, delta: number, players: RoomPlayers): void {
   const { element, ring } = handle;
   if (!element || !ring) {
     return;
   }
-  const indicator = indicatorFor(handle.sign);
+  const indicator = indicatorFor(view, handle.sign);
   const current = handle.shown;
-  const target = indicator.kind === 'busy' || indicator.kind === 'none' ? 1 : indicator.fraction;
+  const target = 'fraction' in indicator ? indicator.fraction : 1;
   if (indicator.kind === 'down' && handle.seconds && current.secondsLeft !== indicator.seconds) {
     current.secondsLeft = indicator.seconds;
     handle.seconds.textContent = String(indicator.seconds);
+  }
+  if (
+    indicator.kind === 'incoming' &&
+    handle.incoming &&
+    current.incomingSeconds !== indicator.seconds
+  ) {
+    current.incomingSeconds = indicator.seconds;
+    handle.incoming.textContent = pl.hud.next.sign(indicator.seconds);
   }
   if (indicator.kind !== current.kind) {
     current.kind = indicator.kind;
@@ -293,17 +334,20 @@ function updateSign(handle: SignHandle, delta: number, players: RoomPlayers): vo
  * to the projected sign positions.
  */
 export function StationIndicators() {
+  const view = useGameView();
   const handles = useMemo(
     () =>
-      collectSigns().map(
+      collectSigns(view.runtime.map).map(
         (sign): SignHandle => ({
           sign,
           anchor: null,
           element: null,
           ring: null,
           seconds: null,
+          incoming: null,
           shown: {
             secondsLeft: -1,
+            incomingSeconds: -1,
             kind: 'none',
             fraction: 1,
             offset: '',
@@ -313,7 +357,7 @@ export function StationIndicators() {
           at: '',
         }),
       ),
-    [],
+    [view],
   );
   const projected = useMemo(() => new Vector3(), []);
 
@@ -324,7 +368,7 @@ export function StationIndicators() {
   useOverlay(styles.layer ?? '', badges);
 
   useFrame(({ camera, size }, delta) => {
-    const players = useApp.getState().room?.players;
+    const players = viewRoster(view);
     for (const handle of handles) {
       const anchor = handle.anchor;
       if (!anchor) {
@@ -336,7 +380,7 @@ export function StationIndicators() {
         handle.at = at;
         anchor.style.transform = at;
       }
-      updateSign(handle, delta, players);
+      updateSign(view, handle, delta, players);
     }
   });
 

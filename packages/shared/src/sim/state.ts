@@ -1,9 +1,15 @@
 // Serialisable game state of one room. Only the simulation functions in this folder change it.
-import { CREDIBILITY_START } from '../constants.ts';
+import { ABILITY_FIRST_READY_MS, CREDIBILITY_START, ROLE_PERKS } from '../constants.ts';
 import type { Role } from '../domain.ts';
-import type { Desk, Folder, FolderResult, LevelOutcome, Station } from '../entities.ts';
+import type {
+  AbilityState,
+  Desk,
+  Folder,
+  FolderResult,
+  LevelOutcome,
+  Station,
+} from '../entities.ts';
 import type { TileMap, Vec2 } from './map.ts';
-import type { RngState } from './rng.ts';
 
 export type PlayerState = {
   id: string;
@@ -15,14 +21,17 @@ export type PlayerState = {
   lastInputSeq: number;
 };
 
-/** Per-player gameplay data that is not part of movement prediction. */
+/**
+ * Per-player gameplay data that is not part of movement prediction. The ability fields
+ * (`AbilityState`, S7-36) also travel in `snapshot.crew`.
+ */
 export type CrewMember = {
   role: Role | null;
   /** Whether the work button is held, as of the last input received. */
   workHeld: boolean;
   /** Level time of the last ping (for the cooldown); -Infinity before the first. */
   lastPingMs: number;
-};
+} & AbilityState;
 
 /** A running folder-based level event (outages live on the station and need no entry). */
 export type ActiveEvent = {
@@ -39,7 +48,21 @@ export type GameState = {
   tick: number;
   /** Level time since start, in ms. */
   elapsedMs: number;
-  rng: RngState;
+  /**
+   * The match seed; constant for the whole level. Minigame seeds are derived from it per folder
+   * spawn key, station kind and attempt (`drawMinigameSeed`), never drawn from a running RNG.
+   */
+  seed: number;
+  /**
+   * Minigame rounds that ended without a stamp, keyed `${spawnKey}:${kind}`
+   * (`minigameAttemptKey`). Sim-only; stations in MINIGAME_STABLE_SEED_STATIONS never count.
+   */
+  minigameAttempts: Record<string, number>;
+  /**
+   * Level time when each station's current minigame round opened, keyed by station id. Sim-only
+   * (never in a snapshot): the versus minimum solve time (`SimContext.minSolveMs`) reads it.
+   */
+  minigameOpenedMs: Record<string, number>;
   /** Keyed by player id; insertion order is join order. */
   players: Record<string, PlayerState>;
   crew: Record<string, CrewMember>;
@@ -58,9 +81,7 @@ export type GameState = {
   desks: Record<string, Desk>;
   score: number;
   credibility: number;
-  /** The managing editor's one deadline extension per level. */
-  deadlineExtensionUsed: boolean;
-  /** Every resolved folder, for the level summary. */
+  /** Every resolved folder, then the ones still in play when the level ended (`unfinished`). */
   results: FolderResult[];
   /** Set once when the level is over; the server then sends `levelEnd`. */
   ended: LevelOutcome | null;
@@ -95,7 +116,9 @@ export function createGameState(options: GameStateOptions = {}): GameState {
   return {
     tick: 0,
     elapsedMs: 0,
-    rng: (options.seed ?? 1) | 0,
+    seed: (options.seed ?? 1) | 0,
+    minigameAttempts: {},
+    minigameOpenedMs: {},
     players: {},
     crew: {},
     folders: {},
@@ -107,7 +130,6 @@ export function createGameState(options: GameStateOptions = {}): GameState {
     desks,
     score: 0,
     credibility: CREDIBILITY_START,
-    deadlineExtensionUsed: false,
     results: [],
     ended: null,
   };
@@ -140,7 +162,15 @@ export function addPlayer(
     players: { ...state.players, [id]: player },
     crew: {
       ...state.crew,
-      [id]: { role, workHeld: false, lastPingMs: Number.NEGATIVE_INFINITY },
+      [id]: {
+        role,
+        workHeld: false,
+        lastPingMs: Number.NEGATIVE_INFINITY,
+        abilityReadyAtMs: state.elapsedMs + ABILITY_FIRST_READY_MS,
+        abilityArmed: false,
+        fieldCall: null,
+        rescuesLeft: role ? ROLE_PERKS[role].rescuesPerLevel : 0,
+      },
     },
   };
 }

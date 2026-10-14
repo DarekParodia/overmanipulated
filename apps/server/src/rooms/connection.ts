@@ -17,3 +17,5 @@ export type Hub = {
 export const CLOSE_NORMAL = 1000;
 export const CLOSE_PROTOCOL_ERROR = 4000;
 export const CLOSE_REPLACED = 4001;
+/** The host removed the member (S7-82); the `error kicked` sent just before says so. */
+export const CLOSE_KICKED = 4002;

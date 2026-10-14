@@ -10,7 +10,7 @@ import { typeset } from '../strings/typography.ts';
 import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import styles from './kit.module.css';
 
-/** The icon shown next to each station's name (overlay header, desk stamps, missed list). */
+/** The icon shown next to each station's name (overlay header, desk stamps, result chips). */
 export const STATION_ICON: Record<StationKind, IconName> = {
   imageSearch: 'imageSearch',
   archive: 'archive',
@@ -18,6 +18,10 @@ export const STATION_ICON: Record<StationKind, IconName> = {
   phone: 'phone',
   aiScanner: 'aiScanner',
   dataLibrary: 'dataLibrary',
+  geolocation: 'geolocation',
+  transcript: 'transcript',
+  crossCheck: 'crossCheck',
+  metadata: 'metadata',
 };
 
 /** One key cap: a small white chip with a thick outline, like a physical key. */
@@ -25,20 +29,30 @@ export function KeyCap({ children }: { children: ReactNode }) {
   return <kbd className={styles.keyCap}>{children}</kbd>;
 }
 
-/** Key hints for the device in use; nothing on touch (the controls are on screen). */
+/**
+ * Key hints for the device in use; on touch they name the gesture or the button to press.
+ * `className` lets a minigame place the row in its short-phone layout (platforms.md).
+ */
 export function KeyHints({
   hints,
   device,
+  className,
 }: {
   hints: Record<InputDevice, readonly KeyHint[]>;
   device: InputDevice;
+  className?: string | undefined;
 }) {
   const list = hints[device];
   if (list.length === 0) {
     return null;
   }
   return (
-    <ul className={styles.keyHints} aria-hidden="true">
+    <ul
+      className={className ? `${styles.keyHints} ${className}` : styles.keyHints}
+      aria-hidden="true"
+      data-testid="key-hints"
+      data-device={device}
+    >
       {list.map((hint) => (
         <li key={hint.label}>
           {hint.keys.map((key) => (
@@ -51,10 +65,21 @@ export function KeyHints({
   );
 }
 
-/** The one-line task at the top of a minigame, with the mistake marks on the right. */
-export function TaskLine({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
+/**
+ * The one-line task at the top of a minigame, with the mistake marks on the right. `className`
+ * lets a minigame place it in its short-phone layout (platforms.md).
+ */
+export function TaskLine({
+  children,
+  aside,
+  className,
+}: {
+  children: ReactNode;
+  aside?: ReactNode;
+  className?: string | undefined;
+}) {
   return (
-    <div className={styles.taskLine}>
+    <div className={className ? `${styles.taskLine} ${className}` : styles.taskLine}>
       <p className={styles.task}>{children}</p>
       {aside}
     </div>

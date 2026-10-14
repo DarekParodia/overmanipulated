@@ -3,9 +3,12 @@ import type { CSSProperties } from 'react';
 import { useState } from 'react';
 import { useGuidance } from '../guidance/store.ts';
 import { resetTutorial } from '../guidance/tutorial-store.ts';
+import { useHowTo } from '../howto/store.ts';
 import { HudGlyph } from '../hud/HudGlyph.tsx';
 import { KeyCap } from '../stations/kit.tsx';
+import { resetStationHelp } from '../stations/station-help-store.ts';
 import { useApp } from '../store/app.ts';
+import { useFeature } from '../store/public-config.ts';
 import { type QualityPreset, qualityPresets, useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
@@ -57,6 +60,12 @@ export function SoundTab() {
         {...spec}
         onChange={(v) => s.update({ uiVolume: v })}
       />
+      <Slider
+        label={pl.settings.voice}
+        value={s.voiceVolume}
+        {...spec}
+        onChange={(v) => s.update({ voiceVolume: v })}
+      />
       <Checkbox
         label={pl.settings.mute}
         checked={s.muted}
@@ -107,6 +116,8 @@ export function AccessTab() {
   const hintsEnabled = useGuidance((g) => g.hintsEnabled);
   const setHintsEnabled = useGuidance((g) => g.setHintsEnabled);
   const [tutorialReset, setTutorialReset] = useState(false);
+  const [stationHelpReset, setStationHelpReset] = useState(false);
+  const intro = useFeature('intro');
   return (
     <div className={styles.stack}>
       <Checkbox
@@ -137,6 +148,36 @@ export function AccessTab() {
           {tutorialReset ? pl.settings.tutorialQueued : pl.settings.tutorialAgain}
         </Button>
       </div>
+      <div>
+        <Button
+          variant="secondary"
+          disabled={stationHelpReset}
+          onClick={() => {
+            resetStationHelp();
+            setStationHelpReset(true);
+          }}
+          data-testid="station-help-reset"
+        >
+          {stationHelpReset ? pl.settings.stationHelpQueued : pl.settings.stationHelpAgain}
+        </Button>
+      </div>
+      {intro && (
+        // S7-102: the intro again, seen or not; it opens over the settings, in „Jak grać”.
+        <div>
+          <Button
+            variant="secondary"
+            icon={<Icon name="play" size={24} />}
+            data-testid="settings-intro"
+            onClick={() =>
+              useHowTo
+                .getState()
+                .show('intro', { practiceAllowed: useApp.getState().screen !== 'game' })
+            }
+          >
+            {pl.settings.introAgain}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -157,6 +198,12 @@ function TouchPreview() {
         <div className={styles.pvKnob} />
       </div>
       <div className={styles.pvButtons}>
+        <span
+          className={`${styles.pvButton} ${styles.pvAbility}`}
+          data-testid="touch-preview-ability"
+        >
+          <Icon name="bolt" size={18} />
+        </span>
         <span className={`${styles.pvButton} ${styles.pvPing}`}>
           <Icon name="ping" size={18} />
         </span>
@@ -222,7 +269,11 @@ const DEVICE_ICON: Record<ControlDevice, IconName> = {
 };
 const DEVICES: readonly ControlDevice[] = ['keyboard', 'gamepad', 'touch'];
 
-export function ControlsTab() {
+/**
+ * The bindings for one device. In the settings (`howToEntry`) it ends with „Jak grać?” (S7-96);
+ * „Jak grać” shows the same tab without it.
+ */
+export function ControlsTab({ howToEntry = false }: { howToEntry?: boolean }) {
   const current = useApp((s) => s.inputDevice);
   const [device, setDevice] = useState<ControlDevice>(current);
   return (
@@ -261,6 +312,22 @@ export function ControlsTab() {
         ))}
       </dl>
       <p className={styles.note}>{pl.settings.controlsMenuNote}</p>
+      {howToEntry && (
+        <div>
+          <Button
+            icon={<Icon name="question" size={24} />}
+            data-testid="settings-how-to"
+            onClick={() =>
+              // Over a match there is no practice round: the player is still in play.
+              useHowTo
+                .getState()
+                .show('intro', { practiceAllowed: useApp.getState().screen !== 'game' })
+            }
+          >
+            {pl.howTo.open}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

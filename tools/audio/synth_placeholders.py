@@ -547,6 +547,38 @@ def amb_chatter():
     return normalize(out, 0.5)
 
 
+# --- Role abilities (S7-42) ----------------------------------------------------------------------
+
+
+def ab_ready():
+    """Ability ready again: two soft wooden ticks, the second a fifth higher."""
+    def soft(freq):
+        body = tone(freq, 0.08, 0.001, 0.018)
+        return body + 0.25 * highpass(noise(0.08), 3000) * env(0.08, 0.0005, 0.005)
+    return normalize(mix(soft(1320), delayed(soft(1980), 0.09)), 0.45)
+
+
+def ab_power():
+    """Ability fires (or arms): a short rising sweep under a sparkle of high bell notes."""
+    n = int(RATE * 0.32)
+    x = np.arange(n) / RATE
+    sweep = np.sin(2 * np.pi * np.cumsum(500 + 1700 * (x / 0.32) ** 2) / RATE) * env(0.32, 0.02, 0.14)
+    sparkle = [delayed(bell(f, 0.22, 0.06, ((1, 1.0), (2.4, 0.25))), 0.12 + i * 0.045) for i, f in enumerate((1760, 2349, 2960))]
+    shimmer = highpass(noise(0.3), 6000) * env(0.3, 0.05, 0.08) * 0.1
+    return normalize(mix(0.5 * sweep, *sparkle, delayed(shimmer, 0.1)), 0.5)
+
+
+def ab_throw():
+    """Folder thrown to a teammate: an airy paper whoosh rising then falling, a soft catch."""
+    n = int(RATE * 0.42)
+    x = np.arange(n) / RATE
+    shape = np.sin(np.pi * np.clip(x / 0.38, 0, 1)) ** 2
+    air = band(noise(0.42), 700, 5000) * shape
+    flap = highpass(lowpass(noise(0.42), 6000), 1200) * np.abs(np.sin(2 * np.pi * 14 * x)) * shape * 0.35
+    catch = delayed(0.6 * np.sin(2 * np.pi * 150 * t(0.12)) * env(0.12, 0.001, 0.025), 0.36)
+    return normalize(mix(air + flap, catch), 0.45)
+
+
 # --- Finishing: click-free edges and a loudness target per class ----------------------------------
 
 # Target RMS (dBFS) over the audible part of a sound, by class. The cues' own `volume` then tunes
@@ -559,7 +591,7 @@ LEVELS = {
     "amb": -34.0,  # the room tone and chatter beds (quiet by design)
 }
 CLASS_OF = {
-    **{k: "ui" for k in ("click", "hover", "back", "copy", "ping1", "ping2", "ping3", "slide", "deskopen")},
+    **{k: "ui" for k in ("click", "hover", "back", "copy", "ping1", "ping2", "ping3", "slide", "deskopen", "abready")},
     **{k: "heavy" for k in ("start", "stamp", "buzzer", "alarm", "lowsting", "lastsec", "win", "lose", "fanfare", "evviral", "evboss", "evraid", "evoutage", "evcorrection", "evclear", "evback")},
     **{k: "ambshot" for k in ("ambphone", "ambprinter", "ambfax", "ambtyping", "evzap")},
     **{k: "amb" for k in ("roomtone", "ambchatter")},
@@ -638,6 +670,10 @@ SOUNDS = [
     ("evzap", ev_zap, False),
     # S5-08 final pass. Appended last; the ids above never change meaning.
     ("ambchatter", amb_chatter, True),
+    # S7-42 role abilities. Appended last; the ids above never change meaning.
+    ("abready", ab_ready, False),
+    ("abpower", ab_power, False),
+    ("abthrow", ab_throw, False),
 ]
 
 

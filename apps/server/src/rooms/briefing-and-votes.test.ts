@@ -16,11 +16,16 @@ const BRIEFING_MS = 10_000;
 function result(folderId: string, storyId: string): FolderResult {
   return {
     folderId,
+    spawnKey: `s${folderId.slice(1)}`,
     storyId,
     outcome: 'correct',
+    reason: 'correctImportant',
     verdict: 'publish',
     scoreDelta: 100,
     credibilityDelta: 5,
+    justifyingStampIds: [`${storyId}-image`],
+    requiredStamps: 1,
+    bonuses: { speed: 0, multiStamp: 0, bossCall: 0 },
     missedStampIds: [],
   };
 }
@@ -64,7 +69,11 @@ beforeEach(() => {
       endNextTick = false;
       return {
         ...out,
-        state: { ...out.state, results: RESULTS, ended: { won: true, stars: 2 } },
+        state: {
+          ...out.state,
+          results: RESULTS,
+          ended: { won: true, stars: 2, lossReason: null },
+        },
       };
     },
   });

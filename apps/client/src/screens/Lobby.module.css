@@ -104,6 +104,10 @@
 }
 
 .reason {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   font-family: var(--font-display);
   font-size: var(--text-md);
   font-weight: 700;
@@ -154,6 +158,23 @@
   .emptySeat {
     min-height: 4rem;
     font-size: var(--text-sm);
+  }
+  /* The top actions (settings, „Jak grać?”, Encyklopedia, Wyniki, Wyjdź) are icon only here, the
+     words kept as their accessible names, so they stay one row of 48 px targets at 640 px
+     (S7-96, S7-86). */
+  .topActions {
+    flex-wrap: nowrap;
+  }
+  .topActions > button {
+    gap: 0;
+    padding-inline: var(--space-3);
+  }
+  .actionLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
   }
   .bottom {
     position: sticky;

@@ -1,0 +1,148 @@
+/* Widownia strip (S7-86): one wrapping row — title, the host's switch (or the state chip), the
+   spectators as small eye chips, and the own move button at the end. */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) dashed var(--outline-a50);
+  border-radius: var(--radius-lg);
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.title svg {
+  flex: none;
+  margin-top: -0.1em;
+}
+
+.toggle {
+  font-weight: 800;
+}
+
+.state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 800;
+  color: var(--text-soft);
+}
+
+.state svg {
+  flex: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 1 1 12rem;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 2.25rem;
+  padding: 0.1em var(--space-3) 0 var(--space-2);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  animation: chip-in var(--motion-base) var(--ease-bounce) both;
+}
+
+.chip svg {
+  flex: none;
+  margin-top: -0.12em;
+}
+
+.me {
+  border-width: var(--stroke-bold);
+}
+
+.away {
+  border-style: dashed;
+  color: var(--text-soft);
+}
+
+.you {
+  padding: 0.05em var(--space-2) 0;
+  border-radius: var(--radius-pill);
+  background: var(--outline);
+  color: var(--text-on-dark);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.empty {
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+@keyframes chip-in {
+  0% {
+    transform: scale(0.7);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Short landscape phones: one row whatever the spectators — the eye and the count (the word
+   „Widownia” stays the heading's name and is on the switch beside it), the switch, the chips,
+   which wrap among themselves in the space left, and the move button as an icon. */
+@media (max-height: 520px) and (orientation: landscape) {
+  .strip {
+    flex-wrap: nowrap;
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-1) var(--space-2);
+  }
+  .chips {
+    flex-basis: 0;
+  }
+  .title {
+    font-size: var(--text-md);
+  }
+  .chip {
+    min-height: 2rem;
+    font-size: var(--text-sm);
+  }
+  /* „Na widownię” / „Do gry” are icon only here (the words stay their accessible names), like
+     the lobby's top actions. */
+  .strip > button {
+    flex: none;
+    gap: 0;
+    padding-inline: var(--space-3);
+  }
+  .titleWord,
+  .moveLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+/* The host's „more” button sits at the end of another spectator's chip (S7-87). */
+.chip > button {
+  margin: var(--space-1) calc(-1 * var(--space-2)) var(--space-1) var(--space-1);
+}

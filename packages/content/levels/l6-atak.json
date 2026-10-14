@@ -3,103 +3,37 @@
   "title": "Atak",
   "topic": "Referendum o linii 12",
   "briefingPoints": [
-    "Przed referendum ruszyła skoordynowana kampania.",
     "Nalot botów: wystarczy rozpoznać jedną kopię.",
-    "Sprostowanie: napraw własny błąd, odzyskaj zaufanie."
+    "Mapa: skąd naprawdę jest zdjęcie?",
+    "Inne media: licz źródła, nie kopie."
   ],
-  "briefing": "W niedzielę referendum w sprawie linii 12, a sieć zalewa skoordynowana kampania. Na taśmę wpadają fale niemal identycznych wpisów od botów: wystarczy rozpoznać jedną kopię. Czasem okaże się, że to my opublikowaliśmy fałsz: wtedy zanieście sprostowanie do stołu. Pracują wszystkie stanowiska, ale awaria jednego może was zaskoczyć.",
+  "briefing": "W niedzielę referendum w sprawie linii 12, a sieć zalewa skoordynowana kampania. Na taśmę wpadają fale niemal identycznych wpisów od botów: wystarczy rozpoznać jedną kopię. Mapa pokaże, gdzie naprawdę zrobiono zdjęcie, a Inne media – czy ktoś niezależny to potwierdza. Gdy okaże się, że opublikowaliśmy fałsz, zanieście sprostowanie do stołu. Uwaga: jedno stanowisko może na chwilę paść.",
   "durationS": 480,
   "layout": [
-    "######################",
-    "#CCCCC..=I==A==R=...P#",
-    "#....................#",
-    "#.T..1.......2....T..#",
-    "#....................#",
-    "#.......T=DD=T.......#",
-    "#..==....====....==..#",
-    "#....................#",
-    "#...3............4...#",
-    "#....................#",
-    "#..==..=S==L=...==...#",
-    "######################"
+    "########################",
+    "#CCCCC..=I==A==R==P=...#",
+    "#......................#",
+    "#..T...1........2...T..#",
+    "#......................#",
+    "#........T=DD=T........#",
+    "#..==.....====.....==..#",
+    "#......................#",
+    "#....3............4....#",
+    "#......................#",
+    "#..=S=..=L=..=G=..=X=..#",
+    "#......................#",
+    "#.==................==.#",
+    "########################"
   ],
-  "stations": ["imageSearch", "archive", "sourceRegistry", "phone", "aiScanner", "dataLibrary"],
-  "schedule": [
-    {
-      "atS": 4,
-      "storyId": "l6-godziny-lokali",
-      "deadlineS": 50
-    },
-    {
-      "atS": 31,
-      "storyId": "l6-referendum-w-poniedzialek",
-      "deadlineS": 40
-    },
-    {
-      "atS": 58,
-      "storyId": "l6-apel-mieszkancow",
-      "deadlineS": 65
-    },
-    {
-      "atS": 85,
-      "storyId": "l6-sondaz-pracowni",
-      "deadlineS": 55
-    },
-    {
-      "atS": 112,
-      "storyId": "l6-sonda-w-grupie",
-      "deadlineS": 55
-    },
-    {
-      "atS": 139,
-      "storyId": "l6-tlum-przed-ratuszem",
-      "deadlineS": 50
-    },
-    {
-      "atS": 166,
-      "storyId": "l6-autobusy-w-niedziele",
-      "deadlineS": 50
-    },
-    {
-      "atS": 193,
-      "storyId": "l6-nagranie-zastepcy",
-      "deadlineS": 40
-    },
-    {
-      "atS": 220,
-      "storyId": "l6-satyra-linia-12",
-      "deadlineS": 55
-    },
-    {
-      "atS": 247,
-      "storyId": "l6-anonimowa-komisja",
-      "deadlineS": 40
-    },
-    {
-      "atS": 274,
-      "storyId": "l6-frekwencja-w-poludnie",
-      "deadlineS": 55
-    },
-    {
-      "atS": 301,
-      "storyId": "l6-hashtag-12-to-koniec",
-      "deadlineS": 60
-    },
-    {
-      "atS": 328,
-      "storyId": "l6-wyrwany-cytat-radnej",
-      "deadlineS": 55
-    },
-    {
-      "atS": 355,
-      "storyId": "l6-dowoz-seniorow",
-      "deadlineS": 50
-    },
-    {
-      "atS": 382,
-      "storyId": "l6-fotka-urny",
-      "deadlineS": 50
-    }
+  "stations": [
+    "imageSearch",
+    "archive",
+    "sourceRegistry",
+    "phone",
+    "aiScanner",
+    "dataLibrary",
+    "geolocation",
+    "crossCheck"
   ],
   "events": [
     {
@@ -141,5 +75,44 @@
       "deadlineS": 55
     }
   ],
-  "stars": { "two": 250, "three": 360 }
+  "bag": {
+    "pool": [
+      "l6-godziny-lokali",
+      "l6-referendum-w-poniedzialek",
+      "l6-apel-mieszkancow",
+      "l6-sondaz-pracowni",
+      "l6-sonda-w-grupie",
+      "l6-tlum-przed-ratuszem",
+      "l6-autobusy-w-niedziele",
+      "l6-nagranie-zastepcy",
+      "l6-satyra-linia-12",
+      "l6-anonimowa-komisja",
+      "l6-frekwencja-w-poludnie",
+      "l6-hashtag-12-to-koniec",
+      "l6-wyrwany-cytat-radnej",
+      "l6-dowoz-seniorow",
+      "l6-fotka-urny",
+      "l6-most-zamkniety",
+      "l6-kolejka-do-lokalu",
+      "l6-pusta-dwunastka",
+      "l6-agencja-dementuje",
+      "l6-relacja-z-debaty",
+      "l6-awaria-w-lokalu",
+      "l6-plakat-sprzed-lat",
+      "l6-baner-na-dwunastce",
+      "l6-kronika-dwunastki",
+      "l6-komisja-w-bibliotece",
+      "l6-strajk-kierowcow",
+      "l6-spoznienia-dwunastki",
+      "l6-najdrozsza-linia"
+    ],
+    "firstAtS": 4,
+    "gapS": 27,
+    "lastSpawnS": 382,
+    "deadlineS": {
+      "normal": 58,
+      "important": 58,
+      "urgent": 43
+    }
+  }
 }

@@ -163,7 +163,8 @@ export function handleMenuIntent(intent: NavIntent): boolean {
     }
     return false;
   }
-  if (intent === 'alt') {
+  // Menus have no use for `alt`, the role ability or the station help: pass them on.
+  if (intent === 'alt' || intent === 'ability' || intent === 'help') {
     return false;
   }
   const controls = collectControls(root);
@@ -224,8 +225,11 @@ export function handleMenuIntent(intent: NavIntent): boolean {
   return false;
 }
 
-/** Screens that are menus: the pad navigates them without any per-screen code. */
-const MENU_SCREENS = new Set(['mainMenu', 'lobby', 'briefing', 'styleguide']);
+/**
+ * Screens that are menus: the pad navigates them without any per-screen code. The spectate
+ * screen (S7-90) uses it for its buttons; its own A / B handlers come first.
+ */
+const MENU_SCREENS = new Set(['mainMenu', 'lobby', 'briefing', 'spectate', 'styleguide']);
 
 /**
  * Mount once (App). Captures the input and routes pad intents to `handleMenuIntent` while a

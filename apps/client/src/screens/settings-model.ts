@@ -2,6 +2,7 @@
 // quality explanation and the real control bindings read from input/.
 import { PAD } from '../input/gamepad.ts';
 import { KEY_BINDINGS } from '../input/keyboard.ts';
+import { NAV_KEYS } from '../input/ui-nav.ts';
 import type { QualityPreset } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 
@@ -61,19 +62,36 @@ export function keyLabel(code: string): string {
   return KEY_LABELS[code] ?? code.replace(/^Key/, '');
 }
 
-export type ControlAction = 'move' | 'interact' | 'work' | 'ping';
-export const controlActions: readonly ControlAction[] = ['move', 'interact', 'work', 'ping'];
+export type ControlAction = 'move' | 'interact' | 'work' | 'ping' | 'ability' | 'stationHelp';
+export const controlActions: readonly ControlAction[] = [
+  'move',
+  'interact',
+  'work',
+  'ping',
+  'ability',
+  'stationHelp',
+];
 export type ControlDevice = 'keyboard' | 'gamepad' | 'touch';
 
 /** Each row lists alternatives; each alternative is the set of caps pressed for it. */
 export type ControlRow = { action: ControlAction; options: readonly (readonly string[])[] };
 
-/** Face-button names of the standard gamepad mapping, keyed by the button index in `PAD`. */
+/** Button names of the standard gamepad mapping, keyed by the button index in `PAD`. */
 const PAD_FACE: Readonly<Record<number, string>> = {
   [PAD.south]: 'A',
   [PAD.west]: 'X',
   [PAD.north]: 'Y',
+  [PAD.rb]: 'RB',
+  [PAD.select]: 'Select',
 };
+
+/** The role ability's key cap for a device with keys (the HUD chip, S7-40). */
+export function abilityKeyCap(device: 'keyboard' | 'gamepad'): string {
+  return device === 'gamepad' ? (PAD_FACE[PAD.rb] ?? '') : keyLabel(KEY_BINDINGS.ability[0]);
+}
+
+/** The keyboard key that opens the station help in an overlay (S7-95). */
+const HELP_KEY = Object.keys(NAV_KEYS).find((code) => NAV_KEYS[code] === 'help') ?? '';
 
 type Direction = 'up' | 'left' | 'down' | 'right';
 const DIRECTIONS: readonly Direction[] = ['up', 'left', 'down', 'right'];
@@ -91,6 +109,8 @@ export function controlRows(device: ControlDevice): readonly ControlRow[] {
         { action: 'interact', options: [[keyLabel(KEY_BINDINGS.interact[0])]] },
         { action: 'work', options: [[keyLabel(KEY_BINDINGS.work[0])]] },
         { action: 'ping', options: [[keyLabel(KEY_BINDINGS.ping[0])]] },
+        { action: 'ability', options: [[keyLabel(KEY_BINDINGS.ability[0])]] },
+        { action: 'stationHelp', options: [[keyLabel(HELP_KEY)]] },
       ];
     case 'gamepad':
       return [
@@ -98,6 +118,8 @@ export function controlRows(device: ControlDevice): readonly ControlRow[] {
         { action: 'interact', options: [[PAD_FACE[PAD.south] ?? '']] },
         { action: 'work', options: [[PAD_FACE[PAD.west] ?? '']] },
         { action: 'ping', options: [[PAD_FACE[PAD.north] ?? '']] },
+        { action: 'ability', options: [[PAD_FACE[PAD.rb] ?? '']] },
+        { action: 'stationHelp', options: [[PAD_FACE[PAD.select] ?? '']] },
       ];
     case 'touch':
       return [
@@ -105,6 +127,8 @@ export function controlRows(device: ControlDevice): readonly ControlRow[] {
         { action: 'interact', options: [[pl.touch.interact]] },
         { action: 'work', options: [[pl.touch.work]] },
         { action: 'ping', options: [[pl.touch.ping]] },
+        { action: 'ability', options: [[pl.touch.abilityGeneric]] },
+        { action: 'stationHelp', options: [['?']] },
       ];
   }
 }

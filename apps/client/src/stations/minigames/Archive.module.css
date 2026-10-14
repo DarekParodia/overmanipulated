@@ -141,6 +141,13 @@
   transition: transform var(--motion-base) var(--ease-bounce);
 }
 
+/* After a failure (when the difficulty allows it): the first mention, dashed. */
+.card.revealed {
+  border-style: dashed;
+  border-color: var(--green-dark);
+  outline: 3px solid var(--green);
+}
+
 /* The frame the right card has to stop in: thick yellow, outlined. */
 .frame {
   position: absolute;
@@ -192,5 +199,28 @@
 
   .card {
     height: 7rem;
+  }
+}
+
+/*
+ * Short landscape phones (640×360): a slimmer drawer and slimmer buttons, so the drawer, the three
+ * buttons and the key hints fit without scrolling. „Wyjmij” keeps its bigger yellow label.
+ */
+@media (max-height: 430px) {
+  .drawer {
+    height: 7.5rem;
+  }
+
+  .track {
+    top: var(--space-2);
+  }
+
+  .card {
+    height: 6.5rem;
+  }
+
+  .controls > button {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-4);
   }
 }

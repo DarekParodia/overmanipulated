@@ -1,18 +1,30 @@
 // Title screen (design-rules §5): the game logo on the sky, one centred panel with the
-// nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner.
+// nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner;
+// minor links sit in the footer under the card and, with ads on, a „Reklama” rail on the left.
+// A versus match already under way (`matchInProgress`) offers to watch it instead (S7-84).
+// With the `spectators` flag an eye next to „Dołącz” watches the typed code; with `roomBrowser`
+// „Publiczne pokoje” under the join row opens the room browser (S7-88).
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { useAbout } from '../about/store.ts';
+import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
+import { useHowTo } from '../howto/store.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
+import { useRoomBrowser } from '../rooms/store.ts';
 import { useApp } from '../store/app.ts';
+import { useProfile } from '../store/profile.ts';
+import { useFeature, usePublicConfig } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
 import { Field } from '../ui/Field.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { GameLogo } from './GameLogo.tsx';
 import styles from './MainMenu.module.css';
+import { MenuFooter } from './menu/MenuFooter.tsx';
+import { MotdBanner } from './menu/MotdBanner.tsx';
 
 const CODE_FILTER = new RegExp(`[^${ROOM_CODE_ALPHABET}]`, 'g');
 
@@ -22,6 +34,9 @@ export function MainMenu() {
   const error = useApp((s) => s.error);
   const connection = useApp((s) => s.connection);
   const setSettingsOpen = useApp((s) => s.setSettingsOpen);
+  const lastJoinCode = useApp((s) => s.lastJoinCode);
+  const spectators = useFeature('spectators');
+  const roomBrowser = useFeature('roomBrowser');
   const [code, setCode] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthStatus | null>(null);
@@ -30,6 +45,8 @@ export function MainMenu() {
   useEffect(() => requestMusic('menu'), []);
   useEffect(() => {
     void fetchHealth().then((h) => setHealth(h.status));
+    // Back in the menu: pick up MOTD and flag changes without a reload (throttled to 60 s).
+    void usePublicConfig.getState().refresh();
   }, []);
 
   function validNickname(): string | null {
@@ -49,8 +66,7 @@ export function MainMenu() {
     }
   }
 
-  function join(event: FormEvent) {
-    event.preventDefault();
+  function joinByCode(as: 'player' | 'spectator') {
     const name = validNickname();
     if (!name) {
       return;
@@ -59,15 +75,37 @@ export function MainMenu() {
       setLocalError(pl.menu.needCode);
       return;
     }
-    joinRoom(name, code);
+    joinRoom(name, code, as);
   }
 
-  const serverError = error ? pl.errors[error] : null;
+  function join(event: FormEvent) {
+    event.preventDefault();
+    joinByCode('player');
+  }
+
+  function watch() {
+    const name = validNickname();
+    if (name && lastJoinCode) {
+      joinRoom(name, lastJoinCode, 'spectator');
+    }
+  }
+
+  const canWatch =
+    localError === null && error === 'matchInProgress' && spectators && lastJoinCode !== null;
+  // The plain `matchInProgress` copy promises nothing; with „Oglądaj” offered, it says so (S7-86).
+  const serverError = canWatch ? pl.menu.matchInProgressWatch : error ? pl.errors[error] : null;
   const message = localError ?? serverError;
 
   return (
     <main className={styles.page}>
       <div className={styles.corner}>
+        <Button
+          icon={<Icon name="question" size={28} />}
+          data-testid="open-how-to"
+          onClick={() => useHowTo.getState().show('intro')}
+        >
+          <span className={styles.cornerLabel}>{pl.howTo.open}</span>
+        </Button>
         <Button
           icon={<Icon name="book" size={26} />}
           data-testid="open-encyclopedia"
@@ -85,6 +123,8 @@ export function MainMenu() {
         <GameLogo />
         <p className={styles.tagline}>{pl.menu.tagline}</p>
       </header>
+
+      <MotdBanner className={styles.motd} />
 
       <section className={`panel ${styles.card}`}>
         <Field
@@ -104,7 +144,7 @@ export function MainMenu() {
           <span>{pl.menu.or}</span>
         </p>
 
-        <form className={styles.join} onSubmit={join}>
+        <form className={`${styles.join} ${spectators ? styles.joinWatch : ''}`} onSubmit={join}>
           <Field
             label={pl.menu.joinCodeLabel}
             large
@@ -120,13 +160,45 @@ export function MainMenu() {
           <Button type="submit" big disabled={busy}>
             {pl.menu.joinAction}
           </Button>
+          {spectators && (
+            <Button
+              big
+              disabled={busy}
+              icon={<Icon name="eye" size={28} label={pl.menu.watchByCode} />}
+              title={pl.menu.watchByCode}
+              data-testid="menu-watch-code"
+              onClick={() => joinByCode('spectator')}
+            />
+          )}
         </form>
+
+        {roomBrowser && (
+          <Button
+            wide
+            icon={<Icon name="globe" size={26} />}
+            disabled={busy}
+            data-testid="open-room-browser"
+            onClick={() => useRoomBrowser.getState().show()}
+          >
+            {pl.menu.browseRooms}
+          </Button>
+        )}
 
         {message && (
           <p className={styles.error} role="alert">
             <Icon name="reject" size={22} />
             {message}
           </p>
+        )}
+        {canWatch && (
+          <Button
+            icon={<Icon name="eye" size={26} />}
+            disabled={busy}
+            data-testid="menu-watch"
+            onClick={watch}
+          >
+            {pl.menu.watchAction}
+          </Button>
         )}
         {health && health !== 'ok' && (
           <p className={styles.error} role="status">
@@ -135,6 +207,33 @@ export function MainMenu() {
           </p>
         )}
       </section>
+
+      <MenuFooter
+        className={styles.footer}
+        profile={
+          <Button
+            variant="ghost"
+            icon={<Icon name="trophy" size={22} />}
+            data-testid="open-profile"
+            onClick={() => useProfile.getState().show()}
+          >
+            {pl.profile.open}
+          </Button>
+        }
+        about={
+          <Button
+            variant="ghost"
+            icon={<Icon name="heart" size={22} />}
+            data-testid="open-about"
+            onClick={() => useAbout.getState().show()}
+          >
+            {pl.about.open}
+          </Button>
+        }
+      />
+
+      {/* Fixed left rail; renders nothing without ads, on phones or below 1180×680 (S7-74). */}
+      <AdSlot placement="menu" />
     </main>
   );
 }

@@ -1,18 +1,18 @@
 // A number that rolls towards its target like a mechanical counter (score roll-up). With
-// reduced motion it jumps straight to the target.
+// reduced motion, or when the caller asks for it (a skipped reveal), it jumps to the target.
 import { useEffect, useRef, useState } from 'react';
 import { easeOutCubic } from '../fx/animation/easing.ts';
 import { useSettings } from '../store/settings.ts';
 
 const ROLL_MS = 450;
 
-export function useRolledNumber(target: number): number {
+export function useRolledNumber(target: number, instant = false): number {
   const reducedMotion = useSettings((s) => s.reducedMotion);
   const [shown, setShown] = useState(target);
   const shownRef = useRef(target);
 
   useEffect(() => {
-    if (reducedMotion || shownRef.current === target) {
+    if (reducedMotion || instant || shownRef.current === target) {
       shownRef.current = target;
       setShown(target);
       return;
@@ -31,7 +31,7 @@ export function useRolledNumber(target: number): number {
     };
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
-  }, [target, reducedMotion]);
+  }, [target, reducedMotion, instant]);
 
   return shown;
 }

@@ -31,6 +31,16 @@
   background: var(--green);
 }
 
+.row:has(.native:disabled) {
+  cursor: not-allowed;
+  color: var(--text-faint);
+}
+
+.native:disabled + .box {
+  border-color: var(--text-faint);
+  box-shadow: none;
+}
+
 .native:focus-visible + .box {
   outline: 4px solid var(--blue);
   outline-offset: 2px;

@@ -44,6 +44,18 @@
         "station": "dataLibrary",
         "text": "Lista lokali w zestawieniu ma 23 pozycje zamiast 24. To literówka w tabeli.",
         "relevance": "misleading"
+      },
+      {
+        "id": "l6-godziny-lokali-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale godzin mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-godziny-lokali-media",
+        "station": "crossCheck",
+        "text": "Inne media jeszcze nie piszą o godzinach – to rutynowy komunikat.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l6-godziny-lokali-source"],
@@ -101,17 +113,30 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak zestawień dotyczących terminu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale daty mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-referendum-w-poniedzialek-media",
+        "station": "crossCheck",
+        "text": "Agencja Nadrzecze i Radio Nadrzecze: komisja dementuje, głosowanie w niedzielę.",
+        "relevance": "decisive"
       }
     ],
     "justifyingStamps": [
       "l6-referendum-w-poniedzialek-archive",
-      "l6-referendum-w-poniedzialek-source"
+      "l6-referendum-w-poniedzialek-source",
+      "l6-referendum-w-poniedzialek-media"
     ],
     "technique": "podszywanie-sie-pod-instytucje",
     "debrief": {
       "what": "Fałszywy komunikat o zmianie terminu referendum, rozsyłany z konta udającego komisję.",
       "technique": "Podszywanie się pod instytucję, by zniechęcić do głosowania: pilność i autorytet mają wyłączyć sprawdzanie.",
-      "tool": "Kartoteka źródeł: nowe konto bez weryfikacji. Archiwum: brak uchwały o zmianie terminu.",
+      "tool": "Kartoteka źródeł: nowe konto bez weryfikacji. Archiwum: brak uchwały o zmianie terminu. Inne media: agencja i radio podają dementi komisji.",
       "realWorld": "Przed wyborami w wielu krajach krążą fałszywe komunikaty o zmianie daty lub miejsca głosowania. Najlepszym antidotum jest oficjalna strona komisji."
     },
     "reviewed": false
@@ -161,9 +186,22 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie pasażerów linii 12 w tym tygodniu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-apel-mieszkancow-map",
+        "station": "geolocation",
+        "text": "Kadr autobusu z reklamy pasuje do podpisu, ale apelu mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-apel-mieszkancow-media",
+        "station": "crossCheck",
+        "text": "Trzy portale cytują apel, ale wszystkie kopiują ten sam wpis.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-apel-mieszkancow-archive", "l6-apel-mieszkancow-phone"],
+    "requiredStamps": 2,
     "technique": "astroturfing",
     "debrief": {
       "what": "Apel wygląda na głos mieszkańców, ale przygotowała go agencja na zlecenie komitetu. Poparcie dla linii 12 jest prawdziwe, tylko skala wygląda na większą.",
@@ -218,9 +256,22 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: próba losowa, wyniki zgodne z metodologią, różnica mieści się w błędzie.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-sondaz-pracowni-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale wyników mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sondaz-pracowni-media",
+        "station": "crossCheck",
+        "text": "Dwie redakcje opisują sondaż, ale tylko przepisują komunikat pracowni.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l6-sondaz-pracowni-source", "l6-sondaz-pracowni-data"],
+    "requiredStamps": 2,
     "technique": "none",
     "debrief": {
       "what": "Rzetelny sondaż z jawną metodologią i uczciwie podanym marginesem błędu.",
@@ -275,6 +326,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: grupa ma 410 członków, zapisanych po jednym wpisie krytykującym urząd.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-sonda-w-grupie-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale ankiety mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sonda-w-grupie-media",
+        "station": "crossCheck",
+        "text": "Dwa portale piszą o „78% przeciw”, powołując się tylko na tę ankietę.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-sonda-w-grupie-data"],
@@ -331,6 +394,18 @@
         "id": "l6-tlum-przed-ratuszem-data",
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie uczestników zgromadzeń.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-map",
+        "station": "geolocation",
+        "text": "Kamienice w tle stoją w centrum, niedaleko ratusza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-tlum-przed-ratuszem-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, za wcześnie na relacje.",
         "relevance": "irrelevant"
       }
     ],
@@ -389,14 +464,30 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak zestawień o ruchu w niedzielę.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale rozkładu mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-autobusy-w-niedziele-media",
+        "station": "crossCheck",
+        "text": "Radio Nadrzecze i Agencja Fala potwierdzają darmowe przejazdy w niedzielę.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l6-autobusy-w-niedziele-source", "l6-autobusy-w-niedziele-phone"],
+    "justifyingStamps": [
+      "l6-autobusy-w-niedziele-source",
+      "l6-autobusy-w-niedziele-phone",
+      "l6-autobusy-w-niedziele-media"
+    ],
     "technique": "none",
     "debrief": {
       "what": "Prawdziwa informacja o darmowej komunikacji w dniu referendum.",
       "technique": "Brak manipulacji. Zwykła informacja usługowa od właściwej instytucji.",
-      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie dyspozytora.",
+      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie dyspozytora. Inne media: radio i agencja piszą to samo.",
       "realWorld": "Miasta organizują dodatkowe lub darmowe przejazdy przy głosowaniach. Ogłasza je zazwyczaj operator transportu."
     },
     "reviewed": false
@@ -432,8 +523,8 @@
       {
         "id": "l6-nagranie-zastepcy-phone",
         "station": "phone",
-        "text": "Rzecznik ratusza: „Nagranie jest zmontowane, takiej rozmowy nie było”.",
-        "relevance": "decisive"
+        "text": "Rzecznik ratusza: „Głos brzmi jak zastępcy, ale nie wiemy, skąd to nagranie”.",
+        "relevance": "misleading"
       },
       {
         "id": "l6-nagranie-zastepcy-scanner",
@@ -446,14 +537,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o wypowiedziach urzędników.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-map",
+        "station": "geolocation",
+        "text": "Okładka nagrania pasuje do podpisu, ale głosu mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nagranie-zastepcy-media",
+        "station": "crossCheck",
+        "text": "Dwa portale już publikują nagranie, żaden nie sprawdził jego źródła.",
+        "relevance": "misleading"
       }
     ],
-    "justifyingStamps": ["l6-nagranie-zastepcy-archive", "l6-nagranie-zastepcy-phone"],
+    "justifyingStamps": ["l6-nagranie-zastepcy-archive"],
     "technique": "zmanipulowane-nagranie",
     "debrief": {
       "what": "Zmontowane nagranie: zdania wycięto z dawnych wystąpień i ułożono w fałszywą wypowiedź.",
       "technique": "Zmanipulowane nagranie: prawdziwy głos składa się w nowe, nigdy niewypowiedziane zdania.",
-      "tool": "Archiwum pokazuje źródło fragmentów. Skaner AI wskazał podejrzenie, ale sam niczego nie dowodzi.",
+      "tool": "Archiwum pokazuje, z jakich dawnych wystąpień wycięto zdania. Rzecznik przez telefon i skaner AI niczego nie rozstrzygają.",
       "realWorld": "Przed głosowaniami pojawiają się „przecieki” z nagrań. Montaż i sztuczne głosy zdarzają się coraz częściej, dlatego szukaj oryginału."
     },
     "reviewed": false
@@ -503,6 +606,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o lotach autobusów.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-satyra-linia-12-map",
+        "station": "geolocation",
+        "text": "Tło fotomontażu pasuje do podpisu, ale rakiety mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-satyra-linia-12-media",
+        "station": "crossCheck",
+        "text": "Dwa portale przedrukowały tekst jako wiadomość, bez słowa o satyrze.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-satyra-linia-12-source"],
@@ -560,14 +675,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o przebiegu głosowania w tym lokalu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-anonimowa-komisja-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale relacji mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-anonimowa-komisja-media",
+        "station": "crossCheck",
+        "text": "Żadna redakcja ani agencja nie potwierdza zgłoszenia. Pisze o nim tylko forum.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l6-anonimowa-komisja-source"],
+    "justifyingStamps": ["l6-anonimowa-komisja-source", "l6-anonimowa-komisja-media"],
     "technique": "niepotwierdzona-plotka",
     "debrief": {
       "what": "Anonimowa plotka o nieprawidłowościach, której nie da się potwierdzić ani obalić.",
       "technique": "Niepotwierdzona plotka: opowieść z drugiej ręki, bez świadków i dowodów. Pilność ma skłonić do udostępnienia bez sprawdzania.",
-      "tool": "Kartoteka źródeł: konto bez historii, brak możliwości kontaktu z autorem.",
+      "tool": "Kartoteka źródeł: konto bez historii, brak kontaktu z autorem. Inne media: nikt niezależny nie potwierdza zgłoszenia.",
       "realWorld": "Przy głosowaniach krążą plotki o nieprawidłowościach, które podważają zaufanie. Pilny temat bez dowodów lepiej odrzucić."
     },
     "reviewed": false
@@ -591,8 +718,8 @@
       {
         "id": "l6-frekwencja-w-poludnie-archive",
         "station": "archive",
-        "text": "Archiwum: poprzednia frekwencja w południe wyniosła 17,9%, tak jak w komunikacie.",
-        "relevance": "decisive"
+        "text": "Archiwum: poprzednia frekwencja w południe to 17,9%. To tło, nie dzisiejszy wynik.",
+        "relevance": "irrelevant"
       },
       {
         "id": "l6-frekwencja-w-poludnie-source",
@@ -615,16 +742,28 @@
       {
         "id": "l6-frekwencja-w-poludnie-data",
         "station": "dataLibrary",
-        "text": "Biblioteka danych: suma głosów ze wszystkich lokali daje 21,4%.",
-        "relevance": "decisive"
+        "text": "Biblioteka danych: zestawienie z 12 lokali daje 19,8%. Reszta jeszcze nie spłynęła.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale liczb mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-frekwencja-w-poludnie-media",
+        "station": "crossCheck",
+        "text": "Inne media czekają na dane komisji, nikt ich jeszcze nie podał.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l6-frekwencja-w-poludnie-source", "l6-frekwencja-w-poludnie-data"],
+    "justifyingStamps": ["l6-frekwencja-w-poludnie-source"],
     "technique": "none",
     "debrief": {
-      "what": "Prawdziwe dane o frekwencji z oficjalnego źródła, zgodne z archiwum i sumą z lokali.",
+      "what": "Prawdziwe dane o frekwencji z oficjalnego źródła: zweryfikowanego konta komisji.",
       "technique": "Brak manipulacji. Do prawdziwych danych porównanie z poprzednim głosowaniem dodaje kontekst.",
-      "tool": "Biblioteka danych: sumowanie wyników z lokali. Kartoteka źródeł: zweryfikowany nadawca.",
+      "tool": "Kartoteka źródeł: zweryfikowane konto komisji, dane zgodne ze stroną urzędu. Niepełne zestawienie z części lokali mogło zmylić.",
       "realWorld": "Komisje podają frekwencję w ciągu dnia. Sprawdź, czy liczby pochodzą z komisji i czy porównanie jest uczciwe."
     },
     "reviewed": false
@@ -674,14 +813,31 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: 83% wpisów z hasztagiem pochodzi z 220 kont, które piszą w tych samych minutach.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale hasztagu mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-hashtag-12-to-koniec-media",
+        "station": "crossCheck",
+        "text": "Dwie niezależne redakcje opisały, że trend nakręciły nowe konta, a nie mieszkańcy.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l6-hashtag-12-to-koniec-archive", "l6-hashtag-12-to-koniec-data"],
+    "justifyingStamps": [
+      "l6-hashtag-12-to-koniec-archive",
+      "l6-hashtag-12-to-koniec-data",
+      "l6-hashtag-12-to-koniec-media"
+    ],
+    "requiredStamps": 3,
     "technique": "sztuczny-hashtag",
     "debrief": {
       "what": "Hasztag sztucznie wypromowany przez niewielką grupę kont, a nie wyraz opinii miasta.",
       "technique": "Sztuczny hasztag: kilka kont wielokrotnie publikuje to samo, by trafić do „popularnych tematów” i wywołać wrażenie masowego poparcia.",
-      "tool": "Biblioteka danych: analiza kont i godzin wpisów. Archiwum: czas pojawienia się hasztagu.",
+      "tool": "Biblioteka danych: analiza kont i godzin wpisów. Archiwum: czas pojawienia się hasztagu. Inne media: niezależne redakcje opisały sztuczny trend.",
       "realWorld": "Popularność tematów w sieci łatwo sfałszować. Warto sprawdzić, ilu różnych ludzi naprawdę go używa."
     },
     "reviewed": false
@@ -717,8 +873,8 @@
       {
         "id": "l6-wyrwany-cytat-radnej-phone",
         "station": "phone",
-        "text": "Radna: „Chcę nowej trasy 12A przez osiedle seniorów, nie likwidacji obsługi”.",
-        "relevance": "decisive"
+        "text": "Asystent radnej: „Tak, radna mówiła na sesji o likwidacji 12”. Bez szczegółów.",
+        "relevance": "misleading"
       },
       {
         "id": "l6-wyrwany-cytat-radnej-scanner",
@@ -731,14 +887,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o trasie 12A.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale cytatu mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-wyrwany-cytat-radnej-media",
+        "station": "crossCheck",
+        "text": "Trzy portale powtarzają ucięty cytat, wszystkie za tym samym postem.",
+        "relevance": "misleading"
       }
     ],
-    "justifyingStamps": ["l6-wyrwany-cytat-radnej-archive", "l6-wyrwany-cytat-radnej-phone"],
+    "justifyingStamps": ["l6-wyrwany-cytat-radnej-archive"],
     "technique": "wyrwany-z-kontekstu",
     "debrief": {
       "what": "Prawdziwy cytat bez końcówki zdania. Pełna wypowiedź radnej mówiła o zmianie trasy, a nie o odebraniu seniorom autobusu.",
       "technique": "Wyrwanie z kontekstu: ucięte słowa są prawdziwe, ale zmieniają sens wypowiedzi.",
-      "tool": "Archiwum: pełna wersja zdania z sesji. Telefon: wyjaśnienie radnej.",
+      "tool": "Archiwum: pełna wersja zdania z sesji. Telefon do biura radnej potwierdził tylko ucięty fragment.",
       "realWorld": "Wypowiedzi polityków w kampaniach są często skracane tak, by wywołać oburzenie. Zawsze szukaj całej wypowiedzi."
     },
     "reviewed": false
@@ -768,8 +936,8 @@
       {
         "id": "l6-dowoz-seniorow-source",
         "station": "sourceRegistry",
-        "text": "Profil zweryfikowany, ten sam komunikat jest na stronie ośrodka.",
-        "relevance": "decisive"
+        "text": "Profil ośrodka bez znaczka weryfikacji, założony w tym roku.",
+        "relevance": "misleading"
       },
       {
         "id": "l6-dowoz-seniorow-phone",
@@ -788,14 +956,26 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie zapisanych.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-dowoz-seniorow-map",
+        "station": "geolocation",
+        "text": "Zdjęcie mikrobusu pasuje do podpisu, ale jest tylko poglądowe.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-dowoz-seniorow-media",
+        "station": "crossCheck",
+        "text": "Inne media jeszcze nie pisały o dowozie.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l6-dowoz-seniorow-source", "l6-dowoz-seniorow-phone"],
+    "justifyingStamps": ["l6-dowoz-seniorow-phone"],
     "technique": "none",
     "debrief": {
       "what": "Prawdziwa informacja o usłudze dla osób, które trudniej dojadą do lokalu.",
       "technique": "Brak manipulacji. Zwykły komunikat usługowy od właściwej instytucji.",
-      "tool": "Kartoteka źródeł: zweryfikowany profil. Telefon: potwierdzenie ośrodka.",
+      "tool": "Telefon: ośrodek potwierdza numer zapisów, godziny i trasy. Nowy profil bez znaczka weryfikacji niczego nie przesądza.",
       "realWorld": "Gminy organizują dowóz do lokali dla seniorów. Prawdziwy komunikat ma dane kontaktowe, które można sprawdzić."
     },
     "reviewed": false
@@ -845,15 +1025,924 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie kart w lokalu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-fotka-urny-map",
+        "station": "geolocation",
+        "text": "Budynek za oknem nie pasuje do lokalu nr 9. Zdjęcie zrobiono gdzie indziej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-fotka-urny-media",
+        "station": "crossCheck",
+        "text": "Inne media milczą, temat krąży tylko w grupach.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l6-fotka-urny-image", "l6-fotka-urny-source"],
+    "justifyingStamps": ["l6-fotka-urny-image", "l6-fotka-urny-source", "l6-fotka-urny-map"],
     "technique": "koordynowane-dzialania",
     "debrief": {
       "what": "Stare zdjęcie szkolnej urny zostało podane jako dowód oszustwa. Wpis rozesłała zgrana grupa kont.",
       "technique": "Skoordynowane nieautentyczne działania: wiele kont działa razem, by wyglądać jak niezależni mieszkańcy. Zdjęcie jest prawdziwe, kontekst nie.",
-      "tool": "Lupa obrazu znalazła źródło zdjęcia. Kartoteka źródeł pokazała, że konta działały razem.",
+      "tool": "Lupa obrazu znalazła źródło zdjęcia, a Mapa pokazała, że zrobiono je gdzie indziej. Kartoteka źródeł: konta działały razem.",
       "realWorld": "Fałszywe oskarżenia o oszustwa wyborcze zwykle opierają się na starych lub wyrwanych z kontekstu zdjęciach, a rozsyła je zgrana grupa kont."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-most-zamkniety",
+    "type": "photo",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Most Portowy zamknięty! Linia 12 nie dojedzie do lokali",
+    "body": "Zdjęcie barierek i znaku „Objazd” z podpisem: „Most Portowy zamknięty do poniedziałku. Do lokali za rzeką nie dojedziesz”.",
+    "source": "Wpis w grupie „Sąsiedzi znad rzeki”",
+    "stamps": [
+      {
+        "id": "l6-most-zamkniety-image",
+        "station": "imageSearch",
+        "text": "Lupa: brak starszych kopii zdjęcia w sieci, kadr jest świeży.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-most-zamkniety-archive",
+        "station": "archive",
+        "text": "Archiwum: tylko zdjęcia z otwarcia mostu w 1998 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-source",
+        "station": "sourceRegistry",
+        "text": "Autorka wpisu to prawdziwa mieszkanka, konto prowadzi od lat.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-most-zamkniety-phone",
+        "station": "phone",
+        "text": "Zarząd Dróg nie odbiera, dyżur ruszy w poniedziałek.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 91%, nie jest generowane.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o ruchu na moście.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-most-zamkniety-map",
+        "station": "geolocation",
+        "text": "Punkty orientacyjne nie pasują do Mostu Portowego. Zdjęcie zrobiono gdzie indziej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-most-zamkniety-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, temat krąży tylko w grupach.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-most-zamkniety-map"],
+    "technique": "zdjecie-z-innego-miejsca",
+    "debrief": {
+      "what": "Prawdziwe, świeże zdjęcie zamkniętego mostu, ale z innego miejsca. Podpis przeniósł je do Nowych Brzegów, żeby zniechęcić do głosowania.",
+      "technique": "Zdjęcie z innego miejsca: autentyczny kadr dostaje fałszywe miejsce. Lupa nie znajdzie starszych kopii, bo zdjęcie jest nowe.",
+      "tool": "Mapa: punkty orientacyjne na zdjęciu nie pasują do Mostu Portowego.",
+      "realWorld": "Przed głosowaniem krążą fałszywe wieści o utrudnieniach w dojeździe do lokali. Zniechęcanie do głosowania to znany sposób wpływania na frekwencję."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-kolejka-do-lokalu",
+    "type": "photo",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Kolejka przed lokalem nr 7 przy Bulwarze Rybackim",
+    "body": "Czytelniczka przysyła zdjęcie: „Lokal nr 7 przy Bulwarze Rybackim, czekamy pół godziny”. W komentarzach: „To ustawka, nikt tam nie stoi”.",
+    "source": "Zdjęcie od czytelniczki",
+    "stamps": [
+      {
+        "id": "l6-kolejka-do-lokalu-image",
+        "station": "imageSearch",
+        "text": "Lupa: brak wcześniejszych kopii zdjęcia w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-archive",
+        "station": "archive",
+        "text": "Archiwum: przy poprzednim głosowaniu lokal nr 7 działał w innym budynku.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-source",
+        "station": "sourceRegistry",
+        "text": "Konto czytelniczki założone wczoraj, bez innych wpisów.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-phone",
+        "station": "phone",
+        "text": "Komisja nr 7 nie odbiera, wszyscy obsługują wyborców.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 88%.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: frekwencję z lokali podają dopiero o 17:00.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-map",
+        "station": "geolocation",
+        "text": "Punkty orientacyjne pasują do podpisu. Zdjęcie zrobiono przy lokalu nr 7.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-kolejka-do-lokalu-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, to świeże zgłoszenie.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-kolejka-do-lokalu-map"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie kolejki od czytelniczki. Komentarze o „ustawce” nie miały podstaw.",
+      "technique": "Brak manipulacji. Nowe konto i stary adres lokalu w archiwum wyglądały podejrzanie, ale nie podważały zdjęcia.",
+      "tool": "Mapa: budynki i punkty orientacyjne na zdjęciu zgadzają się z miejscem z podpisu.",
+      "realWorld": "Redakcje sprawdzają zdjęcia od czytelników, porównując widoczne budynki z mapą i zdjęciami ulic. Tak samo potwierdza się prawdziwe zgłoszenia."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-pusta-dwunastka",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "„Dwunastka wozi powietrze” – zdjęcie z przystanku Rynek",
+    "body": "Zdjęcie pustego autobusu linii 12 z podpisem: „Przystanek Rynek, 8 rano, w środku nikogo. Po co nam ta linia?”.",
+    "source": "Profil „Stop drogim autobusom”",
+    "stamps": [
+      {
+        "id": "l6-pusta-dwunastka-image",
+        "station": "imageSearch",
+        "text": "Lupa: brak starszych kopii zdjęcia w sieci.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-pusta-dwunastka-archive",
+        "station": "archive",
+        "text": "Archiwum: linia 12 jeździ przez Rynek od 1995 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-source",
+        "station": "sourceRegistry",
+        "text": "Profil zwolenników likwidacji linii, aktywny od roku.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-phone",
+        "station": "phone",
+        "text": "Zarząd Transportu nie komentuje zdjęć z sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 93%, nie jest generowane.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: liczenie pasażerów linii 12 dopiero w przyszłym miesiącu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-pusta-dwunastka-map",
+        "station": "geolocation",
+        "text": "Punkty orientacyjne nie pasują do przystanku Rynek. Zdjęcie zrobiono gdzie indziej.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-pusta-dwunastka-media",
+        "station": "crossCheck",
+        "text": "Trzy portale to powtarzają – same kopie wpisu.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l6-pusta-dwunastka-map"],
+    "technique": "zdjecie-z-innego-miejsca",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie pustego autobusu, ale nie z przystanku Rynek. Podpis miał dowieść, że linia 12 jest niepotrzebna.",
+      "technique": "Zdjęcie z innego miejsca: autentyczny kadr dostaje fałszywe miejsce i porę, żeby pasował do tezy.",
+      "tool": "Mapa: punkty orientacyjne w tle nie pasują do przystanku Rynek.",
+      "realWorld": "W sporach o komunikację krążą zdjęcia „pustych autobusów” z pętli lub zajezdni. Miejsce zdjęcia sprawdza się na mapie i zdjęciach ulic."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-agencja-dementuje",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Brakuje kart! Lokale zamkną o 15:00, głosujcie rano",
+    "body": "Wpis: „Znajomy z komisji mówi, że kart starczy tylko do 15:00. Potem koniec głosowania. Przekażcie dalej!”.",
+    "source": "Wpis na prywatnym profilu",
+    "stamps": [
+      {
+        "id": "l6-agencja-dementuje-image",
+        "station": "imageSearch",
+        "text": "Wpis nie zawiera zdjęć.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-archive",
+        "station": "archive",
+        "text": "Archiwum: w 2019 r. w jednym lokalu na godzinę zabrakło kart.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-agencja-dementuje-source",
+        "station": "sourceRegistry",
+        "text": "Konto prawdziwe, autor to znany działacz osiedlowy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-agencja-dementuje-phone",
+        "station": "phone",
+        "text": "Miejska komisja: linia zajęta, oddzwonią po 16:00.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (80%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o liczbie kart w lokalach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale godzin mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-agencja-dementuje-media",
+        "station": "crossCheck",
+        "text": "Agencja Nadrzecze i Radio Nadrzecze dementują: kart wystarczy, lokale działają do 21:00.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-agencja-dementuje-media"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Fałszywy alarm o braku kart, który miał skrócić głosowanie. Niezależne media szybko go zdementowały.",
+      "technique": "Plotka bez źródła: „znajomy z komisji” i prośba o przekazanie dalej zastępują dowód. Pilny ton ma wyprzedzić sprawdzenie.",
+      "tool": "Inne media: agencja i radio niezależnie od siebie dementują plotkę.",
+      "realWorld": "W dniu głosowania krążą fałszywe wieści o godzinach pracy lokali. Agencje informacyjne i lokalne media szybko je prostują."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-relacja-z-debaty",
+    "type": "article",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Na debacie o linii 12 obie strony poparły nocne kursy",
+    "body": "Portal „Głos Błoni” relacjonuje czwartkową debatę: zwolennicy i przeciwnicy likwidacji linii 12 zgodzili się, że miastu brakuje nocnych autobusów.",
+    "source": "Portal „Głos Błoni”",
+    "stamps": [
+      {
+        "id": "l6-relacja-z-debaty-image",
+        "station": "imageSearch",
+        "text": "Lupa: zdjęcie z sali bez starszych kopii w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-archive",
+        "station": "archive",
+        "text": "Archiwum: brak nagrania debaty, nikt go jeszcze nie przesłał.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-source",
+        "station": "sourceRegistry",
+        "text": "Portal działa od miesiąca, nie ma stopki redakcyjnej.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-relacja-z-debaty-phone",
+        "station": "phone",
+        "text": "Organizatorzy debaty nie odbierają w niedzielę.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: 62% szans, że tekst napisała maszyna. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-relacja-z-debaty-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o nocnych kursach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-map",
+        "station": "geolocation",
+        "text": "Zdjęcie z sali pasuje do podpisu, ale debaty mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-relacja-z-debaty-media",
+        "station": "crossCheck",
+        "text": "Kurier Nowobrzeski i TV Brzegi, każdy z własnym reporterem, opisują debatę tak samo.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-relacja-z-debaty-media"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa relacja z debaty w nowym, mało znanym portalu.",
+      "technique": "Brak manipulacji. Nowy portal i niepewny wynik skanera AI nie przesądzają o fałszu.",
+      "tool": "Inne media: dwie redakcje z własnymi reporterami piszą o debacie to samo.",
+      "realWorld": "Gdy źródło jest nowe lub mało znane, sprawdza się, co piszą o tym niezależne redakcje. To czytanie w poprzek, jedna z metod SIFT."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-awaria-w-lokalu",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "W lokalu nr 4 zgasło światło, głosowanie przy latarkach",
+    "body": "Wpis z forum osiedla: „Awaria prądu w lokalu nr 4. Komisja świeci latarkami, ale głosujemy dalej”.",
+    "source": "Wpis na forum osiedla",
+    "stamps": [
+      {
+        "id": "l6-awaria-w-lokalu-image",
+        "station": "imageSearch",
+        "text": "Wpis nie zawiera zdjęć.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych awarii w tym lokalu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-source",
+        "station": "sourceRegistry",
+        "text": "Konto anonimowe, bez historii wpisów.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-phone",
+        "station": "phone",
+        "text": "Komisja nr 4 nie odbiera, telefon w biurze nie działa bez prądu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (77%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o przebiegu głosowania w tym lokalu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale awarii mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-awaria-w-lokalu-media",
+        "station": "crossCheck",
+        "text": "Agencja Fala i Radio Nadrzecze potwierdzają awarię. Głosowanie trwa.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l6-awaria-w-lokalu-media"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa wiadomość o awarii prądu w lokalu, choć podał ją anonim.",
+      "technique": "Brak manipulacji. Anonimowe źródło nie przesądza o fałszu, gdy fakt potwierdzają niezależne media.",
+      "tool": "Inne media: agencja i radio niezależnie od siebie potwierdzają awarię.",
+      "realWorld": "Pierwsze wieści o zdarzeniach często przychodzą od anonimowych świadków. Redakcja publikuje je, gdy potwierdzą je niezależne źródła."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-plakat-sprzed-lat",
+    "type": "photo",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Plakat ZT: „Dwunastka zostaje na zawsze!”. A teraz referendum?",
+    "body": "Zdjęcie plakatu Zarządu Transportu na przystanku Rynek, z hasłem „Dwunastka zostaje na zawsze!”. Wpis: „Obiecali, a teraz chcą ją zlikwidować”.",
+    "source": "Profil komitetu „Zostaje12”",
+    "stamps": [
+      {
+        "id": "l6-plakat-sprzed-lat-image",
+        "station": "imageSearch",
+        "text": "Lupa: plakat z jubileuszu 50 lat linii 12 w 2015 r. Prawdziwy, ale sprzed lat.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-archive",
+        "station": "archive",
+        "text": "Archiwum: wycinki o linii 12 dotyczą głównie zmian rozkładu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-source",
+        "station": "sourceRegistry",
+        "text": "Zarejestrowany komitet referendalny, aktywny od trzech miesięcy. Podaje skład zarządu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-phone",
+        "station": "phone",
+        "text": "Rzeczniczka Zarządu Transportu oddzwoni po południu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne (91%), nie jest generowane.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o plakatach i kampaniach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-map",
+        "station": "geolocation",
+        "text": "Plakat wisi na przystanku Rynek. Miejsce się zgadza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-plakat-sprzed-lat-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, plakat krąży tylko w grupach.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-plakat-sprzed-lat-image"],
+    "technique": "stare-zdjecie-nowy-podpis",
+    "debrief": {
+      "what": "Prawdziwy plakat Zarządu Transportu, ale z 2015 r., z jubileuszu 50 lat linii 12. Hasło było życzeniem na urodziny linii, a nie obietnicą na dziś.",
+      "technique": "Stare zdjęcie z nowym podpisem: autentyczny obraz sprzed lat pokazany tak, jakby był aktualny. Każdy szczegół jest prawdziwy, myli tylko czas.",
+      "tool": "Lupa obrazu: pierwsza publikacja zdjęcia plakatu pochodzi z 2015 r. Mapa potwierdziła tylko miejsce, a nie datę.",
+      "realWorld": "W kampaniach wracają stare plakaty i hasła jako „dowód złamanych obietnic”. Sprawdź, kiedy zdjęcie pojawiło się pierwszy raz i z jakiej okazji powstało hasło."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-baner-na-dwunastce",
+    "type": "photo",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Miejska spółka agituje? Na dwunastce baner „Głosuj NIE”",
+    "body": "Zdjęcie autobusu linii 12 w zajezdni przy ulicy Portowej, z wielkim banerem „W niedzielę głosuj NIE”. Wpis: „Zarząd Transportu łamie zasady kampanii za nasze pieniądze”.",
+    "source": "Wpis na profilu „Patrzymy Władzy na Ręce”",
+    "stamps": [
+      {
+        "id": "l6-baner-na-dwunastce-image",
+        "station": "imageSearch",
+        "text": "Lupa: oryginał w galerii Zarządu Transportu z 2023 r. Ten sam autobus, bez banera.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych skarg na reklamy w autobusach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-source",
+        "station": "sourceRegistry",
+        "text": "Profil istnieje od 2 lat, często pisze o komunikacji miejskiej.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-phone",
+        "station": "phone",
+        "text": "Rzecznik Zarządu Transportu na urlopie, biuro nic nie wie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: zdjęcie autentyczne w 74%. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o reklamach w pojazdach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-map",
+        "station": "geolocation",
+        "text": "Zajezdnia przy ulicy Portowej, miejsce się zgadza.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-baner-na-dwunastce-media",
+        "station": "crossCheck",
+        "text": "Trzy portale to powtarzają – same kopie wpisu.",
+        "relevance": "misleading"
+      }
+    ],
+    "justifyingStamps": ["l6-baner-na-dwunastce-image"],
+    "technique": "zmanipulowane-zdjecie",
+    "debrief": {
+      "what": "Fotomontaż: na zdjęcie autobusu z galerii Zarządu Transportu doklejono baner, którego nigdy nie było.",
+      "technique": "Tania podróbka: prosty montaż w edytorze zdjęć, bez sztucznej inteligencji. Jeden doklejony element zmienia sens całego obrazu.",
+      "tool": "Lupa obrazu: wyszukiwanie obrazem znalazło oryginał bez banera. Skaner AI nic nie wykrył, bo to nie obraz z generatora.",
+      "realWorld": "W kampaniach krążą zdjęcia z doklejonymi hasłami na autobusach, budynkach czy transparentach. Wyszukiwanie obrazem często szybko odnajduje oryginał."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-kronika-dwunastki",
+    "type": "post",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Dwunastkę skrócono już w 2009 r. Wróciła po pół roku",
+    "body": "Wpis pasjonata komunikacji: „W 2009 r. linię 12 skrócono do Rynku. Po protestach mieszkańców wróciła pełna trasa. Historia lubi się powtarzać”.",
+    "source": "Blog „Kronika komunikacji NB”",
+    "stamps": [
+      {
+        "id": "l6-kronika-dwunastki-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-archive",
+        "station": "archive",
+        "text": "Archiwum: „Kurier Nowobrzeski” z 2009 r. opisuje skrócenie linii 12 i powrót pełnej trasy po pół roku.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-kronika-dwunastki-source",
+        "station": "sourceRegistry",
+        "text": "Anonimowy blog bez nazwiska autora i danych kontaktowych.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kronika-dwunastki-phone",
+        "station": "phone",
+        "text": "Zarząd Transportu: dokumenty sprzed 2010 r. są w składnicy, sprawdzimy za tydzień.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst wygenerowany w 55%. Wynik niepewny.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-kronika-dwunastki-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: liczba pasażerów dopiero od 2012 r.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale historii mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-kronika-dwunastki-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, to stara historia.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-kronika-dwunastki-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa ciekawostka: archiwalne wydanie gazety potwierdza, że w 2009 r. linię 12 skrócono, a po pół roku przywrócono pełną trasę.",
+      "technique": "Brak manipulacji. Anonimowy blog i niepewny wynik skanera AI nie przesądzają o fałszu – liczy się to, co da się sprawdzić w źródłach.",
+      "tool": "Archiwum: wycinek z 2009 r. potwierdza oba fakty. Rejestr źródeł i skaner AI tylko budziły wątpliwości.",
+      "realWorld": "Historyczne ciekawostki często krążą bez podanego źródła. Cyfrowe archiwa gazet i bibliotek pozwalają szybko je sprawdzić, zanim uznamy je za plotkę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-komisja-w-bibliotece",
+    "type": "post",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Komisja nr 3 przeniesiona: głosujemy w bibliotece, nie w szkole",
+    "body": "Rada Osiedla Lipowa: w Szkole Podstawowej nr 6 pękła rura. W niedzielę komisja nr 3 pracuje w Bibliotece Miejskiej przy ul. Lipowej 4.",
+    "source": "Profil „Rada Osiedla Lipowa”",
+    "stamps": [
+      {
+        "id": "l6-komisja-w-bibliotece-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-archive",
+        "station": "archive",
+        "text": "Archiwum: od 15 lat komisja nr 3 zawsze pracowała w szkole.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-source",
+        "station": "sourceRegistry",
+        "text": "Prawdziwy profil rady osiedla, ale rada nie organizuje głosowania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-phone",
+        "station": "phone",
+        "text": "Biuro wyborcze urzędu potwierdza: awaria w szkole, komisja nr 3 w bibliotece przy Lipowej 4.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (91%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak liczb do sprawdzenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale zmiany mapa nie potwierdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-komisja-w-bibliotece-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, to świeży komunikat.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-komisja-w-bibliotece-phone"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwa zmiana lokalu: w szkole pękła rura, więc komisja nr 3 pracuje w niedzielę w bibliotece.",
+      "technique": "Brak manipulacji. Zmiana brzmi podejrzanie, bo przez lata było inaczej, ale urząd ją potwierdza.",
+      "tool": "Telefon: biuro wyborcze potwierdza awarię i nowy adres. Archiwum pokazywało tylko, gdzie komisja pracowała wcześniej.",
+      "realWorld": "Lokale wyborcze czasem zmieniają się w ostatniej chwili, na przykład po awarii. Zmianę potwierdza urząd, a na drzwiach starego lokalu wisi kartka z nowym adresem."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-strajk-kierowcow",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Kierowcy strajkują! W niedzielę dwunastka nie wyjedzie",
+    "body": "Wpis „od kierowców”: „W niedzielę od rana stoimy w zajezdni. Do lokali nie dojedziecie, przekażcie dalej!”.",
+    "source": "Profil „Kierowcy NB – nieoficjalnie”",
+    "stamps": [
+      {
+        "id": "l6-strajk-kierowcow-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-archive",
+        "station": "archive",
+        "text": "Archiwum: profil od maja pisał tylko o zmianach w rozkładach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-source",
+        "station": "sourceRegistry",
+        "text": "Profil ma 2 tys. obserwujących, piszą tam prawdziwi kierowcy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-strajk-kierowcow-phone",
+        "station": "phone",
+        "text": "Związek zawodowy kierowców i Zarząd Transportu: żadnego strajku, w niedzielę wszystkie kursy.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-strajk-kierowcow-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (84%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-data",
+        "station": "dataLibrary",
+        "text": "Biblioteka danych: brak danych o strajkach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale strajku mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-strajk-kierowcow-media",
+        "station": "crossCheck",
+        "text": "Dwa portale przepisały wpis, nikt nie dzwonił do przewoźnika.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-strajk-kierowcow-phone"],
+    "technique": "plotka-bez-zrodla",
+    "debrief": {
+      "what": "Fałszywy alarm: żadnego strajku nie ma, w niedzielę dwunastka jeździ zwykłym rozkładem.",
+      "technique": "Plotka bez źródła: anonimowy wpis „od kierowców” i prośba o przekazanie dalej mają zniechęcić ludzi do wyjścia na głosowanie.",
+      "tool": "Telefon: związek zawodowy kierowców i Zarząd Transportu zaprzeczają. Popularny profil kierowców to jeszcze nie dowód.",
+      "realWorld": "Przed głosowaniem krążą plotki o utrudnieniach, które mają zniechęcić do pójścia do lokalu. Strajk zapowiada związek zawodowy, a przewoźnik ogłasza zmiany w rozkładzie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-spoznienia-dwunastki",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Co drugi kurs dwunastki spóźniony! Czas z tym skończyć",
+    "body": "Grafika komitetu „Tak dla zmian”: „Według Zarządu Transportu 48% kursów linii 12 spóźnia się ponad 5 minut”.",
+    "source": "Grafika komitetu „Tak dla zmian”",
+    "stamps": [
+      {
+        "id": "l6-spoznienia-dwunastki-image",
+        "station": "imageSearch",
+        "text": "Grafika zrobiona dziś, bez starszych kopii w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych grafik tego komitetu o spóźnieniach.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-source",
+        "station": "sourceRegistry",
+        "text": "Komitet jest zarejestrowany, a raport Zarządu Transportu istnieje.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-phone",
+        "station": "phone",
+        "text": "Zarząd Transportu: raport jest na stronie, rzecznik oddzwoni jutro.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (88%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-data",
+        "station": "dataLibrary",
+        "text": "Tabela Zarządu Transportu: 48% spóźnień ma linia 21. Linia 12 – 9%.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale spóźnień mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-spoznienia-dwunastki-media",
+        "station": "crossCheck",
+        "text": "Nikt jeszcze o tym nie pisze, grafika krąży tylko w grupach.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-spoznienia-dwunastki-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Liczba jest prawdziwa, ale dotyczy innej linii: 48% spóźnień ma linia 21, a dwunastka – 9%.",
+      "technique": "Zmanipulowana statystyka: prawdziwa liczba z prawdziwej tabeli, tylko z innego wiersza. Powołanie się na urząd ma ją uwiarygodnić.",
+      "tool": "Biblioteka danych: tabela Zarządu Transportu pokazuje 9% spóźnień linii 12. Zarejestrowany komitet niczego nie przesądza.",
+      "realWorld": "Liczby w kampaniach bywają prawdziwe, ale z innego roku, miejsca albo wiersza tabeli. Warto otworzyć oryginalne zestawienie i znaleźć dokładnie tę komórkę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l6-najdrozsza-linia",
+    "type": "statistic",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Dwunastka to najdroższa linia w mieście: 2,1 mln zł rocznie",
+    "body": "Wpis komitetu „Tak dla zmian”: „Żadna linia nie kosztuje tyle co dwunastka. Czas przestać przepalać pieniądze!”.",
+    "source": "Profil komitetu „Tak dla zmian”",
+    "stamps": [
+      {
+        "id": "l6-najdrozsza-linia-image",
+        "station": "imageSearch",
+        "text": "Wpis bez zdjęcia, Lupa nie ma czego szukać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-archive",
+        "station": "archive",
+        "text": "Archiwum: brak wcześniejszych tekstów o kosztach linii.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-source",
+        "station": "sourceRegistry",
+        "text": "Komitet jest zarejestrowany, a kwota pochodzi z budżetu miasta.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-najdrozsza-linia-phone",
+        "station": "phone",
+        "text": "Biuro skarbnika: kwota z budżetu, bez komentarza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-scanner",
+        "station": "aiScanner",
+        "text": "Skaner: tekst ludzki (93%).",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-data",
+        "station": "dataLibrary",
+        "text": "Tabela: 2,1 mln zł się zgadza, ale to najdłuższa trasa. Na kilometr kosztuje tyle co inne linie.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l6-najdrozsza-linia-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale kosztów mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-najdrozsza-linia-media",
+        "station": "crossCheck",
+        "text": "Jeden portal powtarza kwotę za wpisem, bez porównania.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l6-najdrozsza-linia-data"],
+    "technique": "zmanipulowana-statystyka",
+    "debrief": {
+      "what": "Kwota jest prawdziwa, ale dwunastka to najdłuższa trasa w mieście. Na kilometr kosztuje tyle co inne linie.",
+      "technique": "Zmanipulowana statystyka: sama suma bez porównania z długością trasy robi z najdłuższej linii „najdroższą”.",
+      "tool": "Biblioteka danych: koszt na kilometr pokazuje, że dwunastka nie odstaje od innych linii. Publikujemy z tym kontekstem.",
+      "realWorld": "Duże kwoty robią wrażenie, ale bez przeliczenia na kilometr, mieszkańca czy pasażera nie mówią, czy coś jest drogie."
     },
     "reviewed": false
   },
@@ -902,6 +1991,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: konta wskazują to samo miasto, ale jest ich za mało na wnioski.",
         "relevance": "misleading"
+      },
+      {
+        "id": "l6-nalot-zostaje12-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale kont mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-zostaje12-media",
+        "station": "crossCheck",
+        "text": "Inne media nie piszą o tych wpisach, to tylko komentarze.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l6-nalot-zostaje12-archive", "l6-nalot-zostaje12-source"],
@@ -959,6 +2060,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: kilka kont publikuje z tego samego adresu sieciowego.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-nalot-hashtag-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale autorów mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-nalot-hashtag-media",
+        "station": "crossCheck",
+        "text": "Inne media nie relacjonują tych wpisów, to tylko komentarze.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": [
@@ -1020,6 +2133,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak zestawień o liczbie zgłoszeń do akcji.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-apel-map",
+        "station": "geolocation",
+        "text": "Zdjęcie przy apelu pasuje do podpisu, ale poparcia mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-apel-media",
+        "station": "crossCheck",
+        "text": "Inne portale wciąż cytują apel jako oddolny, za naszą publikacją.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l6-sprostowanie-apel-archive", "l6-sprostowanie-apel-source"],
@@ -1076,6 +2201,18 @@
         "id": "l6-sprostowanie-tlum-data",
         "station": "dataLibrary",
         "text": "Biblioteka danych: brak danych o liczbie uczestników.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-map",
+        "station": "geolocation",
+        "text": "Zdjęcie rzeczywiście zrobiono na placu przed ratuszem.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l6-sprostowanie-tlum-media",
+        "station": "crossCheck",
+        "text": "Inne media nie wracały do tamtego wiecu.",
         "relevance": "irrelevant"
       }
     ],
@@ -1134,6 +2271,18 @@
         "station": "dataLibrary",
         "text": "Biblioteka danych: liczba 2000 to wszystkie wiersze tabeli, a nie błędne wpisy.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-map",
+        "station": "geolocation",
+        "text": "Miejsce z podpisu się zgadza, ale tabeli mapa nie sprawdzi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l6-szef-kaze-publikowac-media",
+        "station": "crossCheck",
+        "text": "„Wszyscy już o tym piszą”: trzy portale przepisały komunikat komitetu.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": [

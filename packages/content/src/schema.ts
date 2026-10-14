@@ -3,10 +3,14 @@
 // ids referenced by levels, solvability with the level's stations) live in checks.ts.
 import {
   correctVerdictFor,
+  countsAsProof,
+  MAX_REQUIRED_STAMPS,
   parseLayout,
   prioritySchema,
   type SimLevel,
   type SimStory,
+  STATION_KINDS,
+  type StationKind,
   stampRelevanceSchema,
   stationKindSchema,
   storyTypeSchema,
@@ -73,8 +77,16 @@ export const storySchema = z
     /** Who sent it in, as shown on the folder („Post na grupie Nowe Brzegi Info”). */
     source: text(80),
     media: mediaSchema.optional(),
-    stamps: z.array(stampSchema).min(1).max(6),
+    /** At most one stamp per station, so at most one per station kind. */
+    stamps: z.array(stampSchema).min(1).max(STATION_KINDS.length),
     justifyingStamps: z.array(z.string()).min(1),
+    /**
+     * Distinct justifying stamps the desk must cite (multi-stamp folder, S7-18); 1 is a classic
+     * folder. Hint-only stamps (the AI scanner) never count toward it. Each proof beyond the
+     * first adds `MULTI_STAMP_EXTRA_DEADLINE_MS` at spawn and `SCORE.multiStampBonus` to a
+     * correct verdict.
+     */
+    requiredStamps: z.number().int().min(1).max(MAX_REQUIRED_STAMPS).default(1),
     /** Manipulation technique id (encyclopedia entry), kebab-case; `none` for true stories. */
     technique: z.string().regex(kebab),
     debrief: debriefSchema,
@@ -115,12 +127,29 @@ export const storySchema = z
         });
       }
     });
+    // No level can make up for proofs a multi-stamp story does not have; the level's stations
+    // are checked in checks.ts, and a classic story justified by the AI scanner alone gets the
+    // more specific errors there.
+    const proofs = new Set(story.justifyingStamps.filter((id) => countsAsProof(story, id))).size;
+    if (story.requiredStamps > 1 && story.requiredStamps > proofs) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['requiredStamps'],
+        message: `needs ${story.requiredStamps} proofs, but only ${proofs} justifying stamp(s) count as proof (hint-only stations never do)`,
+      });
+    }
   });
 
 export const spawnSchema = z.object({
   atS: z.number().nonnegative(),
   storyId: contentIdSchema,
   deadlineS: z.number().positive(),
+  /**
+   * The station a bag slot designated for this folder (S7-21): every entry `generateBagLevel`
+   * writes carries it, authored schedules leave it out. The sim copies it to the folder (S7-23)
+   * and guidance suggests it first among the stations that decide the story.
+   */
+  station: stationKindSchema.optional(),
 });
 
 const eventBase = { atS: z.number().nonnegative() };
@@ -145,88 +174,243 @@ export const levelEventSchema = z.discriminatedUnion('kind', [
   }),
 ]);
 
-export const levelSchema = z
+/** Score thresholds for two and three stars (one star = survived with a positive score). */
+export const starsSchema = z.object({
+  two: z.number().int().positive(),
+  three: z.number().int().positive(),
+});
+
+/** Folder time per story priority, in seconds. */
+export const priorityDeadlinesSchema = z.object({
+  normal: z.number().positive(),
+  important: z.number().positive(),
+  urgent: z.number().positive(),
+});
+
+/** Star thresholds of a generated run as shares of its maximum score (see `STAR_SHARES`). */
+export const starSharesSchema = z.object({
+  two: z.number().gt(0).lt(1),
+  three: z.number().gt(0).lt(1),
+});
+
+/**
+ * A level's station bag (S7-21): instead of an authored schedule, every run deals distinct pool
+ * stories in shuffled rounds over the stations that decide them (`generateBagLevel`). The values
+ * are Normal's; the difficulty scales the gap and the deadlines.
+ */
+export const levelBagSchema = z.object({
+  /** Stories the bag may deal, ids of this level. Event stories stay in `events`. */
+  pool: z.array(contentIdSchema).min(2),
+  /** Level time of the first folder (s). */
+  firstAtS: z.number().nonnegative(),
+  /** Seconds between folders on Normal; `DIFFICULTY[d].spawnGapFactor` scales it. */
+  gapS: z.number().positive(),
+  /** No dealt folder arrives after this, on any difficulty (s). */
+  lastSpawnS: z.number().positive(),
+  /** Folder time by story priority on Normal (s); `DIFFICULTY[d].deadlineFactor` scales it. */
+  deadlineS: priorityDeadlinesSchema,
+  /** Override of `STAR_SHARES` for this level. */
+  starShares: starSharesSchema.optional(),
+});
+
+/** Fields every level has, in a file and resolved. */
+const levelBase = {
+  id: contentIdSchema,
+  /** Player-facing level name. */
+  title: text(60),
+  /** Editorial briefing shown before the level: topic of the day, new mechanics. */
+  briefing: text(400),
+  /** Topic of the day for the briefing card („Burza nad miastem”). */
+  topic: text(40).optional(),
+  /** Up to 3 short lines shown on the briefing card instead of a long `briefing` text. */
+  briefingPoints: z.array(text(60)).min(1).max(3).optional(),
+  durationS: z.number().int().positive(),
+  /** Tile layout; legend in packages/shared/src/sim/map.ts. */
+  layout: z.array(z.string().min(1)).min(3),
+  stations: z.array(stationKindSchema).min(1),
+  /** Random events, sorted by `atS`. */
+  events: z.array(levelEventSchema).default([]),
+  bag: levelBagSchema.optional(),
+};
+
+type Refine = z.RefinementCtx;
+
+/** Layout, station and event rules both level shapes share. */
+function refineLevelCommon(
+  level: {
+    layout: readonly string[];
+    stations: readonly StationKind[];
+    durationS: number;
+    events: readonly z.infer<typeof levelEventSchema>[];
+  },
+  ctx: Refine,
+): void {
+  let map: ReturnType<typeof parseLayout> | undefined;
+  try {
+    map = parseLayout(level.layout);
+  } catch (error) {
+    ctx.addIssue({ code: 'custom', path: ['layout'], message: String(error) });
+  }
+  if (map) {
+    const placed = new Set(map.fixtures.flatMap((f) => (f.station ? [f.station] : [])));
+    level.stations.forEach((station, i) => {
+      if (!placed.has(station)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['stations', i],
+          message: `station "${station}" is not placed in the layout`,
+        });
+      }
+    });
+    for (const kind of ['conveyor', 'desk'] as const) {
+      if (!map.fixtures.some((f) => f.kind === kind)) {
+        ctx.addIssue({ code: 'custom', path: ['layout'], message: `layout has no ${kind}` });
+      }
+    }
+    if (map.spawns.length < 4) {
+      ctx.addIssue({ code: 'custom', path: ['layout'], message: 'layout needs 4 spawn points' });
+    }
+  }
+  level.events.forEach((event, i) => {
+    const previous = level.events[i - 1];
+    if (previous && event.atS < previous.atS) {
+      ctx.addIssue({ code: 'custom', path: ['events', i], message: 'events must be sorted' });
+    }
+    if (event.atS >= level.durationS) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['events', i, 'atS'],
+        message: 'event after the level ends',
+      });
+    }
+    if (event.kind === 'outage' && !level.stations.includes(event.station)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['events', i, 'station'],
+        message: `station "${event.station}" is not in this level`,
+      });
+    }
+  });
+}
+
+function refineSchedule(
+  schedule: readonly z.infer<typeof spawnSchema>[],
+  durationS: number,
+  ctx: Refine,
+): void {
+  schedule.forEach((spawn, i) => {
+    const previous = schedule[i - 1];
+    if (previous && spawn.atS < previous.atS) {
+      ctx.addIssue({ code: 'custom', path: ['schedule', i], message: 'schedule must be sorted' });
+    }
+    if (spawn.atS >= durationS) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['schedule', i, 'atS'],
+        message: 'spawns after the level ends',
+      });
+    }
+  });
+}
+
+function refineStars(stars: z.infer<typeof starsSchema>, ctx: Refine): void {
+  if (stars.three <= stars.two) {
+    ctx.addIssue({ code: 'custom', path: ['stars'], message: 'three stars must need more' });
+  }
+}
+
+function refineBag(bag: LevelBag, durationS: number, ctx: Refine): void {
+  if (bag.firstAtS > bag.lastSpawnS) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['bag', 'firstAtS'],
+      message: 'the first folder comes after lastSpawnS',
+    });
+  }
+  if (bag.lastSpawnS >= durationS) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['bag', 'lastSpawnS'],
+      message: 'the last folder comes after the level ends',
+    });
+  }
+  if (bag.starShares && bag.starShares.three <= bag.starShares.two) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['bag', 'starShares'],
+      message: 'three stars must need a larger share',
+    });
+  }
+  const seen = new Set<string>();
+  bag.pool.forEach((id, i) => {
+    if (seen.has(id)) {
+      ctx.addIssue({ code: 'custom', path: ['bag', 'pool', i], message: `duplicate id "${id}"` });
+    }
+    seen.add(id);
+  });
+}
+
+/**
+ * A level as authored: either a fixed `schedule` with its `stars`, or a station `bag` that deals a
+ * fresh schedule (and stars) for every run. `index.ts` resolves it into a `Level`.
+ */
+export const levelFileSchema = z
   .object({
-    id: contentIdSchema,
-    /** Player-facing level name. */
-    title: text(60),
-    /** Editorial briefing shown before the level: topic of the day, new mechanics. */
-    briefing: text(400),
-    /** Topic of the day for the briefing card („Burza nad miastem”). */
-    topic: text(40).optional(),
-    /** Up to 3 short lines shown on the briefing card instead of a long `briefing` text. */
-    briefingPoints: z.array(text(60)).min(1).max(3).optional(),
-    durationS: z.number().int().positive(),
-    /** Tile layout; legend in packages/shared/src/sim/map.ts. */
-    layout: z.array(z.string().min(1)).min(3),
-    stations: z.array(stationKindSchema).min(1),
-    schedule: z.array(spawnSchema).min(1),
-    /** Random events, sorted by `atS`. */
-    events: z.array(levelEventSchema).default([]),
-    stars: z.object({ two: z.number().int().positive(), three: z.number().int().positive() }),
+    ...levelBase,
+    schedule: z.array(spawnSchema).min(1).optional(),
+    stars: starsSchema.optional(),
   })
   .superRefine((level, ctx) => {
-    let map: ReturnType<typeof parseLayout> | undefined;
-    try {
-      map = parseLayout(level.layout);
-    } catch (error) {
-      ctx.addIssue({ code: 'custom', path: ['layout'], message: String(error) });
-    }
-    if (map) {
-      const placed = new Set(map.fixtures.flatMap((f) => (f.station ? [f.station] : [])));
-      level.stations.forEach((station, i) => {
-        if (!placed.has(station)) {
-          ctx.addIssue({
-            code: 'custom',
-            path: ['stations', i],
-            message: `station "${station}" is not placed in the layout`,
-          });
-        }
+    refineLevelCommon(level, ctx);
+    if (level.schedule && level.bag) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['bag'],
+        message: 'a level has either a schedule or a bag, not both',
       });
-      for (const kind of ['conveyor', 'desk'] as const) {
-        if (!map.fixtures.some((f) => f.kind === kind)) {
-          ctx.addIssue({ code: 'custom', path: ['layout'], message: `layout has no ${kind}` });
-        }
-      }
-      if (map.spawns.length < 4) {
-        ctx.addIssue({ code: 'custom', path: ['layout'], message: 'layout needs 4 spawn points' });
-      }
+    } else if (!level.schedule && !level.bag) {
+      ctx.addIssue({ code: 'custom', path: [], message: 'a level needs a schedule or a bag' });
     }
-    level.schedule.forEach((spawn, i) => {
-      const previous = level.schedule[i - 1];
-      if (previous && spawn.atS < previous.atS) {
-        ctx.addIssue({ code: 'custom', path: ['schedule', i], message: 'schedule must be sorted' });
-      }
-      if (spawn.atS >= level.durationS) {
+    if (level.schedule) {
+      refineSchedule(level.schedule, level.durationS, ctx);
+      if (!level.stars) {
         ctx.addIssue({
           code: 'custom',
-          path: ['schedule', i, 'atS'],
-          message: 'spawns after the level ends',
+          path: ['stars'],
+          message: 'a level with a schedule needs stars',
         });
       }
-    });
-    level.events.forEach((event, i) => {
-      const previous = level.events[i - 1];
-      if (previous && event.atS < previous.atS) {
-        ctx.addIssue({ code: 'custom', path: ['events', i], message: 'events must be sorted' });
-      }
-      if (event.atS >= level.durationS) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['events', i, 'atS'],
-          message: 'event after the level ends',
-        });
-      }
-      if (event.kind === 'outage' && !level.stations.includes(event.station)) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['events', i, 'station'],
-          message: `station "${event.station}" is not in this level`,
-        });
-      }
-    });
-    if (level.stars.three <= level.stars.two) {
-      ctx.addIssue({ code: 'custom', path: ['stars'], message: 'three stars must need more' });
+    } else if (level.stars) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['stars'],
+        message: 'a bag level gets its stars from each run (use bag.starShares)',
+      });
+    }
+    if (level.stars) {
+      refineStars(level.stars, ctx);
+    }
+    if (level.bag) {
+      refineBag(level.bag, level.durationS, ctx);
+    }
+  });
+
+/**
+ * A resolved level, as the game plays it: always a schedule and stars. A bag level keeps its
+ * `bag`, so a run can deal a new schedule (`prepareRun`); `LEVELS` hold its Normal preview.
+ */
+export const levelSchema = z
+  .object({
+    ...levelBase,
+    schedule: z.array(spawnSchema).min(1),
+    stars: starsSchema,
+  })
+  .superRefine((level, ctx) => {
+    refineLevelCommon(level, ctx);
+    refineSchedule(level.schedule, level.durationS, ctx);
+    refineStars(level.stars, ctx);
+    if (level.bag) {
+      refineBag(level.bag, level.durationS, ctx);
     }
   });
 
@@ -258,7 +442,10 @@ export type Technique = z.infer<typeof techniqueSchema>;
 
 export type Stamp = z.infer<typeof stampSchema>;
 export type Story = z.infer<typeof storySchema>;
+export type LevelFile = z.infer<typeof levelFileSchema>;
 export type Level = z.infer<typeof levelSchema>;
+export type LevelBag = z.infer<typeof levelBagSchema>;
+export type StarShares = z.infer<typeof starSharesSchema>;
 
 // Compile-time check: content types are usable wherever the simulation expects its views.
 type Assignable<T, U> = T extends U ? true : false;

@@ -16,6 +16,7 @@ import { Icon, type IconName } from '../../../apps/client/src/ui/icons/Icon.tsx'
 import { RoleIcon, type RoleIconName } from '../../../apps/client/src/ui/icons/RoleIcon.tsx';
 import { colors } from '../../../apps/client/src/ui/tokens.ts';
 import { LEVELS, STORIES } from '../../../packages/content/src/index.ts';
+import type { StationKind } from '../../../packages/shared/src/index.ts';
 
 export { colors, LEVELS, pl, STORIES };
 
@@ -162,15 +163,21 @@ export async function renderPng(
 export const PRIORITY_LABEL = pl.vocab.priorities;
 export const TYPE_LABEL = pl.vocab.storyTypes;
 
-/** What each station checks, in one short Polish line (design document, "Stanowiska weryfikacji"). */
+const help = pl.stationHelp.kinds;
+
+/** What each station checks, in one short Polish line: the in-game station help's purpose. */
 export const STATION_PURPOSE = {
-  imageSearch: 'Czy zdjęcie pojawiło się wcześniej i gdzie?',
-  archive: 'Daty, dawne wersje stron, usunięte treści.',
-  sourceRegistry: 'Autor, domena i historia konta.',
-  phone: 'Źródło pierwotne, świadek, ekspert.',
-  aiScanner: 'Ślady generowania lub edycji przez AI.',
-  dataLibrary: 'Czy liczba zgadza się z oryginalną tabelą?',
-} as const;
+  imageSearch: help.imageSearch.purpose,
+  archive: help.archive.purpose,
+  sourceRegistry: help.sourceRegistry.purpose,
+  phone: help.phone.purpose,
+  aiScanner: help.aiScanner.purpose,
+  dataLibrary: help.dataLibrary.purpose,
+  geolocation: help.geolocation.purpose,
+  transcript: help.transcript.purpose,
+  crossCheck: help.crossCheck.purpose,
+  metadata: help.metadata.purpose,
+} satisfies Record<StationKind, string>;
 
 export const ICON_FOR_STATION = {
   imageSearch: 'imageSearch',
@@ -179,4 +186,8 @@ export const ICON_FOR_STATION = {
   phone: 'phone',
   aiScanner: 'aiScanner',
   dataLibrary: 'dataLibrary',
-} as const satisfies Record<string, IconName>;
+  geolocation: 'geolocation',
+  transcript: 'transcript',
+  crossCheck: 'crossCheck',
+  metadata: 'metadata',
+} as const satisfies Record<StationKind, IconName>;

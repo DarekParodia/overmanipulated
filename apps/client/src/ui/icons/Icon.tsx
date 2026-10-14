@@ -77,6 +77,30 @@ const icons = {
     },
     { d: 'M5 6c0 1.4 3.1 2.5 7 2.5S19 7.4 19 6M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5' },
   ],
+  /** Mapa: a folded map (the zigzag edges are its folds) with a pin. */
+  geolocation: [
+    { d: 'M3.5 6.5l5-2 7 2 5-2v13l-5 2-7-2-5 2Z', fill: 'tint' },
+    { d: 'M12 16c-2-2.2-3-3.8-3-5.3a3 3 0 0 1 6 0c0 1.5-1 3.1-3 5.3Z', fill: 'solid' },
+  ],
+  /** Stenogram: a page of the record with one highlighted line. */
+  transcript: [
+    { d: 'M5.5 2.5h13v19h-13Z', fill: 'tint' },
+    { d: 'M8.5 6.5h7M8.5 17.5h4.5' },
+    { d: 'M8.5 10.5h7v2.5h-7Z', fill: 'solid' },
+  ],
+  /** Inne media: two overlapping newspapers. */
+  crossCheck: [
+    { d: 'M3 3.5h11v11H3Z', fill: 'tint' },
+    { d: 'M5.5 6.5h6M5.5 10h2' },
+    { d: 'M10 9.5h11v11H10Z', fill: 'tint' },
+    { d: 'M12.5 13h6M12.5 16.5h6' },
+  ],
+  /** Metadane: a luggage tag with its hole and two data ticks. */
+  metadata: [
+    { d: 'M3.5 12l5-6h12v12h-12Z', fill: 'tint' },
+    { d: 'M7.5 12a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0-2.5 0Z', fill: 'solid' },
+    { d: 'M13 10h4.5M13 14h4.5' },
+  ],
   conveyor: [
     { d: 'M7.5 13.5V7.5h7v6', fill: 'tint' },
     { d: 'M5.5 13.5h13a2.5 2.5 0 0 1 0 5h-13a2.5 2.5 0 0 1 0-5Z', fill: 'tint' },
@@ -147,7 +171,12 @@ const icons = {
   crown: [{ d: 'M4.5 18.5L3.5 8l5 4.5L12 5.5l3.5 7 5-4.5-1 10.5Z', fill: 'tint' }],
   // --- Interface ---------------------------------------------------------------------------
   arrow: [{ d: 'M4 12h15M13.5 6.5L19 12l-5.5 5.5' }],
+  /** A versus draw (S7-89): the results ribbon's equals sign. */
+  equal: [{ d: 'M5 9h14M5 15h14' }],
   play: [{ d: 'M7.5 4.5v15l12-7.5Z', fill: 'tint' }],
+  pause: [{ d: 'M6.5 5h3.5v14H6.5ZM14 5h3.5v14H14Z', fill: 'tint' }],
+  /** Three bars: the in-game menu button (S7-10). */
+  menu: [{ d: 'M4.5 6.5h15M4.5 12h15M4.5 17.5h15' }],
   close: [{ d: 'M7 7l10 10M17 7L7 17' }],
   fullscreen: [{ d: 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5' }],
   settings: [
@@ -210,6 +239,12 @@ const icons = {
   ],
   /** Question mark: "not sure". */
   question: [{ d: 'M8.5 9a3.5 3.5 0 1 1 5.2 3c-1.2.7-1.7 1.3-1.7 2.5' }, { d: 'M12 18.5h.01' }],
+  // --- S7-88 room browser ------------------------------------------------------------------
+  /** A plain magnifier on a handle: the room browser's search field (not the Lupa station). */
+  search: [
+    { d: 'M3.5 10a6.5 6.5 0 1 0 13 0a6.5 6.5 0 1 0-13 0Z', fill: 'tint' },
+    { d: 'M15 15l5.5 5.5' },
+  ],
   // --- Endless mode (S4-11) ----------------------------------------------------------------
   /** Endless mode: a lying eight. */
   infinity: [
@@ -269,6 +304,43 @@ const icons = {
     { d: 'M12 6.5C10 5 7 4.5 3.5 5v13.5c3.5-.5 6.5 0 8.5 1.5Z', fill: 'tint' },
     { d: 'M12 6.5c2-1.5 5-2 8.5-1.5v13.5c-3.5-.5-6.5 0-8.5 1.5Z', fill: 'tint' },
     { d: 'M12 6.5V20M6.5 9c1.5-.2 3-.1 4 .4M17.5 9c-1.5-.2-3-.1-4 .4' },
+  ],
+  // --- S7-40 abilities ---------------------------------------------------------------------
+  /** A round arrow coming back to the start (Druga szansa). */
+  retry: [{ d: 'M19 12a7 7 0 1 1-2.05-4.95' }, { d: 'M17 3v4.2h-4.2' }],
+  /** A folder thrown along an arc (Podaj teczkę). */
+  pass: [
+    { d: 'M3.5 15h6.5v5.5H3.5Z', fill: 'tint' },
+    { d: 'M7 11.5C9 7 13.5 5 19.5 6.5' },
+    { d: 'M16 3.5l3.5 3-3 3.5' },
+  ],
+  /** A lifebuoy (Koło ratunkowe). */
+  lifebuoy: [
+    { d: 'M3.5 12a8.5 8.5 0 1 0 17 0a8.5 8.5 0 1 0-17 0Z', fill: 'tint' },
+    { d: 'M8.5 12a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0Z' },
+    { d: 'M6 6l3.5 3.5M18 6l-3.5 3.5M6 18l3.5-3.5M18 18l-3.5-3.5' },
+  ],
+  // --- S7-25 difficulty --------------------------------------------------------------------
+  /** A dial with its needle: the room's difficulty (lobby picker and chips). */
+  gauge: [
+    { d: 'M3.5 17a8.5 8.5 0 0 1 17 0Z', fill: 'tint' },
+    { d: 'M12 17l4-5.5M6.5 13.5l1 .6M12 10.5V12M17.5 13.5l-1 .6' },
+  ],
+  // --- S7-84 spectators --------------------------------------------------------------------
+  /** An open eye: watch a match from the Widownia (Oglądaj, Oglądasz). */
+  eye: [
+    { d: 'M2.5 12c2.5-4.3 5.7-6.5 9.5-6.5s7 2.2 9.5 6.5c-2.5 4.3-5.7 6.5-9.5 6.5S5 16.3 2.5 12Z' },
+    { d: 'M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z', fill: 'tint' },
+  ],
+  // --- S7-86 lobby: teams and member options -------------------------------------------------
+  /** Two arrows passing each other: move to the other newsroom („Przejdź tutaj”). */
+  swap: [{ d: 'M4 8.5h14.5M15 5l3.5 3.5L15 12' }, { d: 'M20 15.5H5.5M9 12l-3.5 3.5L9 19' }],
+  /** Three dots: more options for a member (host manage sheet, S7-87). */
+  more: [
+    {
+      d: 'M4 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0ZM10 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0ZM16 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0Z',
+      fill: 'solid',
+    },
   ],
 } satisfies Record<string, readonly IconPart[]>;
 

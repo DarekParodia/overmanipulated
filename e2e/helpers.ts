@@ -12,16 +12,86 @@ export const PHONE: BrowserContextOptions = { ...devices['Pixel 7 landscape'] };
 
 export type Player = { page: Page; nickname: string; touch: boolean };
 
+/**
+ * How long a tab may take from „Do składu!” to the HUD: the game gate starts the level after
+ * at most 20 s whatever is still loading (`GIVE_UP_MS`), plus 10 s for the lazy game chunk and
+ * the first frames of software WebGL on a loaded machine.
+ */
+export const GAME_READY_TIMEOUT_MS = 30_000;
+
 const openContexts: BrowserContext[] = [];
 
-/** Closes every context opened by `openPlayer`; idle scenes would otherwise keep rendering. */
-export async function closePlayers(): Promise<void> {
-  await Promise.all(openContexts.splice(0).map((context) => context.close()));
+/** Hosts of Google's ad, consent and ad-measurement requests. */
+const AD_HOST =
+  /(^|\.)(googlesyndication\.com|doubleclick\.net|googleadservices\.com|adtrafficquality\.google|fundingchoicesmessages\.google\.com)$/;
+
+/** Contexts under the ad guard since the last `closePlayers`, with the ad requests each made. */
+const adRequests = new Map<BrowserContext, string[]>();
+
+/**
+ * Ad guard (S7-74): with no ads config (every spec but ads.spec) the game must not ask Google
+ * for anything. Records each such request; `closePlayers` fails the test if there was one.
+ * `trackContext` and `openPlayer` apply it; call it directly for Playwright's own `page` fixture.
+ */
+export function guardAdRequests(context: BrowserContext): void {
+  const seen: string[] = [];
+  adRequests.set(context, seen);
+  context.on('request', (request) => {
+    if (AD_HOST.test(new URL(request.url()).hostname)) {
+      seen.push(request.url());
+    }
+  });
 }
 
-/** Registers a context opened by a spec itself, so `closePlayers` disposes of it too. */
-export function trackContext(context: BrowserContext): void {
+/**
+ * Closes every context opened by `openPlayer`; idle scenes would otherwise keep rendering. Then
+ * fails if a context without ads asked Google for an ad.
+ */
+export async function closePlayers(): Promise<void> {
+  await Promise.all(openContexts.splice(0).map((context) => context.close()));
+  const leaked = [...adRequests.values()].flat();
+  adRequests.clear();
+  if (leaked.length > 0) {
+    throw new Error(`Ad requests without an ads config: ${leaked.join(', ')}`);
+  }
+}
+
+/** Every station kind (`stationKindSchema` in packages/shared; e2e cannot import workspaces). */
+const STATION_KINDS = [
+  'imageSearch',
+  'archive',
+  'sourceRegistry',
+  'phone',
+  'aiScanner',
+  'dataLibrary',
+  'geolocation',
+  'transcript',
+  'crossCheck',
+  'metadata',
+] as const;
+
+/**
+ * Marks every station's help card as seen in this page's browser (S7-95), so a station overlay
+ * opens straight on its minigame. Call after the page loaded the game's origin.
+ */
+export async function skipStationHelp(page: Page): Promise<void> {
+  await page.evaluate((kinds) => {
+    localStorage.setItem('redakcja.stationHelp.v1', JSON.stringify(kinds));
+  }, STATION_KINDS);
+}
+
+/**
+ * Registers a context opened by a spec itself, so `closePlayers` disposes of it too. Unless the
+ * spec serves an ads config (`ads: true`), the context must make no ad request.
+ */
+export function trackContext(
+  context: BrowserContext,
+  { ads = false }: { ads?: boolean } = {},
+): void {
   openContexts.push(context);
+  if (!ads) {
+    guardAdRequests(context);
+  }
 }
 
 export async function openPlayer(
@@ -30,7 +100,7 @@ export async function openPlayer(
   options: BrowserContextOptions,
 ): Promise<Player> {
   const context = await browser.newContext(options);
-  openContexts.push(context);
+  trackContext(context);
   const page = await context.newPage();
   page.on('pageerror', (error) => {
     throw error;
@@ -112,14 +182,15 @@ export async function avatarPositions(
   });
 }
 
-/** Moves right for `ms` with the keyboard, or by dragging the touch joystick on touch devices. */
-export async function moveRight(player: Player, ms: number): Promise<void> {
+/**
+ * Starts moving right with the keyboard, or by dragging the touch joystick on touch devices, and
+ * returns the function that lets go.
+ */
+async function pressRight(player: Player): Promise<() => Promise<void>> {
   const { page } = player;
   if (!player.touch) {
     await page.keyboard.down('KeyD');
-    await page.waitForTimeout(ms);
-    await page.keyboard.up('KeyD');
-    return;
+    return () => page.keyboard.up('KeyD');
   }
   const zone = await page.getByTestId('touch-joystick').boundingBox();
   if (!zone) {
@@ -138,6 +209,47 @@ export async function moveRight(player: Player, ms: number): Promise<void> {
       touchPoints: [{ x: x + i * 10, y, id: 1 }],
     });
   }
-  await page.waitForTimeout(ms);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  return async () => {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  };
+}
+
+/** Moves right for `ms` with the keyboard, or by dragging the touch joystick on touch devices. */
+export async function moveRight(player: Player, ms: number): Promise<void> {
+  const release = await pressRight(player);
+  await player.page.waitForTimeout(ms);
+  await release();
+}
+
+/**
+ * Holds „right” until `arrived` resolves (an `expect` that the move was seen), then lets go.
+ * The client samples input once per rendered frame, and software WebGL under load renders a
+ * frame every second or so: a fixed short hold can end between two frames and move nobody.
+ */
+export async function moveRightUntil(
+  player: Player,
+  arrived: () => Promise<unknown>,
+): Promise<void> {
+  const release = await pressRight(player);
+  try {
+    await arrived();
+  } finally {
+    await release();
+  }
+}
+
+/**
+ * Stops drawing the 3D scene and hides the canvas, for checks of the 2D overlays and HUD only:
+ * software WebGL draws the newsroom at a few frames per second and leaves the overlay clocks
+ * too little real time. Hiding the canvas alone is not enough: a hidden canvas that still draws
+ * gives the GPU process no back-pressure, so it queues frames it cannot draw, and the next
+ * test's `browser.newContext()` waits for that backlog (up to a minute under load).
+ */
+export async function hideScene(page: Page): Promise<void> {
+  // The ?debug hook appears with the game screen (lazy chunk); a call from the lobby waits.
+  await page.waitForFunction(() => '__game' in window);
+  await page.evaluate(() =>
+    (window as unknown as { __game: { pauseScene(): void } }).__game.pauseScene(),
+  );
+  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
 }

@@ -4,102 +4,35 @@
   "topic": "Nagranie burmistrza",
   "briefingPoints": [
     "Skaner AI: tylko podpowiedź, może się mylić.",
-    "Telefon i Archiwum rozstrzygają sprawę.",
-    "Szef krzyczy „publikuj”? Najpierw sprawdź."
+    "Stenogram: czy cięcie zmienia sens?",
+    "Metadane: kiedy i czym zrobiono plik."
   ],
-  "briefing": "W Nowych Brzegach krążą nagrania i zdjęcia burmistrza. Skaner AI ocenia, czy materiał wygenerował program, ale to tylko szacunek z marginesem błędu. Prawdziwe źródło potwierdzą Telefon, Archiwum i Kartoteka. Uwaga: szef będzie żądał natychmiastowej publikacji!",
+  "briefing": "W Nowych Brzegach krążą nagrania i zdjęcia burmistrza. Skaner AI ocenia, czy materiał wygenerował program, ale to tylko szacunek z marginesem błędu. Nowy Stenogram porówna cytat z pełnym zapisem wypowiedzi, a Metadane pokażą, kiedy i czym zrobiono plik. Źródło potwierdzą też Telefon, Archiwum i Kartoteka. Uwaga: szef będzie żądał natychmiastowej publikacji!",
   "durationS": 420,
   "layout": [
-    "####################",
-    "#CCCCC.=I=.=S=.=R=.#",
-    "#..................#",
-    "#.T...1......2...T.#",
-    "#..................#",
-    "#......T=DD=T......#",
-    "#.==....====....==.#",
-    "#..................#",
-    "#...3..........4...#",
-    "#..................#",
-    "#..=A=......=P=....#",
-    "####################"
+    "########################",
+    "#CCCCC..=I==S==R==Q=...#",
+    "#......................#",
+    "#..T...1........2...T..#",
+    "#......................#",
+    "#........T=DD=T........#",
+    "#..==.....====.....==..#",
+    "#......................#",
+    "#....3............4....#",
+    "#......................#",
+    "#..=A=....=P=....=E=...#",
+    "#......................#",
+    "#.==................==.#",
+    "########################"
   ],
-  "stations": ["imageSearch", "aiScanner", "sourceRegistry", "phone", "archive"],
-  "schedule": [
-    {
-      "atS": 4,
-      "storyId": "l5-nagranie-podatek",
-      "deadlineS": 60
-    },
-    {
-      "atS": 28,
-      "storyId": "l5-przemowa-na-rynku",
-      "deadlineS": 65
-    },
-    {
-      "atS": 52,
-      "storyId": "l5-burmistrz-na-jachcie",
-      "deadlineS": 60
-    },
-    {
-      "atS": 76,
-      "storyId": "l5-wolne-tempo",
-      "deadlineS": 60
-    },
-    {
-      "atS": 100,
-      "storyId": "l5-glosowka-przelew",
-      "deadlineS": 40
-    },
-    {
-      "atS": 124,
-      "storyId": "l5-przecinanie-wstegi",
-      "deadlineS": 60
-    },
-    {
-      "atS": 148,
-      "storyId": "l5-wyciety-cytat",
-      "deadlineS": 60
-    },
-    {
-      "atS": 172,
-      "storyId": "l5-wideo-ewakuacja",
-      "deadlineS": 40
-    },
-    {
-      "atS": 196,
-      "storyId": "l5-komunikat-budzet",
-      "deadlineS": 60
-    },
-    {
-      "atS": 220,
-      "storyId": "l5-zdjecie-sprzed-lat",
-      "deadlineS": 60
-    },
-    {
-      "atS": 244,
-      "storyId": "l5-glosowka-radnej",
-      "deadlineS": 60
-    },
-    {
-      "atS": 268,
-      "storyId": "l5-parodia-rap",
-      "deadlineS": 60
-    },
-    {
-      "atS": 292,
-      "storyId": "l5-tlum-na-wiecu",
-      "deadlineS": 60
-    },
-    {
-      "atS": 316,
-      "storyId": "l5-wywiad-radio",
-      "deadlineS": 60
-    },
-    {
-      "atS": 340,
-      "storyId": "l5-wideo-obietnica",
-      "deadlineS": 50
-    }
+  "stations": [
+    "imageSearch",
+    "aiScanner",
+    "sourceRegistry",
+    "phone",
+    "archive",
+    "transcript",
+    "metadata"
   ],
   "events": [
     {
@@ -121,5 +54,39 @@
       "deadlineS": 45
     }
   ],
-  "stars": { "two": 240, "three": 350 }
+  "bag": {
+    "pool": [
+      "l5-nagranie-podatek",
+      "l5-przemowa-na-rynku",
+      "l5-burmistrz-na-jachcie",
+      "l5-wolne-tempo",
+      "l5-glosowka-przelew",
+      "l5-przecinanie-wstegi",
+      "l5-wyciety-cytat",
+      "l5-wideo-ewakuacja",
+      "l5-komunikat-budzet",
+      "l5-zdjecie-sprzed-lat",
+      "l5-glosowka-radnej",
+      "l5-parodia-rap",
+      "l5-tlum-na-wiecu",
+      "l5-wywiad-radio",
+      "l5-wideo-obietnica",
+      "l5-cytat-z-sesji",
+      "l5-wywiad-skrocony",
+      "l5-zdjecie-czytelnika",
+      "l5-film-z-montazu",
+      "l5-drzemka-na-sesji",
+      "l5-burmistrz-morsuje",
+      "l5-falszywy-profil-urzedu",
+      "l5-basen-zamkniety"
+    ],
+    "firstAtS": 4,
+    "gapS": 26,
+    "lastSpawnS": 340,
+    "deadlineS": {
+      "normal": 60,
+      "important": 60,
+      "urgent": 45
+    }
+  }
 }

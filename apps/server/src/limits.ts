@@ -14,3 +14,47 @@ export const JOINS_PER_MINUTE_PER_IP = 120;
 export const ROOMS_PER_MINUTE_PER_IP = 20;
 /** Rooms alive at once; keeps memory bounded on a small VPS. */
 export const MAX_ROOMS = 300;
+/**
+ * How long a browser (`clientId`) the host kicked may not rejoin that room (S7-82): 10 minutes.
+ * Not an IP ban, which would lock out the whole class behind one address.
+ */
+export const KICK_REJOIN_COOLDOWN_MS = 10 * 60 * 1000;
+
+// --- Room browser, GET /api/rooms (S7-83) --------------------------------------------------
+
+/**
+ * Room-list requests per IP per minute (token bucket: this burst, refilled evenly over a minute).
+ * A whole school shares one NAT address: 35 students each polling every 8 s is ~260 a minute,
+ * and two classes in the lab at once stay under 600. A script hammering the list does not.
+ */
+export const ROOM_LIST_PER_MINUTE_PER_IP = 600;
+/** The unfiltered public room list is rebuilt at most this often; filters run over the copy. */
+export const ROOM_LIST_CACHE_MS = 2000;
+/** The room-list limiter forgets idle addresses once every this many requests (no timer). */
+export const ROOM_LIST_PRUNE_EVERY = 256;
+
+// --- config.json (S7-68) -------------------------------------------------------------------
+
+/** Highest `rooms.maxRooms` config.json may set; a typo of an extra zero stays bounded. */
+export const MAX_ROOMS_CEILING = 5000;
+/** Quiet time after the last file event before config.json is re-read (atomic saves, partial writes). */
+export const CONFIG_RELOAD_DEBOUNCE_MS = 250;
+/** Most host names in `ads.domains`. */
+export const AD_DOMAINS_MAX = 16;
+/** Most lines in `ads.adsTxt`, and the longest line. */
+export const ADS_TXT_MAX_LINES = 100;
+export const ADS_TXT_LINE_MAX_CHARS = 300;
+/** Most sources one CSP directive may gain from `csp.extra` or `csp.adsExtra`. */
+export const CSP_EXTRA_MAX_SOURCES = 20;
+/** Longest operator name and longest contact or hosting line (privacy page variables). */
+export const OPERATOR_NAME_MAX_CHARS = 120;
+export const OPERATOR_LINE_MAX_CHARS = 200;
+/** Longest `ads.signOff.by` (who signed off on ads: supervisor or legal reviewer). */
+export const AD_SIGN_OFF_BY_MAX_CHARS = 120;
+
+// --- HTML shell (S7-70) --------------------------------------------------------------------
+
+/** Random bytes in each per-request CSP nonce (128 bits; 24 base64 characters). */
+export const CSP_NONCE_BYTES = 16;
+/** How long browsers and crawlers may cache `/ads.txt` (seconds); a config reload shows within it. */
+export const ADS_TXT_MAX_AGE_S = 300;

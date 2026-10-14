@@ -1,7 +1,7 @@
 // Human behaviour models for the balance bots. Every number here is an ASSUMPTION about how
 // students play, chosen to be plausible, not measured. Replace them with data from the playtests
 // (docs/playtests, S3-09) and re-run `bun run balance`; docs/balance.md explains the limits.
-import type { StationKind } from '../../packages/shared/src/index.ts';
+import type { Difficulty, StationKind } from '../../packages/shared/src/index.ts';
 
 export type Range = readonly [min: number, max: number];
 
@@ -36,8 +36,12 @@ export type SkillProfile = {
   recogniseCorrection: number;
   /** Chance of obeying a boss call at once, without checking the folder. */
   obeyBoss: number;
-  /** Chance of using the deadline extension in an emergency (when allowed to). */
-  usesExtension: number;
+  /**
+   * Chance, per bot and run, that it uses its role ability at all (S7-46 policies in bot.ts:
+   * Przedłużenie in an emergency, Ekspertyza and Druga szansa armed, Telefon z terenu instead of
+   * the phone station; Podaj teczkę never).
+   */
+  usesAbility: number;
   /** Failed attempts at one station before giving up on it. */
   maxStationFailures: number;
 };
@@ -59,7 +63,7 @@ export const ROOKIE: SkillProfile = {
   patience: 3,
   recogniseCorrection: 0.5,
   obeyBoss: 0.4,
-  usesExtension: 0,
+  usesAbility: 0,
   maxStationFailures: 3,
 };
 
@@ -80,7 +84,7 @@ export const AVERAGE: SkillProfile = {
   patience: 4,
   recogniseCorrection: 0.9,
   obeyBoss: 0.1,
-  usesExtension: 0.5,
+  usesAbility: 0.5,
   maxStationFailures: 4,
 };
 
@@ -101,7 +105,7 @@ export const EXPERT: SkillProfile = {
   patience: 6,
   recogniseCorrection: 1,
   obeyBoss: 0,
-  usesExtension: 1,
+  usesAbility: 1,
   maxStationFailures: 5,
 };
 
@@ -116,6 +120,11 @@ export const MINIGAME_BASE_S: Record<StationKind, number> = {
   phone: 7,
   aiScanner: 6,
   dataLibrary: 10,
+  // Stage 7 stations (S7-48): design estimates until bot data exists (S7-66).
+  geolocation: 10,
+  transcript: 11,
+  crossCheck: 8,
+  metadata: 8,
 };
 
 /** Relative chance of failing, by station (how fiddly the puzzle is). */
@@ -126,9 +135,34 @@ export const MINIGAME_DIFFICULTY: Record<StationKind, number> = {
   phone: 0.8,
   aiScanner: 1.2,
   dataLibrary: 1.2,
+  geolocation: 1.1,
+  transcript: 1.1,
+  crossCheck: 1.2,
+  metadata: 1,
 };
 
 /** Spread of a minigame duration around its mean: uniform in [1 - s, 1 + s]. */
 export const MINIGAME_SPREAD = 0.3;
 /** A failing attempt ends this share of the way through a normal one (mistakes come early). */
 export const MINIGAME_FAIL_AT = 0.6;
+
+/**
+ * How much more often a minigame attempt fails on each difficulty: Easy allows an extra mistake
+ * and more time, Expert one mistake less and less time (DIFFICULTY in constants.ts). The bot's
+ * time cap follows the real limit (`minigameTimeLimitMs`); this factor models the rest.
+ */
+export const DIFFICULTY_FAIL_FACTOR: Record<Difficulty, number> = {
+  easy: 0.75,
+  normal: 1,
+  hard: 1.15,
+  expert: 1.4,
+};
+
+/**
+ * A retry at a station that keeps its puzzle (MINIGAME_STABLE_SEED_STATIONS: the Kartoteka shows
+ * the same card again) fails this much less often: the player has seen the card once.
+ */
+export const RETRY_FAIL_FACTOR = 0.5;
+
+/** No attempt fails more often than this, whatever the factors multiply to. */
+export const MAX_FAIL_CHANCE = 0.9;

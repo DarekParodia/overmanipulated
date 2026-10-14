@@ -176,6 +176,100 @@
   stroke-width: 3.4;
 }
 
+/* Multi-stamp pick (S7-19): the tick carries the pick's order number instead of the ✓. */
+.tickNo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1;
+  padding-top: 0.1em;
+}
+
+/* "k/N" chip on the step heading. */
+.count {
+  margin-left: var(--space-1);
+  padding: 0 var(--space-3);
+  background: var(--surface-soft);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Amber warning: the folder holds fewer stamps than the story needs proofs. */
+.shortfall,
+.blocked {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+}
+
+.shortfall {
+  background: var(--orange);
+}
+
+/* A pick beyond N: a blue info line (selection), and the row nudges sideways. */
+.blocked {
+  background: var(--surface-soft);
+  border-color: var(--blue-dark);
+}
+
+.noteGlyph {
+  flex: none;
+}
+
+.nudgeA {
+  animation: nudge-a var(--motion-slow) var(--ease-out);
+}
+
+.nudgeB {
+  animation: nudge-b var(--motion-slow) var(--ease-out);
+}
+
+/* Two identical keyframes so a second blocked pick on the same row plays again. */
+@keyframes nudge-a {
+  0%,
+  100% {
+    translate: 0;
+  }
+  25% {
+    translate: -6px;
+  }
+  50% {
+    translate: 6px;
+  }
+  75% {
+    translate: -3px;
+  }
+}
+
+@keyframes nudge-b {
+  0%,
+  100% {
+    translate: 0;
+  }
+  25% {
+    translate: -6px;
+  }
+  50% {
+    translate: 6px;
+  }
+  75% {
+    translate: -3px;
+  }
+}
+
 /* Keyboard / gamepad focus: a thick blue ring outside the element. */
 .focused {
   outline: 4px solid var(--blue);
@@ -191,40 +285,6 @@
 .emptyBox [data-focused="true"] {
   outline: 4px solid var(--blue);
   outline-offset: 4px;
-}
-
-/* --- Deadline extension (managing editor) ------------------------------------------------ */
-
-.extend {
-  display: flex;
-}
-
-.extend [data-focused="true"] {
-  outline: 4px solid var(--blue);
-  outline-offset: 4px;
-}
-
-.extendAmount {
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Confirmed: a green badge that pops in where the button was. */
-.extended {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: var(--space-2);
-  min-height: var(--touch-target);
-  padding: var(--space-1) var(--space-4);
-  background: var(--green);
-  border: var(--stroke) solid var(--outline);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--pop);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--text-lg);
-  animation: pop var(--motion-base) var(--ease-bounce) both;
 }
 
 /* --- Verdict buttons --------------------------------------------------------------------- */
@@ -374,39 +434,55 @@
   font-size: var(--text-xl);
 }
 
-.missed {
+/* At most two short lines under the deltas: a label, then station chips or the right verdict. */
+.lines {
   display: grid;
   gap: var(--space-2);
+  margin: 0;
   padding: var(--space-3);
+  list-style: none;
   background: var(--surface-soft);
   border: var(--stroke) solid var(--outline);
   border-radius: var(--radius-md);
 }
 
-.missedTitle {
-  font-size: var(--text-lg);
-  color: var(--red-dark);
-}
-
-.missed ul {
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.missed li {
+.line {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-md);
+  min-height: 2.5rem;
+}
+
+.lineIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+}
+
+.lineLabel {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
   line-height: var(--leading-snug);
 }
 
-.missed .stampIcon {
-  width: 2.25rem;
-  height: 2.25rem;
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-md);
 }
 
 .next {
@@ -424,13 +500,15 @@
 }
 
 :global(:root[data-reduced-motion="true"]) .tick,
-:global(:root[data-reduced-motion="true"]) .extended {
+:global(:root[data-reduced-motion="true"]) .nudgeA,
+:global(:root[data-reduced-motion="true"]) .nudgeB {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tick,
-  .extended {
+  .nudgeA,
+  .nudgeB {
     animation: none;
   }
 }
@@ -477,6 +555,17 @@
     font-size: var(--text-sm);
   }
 
+  .count {
+    font-size: var(--text-sm);
+    padding: 0 var(--space-2);
+  }
+
+  .shortfall,
+  .blocked {
+    padding: 2px var(--space-2) 2px var(--space-1);
+    font-size: var(--text-sm);
+  }
+
   .decide {
     bottom: calc(-1 * var(--space-2));
     margin: 0 calc(-1 * var(--space-3)) calc(-1 * var(--space-2));
@@ -517,11 +606,27 @@
     font-size: var(--text-lg);
   }
 
-  .missed {
-    padding: var(--space-2);
+  .lines {
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
   }
 
-  .missed li {
+  .line {
+    gap: var(--space-1) var(--space-2);
+    min-height: 2rem;
+  }
+
+  .lineIcon {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .lineLabel {
+    font-size: var(--text-md);
+  }
+
+  .chip {
+    padding: 0 var(--space-2) 0 var(--space-1);
     font-size: var(--text-sm);
   }
 
@@ -529,12 +634,21 @@
     display: none;
   }
 
-  .missedTitle {
-    font-size: var(--text-md);
+  /* Two result lines and "Dalej" fit 640x360 without scrolling: a regular-height button. */
+  .next > button {
+    min-height: var(--touch-target);
+    padding-block: var(--space-1);
+    font-size: var(--text-lg);
   }
 
-  .extended {
-    font-size: var(--text-md);
+  /* Bonus chips keep the icon and the points; the label stays for screen readers. */
+  .bonusLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 

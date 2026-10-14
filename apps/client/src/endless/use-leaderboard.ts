@@ -1,7 +1,7 @@
-// Fetches one leaderboard list (S4-11) with loading / ready / error states. When the caller
-// expects its own just-finished run in the list and it is not there yet (the server may still be
-// saving it), the list is fetched once more shortly after.
-import type { LeaderboardEntry } from '@redakcja/shared';
+// Fetches one leaderboard list (S4-11) for one difficulty (S7-26), with loading / ready / error
+// states. When the caller expects its own just-finished run in the list and it is not there yet
+// (the server may still be saving it), the list is fetched once more shortly after.
+import type { Difficulty, LeaderboardEntry } from '@redakcja/shared';
 import { LEADERBOARD_DEFAULT_LIMIT } from '@redakcja/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { fetchLeaderboard } from '../net/api.ts';
@@ -22,6 +22,7 @@ const MAX_RECHECKS = 2;
 export function useLeaderboard(
   scope: LeaderboardScope,
   roomCode: string | null,
+  difficulty: Difficulty,
   expected?: (EndlessRun & { roomCode: string }) | null,
 ): LeaderboardState & { retry(): void } {
   const [state, setState] = useState<LeaderboardState>({ status: 'loading', entries: NO_ENTRIES });
@@ -42,7 +43,7 @@ export function useLeaderboard(
     setState((previous) =>
       previous.status === 'ready' ? previous : { status: 'loading', entries: NO_ENTRIES },
     );
-    fetchLeaderboard(scope, roomCode, LEADERBOARD_DEFAULT_LIMIT, abort.signal)
+    fetchLeaderboard(scope, roomCode, difficulty, LEADERBOARD_DEFAULT_LIMIT, abort.signal)
       .then((response) => {
         setState({ status: 'ready', entries: response.entries });
         const missing =
@@ -65,7 +66,7 @@ export function useLeaderboard(
         clearTimeout(recheck);
       }
     };
-  }, [scope, roomCode, attempt, rechecks, score, survivedS, expectedRoom]);
+  }, [scope, roomCode, difficulty, attempt, rechecks, score, survivedS, expectedRoom]);
 
   const retry = useCallback(() => {
     setRechecks(0);

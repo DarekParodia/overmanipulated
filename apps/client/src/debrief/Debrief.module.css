@@ -43,6 +43,11 @@
   animation: none;
 }
 
+/* The lead page (the results summary on phones) turns by swiping like a card. */
+.lead {
+  touch-action: pan-y;
+}
+
 .empty {
   margin: 0;
   font-family: var(--font-body);
@@ -164,8 +169,51 @@
   color: var(--text-soft);
 }
 
+/* Points, credibility and '×N' after the title: small pills with a glyph and a number. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  color: var(--text);
+}
+
+.chip svg {
+  flex: none;
+}
+
 .points {
   font-variant-numeric: tabular-nums;
+}
+
+.credUp,
+.credDown {
+  font-variant-numeric: tabular-nums;
+}
+
+.credUp {
+  color: var(--green-dark);
+}
+
+.credDown {
+  color: var(--red-dark);
+}
+
+.repeats {
+  background: var(--surface-soft);
+}
+
+/* The one-line reason under the title: what the folder paid and why. */
+.why {
+  margin: var(--space-1) 0 0;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--text-md);
+  line-height: var(--leading-snug);
+  color: var(--text);
 }
 
 .good .points {
@@ -200,6 +248,45 @@
 
 .verdictPair dd {
   margin: 0;
+}
+
+/* Versus (S7-89): the rival's stamp with a small outcome disc, or a neutral „nie mieli” / „w grze”. */
+.rival {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.rivalMark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
+}
+
+.rivalMark.good {
+  background: var(--green);
+}
+
+.rivalMark.caution {
+  background: var(--orange);
+}
+
+.rivalMark.bad {
+  background: var(--red);
+}
+
+.rivalNone {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  background: var(--surface-soft);
+  color: var(--text-soft);
 }
 
 /* --- Debrief chunks -------------------------------------------------------------------------- */
@@ -266,6 +353,34 @@
 .missedItem svg {
   flex: none;
   margin-top: 1px;
+}
+
+/* Status chip after a deciding proof: cited (selection blue), only in the folder (plain) or
+   never collected (warning orange). The word carries the state; the colour only repeats it. */
+.proofStatus {
+  flex: none;
+  margin-left: auto;
+  padding: 0 var(--space-2);
+  background: var(--surface);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.proofCited {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
+.proofCollected {
+  background: var(--surface);
+}
+
+.proofMissing {
+  background: var(--orange);
 }
 
 /* --- Vote ------------------------------------------------------------------------------------ */

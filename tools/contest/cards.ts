@@ -1,8 +1,19 @@
-// Printable cards (S6-03 deliverables 3 and 4): the four role cards and sample story folders
-// rendered from real content. Output in docs/contest/cards/: role-cards.html (one A4 page),
-// folders.html (one A4 page per folder) plus a PNG of every card.
-import type { Role, Verdict } from '../../packages/shared/src/index.ts';
-import { ROLE_STATIONS, ROLE_WORK_TIME_FACTOR, ROLES } from '../../packages/shared/src/index.ts';
+// Printable cards (S6-03 deliverables 3 and 4): the role cards and sample story folders
+// rendered from real content. Output in docs/contest/cards/: role-cards.html (six roles on two
+// A4 landscape pages, 4 + 2, S7-46) with role-cards.pdf, folders.html (one A4 page per folder)
+// plus a PNG of every card.
+
+import { ABILITY_ICON, RESCUE_ICON } from '../../apps/client/src/abilities/ability-icons.ts';
+import { abilityKeyCap } from '../../apps/client/src/screens/settings-model.ts';
+import type { Ability, Role, StationFamily, Verdict } from '../../packages/shared/src/index.ts';
+import {
+  ABILITY,
+  abilityOf,
+  RESCUE_ADD_MS,
+  ROLE_PERKS,
+  ROLES,
+  STATION_KINDS,
+} from '../../packages/shared/src/index.ts';
 import {
   colors,
   copyFonts,
@@ -60,23 +71,76 @@ const ROLE_INFO: Record<Role, { task: string; tip: string }> = {
     task: 'Decyzje przy stole redakcyjnym i koordynacja zespołu.',
     tip: 'Pilne nie znaczy prawdziwe. Przy stole zwolnij i zapytaj zespół o dowód.',
   },
+  generalist: {
+    task: 'Pomoc tam, gdzie właśnie jest kolejka.',
+    tip: 'Jeden dowód to mało? Sprawdź drugim narzędziem.',
+  },
+  rescuer: {
+    task: 'Pilnowanie terminów i podawanie teczek.',
+    tip: 'Pośpiech sprzyja manipulacji. Zyskaj czas, zanim zdecydujesz.',
+  },
 };
 
+/** The role is faster at every station (Wszechstronny): no station chips, one line instead. */
+function fasterEverywhere(role: Role): boolean {
+  return ROLE_PERKS[role].fasterAt.length === STATION_KINDS.length;
+}
+
 function bonusLine(role: Role): string {
-  const stations = ROLE_STATIONS[role].map((kind) => pl.vocab.stations[kind]);
-  const percent = Math.round((1 - ROLE_WORK_TIME_FACTOR) * 100);
-  if (role === 'photoEditor' || role === 'archivist') {
-    return `${stations.join(' i ')} ${stations.length > 1 ? 'działają' : 'działa'} o ${percent}% szybciej.`;
+  // The station chips under the line name the stations, so the line does not repeat them.
+  const percent = Math.round((1 - ROLE_PERKS[role].workFactor) * 100);
+  if (fasterEverywhere(role)) {
+    return `Każde stanowisko działa o\u00a0${percent}% szybciej.`;
   }
-  if (role === 'reporter') {
-    return 'Telefon do źródła bez kolejki.';
+  const faster = `stanowiska poniżej działają o\u00a0${percent}% szybciej.`;
+  if (ROLE_PERKS[role].skipsPhoneQueue) {
+    return `Telefon do źródła bez kolejki, a\u00a0${faster}`;
   }
-  return 'Raz na poziom przedłuża termin jednej teczki.';
+  if (ROLE_PERKS[role].fasterAt.length > 0) {
+    return `S${faster.slice(1)}`;
+  }
+  if (ROLE_PERKS[role].rescuesPerLevel > 0) {
+    return `Koło ratunkowe: raz na poziom teczka w\u00a0jego rękach dostaje +${RESCUE_ADD_MS / 1000}\u00a0s.`;
+  }
+  return 'Bez premii za szybkość: jego siłą jest zdolność.';
+}
+
+/**
+ * Where Ekspertyza works, by station family: the whole family, which can be more than the
+ * passive's chips (the archivist's Ekspertyza also covers Biblioteka danych).
+ */
+const EXPERTISE_WHERE: Record<StationFamily, string> = {
+  image: 'przy obrazie',
+  documents: 'przy dokumentach',
+  sources: 'przy źródłach',
+};
+
+/** What each ability does, in one printed sentence (the lobby's `abilityWhat`, spelled out). */
+function abilityText(role: Role, ability: Ability): string {
+  const family = ROLE_PERKS[role].expertiseFamily;
+  return ability === 'expertise' && family
+    ? `Następne zadanie ${EXPERTISE_WHERE[family]} zalicza się samo: pieczątka od razu.`
+    : ABILITY_TEXT[ability];
+}
+
+const ABILITY_TEXT: Record<Ability, string> = {
+  expertise: 'Następne zadanie jego działu zalicza się samo: pieczątka od razu.',
+  fieldCall: `Dzwoni z\u00a0teczką w\u00a0ręce: po ${ABILITY.fieldCall.callMs / 1000}\u00a0s pieczątka Telefonu bez chodzenia.`,
+  extendDeadline: `+${ABILITY.extendDeadline.addMs / 1000}\u00a0s dla teczki w\u00a0ręce, na jego stole albo najpilniejszej.`,
+  secondChance: 'Po nieudanej minigrze gra od razu jeszcze raz, bez blokady.',
+  passFolder: `Rzuca teczkę najbliższej wolnej osobie (do ${ABILITY.passFolder.rangeTiles}\u00a0pól).`,
+};
+
+/** How to press the ability on every device, and how long it takes to come back. */
+function abilityKeysLine(ability: Ability): string {
+  return `${abilityKeyCap('keyboard')} · ${abilityKeyCap('gamepad')} · przycisk ${pl.touch.ability[ability]} na ekranie · odnowienie ${ABILITY[ability].cooldownMs / 1000}\u00a0s`;
 }
 
 function roleCard(role: Role): string {
   const info = ROLE_INFO[role];
-  const stations = ROLE_STATIONS[role];
+  const stations = fasterEverywhere(role) ? [] : ROLE_PERKS[role].fasterAt;
+  const ability = abilityOf(role);
+  const bonusIcon = ROLE_PERKS[role].rescuesPerLevel > 0 ? RESCUE_ICON : 'bolt';
   return `<article class="card role" data-role="${role}">
   <header>
     <div class="badge">${roleIconSvg(role, 76, colors.outline, colors.yellow)}</div>
@@ -86,14 +150,23 @@ function roleCard(role: Role): string {
     </div>
   </header>
   <section class="bonus">
-    <h3>${iconSvg('bolt', 26, colors.outline, colors.yellow)} Premia</h3>
+    <h3>${iconSvg(bonusIcon, 26, colors.outline, colors.yellow)} Premia</h3>
     <p>${esc(bonusLine(role))}</p>
     ${
       stations.length
-        ? `<ul class="chips">${stations.map((kind) => `<li>${iconSvg(kind, 22, colors.outline, colors.yellow)}${esc(pl.vocab.stations[kind])}</li>`).join('')}</ul>`
+        ? `<ul class="chips">${stations.map((kind) => `<li>${iconSvg(kind, 18, colors.outline, colors.yellow)}${esc(pl.vocab.stations[kind])}</li>`).join('')}</ul>`
         : ''
     }
   </section>
+  ${
+    ability
+      ? `<section class="ability">
+    <h3>${iconSvg(ABILITY_ICON[ability], 26, colors.outline, colors.yellow)} ${esc(pl.lobbyRoles.abilityLabel)}: ${esc(pl.vocab.abilities[ability])}</h3>
+    <p>${esc(abilityText(role, ability))}</p>
+    <p class="keys">${esc(abilityKeysLine(ability))}</p>
+  </section>`
+      : ''
+  }
   <section>
     <h3>${iconSvg('hand', 26, colors.outline, colors.surface)} Typowe zadanie</h3>
     <p>${esc(info.task)}</p>
@@ -106,23 +179,39 @@ function roleCard(role: Role): string {
 </article>`;
 }
 
+/** Role cards per printed A4 landscape page (two rows of two). */
+export const ROLE_CARDS_PER_PAGE = 4;
+
+/** The roles of each printed page, in ROLES order: 6 roles give 4 + 2. */
+export function rolePages(roles: readonly Role[] = ROLES): Role[][] {
+  const pages: Role[][] = [];
+  for (let i = 0; i < roles.length; i += ROLE_CARDS_PER_PAGE) {
+    pages.push(roles.slice(i, i + ROLE_CARDS_PER_PAGE));
+  }
+  return pages;
+}
+
 const ROLE_CSS = `
-.card.role{width:540px;height:410px;background:var(--surface);border:6px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:20px 24px 14px;display:flex;flex-direction:column;gap:10px}
+.card.role{width:540px;height:510px;background:var(--surface);border:6px solid var(--ink);border-radius:28px;box-shadow:0 8px 0 var(--ink);padding:16px 22px 10px;display:flex;flex-direction:column;gap:7px;break-inside:avoid}
 .role header{display:flex;gap:16px;align-items:center}
-.role .badge{width:92px;height:92px;border-radius:50%;background:var(--sky);border:5px solid var(--ink);display:grid;place-items:center}
+.role .badge{width:84px;height:84px;border-radius:50%;background:var(--sky);border:5px solid var(--ink);display:grid;place-items:center}
 .role .kicker{margin:0 0 2px;font-weight:800;font-size:15px;color:var(--ink-soft)}
-.role h2{font-size:34px}
+.role h2{font-size:32px}
 .role h3{font-size:17px;display:flex;gap:8px;align-items:center;margin-bottom:2px}
-.role p{margin:0;font-size:16px;line-height:1.3}
-.role .bonus{background:var(--soft);border:4px solid var(--ink);border-radius:18px;padding:8px 14px}
-.role .bonus p{font-weight:800;font-size:18px}
-.chips{list-style:none;margin:6px 0 0;padding:0;display:flex;gap:8px;flex-wrap:wrap}
-.chips li{display:flex;gap:6px;align-items:center;background:var(--surface);border:3px solid var(--ink);border-radius:999px;padding:2px 12px 2px 8px;font-weight:800;font-size:14px}
-.role .tip{display:flex;gap:12px;align-items:center;background:var(--yellow);border:4px solid var(--ink);border-radius:18px;padding:8px 14px}
-.role .tip p{font-weight:800;font-size:16px}
+.role p{margin:0;font-size:15px;line-height:1.28}
+.role .bonus{background:var(--soft);border:4px solid var(--ink);border-radius:18px;padding:6px 14px}
+.role .bonus p{font-weight:800;font-size:16px}
+.role .ability{background:var(--surface);border:4px solid var(--ink);border-radius:18px;padding:6px 14px}
+.role .ability p{font-weight:800}
+.role .ability .keys{margin-top:3px;font-size:13px;color:var(--ink-soft)}
+.chips{list-style:none;margin:5px 0 0;padding:0;display:flex;gap:5px;flex-wrap:wrap}
+.chips li{display:flex;gap:6px;align-items:center;background:var(--surface);border:3px solid var(--ink);border-radius:999px;padding:1px 8px 1px 5px;font-weight:800;font-size:12px}
+.role .tip{display:flex;gap:12px;align-items:center;background:var(--yellow);border:4px solid var(--ink);border-radius:18px;padding:6px 14px}
+.role .tip p{font-weight:800;font-size:15px}
+.role>*{flex:none}
 .role footer{margin-top:auto;font-size:12px;color:var(--ink-soft);font-weight:700;text-align:center}
-.role-sheet{grid-template-columns:repeat(2,540px);padding-bottom:40px;gap:28px}
-@media print{@page{size:A4 landscape;margin:8mm}.role-sheet{zoom:.78;gap:22px;align-content:center;min-height:190mm}}
+.role-sheet{grid-template-columns:repeat(2,540px);gap:28px}
+@media print{@page{size:A4 landscape;margin:8mm}.role-sheet{zoom:.66;gap:22px;break-after:page}.role-sheet:last-child{break-after:auto}}
 `;
 
 function rolesHtml(): string {
@@ -130,8 +219,12 @@ function rolesHtml(): string {
 <html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Karty ról: Redakcja na Ostatnią Chwilę</title>
 <style>${BASE_CSS}${ROLE_CSS}</style></head>
-<body><main class="sheet role-sheet">
-${ROLES.map(roleCard).join('\n')}
+<body><main>
+${rolePages()
+  .map(
+    (roles) => `<section class="sheet role-sheet">\n${roles.map(roleCard).join('\n')}\n</section>`,
+  )
+  .join('\n')}
 </main></body></html>
 `;
 }
@@ -247,6 +340,11 @@ ${SAMPLE_FOLDERS.map(folderCard).join('\n')}
 `;
 }
 
+/** Pages of a PDF Chromium printed (its `/Type /Page` objects). */
+function pdfPageCount(pdf: Uint8Array): number {
+  return new TextDecoder('latin1').decode(pdf).match(/\/Type\s*\/Page\b/g)?.length ?? 0;
+}
+
 export async function buildCards(): Promise<string[]> {
   await copyFonts();
   const written: string[] = [];
@@ -269,6 +367,13 @@ export async function buildCards(): Promise<string[]> {
     }
     await page.screenshot({ path: outPath('cards/role-cards.png'), fullPage: true });
     written.push('cards/role-cards.png');
+    const pdf = await page.pdf({ preferCSSPageSize: true, printBackground: true });
+    const pages = pdfPageCount(pdf);
+    if (pages !== rolePages().length) {
+      throw new Error(`role-cards.pdf has ${pages} pages, expected ${rolePages().length}`);
+    }
+    await writeOut(outPath('cards/role-cards.pdf'), pdf);
+    written.push('cards/role-cards.pdf');
     await page.goto(`file://${foldersPath}`);
     await page.evaluate(() => document.fonts.ready);
     for (const id of SAMPLE_FOLDERS) {

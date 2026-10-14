@@ -43,6 +43,8 @@ export function verdictCue(event: VerdictEvent, truth: Truth | undefined): CueId
     case 'wrong':
       return wrongVerdictCue(event.verdict, truth);
     case 'expired':
+    case 'unfinished':
+      // Neither comes as a verdict; mapped so the switch covers every outcome.
       return 'folder.expired';
   }
 }
@@ -71,11 +73,49 @@ export function levelEventCue(event: LevelEventMessage): CueId {
   }
 }
 
-/** The cue for a gameplay event. `truthOf` looks up a story's truth (for wrong verdicts). */
+type AbilityEvent = Extract<GameplayEvent, { kind: 'ability' }>;
+
+/**
+ * Cue of a role ability's stage (S7-36): arming and disarming are shared, Telefon z terenu has a
+ * cue per stage, every other ability is heard when its effect lands. A teammate arming or
+ * disarming is nobody else's business (S7-42): null, so only the presser hears it; the armed
+ * badge over the head shows it to everyone.
+ */
+export function abilityCue(event: AbilityEvent, localPlayerId: string | null): CueId | null {
+  if (event.stage === 'armed' || event.stage === 'disarmed') {
+    if (event.playerId !== localPlayerId) {
+      return null;
+    }
+    return event.stage === 'armed' ? 'ability.armed' : 'ability.disarmed';
+  }
+  switch (event.ability) {
+    case 'fieldCall':
+      return event.stage === 'started'
+        ? 'ability.call.start'
+        : event.stage === 'cancelled'
+          ? 'ability.call.dropped'
+          : 'ability.call.done';
+    case 'expertise':
+      return 'ability.expertise';
+    case 'extendDeadline':
+      return 'ability.extendDeadline';
+    case 'secondChance':
+      return 'ability.secondChance';
+    case 'passFolder':
+      return 'ability.pass';
+  }
+}
+
+/**
+ * The cue for a gameplay event, or null when the event is silent for this client (a teammate's
+ * arm / disarm). `truthOf` looks up a story's truth (for wrong verdicts); `localPlayerId` is this
+ * client's player.
+ */
 export function cueForEvent(
   event: GameplayEvent,
   truthOf: (storyId: string) => Truth | undefined,
-): CueId {
+  localPlayerId: string | null,
+): CueId | null {
   switch (event.kind) {
     case 'folderSpawned':
       return 'folder.arrive';
@@ -87,8 +127,6 @@ export function cueForEvent(
       return 'folder.deadlineWarning';
     case 'folderExpired':
       return 'folder.expired';
-    case 'deadlineExtended':
-      return 'folder.deadlineExtended';
     case 'workStarted':
       return 'station.workStart';
     case 'workCancelled':
@@ -109,6 +147,10 @@ export function cueForEvent(
       return levelEventCue(event);
     case 'raidResolved':
       return 'event.raidResolved';
+    case 'ability':
+      return abilityCue(event, localPlayerId);
+    case 'folderRescued':
+      return 'role.rescue';
     case 'ping':
       switch (event.ping) {
         case 'needArchive':

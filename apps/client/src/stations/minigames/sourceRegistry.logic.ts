@@ -5,6 +5,10 @@
 import type { Stamp, Story } from '@redakcja/content';
 import {
   createRng,
+  DEFAULT_DIFFICULTY,
+  type Difficulty,
+  mistakeLimit,
+  type Rng,
   SOURCE_REGISTRY_CLEAN_CHANCE,
   SOURCE_REGISTRY_FIELDS,
   SOURCE_REGISTRY_MAX_FLAGS,
@@ -13,6 +17,7 @@ import {
   type StoryType,
 } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
+import { pick, problemFromStamp, shuffled } from './evidence.ts';
 
 export type CardKind = keyof typeof pl.minigames.sourceRegistry.fields;
 
@@ -26,6 +31,8 @@ export type CardField = {
 };
 
 export type SourceCard = {
+  /** Minigame seed the card was built from; a retry of the same card has the same seed. */
+  seed: number;
   kind: CardKind;
   /** Printed index-card number, for the look only. */
   number: number;
@@ -42,8 +49,6 @@ const KIND_BY_STORY_TYPE: Record<StoryType, CardKind> = {
   article: 'website',
 };
 
-type Rng = ReturnType<typeof createRng>;
-
 /**
  * Whether the card must show warning signs, consistent with the stamp the station gives:
  * a decisive stamp on an untrue story means the source is the problem; a decisive stamp on a
@@ -52,36 +57,7 @@ type Rng = ReturnType<typeof createRng>;
  * Without a stamp the card is random.
  */
 export function cardHasFlags(story: Story, stamp: Stamp | undefined, rng: Rng): boolean {
-  if (!stamp) {
-    return rng.next() >= SOURCE_REGISTRY_CLEAN_CHANCE;
-  }
-  const isTrue = story.truth === 'true';
-  switch (stamp.relevance) {
-    case 'decisive':
-      return !isTrue;
-    case 'misleading':
-      return isTrue;
-    case 'irrelevant':
-      return false;
-  }
-}
-
-function pick<T>(rng: Rng, items: readonly T[]): T {
-  const item = items[rng.int(items.length)];
-  if (item === undefined) {
-    throw new Error('empty pool');
-  }
-  return item;
-}
-
-/** Fisher–Yates on a copy. */
-function shuffled<T>(rng: Rng, items: readonly T[]): T[] {
-  const out = [...items];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = rng.int(i + 1);
-    [out[i], out[j]] = [out[j] as T, out[i] as T];
-  }
-  return out;
+  return problemFromStamp(story, stamp) ?? rng.next() >= SOURCE_REGISTRY_CLEAN_CHANCE;
 }
 
 /** Same seed, story and stamp → same card. */
@@ -105,7 +81,7 @@ export function generateCard(seed: number, story: Story, stamp: Stamp | undefine
       flagged,
     };
   });
-  return { kind, number: 100 + rng.int(9900), fields };
+  return { seed, kind, number: 100 + rng.int(9900), fields };
 }
 
 // --- Rules -------------------------------------------------------------------------------
@@ -121,10 +97,17 @@ export type GameState = {
   /** Clean fields the player circled by mistake (crossed out, cannot be circled again). */
   struck: boolean[];
   mistakes: number;
+  /** Mistakes that fail the round on this difficulty (`mistakeLimit`, S7-24). */
+  maxMistakes: number;
   /** The last filing missed a warning sign. */
   missing: boolean;
   outcome: Outcome;
+  /** The player has seen this card before (S7-14): it came back after a failure or a cancel. */
+  retry: boolean;
 };
+
+/** What the player left on a card that comes back (the retry memory, retry-memory.ts). */
+export type RememberedCard = { seed: number; circled: readonly boolean[] };
 
 export type Action =
   | { type: 'move'; delta: number }
@@ -144,21 +127,34 @@ export type Effect =
   | 'failed'
   | 'blocked';
 
-export function initialState(card: SourceCard): GameState {
+/**
+ * A fresh round of `card`. When the player left this very card earlier (`remembered` has the
+ * same seed), the warning signs they circled stay circled; a circle on a clean field never
+ * lasts (it is struck at once), so only flagged fields are restored. Mistakes and struck fields
+ * start fresh: the retry has its own mistake budget, set by the room's difficulty.
+ */
+export function initialState(
+  card: SourceCard,
+  remembered?: RememberedCard,
+  difficulty: Difficulty = DEFAULT_DIFFICULTY,
+): GameState {
+  const memory = remembered?.seed === card.seed ? remembered : undefined;
   return {
     card,
     cursor: 0,
-    circled: card.fields.map(() => false),
+    circled: card.fields.map((field, i) => field.flagged && memory?.circled[i] === true),
     struck: card.fields.map(() => false),
     mistakes: 0,
+    maxMistakes: mistakeLimit(SOURCE_REGISTRY_MAX_MISTAKES, difficulty),
     missing: false,
     outcome: 'playing',
+    retry: memory !== undefined,
   };
 }
 
 function withMistake(state: GameState, patch: Partial<GameState>): [GameState, Effect] {
   const mistakes = state.mistakes + 1;
-  const failed = mistakes >= SOURCE_REGISTRY_MAX_MISTAKES;
+  const failed = mistakes >= state.maxMistakes;
   return [
     { ...state, ...patch, mistakes, outcome: failed ? 'failure' : 'playing' },
     failed ? 'failed' : patch.missing ? 'missing' : 'mistake',

@@ -9,6 +9,9 @@ export const PAD = {
   south: 0, // A / Cross → pick up / put down
   west: 2, // X / Square → work (hold)
   north: 3, // Y / Triangle → ping
+  rb: 5, // RB / R1 → role ability (S7-39)
+  select: 8, // Back / Select / Share → station help in an overlay (S7-95)
+  start: 9, // Start / Options → in-game menu (input/menu-button.ts)
   dpadUp: 12,
   dpadDown: 13,
   dpadLeft: 14,
@@ -25,6 +28,8 @@ export type PadReading = {
   interact: boolean;
   work: boolean;
   ping: boolean;
+  /** The role ability button (RB / R1) is held. */
+  ability: boolean;
   active: boolean;
 };
 
@@ -52,6 +57,7 @@ export function readGamepad(pad: GamepadLike): PadReading {
   const interact = pressed(PAD.south);
   const work = pressed(PAD.west);
   const ping = pressed(PAD.north);
-  const active = move.x !== 0 || move.y !== 0 || interact || work || ping;
-  return { move, interact, work, ping, active };
+  const ability = pressed(PAD.rb);
+  const active = move.x !== 0 || move.y !== 0 || interact || work || ping || ability;
+  return { move, interact, work, ping, ability, active };
 }

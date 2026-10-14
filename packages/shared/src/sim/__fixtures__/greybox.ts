@@ -1,6 +1,8 @@
-// Test fixtures for gameplay subsystems: the greybox level with a short schedule and one story
-// per truth value. Plain data, independent of the content package.
+// Test fixtures for gameplay subsystems: the greybox level with a short schedule, one story per
+// truth value and the multi-stamp story `m2`. Plain data, independent of the content package.
 import { TICK_MS } from '../../constants.ts';
+import { NORMAL_TUNING } from '../../difficulty.ts';
+import type { Folder } from '../../entities.ts';
 import type { PlayerCommand } from '../../protocol.ts';
 import type { SimLevel, SimStory, StoryBook } from '../content.ts';
 import type { QueuedCommand, SimContext } from '../frame.ts';
@@ -31,6 +33,21 @@ function story(
   };
 }
 
+/**
+ * A multi-stamp story (S7-18): false and important, proven by the image search and the archive
+ * alike, and the desk must cite both (`requiredStamps` 2). No schedule entry uses it.
+ */
+export const MULTI_STAMP_STORY: SimStory = {
+  ...story('m2', 'false', 'important', 'reject'),
+  stamps: [
+    { id: 'm2-image', station: 'imageSearch', relevance: 'decisive' },
+    { id: 'm2-archive', station: 'archive', relevance: 'decisive' },
+    { id: 'm2-source', station: 'sourceRegistry', relevance: 'irrelevant' },
+  ],
+  justifyingStamps: ['m2-image', 'm2-archive'],
+  requiredStamps: 2,
+};
+
 export const TEST_STORIES: StoryBook = {
   't-true': story('t-true', 'true', 'normal', 'publish'),
   't-false': story('t-false', 'false', 'important', 'reject'),
@@ -38,6 +55,7 @@ export const TEST_STORIES: StoryBook = {
   't-satire': story('t-satire', 'satire', 'normal', 'publishWithContext'),
   't-unverifiable': story('t-unverifiable', 'unverifiable', 'normal', 'reject'),
   't-unverifiable-urgent': story('t-unverifiable-urgent', 'unverifiable', 'urgent', 'reject'),
+  m2: MULTI_STAMP_STORY,
 };
 
 export const TEST_LEVEL: SimLevel = {
@@ -53,8 +71,35 @@ export const TEST_LEVEL: SimLevel = {
   stars: { two: 30, three: 60 },
 };
 
+/** The test level on Normal; `overrides` replace any field (e.g. `tuning: simTuning('expert')`). */
 export function testContext(overrides: Partial<SimContext> = {}): SimContext {
-  return { dtMs: TICK_MS, map: TEST_MAP, level: TEST_LEVEL, stories: TEST_STORIES, ...overrides };
+  return {
+    dtMs: TICK_MS,
+    map: TEST_MAP,
+    level: TEST_LEVEL,
+    stories: TEST_STORIES,
+    tuning: NORMAL_TUNING,
+    ...overrides,
+  };
+}
+
+/**
+ * A folder for tests: `t-true` on the first conveyor tile, no stamps, 60 s to go. Its spawn key
+ * defaults to `s<digits of the id>` (`f3` → `s3`, `x0` → `s0`), so hand-made folders with
+ * different ids also differ in their key, as spawned ones do.
+ */
+export function testFolder(id: string, patch: Partial<Folder> = {}): Folder {
+  return {
+    id,
+    spawnKey: `s${/\d+/.exec(id)?.[0] ?? '0'}`,
+    storyId: 't-true',
+    location: { kind: 'fixture', fixtureId: 'conveyor-0' },
+    stamps: [],
+    spawnedAtMs: 0,
+    deadlineMs: 60_000,
+    warned: false,
+    ...patch,
+  };
 }
 
 const NO_ACTIONS = { interact: false, work: false };

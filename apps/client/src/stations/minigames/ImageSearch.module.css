@@ -126,6 +126,13 @@
   grid-column: 1 / -1;
 }
 
+/* Round over: every result in one row under the banner, so nothing scrolls at 1280×720. */
+.over .results {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
 /* Four results sit in one row: on roomy screens put them under the photo, full width. */
 @media (min-height: 30.01rem) {
   .table[data-columns="4"] {
@@ -133,7 +140,9 @@
   }
 
   .table[data-columns="4"] .submitted {
-    grid-template-columns: minmax(0, 24rem) auto;
+    /* The photo is capped by the window height too, so the row of results and the key hints
+       still fit at 1280×720 (34 rem: the panel's chrome, the task, the results and the hints). */
+    grid-template-columns: minmax(0, min(24rem, calc((100dvh - 34rem) * 4 / 3))) auto;
     align-items: end;
   }
 
@@ -220,6 +229,14 @@
   outline-offset: 0;
 }
 
+/* After a failure (when the difficulty allows it): the right result, dashed. */
+.revealed {
+  border-style: dashed;
+  border-color: var(--green-dark);
+  outline: 3px solid var(--green);
+  outline-offset: 0;
+}
+
 .badge {
   position: absolute;
   top: -0.6rem;
@@ -280,5 +297,61 @@
 
   .caption {
     font-size: var(--text-md);
+  }
+}
+
+/*
+ * Short landscape phones (640×360): the photo and the loupe keep the whole left column and the
+ * key hints sit under the result cards, which get a step smaller, so everything fits without
+ * scrolling. `.table` lends its children to the root grid.
+ */
+@media (max-height: 430px) {
+  .root {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    column-gap: var(--space-4);
+  }
+
+  .root > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .table {
+    display: contents;
+  }
+
+  .submitted {
+    grid-column: 1;
+    grid-row: 2 / 4;
+    align-self: start;
+  }
+
+  .results {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    max-width: calc(var(--columns, 3) * 5.5rem);
+  }
+
+  .root > .hints {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .table > [role="status"] {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  /* Round over: the banner across the top, the results in one row of small cards under it. */
+  .over .results {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    grid-auto-columns: 5rem;
+    max-width: none;
+  }
+
+  .caption {
+    font-size: var(--text-sm);
   }
 }

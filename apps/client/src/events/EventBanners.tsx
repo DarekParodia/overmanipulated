@@ -2,36 +2,42 @@
 // chunky card slides in under the HUD pill with the event's icon, a short title and one short
 // line. Up to two at a time, each leaves on its own. The sound, particles and camera shake come
 // from the cue (fx/cues.ts); this is the visual announcement, so muted players get it too.
-import { EVENT_BANNER_MS, fixtureById } from '@redakcja/shared';
+import { EVENT_BANNER_MS, fixtureById, type TileMap } from '@redakcja/shared';
 import { useEffect, useRef } from 'react';
-import { onGameEvent } from '../net/game-events.ts';
-import { runtime } from '../net/session.ts';
+import { useStore } from 'zustand';
+import { useGameView } from '../net/view-context.tsx';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import styles from './EventBanners.module.css';
-import { useEvents } from './event-store.ts';
 
 /** Display name of the station standing on a fixture id. */
-function stationName(stationId: string | undefined): string {
-  const kind = stationId ? fixtureById(runtime.map, stationId)?.station : undefined;
+function stationName(map: TileMap, stationId: string | undefined): string {
+  const kind = stationId ? fixtureById(map, stationId)?.station : undefined;
   return kind ? pl.vocab.stations[kind] : pl.events.badge.down;
 }
 
-/** Routes level events into the event store while the game screen is mounted. */
+/**
+ * Routes level events and station lockouts into the GameView's event store while the game is
+ * on screen.
+ */
 export function useEventFeed(): void {
+  const view = useGameView();
   useEffect(() => {
-    useEvents.getState().reset();
-    const unsubscribe = onGameEvent((event) => useEvents.getState().handle(event, stationName));
+    const store = view.events;
+    const name = (stationId: string | undefined) => stationName(view.runtime.map, stationId);
+    store.getState().reset();
+    const unsubscribe = view.bus.on((event) => store.getState().handle(event, name));
     return () => {
       unsubscribe();
-      useEvents.getState().reset();
+      store.getState().reset();
     };
-  }, []);
+  }, [view]);
 }
 
 export function EventBanners() {
   useEventFeed();
-  const banners = useEvents((s) => s.banners);
+  const events = useGameView().events;
+  const banners = useStore(events, (s) => s.banners);
   const timers = useRef(new Map<string, number>());
 
   useEffect(() => {
@@ -42,7 +48,7 @@ export function EventBanners() {
           banner.id,
           window.setTimeout(() => {
             pending.delete(banner.id);
-            useEvents.getState().dismiss(banner.id);
+            events.getState().dismiss(banner.id);
           }, EVENT_BANNER_MS),
         );
       }
@@ -54,7 +60,7 @@ export function EventBanners() {
         pending.delete(id);
       }
     }
-  }, [banners]);
+  }, [banners, events]);
 
   useEffect(() => {
     const pending = timers.current;

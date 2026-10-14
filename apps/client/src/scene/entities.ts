@@ -5,8 +5,10 @@ import {
   type Fixture,
   type Folder,
   MINIGAME_FAIL_LOCKOUT_MS,
+  type NextFolder,
   type Priority,
   type Station,
+  type StationKind,
   type StoryType,
 } from '@redakcja/shared';
 import { outageFraction, outageSeconds } from '../events/event-model.ts';
@@ -23,7 +25,11 @@ export const SURFACE_HEIGHT = {
   phone: 0.76,
   aiScanner: 0.76,
   dataLibrary: 0.76,
-} as const;
+  geolocation: 0.76,
+  transcript: 0.76,
+  crossCheck: 0.76,
+  metadata: 0.76,
+} as const satisfies Record<StationKind | 'conveyor' | 'table' | 'desk', number>;
 
 export function surfaceHeight(fixture: Fixture): number {
   if (fixture.kind === 'station') {
@@ -31,6 +37,9 @@ export function surfaceHeight(fixture: Fixture): number {
   }
   return SURFACE_HEIGHT[fixture.kind];
 }
+
+/** Height of a sign's foot above its fixture's surface; the sign rises from there. */
+export const SIGN_ABOVE = 0.45;
 
 /** Folder held in front of the carrier: distance from the body centre and height. */
 export const CARRY_REACH = 0.6;
@@ -145,21 +154,36 @@ export function stampMarkCount(folder: Folder): number {
   return Math.min(folder.stamps.length, MAX_STAMP_MARKS);
 }
 
+/**
+ * Lockout time left as a fraction of the whole lockout; without an announced total (e.g. after a
+ * reconnect) the Normal lockout stands in, never less than what is left.
+ */
+export function lockoutFraction(lockoutMs: number, totalMs: number | undefined): number {
+  const total = Math.max(totalMs ?? MINIGAME_FAIL_LOCKOUT_MS, lockoutMs, 1);
+  return clamp01(lockoutMs / total);
+}
+
 export type StationIndicator =
   | { kind: 'none' }
   | { kind: 'working'; fraction: number; operatorId: string | null }
   | { kind: 'busy'; operatorId: string | null }
   | { kind: 'lockout'; fraction: number }
   /** The station is down (outage event): time left as a fraction of the announced duration. */
-  | { kind: 'down'; fraction: number; seconds: number };
+  | { kind: 'down'; fraction: number; seconds: number }
+  /** Conveyor: the next scheduled folder, the ring filling up as it nears (S7-09). */
+  | { kind: 'incoming'; fraction: number; seconds: number }
+  /** Conveyor: a due folder waits because every conveyor tile holds one. */
+  | { kind: 'full' };
 
 /**
  * What to show above a station: a work dial, a "busy" tag, the lockout countdown, or the
- * outage countdown (`outageTotalMs`: the duration the outage announced, if known).
+ * outage countdown (`outageTotalMs`: the duration the outage announced, if known;
+ * `lockoutTotalMs`: the lockout the last `minigameFailed` announced, which the difficulty scales).
  */
 export function stationIndicator(
   station: Station | undefined,
   outageTotalMs?: number,
+  lockoutTotalMs?: number,
 ): StationIndicator {
   if (!station) {
     return { kind: 'none' };
@@ -183,8 +207,34 @@ export function stationIndicator(
     case 'minigame':
       return { kind: 'busy', operatorId: station.operatorId };
     case 'lockout':
-      return { kind: 'lockout', fraction: clamp01(station.lockoutMs / MINIGAME_FAIL_LOCKOUT_MS) };
+      return { kind: 'lockout', fraction: lockoutFraction(station.lockoutMs, lockoutTotalMs) };
   }
+}
+
+/**
+ * What the conveyor sign shows: `full` while a due folder waits for a free tile, otherwise the
+ * next scheduled folder as a ring that fills from the previous scheduled time (`sinceMs`) to its
+ * due time, with the whole seconds left; nothing once the schedule is used up. `sinceMs` is a
+ * due time, not an arrival, so after a held spawn the ring may start part-filled; two entries
+ * due at the same moment count as a full ring.
+ */
+export function conveyorIndicator(
+  next: NextFolder | null,
+  elapsedMs: number,
+  full: boolean,
+): StationIndicator {
+  if (full) {
+    return { kind: 'full' };
+  }
+  if (!next) {
+    return { kind: 'none' };
+  }
+  const span = next.atMs - next.sinceMs;
+  return {
+    kind: 'incoming',
+    fraction: span > 0 ? clamp01((elapsedMs - next.sinceMs) / span) : 1,
+    seconds: Math.max(0, Math.ceil((next.atMs - elapsedMs) / 1000)),
+  };
 }
 
 /**

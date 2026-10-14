@@ -1,26 +1,46 @@
 // The single WebSocket session: join/create, reconnect with the slot token (survives reloads
 // via sessionStorage and short app switches on phones), heartbeat RTT, and routing of server
-// messages to the store, the game runtime and the feedback cues.
+// messages to the store, the game runtime and the feedback cues. Spectators (S7-84) get their own
+// routing: their snapshots, events, stats and level ends go to the spectate store only.
 import {
   type ClientMessage,
+  type Difficulty,
   encodeMessage,
+  type LevelEndMessage,
   type LobbyAction,
+  type Look,
+  type MemberKind,
   type PlayerCommand,
   PROTOCOL_VERSION,
   parseServerMessage,
   RECONNECT_GRACE_MS,
   type Role,
+  type RoomMode,
+  type RoomStateMessage,
+  type RoomVisibility,
   type ServerMessage,
+  type TeamIndex,
 } from '@redakcja/shared';
-import { emitCue } from '../fx/feedback.ts';
-import { useApp } from '../store/app.ts';
+import { useEvents } from '../events/event-store.ts';
+import { emitCue, feedback } from '../fx/feedback.ts';
+import { useGuidance } from '../guidance/store.ts';
+import { playerBubbles } from '../pings/bubble-store.ts';
+import { renderState } from '../scene/render-state.ts';
+import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
+import { selfKind, selfTeam, useApp } from '../store/app.ts';
+import { clientId } from '../store/client-id.ts';
+import { profileLook, useProfile } from '../store/profile.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
+import { useSettings } from '../store/settings.ts';
 import { playerColor } from '../ui/tokens.ts';
 import { reconnectDelayMs } from './backoff.ts';
-import { handleGameEvent } from './game-events.ts';
+import { type GameplayEvent, playerEvents, routeViewEvent } from './game-events.ts';
 import { useGame } from './game-store.ts';
+import { createGameView } from './game-view.ts';
+import { joinedSpectators } from './room-diff.ts';
 import { createRuntime } from './runtime.ts';
+import { useSpectate } from './spectate-store.ts';
 
 const TOKEN_KEY = 'redakcja.reconnect';
 const HEARTBEAT_MS = 2000;
@@ -49,7 +69,7 @@ function socketUrl(): string {
 
 let socket: WebSocket | null = null;
 /** A fresh join to send on the next open; null means resume `slot` instead. */
-let pendingJoin: { nickname: string; roomCode: string | null } | null = null;
+let pendingJoin: { nickname: string; roomCode: string | null; as: MemberKind } | null = null;
 let slot: StoredSlot | null = readSlot();
 let reconnectAttempt = 0;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -60,7 +80,31 @@ let leaving = false;
 export const runtime = createRuntime(
   () => useApp.getState().playerId,
   (message) => send(message),
+  (command) => send({ type: 'command', command }),
 );
+
+/**
+ * The local player's GameView (S7-85): this session's runtime and the module-level stores the
+ * HUD reads too. The scene renders it whenever no other view is provided.
+ */
+export const playerView = createGameView({
+  kind: 'player',
+  team: 0,
+  runtime,
+  subjectId: () => useApp.getState().playerId,
+  store: useGame,
+  events: useEvents,
+  bubbles: playerBubbles,
+  guidance: useGuidance,
+  render: renderState,
+  feedback,
+  bus: playerEvents,
+});
+
+/** Delivers a gameplay event to the player's view (listeners, then its cue). */
+export function handleGameEvent(event: GameplayEvent): void {
+  routeViewEvent(playerView, event);
+}
 
 function send(message: ClientMessage): void {
   if (socket?.readyState === WebSocket.OPEN) {
@@ -78,6 +122,65 @@ function resetLevelState(levelId: string): void {
   useGame.getState().reset();
 }
 
+/** Whether this client watches the room from the Widownia. */
+function watching(): boolean {
+  const { room, playerId } = useApp.getState();
+  return selfKind(room, playerId) === 'spectator';
+}
+
+/** A team-tagged message for another newsroom than the player's own is not theirs to show. */
+function otherTeam(team: TeamIndex | undefined): boolean {
+  const { room, playerId } = useApp.getState();
+  return team !== undefined && team !== selfTeam(room, playerId);
+}
+
+/** Moves a spectator between the lobby, the read-only briefing and the spectate screen. */
+function routeSpectator(message: RoomStateMessage, previous: RoomStateMessage | null): void {
+  const app = useApp.getState();
+  if (message.phase === 'briefing' && app.screen !== 'briefing') {
+    useSpectate.getState().reset(message.levelId);
+    app.setScreen('briefing');
+  } else if (
+    (message.phase === 'playing' || message.phase === 'results') &&
+    app.screen !== 'spectate'
+  ) {
+    // Already reset when the briefing began; joining mid-match arrives here directly.
+    if (previous?.phase !== 'briefing') {
+      useSpectate.getState().reset(message.levelId);
+    }
+    app.setScreen('spectate');
+  } else if (message.phase === 'lobby' && app.screen !== 'lobby') {
+    app.setScreen('lobby');
+  }
+}
+
+function handleLevelEnd(message: LevelEndMessage): void {
+  if (watching()) {
+    useSpectate.getState().applyLevelEnd(message);
+    return;
+  }
+  if (otherTeam(message.team)) {
+    return;
+  }
+  useGame.getState().setLevelEnd(message);
+  // A versus match is not a level played for progress (S7-80 writes no leaderboard either).
+  if (!message.versus) {
+    useProgress.getState().record(message.levelId, message.difficulty, message.stars);
+  }
+  // The profile counts versus matches too: `won` is then this newsroom's match result (S7-104).
+  useProfile.getState().recordLevelEnd(message);
+}
+
+/** Removed by the host (S7-82): the slot is gone, so back to the menu with the reason. */
+function handleKicked(): void {
+  setSlot(null);
+  closeSession();
+  resetToMenu();
+  useApp.setState({ connection: 'idle', error: 'kicked' });
+  // The menu's alert says why (S7-87).
+  emitCue('lobby.kicked');
+}
+
 function handleMessage(message: ServerMessage): void {
   const app = useApp.getState();
   switch (message.type) {
@@ -89,8 +192,10 @@ function handleMessage(message: ServerMessage): void {
       return;
     case 'roomState': {
       const previous = app.room;
-      useApp.setState({ room: message });
-      if (message.phase === 'briefing' && app.screen !== 'briefing') {
+      app.setRoom(message);
+      if (selfKind(message, app.playerId) === 'spectator') {
+        routeSpectator(message, previous);
+      } else if (message.phase === 'briefing' && app.screen !== 'briefing') {
         // Topic of the day before the level (S3-03). Entering it (from the lobby or, on a
         // replay, from the results screen) drops the previous level's state once.
         resetLevelState(message.levelId);
@@ -110,19 +215,37 @@ function handleMessage(message: ServerMessage): void {
           emitCue('player.join');
         }
       }
+      // Someone started watching (S7-86): announced in the lobby and, with a toast, in the game.
+      // A spectator away from the lobby hears nothing (the Widownia's audio policy is S7-90's).
+      if (
+        joinedSpectators(previous, message, app.playerId).length > 0 &&
+        (message.phase === 'lobby' || selfKind(message, app.playerId) === 'player')
+      ) {
+        emitCue('room.spectatorJoined');
+      }
       return;
     }
     case 'snapshot':
-      runtime.onSnapshot(message, performance.now());
-      useGame.getState().applySnapshot(message);
+      if (watching()) {
+        useSpectate.getState().applySnapshot(message, performance.now());
+      } else if (!otherTeam(message.team)) {
+        runtime.onSnapshot(message, performance.now());
+        useGame.getState().applySnapshot(message);
+      }
       return;
     case 'levelEnd':
-      useGame.getState().setLevelEnd(message);
-      useProgress.getState().record(message.levelId, message.stars);
+      handleLevelEnd(message);
       return;
     case 'event': {
+      // Spectators follow the match through `spectatorEvent` (embargoed in versus) only.
+      if (watching() || otherTeam(message.team)) {
+        return;
+      }
       const { event } = message;
       if (event.kind === 'gameStarted') {
+        // Kartoteka cards the player left in the last level do not come back (S7-14).
+        useRetryMemory.getState().reset();
+        useProfile.getState().startMatch();
         emitCue('game.start');
         return;
       }
@@ -156,6 +279,10 @@ function handleMessage(message: ServerMessage): void {
       return;
     }
     case 'error':
+      if (message.code === 'kicked') {
+        handleKicked();
+        return;
+      }
       useApp.setState({ error: message.code });
       if (message.code === 'reconnectFailed') {
         setSlot(null);
@@ -169,6 +296,13 @@ function handleMessage(message: ServerMessage): void {
       return;
     case 'heartbeatAck':
       useApp.setState({ rttMs: Math.round(performance.now() - message.clientTime) });
+      return;
+    case 'spectatorEvent':
+      // Never the player's stores or gameplay listeners: in versus it may hold a masked verdict.
+      useSpectate.getState().applyEvent(message);
+      return;
+    case 'matchStats':
+      useSpectate.getState().applyMatchStats(message);
       return;
   }
 }
@@ -189,6 +323,9 @@ function open(): void {
         protocolVersion: PROTOCOL_VERSION,
         nickname: pendingJoin.nickname,
         ...(pendingJoin.roomCode ? { roomCode: pendingJoin.roomCode } : {}),
+        ...(pendingJoin.as === 'spectator' ? { as: 'spectator' as const } : {}),
+        clientId: clientId(),
+        look: profileLook(),
       });
     } else if (slot) {
       send({
@@ -196,6 +333,7 @@ function open(): void {
         protocolVersion: PROTOCOL_VERSION,
         nickname: useApp.getState().nickname || 'Reporter',
         reconnectToken: slot.token,
+        clientId: clientId(),
       });
     }
     pendingJoin = null;
@@ -268,18 +406,23 @@ function closeSession(): void {
 
 function resetToMenu(): void {
   runtime.reset();
-  useApp.setState({ playerId: null, room: null, screen: 'mainMenu', rttMs: null });
+  useSpectate.getState().reset();
+  useApp.getState().clearRoom();
+  useApp.setState({ playerId: null, screen: 'mainMenu', rttMs: null });
 }
 
-/** Creates a new room (no code) or joins one by code. */
-export function joinRoom(nickname: string, roomCode?: string): void {
+/**
+ * Creates a new room (no code) or joins one by code, as a player or as a spectator (S7-84). The
+ * code is remembered, so a `matchInProgress` answer can offer to watch the same room.
+ */
+export function joinRoom(nickname: string, roomCode?: string, as: MemberKind = 'player'): void {
   setSlot(null);
   closeSession();
   leaving = false;
   disconnectedAt = null;
   reconnectAttempt = 0;
-  useApp.setState({ error: null });
-  pendingJoin = { nickname, roomCode: roomCode ?? null };
+  useApp.setState({ error: null, lastJoinCode: roomCode ?? null });
+  pendingJoin = { nickname, roomCode: roomCode ?? null, as };
   open();
 }
 
@@ -311,6 +454,11 @@ export function selectLevel(levelId: string): void {
   lobby({ kind: 'selectLevel', levelId });
 }
 
+/** Host, in the lobby: the room's difficulty for the next run (resets everyone's ready). */
+export function setDifficulty(difficulty: Difficulty): void {
+  lobby({ kind: 'setDifficulty', difficulty });
+}
+
 /** Briefing: this player has read it; the level starts when everyone has (or on time). */
 export function skipBriefing(): void {
   lobby({ kind: 'skipBriefing' });
@@ -323,6 +471,66 @@ export function backToLobby(): void {
 /** Blunder-of-the-day vote on the results screen; a new vote replaces the old one. */
 export function voteBlunder(storyId: string): void {
   lobby({ kind: 'voteBlunder', storyId });
+}
+
+/**
+ * In-game menu (S7-10): asks the server to hold the level still while a solo player has the menu
+ * open, or to resume it. The server refuses a pause whenever someone else is connected.
+ */
+export function setPaused(paused: boolean): void {
+  lobby({ kind: 'setPaused', paused });
+}
+
+/** Host, in the lobby (S7-86): Razem or Na punkty; the server deals the newsrooms anew. */
+export function setMode(mode: RoomMode): void {
+  lobby({ kind: 'setMode', mode });
+}
+
+/** Na punkty, lobby or results: move to a newsroom (the host may move another player). */
+export function setTeam(team: TeamIndex, playerId?: string): void {
+  lobby(playerId === undefined ? { kind: 'setTeam', team } : { kind: 'setTeam', team, playerId });
+}
+
+/** Lobby or results: watch from the Widownia, or take a seat again (the host may move others). */
+export function setSpectator(spectator: boolean, playerId?: string): void {
+  lobby(
+    playerId === undefined
+      ? { kind: 'setSpectator', spectator }
+      : { kind: 'setSpectator', spectator, playerId },
+  );
+}
+
+/** Host: whether spectators may join this room (the Widownia; closed by default). */
+export function setSpectatorsAllowed(allowed: boolean): void {
+  lobby({ kind: 'setSpectatorsAllowed', allowed });
+}
+
+/** Host: private (by code) or public (in the room browser, when the server offers one). */
+export function setVisibility(visibility: RoomVisibility): void {
+  lobby({ kind: 'setVisibility', visibility });
+}
+
+/** Host: names the room, or clears the name with null. */
+export function setRoomName(name: string | null): void {
+  lobby({ kind: 'setRoomName', name });
+}
+
+/** Host (S7-87): removes a member from the room; their browser may not rejoin for a while. */
+export function kick(playerId: string): void {
+  lobby({ kind: 'kick', playerId });
+}
+
+/** Host (S7-87): hands the host to another connected member (a spectator may host). */
+export function transferHost(playerId: string): void {
+  lobby({ kind: 'transferHost', playerId });
+}
+
+/**
+ * Lobby only (S7-105): the profile's look changed while in a room. The room keeps the current
+ * colour when a teammate holds the preferred one; the accessory always applies.
+ */
+export function setLook(look: Look): void {
+  lobby({ kind: 'setLook', look });
 }
 
 /** Sends a player decision (minigame result, verdict, ping, …); applied on the next tick. */
@@ -348,8 +556,19 @@ export function handleVisibilityReturn(): void {
   }
 }
 
+/** Tests only: feeds one server message through the routing above. */
+export const receiveForTest = handleMessage;
+
 // Dev aid (`?debug`): replay a server message, e.g. a `roomState` in the briefing phase before
 // the server sends one, and send lobby actions from the console or a scripted playtest.
 if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
   (window as unknown as { __session?: unknown }).__session = { receive: handleMessage, lobby };
+  // Fire events and cues from the console or end-to-end tests.
+  (window as unknown as { __fx?: unknown }).__fx = {
+    handleGameEvent,
+    emitCue,
+    useGame,
+    useApp,
+    useSettings,
+  };
 }

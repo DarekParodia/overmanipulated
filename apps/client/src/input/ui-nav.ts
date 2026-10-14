@@ -1,14 +1,31 @@
 // UI navigation while an overlay (station minigame, desk sheet, ping picker) owns the input.
 // Keyboard and gamepad are translated into a small set of intents; touch and mouse use the
 // overlay's own buttons. While captured, the world gets neutral input (no movement, no actions).
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { useApp } from '../store/app.ts';
 import { PAD, radialDeadzone } from './gamepad.ts';
 import { firstGamepad } from './gamepad-access.ts';
 
-export type NavIntent = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'alt';
+/**
+ * `ability` is the role ability key (R / RB, S7-39): overlays that offer an ability use it
+ * (Ekspertyza, the desk's Przedłużenie); everything else ignores it or passes it on.
+ * `help` opens the station help card in a station overlay (H / Select, S7-95).
+ */
+export type NavIntent =
+  | 'up'
+  | 'down'
+  | 'left'
+  | 'right'
+  | 'confirm'
+  | 'back'
+  | 'alt'
+  | 'ability'
+  | 'help';
 
-/** Physical key → intent. WASD and arrows navigate; Space/Enter/E confirm; Esc/Backspace back. */
+/**
+ * Physical key → intent. WASD and arrows navigate; Space/Enter/E confirm; Esc/Backspace back;
+ * Q/Tab alt; R is the role ability; H opens the station help.
+ */
 export const NAV_KEYS: Readonly<Record<string, NavIntent>> = {
   ArrowUp: 'up',
   KeyW: 'up',
@@ -26,9 +43,14 @@ export const NAV_KEYS: Readonly<Record<string, NavIntent>> = {
   Backspace: 'back',
   KeyQ: 'alt',
   Tab: 'alt',
+  KeyR: 'ability',
+  KeyH: 'help',
 };
 
-/** Gamepad: d-pad / left stick navigate, south confirms, east backs out, north is `alt`. */
+/**
+ * Gamepad: d-pad / left stick navigate, south confirms, east backs out, north is `alt`, RB is
+ * the role ability, Select is the station help.
+ */
 const PAD_EAST = 1;
 const STICK_THRESHOLD = 0.6;
 
@@ -42,8 +64,28 @@ let captureCount = 0;
 let pollHandle: number | null = null;
 const padPrevious = new Set<NavIntent>();
 
+const captureListeners = new Set<() => void>();
+
 export function isInputCaptured(): boolean {
   return captureCount > 0;
+}
+
+function notifyCapture(): void {
+  for (const listener of captureListeners) {
+    listener();
+  }
+}
+
+function subscribeCapture(listener: () => void): () => void {
+  captureListeners.add(listener);
+  return () => {
+    captureListeners.delete(listener);
+  };
+}
+
+/** Re-renders when something takes or gives back the input (e.g. the menu button, S7-10). */
+export function useInputCaptured(): boolean {
+  return useSyncExternalStore(subscribeCapture, isInputCaptured, () => false);
 }
 
 function dispatch(intent: NavIntent): void {
@@ -94,6 +136,8 @@ function padIntents(): Set<NavIntent> {
   if (pressed(PAD.south)) intents.add('confirm');
   if (pressed(PAD_EAST)) intents.add('back');
   if (pressed(PAD.north)) intents.add('alt');
+  if (pressed(PAD.rb)) intents.add('ability');
+  if (pressed(PAD.select)) intents.add('help');
   return intents;
 }
 
@@ -122,6 +166,9 @@ export function captureInput(): () => void {
     }
     pollHandle ??= requestAnimationFrame(poll);
   }
+  if (captureCount === 1) {
+    notifyCapture();
+  }
   let released = false;
   return () => {
     if (released) {
@@ -133,6 +180,9 @@ export function captureInput(): () => void {
       cancelAnimationFrame(pollHandle);
       pollHandle = null;
       padPrevious.clear();
+    }
+    if (captureCount === 0) {
+      notifyCapture();
     }
   };
 }

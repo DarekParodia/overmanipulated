@@ -1,24 +1,41 @@
-// Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick one collected
-// stamp as the evidence. 2: press one of three big verdict buttons. After the server's verdict
-// the sheet shows the outcome (✓ / ✗, points, what was missed) until dismissed. The managing
-// editor also gets the level's one "+20 s" deadline extension here (S4-04 groundwork).
+// Editorial desk sheet (S2-07): the folder card, then two numbered steps. 1: pick the collected
+// stamps cited as evidence: one for most stories, N for a multi-stamp folder (S7-19, numbered
+// ticks in the order picked, a k/N chip, an amber line when the folder holds fewer stamps than
+// N; `desk-model.ts`). 2: press one of three big verdict buttons. After the server's verdict
+// the sheet shows the outcome until dismissed (S7-04): ✓ / ✗, the title by reason, points,
+// credibility and bonus chips (the multi-stamp one included), then at most two short lines from
+// `desk-result-model.ts` (the proof, or the right verdict and the deciding station). The
+// managing editor's Przedłużenie is the role ability (R / RB / the touch button, S7-37), not a
+// sheet button: while the sheet owns the input, R / RB arrive as the nav intent `ability` and
+// go out as a world press (S7-41), which targets the folder on the desk.
 import type { Story, Stamp as StoryStamp } from '@redakcja/content';
-import type { Folder, GameEvent, Verdict } from '@redakcja/shared';
+import {
+  type Folder,
+  type FolderBonuses,
+  type GameEvent,
+  requiredStampsOf,
+  type Verdict,
+} from '@redakcja/shared';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { correctionStampId } from '../events/event-model.ts';
 import { emitCue } from '../fx/feedback.ts';
 import { type NavIntent, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
-import { onGameEvent } from '../net/game-events.ts';
 import { useGame } from '../net/game-store.ts';
-import { sendCommand } from '../net/session.ts';
+import { runtime } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Button } from '../ui/Button.tsx';
-import { Icon } from '../ui/icons/Icon.tsx';
+import { Icon, type IconName } from '../ui/icons/Icon.tsx';
 import { VerdictStamp } from '../ui/VerdictStamp.tsx';
 import styles from './DeskOverlay.module.css';
-import { DEADLINE_EXTENSION_S, mayExtendDeadline } from './deadline-extension.ts';
+import { evidenceShortfall, toggleEvidence, verdictReady } from './desk-model.ts';
+import {
+  type DeskResultLine,
+  deskResultChips,
+  deskResultLabel,
+  deskResultLines,
+} from './desk-result-model.ts';
 import { FolderSheet } from './FolderSheet.tsx';
 import { OutcomeBanner, ResultMark, STATION_ICON } from './kit.tsx';
 import { OverlayFrame } from './OverlayFrame.tsx';
@@ -33,7 +50,8 @@ export type DeskOverlayProps = {
   pending: boolean;
   /** The server's answer; switches the sheet to the outcome view. */
   result: VerdictResultEvent | null;
-  onVerdict(verdict: Verdict, justifyingStampId: string): void;
+  /** `justifyingStampIds`: the cited proofs in the order picked, 1 to N stamp ids. */
+  onVerdict(verdict: Verdict, justifyingStampIds: string[]): void;
   onClose(): void;
   onDismissResult(): void;
 };
@@ -42,15 +60,21 @@ export type DeskOverlayProps = {
 const VERDICT_ORDER: readonly Verdict[] = ['publish', 'publishWithContext', 'reject'];
 
 const CLOSE = 'close';
-const EXTEND = 'extend';
-/** How long the "+20 s" button waits for the server before it can be pressed again. */
-const EXTEND_RETRY_MS = 2000;
 /** Gap kept between a focused stamp and the panel edge or the verdict strip. */
 const FOCUS_MARGIN_PX = 12;
 const verdictKey = (verdict: Verdict) => `verdict:${verdict}`;
 
 export function DeskOverlay(props: DeskOverlayProps) {
   useInputCapture(true);
+  // Subscribed after the view inside (React runs a parent's effects last), so this sees the
+  // role ability key first and passes everything else on.
+  useNavIntent((intent: NavIntent) => {
+    if (intent !== 'ability') {
+      return false;
+    }
+    runtime.pressAbility();
+    return true;
+  });
   if (props.result) {
     return <ResultView {...props} result={props.result} />;
   }
@@ -74,7 +98,7 @@ function CorrectionView({ folder, story, pending, onVerdict, onClose }: DeskOver
   const canSend = stampId !== null && !pending;
   const send = () => {
     if (stampId !== null && canSend) {
-      onVerdict('publishWithContext', stampId);
+      onVerdict('publishWithContext', [stampId]);
     }
   };
 
@@ -132,25 +156,38 @@ function CorrectionView({ folder, story, pending, onVerdict, onClose }: DeskOver
 function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlayProps) {
   const device = useApp((s) => s.inputDevice);
   const collected = collectedStamps(folder, story);
-  const [chosen, setChosen] = useState<string | null>(null);
-  const extension = useDeadlineExtension(folder.id);
+  const required = story ? requiredStampsOf(story) : 1;
+  const many = required >= 2;
+  const [chosen, setChosen] = useState<readonly string[]>([]);
+  // The last blocked pick (a stamp beyond N): its row nudges and a line says what to do.
+  const [blocked, setBlocked] = useState<{ id: string; serial: number } | null>(null);
   const grid: FocusGrid = [
-    extension.state === 'available' ? [EXTEND] : [],
     ...collected.map((stamp) => [stamp.id]),
     collected.length > 0 ? VERDICT_ORDER.map(verdictKey) : [],
     [CLOSE],
   ];
   const [focus, setFocus] = useState<string | null>(() => collected[0]?.id ?? CLOSE);
-  const canVerdict = chosen !== null && !pending;
-  const choose = (stampId: string) => {
-    setChosen(stampId);
-    emitCue('desk.justify');
+  const ready = verdictReady(chosen, required, collected.length);
+  const canVerdict = ready && !pending;
+  const shortfall = many && evidenceShortfall(required, collected.length);
+  /** Picks or unpicks a stamp; true when the pick just became complete. */
+  const toggle = (stampId: string): boolean => {
+    const next = toggleEvidence(chosen, stampId, required);
+    if (next.blocked) {
+      emitCue('ui.back');
+      setBlocked((last) => ({ id: stampId, serial: (last?.serial ?? 0) + 1 }));
+      return false;
+    }
+    setBlocked(null);
+    setChosen(next.selected);
+    emitCue(next.removed ? 'desk.unjustify' : 'desk.justify');
+    return !next.removed && verdictReady(next.selected, required, collected.length);
   };
   const decide = (verdict: Verdict) => {
-    if (chosen === null || pending) {
+    if (!canVerdict) {
       return;
     }
-    onVerdict(verdict, chosen);
+    onVerdict(verdict, [...chosen]);
   };
 
   useNavIntent((intent: NavIntent) => {
@@ -166,13 +203,6 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
     if (focus === CLOSE) {
       emitCue('ui.back');
       onClose();
-    } else if (focus === EXTEND) {
-      if (extension.state === 'available') {
-        emitCue('ui.click');
-        extension.extend();
-      } else {
-        emitCue('ui.hover');
-      }
     } else if (focus?.startsWith('verdict:')) {
       const verdict = focus.slice('verdict:'.length) as Verdict;
       if (canVerdict) {
@@ -181,8 +211,8 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
       } else {
         emitCue('ui.hover');
       }
-    } else if (focus !== null) {
-      choose(focus);
+    } else if (focus !== null && toggle(focus)) {
+      // One proof: straight to the verdicts. Several: once the pick is complete.
       setFocus(verdictKey('publish'));
     }
   });
@@ -229,11 +259,17 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
   const empty = collected.length === 0;
   const hint = empty
     ? pl.desk.noStamps
-    : chosen === null
-      ? pl.desk.pickStamp
-      : pending
-        ? pl.desk.sending
-        : pl.desk.pickVerdict;
+    : pending
+      ? pl.desk.sending
+      : blocked
+        ? pl.desk.deselectFirst
+        : ready
+          ? pl.desk.pickVerdict
+          : many
+            ? pl.desk.evidenceStatus(chosen.length, required)
+            : pl.desk.pickStamp;
+  const nudge = (stampId: string) =>
+    blocked?.id === stampId ? (blocked.serial % 2 ? styles.nudgeA : styles.nudgeB) : '';
 
   return (
     <OverlayFrame
@@ -254,14 +290,6 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
           <p className="visually-hidden" role="status" data-testid="desk-hint">
             {typeset(hint)}
           </p>
-          <ExtendDeadline
-            state={extension.state}
-            focused={showFocus && focus === EXTEND}
-            onExtend={() => {
-              setFocus(EXTEND);
-              extension.extend();
-            }}
-          />
           {empty ? (
             <div className={styles.emptyBox}>
               <OutcomeBanner success={false} title={typeset(pl.desk.noStamps)} />
@@ -277,46 +305,71 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
             </div>
           ) : (
             <>
-              <Step n={1} state={chosen === null ? 'active' : 'done'}>
-                {pl.desk.stepEvidence}
+              <Step n={1} state={ready ? 'done' : 'active'}>
+                {many ? pl.desk.stepEvidenceMany(required) : pl.desk.stepEvidence}
+                {many && (
+                  <span className={styles.count} data-testid="desk-evidence-count">
+                    {pl.desk.evidenceCount(chosen.length, required)}
+                  </span>
+                )}
               </Step>
+              {shortfall && (
+                <p className={styles.shortfall} data-testid="desk-too-few">
+                  <Icon name="stamp" size={20} className={`${styles.noteGlyph}`} />
+                  <span>{typeset(pl.desk.tooFewProofs)}</span>
+                </p>
+              )}
+              {blocked && (
+                <p className={styles.blocked} data-testid="desk-deselect-first">
+                  <Icon name="stamp" size={20} className={`${styles.noteGlyph}`} />
+                  <span>{typeset(pl.desk.deselectFirst)}</span>
+                </p>
+              )}
               <ul className={styles.stamps}>
-                {collected.map((stamp) => (
-                  <li key={stamp.id}>
-                    <button
-                      type="button"
-                      className={`${styles.stamp} ${chosen === stamp.id ? styles.chosen : ''} ${focused(stamp.id)}`}
-                      aria-pressed={chosen === stamp.id}
-                      data-testid={`desk-stamp-${stamp.id}`}
-                      ref={(element) => {
-                        if (element) {
-                          stampRefs.current.set(stamp.id, element);
-                        } else {
-                          stampRefs.current.delete(stamp.id);
-                        }
-                      }}
-                      onClick={() => {
-                        choose(stamp.id);
-                        setFocus(stamp.id);
-                      }}
-                    >
-                      <span className={styles.stampIcon}>
-                        <Icon name={STATION_ICON[stamp.station]} size={26} />
-                      </span>
-                      <span className={styles.stampText}>
-                        <span className={styles.stampStation}>
-                          {pl.vocab.stations[stamp.station]}
+                {collected.map((stamp) => {
+                  const order = chosen.indexOf(stamp.id);
+                  const picked = order >= 0;
+                  return (
+                    <li key={stamp.id}>
+                      <button
+                        type="button"
+                        className={`${styles.stamp} ${picked ? styles.chosen : ''} ${focused(stamp.id)} ${nudge(stamp.id)}`}
+                        aria-pressed={picked}
+                        data-testid={`desk-stamp-${stamp.id}`}
+                        ref={(element) => {
+                          if (element) {
+                            stampRefs.current.set(stamp.id, element);
+                          } else {
+                            stampRefs.current.delete(stamp.id);
+                          }
+                        }}
+                        onClick={() => {
+                          toggle(stamp.id);
+                          setFocus(stamp.id);
+                        }}
+                      >
+                        <span className={styles.stampIcon}>
+                          <Icon name={STATION_ICON[stamp.station]} size={26} />
                         </span>
-                        <span>{typeset(stamp.text)}</span>
-                      </span>
-                      {chosen === stamp.id && (
-                        <span className={styles.tick} aria-hidden="true">
-                          <Icon name="publish" size={20} className={`${styles.tickIcon}`} />
+                        <span className={styles.stampText}>
+                          <span className={styles.stampStation}>
+                            {pl.vocab.stations[stamp.station]}
+                          </span>
+                          <span>{typeset(stamp.text)}</span>
                         </span>
-                      )}
-                    </button>
-                  </li>
-                ))}
+                        {picked && (
+                          <span className={styles.tick} aria-hidden="true">
+                            {many ? (
+                              <span className={styles.tickNo}>{order + 1}</span>
+                            ) : (
+                              <Icon name="publish" size={20} className={`${styles.tickIcon}`} />
+                            )}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </>
           )}
@@ -324,7 +377,7 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
 
         {!empty && (
           <div className={styles.decide} ref={decideRef}>
-            <Step n={2} state={chosen === null ? 'waiting' : 'active'}>
+            <Step n={2} state={ready ? 'active' : 'waiting'}>
               {pending ? pl.desk.sending : pl.desk.stepVerdict}
             </Step>
             <fieldset className={styles.verdicts} disabled={!canVerdict}>
@@ -356,96 +409,6 @@ function VerdictView({ folder, story, pending, onVerdict, onClose }: DeskOverlay
   );
 }
 
-type ExtensionState = 'hidden' | 'available' | 'sending' | 'done';
-
-/**
- * The local player's view of the level's one deadline extension for this folder: offered only
- * to whoever may use it (see `mayExtendDeadline`) while it is unused, then "done" once the
- * server confirms it for this folder.
- */
-function useDeadlineExtension(folderId: string): { state: ExtensionState; extend(): void } {
-  const playerId = useApp((s) => s.playerId);
-  const players = useApp((s) => s.room?.players);
-  const used = useGame((s) => s.deadlineExtensionUsed);
-  const [sentAt, setSentAt] = useState<number | null>(null);
-  const [done, setDone] = useState(false);
-  useEffect(
-    () =>
-      onGameEvent((event) => {
-        if (event.kind === 'deadlineExtended' && event.folderId === folderId) {
-          setDone(true);
-          setSentAt(null);
-        }
-      }),
-    [folderId],
-  );
-  // The server ignores a refused command; let the player try again after a moment.
-  useEffect(() => {
-    if (sentAt === null) {
-      return;
-    }
-    const timer = setTimeout(() => setSentAt(null), EXTEND_RETRY_MS);
-    return () => clearTimeout(timer);
-  }, [sentAt]);
-  const allowed = mayExtendDeadline(players ?? [], playerId, used);
-  const state: ExtensionState = done
-    ? 'done'
-    : !allowed
-      ? 'hidden'
-      : sentAt !== null
-        ? 'sending'
-        : 'available';
-  return {
-    state,
-    extend() {
-      if (state !== 'available') {
-        return;
-      }
-      setSentAt(Date.now());
-      sendCommand({ kind: 'extendDeadline', folderId });
-    },
-  };
-}
-
-/** Secondary "+20 s" button; after the server's confirmation a green "+20 s!" badge. */
-function ExtendDeadline({
-  state,
-  focused,
-  onExtend,
-}: {
-  state: ExtensionState;
-  focused: boolean;
-  onExtend(): void;
-}) {
-  if (state === 'hidden') {
-    return null;
-  }
-  if (state === 'done') {
-    return (
-      <p className={styles.extended} role="status" data-testid="desk-extended">
-        <Icon name="clock" size={22} />
-        {pl.desk.extended(DEADLINE_EXTENSION_S)}
-      </p>
-    );
-  }
-  return (
-    <div className={styles.extend}>
-      <Button
-        variant="secondary"
-        icon={<Icon name="clock" size={22} />}
-        disabled={state === 'sending'}
-        aria-label={pl.desk.extendLabel(DEADLINE_EXTENSION_S)}
-        data-focused={focused}
-        data-testid="desk-extend"
-        onClick={onExtend}
-      >
-        <span className={styles.extendAmount}>{pl.desk.extendAmount(DEADLINE_EXTENSION_S)}</span>{' '}
-        {pl.desk.extend}
-      </Button>
-    </div>
-  );
-}
-
 /** Numbered step heading: yellow number when it is the thing to do, green ✓ once done. */
 function Step({
   n,
@@ -466,22 +429,40 @@ function Step({
   );
 }
 
+/** Bonus chips in a fixed order, each with its icon. */
+const BONUS_ICON: Record<keyof FolderBonuses, IconName> = {
+  speed: 'clock',
+  multiStamp: 'stamp',
+  bossCall: 'phone',
+};
+const BONUS_ORDER: readonly (keyof FolderBonuses)[] = ['speed', 'multiStamp', 'bossCall'];
+
 function ResultView({
+  folder,
   story,
   result,
   onDismissResult,
 }: DeskOverlayProps & { result: VerdictResultEvent }) {
   const device = useApp((s) => s.inputDevice);
+  // The level's stations do not change while the result shows; read them once, not per snapshot.
+  const [levelStations] = useState(() => useGame.getState().stations.map((s) => s.kind));
   useNavIntent((intent) => {
     if (intent === 'confirm' || intent === 'back') {
       emitCue('ui.click');
       onDismissResult();
     }
   });
-  const missed = result.missedStampIds
-    .map((id) => story?.stamps.find((stamp) => stamp.id === id))
-    .filter((stamp): stamp is StoryStamp => stamp !== undefined);
   const good = result.outcome === 'correct';
+  const lines = deskResultLines(
+    {
+      reason: result.reason,
+      justifyingStampIds: result.justifyingStampIds,
+      requiredStamps: result.requiredStamps,
+      folderStampIds: folder.stamps,
+      levelStations,
+    },
+    story,
+  );
 
   return (
     <OverlayFrame
@@ -493,11 +474,16 @@ function ResultView({
       testId="desk-result"
     >
       <div className={styles.result}>
-        <div className={styles.outcome} role="status" data-testid="desk-outcome">
+        <div
+          className={styles.outcome}
+          role="status"
+          data-testid="desk-outcome"
+          data-reason={result.reason}
+        >
           <ResultMark success={good} size="lg" />
           <div className={styles.outcomeText}>
             <p className={`${styles.outcomeTitle} ${good ? styles.good : styles.bad}`}>
-              {typeset(pl.desk.outcomes[result.outcome])}
+              {typeset(pl.outcome.title[result.reason])}
             </p>
             {story && <p className={styles.outcomeStory}>{typeset(story.headline)}</p>}
           </div>
@@ -511,28 +497,21 @@ function ResultView({
           <span className={styles.delta}>
             {pl.desk.credibility(signed(result.credibilityDelta))}
           </span>
-          {result.speedBonus && (
-            <span className={styles.delta}>
-              <Icon name="clock" size={20} />
-              {pl.desk.speedBonus}
+          {BONUS_ORDER.filter((bonus) => result.bonuses[bonus] > 0).map((bonus) => (
+            <span key={bonus} className={styles.delta} data-testid={`desk-bonus-${bonus}`}>
+              <Icon name={BONUS_ICON[bonus]} size={20} />
+              <span className={styles.bonusLabel}>{pl.desk.result.bonuses[bonus]}</span>
+              {signed(result.bonuses[bonus])}
             </span>
-          )}
+          ))}
         </p>
 
-        {missed.length > 0 && (
-          <div className={styles.missed}>
-            <h3 className={styles.missedTitle}>{pl.desk.missed}</h3>
-            <ul>
-              {missed.map((m) => (
-                <li key={m.id}>
-                  <span className={styles.stampIcon}>
-                    <Icon name={STATION_ICON[m.station]} size={22} />
-                  </span>
-                  <span>{typeset(m.text)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {lines.length > 0 && (
+          <ul className={styles.lines} data-testid="desk-result-lines">
+            {lines.map((line) => (
+              <ResultLine key={line.kind} line={line} />
+            ))}
+          </ul>
         )}
 
         <div className={styles.next}>
@@ -542,6 +521,37 @@ function ResultView({
         </div>
       </div>
     </OverlayFrame>
+  );
+}
+
+/** Lines without chips lead with an icon, so no line is words alone. */
+const LINE_ICON: Partial<Record<DeskResultLine['kind'], IconName>> = {
+  weakProof: 'stamp',
+  tooFewProofs: 'stamp',
+};
+
+/** One short line: a label, then station chips (icon + short name) or the right verdict. */
+function ResultLine({ line }: { line: DeskResultLine }) {
+  const icon =
+    line.kind === 'hintOnly' && line.stations[0]
+      ? STATION_ICON[line.stations[0]]
+      : LINE_ICON[line.kind];
+  return (
+    <li className={styles.line} data-testid={`desk-line-${line.kind}`}>
+      {icon && (
+        <span className={styles.lineIcon}>
+          <Icon name={icon} size={20} />
+        </span>
+      )}
+      <span className={styles.lineLabel}>{typeset(deskResultLabel(line))}</span>
+      {deskResultChips(line).map((station) => (
+        <span key={station} className={styles.chip}>
+          <Icon name={STATION_ICON[station]} size={20} />
+          {pl.guidance.stationShort[station]}
+        </span>
+      ))}
+      {line.kind === 'correctVerdict' && <VerdictStamp kind={line.verdict} size="sm" />}
+    </li>
   );
 }
 

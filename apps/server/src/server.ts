@@ -2,14 +2,17 @@
 import { websocket } from '@hono/bun';
 import type { Server } from 'bun';
 import { createApp } from './app.ts';
+import { type ConfigStore, staticConfigStore } from './config.ts';
 import { type Db, openDatabase } from './db/client.ts';
 import { deleteExpiredBlunderVotes, recordBlunderVote } from './db/queries/blunder-votes.ts';
 import { deleteExpiredEntries, insertLeaderboardEntry } from './db/queries/leaderboard.ts';
 import type { Env } from './env.ts';
 import { log } from './log.ts';
 import { createGameLoop } from './loop.ts';
+import { roomSettings } from './public-config.ts';
 import { createRoomRegistry } from './rooms/registry.ts';
 import { delayed } from './routes/ws.ts';
+import { NO_SHELL, type ShellAssets } from './shell/assets.ts';
 
 const RETENTION_SWEEP_MS = 60 * 60 * 1000;
 
@@ -19,7 +22,15 @@ export type RunningServer = {
   stop(): Promise<void>;
 };
 
-export function startServer(env: Env): RunningServer {
+export type ServerOptions = {
+  /** Live config.json; the defaults when absent (tests, tools). The caller owns `close()`. */
+  config?: ConfigStore;
+  /** Built client page for the HTML shell (`loadShellAssets`); none when absent (tests, tools). */
+  shell?: ShellAssets;
+};
+
+export function startServer(env: Env, options: ServerOptions = {}): RunningServer {
+  const config = options.config ?? staticConfigStore();
   const db = openDatabase(env.DATABASE_PATH);
   let server: Server<unknown> | null = null;
   const registry = createRoomRegistry({
@@ -28,13 +39,19 @@ export function startServer(env: Env): RunningServer {
     },
     onActive: () => loop.start(),
     briefingMs: env.BRIEFING_MS,
+    settings: () => roomSettings(config.get()),
     recordBlunderVote: (vote) => recordBlunderVote(db, vote),
-    recordLeaderboardEntry: (entry) => {
-      insertLeaderboardEntry(db, entry);
-    },
+    recordLeaderboardEntry: (entry) => insertLeaderboardEntry(db, entry),
   });
   const loop = createGameLoop(registry);
-  const app = createApp({ db, registry, devLatencyMs: env.DEV_LATENCY_MS });
+  const app = createApp({
+    db,
+    registry,
+    devLatencyMs: env.DEV_LATENCY_MS,
+    config: () => config.get(),
+    configMeta: () => ({ source: config.source, revision: config.revision }),
+    shell: options.shell ?? NO_SHELL,
+  });
 
   server = Bun.serve({ port: env.PORT, fetch: app.fetch, websocket });
 

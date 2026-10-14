@@ -1,11 +1,19 @@
 import { describe, expect, it } from 'bun:test';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
+  BUDGET,
+  EXTRAS_SOURCES,
+  extrasGraph,
+  isExtrasKey,
   lazyGraph,
   linkedFiles,
   type Manifest,
   rangeCovers,
   requestedFonts,
   staticGraph,
+  voiceFiles,
 } from './check-bundle.ts';
 
 const manifest: Manifest = {
@@ -36,6 +44,97 @@ describe('bundle graph', () => {
       'assets/game.js',
       'assets/three.js',
     ]);
+  });
+});
+
+// S7-96: the lazy dialogs („Jak grać”, intro, „O grze”, profile) are their own route.
+const withExtras: Manifest = {
+  'index.html': {
+    file: 'assets/index.js',
+    css: ['assets/index.css'],
+    imports: ['shared'],
+    isEntry: true,
+    dynamicImports: ['game', 'src/howto/HowToPlayDialog.tsx', 'src/about/AboutDialog.tsx'],
+  },
+  shared: { file: 'assets/shared.js' },
+  game: { file: 'assets/game.js', css: ['assets/game.css'], imports: ['shared', 'three', 'kit'] },
+  three: { file: 'assets/three.js' },
+  kit: { file: 'assets/kit.js' },
+  'src/howto/HowToPlayDialog.tsx': {
+    file: 'assets/HowToPlayDialog.js',
+    css: ['assets/HowToPlayDialog.css'],
+    imports: ['shared', 'kit', 'help'],
+    dynamicImports: ['src/intro/IntroPlayer.tsx'],
+  },
+  help: { file: 'assets/help.js', dynamicImports: ['src/intro/IntroPlayer.tsx'] },
+  'src/intro/IntroPlayer.tsx': { file: 'assets/IntroPlayer.js', imports: ['shared'] },
+  'src/about/AboutDialog.tsx': { file: 'assets/AboutDialog.js', imports: ['help'] },
+};
+
+describe('extras route', () => {
+  it('knows the five extras folders and the 1 MB guard', () => {
+    expect(EXTRAS_SOURCES).toEqual([
+      'src/intro/',
+      'src/howto/',
+      'src/about/',
+      'src/profile/',
+      'src/rooms/',
+    ]);
+    expect(BUDGET.extrasMax).toBe(1024 * 1024);
+    expect(isExtrasKey('src/howto/HowToPlayDialog.tsx')).toBe(true);
+    expect(isExtrasKey('src/profile/ProfileDialog.tsx')).toBe(true);
+    expect(isExtrasKey('src/rooms/RoomBrowserDialog.tsx')).toBe(true);
+    expect(isExtrasKey('src/screens/GameScreen.tsx')).toBe(false);
+    expect(isExtrasKey('_kit-abc.js')).toBe(false);
+  });
+
+  it('keeps the extras out of the game route', () => {
+    expect(lazyGraph(withExtras, 'index.html', isExtrasKey).sort()).toEqual([
+      'assets/game.css',
+      'assets/game.js',
+      'assets/kit.js',
+      'assets/three.js',
+    ]);
+  });
+
+  it('counts each extras file once, after the menu and the game', () => {
+    const game = lazyGraph(withExtras, 'index.html', isExtrasKey);
+    expect(extrasGraph(withExtras, 'index.html', game).sort()).toEqual([
+      'assets/AboutDialog.js',
+      'assets/HowToPlayDialog.css',
+      'assets/HowToPlayDialog.js',
+      'assets/IntroPlayer.js',
+      'assets/help.js',
+    ]);
+  });
+
+  it('counts a chunk shared with the game when the game files are not given', () => {
+    expect(extrasGraph(withExtras, 'index.html')).toContain('assets/kit.js');
+  });
+
+  it('is empty without extras', () => {
+    expect(extrasGraph(manifest, 'index.html')).toEqual([]);
+  });
+
+  it('lists the voice audio of one format with its sprite json', () => {
+    const dist = mkdtempSync(join(tmpdir(), 'check-bundle-'));
+    try {
+      expect(voiceFiles(dist, 'webm')).toEqual([]);
+      mkdirSync(join(dist, 'assets/voice'), { recursive: true });
+      for (const name of ['intro.webm', 'intro.mp3', 'intro.json', 'README.txt']) {
+        writeFileSync(join(dist, 'assets/voice', name), 'x');
+      }
+      expect(voiceFiles(dist, 'webm')).toEqual([
+        'assets/voice/intro.json',
+        'assets/voice/intro.webm',
+      ]);
+      expect(voiceFiles(dist, 'mp3')).toEqual([
+        'assets/voice/intro.json',
+        'assets/voice/intro.mp3',
+      ]);
+    } finally {
+      rmSync(dist, { recursive: true, force: true });
+    }
   });
 });
 

@@ -4,6 +4,8 @@ import type { GameplayEvent } from '../fx/event-cues.ts';
 import { pl } from '../strings/pl.ts';
 import {
   BUSY_KINDS,
+  hasEnoughProofs,
+  justifyingCount,
   type NextStepInput,
   nextStep,
   type StoryStamps,
@@ -39,6 +41,7 @@ const ME = 'p1';
 function folder(id: string, location: Folder['location'], extra: Partial<Folder> = {}): Folder {
   return {
     id,
+    spawnKey: 's0',
     storyId: 'story',
     location,
     stamps: [],
@@ -68,13 +71,114 @@ function input(partial: Partial<NextStepInput>): NextStepInput {
     targetFixtureId: null,
     device: 'keyboard',
     story: (id) => (id === 'story' ? story : undefined),
+    next: { kind: 'none' },
     ...partial,
   };
 }
 
+describe('multi-stamp folders (S7-19)', () => {
+  // Needs two proofs: the archive and the registry; the AI scanner justifies but is a hint.
+  const two: StoryStamps = {
+    stamps: [...story.stamps, { id: 's-ai', station: 'aiScanner' }],
+    justifyingStamps: ['s-ai', 's-archive', 's-registry'],
+    requiredStamps: 2,
+  };
+  const withTwo = (partial: Partial<NextStepInput>) => input({ story: () => two, ...partial });
+
+  test('justifyingCount counts distinct proofs, never the AI scanner', () => {
+    expect(justifyingCount(folder('f', carried, { stamps: ['s-ai', 's-image'] }), two)).toBe(0);
+    expect(justifyingCount(folder('f', carried, { stamps: ['s-archive', 's-ai'] }), two)).toBe(1);
+    expect(
+      justifyingCount(folder('f', carried, { stamps: ['s-archive', 's-registry'] }), two),
+    ).toBe(2);
+    expect(justifyingCount(folder('f', carried, { stamps: ['s-archive'] }), undefined)).toBe(0);
+  });
+
+  test('hasEnoughProofs compares against requiredStamps (1 when absent)', () => {
+    const one = folder('f', carried, { stamps: ['s-archive'] });
+    expect(hasEnoughProofs(one, story)).toBe(true);
+    expect(hasEnoughProofs(one, two)).toBe(false);
+    expect(
+      hasEnoughProofs(folder('f', carried, { stamps: ['s-archive', 's-registry'] }), two),
+    ).toBe(true);
+    expect(hasEnoughProofs(one, undefined)).toBe(false);
+  });
+
+  test('one proof of two: on to the missing proving station, not the desk', () => {
+    const step = nextStep(withTwo({ folders: [folder('f', carried, { stamps: ['s-archive'] })] }));
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
+    expect(step.text).toBe('Zanieś do: Kartoteka');
+  });
+
+  test('the AI scanner does not make up the second proof', () => {
+    const step = nextStep(
+      withTwo({ folders: [folder('f', carried, { stamps: ['s-archive', 's-ai'] })] }),
+    );
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
+  });
+
+  test('both proofs collected: to a free desk', () => {
+    const step = nextStep(
+      withTwo({ folders: [folder('f', carried, { stamps: ['s-registry', 's-archive'] })] }),
+    );
+    expect(step.kind).toBe('toDesk');
+    expect(step.targetFixtureIds).toEqual(['desk-0', 'desk-1']);
+  });
+
+  test('an unchecked multi-stamp folder: every proving station', () => {
+    const step = nextStep(withTwo({ folders: [folder('f', carried)] }));
+    expect(step.targetFixtureIds).toEqual(['archive-0', 'sourceRegistry-0']);
+  });
+});
+
 describe('nextStep', () => {
   test('nothing anywhere: wait', () => {
-    expect(nextStep(input({})).kind).toBe('wait');
+    expect(nextStep(input({}))).toEqual({
+      kind: 'wait',
+      text: 'Czekaj na nową teczkę',
+      targetFixtureIds: [],
+    });
+  });
+
+  test('nothing anywhere: says in whole seconds when the next folder comes', () => {
+    expect(nextStep(input({ next: { kind: 'in', ms: 12_000 } }))).toEqual({
+      kind: 'wait',
+      text: 'Czekaj – teczka za\u00a012\u00a0s',
+      targetFixtureIds: [],
+    });
+    expect(nextStep(input({ next: { kind: 'in', ms: 400 } })).text).toBe(
+      'Czekaj – teczka za\u00a01\u00a0s',
+    );
+    // Due now: it arrives with the next snapshot.
+    expect(nextStep(input({ next: { kind: 'in', ms: 0 } })).text).toBe('Czekaj na nową teczkę');
+  });
+
+  test('a full belt: take a folder off the conveyor', () => {
+    const step = nextStep(
+      input({
+        folders: [
+          folder('late', at('conveyor-0'), { deadlineMs: 90_000 }),
+          folder('soon', at('conveyor-1'), { deadlineMs: 30_000 }),
+        ],
+        next: { kind: 'full' },
+      }),
+    );
+    expect(step).toEqual({
+      kind: 'pickup',
+      text: 'Taśma pełna – zabierz teczkę',
+      targetFixtureIds: ['conveyor-1'],
+    });
+  });
+
+  test("a full belt does not hide a folder's event hint", () => {
+    const viral = folder('v', at('conveyor-0'), {
+      tag: { kind: 'viral' },
+    });
+    expect(nextStep(input({ folders: [viral], next: { kind: 'full' } })).text).toBe(
+      pl.events.hint.viral,
+    );
   });
 
   test('a folder dropped on the floor still needs picking up', () => {
@@ -134,6 +238,18 @@ describe('nextStep', () => {
   test('a non-justifying stamp alone is not enough', () => {
     const step = nextStep(input({ folders: [folder('f', carried, { stamps: ['s-image'] })] }));
     expect(step.kind).toBe('toStation');
+  });
+
+  test('the hint-only AI scanner is no proof: the folder goes to a station that proves it', () => {
+    const scanned: StoryStamps = {
+      stamps: [...story.stamps, { id: 's-ai', station: 'aiScanner' }],
+      justifyingStamps: ['s-ai', 's-registry'],
+    };
+    const step = nextStep(
+      input({ folders: [folder('f', carried, { stamps: ['s-ai'] })], story: () => scanned }),
+    );
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
   });
 
   test('a story with no justifying station in the level falls back to unchecked ones', () => {
@@ -283,9 +399,11 @@ describe('tutorial', () => {
     expect(advanceTutorial(1, 'pickedUp')).toBe(2);
     expect(advanceTutorial(1, 'stampApplied')).toBe(4);
     expect(advanceTutorial(3, 'pickedUp')).toBe(3);
-    expect(advanceTutorial(4, 'verdict')).toBe(TUTORIAL_DONE);
+    // The verdict leads to the role ability step (S7-45), the last one.
+    expect(advanceTutorial(4, 'verdict')).toBe(5);
     expect(advanceTutorial(1, 'teamVerdict')).toBe(1);
-    expect(advanceTutorial(4, 'teamVerdict')).toBe(TUTORIAL_DONE);
+    expect(advanceTutorial(4, 'teamVerdict')).toBe(5);
+    expect(advanceTutorial(5, 'abilityUsed')).toBe(TUTORIAL_DONE);
   });
 
   test('events count only for the local player, except the verdict', () => {
@@ -361,5 +479,47 @@ describe('tutorial skip on a gamepad', () => {
     expect(run([idle, ...Array.from({ length: polls }, () => held)])).toBe(false);
     // Still held after the overlay closes: it must be released first.
     expect(run([idle, held, ...Array.from({ length: polls }, () => select)])).toBe(false);
+  });
+});
+
+describe('bag station first (S7-24)', () => {
+  test('a dealt folder names its bag station first among the proving stations', () => {
+    const step = nextStep(
+      input({ folders: [folder('f', carried, { bagStation: 'sourceRegistry' })] }),
+    );
+    expect(step.kind).toBe('toStation');
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0', 'archive-0']);
+    expect(step.text).toBe('Zanieś do: Kartoteka / Archiwum');
+  });
+
+  test('a bag station that proves nothing for the story changes nothing', () => {
+    const step = nextStep(
+      input({ folders: [folder('f', carried, { bagStation: 'imageSearch' })] }),
+    );
+    expect(step.targetFixtureIds).toEqual(['archive-0', 'sourceRegistry-0']);
+    expect(step.text).toBe('Zanieś do: Archiwum / Kartoteka');
+  });
+
+  test('a busy bag station is not suggested while another proving station is free', () => {
+    const step = nextStep(
+      input({
+        folders: [
+          folder('f', carried, { bagStation: 'sourceRegistry' }),
+          folder('other', at('sourceRegistry-0')),
+        ],
+      }),
+    );
+    expect(step.targetFixtureIds).toEqual(['archive-0']);
+  });
+
+  test('a stamped bag station drops out; the next proof is suggested', () => {
+    const two: StoryStamps = { ...story, requiredStamps: 2 };
+    const step = nextStep(
+      input({
+        story: () => two,
+        folders: [folder('f', carried, { bagStation: 'archive', stamps: ['s-archive'] })],
+      }),
+    );
+    expect(step.targetFixtureIds).toEqual(['sourceRegistry-0']);
   });
 });

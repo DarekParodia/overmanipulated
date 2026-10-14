@@ -57,6 +57,8 @@ export async function startStack(options: { briefingMs?: number } = {}): Promise
       PORT: String(serverPort),
       DATABASE_PATH: ':memory:',
       LOG_LEVEL: 'silent',
+      // The room browser is off by default (S7-88); the screenshots show it.
+      CONFIG_PATH: `${ROOT}/tools/contest/server-config.json`,
       ...(options.briefingMs === undefined ? {} : { BRIEFING_MS: String(options.briefingMs) }),
     },
   });

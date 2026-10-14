@@ -1,25 +1,38 @@
-// Broken content for checks.test.ts: each case takes a fresh copy of the real greybox content,
+// Broken content for checks.test.ts: each case takes a fresh copy of the greybox schedule fixture,
 // breaks exactly one rule and names the issue the validator must report.
 // The JSON files in ./broken/ are the same idea on disk, for the validate.ts CLI.
-import l0Level from '../../levels/l0-greybox.json';
 import l0Stories from '../../stories/l0-greybox.json';
 import type { ContentFile, Issue } from '../checks.ts';
-import { type Level, levelSchema, type Story, storyFileSchema } from '../schema.ts';
+import { type Level, type LevelFile, levelSchema, type Story, storyFileSchema } from '../schema.ts';
+import greyboxSchedule from './greybox-schedule.json';
 
 export const LEVEL_FILE = 'levels/l0-greybox.json';
 export const STORY_FILE = 'stories/l0-greybox.json';
 
 export type Content = { level: Level; stories: Story[]; extraStories?: Story[] };
 
-/** A deep copy of the real greybox content, safe to mutate. */
+/**
+ * A deep copy of the greybox as an authored-schedule level, safe to mutate: the real l0 plays a
+ * station bag since S7-27, so its last authored schedule and stars are frozen in
+ * `greybox-schedule.json` and keep the schedule rules covered. The stories are the real ones it
+ * schedules, in file order (they stay first in the story file, so issue paths are stable).
+ */
 export function realContent(): Content {
+  const level = levelSchema.parse(greyboxSchedule);
+  const scheduled = new Set(level.schedule.map((spawn) => spawn.storyId));
   return {
-    level: structuredClone(levelSchema.parse(l0Level)),
-    stories: structuredClone(storyFileSchema.parse(l0Stories)),
+    level: structuredClone(level),
+    stories: structuredClone(
+      storyFileSchema.parse(l0Stories).filter((story) => scheduled.has(story.id)),
+    ),
   };
 }
 
-export function toFiles(content: Content): { levels: ContentFile[]; stories: ContentFile[] } {
+export function toFiles(content: {
+  level: LevelFile;
+  stories: readonly Story[];
+  extraStories?: readonly Story[];
+}): { levels: ContentFile[]; stories: ContentFile[] } {
   const stories: ContentFile[] = [{ file: STORY_FILE, data: content.stories }];
   if (content.extraStories) {
     stories.push({ file: 'stories/extra.json', data: content.extraStories });
@@ -35,6 +48,11 @@ function story(content: Content, id: string): Story {
   return found;
 }
 
+/** Replaces whole layout rows, keyed by row index. */
+function setRows(content: Content, rows: Readonly<Record<number, string>>): void {
+  content.level.layout = content.level.layout.map((row, y) => rows[y] ?? row);
+}
+
 export type BrokenCase = {
   name: string;
   breakIt: (content: Content) => void;
@@ -42,6 +60,22 @@ export type BrokenCase = {
 };
 
 export const BROKEN_CASES: readonly BrokenCase[] = [
+  {
+    name: 'a decisive stamp that does not justify the verdict',
+    breakIt: (c) => {
+      const stamp = story(c, 'l0-nocny-autobus').stamps.find((s) => s.station === 'imageSearch');
+      if (stamp) {
+        stamp.relevance = 'decisive';
+      }
+    },
+    expected: {
+      severity: 'warning',
+      file: STORY_FILE,
+      path: '[1].stamps[2].relevance',
+      message:
+        'decisive stamp "l0-nocny-autobus-image" does not justify the verdict, so imageSearch decides nothing; add it to justifyingStamps or lower its relevance',
+    },
+  },
   {
     name: 'wrong correctVerdict',
     breakIt: (c) => {
@@ -408,6 +442,122 @@ export const BROKEN_CASES: readonly BrokenCase[] = [
       file: LEVEL_FILE,
       path: 'schedule',
       message: '100% of stories are true; aim for 25–45%',
+    },
+  },
+  {
+    name: 'two required proofs where one is the hint-only AI scanner',
+    breakIt: (c) => {
+      const s = story(c, 'l0-nocny-autobus');
+      s.stamps.push(
+        {
+          id: 'l0-nocny-autobus-ai',
+          station: 'aiScanner',
+          text: 'Zdjęcie rozkładu: 8% szans, że to obraz generowany.',
+          relevance: 'decisive',
+        },
+        {
+          id: 'l0-nocny-autobus-phone',
+          station: 'phone',
+          text: 'Przewoźnik potwierdza: linia N3 rusza w poniedziałek.',
+          relevance: 'decisive',
+        },
+      );
+      s.justifyingStamps = ['l0-nocny-autobus-ai', 'l0-nocny-autobus-phone'];
+      s.requiredStamps = 2;
+    },
+    expected: {
+      severity: 'error',
+      file: STORY_FILE,
+      path: '[1].requiredStamps',
+      message:
+        'needs 2 proofs, but only 1 justifying stamp(s) count as proof (hint-only stations never do)',
+    },
+  },
+  {
+    name: 'more required proofs than the level stations give',
+    breakIt: (c) => {
+      story(c, 'l0-zalany-rynek').requiredStamps = 2;
+      c.level.stations = ['imageSearch', 'sourceRegistry'];
+    },
+    expected: {
+      severity: 'error',
+      file: LEVEL_FILE,
+      path: 'schedule[0].storyId',
+      message: 'story "l0-zalany-rynek" needs 2 proofs, but this level\'s stations give only 1',
+    },
+  },
+  {
+    name: 'multi-stamp extra time that runs the deadline past the end of the level',
+    breakIt: (c) => {
+      // 140 s + 90 s ends at 230 s of 240 s; the second proof's 20 s ends it at 250 s.
+      story(c, 'l0-rowery-miejskie').requiredStamps = 2;
+      const spawn = c.level.schedule.find((entry) => entry.storyId === 'l0-rowery-miejskie');
+      if (spawn) {
+        spawn.deadlineS = 90;
+      }
+    },
+    expected: {
+      severity: 'warning',
+      file: LEVEL_FILE,
+      path: 'schedule[7].deadlineS',
+      message: 'deadline runs past the end of the level',
+    },
+  },
+  {
+    name: 'multi-stamp story before level 4 (warning only)',
+    breakIt: (c) => {
+      story(c, 'l0-zalany-rynek').requiredStamps = 2;
+    },
+    expected: {
+      severity: 'warning',
+      file: LEVEL_FILE,
+      path: 'schedule[0].storyId',
+      message: 'story "l0-zalany-rynek" needs 2 proofs; multi-stamp folders start at level 4',
+    },
+  },
+  {
+    name: 'two station signs closer than 3 columns (warning only)',
+    breakIt: (c) => {
+      setRows(c, { 1: '#CCCC...I.A.....R..#' });
+    },
+    expected: {
+      severity: 'warning',
+      file: LEVEL_FILE,
+      path: 'layout[1]',
+      message:
+        'station signs overlap on phones: imageSearch-0 and archive-0 are 2 columns apart; keep at least 3',
+    },
+  },
+  {
+    name: 'a table walled off from spawn 1',
+    breakIt: (c) => {
+      setRows(c, {
+        8: '#.=.....====.......#',
+        9: '#=T=.............T.#',
+        10: '#.=................#',
+      });
+    },
+    expected: {
+      severity: 'error',
+      file: LEVEL_FILE,
+      path: 'layout[9]',
+      message: 'table-2 at column 2 cannot be reached from spawn 1',
+    },
+  },
+  {
+    name: 'a spawn walled off from spawn 1',
+    breakIt: (c) => {
+      setRows(c, {
+        6: '#...............=..#',
+        7: '#..3....=DD=...=4=.#',
+        8: '#.......====....=..#',
+      });
+    },
+    expected: {
+      severity: 'error',
+      file: LEVEL_FILE,
+      path: 'layout[7]',
+      message: 'spawn 4 at column 16 cannot be reached from spawn 1',
     },
   },
 ];

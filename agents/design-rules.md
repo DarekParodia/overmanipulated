@@ -17,16 +17,27 @@ blocks you, raise it in the plan's *Open questions*; don't quietly break it.
    only yellow (`primary`) button. Everything else is white (`secondary`) or a text link.
 2. **Show, don't write.** Icon + one short word beats a sentence. Instructions are at most one
    line (≤ 8 words). Explanations belong in the tutorial or the debrief, never in the middle of
-   play.
-3. **Big numbers, few numbers.** The HUD shows only time, points, credibility and up to 3 folders.
-   Anything else is hidden or moved to the results screen.
+   play. Exception (S7-95): the first-use station help card (`StationHelpCard`, variant
+   `inPlay`) is the one explanation allowed in play. It covers the minigame, pauses the client
+   minigame clock while it is up (the folder deadline keeps running and the card says so), keeps
+   every line ≤ 8 words and has one yellow „Rozumiem”. It shows by itself only on a station's
+   first use per browser; after that only the '?' in the overlay header (H / Select) opens it.
+3. **Big numbers, few numbers.** The HUD shows only time, points, credibility, up to 3 folders
+   and the player's own role chip (ability icon, cooldown ring, key); a free queue slot may hold
+   one dashed ghost card counting down to the next folder (or „Taśma pełna”). In versus also the
+   rival's points, in one chip (S7-89). Level-event
+   folders are not telegraphed. Anything else is hidden or moved to the results screen.
 4. **Colour = meaning, always the same meaning** (see §3). Never use a meaning colour for
    decoration.
 5. **Never colour alone.** Every state also has an icon or shape (priority flags, ✓/✗ marks,
    outlines).
 6. **Tell players what to do next.** When a player carries a folder, the station that can help
    lights up, and a hint bubble says what's next ("Zanieś do Lupy", "Gotowe — na stół!").
-   The first level starts with a guided tutorial.
+   The first level starts with a guided tutorial; with a role, its last step shows the role
+   ability (S7-45). A ready ability that helps right now takes the bubble („R: +20 s dla
+   teczki”). Exception (S7-24): on Ekspert, and when the player turns hints off, the bubble
+   (ability hints included), the station markers and the folder-card proof count („1/2”
+   becomes „×2”) are gone (`useEffectiveHints`); the tutorial still runs.
 7. **Readable from 2 m on a classroom projector and on a 640×360 phone.** Minimum text 15 px
    (secondary labels), body 17 px, HUD numbers ≥ 30 px. Contrast ≥ 4.5:1 for all text.
 8. **Big targets.** ≥ 48 px touch targets, ≥ 8 px between them. Main buttons ≥ 60 px tall.
@@ -58,13 +69,21 @@ All colours come from `apps/client/src/ui/tokens.css` (DOM) and `tokens.ts` (thr
 | `--red` | false / reject / wrong / danger | Reject, errors, deadline < 10 s, credibility low |
 | `--orange` | context / warning | Publish with context, "important" priority |
 | `--blue` | information / selection / focus | focus ring, selected item, "normal" priority |
-| `--purple` | help | tutorial and hint bubbles only |
+| `--purple` | help | tutorial, hint bubbles, the station help card and its ways in („Jak grać”, the briefing chips' '?', the practice round's „Ćwiczenie” chip, S7-97) only |
 | `--sky` | background | behind menus |
 | `--surface` / `--outline` / `--text` | neutral | panels, outlines, text |
 | `--player-0..3` | player identity | avatars, name tags, ping bubbles — nothing else |
+| `--team-0` / `--team-0-ink` | versus newsroom Kurier | the navy `TeamBadge` shield with a white „K” (lobby columns, rival chip, results) — nothing else |
+| `--team-1` / `--team-1-ink` | versus newsroom Głos | the white `TeamBadge` seal with a navy „G” — nothing else |
 
 Folder priority: normal = blue, important = orange, urgent = red, **plus** the flag shape
 (1, 2 or 3 flags) so it never relies on colour.
+
+Versus newsrooms (S7-86) take no meaning colour: the two team tokens are the neutral navy and
+white swapped, and the badge's shape (shield / seal) and letter (K / G) tell them apart, so a
+team is never confused with "do this next", "correct" or "selected". The lobby's own team move
+(„Przejdź tutaj”) and the Widownia moves are white buttons; the footer keeps the one yellow
+action.
 
 ## 4. Type
 
@@ -79,14 +98,74 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
 
 ## 5. Layout
 
-- **HUD:** time + points + credibility in one compact pill top-left; folder queue (max 3 cards,
-  "+N" chip for the rest) top-centre; tool buttons top-right; nothing else on screen during play
-  except the hint bubble and touch controls.
+- **HUD:** time + points + credibility in one compact pill top-left (on phones one low row:
+  clock │ star and points │ shield and credibility with a thin bar under it; endless adds the
+  orange „×N” tempo chip inside the row; numbers stay 30 px); folder queue (max 3 cards,
+  fewer when the band between pill and tools is too narrow, "+N" chip for the rest) top-centre;
+  one round menu button top-right (three bars; a red dot while offline); nothing else on screen
+  during play except the hint bubble and touch controls. A free queue slot may hold one ghost
+  card for the next scheduled folder: dashed navy outline, soft fill, no pop shadow, an
+  hourglass and the seconds; while the belt is full its band turns orange with the conveyor
+  icon and „Taśma pełna”. An empty queue shows the ghost on its side with „Nowa teczka za N s”.
+  Level-event folders are never announced. **Rival chip** (versus, S7-89): the rival newsroom's
+  badge, name and points in a white chip hanging under the pill's left edge (in endless versus
+  in place of the tempo chip, and the clock counts down the 10-minute match); on phones it is
+  the pill row's last segment, badge and points only, so the band stays one row. An arrow in a
+  small disc says who leads: up on green while this newsroom leads, down on orange while it
+  trails, none when tied; a change of lead pops or shakes the chip (`versus.leadTaken` /
+  `versus.leadLost`). Only the own newsroom's avatars are drawn. **Role chip** (S7-40): bottom-left on keyboard and
+  gamepad, a white pill with a 64 px ring (the ability icon, or the seconds while it cools down
+  or a field call runs), the key cap (R / RB), the ability's one-word name and one status line
+  („Gotowa”, the target's name, „Uzbrojona”, „Dzwonię…” or the reason it cannot act). Ready is
+  green, armed blue, a call orange, cooling and blocked grey — never yellow, so the screen keeps
+  one yellow action. The hint bubble keeps the chip's width free on both sides. On touch the 4th
+  thumb button is the chip (same ring, icon and word, in the empty cell above „Pracuj”); no
+  chip shows on touch, and without a role neither shows. A Ratownik's lifebuoy badge with the
+  rescues left hangs on the ring. Folder cards carry the ability marks: an hourglass „+20” chip
+  on the top-right corner after Przedłużenie or Koło ratunkowe, a lifebuoy on the top-left corner
+  while a Ratownik with the rescue left carries the folder, and a dashed blue outline on the card
+  the player's ready press would act on. In a minigame the player's Ekspertyza covers, the
+  overlay header shows a white „Ekspert” pill (green bolt, key cap) between the time bar and
+  the back key, icon-only 48 px on phones (S7-41); the lockout plate adds a blue
+  „[R] Druga szansa” line while that press would reopen the station (a hint: hidden with hints
+  off and on Ekspert). Captions, event banners and verdict toasts start
+  under the measured HUD band (`--hud-band`: the lowest edge of the pill, the queue and the
+  menu button), never at a fixed offset, so nothing covers the HUD at any screen or text size.
+- **In-game menu** (the top-right button, Esc, a pad's Start): one sheet, never a second screen.
+  Desktop: a 24 rem panel under the button; phones: a full-height sheet on the right with 48 px
+  buttons in two columns. One yellow „Wróć do gry”, then Ustawienia, Pełny ekran, the room code
+  with copy and ping, and „Wyjdź z redakcji”, which asks „Na pewno? Wyjdź” and needs a second
+  press within 3 s. The header chip says what the world does meanwhile: „Pauza” (pause icon) when
+  the player is alone — the level waits — or the orange „Gra trwa dalej” (play icon) with
+  teammates, whose shared level runs on.
 - **Overlays** (stations, desk): one panel, title with icon at the top, the task in the middle,
   the main action at the bottom. Desktop: right half, scene visible. Phone: full width, close
   button always reachable.
 - **Menus:** content in one centred column ≤ 560 px wide on the sky background; the game logo on
-  top. Lobby: player cards in a row, big "Gotowy" toggle, one yellow start button.
+  top. Lobby: player cards in a row, big "Gotowy" toggle, one yellow start button. The role
+  picker (S7-44) is 7 compact passes (icon + name; 7 columns on desktop, 4 below 1100 px, 4
+  compact passes on landscape phones, 2 at ≤ 560 px) with the teammates' player marks, and one
+  white detail panel under them: „Premia” with the level's station chips, „Zdolność” with the key
+  cap (R / RB / „Przycisk”), what it does and „co 60 s”, plus a lock note when a perk does
+  nothing on the chosen level. Never yellow; selection stays the blue ring and ✓ badge.
+  The main menu may show the operator's message of the day („Komunikat redakcji”) between the
+  logo and the card: a white card with a blue (info) or orange (warning) outline and icon and a
+  close button. Never yellow: the menu keeps one main action.
+- **Ads** (S7-74, only when the operator enables them): only on the main menu (left rail),
+  the lobby (banner under the footer), the results (bottom-right rail, 1780×900 and up) and the
+  spectate screen (S7-91, 1280×900 and up: a 300×250 unit at the bottom of the side stats sheet
+  and under the figures of the spectator results, never over a live view). Never during play, in
+  the briefing, in station or desk overlays, in any other dialog or sheet, and **never on
+  phones** (no placement's viewport gate matches `PHONE_QUERY`). Each ad
+  sits in the white „Reklama” frame (`AdSlot`: `--surface`, `--outline-border`, `--radius-md`)
+  at least `--space-ad-gap` (≥ 150 px, `AD_MIN_GAP_PX`) from any control, fixed-size (no
+  responsive units, no layout shift), not focusable, with no cue, animation or sound, and
+  nothing ever points at it. Without ads, with an ad blocker or when Google has no ad, the frame
+  is gone and nothing replaces it: no empty box, no "turn off your ad blocker". The creative
+  inside the frame is third-party and exempt from the tokens and the one-yellow rule; the frame
+  is not. The main-menu footer (`MenuFooter`) holds minor ghost links („Profil”, „O grze”,
+  „Prywatność”, „Zgody reklamowe”); never yellow. A link to a page (`LinkButton`) looks like a
+  ghost button and opens in the same tab.
 - Generous spacing (≥ `--space-4` between groups). If a screen feels crowded, remove things;
   don't shrink them.
 
@@ -131,3 +210,5 @@ Folder priority: normal = blue, important = orange, urgent = red, **plus** the f
 - [ ] Only tokens; thick outlines; pop shadows; rounded corners; no gradients/blur/serif/emoji?
 - [ ] Touch targets ≥ 48 px; keyboard and gamepad focus visible?
 - [ ] Screenshot checked on desktop and Pixel 7 landscape?
+- [ ] Ads ≥ 150 px (`--space-ad-gap`) from every control, none in play, none on phones
+      (`e2e/ads.spec.ts` covers every placement)?

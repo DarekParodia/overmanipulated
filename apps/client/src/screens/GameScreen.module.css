@@ -1,4 +1,7 @@
 .screen {
+  /* The role ability chip's widest size (abilities/AbilityChip); the guidance dock keeps it free. */
+  --ability-chip-w: 16rem;
+
   position: fixed;
   inset: 0;
   overflow: hidden;
@@ -7,31 +10,6 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
-}
-
-/* Top-right: round icon tools, the room chip under them (hud/RoomChip). The HUD's
-   --hud-tools-w mirrors this width so the folder queue never runs under them. */
-.tools {
-  position: absolute;
-  top: max(var(--space-3), env(safe-area-inset-top));
-  right: max(var(--space-3), env(safe-area-inset-right));
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2);
-}
-
-.toolRow {
-  display: flex;
-  gap: var(--space-2);
-}
-
-/* Round icon buttons (ui/Button with only an icon). */
-.toolRow button {
-  width: 3.5rem;
-  height: 3.5rem;
-  padding: 0;
 }
 
 .banner {
@@ -54,18 +32,4 @@
   font-weight: 800;
   font-size: var(--text-lg);
   white-space: nowrap;
-}
-
-@media (max-height: 500px), (max-width: 760px) {
-  .tools {
-    top: max(var(--space-2), env(safe-area-inset-top));
-    right: max(var(--space-2), env(safe-area-inset-right));
-    gap: var(--space-1);
-  }
-
-  .toolRow button {
-    width: 3rem;
-    height: 3rem;
-    border-width: var(--stroke);
-  }
 }
