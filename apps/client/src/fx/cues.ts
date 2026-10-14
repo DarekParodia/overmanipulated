@@ -67,7 +67,10 @@ export type AnimationTrigger =
   /** The local ability came off its cooldown: the chip / button bumps once. */
   | 'abilityReady'
   /** A local press that cannot do anything: the chip / button shakes (none with reduced motion). */
-  | 'abilityDenied';
+  | 'abilityDenied'
+  // S7-89 versus.
+  /** The rival chip pops (lead taken) or shakes (lead lost); none with reduced motion. */
+  | 'versusLead';
 
 export type ParticleLayer = { preset: ParticlePresetId; count?: number };
 
@@ -340,6 +343,44 @@ export const cues = {
     particles: { preset: 'paperBits', count: 24 },
     haptic: 'alarm',
     animation: 'slump',
+    loop: 'stopAll',
+  },
+  // --- S7-89 versus: the lead changing hands (rival chip) and the match result stingers, which
+  // replace `level.win` / `level.lose` when the level end carries a versus summary. ---
+  'versus.leadTaken': {
+    severity: 2,
+    sound: { ids: ['chime'], bus: 'sfx', volume: 0.7 },
+    haptic: 'tick',
+    animation: 'versusLead',
+  },
+  'versus.leadLost': {
+    severity: 2,
+    sound: { ids: ['lowsting'], bus: 'sfx', volume: 0.5 },
+    haptic: 'tick',
+    animation: 'versusLead',
+  },
+  'versus.win': {
+    severity: 3,
+    sound: { ids: ['fanfare'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'confetti', count: 40 },
+    extraParticles: { preset: 'starBurst' },
+    haptic: 'success',
+    animation: 'cheer',
+    loop: 'stopAll',
+  },
+  'versus.lose': {
+    severity: 3,
+    sound: { ids: ['lose'], bus: 'sfx', volume: 0.9 },
+    particles: { preset: 'paperBits', count: 24 },
+    haptic: 'thud',
+    animation: 'slump',
+    loop: 'stopAll',
+  },
+  'versus.draw': {
+    severity: 2,
+    sound: { ids: ['hmm'], bus: 'sfx', volume: 0.8 },
+    particles: { preset: 'inkPuff', count: 12 },
+    animation: 'shrug',
     loop: 'stopAll',
   },
   // --- Station overlay and desk sheet (S2-03, S2-07). Placeholder sounds until the sound pass.

@@ -1,6 +1,7 @@
 /*
  * Results panel: one white cartoon panel over the dimmed newsroom. A coloured ribbon with the
- * headline on top (green = won, red = lost, plus a ✓/✗ disc); desktop: the summary (stars,
+ * headline on top (green = won, red = lost, plus a ✓/✗ disc; in versus a trophy, a ✗ or, on blue
+ * for a draw, an equals sign); desktop: the summary (stars,
  * figures, the totals table; ResultsSummary.module.css) on the left, the Kolegium list on the
  * right (both scroll on their own so the buttons always stay visible). Phones: stars and figures
  * move into the ribbon, the summary becomes the Kolegium's first page and the Kolegium shows
@@ -494,6 +495,29 @@
 
   .summary {
     justify-content: center;
+  }
+}
+
+/* --- Versus (S7-89): won / lost as above; a draw is blue (information), like endless; both
+   newsrooms' points sit at the ribbon's right edge on desktop and beside it on phones. ------- */
+
+.draw .ribbon {
+  background: var(--blue);
+}
+
+.draw .headline,
+.draw .lede {
+  color: var(--text-on-dark);
+}
+
+.ribbonScore {
+  flex: none;
+  margin-left: auto;
+}
+
+@media (max-height: 500px), (max-width: 760px) {
+  .draw .summary {
+    background: var(--blue);
   }
 }
 

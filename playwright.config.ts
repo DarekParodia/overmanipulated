@@ -37,10 +37,10 @@ export default defineConfig({
       },
     },
     {
-      // The smallest supported phone (S7-12): the phone layout checks at 640×360, and the role
-      // ability button there (S7-47).
+      // The smallest supported phone (S7-12): the phone layout checks at 640×360, the role
+      // ability button there (S7-47) and the versus rival chip and results (S7-89).
       name: 'phone-small',
-      testMatch: /(phone-layout|abilities)\.spec\.ts/,
+      testMatch: /(phone-layout|abilities|versus)\.spec\.ts/,
       use: {
         ...devices['Pixel 7 landscape'],
         viewport: { width: 640, height: 360 },

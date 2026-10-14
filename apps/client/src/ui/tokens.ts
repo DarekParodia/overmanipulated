@@ -68,3 +68,15 @@ export function playerColor(index: number): string {
 export function playerColorVar(index: number): string {
   return `var(--player-${index % playerColors.length})`;
 }
+
+/** Versus newsroom identity (S7-89), mirroring `--team-N` / `--team-N-ink` in tokens.css. */
+export const teamColors = [
+  { fill: colors.outline, ink: colors.surface },
+  { fill: colors.surface, ink: colors.outline },
+] as const;
+
+/** CSS custom properties for a newsroom's badge fill and letter, for DOM UI. */
+export function teamColorVars(team: number): { fill: string; ink: string } {
+  const index = team % teamColors.length;
+  return { fill: `var(--team-${index})`, ink: `var(--team-${index}-ink)` };
+}

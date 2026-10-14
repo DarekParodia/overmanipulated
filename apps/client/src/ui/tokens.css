@@ -42,6 +42,12 @@
   --player-2: #2ec4b6;
   --player-3: #e86fc6;
 
+  /* Versus newsroom identity (S7-89): Kurier a navy masthead, Głos a white seal (shape too). */
+  --team-0: var(--outline);
+  --team-0-ink: var(--surface);
+  --team-1: var(--surface);
+  --team-1-ink: var(--outline);
+
   /* Translucent outline for scrims */
   --outline-a20: rgb(30 42 74 / 0.2);
   --outline-a50: rgb(30 42 74 / 0.5);

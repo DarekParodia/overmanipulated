@@ -94,6 +94,65 @@
   margin-top: -0.15em;
 }
 
+/*
+ * Versus (S7-89): the rival chip hangs under the pill's left edge like the tempo chip (which it
+ * replaces in endless versus): the rival's badge, name and points, and an arrow in a disc — up
+ * on green while this newsroom leads, down on orange while it trails, none when tied.
+ */
+.versus {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-2);
+  background: var(--surface);
+  border: var(--outline-border);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  white-space: nowrap;
+}
+
+.versusName {
+  padding-top: 0.12em;
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-soft);
+}
+
+.versusScore {
+  display: inline-block;
+  min-width: 2ch;
+  padding-top: 0.12em;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.versusArrow {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
+}
+
+.versus[data-lead="ahead"] .versusArrow {
+  background: var(--green);
+}
+
+.versus[data-lead="behind"] .versusArrow {
+  background: var(--orange);
+}
+
 /* „Tempo ×N” in words; phones show only „×N” next to the icon (one-row pill). */
 .tempoShort {
   display: none;
@@ -408,6 +467,34 @@
 
   .tempoLong {
     display: none;
+  }
+
+  /* Versus: the rival chip is the row's last segment, after a thin divider: badge and points. */
+  .versus {
+    position: static;
+    flex: none;
+    gap: var(--space-1);
+    padding: 0 0 0 var(--space-2);
+    background: none;
+    border: none;
+    border-left: var(--stroke) solid var(--surface-sunk);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .versusName {
+    display: none;
+  }
+
+  .versusArrow {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-width: 2px;
+  }
+
+  .pill .versusArrow svg {
+    width: 16px;
+    height: 16px;
   }
 
   .tempoShort {

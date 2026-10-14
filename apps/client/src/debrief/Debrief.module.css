@@ -250,6 +250,45 @@
   margin: 0;
 }
 
+/* Versus (S7-89): the rival's stamp with a small outcome disc, or a neutral „nie mieli” / „w grze”. */
+.rival {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.rivalMark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--outline-border);
+  border-radius: 50%;
+  color: var(--outline);
+}
+
+.rivalMark.good {
+  background: var(--green);
+}
+
+.rivalMark.caution {
+  background: var(--orange);
+}
+
+.rivalMark.bad {
+  background: var(--red);
+}
+
+.rivalNone {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  background: var(--surface-soft);
+  color: var(--text-soft);
+}
+
 /* --- Debrief chunks -------------------------------------------------------------------------- */
 
 .sections {

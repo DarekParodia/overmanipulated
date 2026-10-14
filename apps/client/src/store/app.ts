@@ -109,3 +109,19 @@ export function selfKind(room: RoomStateMessage | null, playerId: string | null)
 export function selfTeam(room: RoomStateMessage | null, playerId: string | null): TeamIndex {
   return room?.players.find((p) => p.id === playerId)?.team ?? 0;
 }
+
+/**
+ * The players of one newsroom (S7-89): everyone in co-op, only that team in versus — each
+ * newsroom plays its own copy of the level, so the other team's avatars are never drawn.
+ */
+export function newsroomPlayers(
+  room: RoomStateMessage | null,
+  team: TeamIndex,
+): RoomStateMessage['players'] {
+  if (!room) {
+    return [];
+  }
+  return room.mode === 'versus'
+    ? room.players.filter((player) => player.team === team)
+    : room.players;
+}

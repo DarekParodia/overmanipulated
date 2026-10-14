@@ -171,6 +171,8 @@ const icons = {
   crown: [{ d: 'M4.5 18.5L3.5 8l5 4.5L12 5.5l3.5 7 5-4.5-1 10.5Z', fill: 'tint' }],
   // --- Interface ---------------------------------------------------------------------------
   arrow: [{ d: 'M4 12h15M13.5 6.5L19 12l-5.5 5.5' }],
+  /** A versus draw (S7-89): the results ribbon's equals sign. */
+  equal: [{ d: 'M5 9h14M5 15h14' }],
   play: [{ d: 'M7.5 4.5v15l12-7.5Z', fill: 'tint' }],
   pause: [{ d: 'M6.5 5h3.5v14H6.5ZM14 5h3.5v14H14Z', fill: 'tint' }],
   /** Three bars: the in-game menu button (S7-10). */

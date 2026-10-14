@@ -3,6 +3,7 @@
 // scrollable list (the current card has a blue outline); phones show one card at a time, paged
 // from the footer or by swiping, after an optional lead page (the results summary, S7-06).
 // Votes go to the server; this player's own vote shows at once (optimistic).
+import type { FolderResult } from '@redakcja/shared';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { voteBlunder } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
@@ -59,6 +60,11 @@ export type KolegiumProps = {
   votes: ReturnType<typeof useBlunderVotes>;
   /** Phones: a page shown before the first card (index -1), e.g. the results summary. */
   lead?: ReactNode;
+  /**
+   * Versus only (S7-89): the rival's result for each card, in card order (null: the rival never
+   * got that folder). Absent in co-op.
+   */
+  rivals?: readonly (FolderResult | null)[];
 };
 
 export function Kolegium({
@@ -71,6 +77,7 @@ export function Kolegium({
   voteKey,
   votes,
   lead,
+  rivals,
 }: KolegiumProps) {
   const list = useRef<HTMLOListElement>(null);
   const first = paged && lead !== undefined ? -1 : 0;
@@ -125,6 +132,7 @@ export function Kolegium({
       }}
       onSelect={() => onCurrent(index)}
       {...(paged ? { onSwipe: turn } : {})}
+      {...(rivals ? { rival: rivals[index] ?? null } : {})}
     />
   );
 

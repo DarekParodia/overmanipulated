@@ -19,6 +19,7 @@ import type {
 import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
+import type { LeadState, VersusReasonId, VersusResultKind } from '../hud/versus-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import type { Accessory } from '../store/profile-model.ts';
@@ -2118,7 +2119,56 @@ export const pl = {
       folderPassed: 'Teczka podana',
       rescued: 'Teczka uratowana!',
       abilityReady: 'Zdolność gotowa',
+      /** Versus (S7-89): the lead changed hands. */
+      leadTaken: 'Prowadzicie!',
+      leadLost: 'Rywale prowadzą',
     },
+  },
+  /**
+   * Versus for players (S7-89): the rival chip next to the HUD pill and the match results (the
+   * ribbon, both newsrooms' cards, the rival's verdict on each Kolegium card).
+   */
+  versus: {
+    /** The chip's spoken label: the rival newsroom and its points. */
+    chipLabel: (team: string, score: number) => `Rywale – ${team}: ${score}\u00a0pkt`,
+    /** Who leads, read after the chip's label. */
+    lead: {
+      ahead: 'Prowadzicie',
+      behind: 'Rywale prowadzą',
+      tied: 'Remis',
+    } satisfies Record<LeadState, string>,
+    own: 'Wy',
+    rival: 'Rywale',
+    headline: {
+      win: 'Wygrana!',
+      lose: 'Przegrana',
+      draw: 'Remis',
+    } satisfies Record<VersusResultKind, string>,
+    /** Under the headline: why the match ended that way, from this newsroom's side. */
+    reasons: {
+      score: 'Zdobyliście więcej punktów.',
+      rivalScore: 'Rywale zdobyli więcej punktów.',
+      rivalCredibility: 'Rywale stracili wiarygodność.',
+      ownCredibility: 'Wasza wiarygodność spadła do zera.',
+      rivalForfeit: 'Rywale opuścili pojedynek.',
+      ownForfeit: 'Wasza redakcja opuściła pojedynek.',
+      draw: 'Obie redakcje mają tyle samo punktów.',
+    } satisfies Record<VersusReasonId, string>,
+    /** Both newsrooms' points in one line, ours first: „Kurier 240 : 195 Głos”. */
+    scoreLine: (own: string, ownScore: number, rival: string, rivalScore: number) =>
+      `${own} ${ownScore} : ${rivalScore} ${rival}`,
+    teamsLabel: 'Wynik pojedynku',
+    winner: 'Zwycięzcy',
+    /** A team card's folders closed with a verdict. */
+    resolved: 'Werdykty',
+    /** The Kolegium card's verdict row: ours, then the rival's on the same folder. */
+    ownVerdict: 'Wy',
+    rivalVerdict: 'Rywale',
+    /** The rival never got this folder (its fuller belt cut a raid wave short). */
+    rivalMissing: 'nie mieli',
+    rivalMissingLabel: 'Rywale nie mieli tej teczki',
+    /** The rival still had this folder in play at the end. */
+    rivalUnfinished: 'w grze',
   },
   /**
    * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate

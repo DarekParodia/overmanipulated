@@ -8,6 +8,8 @@ import type {
   GameEvent,
   LevelEndMessage,
   NextFolder,
+  TeamIndex,
+  TeamScore,
 } from '@redakcja/shared';
 import type { GameplayEvent } from '../net/game-events.ts';
 import { useGame } from '../net/game-store.ts';
@@ -37,10 +39,17 @@ export type HudDevApi = {
     conveyorFull?: boolean;
     /** Ability state per player (S7-36), e.g. a cooling or armed ability for the HUD chip. */
     crew?: readonly CrewSnapshot[];
+    /** Versus standings (S7-89): both newsrooms, for the rival chip; null hides it. */
+    scoreboard?: readonly TeamScore[] | null;
   }): void;
   verdict(patch?: Partial<VerdictEvent>): void;
   expire(storyId?: string): void;
   end(won: boolean, stars: number): void;
+  /**
+   * Ends a versus match for this player's newsroom (team 0) with the fixture results: the rival
+   * got the same folders but one, and decided some of them differently (S7-89).
+   */
+  endVersus(winnerTeam: TeamIndex | null): void;
   /** Gives the store back to the server's snapshots. */
   release(): void;
 };
@@ -257,6 +266,53 @@ export function installHudDevFixture(): (() => void) | undefined {
         maxScore: FIXTURE_MAX_SCORE,
       };
       state.setLevelEnd(message);
+    },
+    endVersus(winnerTeam) {
+      const state = useGame.getState();
+      const results = fixtureResults();
+      const score = results.reduce((sum, result) => sum + result.scoreDelta, 0);
+      const rivalScore = winnerTeam === null ? score : winnerTeam === 0 ? score - 30 : score + 30;
+      // The rival never got f-6 (its belt was full) and judged f-2 the other way.
+      const rivalResults = results
+        .filter((result) => result.folderId !== 'f-6')
+        .map((result) =>
+          result.folderId === 'f-2'
+            ? {
+                ...result,
+                outcome: 'wrong' as const,
+                reason: 'rejectedTrue' as const,
+                verdict: 'reject' as const,
+              }
+            : result,
+        );
+      const team = (index: TeamIndex, points: number): TeamScore => ({
+        team: index,
+        score: points,
+        credibility: index === 0 ? state.credibility : 55,
+        resolved: 4,
+        expired: 1,
+        connected: 2,
+      });
+      state.setLevelEnd({
+        type: 'levelEnd',
+        levelId: 'l0-greybox',
+        difficulty: 'normal',
+        won: winnerTeam === 0,
+        stars: 0,
+        score,
+        credibility: state.credibility,
+        results,
+        lossReason: winnerTeam === 1 ? 'score' : null,
+        starThresholds: FIXTURE_STARS,
+        maxScore: FIXTURE_MAX_SCORE,
+        team: 0,
+        versus: {
+          winnerTeam,
+          reason: winnerTeam === null ? 'draw' : 'score',
+          teams: [team(0, score), team(1, rivalScore)],
+          rivalResults,
+        },
+      });
     },
     release() {
       useGame.setState({ applySnapshot: original });

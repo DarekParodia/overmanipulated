@@ -2,7 +2,8 @@
 // next star still needs, why the thresholds are where they are, and the 'Za co punkty' table
 // whose rows tick in with their points counting up. Desktop shows it as the left column; phones
 // show it as the Kolegium's first page ('Podsumowanie'), with the lede the ribbon has no room
-// for. Endless has no stars: only the figures and the table.
+// for. Endless has no stars: only the figures and the table. Versus has no stars either: both
+// newsrooms' cards, then this newsroom's table (S7-89).
 import { CREDIBILITY_MAX } from '@redakcja/shared';
 import type { ReactNode } from 'react';
 import type {
@@ -49,6 +50,8 @@ export type ResultsSummaryProps = {
   totals: ResultTotals;
   /** The score and credibility figures (desktop column only). */
   figures?: ReactNode;
+  /** Versus (S7-89): both newsrooms' cards, first in the column and under the phone page's lede. */
+  teams?: ReactNode;
   reveal: SummaryReveal;
   /** Whether 'Skąd te progi?' starts open (keyboard and gamepad cannot open it). */
   explainOpen: boolean;
@@ -61,6 +64,7 @@ export function ResultsSummary({
   maxScore,
   totals,
   figures,
+  teams,
   reveal,
   explainOpen,
 }: ResultsSummaryProps) {
@@ -89,6 +93,7 @@ export function ResultsSummary({
         <>
           <div className={styles.pageSide}>
             <p className={styles.lede}>{typeset(lede)}</p>
+            {teams}
             {progress && <ProgressLine progress={progress} shown={reveal.progress} />}
             {progress && <StarRule progress={progress} shown={reveal.stars} compact />}
             {why}
@@ -97,6 +102,7 @@ export function ResultsSummary({
         </>
       ) : (
         <>
+          {teams}
           {progress && (
             <>
               <StarRule progress={progress} shown={reveal.stars} compact={false} />

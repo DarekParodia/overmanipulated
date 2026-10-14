@@ -158,6 +158,13 @@ export const captionTable: Record<CueId, CaptionEntry> = {
   'endless.tempo': chip('clock', t.tempoUp, 'warn'),
   'endless.over': skip('visual-elsewhere'),
   'endless.record': chip('trophy', t.record, 'good'),
+  // S7-89: the lead changing hands is heard and shown on the rival chip; the caption says who.
+  'versus.leadTaken': chip('arrow', t.leadTaken, 'good', { group: 'versusLead' }),
+  'versus.leadLost': chip('arrow', t.leadLost, 'warn', { group: 'versusLead' }),
+  // The results ribbon says „Wygrana!”, „Przegrana” or „Remis” in words.
+  'versus.win': skip('visual-elsewhere'),
+  'versus.lose': skip('visual-elsewhere'),
+  'versus.draw': skip('visual-elsewhere'),
   'event.viral.start': chip('share', t.viral, 'warn'),
   'event.bossCall.start': chip('phone', t.phoneRings, 'danger'),
   'event.botRaid.start': chip('bot', t.botRaid, 'warn'),
