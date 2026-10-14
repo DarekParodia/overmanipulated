@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import {
   MINIGAME_FAIL_LOCKOUT_MS,
+  MINIGAME_MIN_SOLVE_MS,
   MINIGAME_STABLE_SEED_STATIONS,
   STATION_WORK_MS,
   TICK_MS,
@@ -20,7 +21,13 @@ import {
 import type { PlayerIntent, QueuedCommand, SimContext, SimFrame } from './frame.ts';
 import { minigameSeedFor } from './rng.ts';
 import { addPlayer, createGameState, type GameState } from './state.ts';
-import { drawMinigameSeed, minigameAttemptKey, stepStations, workDurationMs } from './stations.ts';
+import {
+  drawMinigameSeed,
+  minigameAttemptKey,
+  solvedTooSoon,
+  stepStations,
+  workDurationMs,
+} from './stations.ts';
 
 const FACING_UP = -Math.PI / 2;
 /** Floor tiles directly below the stations (row 2), facing up. */
@@ -717,5 +724,58 @@ describe('stepStations: minigame seeds (S7-13)', () => {
     expect(minigameAttemptKey('s1', 'imageSearch')).toBe('s1:imageSearch');
     expect(drawMinigameSeed(state, { spawnKey: 's1' }, 'imageSearch')).toBe(1518889876);
     expect(drawMinigameSeed(state, { spawnKey: 's1' }, 'sourceRegistry')).toBe(1262930342);
+  });
+});
+
+describe('stepStations: versus minimum solve time (S7-80)', () => {
+  const VERSUS_CTX = testContext({ minSolveMs: MINIGAME_MIN_SOLVE_MS });
+  const success = testCommand('a', {
+    kind: 'minigameResult',
+    stationId: 'imageSearch-0',
+    success: true,
+  });
+
+  /** Opens the image search round at level time 5000 ms, then answers `afterMs` later. */
+  function answerAfter(afterMs: number, ctx: SimContext) {
+    const start = { ...setup([{ id: 'a', spot: 'imageSearch' }]), elapsedMs: 5000 };
+    const open = workUntilMinigame(start, ['a'], 'imageSearch-0', ctx).state;
+    expect(open.minigameOpenedMs).toEqual({ 'imageSearch-0': 5000 });
+    return tick({ ...open, elapsedMs: 5000 + afterMs }, [], [success], ctx);
+  }
+
+  it('counts a success 200 ms after the round opened as a failure in versus', () => {
+    const { state, events } = answerAfter(200, VERSUS_CTX);
+    expect(state.folders.f1?.stamps).toEqual([]);
+    expect(state.stations['imageSearch-0']?.phase).toBe('lockout');
+    expect(state.minigameAttempts).toEqual({ 's1:imageSearch': 1 });
+    expect(events).toEqual([
+      {
+        kind: 'minigameFailed',
+        stationId: 'imageSearch-0',
+        playerId: 'a',
+        folderId: 'f1',
+        lockoutMs: MINIGAME_FAIL_LOCKOUT_MS,
+      },
+    ]);
+  });
+
+  it('stamps a success 200 ms after the round opened in co-op', () => {
+    const { state, events } = answerAfter(200, testContext());
+    expect(state.folders.f1?.stamps).toEqual(['t-true-image']);
+    expect(kinds(events)).toEqual(['stampApplied']);
+  });
+
+  it('stamps a versus success once the minimum time has passed', () => {
+    expect(MINIGAME_MIN_SOLVE_MS.imageSearch).toBe(1200);
+    expect(answerAfter(1199, VERSUS_CTX).state.folders.f1?.stamps).toEqual([]);
+    expect(answerAfter(1200, VERSUS_CTX).state.folders.f1?.stamps).toEqual(['t-true-image']);
+  });
+
+  it('reads the minimum per station kind and is off without one', () => {
+    expect(solvedTooSoon(undefined, 'phone', 0, 10)).toBe(false);
+    expect(solvedTooSoon(MINIGAME_MIN_SOLVE_MS, 'phone', 0, 999)).toBe(true);
+    expect(solvedTooSoon(MINIGAME_MIN_SOLVE_MS, 'phone', 0, 1000)).toBe(false);
+    expect(solvedTooSoon(MINIGAME_MIN_SOLVE_MS, 'aiScanner', 100, 700)).toBe(false);
+    expect(solvedTooSoon(MINIGAME_MIN_SOLVE_MS, 'archive', undefined, 10)).toBe(false);
   });
 });

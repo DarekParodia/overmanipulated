@@ -18,6 +18,10 @@ services:
     build:
       context: .
       target: server
+      # The sha „O grze” shows (S7-103). Both images must get the same value: the server's HTML
+      # shell names the web image's hashed chunks. `APP_GIT_SHA=$(git rev-parse --short HEAD)`.
+      args:
+        APP_GIT_SHA: ${APP_GIT_SHA:-}
     restart: unless-stopped
     init: true
     # The server stops accepting sockets and closes the database on SIGTERM; 15 s is plenty.
@@ -49,6 +53,8 @@ services:
     build:
       context: .
       target: web
+      args:
+        APP_GIT_SHA: ${APP_GIT_SHA:-}
     restart: unless-stopped
     init: true
     stop_grace_period: 15s

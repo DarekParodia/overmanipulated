@@ -2,11 +2,11 @@
 // hull and a role accessory (scene/character/rig.ts), animated by an AnimationMixer whose layers
 // follow the player's state (idle, walk, run, carry, work) and the feedback triggers (stamp,
 // cheer, facepalm, shrug, slump; scene/character/controller.ts). On top: role fidgets and
-// celebrations, ping emotes (also on remote players), hand IK that holds a carried folder and
-// reaches for fixtures, a head that leads turns and looks at the station in use, footsteps timed
-// to the foot contacts of the clips, and the procedural layer (lean, squash & stretch, spawn pop,
-// hop with landing squash, wobble). A white name pill outlined in the player's colour floats
-// above the head.
+// celebrations, ping emotes and ability reactions (also on remote players), hand IK that holds a
+// carried folder and reaches for fixtures, a head that leads turns and looks at the station in
+// use, footsteps timed to the foot contacts of the clips, and the procedural layer (lean, squash
+// & stretch, spawn pop, hop with landing squash, wobble). A white name pill outlined in the
+// player's colour floats above the head.
 
 import { useFrame } from '@react-three/fiber';
 import {
@@ -33,6 +33,7 @@ import { useSettings } from '../store/settings.ts';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { playerColor, playerColorVar } from '../ui/tokens.ts';
 import {
+  abilityReaction,
   type CharacterController,
   type CharacterState,
   createCharacterController,
@@ -231,12 +232,22 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
     [id, role],
   );
 
-  // Ping emotes (visible on remote players too) and hand reaches for pick-up / put-down.
+  // Ping emotes and ability reactions (visible on remote players too) and hand reaches for
+  // pick-up / put-down and for catching a passed folder.
   useEffect(
     () =>
       onGameEvent((event) => {
         if (event.kind === 'ping' && event.playerId === id) {
           controller.current?.playUpper(emoteForPing(event.ping));
+        } else if (event.kind === 'ability') {
+          const reaction = abilityReaction(event, id);
+          if (reaction?.kind === 'play') {
+            controller.current?.playUpper(reaction.clip);
+          } else if (reaction?.kind === 'stop') {
+            controller.current?.stopUpper(reaction.clip);
+          } else if (reaction?.kind === 'catch') {
+            reachAt(id, controller.current, motion.current.bodyYaw, null, scratch.reach);
+          }
         } else if (event.kind === 'folderPickedUp' && event.playerId === id) {
           reachAt(id, controller.current, motion.current.bodyYaw, null, scratch.reach);
         } else if (event.kind === 'folderPutDown' && event.playerId === id) {
@@ -271,6 +282,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
         }}
         className={styles.label}
         style={{ borderColor: playerColorVar(colorIndex) }}
+        data-testid="name-tag"
       >
         <PlayerMark colorIndex={colorIndex} size={14} />
         {nickname}

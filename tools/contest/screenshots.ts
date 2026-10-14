@@ -86,7 +86,7 @@ const S = {
   lobby: defineShot(
     'lobby',
     'Poczekalnia',
-    'Kod pokoju, cztery miejsca przy biurkach, role i gotowość graczy.',
+    'Kod pokoju, cztery miejsca przy biurkach, sześć ról z premią i zdolnością, gotowość graczy.',
   ),
   lobbyLevels: defineShot(
     'lobby-poziomy',
@@ -118,6 +118,11 @@ const S = {
     'rozgrywka',
     'Rozgrywka (poziom 1)',
     'Redakcja z góry. U góry czas, punkty i Wiarygodność oraz kolejka teczek z licznikami.',
+  ),
+  hudAbility: defineShot(
+    'rozgrywka-zdolnosc',
+    'Zdolność roli',
+    'Redaktor prowadzący nacisnął R (na telefonie czwarty przycisk): teczka ma 20 sekund więcej, a zdolność się odnawia.',
   ),
   hudSix: defineShot(
     'rozgrywka-poziom-6',
@@ -460,7 +465,9 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
   await pickRole(host, 'Redaktor prowadzący');
   await pickRole(guests[0] as Player, 'Fotoedytor');
   await pickRole(guests[1] as Player, 'Archiwista');
-  await pickRole(guests[2] as Player, 'Reporter');
+  // Level 1 has no phone, so the fourth seat is Wszechstronny rather than Reporter (the lobby's
+  // role panel would warn that Telefon z terenu does nothing there).
+  await pickRole(guests[2] as Player, 'Wszechstronny');
   for (const guest of guests) {
     await setReady(guest);
   }
@@ -486,6 +493,17 @@ async function shootDevice(browser: Browser, baseUrl: string, device: Device): P
   await attempt(S.briefing, async () => take(host.page, S.briefing, 1200));
   await confirmBriefing([host, ...guests]);
   await attempt(S.hud, async () => take(host.page, S.hud, 5500));
+  await attempt(S.hudAbility, async () => {
+    const ability = host.page.getByTestId(touch ? 'touch-ability' : 'hud-ability');
+    await ability.waitFor({ timeout: 4000 });
+    if (touch) {
+      await ability.tap();
+    } else {
+      await host.page.keyboard.press('r');
+    }
+    await host.page.locator('[data-extended]').first().waitFor({ timeout: 4000 });
+    await take(host.page, S.hudAbility, 600);
+  });
   for (const player of [host, ...guests]) {
     await player.context.close();
   }

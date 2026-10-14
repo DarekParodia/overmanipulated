@@ -16,4 +16,13 @@ describe('vite.config', () => {
       );
     }
   });
+
+  it('defines the version, copyright and authors for „O grze” (S7-103)', () => {
+    const define = viteConfig.define ?? {};
+    expect(JSON.parse(String(define.__APP_VERSION__))).toMatch(/^0\.0\.0\+(?:[0-9a-f]{7,12}|dev)$/);
+    expect(JSON.parse(String(define.__APP_COPYRIGHT__))).toBe(
+      'Copyright © 2026 Kamil Wida. Wszelkie prawa zastrzeżone.',
+    );
+    expect(JSON.parse(String(define.__APP_AUTHORS__))).toEqual(['Kamil Wida']);
+  });
 });

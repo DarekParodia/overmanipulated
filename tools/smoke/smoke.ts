@@ -6,8 +6,9 @@
 // it links, response headers (warnings; failures with --strict), the HTML shell the game server
 // renders (embedded config, CSP mode, nonce rotation), /ads.txt, /prywatnosc and the manifest,
 // then a full game flow over `wss://…/ws`: heartbeat, create room, second player joins by code,
-// ready, start, skip the briefing and receive live snapshots that acknowledge our input. Exit
-// code 1 if any check fails. --insecure accepts a self-signed certificate.
+// ready, start, skip the briefing, receive live snapshots that acknowledge our input and arm the
+// host's role ability (M3). Exit code 1 if any check fails. --insecure accepts a self-signed
+// certificate.
 import {
   type ClientMessage,
   encodeMessage,
@@ -433,14 +434,24 @@ export async function runSmoke(
     if (response.status !== 200 || !type.includes('html')) {
       throw new Error(`HTTP ${response.status}, ${type}`);
     }
-    if (/<h1\b/.test(html)) {
-      return 'privacy page';
+    if (!/<h1\b/.test(html) || embeddedConfig(html).kind !== 'missing') {
+      throw new Error('not the privacy page (no heading, or the game shell instead)');
     }
-    // Until the privacy page route lands (S7-75) the path renders the HTML shell.
-    if (embeddedConfig(html).kind !== 'missing') {
-      return 'HTML shell (privacy page route not deployed yet)';
+    if (/<script\b/i.test(html)) {
+      throw new Error('the privacy page carries a script');
     }
-    throw new Error('HTML without a heading or the game shell');
+    const csp = response.headers.get('content-security-policy');
+    if (csp?.includes("'strict-dynamic'")) {
+      throw new Error('the privacy page got the ads CSP; it never shows ads');
+    }
+    // The ads text follows the same per-host decision as /api/config.
+    const adsSection = html.includes('data-block="ads"');
+    if (apiConfig && apiConfig.ads.enabled !== adsSection) {
+      throw new Error(
+        `ads section ${adsSection ? 'shown' : 'missing'} but /api/config has ads ${apiConfig.ads.enabled ? 'on' : 'off'}`,
+      );
+    }
+    return `privacy page, ads section ${adsSection ? 'shown' : 'hidden'}`;
   });
 
   await check('GET /manifest.webmanifest', async () => {
@@ -510,8 +521,13 @@ export async function runSmoke(
       if (!guest || !hostId) {
         throw new Error('no second player');
       }
+      // A role for the ability check below: Training (l0) has the Lupa obrazu, so the photo
+      // editor's Ekspertyza arms at once, with no folder needed.
+      host.send({ type: 'lobby', action: { kind: 'setRole', role: 'photoEditor' } });
       guest.send({ type: 'lobby', action: { kind: 'setReady', ready: true } });
-      await host.waitFor('roomState', (m) => m.players.every((p) => p.id === m.hostId || p.ready));
+      await host.waitFor('roomState', (m) =>
+        m.players.every((p) => (p.id === m.hostId ? p.role === 'photoEditor' : p.ready)),
+      );
       host.send({ type: 'lobby', action: { kind: 'start' } });
       await guest.waitFor('roomState', (m) => m.phase === 'briefing');
       for (const player of [host, guest]) {
@@ -543,6 +559,26 @@ export async function runSmoke(
       }
       const seconds = (performance.now() - started) / 1000;
       return `${wanted}+ snapshots in ${seconds.toFixed(1)} s, input acknowledged`;
+    });
+
+    await check('role ability round trip', async () => {
+      const { hostId } = hostBox;
+      if (!hostId) {
+        throw new Error('no level running');
+      }
+      host.send({ type: 'command', command: { kind: 'useAbility' } });
+      await host.waitFor(
+        'event',
+        (m) =>
+          m.event.kind === 'ability' &&
+          m.event.playerId === hostId &&
+          m.event.ability === 'expertise' &&
+          m.event.stage === 'armed',
+      );
+      await host.waitFor('snapshot', (m) =>
+        m.crew.some((member) => member.id === hostId && member.abilityArmed),
+      );
+      return 'Ekspertyza armed, crew state in the snapshot';
     });
   }
 

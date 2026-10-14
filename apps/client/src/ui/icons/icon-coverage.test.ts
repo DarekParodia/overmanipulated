@@ -16,6 +16,8 @@ import { cardIcon } from '../../encyclopedia/card-icons.ts';
 import { EVENT_ICON } from '../../events/event-model.ts';
 import { PING_ICON } from '../../pings/PingPicker.tsx';
 import { STATION_ICON } from '../../stations/kit.tsx';
+import { ACCESSORIES } from '../../store/profile-model.ts';
+import { ACCESSORY_ICON_NAMES } from './AccessoryIcon.tsx';
 import { iconNames } from './Icon.tsx';
 import { ROLE_ICON_NAMES } from './RoleIcon.tsx';
 
@@ -44,6 +46,10 @@ describe('icon coverage', () => {
 
   it('draws every role', () => {
     for (const role of ROLES) expect(ROLE_ICON_NAMES).toContain(role);
+  });
+
+  it('draws every accessory (S7-104)', () => {
+    expect([...ACCESSORY_ICON_NAMES].sort()).toEqual([...ACCESSORIES].sort());
   });
 
   it('gives every ability and the rescue badge an icon from the set (S7-40)', () => {

@@ -3,6 +3,7 @@
 import { Canvas } from '@react-three/fiber';
 import { useEffect } from 'react';
 import { NoToneMapping, SRGBColorSpace } from 'three';
+import { AbilityMarkers } from '../abilities/AbilityMarkers.tsx';
 import { installGameHook } from '../debug/game-hook.ts';
 import { perfStats } from '../debug/perf-stats.ts';
 import { useApp } from '../store/app.ts';
@@ -96,6 +97,7 @@ export function GameCanvas() {
       </group>
       <Players shadows={profile.shadows} />
       <PingBubbles />
+      <AbilityMarkers />
       <Particles />
       <PerfProbe />
       <Warmup />

@@ -58,6 +58,11 @@ export type GameState = {
    * (`minigameAttemptKey`). Sim-only; stations in MINIGAME_STABLE_SEED_STATIONS never count.
    */
   minigameAttempts: Record<string, number>;
+  /**
+   * Level time when each station's current minigame round opened, keyed by station id. Sim-only
+   * (never in a snapshot): the versus minimum solve time (`SimContext.minSolveMs`) reads it.
+   */
+  minigameOpenedMs: Record<string, number>;
   /** Keyed by player id; insertion order is join order. */
   players: Record<string, PlayerState>;
   crew: Record<string, CrewMember>;
@@ -113,6 +118,7 @@ export function createGameState(options: GameStateOptions = {}): GameState {
     elapsedMs: 0,
     seed: (options.seed ?? 1) | 0,
     minigameAttempts: {},
+    minigameOpenedMs: {},
     players: {},
     crew: {},
     folders: {},

@@ -32,8 +32,10 @@ stopped, `/` answered 503 with the menu, and the browser console showed no CSP v
 ## Requirements
 
 - A Linux VPS with Docker Engine and the compose plugin. 1 vCPU / 1 GB RAM is plenty: measured
-  idle usage is about 30 MB (server) + 15 MB (Caddy), and the compose file caps them at 384 MB
-  and 128 MB.
+  idle usage is about 30 MB (server) + 15 MB (Caddy). The compose file sets no memory or CPU
+  caps (hosts without those cgroup controllers refuse containers that set them); add them in a
+  `docker-compose.override.yml` where supported (see the comment at the top of
+  `docker-compose.yml`: server 384 MB / 1 CPU, web 128 MB / 0.5 CPU).
 - An external TLS reverse proxy for the public domain that forwards to port 8080 (WebSocket
   upgrades and the original `Host` header included). Port 8080 is reachable only from it.
 
@@ -41,8 +43,9 @@ stopped, `/` answered 503 with the menu, and the browser console showed no CSP v
 
 ```sh
 git clone <repo> redakcja && cd redakcja
-cp .env.example .env          # optional: LOG_LEVEL, TRUSTED_PROXIES
+cp .env.example .env          # optional: LOG_LEVEL, TRUSTED_PROXIES, ADS_ENABLED
 cp config/config.example.json config/config.json && chmod 644 config/config.json   # optional
+bun run config:check -- config/config.json   # if you edited it (needs Bun), see "Configuration"
 docker compose up -d --build
 docker compose ps             # server and web should both be "healthy"
 bun run smoke -- https://gra.example.pl     # from any machine with Bun, see "Smoke test"
@@ -57,8 +60,12 @@ with the defaults (ads off, room browser off).
 
 ```sh
 git pull
-docker compose up -d --build
+APP_GIT_SHA=$(git rev-parse --short HEAD) docker compose up -d --build
 ```
+
+`APP_GIT_SHA` is optional: it puts the commit into the version „O grze” shows
+(`0.0.0+1a2b3c4 · protokół 7`); without it the version reads `+dev`. The build context has no
+`.git`, so the sha comes in as a build argument, the same for both images.
 
 Rooms live in memory, so a restart ends running matches. Deploy outside lesson hours.
 Players who are mid-game get the "connection lost" notice and can create a new room.
@@ -67,22 +74,110 @@ build are gone, so such a tab shows the load error; reloading fixes it.
 
 ## Configuration
 
-| Variable | Where | Default | Meaning |
-| --- | --- | --- | --- |
-| `LOG_LEVEL` | `.env` → server | `info` | `silent` disables server logs |
-| `TRUSTED_PROXIES` | `.env` → web | `private_ranges` | Addresses of the external TLS proxy whose `X-Forwarded-For` Caddy believes (IPs or CIDR ranges, space-separated). Set it to the proxy's `IP/32` when the proxy runs on another machine; see "Client address" |
-| `CONFIG_PATH` | server | `/app/config/config.json` (compose) | Operator config: features, message of the day, rooms, ads, CSP extras. Compose mounts `./config` read-only at `/app/config`; a missing file means the defaults. Saving the file reloads it (or `docker compose kill -s SIGHUP server`); check it first with `bun run config:check -- config/config.json` |
-| `ADS_ENABLED` | `.env` → server | unset | Kill switch: `false` turns ads off whatever `config.json` says, also across reloads; `true` still needs `ads.signOff`. Unset: `config.json` decides. Takes effect on `docker compose up -d server` |
-| `SHELL_HTML_PATH` | server | `apps/client/dist/index.html` | Built page the HTML shell is rendered from; the image copies it from the client build. Absent: the shell paths 404 (dev, where Vite serves the page) |
-| `PRIVACY_MD_PATH` | server | `docs/privacy.pl.md` | Privacy note rendered at `/prywatnosc` |
-| `PORT` | server | `3000` | Internal HTTP/WS port (set by compose) |
-| `DATABASE_PATH` | server | `/data/redakcja.sqlite` | SQLite file (set by compose) |
-| `BRIEFING_MS` | server | `18000` | Briefing length before a level auto-starts (tests shorten it) |
-| `DEV_LATENCY_MS` | server | `0` | Dev only: artificial latency for netcode testing. Keep `0` in production |
+Settings live in three places, and each setting lives in exactly one of them:
 
-Retention (90 days) and the limits below are constants in the code, not environment variables:
+1. **Environment** (`.env` next to `docker-compose.yml`, or the compose file itself): process and
+   infrastructure settings (ports, file paths, log level, the trusted proxies) and one kill switch,
+   `ADS_ENABLED`. Read once at start: change them, then `docker compose up -d` (recreates the
+   changed service).
+2. **`config/config.json`**: product settings the operator changes while the game runs (feature
+   flags, message of the day, rooms, ads, CSP extras). Validated with a strict schema and
+   **hot-reloaded**: no restart, running matches keep going.
+3. **Code constants**: balance numbers, abuse limits and retention (`packages/shared/src/constants.ts`,
+   `apps/server/src/limits.ts`); changing them is a release.
+
+**Precedence.** A key is either env or `config.json`, never both, with one exception: the
+`ADS_ENABLED` kill switch, which always wins over `ads.enabled`. It is written into the file's
+values **before** validation, at start and on every reload, so `ADS_ENABLED=false` keeps ads off
+whatever the file says, and `ADS_ENABLED=true` cannot skip a rule: without `ads.signOff` (or a
+client, a domain, a slot) the server refuses the config exactly as if the file said it.
+`BRIEFING_MS` stays env-only on purpose (the e2e knob).
+
+### Environment variables
+
+| Variable | Where | Default | Applies | Meaning |
+| --- | --- | --- | --- | --- |
+| `LOG_LEVEL` | `.env` → server | `info` | restart | `silent` disables server logs |
+| `TRUSTED_PROXIES` | `.env` → web | `private_ranges` | restart (`docker compose up -d web`) | Addresses of the external TLS proxy whose `X-Forwarded-For` Caddy believes (IPs or CIDR ranges, space-separated). Set it to the proxy's `IP/32` when the proxy runs on another machine; see "Client address" |
+| `ADS_ENABLED` | `.env` → server | unset | restart (`docker compose up -d server`) | Kill switch: `false` turns ads off whatever `config.json` says, also across reloads; `true` still needs everything `ads.enabled` needs (`ads.signOff` above all). Unset: `config.json` decides |
+| `CONFIG_PATH` | server | `config/config.json` in the repository; compose sets `/app/config/config.json` | restart | Where `config.json` is read from. Compose mounts `./config` read-only at `/app/config`; a missing file means the defaults |
+| `SHELL_HTML_PATH` | server | `apps/client/dist/index.html` | restart | Built page the HTML shell is rendered from; the image copies it from the client build. Absent file: the shell paths 404 (dev, where Vite serves the page) |
+| `PRIVACY_MD_PATH` | server | `docs/privacy.pl.md` | restart | Privacy note rendered at `/prywatnosc`; the image copies it. Absent file: `/prywatnosc` is a 404 |
+| `PORT` | server | `3000` | restart | Internal HTTP/WS port (set by compose) |
+| `DATABASE_PATH` | server | `./data/redakcja.sqlite`; compose sets `/data/redakcja.sqlite` | restart | SQLite file |
+| `BRIEFING_MS` | server | `18000` | restart | Briefing length before a level auto-starts (tests shorten it) |
+| `DEV_LATENCY_MS` | server | `0` | restart | Dev only: artificial latency for netcode testing. Keep `0` in production |
+
+Compose passes only `LOG_LEVEL`, `ADS_ENABLED` and `TRUSTED_PROXIES` from `.env`; the paths and
+the port are fixed in `docker-compose.yml` and the image. Outside Docker, Bun reads a `.env` in the
+working directory itself, so every server variable above can go there.
+
+Retention (90 days) and the abuse limits below are constants in the code, not settings:
 `LEADERBOARD_RETENTION_DAYS` in `packages/shared/src/constants.ts` and
 `apps/server/src/limits.ts`.
+
+### config.json
+
+Copy `config/config.example.json` (ads off, room browser off, no sign-off) to
+`config/config.json` and `chmod 644` it (the container user must read it). Editors with JSON
+Schema support complete and check keys through `"$schema": "./config.schema.json"`
+(`config/config.schema.json`, generated by `bun run config:schema`). Unknown keys are refused.
+Every key is optional: the table lists the default for a missing key. "Required" keys must be
+there once their section is (a `motd` needs an `id` and a `text`).
+
+All keys are hot: a reload applies to the next request (page, `/api/config`, `/ads.txt`,
+`/prywatnosc`) and to the next new room. Open game tabs pick up the public part on their next
+main-menu visit (at most once a minute) or reload; a running match never changes.
+
+| Key | Default | Hot reload | Meaning |
+| --- | --- | --- | --- |
+| `site.publicOrigin` | unset | yes | Public address, e.g. `https://bronsie.drkp.dev` (stored as the bare origin). Sent to clients as `siteOrigin` and shown as `{{site.origin}}` in the privacy note |
+| `site.operator.name` | unset | yes, next `/prywatnosc` | Who runs this server (≤ 120 characters), named in the privacy note. Unset: the note shows „[do uzupełnienia…]” |
+| `site.operator.contact` | unset | yes, next `/prywatnosc` | Contact for privacy questions (≤ 200 characters), e.g. an e-mail address |
+| `site.operator.hosting` | unset | yes, next `/prywatnosc` | Where the server runs (≤ 200 characters), e.g. the hosting company and country |
+| `features.roomBrowser` | `false` | yes, next menu visit | Public room list. Off by default: rooms of minors are never listed publicly unless the operator opts in |
+| `features.versus` | `true` | yes, next menu visit / new room | „Na punkty” (versus) mode. Gates entry points only: a running match keeps going |
+| `features.spectators` | `true` | yes, next join | Spectator joins (the host still opens the Widownia per room) |
+| `features.intro` | `true` | yes, next menu visit | The intro: its entry in „Jak grać” and its autoplay before the first training |
+| `motd` | `null` | yes, next menu visit | Message of the day in the main menu; `null` for none |
+| `motd.id` | required | yes | Stable id (`A–Z a–z 0–9 . _ -`, 1–40). Players who closed the message do not see it again until the id changes |
+| `motd.text` | required | yes | Polish text, one paragraph, ≤ 140 characters (`MOTD_MAX_CHARS`), no line breaks. Shown as written (typographic quotes and dashes are fixed up) |
+| `motd.tone` | `"info"` | yes | `info` (blue, lightbulb) or `warning` (orange, siren) |
+| `motd.from` | unset | yes | ISO 8601 instant with an offset (`2026-11-02T07:00:00+01:00`): shown from then on (inclusive) |
+| `motd.until` | unset | yes | Hidden from then on (exclusive); must be later than `from` |
+| `rooms.maxRooms` | `300` | yes, next new room | Rooms alive at once (1–5000); a full server answers „server is busy” to new rooms |
+| `rooms.defaultDifficulty` | `"normal"` | yes, next new room | Difficulty a new room starts on: `easy`, `normal`, `hard` or `expert` |
+| `ads.enabled` | `false` | yes, next page | Ads on `ads.domains`. Needs `ads.client`, `ads.signOff`, at least one host in `ads.domains` and at least one slot. `ADS_ENABLED` wins over it. See "AdSense operator checklist" |
+| `ads.verification` | `false` | yes, next page | Put AdSense's `google-adsense-account` meta tag on `ads.domains` pages while ads are still off (site verification). Needs `ads.client` |
+| `ads.mode` | `"limited"` | yes, next page | `limited` (Google's limited ads: no cookies, no local storage, no personalisation) or `nonPersonalized` (may use cookies, adults only). Only `limited` is accepted while `ageTreatment` is `teen` or `child`, even with ads off |
+| `ads.client` | unset | yes, next page | AdSense publisher id, `ca-pub-` and 10–20 digits |
+| `ads.slots` | `{}` | yes, next page | Ad unit id (6–20 digits) per placement: `menu` (160×600), `lobby` (728×90), `results` (160×600), `spectator` (728×90). A placement without a unit shows nothing |
+| `ads.domains` | `[]` | yes, next page | Hosts that show ads (≤ 16, exact, no port: `bronsie.drkp.dev` never matches `drkp.dev` or `x.bronsie.drkp.dev`). Every other host gets no ads, the base CSP and the ad-free privacy text: a school can get an ad-free address |
+| `ads.ageTreatment` | `"teen"` | yes, next page | Age tag on every ad request: `child`, `teen` or `unspecified` (adults only) |
+| `ads.signOff.by` | required | yes | Who signed off ads for this audience (supervisor or legal; ≤ 120 characters) |
+| `ads.signOff.date` | required | yes | When (`YYYY-MM-DD`). Without `ads.signOff`, `ads.enabled: true` is refused |
+| `ads.adsTxt` | `[]` | yes, next `/ads.txt` (cached 5 minutes) | Lines served at `/ads.txt` on every host, also while ads are off (≤ 100 lines of ≤ 300 characters: a comment, `VARIABLE=value` or `domain, pub-id, DIRECT\|RESELLER[, cert-id]`). Empty: `/ads.txt` is a 404 |
+| `csp.extra` | `{}` | yes, next page | Extra CSP sources per fetch directive (`script-src`, `style-src`, `img-src`, `font-src`, `media-src`, `connect-src`, `frame-src`, `worker-src`; ≤ 20 each: a keyword, `https:`/`wss:`/`data:`/`blob:` or an `https://` host), on every page the server renders. Static files keep the Caddyfile policy |
+| `csp.adsExtra` | `{}` | yes, next page | The same, added only to pages in ads mode |
+
+### Reloading and checking config.json
+
+1. Check the new file first, on any machine with Bun and the repository:
+   `bun run config:check -- config/config.json`. It prints OK, the effective config (defaults
+   filled in, `ADS_ENABLED` from the environment applied) and what `/api/config` serves on each
+   ads host and on any other host, or the errors with exit code 1.
+2. Save it over `config/config.json`. The server watches the directory and reloads 250 ms after
+   the last change. Where file events do not reach the container (Docker Desktop, network
+   filesystems), reload by hand: `docker compose kill -s SIGHUP server`.
+3. Confirm: `docker compose logs --since 1m server | grep config` shows `config reloaded` with the
+   changed keys, and `curl -s https://<domain>/api/health` shows `config.revision` one higher
+   (`config.source` is `file`). `config reload rejected` means the file was invalid or unreadable:
+   the server **keeps the old config** and says so only in this log line. A file deleted while
+   the server runs also keeps the old config.
+
+An invalid `config.json` at **start** stops the server (exit 1, `invalid config file, refusing to
+start` in the log), so a typo never starts a server with ads, flags or limits nobody meant;
+`docker compose ps` then shows it restarting. A missing file at start means the defaults.
 
 ## What Caddy does (and how to check it)
 
@@ -92,7 +187,7 @@ Retention (90 days) and the limits below are constants in the code, not environm
 | Compression | zstd and gzip on the fly; Brotli files are pre-built at image build time (`tools/deploy/precompress.ts`) and served by `precompressed br` | `curl -sI -H 'Accept-Encoding: br' https://<domain>/assets/<index>.js` |
 | Cache: hashed assets | `/assets/<name>-<8 hash chars>.(js\|css\|woff2)` → `public, max-age=31536000, immutable`. Only when the file exists: a missing hashed file is a plain 404, never `index.html` cached for a year | `curl -sI` the script |
 | Cache: static files | manifest, icons and the un-hashed audio in `/assets/audio` → `no-cache` (revalidate by ETag). The manifest is sent as `application/manifest+json` (Caddy knows no type for it). `index.html.br` from the precompress step stays unused: the page comes from the game server | `curl -sI https://<domain>/manifest.webmanifest` |
-| Pages | `/`, SPA paths, `/index.html`, `/ads.txt`, `/prywatnosc` → game server (it sets `Cache-Control`: `no-store` on the shell, `public, max-age=300` on `/ads.txt`). Unknown file-like paths (`/foo.js`) get a plain 404, never HTML | `bun run smoke -- <url>` |
+| Pages | `/`, SPA paths, `/index.html`, `/ads.txt`, `/prywatnosc` → game server (it sets `Cache-Control`: `no-store` on the shell, `public, max-age=300` on `/ads.txt`, `no-cache` on `/prywatnosc`). Unknown file-like paths (`/foo.js`) get a plain 404, never HTML | `bun run smoke -- <url>` |
 | Server down | `handle_errors 502 503 504`: the static `index.html` of the same build, `no-store`, with the security headers; not for `/ads.txt`, `/api`, `/ws`, `/health` | Stop the server, open the site |
 | Cache: API | `/api/*`, `/health`, `/ws` → `no-store` | |
 | Security headers | `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` plus CSP `frame-ancestors 'none'`, `Permissions-Policy` (no camera, microphone, geolocation), no `Server` header, on every response (`security_headers` snippet, also on the fallback page). `Content-Security-Policy`, `Referrer-Policy: no-referrer` and `Cross-Origin-Opener-Policy` are **defaults** (`?Header`): the game server sets its own on the pages it renders and those win | `bun run smoke -- <url> --strict` |
@@ -103,10 +198,43 @@ Retention (90 days) and the limits below are constants in the code, not environm
 | Access logs | Off on purpose: no IP addresses are written. Errors still go to the container log | See "Debugging with access logs" |
 
 If you add an external origin (analytics, CDN, fonts) to the page, extend the CSP with
-`csp.extra` in `config.json` (hot reload) and, for static files, in the `Caddyfile`; the game
-itself loads nothing from other hosts.
+`csp.extra` in `config.json` (hot reload) and, for static files, in the `Caddyfile`. Apart from
+Google's ad script on ad hosts (below), the game loads nothing from other hosts.
 
-### Abuse limits in the game server
+## Headers and CSP modes
+
+**Who owns which header.** Each header has one owner, so the two never fight:
+
+| Header | Owner | Where |
+| --- | --- | --- |
+| `Content-Security-Policy`, `Referrer-Policy`, `Cross-Origin-Opener-Policy` on the HTML shell and `/prywatnosc` | Game server (`apps/server/src/shell/csp.ts`), from `config.json` and the request host | Per request, hot with config reloads |
+| `Cache-Control` on the shell (`no-store`: per-request nonce), `/prywatnosc` (`no-cache`), `/ads.txt` (`public, max-age=300`), `/api/config` (`no-store`) | Game server | |
+| `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Permissions-Policy`, no `Server` | Caddy (`security_headers` snippet) | Every response, the fallback page included |
+| `Content-Security-Policy`, `Referrer-Policy`, `Cross-Origin-Opener-Policy` on static files and the fallback page | Caddy, as `?` defaults: set only when the response has none, so the game server's values win on its pages | |
+| `Cache-Control` on `/assets/*`, the manifest and icons; `no-store` on `/api/*`, `/ws`, `/health` | Caddy | |
+| `X-Real-IP` (request header to the game server) | Caddy (`header_up X-Real-IP {client_ip}`), always overwritten | See "Client address" |
+
+**CSP modes.** The game server picks one mode per page, from the same decision that fills the
+embedded config, so the page's ads and its policy never disagree:
+
+- **Base** (every host without ads, `/prywatnosc` always, and Caddy's static files and fallback):
+  the strict same-origin policy in the table above, byte for byte the Caddyfile's
+  (`tools/deploy/caddyfile.test.ts`), plus `csp.extra` on the pages the server renders (Caddy's
+  copy has no extras); `Referrer-Policy: no-referrer`.
+- **Ads** (only on pages of a host in `ads.domains` while `ads.enabled`, a client is set and the
+  shell was built with the nonce placeholder): Google's strict CSP for AdSense. `script-src
+  'nonce-…' 'strict-dynamic'` with a fresh nonce per request (`'unsafe-inline' 'unsafe-eval'
+  https: http:` follow only as fallbacks for browsers without CSP3, which ignore them otherwise);
+  `https:` added to `style-src`, `img-src`, `font-src` (with `data:`), `connect-src` and a new
+  `frame-src https:` for ad creatives and Google's consent message; `object-src`, `base-uri`, `form-action`
+  and `frame-ancestors` stay closed. Plus `csp.extra` and `csp.adsExtra`.
+  `Referrer-Policy: strict-origin-when-cross-origin`, because Google's consent message does not
+  show under `no-referrer`.
+
+Check a page: `curl -sI https://<domain>/ | grep -i -E 'content-security|referrer'`; the smoke
+test checks that the mode matches `/api/config` and that the nonce changes per request.
+
+## Abuse limits in the game server
 
 Implemented in the server (`apps/server/src/limits.ts`, tested in `limits.test.ts`); Caddy adds
 the 8 KB body cap. Because a whole class often sits behind one school IP, the per-address
@@ -122,7 +250,7 @@ numbers are generous: they stop scripts, not students.
 | Players per room | 4 | `roomFull` |
 | Every message | validated with Zod | `invalidMessage` |
 
-### Client address
+## Client address
 
 The per-address limits need the player's own address, not the proxy's. The external TLS proxy
 reports it in `X-Forwarded-For`. Caddy believes that header only on connections from an address
@@ -145,6 +273,71 @@ reads only `X-Real-IP`, falling back to the socket address in dev and tests
   trusts, so a direct visitor could pick their own address.
 - **Check:** switch access logs on for a minute (see "Debugging with access logs"); the
   `client_ip` field must show browser addresses, not the proxy's.
+
+## AdSense operator checklist
+
+Ads are off by default (`ads.enabled: false`) and never run on a host outside `ads.domains`, so
+any other address of the same server stays ad-free (a school can get its own). The game asks
+only for Google's **limited ads** while the audience may be under 18. Before `ads.enabled: true`
+in production, in this order (the example uses the game at `bronsie.drkp.dev`):
+
+1. **Sign-off gate.** Many players are under 16 and cannot consent to ad cookies or storage. The
+   supervisor (or the school's lawyer) signs off in writing that ads may run for this audience,
+   in this mode and in these placements. Record who and when in `ads.signOff`
+   (`{"by": "…", "date": "YYYY-MM-DD"}`) and keep the written sign-off with the deployment files.
+   The server refuses `ads.enabled: true` without it, also when `ADS_ENABLED=true` forces ads; the
+   committed example has no sign-off on purpose. No sign-off, no ads.
+2. **AdSense site = root domain.** Create the AdSense account and add the root domain
+   **`drkp.dev`** as the site: AdSense accepts only root domains (since March 2023), and the site
+   covers its subdomains.
+3. **ads.txt on the root.** Google reads `https://drkp.dev/ads.txt`, not the game host's: put the
+   line AdSense gives you (`google.com, pub-…, DIRECT, f08c47fec0942fa0`) there. The game's own
+   `/ads.txt` (`ads.adsTxt`, every host, 5-minute cache) matters only when the root file sends
+   crawlers to the subdomain with a `subdomain=bronsie.drkp.dev` line, which is needed only if
+   the game host sells through a different account.
+4. **Verification.** Verify the root site through `drkp.dev` (its owner adds AdSense's meta tag or
+   ads.txt there). Only if the game itself runs on the root domain: set `ads.client`,
+   `ads.domains` and `ads.verification: true`, and the game's pages carry the
+   `google-adsense-account` meta tag while ads are still off.
+5. **Consent message (Privacy & messaging).** Create a European regulations message (Google's
+   certified CMP, required in the EEA) for the site: language **Polish**, privacy policy URL
+   `https://bronsie.drkp.dev/prywatnosc`, and the **floating revocation link off**: the game's
+   own „Zgody reklamowe” link in the menu footer reopens the message, and a floating button would
+   sit over the game's controls. Create no other message types.
+6. **Auto ads off.** Under Ads → By site → `drkp.dev`: Auto ads **off**, including the overlay
+   formats (anchor, vignette, side rail) and the optimisation of existing ad units. The client
+   never asks for them, but switched on in AdSense they could cover controls during play.
+7. **Ad units.** Create fixed-size display units (not responsive): 160×600 for `menu` and
+   `results`, 728×90 for `lobby` and `spectator`. Copy their ids into `ads.slots`.
+8. **Config.** Set `ads.client`, `ads.slots`, `ads.domains: ["bronsie.drkp.dev"]`,
+   `ads.mode: "limited"`, `ads.ageTreatment: "teen"` (or `"child"`; `"unspecified"` and
+   `nonPersonalized` only for an adults-only deployment), `ads.signOff` and `ads.enabled: true`.
+   Run `bun run config:check -- config/config.json`, save, confirm the reload (see "Reloading and
+   checking config.json"), then `bun run smoke -- https://bronsie.drkp.dev --strict`: it must
+   report "ads mode: nonce policy matches the page", and `/prywatnosc` must show its ads section.
+9. **Verify the limited-ads flags** in a desktop browser at 1280×720 or more (the menu rail needs
+   1180×680) on the ad host, with DevTools:
+   - Elements: every `<ins class="adsbygoogle">` has `data-tag-for-under-age-of-consent="1"`
+     (limited mode) and `data-tag-for-age-treatment="2"` (`teen`; `1` for `child`, absent for
+     `unspecified`), and no `data-ad-format` or `data-full-width-responsive`.
+   - Console, on the menu: `adsbygoogle.requestNonPersonalizedAds` is `1` and
+     `adsbygoogle.pauseAdRequests` is `0`; start a level: no ad on screen, `pauseAdRequests` is
+     `1` and the Network tab shows no new ad request.
+   - Application → Cookies and Local storage for `https://bronsie.drkp.dev`: no Google ad
+     entries (`__gads`, `__gpi`, `__eoi`, `google_*`).
+   - A phone (or the browser at 640×360): no request to any Google host at all.
+   - Another host of the same server (e.g. `http://<server IP>:8080`, or a second domain):
+     no ads, base CSP, `/prywatnosc` says „Pod tym adresem nie ma reklam”.
+   - Compare the flag names with Google's current help pages: limited ads (AdSense answer
+     14210870), the age-treatment tag (17042704) and non-personalised ads (9042142). They were
+     taken from those pages but could not be re-read from the build sandbox; if Google renamed a
+     flag, fix `apps/client/src/ads/ads-model.ts` (and its tests) before enabling ads.
+10. **Device matrix.** Add a row with ads on (laptop with the menu rail, and a phone) and play a
+    full level on each.
+
+**Switching ads off.** `ads.enabled: false` in `config.json` works at once and keeps running
+matches. `ADS_ENABLED=false` in `.env` wins over the file and survives later edits, but needs
+`docker compose up -d server`, which ends running matches: use it outside lessons.
 
 ## Data, backups and retention
 
@@ -187,8 +380,9 @@ docker compose up -d server
 - **Health checks:** `server` calls `/health` every 15 s (database probe included); `web`
   asks Caddy's admin endpoint (`localhost:2019`, not published). `web` starts only after
   `server` is healthy. `restart: unless-stopped` brings both back after a crash or reboot.
-- **Limits:** server 384 MB / 1 CPU, web 128 MB / 0.5 CPU, 128 processes each; the server runs
-  as the unprivileged `bun` user with no Linux capabilities and `no-new-privileges`.
+- **Limits:** none in `docker-compose.yml` (see "Requirements" for an override with server
+  384 MB / 1 CPU, web 128 MB / 0.5 CPU). The server runs as the unprivileged `bun` user with no
+  Linux capabilities and `no-new-privileges`; the web container has `no-new-privileges`.
 - **Log rotation:** the `json-file` driver keeps 3 files of 10 MB per container.
 - **Logs:** `docker compose logs -f server` (one JSON line per event: `room created`,
   `player joined`, `player left`, `room closed`, `invalid client message`, `join rate limited`,
@@ -210,10 +404,13 @@ endpoint, `/api/config`, the HTML page and every script/stylesheet it links (cac
 compression, security headers), the HTML shell (the embedded config parses and agrees with
 `/api/config`; the CSP mode matches it: ads on needs `'strict-dynamic'` with a `'nonce-…'` equal to
 the module script's nonce, ads off needs `script-src 'self'` without `'unsafe-eval'`; a second
-request gets a different nonce), `/ads.txt` (404 or `text/plain`, never HTML), `/prywatnosc` and
-the manifest (static, `no-cache`), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
-create room, second socket joins by code, ready, start, skip the briefing, receive live
-snapshots that acknowledge the input. It prints PASS/WARN/FAIL per step and exits 1 on any
+request gets a different nonce), `/ads.txt` (404 or `text/plain`, never HTML), `/prywatnosc` (the
+privacy page, not the shell: no script, never the ads CSP, its ads section shown exactly when
+`/api/config` has ads on) and the manifest (static, `no-cache`), then a full game flow over `wss://<domain>/ws`: heartbeat round trip,
+create room, second socket joins by code, the host picks Fotoedytor, ready, start, skip the
+briefing, receive live snapshots that acknowledge the input, then press the role ability
+(`useAbility`) and see Ekspertyza armed in the `ability` event and in `snapshot.crew` (roles
+and abilities, M3). It prints PASS/WARN/FAIL per step and exits 1 on any
 failure. A static fallback page instead of the server-rendered shell is a warning ("static
 fallback?"): the game server is down or the catch-all does not reach it. The script is covered
 by `tools/smoke/smoke.test.ts`, which runs it against a local server with ads off and with ads on
@@ -267,6 +464,7 @@ date and tester. The matrix comes from `agents/platforms.md`.
 | iPhone (11 or newer), landscape | Safari iOS 17+ | | | | | | | | | |
 | Tablet (iPad or Android), landscape | Safari / Chrome | | | | | | | | | |
 | Mixed room: 2 laptops + 2 phones | any | | | | | | | | | |
+| Ads on (only if enabled): laptop ≥ 1180×680 + a phone | Chrome / any | | | | | | | | | Ads only in menu, lobby, results (by viewport); none in play or on the phone |
 
 Targets: 60 FPS on the laptop and never below 30 FPS on the mid-range phone for the whole
 level; text readable at 640×360; no console errors; sound unlocks after the first tap on iOS.
@@ -279,8 +477,12 @@ level; text readable at 640×360; no console errors; sound unlocks after the fir
 2. `docker compose ps` shows both services healthy; `bun run smoke -- https://<domain> --strict`
    passes with no warnings.
 3. Supervisor sign-off done (`reviewed: true` for all stories, see `docs/review/`), and the
-   privacy note (`docs/privacy.pl.md`) went to the teacher.
+   privacy note went to the teacher: `https://<domain>/prywatnosc`, with `site.operator` (name,
+   contact, hosting) filled in `config.json`, which replaces the „[do uzupełnienia…]” lines.
 4. Device matrix above filled in at least for laptop + Android + iPhone.
+5. Ads: off, or the whole "AdSense operator checklist" done (sign-off recorded in `ads.signOff`).
+   The teacher gets the address that matches: an ad host shows ads in the menu, any other host
+   of the server shows none.
 
 **Before class (30 minutes)**
 

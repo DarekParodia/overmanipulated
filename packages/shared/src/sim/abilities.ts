@@ -453,7 +453,12 @@ function applySecondChance(
     durationMs,
   };
   return consume(
-    { ...state, stations: { ...state.stations, [stationId]: reopened } },
+    {
+      ...state,
+      stations: { ...state.stations, [stationId]: reopened },
+      // A fresh round: the versus minimum solve time counts from now (S7-80).
+      minigameOpenedMs: { ...state.minigameOpenedMs, [stationId]: state.elapsedMs },
+    },
     playerId,
     'secondChance',
   );
