@@ -2084,7 +2084,6 @@ export const pl = {
       abilityReady: 'Zdolność gotowa',
     },
   },
-  // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   /**
    * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
    * screen (S7-90/91) builds on these.
@@ -2100,6 +2099,7 @@ export const pl = {
     /** The single newsroom of a co-op match. */
     coopTeam: 'Redakcja',
   },
+  // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   encyclopedia: {
     title: 'Encyklopedia technik',
     open: 'Encyklopedia',
