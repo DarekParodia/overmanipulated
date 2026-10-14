@@ -17,6 +17,7 @@ import {
   addPlayer,
   applyStatsEvent,
   BRIEFING_DURATION_MS,
+  byScore,
   type ClientId,
   type ClientMessage,
   COMMAND_QUEUE_MAX,
@@ -38,10 +39,14 @@ import {
   INPUT_QUEUE_MAX,
   type JoinMessage,
   type LevelEndMessage,
+  type LevelOutcome,
   type LobbyAction,
+  MAX_ROOM_PLAYERS,
   MAX_TEAM_PLAYERS,
   MAX_TEAMS,
   type MemberKind,
+  MINIGAME_MIN_SOLVE_MS,
+  matchDurationMs,
   nextScheduledSpawn,
   PLAYER_COLOR_COUNT,
   type PlayerCommand,
@@ -67,10 +72,14 @@ import {
   step,
   type TeamIndex,
   type TeamScore,
+  type TeamStanding,
   TICK_MS,
   type TileMap,
+  teamScoreOf,
   timeLeftMs,
+  unfinishedResults,
   type VersusResult,
+  versusOutcome,
 } from '@redakcja/shared';
 import { MAX_ROOMS } from '../limits.ts';
 import { log } from '../log.ts';
@@ -322,6 +331,45 @@ export function syncTopics(
   }
 }
 
+/**
+ * Gives every player its team for the room's mode (co-op: team 0; versus: alternating in join
+ * order, so the first joiner is in Kurier, the second in Głos) and its colour within that team
+ * in join order. Spectators keep their team, which co-op resets to 0.
+ */
+function assignTeams(room: Pick<Room, 'mode' | 'members'>): void {
+  const nextColor = Array.from({ length: MAX_TEAMS }, () => 0);
+  let index = 0;
+  for (const member of room.members.values()) {
+    if (member.kind !== 'player') {
+      if (room.mode === 'coop') {
+        member.team = 0;
+      }
+      continue;
+    }
+    const team = room.mode === 'versus' ? index % MAX_TEAMS : 0;
+    index += 1;
+    member.team = team;
+    member.colorIndex = (nextColor[team] ?? 0) % PLAYER_COLOR_COUNT;
+    nextColor[team] = (nextColor[team] ?? 0) + 1;
+  }
+}
+
+/**
+ * The versus level end of a newsroom: `won` means the match was won; no campaign stars. A loser
+ * lost on credibility when its own ran out, otherwise on points; a draw has no loss reason.
+ */
+export function versusLevelOutcome(
+  result: VersusResult,
+  team: TeamIndex,
+  credibility: number,
+): LevelOutcome {
+  const won = result.winnerTeam === team;
+  if (won || result.winnerTeam === null) {
+    return { won, stars: 0, lossReason: null };
+  }
+  return { won, stars: 0, lossReason: credibility <= 0 ? 'credibility' : 'score' };
+}
+
 /** Fresh lobby newsrooms for the room's mode, without players. */
 function freshTeams(room: Pick<Room, 'map' | 'mode'>): [TeamRun, ...TeamRun[]] {
   const run = (): TeamRun => ({ game: createGameState({ map: room.map }), forfeited: false });
@@ -363,6 +411,11 @@ export function createRoomRegistry(options: RegistryOptions) {
     const room = membership ? rooms.get(membership.roomCode) : undefined;
     const member = membership ? room?.members.get(membership.memberId) : undefined;
     return room && member ? { room, member } : undefined;
+  }
+
+  /** Whether a feature flag of config.json is on now (the shared defaults without settings). */
+  function featureOn(flag: 'versus' | 'spectators'): boolean {
+    return options.settings?.().features[flag] ?? DEFAULT_FEATURE_FLAGS[flag];
   }
 
   function teamRun(room: Room, team: TeamIndex): TeamRun {
@@ -563,6 +616,11 @@ export function createRoomRegistry(options: RegistryOptions) {
       sendError(connection, 'roomNotFound');
       return;
     }
+    // A versus match keeps its line-up: a new player waits for the results (or spectates).
+    if (room.mode === 'versus' && (room.phase === 'briefing' || room.phase === 'playing')) {
+      sendError(connection, 'matchInProgress');
+      return;
+    }
     const team = pickTeam(room);
     if (team === null) {
       sendError(connection, 'roomFull');
@@ -651,9 +709,7 @@ export function createRoomRegistry(options: RegistryOptions) {
    * is always closed until the host can open it.
    */
   function rejectSpectatorJoin(connection: Connection, message: JoinMessage): void {
-    const spectatorsOn =
-      options.settings?.().features.spectators ?? DEFAULT_FEATURE_FLAGS.spectators;
-    if (!spectatorsOn || message.roomCode === undefined) {
+    if (!featureOn('spectators') || message.roomCode === undefined) {
       sendError(connection, 'featureDisabled', 'spectators are not available');
       return;
     }
@@ -715,6 +771,13 @@ export function createRoomRegistry(options: RegistryOptions) {
         if (waitingFor.length > 0) {
           if (member.connection) {
             sendError(member.connection, 'notReady', `waiting for ${waitingFor.join(', ')}`);
+          }
+          return;
+        }
+        const empty = emptyTeam(room);
+        if (empty !== null) {
+          if (member.connection) {
+            sendError(member.connection, 'teamEmpty', `team ${empty}`);
           }
           return;
         }
@@ -789,14 +852,18 @@ export function createRoomRegistry(options: RegistryOptions) {
         broadcastRoomState(room);
         return;
       case 'setMode':
+        setMode(room, member, action.mode);
+        return;
       case 'setTeam':
+        setTeam(room, member, action.team, action.playerId);
+        return;
       case 'setSpectator':
       case 'setVisibility':
       case 'setRoomName':
       case 'setSpectatorsAllowed':
       case 'kick':
       case 'transferHost':
-        // On the wire since protocol 7 (S7-77); served from S7-80..S7-82. Ignored until then,
+        // On the wire since protocol 7 (S7-77); served from S7-81..S7-82. Ignored until then,
         // like any action that does not apply.
         return;
       case 'backToLobby':
@@ -825,13 +892,106 @@ export function createRoomRegistry(options: RegistryOptions) {
     }
   }
 
+  function reject(member: RoomMember, code: ErrorCode, detail?: string): void {
+    if (member.connection) {
+      sendError(member.connection, code, detail);
+    }
+  }
+
   /**
-   * The in-game menu pauses a solo level (S7-10): only while playing, with exactly one
-   * connected player. S7-81 also refuses it while spectators are present. Resuming is always
-   * accepted. Anything else is ignored, like other out-of-phase actions.
+   * Host, lobby only: switches between co-op and versus. Versus deals the players into the two
+   * newsrooms alternately in join order; back to co-op needs at most one newsroom of players.
+   * Every member's topics follow its team, the newsrooms are rebuilt and nobody stays ready.
+   */
+  function setMode(room: Room, member: RoomMember, mode: RoomMode): void {
+    if (member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    if (room.phase !== 'lobby' || room.mode === mode) {
+      return;
+    }
+    if (mode === 'versus' && !featureOn('versus')) {
+      reject(member, 'featureDisabled', 'versus is not available');
+      return;
+    }
+    if (mode === 'coop' && playersOf(room).length > MAX_TEAM_PLAYERS) {
+      reject(member, 'teamFull', `${MAX_TEAM_PLAYERS} players at most`);
+      return;
+    }
+    const before = new Map(
+      [...room.members.values()].map((m) => [m.id, topicsFor(room.code, m)] as const),
+    );
+    room.mode = mode;
+    assignTeams(room);
+    room.teams = freshTeams(room);
+    room.embargo = createEmbargo(room.teams.length);
+    for (const m of room.members.values()) {
+      syncTopics(room.code, m, before.get(m.id) ?? []);
+    }
+    resetReady(room);
+    log.info('room mode changed', { room: room.code, mode });
+    broadcastRoomState(room);
+  }
+
+  /**
+   * Versus, lobby or results: a player moves to the other newsroom (the host may move anyone)
+   * and takes the lowest free colour there.
+   */
+  function setTeam(
+    room: Room,
+    member: RoomMember,
+    team: TeamIndex,
+    playerId: string | undefined,
+  ): void {
+    if (room.mode !== 'versus' || (room.phase !== 'lobby' && room.phase !== 'results')) {
+      return;
+    }
+    const targetId = playerId ?? member.id;
+    if (targetId !== member.id && member.id !== room.hostId) {
+      rejectNotHost(member);
+      return;
+    }
+    const target = room.members.get(targetId);
+    if (target?.kind !== 'player') {
+      reject(member, 'invalidTarget');
+      return;
+    }
+    if (target.team === team) {
+      return;
+    }
+    if (playersOf(room, team).length >= MAX_TEAM_PLAYERS) {
+      reject(member, 'teamFull');
+      return;
+    }
+    const before = topicsFor(room.code, target);
+    target.colorIndex = freeColorIndex(room, team);
+    target.team = team;
+    syncTopics(room.code, target, before);
+    broadcastRoomState(room);
+  }
+
+  /** The first newsroom of the mode without a connected player, or null when all have one. */
+  function emptyTeam(room: Room): TeamIndex | null {
+    for (let team = 0; team < teamTotal(room); team++) {
+      if (!playersOf(room, team).some((p) => p.connection !== null)) {
+        return team;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * The in-game menu pauses a solo level (S7-10): only while playing a co-op room with exactly
+   * one connected player (a versus clock never stops). S7-81 also refuses it while spectators
+   * are present. Resuming is always accepted. Anything else is ignored, like other out-of-phase
+   * actions.
    */
   function setPaused(room: Room, paused: boolean): void {
-    if (paused && (room.phase !== 'playing' || connectedPlayerCount(room) !== 1)) {
+    if (
+      paused &&
+      (room.phase !== 'playing' || room.mode !== 'coop' || connectedPlayerCount(room) !== 1)
+    ) {
       return;
     }
     if (room.paused === paused) {
@@ -926,7 +1086,8 @@ export function createRoomRegistry(options: RegistryOptions) {
 
   /**
    * The level starts in every newsroom at once: one sim seed for the match (the run, endless
-   * included, was dealt at the briefing and is shared), each team's players at their spawns.
+   * included, was dealt at the briefing and is shared), each team's players at their spawns. A
+   * versus newsroom whose players all left during the briefing starts forfeited.
    */
   function startLevel(room: Room): void {
     room.phase = 'playing';
@@ -935,10 +1096,11 @@ export function createRoomRegistry(options: RegistryOptions) {
     const seed = drawSeed();
     const build = (team: TeamIndex): TeamRun => {
       let game = createGameState({ map: room.map, seed });
-      for (const p of playersOf(room, team)) {
+      const players = playersOf(room, team);
+      for (const p of players) {
         game = addPlayer(game, p.id, spawnPoint(room.map, p.colorIndex), p.role);
       }
-      return { game, forfeited: false };
+      return { game, forfeited: room.mode === 'versus' && players.length === 0 };
     };
     room.teams = teamTotal(room) > 1 ? [build(0), build(1)] : [build(0)];
     room.stats = new Map(playersOf(room).map((p) => [p.id, emptyPlayerStats(p.id, p.team)]));
@@ -994,6 +1156,15 @@ export function createRoomRegistry(options: RegistryOptions) {
     if (member.kind === 'player') {
       const run = teamRun(room, member.team);
       run.game = removeSimPlayer(run.game, member.id);
+      // The last player of a versus newsroom gone for good (left, or the grace ran out): the
+      // match is lost by forfeit, which the match rules settle at the next step.
+      if (
+        room.mode === 'versus' &&
+        room.phase === 'playing' &&
+        playersOf(room, member.team).length === 0
+      ) {
+        run.forfeited = true;
+      }
     }
     room.briefing?.skippedBy.delete(member.id);
     // A stored vote stays counted; it just leaves the room's list with its player.
@@ -1114,6 +1285,8 @@ export function createRoomRegistry(options: RegistryOptions) {
       stories: room.stories,
       tuning: simTuning(room.difficulty),
       ...(absent ? { absent } : {}),
+      // Versus anti-cheat: a scripted instant answer counts as a failure (off in co-op).
+      ...(room.mode === 'versus' ? { minSolveMs: MINIGAME_MIN_SOLVE_MS } : {}),
     };
     const events = room.teams.map((run, team) => {
       const result = stepGame(run.game, inputs[team] ?? {}, commands[team] ?? [], ctx);
@@ -1128,10 +1301,56 @@ export function createRoomRegistry(options: RegistryOptions) {
     });
     const spectatorFrame = room.teams[0].game.tick % SPECTATOR_SNAPSHOT_INTERVAL_TICKS === 0;
     publishSnapshots(room, spectatorFrame);
-    // Co-op ends with its newsroom; the versus match rules replace this in S7-80.
-    if (room.teams.every((run) => run.game.ended !== null)) {
+    if (room.mode === 'versus') {
+      // The match rules decide every tick: credibility, forfeit, time (600 s in endless).
+      room.outcome = matchOutcome(room);
+      if (room.outcome) {
+        endLevel(room);
+      }
+    } else if (room.teams[0].game.ended !== null) {
       endLevel(room);
     }
+  }
+
+  /** Match time: the newsrooms step in lockstep, so this is any running one's level time. */
+  function matchElapsedMs(room: Room): number {
+    return Math.max(...room.teams.map((run) => run.game.elapsedMs));
+  }
+
+  function standingsOf(room: Room): TeamStanding[] {
+    return room.teams.map((run, team) => ({
+      team,
+      score: run.game.score,
+      credibility: run.game.credibility,
+      forfeited: run.forfeited,
+    }));
+  }
+
+  /**
+   * The versus result now, or null while the match goes on. Should every newsroom's sim have
+   * ended without the match rules deciding, the score decides.
+   */
+  function matchOutcome(room: Room): VersusResult | null {
+    const standings = standingsOf(room);
+    const result = versusOutcome(standings, matchElapsedMs(room), matchDurationMs(room.level));
+    if (result) {
+      return result;
+    }
+    return room.teams.every((run) => run.game.ended !== null) ? byScore(standings) : null;
+  }
+
+  /** Both newsrooms' standings for versus snapshots and `levelEnd`; undefined in co-op. */
+  function scoreboardOf(room: Room): TeamScore[] | undefined {
+    if (room.mode !== 'versus') {
+      return undefined;
+    }
+    return room.teams.map((run, team) =>
+      teamScoreOf(
+        run.game,
+        team,
+        playersOf(room, team).filter((p) => p.connection !== null).length,
+      ),
+    );
   }
 
   /** Folds a team's events into the players' counters (`applyStatsEvent` is the only rule). */
@@ -1146,12 +1365,16 @@ export function createRoomRegistry(options: RegistryOptions) {
   }
 
   function publishSnapshots(room: Room, toSpectators: boolean): void {
+    const scoreboard = scoreboardOf(room);
     room.teams.forEach((_, team) => {
-      publishTeam(room, team, snapshotOf(room, team), toSpectators);
+      publishTeam(room, team, snapshotOf(room, team, scoreboard), toSpectators);
     });
   }
 
-  /** One newsroom's snapshot, tagged with its team; versus adds the scoreboard (S7-80). */
+  /**
+   * One newsroom's snapshot, tagged with its team. Versus adds the scoreboard and counts the
+   * match time down (endless included, `VERSUS.endlessDurationS`).
+   */
   function snapshotOf(room: Room, team: TeamIndex, scoreboard?: TeamScore[]): SnapshotMessage {
     const game = teamRun(room, team).game;
     const schedule = { level: room.level, stories: room.stories, map: room.map };
@@ -1167,7 +1390,10 @@ export function createRoomRegistry(options: RegistryOptions) {
         lastInputSeq: p.lastInputSeq,
       })),
       elapsedMs: game.elapsedMs,
-      timeLeftMs: timeLeftMs(game, room.level.durationS),
+      timeLeftMs:
+        room.mode === 'versus'
+          ? Math.max(0, matchDurationMs(room.level) - game.elapsedMs)
+          : timeLeftMs(game, room.level.durationS),
       score: game.score,
       credibility: game.credibility,
       folders: Object.values(game.folders),
@@ -1212,14 +1438,15 @@ export function createRoomRegistry(options: RegistryOptions) {
   }
 
   /**
-   * One newsroom's `levelEnd`. Co-op sends exactly what it always did; versus tags the team
-   * (S7-80 adds the match summary and the stats).
+   * One newsroom's `levelEnd`. Co-op sends exactly what it always did; versus tags the team and
+   * adds the match summary (with the rival's results, which pair with ours by spawn key) and
+   * every player's stats.
    */
   function levelEndFor(room: Room, team: TeamIndex): LevelEndMessage {
     const game = teamRun(room, team).game;
     const outcome = game.ended ?? { won: false, stars: 0, lossReason: null };
     const endless = room.level.id === ENDLESS_LEVEL_ID;
-    return {
+    const base = {
       type: 'levelEnd',
       levelId: room.level.id,
       difficulty: room.difficulty,
@@ -1232,15 +1459,57 @@ export function createRoomRegistry(options: RegistryOptions) {
       starThresholds: endless ? null : { ...room.level.stars },
       maxScore: endless ? null : runMaxScore(room),
       ...(endless ? { survivedS: survivedSOf(game) } : {}),
-      ...(room.mode === 'versus' ? { team } : {}),
+    } satisfies LevelEndMessage;
+    const result = room.outcome;
+    if (room.mode !== 'versus' || !result) {
+      return base;
+    }
+    const scoreboard = scoreboardOf(room) ?? [];
+    const rival = teamRun(room, team === 0 ? 1 : 0).game;
+    return {
+      ...base,
+      team,
+      stats: [...room.stats.values()].slice(0, MAX_ROOM_PLAYERS),
+      versus: {
+        winnerTeam: result.winnerTeam,
+        reason: result.reason,
+        teams: scoreboard,
+        rivalResults: rival.results.slice(-ENDLESS.maxResultsSent),
+      },
     };
   }
 
+  /**
+   * Closes a versus newsroom the match rules ended before its own sim did (the rival's
+   * credibility or forfeit, endless time): its outcome follows the match, and every folder still
+   * in play is recorded as unfinished, as at a level's own end.
+   */
+  function closeVersusGame(room: Room, team: TeamIndex, result: VersusResult): void {
+    const run = teamRun(room, team);
+    const game = run.game;
+    const ended = versusLevelOutcome(result, team, game.credibility);
+    const unfinished =
+      game.ended === null ? unfinishedResults(Object.values(game.folders), room.stories) : [];
+    run.game = { ...game, ended, results: [...game.results, ...unfinished] };
+  }
+
   function endLevel(room: Room): void {
+    const result = room.outcome;
+    if (room.mode === 'versus' && result) {
+      room.teams.forEach((_, team) => {
+        closeVersusGame(room, team, result);
+      });
+    }
     const game = room.teams[0].game;
     const outcome = game.ended ?? { won: false, stars: 0, lossReason: null };
     room.phase = 'results';
-    log.info('level ended', { room: room.code, level: room.level.id, ...outcome });
+    log.info('level ended', {
+      room: room.code,
+      level: room.level.id,
+      ...outcome,
+      ...(result ? { winnerTeam: result.winnerTeam, reason: result.reason } : {}),
+    });
+    // Versus is never a leaderboard run (nor campaign progress, which the client skips).
     if (room.level.id === ENDLESS_LEVEL_ID && room.mode === 'coop') {
       recordEndlessRun(room, survivedSOf(game));
     }

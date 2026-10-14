@@ -1,7 +1,7 @@
 // Shared room-test harness (S7-79): a registry on a fake hub that also records every publish by
 // topic, a controllable clock, join/lobby/input helpers and `forceStep`, which wraps the real
-// sim step and changes one team's result once. New room tests use it; the older files keep
-// their local helpers.
+// sim step and changes one team's result once; `versusRoom` (S7-80) builds a ready versus lobby.
+// New room tests use it; the older files keep their local helpers.
 import {
   BRIEFING_DURATION_MS,
   type GameEvent,
@@ -103,6 +103,28 @@ export function createRoomHarness(options: Omit<Partial<RegistryOptions>, 'hub' 
     }
   }
 
+  /**
+   * A versus lobby: the first nickname hosts and switches to versus, the others join in order
+   * (each into the smaller team, so they alternate: Kurier, Głos, Kurier, …) and are ready.
+   */
+  function versusRoom(nicknames: readonly [string, ...string[]]) {
+    const [hostName, ...guestNames] = nicknames;
+    const host = join(hostName);
+    const code = welcomeOf(host).roomCode;
+    lobby(host, { kind: 'setMode', mode: 'versus' });
+    const guests = guestNames.map((nickname) => join(nickname, { code }));
+    for (const guest of guests) {
+      lobby(guest, { kind: 'setReady', ready: true });
+    }
+    const connections = [host, ...guests];
+    return {
+      code,
+      host,
+      connections,
+      ids: connections.map((connection) => welcomeOf(connection).playerId),
+    };
+  }
+
   /** Changes `team`'s result of the room's next step once (the real step still runs first). */
   function forceStep(
     code: string,
@@ -126,6 +148,7 @@ export function createRoomHarness(options: Omit<Partial<RegistryOptions>, 'hub' 
     welcomeOf,
     lobby,
     startPastBriefing,
+    versusRoom,
     ticks,
     forceStep,
     onTopic,
