@@ -326,6 +326,15 @@ export function PlayerAvatar({
         tagAt.current = at;
         tag.current.style.transform = `${at} translate(-50%, -50%)`;
       }
+      // A spectator view rings the followed player's tag in blue (selection, S7-91).
+      const followed = view.kind === 'spectator' && view.subjectId() === id;
+      if (followed !== (tag.current.dataset.followed === 'true')) {
+        if (followed) {
+          tag.current.dataset.followed = 'true';
+        } else {
+          delete tag.current.dataset.followed;
+        }
+      }
     }
     if (!player) {
       return;

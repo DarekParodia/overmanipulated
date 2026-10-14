@@ -4,15 +4,25 @@
 // with a one-tap team switch), a full-width top-bar scoreboard with both scores always visible,
 // and a plate per view with the team's badge and players. Spectator canvases run on the medium
 // preset at most, without shadows (scene/quality.ts `spectatorProfile`); sounds follow the
-// spectator audio policy (spectate-audio.ts). Follow, feed, stats and the spectator results come
-// with S7-91.
-import { ENDLESS_LEVEL_ID, type TeamIndex } from '@redakcja/shared';
+// spectator audio policy (spectate-audio.ts). S7-91: follow a player (←/→ or A/D, the d-pad or
+// RB, a tap on their chip; Esc / B stops), whom the view's camera glides after with a blue ring on
+// their chip and name tag and a FollowCard in their newsroom's view; the event feed (the visual
+// twin of every sound, embargoed in versus); the stats sheet (Q, Y or „Statystyki”); and, once
+// every watched newsroom's level end is in, the spectator results in place of the views.
+import {
+  ENDLESS_LEVEL_ID,
+  type LevelEndMessage,
+  type LobbyPlayer,
+  type TeamIndex,
+} from '@redakcja/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useStore } from 'zustand';
+import { PHONE_QUERY, useMediaQuery } from '../debrief/use-media-query.ts';
 import { formatElapsed } from '../endless/endless-model.ts';
 import { useEventFeed } from '../events/EventBanners.tsx';
 import { playSound, startAmbience, stopAmbience } from '../fx/audio/audio-manager.ts';
 import { requestMusic } from '../fx/audio/music.ts';
+import { emitCue } from '../fx/feedback.ts';
 import { formatClock } from '../hud/hud-model.ts';
 import { useLevelClock } from '../hud/use-level-clock.ts';
 import { type NavIntent, useInputCapture, useNavIntent } from '../input/ui-nav.ts';
@@ -29,7 +39,13 @@ import { Button } from '../ui/Button.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { TeamBadge } from '../ui/TeamBadge.tsx';
+import { EventFeed } from './EventFeed.tsx';
+import { FollowCard } from './FollowCard.tsx';
+import { FEED_VISIBLE_DESKTOP, FEED_VISIBLE_PHONE } from './feed-model.ts';
+import { focusForTeam, followOrder, stepFollow } from './follow-model.ts';
 import styles from './SpectateScreen.module.css';
+import { SpectatorResults } from './SpectatorResults.tsx';
+import { StatsSheet } from './StatsSheet.tsx';
 import { type ScoreSide, scoreSides } from './scoreboard-model.ts';
 import { spectatorSoundOutput, teamPan } from './spectate-audio.ts';
 import {
@@ -47,6 +63,15 @@ import {
 } from './spectate-layout.ts';
 
 const CONFIRM_KEYS: ReadonlySet<string> = new Set(['Space', 'Enter', 'NumpadEnter']);
+/** Keyboard follow: ← / A the previous player, → / D the next. */
+const FOLLOW_KEYS: Readonly<Record<string, 1 | -1>> = {
+  ArrowLeft: -1,
+  KeyA: -1,
+  ArrowRight: 1,
+  KeyD: 1,
+};
+const STATS_KEY = 'KeyQ';
+const NO_PLAYERS: readonly LobbyPlayer[] = [];
 const COOP_TEAMS: readonly TeamIndex[] = [0];
 const VERSUS_TEAMS: readonly TeamIndex[] = [0, 1];
 
@@ -218,53 +243,63 @@ function Scoreboard({
   );
 }
 
-/** A view's header: the team badge and name, and its players. Tapping it focuses the team. */
+/**
+ * A view's header: the team badge and name (in a split, the button that focuses the team) and
+ * its players, each a chip that follows them; the followed one wears a blue ring (S7-91).
+ */
 function TeamPlate({
   team,
   versus,
   action,
+  followed,
+  onFollow,
 }: {
   team: TeamIndex;
   versus: boolean;
   action: { label: string; onPress: () => void } | null;
+  followed: string | null;
+  onFollow: (playerId: string) => void;
 }) {
   const roster = useApp((s) => s.room?.players);
   const players = (roster ?? []).filter((player) => player.team === team);
   const name = teamName(team, versus);
-  const content = (
+  const head = (
     <>
       {versus ? <TeamBadge team={team} size={26} /> : <Icon name="eye" size={24} />}
       <span className={styles.plateName}>{name}</span>
+    </>
+  );
+  return (
+    <div className={styles.plate} data-testid={`spectate-plate-${team}`}>
+      {action ? (
+        <button
+          type="button"
+          className={`${styles.plateHead} ${styles.plateButton}`}
+          aria-label={action.label}
+          data-testid={`spectate-team-${team}`}
+          onClick={action.onPress}
+        >
+          {head}
+        </button>
+      ) : (
+        <span className={styles.plateHead}>{head}</span>
+      )}
       <span className={styles.chips}>
         {players.map((player) => (
-          <span
+          <button
+            type="button"
             key={player.id}
             className={`${styles.chip} ${player.connected ? '' : styles.away}`}
+            aria-pressed={followed === player.id}
+            aria-label={pl.spectate.follow.chip(player.nickname)}
             data-testid={`spectate-player-${player.id}`}
+            onClick={() => onFollow(player.id)}
           >
             <PlayerMark colorIndex={player.colorIndex} size={16} />
             <span className={styles.chipName}>{player.nickname}</span>
-          </span>
+          </button>
         ))}
       </span>
-    </>
-  );
-  if (action) {
-    return (
-      <button
-        type="button"
-        className={`${styles.plate} ${styles.plateButton}`}
-        aria-label={action.label}
-        data-testid={`spectate-plate-${team}`}
-        onClick={action.onPress}
-      >
-        {content}
-      </button>
-    );
-  }
-  return (
-    <div className={styles.plate} data-testid={`spectate-plate-${team}`}>
-      {content}
     </div>
   );
 }
@@ -277,6 +312,8 @@ function ViewPane({
   compact,
   versus,
   plateAction,
+  followed,
+  onFollow,
 }: {
   view: SpectateView;
   slot: number;
@@ -284,6 +321,9 @@ function ViewPane({
   compact: boolean;
   versus: boolean;
   plateAction: { label: string; onPress: () => void } | null;
+  /** The followed player, when they play in this newsroom. */
+  followed: LobbyPlayer | null;
+  onFollow: (playerId: string | null) => void;
 }) {
   const live = useStore(view.store, (s) => s.tick > 0);
   return (
@@ -299,7 +339,16 @@ function ViewPane({
         <EventFeedHook />
         <GameCanvas view={view.view} primary={primary} viewKey={`spectate-${slot}`} />
       </GameViewProvider>
-      <TeamPlate team={view.team} versus={versus} action={plateAction} />
+      <TeamPlate
+        team={view.team}
+        versus={versus}
+        action={plateAction}
+        followed={followed?.id ?? null}
+        onFollow={onFollow}
+      />
+      {followed && live && (
+        <FollowCard view={view} player={followed} onStop={() => onFollow(null)} />
+      )}
       {!live && (
         <p className={styles.waiting} role="status">
           {pl.spectate.waiting}
@@ -315,19 +364,31 @@ function EventFeedHook() {
   return null;
 }
 
-/** The keys of a versus split (or of the one-view layout, where they swap the newsroom). */
-function KeyHint({ single }: { single: boolean }) {
+/**
+ * The keys: follow and the stats sheet, plus the view toggle of a versus split (or of the one-view
+ * layout, where it swaps the newsroom). Co-op's one newsroom has no view to toggle.
+ */
+function KeyHint({ hint }: { hint: 'split' | 'single' | 'coop' }) {
   const device = useApp((s) => s.inputDevice);
   if (device !== 'keyboard' && device !== 'gamepad') {
     return null;
   }
-  const hints = pl.spectate.hints[device];
   return (
     <p className={styles.hint} data-testid="spectate-hint">
       <Icon name={device === 'gamepad' ? 'gamepad' : 'eye'} size={20} />
-      {typeset(single ? hints.single : hints.split)}
+      {typeset(pl.spectate.hints[device][hint])}
     </p>
   );
+}
+
+/** Each watched newsroom's level end once all of them are in (the spectator results), else null. */
+function useMatchEnds(teams: readonly TeamIndex[]): LevelEndMessage[] | null {
+  const levelEnds = useSpectate((s) => s.levelEnds);
+  return useMemo(() => {
+    const ends = teams.map((team) => levelEnds[team] ?? null);
+    const arrived = ends.flatMap((end) => (end ? [end] : []));
+    return arrived.length === ends.length ? arrived : null;
+  }, [teams, levelEnds]);
 }
 
 export function SpectateScreen() {
@@ -335,19 +396,24 @@ export function SpectateScreen() {
   const phase = useApp((s) => s.room?.phase);
   const host = useApp((s) => s.room !== null && s.room.hostId === s.playerId);
   const connection = useApp((s) => s.connection);
+  const roster = useApp((s) => s.room?.players ?? NO_PLAYERS);
   const teams = versus ? VERSUS_TEAMS : COOP_TEAMS;
   const size = useViewport();
-  const layout: SpectateLayout = chooseSpectateLayout(
-    size,
-    teams.length,
-    isPhoneViewport(size, isCoarsePointer()),
-  );
+  const phoneSize = useMediaQuery(PHONE_QUERY);
+  const phone = isPhoneViewport(size, isCoarsePointer());
+  const layout: SpectateLayout = chooseSpectateLayout(size, teams.length, phone);
   const [focus, setFocus] = useState<SpectateFocus>('split');
+  const [statsOpen, setStatsOpen] = useState(false);
+  const followedId = useSpectate((s) => s.followed);
+  const ends = useMatchEnds(teams);
+  const ended = ends !== null;
   const shown = visibleTeams(layout, teams, focus);
   const single = shown.length < 2;
   const shownKey = shown.join(',');
   const paneWidth = layout === 'side' && !single ? size.width / 2 : size.width;
   const compact = paneWidth < SPECTATE_COMPACT_VIEW_WIDTH;
+  const followed = roster.find((player) => player.id === followedId) ?? null;
+  const order = useMemo(() => followOrder(roster, teams), [roster, teams]);
 
   useWakeLock(true);
   useEffect(() => requestMusic('game'), []);
@@ -358,6 +424,9 @@ export function SpectateScreen() {
 
   // Only the newsrooms on screen are heard: quieter, and to their side while both are shown.
   useEffect(() => {
+    if (ended) {
+      return;
+    }
     const onScreen = shownKey.split(',').map(Number);
     const split = onScreen.length > 1;
     const disconnects = onScreen.map((team) =>
@@ -370,16 +439,40 @@ export function SpectateScreen() {
         disconnect();
       }
     };
-  }, [shownKey]);
+  }, [shownKey, ended]);
 
-  const actions = useMemo(
-    () => ({
+  // The match is over: nobody to follow, no live stats.
+  useEffect(() => {
+    if (ended) {
+      setStatsOpen(false);
+      useSpectate.getState().follow(null);
+    }
+  }, [ended]);
+
+  const actions = useMemo(() => {
+    /** Follows a player, or stops with null. */
+    const follow = (next: string | null) => {
+      if (next === useSpectate.getState().followed) {
+        return;
+      }
+      useSpectate.getState().follow(next);
+      emitCue('spectate.follow');
+      const team = order.find((player) => player.id === next)?.team;
+      if (team !== undefined) {
+        setFocus((now) => focusForTeam(layout, teams, now, team));
+      }
+    };
+    return {
       intent(intent: NavIntent): boolean {
         if (intent === 'confirm') {
           setFocus((current) => nextFocus(layout, teams, current));
           return teams.length > 1;
         }
         if (intent === 'back') {
+          if (useSpectate.getState().followed !== null) {
+            follow(null);
+            return true;
+          }
           const back = backFocus(layout, focus);
           if (back !== null) {
             setFocus(back);
@@ -391,14 +484,41 @@ export function SpectateScreen() {
       tap(team: TeamIndex) {
         setFocus((current) => tapTeam(layout, teams, current, team));
       },
-    }),
-    [layout, teams, focus],
-  );
+      follow,
+      /** A chip: follows its player; a second tap on the followed one stops. */
+      tapPlayer(playerId: string | null) {
+        follow(playerId === useSpectate.getState().followed ? null : playerId);
+      },
+      step(direction: 1 | -1) {
+        follow(stepFollow(order, useSpectate.getState().followed, direction));
+      },
+      toggleStats() {
+        emitCue('ui.click');
+        setStatsOpen((open) => !open);
+      },
+    };
+  }, [layout, teams, focus, order]);
 
-  // Gamepad (A toggles the view, B brings both newsrooms back); the d-pad moves between the
-  // buttons through the menu navigation, which then presses the one in focus.
+  // Gamepad: ←/→ (d-pad, stick) and RB follow, A toggles the view, B stops following and then
+  // brings both newsrooms back, Y opens the stats; ↑/↓ move between the buttons through the menu
+  // navigation, which then presses the one in focus. An open stats sheet takes the pad itself.
   useInputCapture(true);
   useNavIntent((intent) => {
+    if (ended || document.querySelector('dialog[open]')) {
+      return false;
+    }
+    if (intent === 'left' || intent === 'right') {
+      actions.step(intent === 'right' ? 1 : -1);
+      return true;
+    }
+    if (intent === 'ability') {
+      actions.step(1);
+      return true;
+    }
+    if (intent === 'alt') {
+      actions.toggleStats();
+      return true;
+    }
     if (intent === 'confirm' && document.activeElement instanceof HTMLButtonElement) {
       return false;
     }
@@ -406,7 +526,27 @@ export function SpectateScreen() {
   });
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
-      if (event.repeat || event.altKey || event.ctrlKey || event.metaKey) {
+      if (event.altKey || event.ctrlKey || event.metaKey || ended) {
+        return;
+      }
+      // The stats sheet is a modal dialog: Esc and Tab are the browser's there.
+      if (document.querySelector('dialog[open]')) {
+        return;
+      }
+      const step = FOLLOW_KEYS[event.code];
+      if (step !== undefined) {
+        event.preventDefault();
+        useApp.getState().setInputDevice('keyboard');
+        actions.step(step);
+        return;
+      }
+      if (event.repeat) {
+        return;
+      }
+      if (event.code === STATS_KEY) {
+        event.preventDefault();
+        useApp.getState().setInputDevice('keyboard');
+        actions.toggleStats();
         return;
       }
       const team = teamKeyFocus(teams, event.code);
@@ -432,7 +572,7 @@ export function SpectateScreen() {
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [actions, teams]);
+  }, [actions, teams, ended]);
 
   const plateAction = (team: TeamIndex) => {
     if (!versus || layout === 'single') {
@@ -444,36 +584,45 @@ export function SpectateScreen() {
       onPress: () => actions.tap(team),
     };
   };
+  const hint = teams.length < 2 ? 'coop' : layout === 'single' ? 'single' : 'split';
+  // On a phone the FollowCard takes the feed's place.
+  const feedShown = !ended && !(phoneSize && followed !== null);
 
   return (
     <main className={styles.screen} data-testid="spectate-screen" data-layout={layout}>
       <Scoreboard
         teams={teams}
         versus={versus}
-        single={layout === 'single'}
+        single={layout === 'single' && !ended}
         shown={shown}
         onPick={actions.tap}
       />
-      <section
-        className={styles.views}
-        aria-label={pl.spectate.viewsLabel}
-        data-layout={layout}
-        data-count={shown.length}
-      >
-        {shown.map((team, slot) => (
-          // Keyed by slot: a canvas that switches newsrooms keeps its WebGL context.
-          <ViewPane
-            // biome-ignore lint/suspicious/noArrayIndexKey: one canvas per slot, on purpose.
-            key={slot}
-            view={teamView(team)}
-            slot={slot}
-            primary={slot === 0}
-            compact={compact}
-            versus={versus}
-            plateAction={plateAction(team)}
-          />
-        ))}
-      </section>
+      {ends ? (
+        <SpectatorResults teams={teams} versus={versus} ends={ends} />
+      ) : (
+        <section
+          className={styles.views}
+          aria-label={pl.spectate.viewsLabel}
+          data-layout={layout}
+          data-count={shown.length}
+        >
+          {shown.map((team, slot) => (
+            // Keyed by slot: a canvas that switches newsrooms keeps its WebGL context.
+            <ViewPane
+              // biome-ignore lint/suspicious/noArrayIndexKey: one canvas per slot, on purpose.
+              key={slot}
+              view={teamView(team)}
+              slot={slot}
+              primary={slot === 0}
+              compact={compact}
+              versus={versus}
+              plateAction={plateAction(team)}
+              followed={followed?.team === team ? followed : null}
+              onFollow={actions.tapPlayer}
+            />
+          ))}
+        </section>
+      )}
 
       {connection === 'reconnecting' && (
         <p className={styles.banner} role="status">
@@ -481,11 +630,28 @@ export function SpectateScreen() {
         </p>
       )}
 
-      <footer className={styles.footer}>
-        {/* Co-op has one newsroom: no key changes the view, so no hint. */}
-        {teams.length > 1 && <KeyHint single={layout === 'single'} />}
+      <footer className={styles.footer} hidden={statsOpen}>
+        <div className={styles.footerLeft}>
+          {feedShown && (
+            <EventFeed
+              visible={phoneSize ? FEED_VISIBLE_PHONE : FEED_VISIBLE_DESKTOP}
+              versus={versus}
+            />
+          )}
+          {!ended && <KeyHint hint={hint} />}
+        </div>
         <div className={styles.buttons}>
-          {phase === 'results' && host && (
+          {!ended && (
+            <Button
+              icon={<Icon name="gauge" size={24} />}
+              aria-haspopup="dialog"
+              data-testid="spectate-stats-open"
+              onClick={actions.toggleStats}
+            >
+              {pl.spectate.stats.open}
+            </Button>
+          )}
+          {(phase === 'results' || ended) && host && (
             <Button
               variant="primary"
               icon={<Icon name="desk" size={24} />}
@@ -505,6 +671,13 @@ export function SpectateScreen() {
           </Button>
         </div>
       </footer>
+      <StatsSheet
+        open={statsOpen && !ended}
+        teams={teams}
+        versus={versus}
+        side={!phoneSize}
+        onClose={() => setStatsOpen(false)}
+      />
     </main>
   );
 }

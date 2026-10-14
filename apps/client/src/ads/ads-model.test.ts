@@ -27,8 +27,11 @@ describe('adEligible', () => {
     ['styleguide', false, false, false],
     ['game', false, false, false],
     ['game', true, false, true],
-    ['game', false, true, true],
+    // S7-91: never in a player's game; a spectator's spectate screen may hold an ad.
+    ['game', false, true, false],
     ['game', true, true, true],
+    ['spectate', false, true, true],
+    ['spectate', false, false, false],
     ['briefing', true, true, false],
   ];
   for (const [screen, levelEnded, spectating, eligible] of table) {
@@ -103,13 +106,13 @@ describe('placements', () => {
     expect(AD_PLACEMENTS.menu.query).toBe('(min-width: 1180px) and (min-height: 680px)');
     expect(AD_PLACEMENTS.lobby.query).toBe('(min-width: 800px) and (min-height: 600px)');
     expect(AD_PLACEMENTS.results.query).toBe('(min-width: 1780px) and (min-height: 900px)');
-    expect(AD_PLACEMENTS.spectator.query).toBe('(min-width: 1280px) and (min-height: 720px)');
+    expect(AD_PLACEMENTS.spectator.query).toBe('(min-width: 1280px) and (min-height: 900px)');
   });
 
   it('uses the fixed AdSense unit sizes', () => {
     expect(AD_PLACEMENTS.menu.size).toEqual({ width: 160, height: 600 });
     expect(AD_PLACEMENTS.lobby.size).toEqual({ width: 728, height: 90 });
     expect(AD_PLACEMENTS.results.size).toEqual({ width: 160, height: 600 });
-    expect(AD_PLACEMENTS.spectator.size).toEqual({ width: 728, height: 90 });
+    expect(AD_PLACEMENTS.spectator.size).toEqual({ width: 300, height: 250 });
   });
 });

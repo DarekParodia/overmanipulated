@@ -4,7 +4,9 @@
 // reaches `useGame`, the player runtime or the player's gameplay event listeners. A watched
 // newsroom's gameplay events go to its own view (S7-90): its listeners and particles, and its
 // cues under the spectator audio policy (spectate/spectate-audio.ts). The spectate screen
-// (spectate/SpectateScreen.tsx) renders it.
+// (spectate/SpectateScreen.tsx) renders it. S7-91 adds the event feed (spectate/feed-model.ts),
+// the verdicts the embargo still masks (for the stats sheet) and the followed player, whom each
+// view's camera and name tags follow while the player is in its newsroom.
 import {
   type LevelEndMessage,
   MAX_TEAMS,
@@ -15,7 +17,14 @@ import {
   type TeamIndex,
 } from '@redakcja/shared';
 import { create } from 'zustand';
+import {
+  type FeedItem,
+  type PendingVerdict,
+  pendingAfter,
+  pushFeed,
+} from '../spectate/feed-model.ts';
 import { isSpectatorAudible } from '../spectate/spectate-audio.ts';
+import { useApp } from '../store/app.ts';
 import { type GameplayEvent, routeViewEvent } from './game-events.ts';
 import type { GameStoreApi } from './game-store.ts';
 import { createWatchView, type GameView } from './game-view.ts';
@@ -35,7 +44,8 @@ export type SpectateView = {
 };
 
 function spectateViewFor(team: TeamIndex): SpectateView {
-  const view = createWatchView(team);
+  // The view's subject is the followed player while they play in this newsroom.
+  const view = createWatchView(team, undefined, () => followedIn(team));
   return { team, view, store: view.store, buffer: view.runtime.buffer };
 }
 
@@ -60,6 +70,15 @@ type SpectateStore = {
   matchStats: MatchStatsMessage | null;
   /** Each team's level end, indexed by team; null until it arrives. */
   levelEnds: readonly (LevelEndMessage | null)[];
+  /** The event feed, newest first (S7-91). */
+  feed: readonly FeedItem[];
+  /** Id of the next feed row (rows are keyed by it). */
+  feedSeq: number;
+  /** Verdicts given whose result the versus embargo still holds. */
+  pending: readonly PendingVerdict[];
+  /** The followed player (S7-91), or null to watch whole newsrooms. */
+  followed: string | null;
+  follow(playerId: string | null): void;
   applySnapshot(message: SnapshotMessage, receivedAt: number): void;
   applyEvent(message: SpectatorEventMessage): void;
   applyMatchStats(message: MatchStatsMessage): void;
@@ -95,6 +114,16 @@ export function spectateView(team: TeamIndex | undefined): SpectateView | undefi
   return spectateViews[team ?? 0];
 }
 
+/** The followed player when they play in `team`'s newsroom (the room's roster says), else null. */
+function followedIn(team: TeamIndex): string | null {
+  const followed = useSpectate.getState().followed;
+  if (followed === null) {
+    return null;
+  }
+  const player = useApp.getState().room?.players.find((entry) => entry.id === followed);
+  return player?.team === team ? followed : null;
+}
+
 export const useSpectate = create<SpectateStore>((set, get) => ({
   teams: [],
   events: [],
@@ -112,8 +141,22 @@ export const useSpectate = create<SpectateStore>((set, get) => ({
       set({ teams: [...teams, view.team].sort((a, b) => a - b) });
     }
   },
+  feed: [],
+  feedSeq: 0,
+  pending: [],
+  followed: null,
+  follow(playerId) {
+    set({ followed: playerId });
+  },
   applyEvent(message) {
-    set({ events: [...get().events, message].slice(-SPECTATE_EVENTS_KEPT) });
+    const { events, feed, feedSeq, pending } = get();
+    const nextFeed = pushFeed(feed, message, feedSeq);
+    set({
+      events: [...events, message].slice(-SPECTATE_EVENTS_KEPT),
+      feed: nextFeed,
+      feedSeq: nextFeed === feed ? feedSeq : feedSeq + 1,
+      pending: pendingAfter(pending, message),
+    });
     const view = spectateView(message.team);
     if (view && isViewEvent(message.event)) {
       routeViewEvent(view.view, message.event, isSpectatorAudible);
@@ -137,6 +180,14 @@ export const useSpectate = create<SpectateStore>((set, get) => ({
       view.view.runtime.reset(levelId);
       view.store.getState().reset();
     }
-    set({ teams: [], events: [], matchStats: null, levelEnds: noLevelEnds() });
+    set({
+      teams: [],
+      events: [],
+      matchStats: null,
+      levelEnds: noLevelEnds(),
+      feed: [],
+      pending: [],
+      followed: null,
+    });
   },
 }));

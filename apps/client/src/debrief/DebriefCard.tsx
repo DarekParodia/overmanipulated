@@ -126,6 +126,8 @@ export type DebriefCardProps = {
    * when the rival never got it. Absent in co-op.
    */
   rival?: FolderResult | null;
+  /** Spectators (S7-91): no blunder vote, and the verdict is the newsroom's, not „Wasz”. */
+  readOnly?: boolean;
 };
 
 export function DebriefCard({
@@ -141,6 +143,7 @@ export function DebriefCard({
   onSelect,
   onSwipe,
   rival,
+  readOnly = false,
 }: DebriefCardProps) {
   const swipe = useSwipe(onSwipe);
   const headline = typeset(card.headline ?? pl.debrief.untitled);
@@ -214,22 +217,24 @@ export function DebriefCard({
           </p>
         </div>
         <div className={styles.voteRow}>
-          <button
-            type="button"
-            className={styles.vote}
-            aria-pressed={votedByMe}
-            aria-label={pl.debrief.voteFor(headline)}
-            onClick={() => {
-              emitCue('debrief.vote');
-              onVote();
-            }}
-          >
-            <Icon name={votedByMe ? 'check' : 'blunder'} size={24} />
-            <span className={styles.voteText}>
-              {votedByMe ? pl.debrief.voted : pl.debrief.vote}
-            </span>
-            {voteKey && <KeyCap>{voteKey}</KeyCap>}
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              className={styles.vote}
+              aria-pressed={votedByMe}
+              aria-label={pl.debrief.voteFor(headline)}
+              onClick={() => {
+                emitCue('debrief.vote');
+                onVote();
+              }}
+            >
+              <Icon name={votedByMe ? 'check' : 'blunder'} size={24} />
+              <span className={styles.voteText}>
+                {votedByMe ? pl.debrief.voted : pl.debrief.vote}
+              </span>
+              {voteKey && <KeyCap>{voteKey}</KeyCap>}
+            </button>
+          )}
           {voters.length > 0 && (
             <span className={styles.voters}>
               <span className={styles.dots} aria-hidden>
@@ -253,7 +258,13 @@ export function DebriefCard({
 
       <dl className={styles.verdicts}>
         <div className={styles.verdictPair}>
-          <dt>{rival === undefined ? pl.debrief.yourVerdict : pl.versus.ownVerdict}</dt>
+          <dt>
+            {readOnly
+              ? pl.spectate.results.verdict
+              : rival === undefined
+                ? pl.debrief.yourVerdict
+                : pl.versus.ownVerdict}
+          </dt>
           <dd>
             <VerdictChip verdict={card.verdict} />
           </dd>

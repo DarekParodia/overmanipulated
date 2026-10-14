@@ -93,6 +93,12 @@ describe('caption table', () => {
     expect(captionTable['lobby.lookChanged']).toEqual({ skip: 'visual-elsewhere' });
   });
 
+  it('leaves the spectate cues to the screen: the ring moves, the feed row is the words (S7-91)', () => {
+    expect(captionTable['spectate.follow']).toEqual({ skip: 'ui' });
+    expect(captionTable['spectate.feed']).toEqual({ skip: 'visual-elsewhere' });
+    expect(captionFor('spectate.feed', false)).toBeNull();
+  });
+
   it('keeps muted-by-design decorative cues out of the stack', () => {
     expect(captionFor('ambience.phone', false)).toBeNull();
     expect(captionFor('player.step', false)).toBeNull();

@@ -29,7 +29,10 @@ information: deadline warning and ticks ("Termin blisko"), last seconds, pings, 
 - The spectate screen (S7-90) shows no captions: a watched newsroom's cues live on its own view's
   feedback, which the caption stack does not listen to. A spectator hears only
   `SPECTATOR_AUDIBLE_CUES` (verdict outcomes, expiries, event starts, raids, abilities), and the
-  spectator event feed (S7-91) is the visual twin of each of them. No haptics either.
+  spectator event feed (S7-91, „Na żywo”, an `aria-live` list) is the visual twin of each of them,
+  with an icon and a tone stripe next to the words. No haptics either. Following a player is
+  marked by a blue ring on their chip and name tag, never by colour alone (the FollowCard names
+  them).
 
 ### Intro subtitles (S7-101)
 

@@ -19,12 +19,14 @@ import type {
   StationKind,
   StoryType,
   Verdict,
+  VersusEndReason,
 } from '@redakcja/shared';
 import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { LeadState, VersusReasonId, VersusResultKind } from '../hud/versus-model.ts';
 import type { RoomListProblem } from '../rooms/room-list-model.ts';
+import type { FeedTone } from '../spectate/feed-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import { listPl, pluralPl } from './plural.ts';
@@ -2394,10 +2396,100 @@ export const pl = {
     /** Split layout: the team plate focuses its newsroom, and a second tap brings both back. */
     focusTeam: (team: string) => `Tylko redakcja ${team}`,
     bothTeams: 'Pokaż obie redakcje',
-    /** The keys of the spectate screen, keyboard and gamepad only (≤ 8 words). */
+    /**
+     * The keys of the spectate screen, keyboard and gamepad only (≤ 8 words): follow, the view
+     * (a split, one view, or co-op's one newsroom) and the stats sheet (S7-91).
+     */
     hints: {
-      keyboard: { split: 'Spacja – widok · 1, 2 – redakcja', single: 'Spacja – druga redakcja' },
-      gamepad: { split: 'A – widok · B – obie redakcje', single: 'A – druga redakcja' },
+      keyboard: {
+        split: '←/→ – śledź · Spacja – widok · Q – statystyki',
+        single: '←/→ – śledź · Spacja – druga redakcja',
+        coop: '←/→ – śledź · Q – statystyki',
+      },
+      gamepad: {
+        split: 'RB – śledź · A – widok · Y – statystyki',
+        single: 'RB – śledź · A – druga redakcja',
+        coop: 'RB – śledź · Y – statystyki',
+      },
+    },
+    // --- S7-91: follow, the event feed, the stats sheet and the spectator results. ---
+    follow: {
+      /** A player chip on the team plate (screen readers): tapping it follows the player. */
+      chip: (nickname: string) => `Śledź: ${nickname}`,
+      /** The FollowCard's head. */
+      following: (nickname: string) => `Śledzisz: ${nickname}`,
+      stop: 'Przestań śledzić',
+      /** What the followed player does; never what a stamp says or how a verdict went. */
+      status: {
+        carrying: 'Niesie teczkę',
+        working: (station: string, percent: number) => `${station}: ${percent}\u00a0%`,
+        minigame: (station: string) => `${station}: rozwiązuje zadanie`,
+        lockout: (seconds: number) => `Blokada ${seconds}\u00a0s`,
+        desk: 'Wydaje werdykt',
+        idle: 'Szuka zajęcia',
+      },
+      /** The stamp icons on the card (screen readers): how many, from which stations. */
+      stamps: (stations: string) => `Pieczątki: ${stations}`,
+      noStamps: 'Bez pieczątek',
+    },
+    /** The event feed: the spectators' visual twin of every sound they hear (≤ 8 words). */
+    feed: {
+      title: 'Na żywo',
+      /** A closed folder whose result the embargo still holds: no verdict, outcome or points. */
+      masked: (team: string) => `${team}: werdykt`,
+      maskedExpired: (team: string) => `${team}: teczka zamknięta`,
+      verdict: {
+        correct: (nickname: string) => `${nickname}: trafny werdykt`,
+        weak: (nickname: string) => `${nickname}: za słaby dowód`,
+        wrong: (nickname: string) => `${nickname}: błędny werdykt`,
+        blunder: (nickname: string) => `${nickname}: fałszywka poszła w świat!`,
+      } satisfies Record<FeedTone, (nickname: string) => string>,
+      expired: 'Teczka przepadła',
+      raid: 'Nalot odparty!',
+      ability: (nickname: string, ability: string) => `${nickname}: ${ability}`,
+      rescue: (nickname: string) => `${nickname}: teczka uratowana!`,
+      points: (points: string) => `${points}\u00a0pkt`,
+      /** A player who has left the room since. */
+      someone: 'Ktoś',
+    },
+    stats: {
+      open: 'Statystyki',
+      title: 'Statystyki',
+      close: 'Zamknij',
+      /** Column heads. */
+      player: 'Gracz',
+      verdicts: 'Werdykty',
+      accuracy: 'Trafność',
+      stamps: 'Pieczątki',
+      fails: 'Pomyłki w zadaniach',
+      abilities: 'Zdolności',
+      /** Verdicts whose result the embargo still holds (counted, but not in the accuracy). */
+      pending: (n: number) => `${n} czeka`,
+      pendingLabel: (n: number) =>
+        `${n} ${pluralPl(n, 'werdykt czeka', 'werdykty czekają', 'werdyktów czeka')} na odsłonięcie`,
+      percent: (n: number) => `${n}\u00a0%`,
+      noAccuracy: '–',
+      noAccuracyLabel: 'Jeszcze bez werdyktów',
+      tableLabel: (team: string) => `Statystyki: ${team}`,
+    },
+    /** The spectator results: both newsrooms, the winner and each player's figures. */
+    results: {
+      winner: (team: string) => `Wygrywa ${team}!`,
+      draw: 'Remis!',
+      /** Why, said of the newsrooms by name. */
+      reasons: {
+        score: (winner: string) => `Redakcja ${winner} zdobyła więcej punktów.`,
+        credibility: (loser: string) => `Redakcja ${loser} straciła wiarygodność.`,
+        forfeit: (loser: string) => `Redakcja ${loser} opuściła pojedynek.`,
+        draw: () => 'Obie redakcje mają tyle samo punktów.',
+      } satisfies Record<VersusEndReason, (team: string) => string>,
+      teamsLabel: 'Wynik meczu',
+      statsTitle: 'Gracze',
+      kolegiumTitle: 'Teczki',
+      /** The Segmented control over the Kolegium in versus. */
+      kolegiumTabs: 'Teczki redakcji',
+      /** Read-only Kolegium: whose verdict a card shows. */
+      verdict: 'Werdykt',
     },
   },
   // --- S7-96 „Jak grać”: the help dialog with the intro, the stations and the controls. ---
