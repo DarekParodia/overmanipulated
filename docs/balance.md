@@ -350,22 +350,27 @@ folders instead of 15 (11 / 13 / 15 / 17 by difficulty) and pinned target 3 eith
 | **26 (kept)** | 220 / 320 of 400 | 100 / 42 / 0 / 49 | 100 / 92 / 17 / 66 | 88 / 0 / 0 / 21 |
 | 28 | 220 / 320 of 400 | 100 / 46 / 0 / 49 | 100 / 80 / 13 / 65 | 92 / 4 / 0 / 22 |
 
-`gapS` 26 keeps the ladder (l4 58 % > l5 49 % ≥ l6 48 % for the average crew on Normal) and the
-last Normal slot at 316 s, so a two-proof folder still ends by 396 s. Full l5 rows at `gapS` 26
-(folders are 13 / 15 / 17 / 19 with both boss calls):
+The `gapS` sweep above ran before the bots pressed abilities (S7-46 policies, equal to today's
+`--no-abilities`). `gapS` 26 keeps the ladder there (l4 58 % > l5 49 % ≥ l6 48 % for the average
+crew on Normal) and the last Normal slot at 316 s, so a two-proof folder still ends by 396 s.
+Full l5 rows at `gapS` 26 with abilities pressed (`--roles mixed`; folders are 13 / 15 / 17 / 19
+with both boss calls):
 
 | Level | Difficulty | Stars at | Rookie ×3 | Average ×3 | Expert ×3 | Mixed ×3 |
 | --- | --- | --- | --- | --- | --- | --- |
-| l5 | easy | 190 / 276 of 345 | 96 / 0 / 0 / 16 | 100 / 92 / 17 / 66 | 100 / 100 / 96 / 92 | 100 / 38 / 0 / 52 |
-| l5 | normal | 220 / 320 of 400 | 46 / 0 / 0 / -1 | 100 / 42 / 0 / 49 | 100 / 100 / 92 / 89 | 100 / 0 / 0 / 35 |
-| l5 | hard | 248 / 361 of 452 | 8 / 0 / 0 / -12 | 96 / 13 / 0 / 37 | 100 / 100 / 62 / 83 | 100 / 0 / 0 / 33 |
-| l5 | expert | 280 / 406 of 508 | 0 / 0 / 0 / -19 | 88 / 0 / 0 / 21 | 100 / 100 / 33 / 75 | 92 / 0 / 0 / 21 |
+| l5 | easy | 190 / 276 of 345 | 96 / 0 / 0 / 16 | 100 / 88 / 21 / 69 | 100 / 100 / 92 / 91 | 100 / 29 / 0 / 51 |
+| l5 | normal | 220 / 320 of 400 | 46 / 0 / 0 / -1 | 100 / 50 / 0 / 51 | 100 / 100 / 92 / 88 | 100 / 0 / 0 / 38 |
+| l5 | hard | 248 / 361 of 452 | 8 / 0 / 0 / -12 | 100 / 29 / 0 / 41 | 100 / 100 / 62 / 82 | 100 / 8 / 0 / 35 |
+| l5 | expert | 280 / 406 of 508 | 0 / 0 / 0 / -19 | 96 / 0 / 0 / 27 | 100 / 100 / 58 / 79 | 100 / 0 / 0 / 25 |
 
-Every intent check for l5 passes (thresholds 55 % / 80 % of the run maximum, expert crew ≤ 89 % of
-max). The station spread falls from 3.5 to 2.9 on Normal: the six bag stations are 11–19 % busy
-and only the hint-only AI scanner (7 %) is below that. Reproduce with `bun run balance --levels
-l5-deepfake --difficulty easy,normal,hard,expert --crew-sizes 3 --seeds 24 --md`. S7-66 re-runs
-the whole matrix for M4.
+Every intent check for l5 passes (thresholds 55 % / 80 % of the run maximum, expert crew ≤ 88 % of
+max; on Normal the score-share ladder reads l4 57 % > l5 51 %, and l6 52 % stays within the
+8-point allowance). The station spread falls from 3.5 to 2.8 on Normal: the six bag stations are
+11–17 % busy and only the hint-only AI scanner (6 %) is below that; Ekspertyza takes effect 2.6
+times a run. Reproduce with `bun run balance --levels l4-zdrowie,l5-deepfake,l6-atak --difficulty
+easy,normal,hard,expert --crew-sizes 3 --seeds 24 --md` (1152 runs, no watchdog fired; the one
+failing check, the l6 win-rate ladder, is the authored l6 and S7-63's). S7-66 re-runs the whole
+matrix for M4.
 
 ## Open points for the playtests
 
