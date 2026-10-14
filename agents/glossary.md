@@ -192,6 +192,8 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Przycisk zdolności | ability button (`AbilityButton`, grid area `ability`, `data-testid="touch-ability"`) | The 4th thumb button on touch; same ring and states as the chip, shown only with a role |
 | Cel zdolności | ability target (`AbilityTarget`, `abilityTargetFolder`, `abilityTargetName`, `data-ability-target`) | What a ready press would act on: the folder card gets a dashed blue outline, a teammate or station is named on the chip |
 | Pierścień postępu | progress ring (`ui/ProgressRing`, `RingTone`) | The round fill shared by the work prompt and the ability chip / button |
+| Podpowiedź zdolności | ability hint (next step kind `ability`, `NextStepAbility`, `abilityHintKey`) | The hint bubble names a ready press that helps now: Przedłużenie for a warned folder in hand („R: +20 s dla teczki”), Telefon z terenu instead of the walk to the phone, Druga szansa at a locked station; the key is R / RB or the touch button's label in quotes; hidden with the other hints on Ekspert |
+| Krok zdolności | tutorial ability step (`'ability'`, `ABILITY_STEP`, signal `abilityUsed`, `skipAbilityStep`) | The 6th tutorial step: the role icon and „R: Ekspertyza – …”; done by the local `ability` event (armed, started, done); skipped without a role, on a level where the ability cannot act (`abilityStepApplies`: Ekspertyza without its family's station, Telefon z terenu without a phone, Podaj teczkę without a connected teammate) or when the ability was used earlier in the run |
 | Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
 
 ## Station families (`StationFamily`, Stage 7)
@@ -278,6 +280,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Sprite lektora | voice sprite (`VoiceSprite`, `voiceSpriteSchema`, `loadVoiceSprite`, `loadIntroVoice`; `intro/voice-sprite.ts`) | `/assets/voice/intro.json` beside `intro.{webm,mp3}`: per clip `startMs`, `durationMs`, `textSha1`; written by `tools/audio/synth_voice.py`; optional (no sprite → subtitles and fallback timing) |
 | Licencja głosu | voice licence (`VOICE_LICENCES`) | `CC0-1.0`, `CC-BY-4.0`, `MIT` or `self-recorded-CC0` (a volunteer recording released under CC0); nothing non-commercial can ship |
 | Nagranie lektora | voice recording (`synth_voice.py --recordings DIR`) | One take per clip, `DIR/<clipId>.wav`, released under CC0 by the volunteer; replaces TTS with one command |
+| Scenariusz nagrania | voice script (`tools/audio/voice-script.ts`, `docs/voice-recording.pl.md`) | The volunteer's guide: the generated 17-clip table (file, who hears it, exact subtitle, key-name respellings, rough length), recording rules and the CC0 consent form; `voice-script.test.ts` fails while the table is stale |
 
 ## Server config and ads (Stage 7)
 
