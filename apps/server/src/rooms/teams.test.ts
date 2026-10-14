@@ -2,6 +2,7 @@
 // one context and one sim seed per match, one member per reconnect token, stats per player.
 import { beforeEach, describe, expect, it } from 'bun:test';
 import {
+  BRIEFING_DURATION_MS,
   type FolderResult,
   type GameEvent,
   type MemberKind,
@@ -147,6 +148,27 @@ describe('newsrooms of a match', () => {
     expect(view?.forfeited).toEqual([false]);
     expect(view?.outcome).toBeNull();
     expect(view?.embargo).toEqual({ teams: 1, open: {}, closed: {}, held: [] });
+  });
+
+  it('draws the sim seed at the level start, apart from the run seed of the briefing', () => {
+    // Each draw returns the next tenth, so a seed shows which draw it came from.
+    let draws = 0;
+    const counted = createRoomHarness({ random: () => (draws++ % 10) / 10 });
+    const host = counted.join('Ala');
+    const code = counted.welcomeOf(host).roomCode;
+    const afterCreate = draws;
+    counted.lobby(host, { kind: 'start' });
+    expect(draws - afterCreate).toBe(1);
+    const runSeed = counted.registry.inspect(code)?.run?.seed;
+    counted.clock.time += BRIEFING_DURATION_MS;
+    counted.ticks(1);
+    expect(draws - afterCreate).toBe(2);
+    const view = counted.registry.inspect(code);
+    expect(view?.phase).toBe('playing');
+    expect(view?.run?.seed).toBe(runSeed);
+    // Four draws make the room code; the briefing's run seed is the 5th (0.4 × 0x7fffffff), the
+    // level start's sim seed the 6th (0.5 × 0x7fffffff).
+    expect([afterCreate, runSeed, view?.game.seed]).toEqual([4, 858_993_458, 1_073_741_823]);
   });
 
   it('records the creation time from the wall clock', () => {
