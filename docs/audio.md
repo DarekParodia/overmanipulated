@@ -28,6 +28,10 @@ Cues (`apps/client/src/fx/cues.ts`) are the only thing gameplay code uses; they 
 - Level events: `evviral evboss evraid evoutage evcorrection evclear evback evzap`
 - Beds (loops): `roomtone`, `keys` (station typing), `ambchatter` (voice-less newsroom chatter)
 - Ambience one-shots: `ambphone ambprinter ambfax ambtyping`
+- Abilities (S7-42): `abready` (two soft rising ticks, ui class: `ability.ready`), `abpower` (a short
+  rising sweep under high bell sparkles: `ability.armed`, `ability.expertise`), `abthrow` (an airy
+  paper whoosh with a soft catch: `ability.pass`). The other ability cues reuse `back`, `ping3`,
+  `fail`, `arrive`, `evback` and `evclear`.
 
 Every sound passes through `finish()` in the synth script: 1.5 ms fade-in, 8 ms fade-out (loops are
 left alone so they stay seamless), a loudness target per class, and a soft peak ceiling of 0.9.
@@ -191,7 +195,7 @@ checkpoint) would pass; it goes in through `--model` once its own audit is recor
 
 ## Budget
 
-Whole payload (both formats are shipped, a browser loads one): webm about 2.2 MB, mp3 about 2.1 MB;
-limit 2.5 MB. Only the sfx sprite (about 170 KB) is in the first-load path; music is fetched lazily.
-The intro voice has its own cap (each of `intro.webm` / `intro.mp3` at most 700 000 bytes) and is
-fetched only when the intro asks for it, never in the first-load path.
+Whole payload (both formats are shipped, a browser loads one): webm about 2.3 MB, mp3 about 2.2 MB;
+limit 2.5 MB. Only the sfx sprite (about 180 KB as webm, 200 KB as mp3) is in the first-load path;
+music is fetched lazily. The intro voice has its own cap (each of `intro.webm` / `intro.mp3` at
+most 700 000 bytes) and is fetched only when the intro asks for it, never in the first-load path.

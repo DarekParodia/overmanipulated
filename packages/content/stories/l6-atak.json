@@ -48,7 +48,7 @@
       {
         "id": "l6-godziny-lokali-map",
         "station": "geolocation",
-        "text": "Post bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale godzin mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -117,7 +117,7 @@
       {
         "id": "l6-referendum-w-poniedzialek-map",
         "station": "geolocation",
-        "text": "Grafika bez zdjęcia miejsca, mapa nic tu nie wniesie.",
+        "text": "Miejsce z podpisu się zgadza, ale daty mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -190,7 +190,7 @@
       {
         "id": "l6-apel-mieszkancow-map",
         "station": "geolocation",
-        "text": "Zdjęcie autobusu to kadr z reklamy, nie pokazuje miejsca z apelu.",
+        "text": "Kadr autobusu z reklamy pasuje do podpisu, ale apelu mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -260,7 +260,7 @@
       {
         "id": "l6-sondaz-pracowni-map",
         "station": "geolocation",
-        "text": "Raport ma tylko wykresy, mapa nic tu nie sprawdzi.",
+        "text": "Miejsce z podpisu się zgadza, ale wyników mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -330,7 +330,7 @@
       {
         "id": "l6-sonda-w-grupie-map",
         "station": "geolocation",
-        "text": "Zrzut ankiety bez zdjęcia miejsca, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale ankiety mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -468,7 +468,7 @@
       {
         "id": "l6-autobusy-w-niedziele-map",
         "station": "geolocation",
-        "text": "Grafika z rozkładem, bez zdjęcia miejsca do sprawdzenia.",
+        "text": "Miejsce z podpisu się zgadza, ale rozkładu mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -541,7 +541,7 @@
       {
         "id": "l6-nagranie-zastepcy-map",
         "station": "geolocation",
-        "text": "Samo nagranie dźwiękowe, na mapie nie ma czego szukać.",
+        "text": "Okładka nagrania pasuje do podpisu, ale głosu mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -610,7 +610,7 @@
       {
         "id": "l6-satyra-linia-12-map",
         "station": "geolocation",
-        "text": "Fotomontaż z rakietą nie pokazuje prawdziwego miejsca.",
+        "text": "Tło fotomontażu pasuje do podpisu, ale rakiety mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -679,7 +679,7 @@
       {
         "id": "l6-anonimowa-komisja-map",
         "station": "geolocation",
-        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale relacji mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -748,7 +748,7 @@
       {
         "id": "l6-frekwencja-w-poludnie-map",
         "station": "geolocation",
-        "text": "Komunikat bez zdjęć, mapa nic tu nie sprawdzi.",
+        "text": "Miejsce z podpisu się zgadza, ale liczb mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -817,7 +817,7 @@
       {
         "id": "l6-hashtag-12-to-koniec-map",
         "station": "geolocation",
-        "text": "Zrzut ekranu bez miejsca, mapa nic tu nie wniesie.",
+        "text": "Miejsce z podpisu się zgadza, ale hasztagu mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -891,7 +891,7 @@
       {
         "id": "l6-wyrwany-cytat-radnej-map",
         "station": "geolocation",
-        "text": "Cytat bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale cytatu mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -960,7 +960,7 @@
       {
         "id": "l6-dowoz-seniorow-map",
         "station": "geolocation",
-        "text": "Zdjęcie mikrobusu jest poglądowe, nie pokazuje miejsca z komunikatu.",
+        "text": "Zdjęcie mikrobusu pasuje do podpisu, ale jest tylko poglądowe.",
         "relevance": "irrelevant"
       },
       {
@@ -1109,7 +1109,7 @@
       }
     ],
     "justifyingStamps": ["l6-most-zamkniety-map"],
-    "technique": "stare-zdjecie-nowy-podpis",
+    "technique": "zdjecie-z-innego-miejsca",
     "debrief": {
       "what": "Prawdziwe, świeże zdjęcie zamkniętego mostu, ale z innego miejsca. Podpis przeniósł je do Nowych Brzegów, żeby zniechęcić do głosowania.",
       "technique": "Zdjęcie z innego miejsca: autentyczny kadr dostaje fałszywe miejsce. Lupa nie znajdzie starszych kopii, bo zdjęcie jest nowe.",
@@ -1247,7 +1247,7 @@
       }
     ],
     "justifyingStamps": ["l6-pusta-dwunastka-map"],
-    "technique": "stare-zdjecie-nowy-podpis",
+    "technique": "zdjecie-z-innego-miejsca",
     "debrief": {
       "what": "Prawdziwe zdjęcie pustego autobusu, ale nie z przystanku Rynek. Podpis miał dowieść, że linia 12 jest niepotrzebna.",
       "technique": "Zdjęcie z innego miejsca: autentyczny kadr dostaje fałszywe miejsce i porę, żeby pasował do tezy.",
@@ -1305,7 +1305,7 @@
       {
         "id": "l6-agencja-dementuje-map",
         "station": "geolocation",
-        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale godzin mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1374,7 +1374,7 @@
       {
         "id": "l6-relacja-z-debaty-map",
         "station": "geolocation",
-        "text": "Zdjęcie z sali, na mapie nie ma czego szukać.",
+        "text": "Zdjęcie z sali pasuje do podpisu, ale debaty mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1443,7 +1443,7 @@
       {
         "id": "l6-awaria-w-lokalu-map",
         "station": "geolocation",
-        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale awarii mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1650,7 +1650,7 @@
       {
         "id": "l6-kronika-dwunastki-map",
         "station": "geolocation",
-        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale historii mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1719,7 +1719,7 @@
       {
         "id": "l6-komisja-w-bibliotece-map",
         "station": "geolocation",
-        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale zmiany mapa nie potwierdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1788,7 +1788,7 @@
       {
         "id": "l6-strajk-kierowcow-map",
         "station": "geolocation",
-        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale strajku mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1857,7 +1857,7 @@
       {
         "id": "l6-spoznienia-dwunastki-map",
         "station": "geolocation",
-        "text": "Grafika bez zdjęcia miejsca, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale spóźnień mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1926,7 +1926,7 @@
       {
         "id": "l6-najdrozsza-linia-map",
         "station": "geolocation",
-        "text": "Wpis bez zdjęcia, na mapie nie ma czego szukać.",
+        "text": "Miejsce z podpisu się zgadza, ale kosztów mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -1995,7 +1995,7 @@
       {
         "id": "l6-nalot-zostaje12-map",
         "station": "geolocation",
-        "text": "Wpisy bez zdjęć miejsc, mapa nic tu nie da.",
+        "text": "Miejsce z podpisu się zgadza, ale kont mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -2064,7 +2064,7 @@
       {
         "id": "l6-nalot-hashtag-map",
         "station": "geolocation",
-        "text": "Wpisy bez zdjęć miejsc, mapa nic tu nie da.",
+        "text": "Miejsce z podpisu się zgadza, ale autorów mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -2137,7 +2137,7 @@
       {
         "id": "l6-sprostowanie-apel-map",
         "station": "geolocation",
-        "text": "Apel bez zdjęć miejsc, mapa nic tu nie wniesie.",
+        "text": "Zdjęcie przy apelu pasuje do podpisu, ale poparcia mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {
@@ -2275,7 +2275,7 @@
       {
         "id": "l6-szef-kaze-publikowac-map",
         "station": "geolocation",
-        "text": "Załącznik to tabela, mapa nic tu nie da.",
+        "text": "Miejsce z podpisu się zgadza, ale tabeli mapa nie sprawdzi.",
         "relevance": "irrelevant"
       },
       {

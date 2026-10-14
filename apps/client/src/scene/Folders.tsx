@@ -5,9 +5,11 @@
 // navy dots on the cover (one instanced mesh for all folders). One draw call per folder plus one
 // per prop type in play. Feedback triggers animate them (folder-motion.ts): slide in on the
 // conveyor, hop, squash on put-down and stamp, tremble, crumple when expired (an expired folder
-// stays drawn until its crumple has played). Groups are named `folder:<id>` for tests.
+// stays drawn until its crumple has played). A folder handed over with Podaj teczkę flies to the
+// receiver's hands in a 450 ms arc (S7-42; it snaps under reduced motion). Groups are named
+// `folder:<id>` for tests.
 import { useFrame } from '@react-three/fiber';
-import type { StoryType } from '@redakcja/shared';
+import { ABILITY, type Folder, type StoryType } from '@redakcja/shared';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   BoxGeometry,
@@ -21,6 +23,7 @@ import {
 import { useShallow } from 'zustand/react/shallow';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
 import { feedback } from '../fx/feedback.ts';
+import { onGameEvent } from '../net/game-events.ts';
 import { useGame } from '../net/game-store.ts';
 import { runtime } from '../net/session.ts';
 import { useSettings } from '../store/settings.ts';
@@ -41,6 +44,7 @@ import {
   createEffects,
   createOffset,
   type FolderEffects,
+  passArcPoint,
   stepEffects,
   triggerEffect,
 } from './folder-motion.ts';
@@ -69,6 +73,11 @@ const PROP_CAPACITY = 32;
 const CRUMPLE_HOLD_S = 0.6;
 /** Effects of folders not drawn for this long are dropped. */
 const STALE_S = 1.5;
+/** Podaj teczkę's flight from the passer's hands to the receiver's. */
+const PASS_FLIGHT_S = ABILITY.passFolder.flightMs / 1000;
+
+/** A folder in flight to a teammate: where it left and how long it has flown. */
+type PassArc = { from: { x: number; y: number; height: number }; toPlayerId: string; t: number };
 
 type Motion = Placement & {
   pop: SpringState;
@@ -163,6 +172,7 @@ export function Folders() {
   const groups = useRef(new Map<string, Group>());
   const motion = useRef(new Map<string, Motion>());
   const effects = useRef(new Map<string, FolderEffects>());
+  const arcs = useRef(new Map<string, PassArc>());
   const marks = useRef<InstancedMesh>(null);
   const props = useRef(new Map<StoryType, InstancedMesh>());
   const scratch = useMemo(
@@ -214,6 +224,33 @@ export function Folders() {
     [],
   );
 
+  // Podaj teczkę: the folder leaves from where it is drawn now (the passer's hands). Under
+  // reduced motion it snaps to the receiver like any carried folder.
+  useEffect(
+    () =>
+      onGameEvent((event) => {
+        if (
+          event.kind !== 'ability' ||
+          event.ability !== 'passFolder' ||
+          event.stage !== 'done' ||
+          !event.folderId ||
+          !event.targetPlayerId ||
+          useSettings.getState().reducedMotion
+        ) {
+          return;
+        }
+        const m = motion.current.get(event.folderId);
+        if (m) {
+          arcs.current.set(event.folderId, {
+            from: { x: m.x, y: m.y, height: m.height },
+            toPlayerId: event.targetPlayerId,
+            t: 0,
+          });
+        }
+      }),
+    [],
+  );
+
   useLayoutEffect(() => {
     if (marks.current) {
       marks.current.count = 0;
@@ -227,6 +264,23 @@ export function Folders() {
   useFrame((_, delta) => {
     const reducedMotion = useSettings.getState().reducedMotion;
     const carrier = (playerId: string) => renderState.players.get(playerId);
+    /** Where a folder sits in a player's hands (character IK, else the carry pose). */
+    const inHands = (folder: Folder, playerId: string) => {
+      const inTheirHands =
+        folder.location.kind === 'carried' && folder.location.playerId === playerId;
+      const placed = folderPlacement(
+        inTheirHands ? folder : { ...folder, location: { kind: 'carried', playerId } },
+        fixtures,
+        carrier,
+      );
+      const hands = handAnchors.get(playerId);
+      if (placed && hands) {
+        placed.x = hands.x;
+        placed.y = hands.y;
+        placed.height = hands.height;
+      }
+      return placed;
+    };
     let markCount = 0;
     const markMesh = marks.current;
     const { seen, propCounts, offset } = scratch;
@@ -267,19 +321,14 @@ export function Folders() {
       if (!group) {
         continue;
       }
-      const target = folderPlacement(folder, fixtures, carrier);
+      // A carried folder sits in the carrier's hands (character IK).
+      const target =
+        folder.location.kind === 'carried'
+          ? inHands(folder, folder.location.playerId)
+          : folderPlacement(folder, fixtures, carrier);
       if (!target) {
         group.visible = false;
         continue;
-      }
-      if (folder.location.kind === 'carried') {
-        // The carrier's hands (character IK) hold the folder.
-        const hands = handAnchors.get(folder.location.playerId);
-        if (hands) {
-          target.x = hands.x;
-          target.y = hands.y;
-          target.height = hands.height;
-        }
       }
       let m = motion.current.get(folder.id);
       if (!m) {
@@ -296,9 +345,22 @@ export function Folders() {
       const k = reducedMotion
         ? 1
         : 1 - Math.exp(-(carried ? FOLLOW_RATE_CARRIED : FOLLOW_RATE_RESTING) * delta);
-      m.x += (target.x - m.x) * k;
-      m.y += (target.y - m.y) * k;
-      m.height += (target.height - m.height) * k;
+      const arc = arcs.current.get(folder.id);
+      if (arc && !reducedMotion) {
+        // In flight: towards the receiver's hands even before the snapshot moves the folder.
+        arc.t += delta;
+        passArcPoint(arc.from, inHands(folder, arc.toPlayerId) ?? target, arc.t / PASS_FLIGHT_S, m);
+        if (arc.t >= PASS_FLIGHT_S) {
+          arcs.current.delete(folder.id);
+        }
+      } else {
+        if (arc) {
+          arcs.current.delete(folder.id);
+        }
+        m.x += (target.x - m.x) * k;
+        m.y += (target.y - m.y) * k;
+        m.height += (target.height - m.height) * k;
+      }
       m.yaw += (target.yaw - m.yaw) * k;
       m.pitch += (target.pitch - m.pitch) * k;
       stepSpring(m.pop, 1, delta, 3.5, 0.5);
@@ -363,6 +425,7 @@ export function Folders() {
         m.unseenS += delta;
         if (m.unseenS > STALE_S) {
           motion.current.delete(id);
+          arcs.current.delete(id);
         }
       }
     }

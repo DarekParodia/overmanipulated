@@ -77,6 +77,22 @@ A manual vendor chunk for three.js was tried and rejected: rolldown then hoisted
 (react, zustand) into it and the menu route imported three.js. The default split already keeps
 three.js out of the menu.
 
+## Ads (Stage 7)
+
+Ads are off unless the operator enables them for a host (`docs/deploy.md`, AdSense operator
+checklist), and every budget above is measured and enforced with ads off:
+`bun run perf:budget` measures our own build, and `e2e/performance.spec.ts` runs with the
+default config, where the e2e ad guard (`guardAdRequests` in `e2e/helpers.ts`) fails any test
+that requests a Google ad host. Google's script and creatives are **outside the budget**, since
+the game cannot size them, and kept away from the frames that matter:
+
+- they load only on an ad host, only on an ad screen (main menu, lobby, results; the spectator view once S7-91 places its slot)
+  and only when a placement's viewport gate matches, so phones never load them;
+- never during play: requests are paused (`pauseAdRequests`) on every other screen and no ad
+  is on screen, so a match pays no network or frame cost for new ads;
+- our own ads code (`apps/client/src/ads/`: loader, slot, pause guard) is a few KB in the menu
+  route and counted there.
+
 ## Loading screen and preloading
 
 `apps/client/src/loading/`:

@@ -15,7 +15,11 @@ import { colors } from '../ui/tokens.ts';
 import { surfaceHeight } from './entities.ts';
 import { cone, cylinder, merge, mergePainted, ring, useGeometries } from './geometry.ts';
 
-/** Enough for every station of the largest level (six kinds). */
+/**
+ * Enough for every hint target: the stations still holding a missing proof (no story has more
+ * than three justifying stamps) or the desks. Not one per station: endless has ten (S7-64), but
+ * while a proof is missing the hint never points at a station whose stamp would not prove it.
+ */
 const POOL = 6;
 /** Arrow centre height above the fixture surface: the tip stays clear of the station dials. */
 const ARROW_LIFT = 1.35;
