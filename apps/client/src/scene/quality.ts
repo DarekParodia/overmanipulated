@@ -81,6 +81,24 @@ export function profileFor(
   };
 }
 
+/** A spectator canvas renders at most this DPR (S7-90). */
+export const SPECTATOR_MAX_DPR = 1.5;
+
+/**
+ * The profile of a spectator canvas (S7-90): at most the medium preset, DPR 1.5 and no shadows
+ * or motes, so two canvases side by side stay inside the desktop render budget. A lower preset
+ * or a degraded profile stays as it is.
+ */
+export function spectatorProfile(profile: QualityProfile): QualityProfile {
+  return {
+    ...profile,
+    preset: profile.preset === 'high' ? 'medium' : profile.preset,
+    maxDpr: Math.min(profile.maxDpr, SPECTATOR_MAX_DPR),
+    shadows: false,
+    motes: false,
+  };
+}
+
 /** Share of the particle budget kept once adaptive quality starts cutting. */
 export const DEGRADED_PARTICLE_SCALE = 0.5;
 /** DPR is lowered to this fraction of the preset's cap (never below 1). */

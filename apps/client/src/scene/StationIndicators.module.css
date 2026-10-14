@@ -172,6 +172,22 @@
   }
 }
 
+/* The same phone size inside a narrow spectator view (S7-90, `data-compact` on the view). */
+:global([data-compact]) .badge {
+  width: 46px;
+  height: 46px;
+}
+
+:global([data-compact]) .face {
+  width: 36px;
+  height: 36px;
+}
+
+:global([data-compact]) .face svg {
+  width: 22px;
+  height: 22px;
+}
+
 /* One layer over the canvas for every sign, under the name tags and ping bubbles. */
 .layer {
   position: absolute;

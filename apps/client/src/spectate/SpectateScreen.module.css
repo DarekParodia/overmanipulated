@@ -1,0 +1,362 @@
+/*
+ * Spectate screen (S7-90): a full-width top bar with the scoreboard, the views under it (one per
+ * newsroom on screen) and a footer row over the bottom of the views with the key hint and the
+ * buttons. Works in landscape and portrait; phones get one view (spectate-layout.ts).
+ */
+.screen {
+  --spectate-gutter: max(var(--space-2), env(safe-area-inset-left));
+  --spectate-bar-h: 3.5rem;
+
+  position: fixed;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--sky);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+}
+
+/* --- Top bar: Kurier left, the clock in the middle, Głos (or the co-op counts) right -------- */
+
+.topBar {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--spectate-bar-h);
+  padding: max(var(--space-1), env(safe-area-inset-top)) var(--spectate-gutter) var(--space-1);
+  background: var(--surface);
+  border-bottom: var(--stroke-bold) solid var(--outline);
+  box-shadow: var(--pop);
+  color: var(--text);
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  justify-self: start;
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: var(--stroke) solid transparent;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.mirrored {
+  flex-direction: row-reverse;
+  justify-self: end;
+}
+
+/* The one-view layout: each score is the button that shows its newsroom. */
+.pick {
+  min-height: var(--touch-target);
+  border-color: var(--outline);
+  background: var(--surface-soft);
+  box-shadow: var(--pop-pressed);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pick[aria-pressed="true"] {
+  border-color: var(--blue-dark);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--blue);
+}
+
+.pick:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.teamName {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crown {
+  display: inline-flex;
+  color: var(--yellow-dark);
+}
+
+.points,
+.credibility,
+.count {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.points svg {
+  color: var(--yellow-dark);
+}
+
+.credibility svg {
+  color: var(--red);
+}
+
+.clock {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-xl);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.counts {
+  display: inline-flex;
+  gap: var(--space-3);
+  justify-self: end;
+}
+
+.count svg {
+  color: var(--text-soft);
+}
+
+/* --- Views ----------------------------------------------------------------------------------- */
+
+.views {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--space-2);
+  min-height: 0;
+  padding: var(--space-2) var(--spectate-gutter);
+}
+
+.views[data-layout="side"][data-count="2"] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.views[data-layout="stacked"][data-count="2"] {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+/* One view fills the screen edge to edge. */
+.views[data-layout="single"],
+.views[data-count="1"] {
+  padding: 0;
+}
+
+.pane {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--sky);
+}
+
+.views[data-count="2"] .pane {
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--pop);
+}
+
+.plate {
+  position: absolute;
+  top: var(--space-2);
+  left: var(--space-2);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: calc(100% - 2 * var(--space-2));
+  min-height: var(--touch-target);
+  margin: 0;
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-2);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  box-shadow: var(--pop);
+  color: var(--text);
+  font: inherit;
+}
+
+.plateButton {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.plateButton:active {
+  box-shadow: var(--pop-pressed);
+  transform: translateY(2px);
+}
+
+.plateButton:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.plateName {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 9rem;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunk);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.chipName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.away {
+  opacity: 0.55;
+}
+
+.waiting {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--text-soft);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+}
+
+.banner {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  z-index: 4;
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: var(--stroke-bold) solid var(--outline);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--pop);
+  color: var(--red-dark);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--text-lg);
+  white-space: nowrap;
+}
+
+/* --- Footer: the key hint left, the buttons right, over the bottom of the views ------------- */
+
+.footer {
+  position: absolute;
+  right: var(--spectate-gutter);
+  bottom: max(var(--space-3), env(safe-area-inset-bottom));
+  left: var(--spectate-gutter);
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.footer > * {
+  pointer-events: auto;
+}
+
+.buttons {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.hint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border: var(--stroke) solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+/* --- Short landscape phones (640×360): a slimmer bar, no team names, smaller plates --------- */
+
+@media (max-height: 500px), (max-width: 700px) {
+  .screen {
+    /* The 48 px team buttons and 2 px of padding each side. */
+    --spectate-bar-h: 3.25rem;
+  }
+
+  .topBar {
+    padding-top: max(2px, env(safe-area-inset-top));
+    padding-bottom: 2px;
+  }
+
+  .teamName {
+    display: none;
+  }
+
+  .points,
+  .credibility,
+  .count,
+  .clock {
+    font-size: var(--text-lg);
+  }
+
+  .score {
+    gap: var(--space-1);
+    padding: 0 var(--space-1);
+  }
+
+  .chipName {
+    display: none;
+  }
+
+  /* The plate keeps its badge and player marks; the pressed score in the bar names the team. */
+  .plateName {
+    display: none;
+  }
+}

@@ -137,7 +137,7 @@ function otherTeam(team: TeamIndex | undefined): boolean {
 function routeSpectator(message: RoomStateMessage, previous: RoomStateMessage | null): void {
   const app = useApp.getState();
   if (message.phase === 'briefing' && app.screen !== 'briefing') {
-    useSpectate.getState().reset();
+    useSpectate.getState().reset(message.levelId);
     app.setScreen('briefing');
   } else if (
     (message.phase === 'playing' || message.phase === 'results') &&
@@ -145,7 +145,7 @@ function routeSpectator(message: RoomStateMessage, previous: RoomStateMessage | 
   ) {
     // Already reset when the briefing began; joining mid-match arrives here directly.
     if (previous?.phase !== 'briefing') {
-      useSpectate.getState().reset();
+      useSpectate.getState().reset(message.levelId);
     }
     app.setScreen('spectate');
   } else if (message.phase === 'lobby' && app.screen !== 'lobby') {

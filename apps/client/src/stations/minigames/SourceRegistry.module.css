@@ -242,16 +242,17 @@
 }
 
 /*
- * Short landscape phones (640×360): the seven fields, the footer and the key hints share one
- * 3 × 3 grid under the task line, filled column by column so up/down on keyboard and pad follows
- * the reading order and ends on „Odłóż kartę”. The card keeps its box (subgrid, for the nudge)
- * but loses its frame, and the „!” flag moves onto the tile's corner so values get the width.
+ * Landscape screens from a 640×360 phone up to desktops: the seven fields, the footer and the key
+ * hints share one 3 × 3 grid under the task line (the account / website chip above it), filled
+ * column by column so up/down on keyboard and pad follows the reading order and ends on „Odłóż
+ * kartę”. The card keeps its box (subgrid, for the nudge) but loses its frame, and the „!” flag
+ * sits on the tile's corner so values get the width. Fits 1280×720 and 640×360 without scrolling.
  */
-@media (max-height: 430px) {
+@media (min-width: 40rem) {
   .root {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-rows: auto repeat(3, auto);
-    gap: var(--space-1) var(--space-2);
+    grid-template-rows: auto auto repeat(3, auto);
+    gap: var(--space-2) var(--space-3);
   }
 
   .root > :first-child {
@@ -274,23 +275,23 @@
     border: 0;
   }
 
+  .kind {
+    grid-row: 1;
+    grid-column: 1;
+  }
+
   .fields {
-    grid-row: 1 / -1;
+    grid-row: 2 / -1;
     grid-auto-flow: column;
   }
 
-  .kind {
-    display: none;
-  }
-
+  /* A long handle or address breaks inside its tile instead of widening it. */
   .field {
-    min-height: var(--touch-target);
-    padding: 2px var(--space-1) 2px var(--space-2);
-    border-radius: var(--radius-sm);
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-1) var(--space-2);
   }
 
   .fieldValue {
-    font-size: var(--text-sm);
     overflow-wrap: break-word;
   }
 
@@ -305,36 +306,35 @@
 
   /* The footer takes the cell under the last field, the hints the one under it. */
   .foot {
-    grid-row: 3;
+    grid-row: 4;
     grid-column: 3;
     flex-direction: column;
     flex-wrap: nowrap;
     align-items: stretch;
     justify-content: center;
-    gap: 2px;
+    gap: var(--space-1);
   }
 
   .file {
-    min-height: var(--touch-target);
-    padding: var(--space-1) var(--space-3);
+    min-height: 3.25rem;
+    padding: var(--space-2) var(--space-3);
     font-size: var(--text-lg);
   }
 
   .count {
     text-align: center;
-    font-size: var(--text-sm);
     line-height: var(--leading-snug);
   }
 
   .root > .hints {
-    grid-row: 4;
+    grid-row: 5;
     grid-column: 3;
     align-content: center;
   }
 
   /* The outcome takes the footer's and the hints' cells, so the revealed rows stay visible. */
   .result {
-    grid-row: 3 / 5;
+    grid-row: 4 / 6;
     grid-column: 3;
     align-self: center;
   }
@@ -344,5 +344,39 @@
     align-items: center;
     gap: var(--space-1);
     text-align: center;
+  }
+}
+
+/* Short landscape phones (640×360): no chip, slimmer tiles and text. */
+@media (max-height: 430px) {
+  .root {
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .kind {
+    display: none;
+  }
+
+  .field {
+    min-height: var(--touch-target);
+    padding: 2px var(--space-1) 2px var(--space-2);
+    border-radius: var(--radius-sm);
+  }
+
+  .fieldValue {
+    font-size: var(--text-sm);
+  }
+
+  .foot {
+    gap: 2px;
+  }
+
+  .file {
+    min-height: var(--touch-target);
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .count {
+    font-size: var(--text-sm);
   }
 }

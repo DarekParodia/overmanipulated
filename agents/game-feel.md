@@ -147,6 +147,16 @@ the player's view uses the global `feedback` that audio, haptics and captions ar
 `CueContext.silent` mutes a cue's sound and loops only (particles, shake, animation and the
 caption still run), for views that must not be heard.
 
+**Spectators (S7-90).** A watched newsroom's events (`spectatorEvent`) go to its own view
+(`routeViewEvent(view, event, isSpectatorAudible)`). Only `SPECTATOR_AUDIBLE_CUES`
+(`spectate/spectate-audio.ts`: verdict outcomes, `folder.expired`, `event.*.start`,
+`event.raidResolved`, the ability cues that land and `role.rescue`) keep their sound; every other
+cue plays silently. Sounds play at `SPECTATOR_SFX_GAIN` (0.6) of the player's volume, panned
+`TEAM_PAN` (Kurier −0.5, Głos +0.5) while both newsrooms are on screen and centred when one is;
+a newsroom off screen is not heard. No haptics, no camera shake, no hit-stop and no captions
+(the event feed of S7-91 is the visual twin of every audible cue). The masked and revealed
+results of the versus embargo play no cue.
+
 ## Music
 
 - Menu track; per-level track with **intensity layers** (calm / pressure) cross-faded by remaining
