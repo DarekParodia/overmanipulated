@@ -1,7 +1,9 @@
 // Title screen (design-rules §5): the game logo on the sky, one centred panel with the
-// nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner.
+// nickname, the yellow "open a room" button and the join-by-code row. Settings sit in a corner;
+// minor links sit in the footer under the card and, with ads on, a „Reklama” rail on the left.
 import { ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '@redakcja/shared';
 import { type FormEvent, useEffect, useState } from 'react';
+import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { requestMusic } from '../fx/audio/music.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
@@ -14,6 +16,7 @@ import { Field } from '../ui/Field.tsx';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { GameLogo } from './GameLogo.tsx';
 import styles from './MainMenu.module.css';
+import { MenuFooter } from './menu/MenuFooter.tsx';
 import { MotdBanner } from './menu/MotdBanner.tsx';
 
 const CODE_FILTER = new RegExp(`[^${ROOM_CODE_ALPHABET}]`, 'g');
@@ -141,6 +144,11 @@ export function MainMenu() {
           </p>
         )}
       </section>
+
+      <MenuFooter className={styles.footer} />
+
+      {/* Fixed left rail; renders nothing without ads, on phones or below 1180×680 (S7-74). */}
+      <AdSlot placement="menu" />
     </main>
   );
 }

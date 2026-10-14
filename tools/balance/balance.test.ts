@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'bun:test';
 import { prepareLevelRun } from '../../packages/content/src/index.ts';
 import type { SimStory } from '../../packages/shared/src/index.ts';
-import { citeStamps, failChance } from './bot.ts';
-import type { RunResult } from './game.ts';
+import { abilityPolicy, citeStamps, failChance } from './bot.ts';
+import { crewRoles, type RunResult, roleSetupLabel } from './game.ts';
 import { buildMatrix, crewsOfSizes, runJob } from './jobs.ts';
 import { AVERAGE, EXPERT, ROOKIE } from './models.ts';
 import {
+  abilityTable,
   difficultyChecks,
   dominantStation,
   intentChecks,
@@ -68,6 +69,73 @@ describe('failChance', () => {
   });
 });
 
+describe('role presets', () => {
+  it('seats the mixed crew, a Ratownik last, or Wszechstronny everywhere', () => {
+    expect(crewRoles('mixed', 1)).toEqual(['generalist']);
+    expect(crewRoles('mixed', 4)).toEqual([
+      'photoEditor',
+      'archivist',
+      'reporter',
+      'managingEditor',
+    ]);
+    expect(crewRoles('rescue', 3)).toEqual(['photoEditor', 'archivist', 'rescuer']);
+    expect(crewRoles('rescue', 4)).toEqual(['photoEditor', 'archivist', 'reporter', 'rescuer']);
+    expect(crewRoles('rescue', 1)).toEqual(['rescuer']);
+    expect(crewRoles('generalists', 2)).toEqual(['generalist', 'generalist']);
+  });
+
+  it('takes an explicit role per seat, without a role past the list', () => {
+    expect(crewRoles(['reporter', null], 3)).toEqual(['reporter', null, null]);
+    expect(roleSetupLabel(['reporter', null])).toBe('reporter+-');
+    expect(roleSetupLabel('rescue')).toBe('rescue');
+  });
+});
+
+describe('abilityPolicy', () => {
+  const own = { stationId: 'st-1', folderId: 'f1' };
+  const urgent = (id: string) => id === 'f1';
+
+  it('extends only an urgent folder the preview targets', () => {
+    expect(abilityPolicy('extendDeadline', { kind: 'now', folderId: 'f1' }, null, urgent)).toBe(
+      true,
+    );
+    expect(abilityPolicy('extendDeadline', { kind: 'now', folderId: 'f2' }, null, urgent)).toBe(
+      false,
+    );
+    expect(abilityPolicy('extendDeadline', { kind: 'cooling', readyAtMs: 9 }, null, urgent)).toBe(
+      false,
+    );
+  });
+
+  it('arms Ekspertyza and Druga szansa, and presses them now only at its own station', () => {
+    for (const ability of ['expertise', 'secondChance'] as const) {
+      expect(abilityPolicy(ability, { kind: 'arm' }, null, urgent)).toBe(true);
+      expect(abilityPolicy(ability, { kind: 'armed' }, own, urgent)).toBe(false);
+      expect(
+        abilityPolicy(ability, { kind: 'now', stationId: 'st-1', folderId: 'f1' }, own, urgent),
+      ).toBe(true);
+      expect(
+        abilityPolicy(ability, { kind: 'now', stationId: 'st-2', folderId: 'f2' }, own, urgent),
+      ).toBe(false);
+      expect(
+        abilityPolicy(ability, { kind: 'now', stationId: 'st-1', folderId: 'f1' }, null, urgent),
+      ).toBe(false);
+    }
+  });
+
+  it('never presses Telefon z terenu from the policy, nor Podaj teczkę at all', () => {
+    expect(abilityPolicy('fieldCall', { kind: 'now', folderId: 'f1' }, own, urgent)).toBe(false);
+    expect(
+      abilityPolicy(
+        'passFolder',
+        { kind: 'now', folderId: 'f1', targetPlayerId: 'p2' },
+        own,
+        urgent,
+      ),
+    ).toBe(false);
+  });
+});
+
 describe('buildMatrix', () => {
   it('runs every crew and seed on each difficulty, in ladder order', () => {
     const jobs = buildMatrix({
@@ -124,6 +192,7 @@ function run(overrides: Partial<RunResult>): RunResult {
     difficulty: 'normal',
     crew: 'average',
     crewSize: 3,
+    roles: 'mixed',
     seed: 1,
     won: true,
     stars: 2,
@@ -144,6 +213,9 @@ function run(overrides: Partial<RunResult>): RunResult {
     events: {},
     firstVerdictS: null,
     stationBusyShare: {},
+    abilities: {},
+    rescues: 0,
+    stalls: 0,
     ...overrides,
   };
 }
@@ -206,6 +278,36 @@ describe('report', () => {
       ok: false,
       detail: 'l1-burza ×4 archive',
     });
+  });
+
+  it('prints ability use and rescues per run for the average crews', () => {
+    const table = abilityTable(
+      summarizeAll([
+        run({ seed: 1, abilities: { expertise: 2, fieldCall: 1 }, rescues: 1 }),
+        run({ seed: 2, abilities: { expertise: 1 } }),
+        run({ crewSize: 4, abilities: { extendDeadline: 3 } }),
+        run({ crew: 'expert', abilities: { passFolder: 5 } }),
+      ]),
+    );
+    expect(table).toBe(
+      [
+        '| Level | Difficulty | Crew | expertise | fieldCall | extendDeadline | rescue |',
+        '| --- | --- | --- | --- | --- | --- | --- |',
+        '| l1-burza | normal | ×3 | 1.5 | 0.5 | 0.0 | 0.5 |',
+        '| l1-burza | normal | ×4 | 0.0 | 0.0 | 3.0 | 0.0 |',
+      ].join('\n'),
+    );
+  });
+
+  it('fails the stall check when a bot watchdog fired', () => {
+    const stall = (runs: RunResult[]) =>
+      intentChecks(summarizeAll(runs), []).find((c) => c.name.startsWith('No bot stalls'));
+    expect(stall([run({ seed: 1 }), run({ seed: 2, stalls: 2 })])).toEqual({
+      name: 'No bot stalls: no watchdog fired (station, desk or field call)',
+      ok: false,
+      detail: '2 in 2 runs',
+    });
+    expect(stall([run({})])?.ok).toBe(true);
   });
 
   it('lists endless after the campaign levels in the station-load table', () => {
@@ -314,5 +416,54 @@ describe('runJob', () => {
       expect(share).toBeGreaterThan(0);
       expect(share).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('runJob with abilities', () => {
+  it('counts the abilities that took effect, without a stall', () => {
+    const job = {
+      levelId: 'l3-afera',
+      crew: ['expert', 'expert', 'expert', 'expert'],
+      seed: 2,
+      difficulty: 'normal',
+    } as const;
+    const pressed = runJob(job);
+    expect(pressed.roles).toBe('mixed');
+    expect(pressed.stalls).toBe(0);
+    expect(pressed.abilities.expertise ?? 0).toBeGreaterThan(0);
+    expect(pressed.abilities.passFolder).toBeUndefined();
+    const off = runJob({ ...job, abilities: false });
+    expect(off.roles).toBe('mixed no-abilities');
+    expect(off.abilities).toEqual({});
+    expect(off.stalls).toBe(0);
+  });
+
+  it('lets reporters phone from the field instead of walking to the phone', () => {
+    const result = runJob({
+      levelId: 'l3-afera',
+      crew: ['expert', 'expert', 'expert'],
+      seed: 1,
+      difficulty: 'normal',
+      roles: ['reporter', 'reporter', 'reporter'],
+    });
+    expect(result.roles).toBe('reporter+reporter+reporter');
+    expect(result.abilities.fieldCall ?? 0).toBeGreaterThan(0);
+    expect(result.stalls).toBe(0);
+  });
+
+  it('runs the generalists and rescue presets without a stall', () => {
+    const job = {
+      levelId: 'l2-wybory',
+      crew: ['expert', 'expert', 'expert'],
+      difficulty: 'hard',
+    } as const;
+    const generalists = runJob({ ...job, seed: 2, roles: 'generalists' });
+    expect(generalists.roles).toBe('generalists');
+    expect(generalists.abilities).toEqual({ secondChance: 2 });
+    expect(generalists.stalls).toBe(0);
+    const rescue = runJob({ ...job, seed: 1, roles: 'rescue' });
+    expect(rescue.roles).toBe('rescue');
+    expect(rescue.abilities).toEqual({ expertise: 3 });
+    expect(rescue.stalls).toBe(0);
   });
 });

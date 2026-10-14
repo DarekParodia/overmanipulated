@@ -81,8 +81,17 @@ describe('controls help', () => {
         'work',
         'ping',
         'ability',
+        'stationHelp',
       ]);
     }
+  });
+
+  test("station help is H, Select and the overlay header '?' (S7-95)", () => {
+    const help = (device: 'keyboard' | 'gamepad' | 'touch') =>
+      controlRows(device).find((r) => r.action === 'stationHelp')?.options;
+    expect(help('keyboard')).toEqual([['H']]);
+    expect(help('gamepad')).toEqual([['Select']]);
+    expect(help('touch')).toEqual([['?']]);
   });
 
   test('the role ability is R, RB and the fourth touch button (S7-39)', () => {

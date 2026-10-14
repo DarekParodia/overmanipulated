@@ -4,6 +4,7 @@
 import { getLevel } from '@redakcja/content';
 import { MAX_PLAYERS, type Role, STATION_KINDS } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
+import { AdSlot } from '../ads/AdSlot.tsx';
 import { useEncyclopedia } from '../encyclopedia/store.ts';
 import { LeaderboardDialog } from '../endless/LeaderboardDialog.tsx';
 import { requestMusic } from '../fx/audio/music.ts';
@@ -257,6 +258,9 @@ export function Lobby() {
           )}
         </div>
       </footer>
+
+      {/* Banner ≥ --space-ad-gap under the footer; nothing without ads or on phones (S7-74). */}
+      <AdSlot placement="lobby" />
     </main>
   );
 }

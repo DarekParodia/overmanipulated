@@ -1,4 +1,4 @@
-# Balance (S6-01, S7-35)
+# Balance (S6-01, S7-35, S7-46)
 
 Status: **bot simulations only, not confirmed by humans.** Bots are not students. The numbers
 below say how the levels behave for the bot models described here; the real playtest data (S3-09
@@ -7,8 +7,10 @@ change to content, `constants.ts` or the bag.
 
 The current numbers are the **S7-35 pass** (Stage 7, M2): every campaign level and endless on all
 four difficulties, after the station bag (S7-20..S7-22), multi-stamp folders (S7-18), the AI
-scanner as a hint only (S7-03) and the l0–l4 bag content (S7-27..S7-33). The S6-01 pass (authored
-schedules, Normal only) is summarised at the end.
+scanner as a hint only (S7-03) and the l0–l4 bag content (S7-27..S7-33). The **S7-46 pass** (M3)
+adds the role abilities to the bots and the role presets; its results are in "Abilities (S7-46)"
+below and every cooldown stays at 60 s. The S6-01 pass (authored schedules, Normal only) is
+summarised at the end.
 
 ## Method
 
@@ -26,7 +28,9 @@ count (timing goes to stderr).
 Options: `--seeds N` (default 50), `--endless-seeds N` (default 24), `--levels a,b` (default l1–l6
 and endless; add `l0-greybox` for the tutorial), `--no-endless`, `--difficulty
 easy,normal,hard,expert` (default `normal`), `--crew-sizes 3` (only the matrix crews of those sizes,
-a quick pass), `--workers N`, `--json file`, `--md`.
+a quick pass), `--roles mixed|rescue|generalists` or a role per seat (`reporter,rescuer,none`;
+S7-46), `--no-abilities` (bots never press their ability; Koło ratunkowe stays passive),
+`--workers N`, `--json file`, `--md`.
 
 Output per level, difficulty and crew: win rate (survived with a positive score), star
 distribution, score p10/p50/p90 and as share of the run's best possible score, minimum credibility,
@@ -34,7 +38,10 @@ credibility trajectory (tenths of the level), share of expired folders, share of
 wrong justifications, time to first verdict, events started per run. Endless: survival time
 distribution (runs are cut at 20 min). Then a **station-load** table (average crews of three and
 four: share of level time each station had a folder or an operator, with the busiest / least busy
-spread) and the pass/fail checks against the intent below.
+spread), the **ability use** per run of the average crews (abilities that took effect, by ability,
+and Koło ratunkowe rescues; S7-46) and the pass/fail checks against the intent below, including
+"no bot stalls" (no bot watchdog fired: a bot never gave up waiting at a station, a desk or a field
+call).
 
 **The S7-35 matrix:** l0–l6 and endless × easy, normal, hard, expert × the 8 matrix crews,
 **24 seeds per campaign level and 8 per endless crew** (5632 runs, about 19 min on 4 workers on a
@@ -44,8 +51,10 @@ about ±10 points between seed sets; treat single-digit differences as noise.
 
 ### Bot models (`tools/balance/models.ts`, all assumptions)
 
-Roles by crew size: 1 = Wszechstronny (generalist, S7-43); 2 = photo editor, archivist; 3 = +
-reporter; 4 = + managing editor.
+Roles by crew size (`--roles mixed`, the default): 1 = Wszechstronny (generalist, S7-43); 2 = photo
+editor, archivist; 3 = + reporter; 4 = + managing editor. `--roles rescue` puts a Ratownik in the
+last seat instead (×3 photo editor, archivist, Ratownik; ×4 photo editor, archivist, reporter,
+Ratownik); `--roles generalists` makes everyone Wszechstronny.
 
 | Parameter | rookie | average | expert |
 | --- | --- | --- | --- |
@@ -62,12 +71,25 @@ reporter; 4 = + managing editor.
 | Stations tried per folder | 3 | 4 | 6 |
 | Obeys a boss call unchecked | 40% | 10% | 0 |
 | Files a correction at once | 50% | 90% | 100% |
-| Uses the role ability (`usesAbility`; so far Przedłużenie on a claimed folder under 5 s left) | never | 50% | always |
+| Uses the role ability at all (`usesAbility`, per bot and run; policies below) | never | 50% | always |
 
 Teamwork: an idle bot claims the next folder on the conveyor (rookies first come first served,
 others by deadline and priority), then carries it through the stations it chooses and to a free
 desk. Bots wait for busy stations, avoid stations that are down and retry after a failed
 minigame. "Mixed" is rookie + average + expert.
+
+Ability policies (S7-46, `abilityPolicy` in `tools/balance/bot.ts`): a bot that uses its ability
+presses it only when the shared `abilityPreview` says the press does something, as the HUD would.
+Przedłużenie: a folder the team works on has under 5 s left and the preview targets it. Ekspertyza
+and Druga szansa: armed whenever the preview offers `arm` (so the next covered minigame is skipped,
+or the next failed minigame reopens at once), or pressed `now` at the bot's own station. Telefon z
+terenu: when the bot's plan sends a folder to the phone and the preview offers the call for it, the
+bot calls instead, stands still with the folder until the stamp lands (6 s) and counts the phone as
+visited. **Podaj teczkę is not modelled:** the bots share work by claims and never hand folders
+over, so a pass would only move a folder between two bots that both know the plan; whether students
+use it to save walking can only be measured in playtests. The Ratownik bot therefore plays as a
+role without a speed bonus whose Koło ratunkowe saves a folder only when it carries one to its
+deadline.
 
 Per difficulty and multi-stamp (S7-34, also assumptions): the minigame failure chance is
 multiplied by `DIFFICULTY_FAIL_FACTOR` (easy 0.75, normal 1, hard 1.15, expert 1.4), halved
@@ -93,6 +115,9 @@ one cited stamp for a held stamp that proves nothing.
   were never timed by humans.
 - Win means "credibility above 0 and score above 0 at the end"; this is easy to reach with
   few wrong verdicts. The star distribution and score share are the sharper signals.
+- Abilities are pressed at the best moment the preview allows, with no reaction delay and no
+  forgotten cooldowns (50 % of average bots, every expert). Podaj teczkę is never used, so the
+  Ratownik and the `rescue` preset are under-represented (see the bot models).
 - Crew size matters little for the bots: on Normal the average crews of two, three and four
   score within 4 points of each other on l0–l2; from l3 on the crew of two loses 3–8 points and the
   fourth bot adds 2–4. Stations are busy at most 36 % of a Normal campaign level, so the third and
@@ -231,6 +256,85 @@ difficulty rises (average score share 75 > 68 > 62 > 58 > 52 > 54 % for l1–l6;
 8-point allowance), no level unwinnable or trivially maxed (expert 87–96 % of max), thresholds
 55 % / 79–85 % of the preview max on l1–l6, no dominant station (busiest 44 %, Normal endless ×4), endless 8.5 min.
 
+## Abilities (S7-46)
+
+Measured on the merged M3 state with the S7-46 bot policies, l0–l6 and endless, crews of three
+and four (`--crew-sizes 3,4`: rookies, average, experts and mixed ×3, average and rookies ×4),
+**12 seeds per campaign level and 6 per endless crew**: `--roles mixed` on all four difficulties
+(2160 runs), `--roles rescue`, `--roles generalists` and `--roles mixed --no-abilities` on Normal
+(540 runs each); then **30 seeds** on l2 and l6 (Normal, with and without abilities, 720 runs;
+×4 without the managing editor, 120 runs) and the cooldown variants below (30 seeds each, 420
+runs). l5 and l6 were measured again after the new l6 (S7-58, S7-61: 24×14 with Mapa and Inne
+media) landed: both on all four difficulties (12 seeds, 576 runs), Normal without abilities (144),
+l6 at 30 seeds with and without abilities (360) and the l6 ladder at 30 seeds (480); the l6 numbers
+below are the new level's. 6600 runs, about 28 min on 3 workers in all. With 12 seeds a
+share moves by about ±15 points between seed sets, with 30 by about ±9.
+
+**No stalls:** no bot watchdog fired in any of the 6600 runs (all presets, all difficulties). Every
+`--roles mixed` check passes on all four difficulties except these, none of them about abilities:
+"difficulty rises" (l6 scores more than l5, as without abilities: l5 45 % vs the new l6 57 %; l5
+and l6 still play authored schedules until M4) and, at 12 seeds only, "no level trivially maxed" (expert
+crew 97 % on l2; 96 % at 30 seeds). On the new l6 the win-rate ladder also fails by one run: the
+average crew of three loses 1 of 30 runs on Normal and none on Hard (97 % vs 100 %; the same loss
+happens without abilities, and the score share ladder 69 > 52 > 43 > 29 % holds).
+
+Abilities that took effect per run, average crews on Normal (`--roles mixed`):
+
+| Level | ×3 Ekspertyza | ×3 Telefon z terenu | ×4 Ekspertyza | ×4 Telefon z terenu | ×4 Przedłużenie |
+| --- | --- | --- | --- | --- | --- |
+| l0 | 1.3 | – | 1.3 | – | 0.0 |
+| l1 | 1.4 | – | 1.4 | – | 0.3 |
+| l2 | 2.4 | – | 2.2 | – | 0.9 |
+| l3 | 1.8 | 0.7 | 1.7 | 0.6 | 1.4 |
+| l4 | 1.0 | 0.3 | 0.8 | 0.4 | 1.7 |
+| l5 | 3.2 | 0.4 | 3.3 | 0.6 | 1.8 |
+| l6 (new, 30 seeds) | 2.6 | 0.3 | 2.5 | 0.1 | 1.5 |
+| endless | 3.3 | 0.7 | 4.0 | 1.0 | 4.7 |
+
+`--roles generalists`: Druga szansa 0.3–2.0 per run (endless 3.3 / 5.3). `--roles rescue`: Koło
+ratunkowe saves 0–0.3 folders per run on the campaign levels (endless 0.7–0.8); average bots rarely
+carry a folder to its deadline.
+
+Effect on Normal, win / 2+ stars / 3 stars / score share in %, abilities off → on (`--roles mixed`,
+12 seeds; l2 and l6 also at 30 seeds):
+
+| Level | Average ×3 | Average ×4 | Expert ×3 |
+| --- | --- | --- | --- |
+| l0 | 100/100/75/82 → 100/100/75/82 | 100/100/75/82 → 100/100/75/82 | 100/100/92/98 → 100/100/92/96 |
+| l1 | 100/100/17/79 → 100/100/17/80 | 100/100/17/79 → 100/100/17/80 | 100/100/100/94 → 100/100/100/94 |
+| l2 (30 seeds) | 100/94/17/69 → 100/90/40/72 | 100/94/17/69 → 100/90/53/76 | 100/100/100/96 → 100/100/100/96 |
+| l3 | 100/66/8/62 → 100/59/17/61 | 100/58/8/61 → 100/75/25/66 | 100/100/92/93 → 100/100/92/92 |
+| l4 | 100/67/0/60 → 100/75/0/58 | 100/67/0/60 → 100/66/8/62 | 100/100/92/92 → 100/100/92/92 |
+| l5 | 100/17/0/41 → 100/33/0/45 | 100/8/0/38 → 100/50/0/50 | 100/100/92/88 → 100/100/75/87 |
+| l6 (new, 30 seeds) | 97/33/3/48 → 97/44/7/52 | 100/26/3/48 → 100/57/10/57 | 100/100/83/87 → 100/100/90/90 |
+
+Endless, median survival on Normal (abilities off → on): average ×3 10.0 → 9.1 min, ×4 11.2 → 11.9,
+experts ×3 15.6 → 18.4. The other presets on Normal (12 seeds, average ×3 score share l1–l6):
+`rescue` 80 / 73 / 63 / 56 / 45 / 61 %, `generalists` 78 / 74 / 65 / 57 / 45 / 59 % (`mixed` 80 /
+73 / 61 / 58 / 45 / 61 %; these l6 values are the old level's). With `generalists` rookies win l0
+and l1 only 75 % (20 % faster
+everywhere is less than 40 % at the stations they use most; rookies never press abilities); every
+other check of the two presets matches `mixed`.
+
+**Cooldowns: all stay at 60 s.** Abilities lift the average crews by 0–12 points of score share and
+mostly turn 1-star runs into 2-star runs on the later levels, which is what they are for. The
+written targets hold: the average crew of three or four reaches 3 stars on l1 in 17 % of runs
+(target ≤ 30 %), the experts stay ≤ 97 % of max (30 seeds), the score-share ladder and every
+per-difficulty target pass.
+The one outlier is **l2**, where the average crew reaches 3 stars in 40 % (×3) and 53 % (×4) of
+runs (17 % without abilities). Longer cooldowns do not fix it: Przedłużenie at 75 s or 90 s leaves
+l2 ×4 at 50 % / 53 % (it is used 0.3–1.8 times a run, so a longer cooldown rarely binds), and
+Ekspertyza at 90 s leaves l2 at 40 % (×3) / 43 % (×4) (30 seeds each); a ×4 crew without the
+managing editor gets 40 %, so Przedłużenie adds about 13 points there. The gain comes from the
+first press or two in a short level whose 3-star threshold sits close to what an average crew
+scores, so it is a level question for the M4 balance pass (S7-66), not a cooldown one. The
+cluster B proposals (Druga szansa 45 s, Podaj teczkę 30 s) are not adopted: Druga szansa is used
+at most twice a level and Podaj teczkę is not modelled, so the bots give no reason to shorten them.
+
+Re-run: `bun run balance --levels l0-greybox,l1-burza,l2-wybory,l3-afera,l4-zdrowie,l5-deepfake,l6-atak,endless
+--seeds 12 --endless-seeds 6 --crew-sizes 3,4 --difficulty normal --roles mixed|rescue|generalists
+[--no-abilities] --md`.
+
 ## Open points for the playtests
 
 - Does a first-time crew really win level 1 (the rookie model says 92 %), and the tutorial (88 %)?
@@ -241,6 +345,9 @@ difficulty rises (average score share 75 > 68 > 62 > 58 > 52 > 54 % for l1–l6;
 - Crew size: see the limits above; bigger crews may need more folders.
 - Time to first verdict: bots need 22–27 s on level 1 (rookies 53 s). If humans need much longer,
   the 4 s first spawn can feel like a pile-up.
+- Abilities: do students press them at all, and at the right moment? The bots arm Ekspertyza and
+  Druga szansa as soon as they can. Watch Podaj teczkę (not modelled) and whether the average crew
+  really gets 3 stars on level 2 as often as the bots (40–53 %).
 - Replace the model numbers in `tools/balance/models.ts` with measured values (minigame durations,
   failure rates, reading time) and re-run.
 

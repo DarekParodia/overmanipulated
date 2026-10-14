@@ -5,6 +5,9 @@
 //   --no-endless       skip endless
 //   --difficulty a,b   difficulties (easy, normal, hard, expert; default normal)
 //   --crew-sizes a,b   only the matrix crews of these sizes (default: all, sizes 2-4)
+//   --roles R          role preset (mixed, rescue, generalists; default mixed) or a role per
+//                      seat in join order (e.g. reporter,rescuer,none)
+//   --no-abilities     bots never press their ability (Koło ratunkowe stays passive)
 //   --workers N        worker threads (default: cores, max 8; 1 = in-process)
 //   --json FILE        also write every run result as JSON
 //   --md               print markdown headings (for docs/balance.md)
@@ -17,10 +20,13 @@ import {
   type Difficulty,
   difficultySchema,
   ENDLESS_LEVEL_ID,
+  type Role,
+  roleSchema,
 } from '../../packages/shared/src/index.ts';
-import type { RunResult } from './game.ts';
+import { crewRoles, ROLE_PRESETS, type RoleSetup, type RunResult, roleSetupLabel } from './game.ts';
 import { buildMatrix, crewsOfSizes, type Job, runJob } from './jobs.ts';
 import {
+  abilityTable,
   campaignTable,
   endlessTable,
   formatChecks,
@@ -44,6 +50,19 @@ const asked = (option('difficulty') ?? 'normal').split(',').map((d) => difficult
 // In ladder order whatever the order on the command line, each difficulty once.
 const difficulties: Difficulty[] = DIFFICULTIES.filter((d) => asked.includes(d));
 const crewSizes = option('crew-sizes')?.split(',').map(Number);
+
+/** `--roles`: a preset name, else a role (or `none`) per seat. */
+function parseRoles(value: string | undefined): RoleSetup {
+  const preset = ROLE_PRESETS.find((p) => p === value);
+  if (value === undefined || preset !== undefined) {
+    return preset ?? 'mixed';
+  }
+  return value
+    .split(',')
+    .map((role): Role | null => (role === 'none' ? null : roleSchema.parse(role)));
+}
+const roles = parseRoles(option('roles'));
+const abilities = !flag('no-abilities');
 const jobs = buildMatrix({
   levels: levels.filter((id) => id !== ENDLESS_LEVEL_ID),
   seeds: Number(option('seeds') ?? 50),
@@ -51,6 +70,8 @@ const jobs = buildMatrix({
   includeEndless,
   difficulties,
   ...(crewSizes ? { crews: crewsOfSizes(crewSizes) } : {}),
+  roles,
+  abilities,
 });
 
 async function runAll(all: Job[], workers: number): Promise<RunResult[]> {
@@ -107,6 +128,18 @@ const levelInfo = LEVELS.map((l) => ({
 
 const md = flag('md');
 const out: string[] = [];
+const seats = [1, 2, 3, 4]
+  .map(
+    (size) =>
+      `×${size} ${crewRoles(roles, size)
+        .map((r) => r ?? '-')
+        .join(', ')}`,
+  )
+  .join(' · ');
+out.push(
+  `Roles: ${roleSetupLabel(roles)} (${seats}); abilities ${abilities ? 'pressed by bots' : 'never pressed'}`,
+  '',
+);
 const shown = [
   ...levels.filter((id) => id !== ENDLESS_LEVEL_ID),
   ...(includeEndless ? [ENDLESS_LEVEL_ID] : []),
@@ -151,6 +184,10 @@ out.push(
     : '== Station load (average ×3 and ×4, share of level time busy)',
 );
 out.push(stationLoadTable(summaries), '');
+out.push(
+  md ? '#### Ability use (average crews, per run)\n' : '== Ability use (average crews, per run)',
+);
+out.push(abilityTable(summaries), '');
 out.push(md ? '#### Intent checks\n' : '== Intent checks');
 out.push(formatChecks(intentChecks(summaries, levelInfo)));
 console.log(out.join('\n'));

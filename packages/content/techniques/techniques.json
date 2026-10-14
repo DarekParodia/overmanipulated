@@ -1,11 +1,11 @@
 [
   {
     "id": "stare-zdjecie-nowy-podpis",
-    "aliases": ["zdjecie-w-zlym-czasie"],
+    "aliases": ["zdjecie-w-zlym-czasie", "zdjecie-z-innego-miejsca"],
     "name": "Stare zdjęcie, nowy podpis",
     "how": "Prawdziwe zdjęcie z innego miejsca lub dnia dostaje nowy podpis i udaje bieżące wydarzenie. Obraz się zgadza, kłamstwo siedzi w opisie.",
-    "detect": "Lupa obrazu pokazuje, gdzie to zdjęcie pojawiło się wcześniej. Archiwum i Kartoteka źródeł sprawdzą datę i autora.",
-    "stations": ["imageSearch", "archive", "sourceRegistry"],
+    "detect": "Lupa obrazu pokazuje, gdzie to zdjęcie pojawiło się wcześniej. Mapa sprawdzi, czy miejsce zgadza się z podpisem, a Metadane i Archiwum podadzą datę zdjęcia.",
+    "stations": ["imageSearch", "geolocation", "metadata", "archive"],
     "realWorld": "Po każdej burzy czy powodzi krążą zdjęcia sprzed lat, podpisane jako „stan na dziś”.",
     "hint": "Zdjęcia z sieci nie zawsze są świeże."
   },
@@ -14,8 +14,8 @@
     "aliases": [],
     "name": "Fałszywa instytucja",
     "how": "Konto lub strona kopiuje logo i nazwę urzędu, szkoły albo firmy. Pilny ton ma sprawić, że klikniesz, zanim sprawdzisz, kto pisze.",
-    "detect": "Kartoteka źródeł pokaże, że konto jest nowe i niezweryfikowane. Telefon do prawdziwej instytucji rozstrzyga sprawę.",
-    "stations": ["sourceRegistry", "phone"],
+    "detect": "Kartoteka źródeł pokaże, że konto jest nowe i niezweryfikowane. Telefon do prawdziwej instytucji rozstrzyga sprawę. Inne media pokażą, że nikt poważny tego nie podał.",
+    "stations": ["sourceRegistry", "phone", "crossCheck"],
     "realWorld": "Fałszywe SMS-y „od przewoźnika” albo „od banku” z linkiem do opłaty, która ma być pilna.",
     "hint": "Logo i słowo „PILNE” to nie dowód."
   },
@@ -24,8 +24,8 @@
     "aliases": ["satyra", "satyra-bez-oznaczenia", "satyra-brana-na-serio"],
     "name": "Satyra brana na serio",
     "how": "Żart wygląda jak prawdziwa wiadomość. Po udostępnieniu znika stopka lub podpis, więc ludzie biorą go za informację.",
-    "detect": "Kartoteka źródeł pokaże, że strona jest satyryczna. Sprawdź stopkę i resztę serwisu, a przy publikacji dopisz, że to żart.",
-    "stations": ["sourceRegistry", "archive"],
+    "detect": "Kartoteka źródeł pokaże, że strona jest satyryczna, a Inne media – że nikt poważny o tym nie pisze. Sprawdź stopkę i resztę serwisu, a przy publikacji dopisz, że to żart.",
+    "stations": ["sourceRegistry", "crossCheck", "archive"],
     "realWorld": "Absurdalne „doniesienia” z portali satyrycznych, które co jakiś czas wracają jako rzekome newsy.",
     "hint": "Nie każdy news jest na serio."
   },
@@ -44,8 +44,8 @@
     "aliases": ["niepotwierdzona-plotka"],
     "name": "Plotka bez źródła",
     "how": "„Podobno” i „słyszałem od znajomej” zastępują dowód. Każde kolejne udostępnienie brzmi jak potwierdzenie, choć nikt niczego nie sprawdził.",
-    "detect": "Szukaj pierwszego źródła w Kartotece źródeł i w Archiwum. Gdy go nie ma, zadzwoń do osoby lub instytucji, której dotyczy wiadomość.",
-    "stations": ["sourceRegistry", "archive", "phone"],
+    "detect": "Inne media pokażą, czy ktoś niezależny to potwierdził, czy tylko kopiuje wpis. Szukaj pierwszego źródła w Kartotece źródeł i w Archiwum, a gdy go nie ma, zadzwoń do osoby lub instytucji, której to dotyczy.",
+    "stations": ["crossCheck", "sourceRegistry", "archive", "phone"],
     "realWorld": "Szkolna plotka o nauczycielu, która obiega klasy w jeden dzień, bo każdy zna „kogoś, kto wie”.",
     "hint": "Im więcej „podobno”, tym mniej faktów."
   },
@@ -54,8 +54,8 @@
     "aliases": ["cytat-wyrwany-z-kontekstu", "wyrwany-z-kontekstu"],
     "name": "Wyrwane z kontekstu",
     "how": "Słowa lub kadr są prawdziwe, ale ktoś obciął początek i koniec. Bez reszty wypowiedź znaczy co innego.",
-    "detect": "Archiwum zawiera pełną wersję wypowiedzi lub materiału. Porównaj ją z wycinkiem i zapytaj osobę, której to dotyczy.",
-    "stations": ["archive", "phone"],
+    "detect": "Stenogram i Archiwum mają pełną wersję wypowiedzi lub materiału. Porównaj ją z wycinkiem i zapytaj osobę, której to dotyczy.",
+    "stations": ["transcript", "archive", "phone"],
     "realWorld": "Jedno zdanie z długiego wywiadu, które w nagłówku brzmi jak poparcie, choć w całości było zastrzeżeniem.",
     "hint": "Prawdziwe słowa mogą kłamać."
   },
@@ -64,8 +64,8 @@
     "aliases": [],
     "name": "Zmyślony cytat",
     "how": "Autentyczna twarz i nazwa uwiarygadniają zdanie, którego nikt nie wypowiedział. Cytat trafia na grafikę lub fałszywe konto.",
-    "detect": "Szukaj cytatu w Archiwum i u źródła. Kartoteka źródeł pokaże, czy konto naprawdę należy do tej osoby.",
-    "stations": ["archive", "sourceRegistry", "phone"],
+    "detect": "Stenogram pokaże, czy to zdanie w ogóle padło. Szukaj cytatu w Archiwum i u źródła, a Kartoteka źródeł powie, czy konto naprawdę należy do tej osoby.",
+    "stations": ["transcript", "archive", "sourceRegistry", "phone"],
     "realWorld": "Grafika z portretem polityka i mocnym hasłem, którego nie ma w żadnym jego wystąpieniu.",
     "hint": "Ładna grafika nie jest dowodem."
   },
@@ -139,8 +139,8 @@
     ],
     "name": "Tania podróbka",
     "how": "Bez sztucznej inteligencji, prostym montażem: zwolnione tempo, wycięty fragment, podmieniony napis. Autentyczny materiał zmienia sens.",
-    "detect": "Archiwum ma oryginalną wersję do porównania. Lupa obrazu i Skaner AI pokażą cięcia, a Skaner może też dać fałszywy alarm.",
-    "stations": ["archive", "aiScanner", "imageSearch"],
+    "detect": "Archiwum ma oryginalną wersję do porównania, a Stenogram pokaże wycięte zdania. Lupa obrazu i Skaner AI wyłapią cięcia, ale Skaner może też dać fałszywy alarm.",
+    "stations": ["archive", "transcript", "aiScanner", "imageSearch"],
     "realWorld": "Nagranie spowolnione tak, że mówca brzmi, jakby był pijany.",
     "hint": "Do oszustwa wystarczą nożyczki."
   },
@@ -149,8 +149,8 @@
     "aliases": [],
     "name": "Obraz z generatora",
     "how": "Program tworzy realistyczną scenę, której nigdy nie było. Zdradzają ją dłonie, napisy, powtarzalne twarze i brak źródła.",
-    "detect": "Skaner AI szuka śladów generowania, a Lupa obrazu sprawdza, czy zdjęcie ma autora i wcześniejsze publikacje. Brak źródła to alarm.",
-    "stations": ["aiScanner", "imageSearch", "sourceRegistry"],
+    "detect": "Skaner AI szuka śladów generowania, a Metadane mogą pokazać, że żaden aparat nie zrobił tego zdjęcia. Lupa obrazu i Kartoteka źródeł sprawdzą autora i wcześniejsze publikacje.",
+    "stations": ["aiScanner", "metadata", "imageSearch", "sourceRegistry"],
     "realWorld": "Zdjęcie tłumu, na którym część osób ma zbyt wiele palców lub nieczytelne napisy.",
     "hint": "Realistyczne nie znaczy prawdziwe."
   },
@@ -159,8 +159,8 @@
     "aliases": ["klonowanie-glosu", "deepfake-wideo"],
     "name": "Deepfake i klon głosu",
     "how": "Program uczy się głosu lub twarzy z publicznych nagrań i mówi dowolny tekst. Brzmi znajomo, a presja czasu blokuje sprawdzanie.",
-    "detect": "Skaner AI wyłapie ślady syntezy, a telefon do osoby z nagrania potwierdzi, czy to ona mówiła. Pilność sama jest sygnałem alarmowym.",
-    "stations": ["aiScanner", "phone", "sourceRegistry"],
+    "detect": "Skaner AI wyłapie ślady syntezy, a telefon do osoby z nagrania potwierdzi, czy to ona mówiła. Metadane mogą zdradzić program, który zrobił plik. Pilność sama jest sygnałem alarmowym.",
+    "stations": ["aiScanner", "phone", "metadata", "sourceRegistry"],
     "realWorld": "Głosówka „od szefa” z pilną prośbą o przelew, nagrana przez program z kilkunastu sekund jego głosu.",
     "hint": "Znajomy głos może być z programu."
   },
@@ -169,8 +169,8 @@
     "aliases": ["sztuczny-hashtag", "koordynowane-dzialania"],
     "name": "Boty i sztuczny tłum",
     "how": "Wiele kont działa razem i powiela jeden komunikat albo hasztag. Ma to wyglądać jak głos niezależnych mieszkańców.",
-    "detect": "Kartoteka źródeł pokaże świeże, podobne konta. Wystarczy rozpoznać jedną kopię, by odrzucić całą falę.",
-    "stations": ["sourceRegistry", "aiScanner", "dataLibrary"],
+    "detect": "Kartoteka źródeł pokaże świeże, podobne konta, a Inne media – że „wszyscy” powtarzają kopie jednego wpisu. Wystarczy rozpoznać jedną kopię, by odrzucić całą falę.",
+    "stations": ["sourceRegistry", "crossCheck", "aiScanner", "dataLibrary"],
     "realWorld": "Setki niemal identycznych komentarzy pod jednym artykułem, dodanych w ciągu kilku minut.",
     "hint": "Czy to na pewno różni ludzie?"
   },
@@ -189,8 +189,8 @@
     "aliases": [],
     "name": "Prawdziwa wiadomość",
     "how": "Nie każda teczka to pułapka. Prawdziwe komunikaty, nawet nudne lub pilne, trzeba szybko opublikować. Skąd wiadomo, że są prawdziwe? Po potwierdzeniu.",
-    "detect": "Dwa zgodne źródła, właściwa instytucja i liczby zgodne z tabelą. Skaner AI bywa fałszywie czuły, więc nie ufaj mu ślepo.",
-    "stations": ["sourceRegistry", "phone", "archive"],
+    "detect": "Inne media i Kartoteka źródeł pokażą dwa zgodne, niezależne źródła, a telefon do właściwej instytucji je potwierdzi. Skaner AI bywa fałszywie czuły, więc nie ufaj mu ślepo.",
+    "stations": ["crossCheck", "sourceRegistry", "phone", "archive"],
     "realWorld": "Oficjalny komunikat urzędu o utrudnieniach w ruchu, potwierdzony w kilku miejscach.",
     "hint": "Czasem teczka jest po prostu w porządku."
   }

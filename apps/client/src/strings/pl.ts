@@ -73,6 +73,8 @@ export const pl = {
     /** Message of the day (S7-72): the banner's name and its close button. */
     motdLabel: 'Komunikat redakcji',
     motdClose: 'Zamknij komunikat',
+    /** Footer link (S7-74): reopens Google's ad consent message. */
+    adConsent: 'Zgody reklamowe',
   },
   /** Ads (S7-73): the frame's label, also its name for screen readers. */
   ads: {
@@ -189,6 +191,9 @@ export const pl = {
     hints: 'Podpowiedzi „co dalej”',
     tutorialAgain: 'Pokaż samouczek jeszcze raz',
     tutorialQueued: 'Samouczek w następnej grze',
+    /** Clears the seen station help cards (S7-95). */
+    stationHelpAgain: 'Pokaż pomoc stanowisk od nowa',
+    stationHelpQueued: 'Pomoc pokaże się znowu',
     close: 'Gotowe',
     closeIcon: 'Zamknij',
     // S5-06 settings screen.
@@ -228,6 +233,7 @@ export const pl = {
       work: 'Pracuj (trzymaj)',
       ping: 'Sygnał',
       ability: 'Zdolność roli',
+      stationHelp: 'Pomoc stanowiska',
     },
     keySpace: 'Spacja',
     padStick: 'Lewa gałka',
@@ -1439,6 +1445,9 @@ export const pl = {
     got: 'Rozumiem',
     /** The help card's note: reading help does not stop the folder's deadline. */
     deadlineRuns: 'Termin teczki biegnie dalej',
+    /** The '?' in a station overlay's header (S7-95): its accessible name and key caps. */
+    openLabel: (station: string) => `Jak działa: ${station}`,
+    key: { keyboard: 'H', gamepad: 'Select', touch: '' } satisfies Record<Device, string>,
     /** Accessible names of the card's parts. */
     stepsLabel: 'Kroki',
     realWorldLabel: 'Tak jest naprawdę',

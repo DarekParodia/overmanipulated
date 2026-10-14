@@ -1,6 +1,7 @@
 // Styleguide test bench: plays any registered minigame with a sample story and a chosen seed,
 // outside a match, so minigames can be built and screenshotted without the full game loop. It
 // plays on Normal (the difficulty defaults: full mistake limit, the answer shown on a failure).
+// Its clock is the station overlay's (useMinigameClock, S7-95).
 import { STORIES } from '@redakcja/content';
 import { DEFAULT_DIFFICULTY, type StationKind } from '@redakcja/shared';
 import { useEffect, useState } from 'react';
@@ -9,6 +10,7 @@ import { useInputCapture } from '../../input/ui-nav.ts';
 import { useApp } from '../../store/app.ts';
 import { pl } from '../../strings/pl.ts';
 import { Button } from '../../ui/Button.tsx';
+import { useMinigameClock } from '../use-minigame-clock.ts';
 import { minigameFor, minigames } from './index.ts';
 import { roundRules } from './rules.ts';
 
@@ -19,30 +21,21 @@ export function MinigameBench() {
   const [round, setRound] = useState(1);
   const [reporter, setReporter] = useState(false);
   const [result, setResult] = useState<boolean | null>(null);
-  const [startedAt, setStartedAt] = useState(() => performance.now());
-  const [now, setNow] = useState(() => performance.now());
   const device = useApp((s) => s.inputDevice);
   const story = STORIES[storyIndex % Math.max(STORIES.length, 1)];
   const Game = minigameFor(kind);
   const rules = roundRules(kind, DEFAULT_DIFFICULTY);
+  const clock = useMinigameClock(rules.timeLimitMs, result !== null);
   useInputCapture(result === null);
   // Outside a match nothing else listens to the keyboard; the bench needs it for nav intents.
   useEffect(() => attachInput(), []);
-
-  useEffect(() => {
-    if (result !== null) {
-      return;
-    }
-    const timer = setInterval(() => setNow(performance.now()), 100);
-    return () => clearInterval(timer);
-  }, [result]);
 
   const restart = (next: Partial<{ kind: StationKind; storyIndex: number }>) => {
     if (next.kind) setKind(next.kind);
     if (next.storyIndex !== undefined) setStoryIndex(next.storyIndex);
     setRound((r) => r + 1);
     setResult(null);
-    setStartedAt(performance.now());
+    clock.restart();
   };
 
   if (!story) {
@@ -74,7 +67,7 @@ export function MinigameBench() {
           stamp={story.stamps.find((s) => s.station === kind)}
           device={device}
           skipsQueue={reporter}
-          timeUsed={Math.min(1, (now - startedAt) / rules.timeLimitMs)}
+          timeUsed={clock.timeUsed}
           onDone={(success) => setResult((r) => r ?? success)}
         />
       ) : (

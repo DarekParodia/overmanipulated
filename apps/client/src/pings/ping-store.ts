@@ -104,7 +104,8 @@ export function pickerNav(selected: number, intent: NavIntent): NavOutcome {
     case 'alt':
       return { kind: 'again' };
     case 'ability':
-      // The picker has no use for the role ability; the press is simply swallowed.
+    case 'help':
+      // The picker has no use for the role ability or the station help; the press is swallowed.
       return { kind: 'none' };
   }
 }

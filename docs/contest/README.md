@@ -6,7 +6,7 @@
 | Jak zagrać (przewodnik dla jury) | [how-to-play.pl.md](how-to-play.pl.md) |
 | Zrzuty ekranu (komputer i telefon) | [screenshots/README.md](screenshots/README.md) |
 | Plany redakcji (poziomy 0–6, SVG i PNG) | [maps/l1-burza.png](maps/l1-burza.png), [maps/l6-atak.png](maps/l6-atak.png) |
-| Karty ról (do druku, A4) | [cards/role-cards.html](cards/role-cards.html), [PNG](cards/role-cards.png) |
+| Karty ról (do druku, 2 strony A4) | [cards/role-cards.html](cards/role-cards.html), [PDF](cards/role-cards.pdf), [PNG](cards/role-cards.png) |
 | Przykładowe teczki (do druku, A4) | [cards/folders.html](cards/folders.html) |
 | Nagranie rozgrywki | `gameplay.webm` (generowane, zob. niżej) |
 
