@@ -14,21 +14,15 @@ import {
   fixtureById,
   PLAYER_SPEED_TILES_PER_S,
   type Role,
+  type TileMap,
   tileCenter,
 } from '@redakcja/shared';
 import { useEffect, useMemo, useRef } from 'react';
 import { Frustum, type Group, Matrix4, Sphere, Vector3 } from 'three';
 import { animateCharacter, createAnimator, landingSquash } from '../fx/animation/procedural.ts';
 import { type SpringState, stepSpring } from '../fx/animation/spring.ts';
-import { emitCue, feedback } from '../fx/feedback.ts';
-import { onGameEvent } from '../net/game-events.ts';
-import {
-  selectCarried,
-  selectOperatedDesk,
-  selectOperatedStation,
-  useGame,
-} from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
+import { selectCarried, selectOperatedDesk, selectOperatedStation } from '../net/game-store.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { PlayerMark } from '../ui/PlayerMark.tsx';
 import { playerColor, playerColorVar } from '../ui/tokens.ts';
@@ -43,14 +37,14 @@ import {
   mixerInterval,
 } from './character/controller.ts';
 import { allowFootstep, createFootstepGate } from './character/footsteps.ts';
-import { CARRY_FOLDER_AHEAD, handAnchors, type Vec3, worldToTorso } from './character/hands.ts';
+import { CARRY_FOLDER_AHEAD, type Vec3, worldToTorso } from './character/hands.ts';
 import { BODY_TURN_RATE, headLook, turnTowards } from './character/look.ts';
 import { CHARACTER_HEIGHT, type CharacterRig, createCharacterRig } from './character/rig.ts';
 import { facingToRotationY } from './coords.ts';
 import { screenTransform, useOverlay } from './overlay.ts';
 import styles from './PlayerAvatar.module.css';
 import { useQuality } from './quality.ts';
-import { renderState } from './render-state.ts';
+import type { RenderState } from './render-state.ts';
 
 /** Height of the name tag's centre above the floor. */
 const NAME_TAG_HEIGHT = CHARACTER_HEIGHT + 0.55;
@@ -95,13 +89,14 @@ if (typeof window !== 'undefined' && new URLSearchParams(window.location.search)
 
 /** Starts a two-handed reach for a tile (or, with no target, a spot ahead of the player). */
 function reachAt(
+  render: RenderState,
   id: string,
   controller: CharacterController | null,
   bodyYaw: number,
   target: { x: number; y: number } | null,
   out: Vec3,
 ): void {
-  const player = renderState.players.get(id);
+  const player = render.players.get(id);
   if (!controller || !player || Number.isNaN(bodyYaw)) {
     return;
   }
@@ -114,15 +109,18 @@ function reachAt(
   controller.reachFor(worldToTorso(dx, dz, REACH_HEIGHT, bodyYaw, out));
 }
 
-function fixtureTarget(fixtureId: string): { x: number; y: number } | undefined {
-  const fixture = fixtureById(runtime.map, fixtureId);
+function fixtureTarget(map: TileMap, fixtureId: string): { x: number; y: number } | undefined {
+  const fixture = fixtureById(map, fixtureId);
   return fixture ? tileCenter(fixture.col, fixture.row) : undefined;
 }
 
-function locationTarget(location: FolderLocation): { x: number; y: number } | undefined {
+function locationTarget(
+  map: TileMap,
+  location: FolderLocation,
+): { x: number; y: number } | undefined {
   switch (location.kind) {
     case 'fixture':
-      return fixtureTarget(location.fixtureId);
+      return fixtureTarget(map, location.fixtureId);
     case 'floor':
       return { x: location.x, y: location.y };
     default:
@@ -139,6 +137,7 @@ export type PlayerAvatarProps = {
 };
 
 export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: PlayerAvatarProps) {
+  const view = useGameView();
   const root = useRef<Group>(null);
   const body = useRef<Group>(null);
   const controller = useRef<CharacterController | null>(null);
@@ -191,7 +190,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
       parent.remove(rig.root);
       ctrl.dispose();
       rig.dispose();
-      handAnchors.delete(id);
+      view.render.hands.delete(id);
       if (debugControllers.get(id) === ctrl) {
         debugControllers.delete(id);
       }
@@ -200,11 +199,11 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
         rigRef.current = null;
       }
     };
-  }, [colorIndex, role, shadows, id]);
+  }, [view, colorIndex, role, shadows, id]);
 
   useEffect(
     () =>
-      feedback.onAnimation((trigger, context, options) => {
+      view.feedback.onAnimation((trigger, context, options) => {
         // Team-wide cues (level win / lose) carry no player: everyone reacts.
         if (context.playerId !== undefined && context.playerId !== id) {
           return;
@@ -229,14 +228,14 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
           wobble.current.velocity = 9;
         }
       }),
-    [id, role],
+    [view, id, role],
   );
 
   // Ping emotes and ability reactions (visible on remote players too) and hand reaches for
   // pick-up / put-down and for catching a passed folder.
   useEffect(
     () =>
-      onGameEvent((event) => {
+      view.bus.on((event) => {
         if (event.kind === 'ping' && event.playerId === id) {
           controller.current?.playUpper(emoteForPing(event.ping));
         } else if (event.kind === 'ability') {
@@ -246,21 +245,29 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
           } else if (reaction?.kind === 'stop') {
             controller.current?.stopUpper(reaction.clip);
           } else if (reaction?.kind === 'catch') {
-            reachAt(id, controller.current, motion.current.bodyYaw, null, scratch.reach);
+            reachAt(
+              view.render,
+              id,
+              controller.current,
+              motion.current.bodyYaw,
+              null,
+              scratch.reach,
+            );
           }
         } else if (event.kind === 'folderPickedUp' && event.playerId === id) {
-          reachAt(id, controller.current, motion.current.bodyYaw, null, scratch.reach);
+          reachAt(view.render, id, controller.current, motion.current.bodyYaw, null, scratch.reach);
         } else if (event.kind === 'folderPutDown' && event.playerId === id) {
           reachAt(
+            view.render,
             id,
             controller.current,
             motion.current.bodyYaw,
-            locationTarget(event.location) ?? null,
+            locationTarget(view.runtime.map, event.location) ?? null,
             scratch.reach,
           );
         }
       }),
-    [id, scratch],
+    [view, id, scratch],
   );
 
   // Name tag in a DOM layer over the canvas, moved to the head every frame.
@@ -293,7 +300,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
   useOverlay(styles.labelLayer ?? '', tagNode);
 
   useFrame(({ camera, size }, delta) => {
-    const player = renderState.players.get(id);
+    const player = view.render.players.get(id);
     const group = root.current;
     const inner = body.current;
     if (!group || !inner) {
@@ -317,7 +324,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
     const { pose, events } = animateCharacter(animator, player.moving, delta, reducedMotion);
     const position = { x: player.x, y: player.y };
     if (events.started) {
-      emitCue('player.start', { position, playerId: id });
+      view.feedback.emit('player.start', { position, playerId: id });
     }
 
     // Rendered speed (smoothed), for walk vs run.
@@ -330,7 +337,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
     m.lastX = player.x;
     m.lastY = player.y;
 
-    const game = useGame.getState();
+    const game = view.store.getState();
     const station = selectOperatedStation(game, id);
     const desk = selectOperatedDesk(game, id);
     const state = scratch.state;
@@ -353,7 +360,7 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
       m.bodyYaw,
       player.facing,
       position,
-      state.working && interaction ? (fixtureTarget(interaction) ?? null) : null,
+      state.working && interaction ? (fixtureTarget(view.runtime.map, interaction) ?? null) : null,
       scratch.look,
     );
     state.lookYaw = reducedMotion ? 0 : look.yaw;
@@ -383,10 +390,13 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
         allowFootstep(
           footstepGate,
           { id, local: player.local, now, x: player.x, y: player.y },
-          renderState.players,
+          view.render.players,
         )
       ) {
-        emitCue(player.local ? 'player.step' : 'player.stepRemote', { position, playerId: id });
+        view.feedback.emit(player.local ? 'player.step' : 'player.stepRemote', {
+          position,
+          playerId: id,
+        });
       }
     }
 
@@ -420,16 +430,16 @@ export function PlayerAvatar({ id, nickname, colorIndex, role, shadows }: Player
       const left = rig.bones.armL.localToWorld(scratch.glove.copy(GLOVE_OFFSET));
       const right = rig.bones.armR.localToWorld(scratch.gloveR.copy(GLOVE_OFFSET));
       const forward = -m.bodyYaw;
-      let anchor = handAnchors.get(id);
+      let anchor = view.render.hands.get(id);
       if (!anchor) {
         anchor = { x: 0, y: 0, height: 0 };
-        handAnchors.set(id, anchor);
+        view.render.hands.set(id, anchor);
       }
       anchor.x = (left.x + right.x) / 2 + Math.cos(forward) * CARRY_FOLDER_AHEAD;
       anchor.y = (left.z + right.z) / 2 + Math.sin(forward) * CARRY_FOLDER_AHEAD;
       anchor.height = (left.y + right.y) / 2;
-    } else if (handAnchors.has(id)) {
-      handAnchors.delete(id);
+    } else if (view.render.hands.has(id)) {
+      view.render.hands.delete(id);
     }
   });
 

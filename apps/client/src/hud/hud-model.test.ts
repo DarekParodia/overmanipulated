@@ -23,6 +23,7 @@ import {
   pushToast,
   type StoryInfo,
   sortQueue,
+  spectatorToast,
   verdictToast,
 } from './hud-model.ts';
 
@@ -226,6 +227,18 @@ describe('toasts', () => {
     );
     expect(free.scoreDelta).toBeNull();
     expect(free.credibilityDelta).toBe(0);
+  });
+
+  test('announces a new spectator in blue with an eye and no points (S7-86)', () => {
+    expect(spectatorToast({ id: 'p7', nickname: 'Ola' }, 4)).toEqual({
+      id: 'spectator:p7:4',
+      title: 'Widz dołączył',
+      headline: 'Ola',
+      scoreDelta: null,
+      credibilityDelta: 0,
+      tone: 'info',
+      mark: 'eye',
+    });
   });
 
   test('keeps at most three, newest first', () => {

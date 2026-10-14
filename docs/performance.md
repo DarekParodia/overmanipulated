@@ -10,7 +10,7 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 | --- | --- |
 | `bun run perf:budget` | Builds the client and measures the first-load transfer (`tools/perf/check-bundle.ts`). Part of `bun run check`. |
 | `bun tools/perf/check-bundle.ts [dist]` | Same measurement on an existing build, with a per-file table. |
-| `bun run test:e2e` | `e2e/performance.spec.ts`: 4 players and 7 folders on the high preset stay under the draw-call and triangle budgets (desktop 150, mobile 100, 100k triangles). |
+| `bun run test:e2e` | `e2e/performance.spec.ts`: 4 players and 7 folders on the high preset stay under the draw-call and triangle budgets (desktop 150, mobile 100, 100k triangles) in four rooms: level 1, the 24×14 rooms of level 5 and level 6, and endless with all ten stations (S7-66). Each case prints its counters. |
 | `?debug` or F3 | Perf overlay: fps, frame time, draw calls, triangles, particles, quality preset, adaptive step, DPR cap. |
 
 ## First load
@@ -24,7 +24,8 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 - **Game route** (added by the first match): the lazy `GameScreen` chunk (three.js, the scene, the
   stations), its CSS, the SFX sprite and the two level music layers.
 - **Extras route** (S7-96, what a first session may open on top): the lazy dialogs whose manifest
-  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`),
+  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`,
+  `src/rooms/` for the room browser, S7-88),
   the chunks they import and load later, and the intro voice in `assets/voice` (one audio format
   plus its sprite json). Chunks the menu or the game route already counted are not counted
   again, and the extras never count as game, so a new lazy dialog does not eat `gameMax`.
@@ -33,8 +34,8 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 
 Limits enforced (`BUDGET` in the script): 10 MB total for menu + game + extras (the project rule,
 also checked against the uncompressed sum), plus regression guards that trip long before it: menu
-route 700 KB gzip, menu JS+CSS 320 KB gzip (this catches three.js leaking into the menu bundle),
-game route 1.6 MB gzip, extras route 1 MB gzip.
+route 700 KB gzip, menu JS+CSS 340 KB gzip (this catches three.js, about 150 KB gzip, leaking into
+the menu bundle), game route 1.6 MB gzip, extras route 1 MB gzip.
 
 Measured (production build, mp3 = worst case):
 
@@ -54,6 +55,18 @@ S7-103 („O grze”): the dialog adds 18 KB raw, 6 KB gzip to the extras route 
 9 KB gzip); `CREDITS.md` and the voice sprite are fetched only when its Zasoby tab opens and are
 not counted. Menu 597 KB gzip, first load 1.39 MB gzip.
 
+S7-101 (the intro player): the player, its subtitles and the welcome art ride in the „Jak grać”
+chunk (extras now 73 KB raw, 23 KB gzip); the in-engine stage is a lazy `IntroStage` chunk
+(8 KB raw, 3 KB gzip) loaded when the player mounts, and the renderer, three.js, the shared sim
+and the HUD cards it borrows are the game route's chunks, so they are counted once there. The
+intro's canvas is not the primary one (no preset probe, no adaptive quality); its mini room is
+10×6 tiles with one character, so it stays far under the scene budgets. Rolldown keeps the
+shared package's modules together, so the sim subsystems the intro steps (`step` and what it
+runs) moved into a chunk the menu loads, about 8 KB gzip. To pay for it, the design reference
+page (`?styleguide`, every minigame) became a lazy chunk in the same change: menu 573 KB gzip,
+290 KB of it JS and CSS (was 321 KB; guard 340 KB). Game route 864 KB gzip (54 % of `gameMax`;
+the styleguide counts there, being a lazy import of the entry), first load 1.43 MB gzip.
+
 Re-measured in S7-56 with all ten minigames: the game chunk is 301 KB gzip and the worst-case
 level music pair is l4's (the figure counts only the largest pair).
 
@@ -67,6 +80,7 @@ components per station kind with `React.lazy`.
 | Task | Game route gzip | Share of `gameMax` | Game chunk gzip |
 | --- | --- | --- | --- |
 | S7-56 (all ten minigames) | 814 KB | 51 % | 301 KB |
+| S7-66 (M4 done: abilities, ten stations, endless room) | 822 KB | 51 % | 303 KB |
 
 Real transfer in headless Chromium (webm audio, brotli estimate, whole flow menu, lobby, briefing,
 match): menu 434 KB, everything 1.7 MB brotli. The 10 MB limit is met about seven times over.
@@ -183,6 +197,32 @@ Audit of the 38 visible renderables on high:
 - Particles: one `InstancedMesh` for the whole pool.
 
 Result: no change needed; the e2e test keeps it that way.
+
+**Several canvases (S7-85).** Each `GameCanvas` has its own renderer, so `PerfProbe` writes its
+counters to `perfStats.views[viewKey]` and the overlay's `draw calls` and `triangles` rows are the
+sum over every mounted canvas (one canvas while playing, so the numbers above are unchanged).
+Only the primary canvas measures frame time and walks the adaptive-quality ladder. The GameView
+refactor itself was measured on the l1 room (solo host, 1366x768, fixed high preset, 7 injected
+floor folders, SwiftShader): 50–51 draw calls before and after, and the same list of visible meshes;
+triangles (23.1–24.4k) differ between runs only by the folder prop of the injected story type.
+
+### The 24×14 rooms (S7-66)
+
+Same setup (4 players, 7 folders, measured page on high, the three other players small on low),
+from `e2e/performance.spec.ts`; "cut" is the last adaptive step:
+
+| Room | Stations | Desktop 1366×768: draw calls / triangles | Phone (Pixel 7): draw calls / triangles | Cut (desktop) |
+| --- | --- | --- | --- | --- |
+| level 1 (20×12) | 2 | 60 / 32.7k | 60 / 33.6k | 35 / 15.1k |
+| level 5 (24×14) | 7 | 68 / 43.0k | 65 / 40.7k | 39 / 20.3k |
+| level 6 (24×14) | 8 | 70 / 45.0k | 66 / 42.0k | 40 / 21.2k |
+| endless (24×14) | 10 | 74 / 49.9k | 69 / 46.2k | 42 / 23.2k |
+
+The heaviest room, endless on high, uses 49 % of the desktop draw-call budget (150), 69 % of the
+phone budget (100) and half of the 100k triangles. Each extra station costs about 2 calls (its merged
+mesh in the main and the shadow pass) and 2k triangles; the bigger room adds the rest. Phones draw
+a few calls less in the big rooms, probably because the phone camera frames the room differently
+and frustum culling drops a few props. No instancing change is needed.
 
 ## Textures and models: not applicable
 

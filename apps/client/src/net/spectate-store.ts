@@ -11,23 +11,31 @@ import {
   type TeamIndex,
 } from '@redakcja/shared';
 import { create } from 'zustand';
-import { createGameStore, type GameStoreApi } from './game-store.ts';
-import { createSnapshotBuffer, type SnapshotBuffer } from './snapshot-buffer.ts';
+import type { GameStoreApi } from './game-store.ts';
+import { createWatchView, type GameView } from './game-view.ts';
+import type { SnapshotBuffer } from './snapshot-buffer.ts';
 
 /** Spectator events kept for the feed; the feed shows the newest few (client presentation). */
 export const SPECTATE_EVENTS_KEPT = 32;
 
-/** One watched newsroom. */
+/** One watched newsroom: its GameView (S7-85), which a spectator canvas renders. */
 export type SpectateView = {
   readonly team: TeamIndex;
+  readonly view: GameView;
+  /** The view's game store. */
   readonly store: GameStoreApi;
+  /** The view's snapshot buffer (its watch runtime renders from it). */
   readonly buffer: SnapshotBuffer;
 };
 
+function spectateViewFor(team: TeamIndex): SpectateView {
+  const view = createWatchView(team);
+  return { team, view, store: view.store, buffer: view.runtime.buffer };
+}
+
 /** Created once; a co-op match fills team 0 only. */
-export const spectateViews: readonly SpectateView[] = Array.from(
-  { length: MAX_TEAMS },
-  (_, team) => ({ team, store: createGameStore(), buffer: createSnapshotBuffer() }),
+export const spectateViews: readonly SpectateView[] = Array.from({ length: MAX_TEAMS }, (_, team) =>
+  spectateViewFor(team),
 );
 
 type SpectateStore = {

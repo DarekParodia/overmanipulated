@@ -3,7 +3,7 @@
 // another map gets a new frame and a fresh shadow map.
 import { useMemo } from 'react';
 import { Object3D } from 'three';
-import { runtime } from '../net/session.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { colors } from '../ui/tokens.ts';
 import { sunFrame } from './sun.ts';
 
@@ -12,7 +12,8 @@ const SUN_INTENSITY = 1.5;
 const SHADOW_MAP_SIZE = 1024;
 
 export function SunLight({ shadows }: { shadows: boolean }) {
-  const frame = useMemo(() => sunFrame(runtime.map.width, runtime.map.height), []);
+  const view = useGameView();
+  const frame = useMemo(() => sunFrame(view.runtime.map.width, view.runtime.map.height), [view]);
   // The light aims at its target's world position, so the target has to live in the scene.
   const target = useMemo(() => {
     const object = new Object3D();

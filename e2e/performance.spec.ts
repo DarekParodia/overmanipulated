@@ -4,8 +4,23 @@ import { closePlayers, createRoom, DESKTOP, PHONE, type Player, trackContext } f
 // Render budget (AGENTS.md rule 10): <= 100k triangles, ~150 draw calls on desktop and ~100 on
 // phones, with 4 players and 7 folders on screen, on the heaviest preset. The counters come from
 // three's renderer.info through the ?debug overlay (the same numbers as the perf overlay shows).
+// Measured in the default level-1 room and in the three 24×14 rooms of M4 (S7-66): level 5
+// (7 stations), level 6 (8 stations) and endless (all 10 stations).
 const MAX_TRIANGLES = 100_000;
 const MAX_DRAW_CALLS = { desktop: 150, mobile: 100 } as const;
+
+/** Rooms to measure: `null` keeps the lobby's default level. */
+const ROOMS = [
+  { name: 'level 1', levelId: null },
+  { name: 'level 5 (24×14, 7 stations)', levelId: 'l5-deepfake' },
+  { name: 'level 6 (24×14, 8 stations)', levelId: 'l6-atak' },
+  { name: 'endless (24×14, 10 stations)', levelId: 'endless' },
+] as const;
+
+/** Every campaign level won on Normal, so the host can pick l5, l6 and endless. */
+const PROGRESS = {
+  normal: { 'l1-burza': 3, 'l2-wybory': 3, 'l3-afera': 3, 'l4-zdrowie': 3, 'l5-deepfake': 3 },
+};
 
 type Counters = { drawCalls: number; triangles: number };
 
@@ -30,9 +45,13 @@ async function openWithQuality(
   // Registered so closePlayers() in afterEach disposes of it like the helper's own contexts.
   trackContext(context);
   const quality = measured ? 'high' : 'low';
-  await context.addInitScript((quality) => {
-    localStorage.setItem('redakcja.settings.v1', JSON.stringify({ quality }));
-  }, quality);
+  await context.addInitScript(
+    ({ quality, progress }) => {
+      localStorage.setItem('redakcja.settings.v1', JSON.stringify({ quality }));
+      localStorage.setItem('redakcja.progress.v2', JSON.stringify(progress));
+    },
+    { quality, progress: PROGRESS },
+  );
   const page = await context.newPage();
   await page.goto('/?debug');
   await page.getByLabel('Twój podpis').fill(nickname);
@@ -41,16 +60,28 @@ async function openWithQuality(
 
 test.afterEach(closePlayers);
 
-test('4 players and 7 folders stay inside the render budget on the high preset', async ({
-  browser,
-}, testInfo) => {
-  test.setTimeout(120_000);
-  const mobile = testInfo.project.name === 'mobile';
+for (const room of ROOMS) {
+  test(`${room.name}: 4 players and 7 folders stay inside the render budget on the high preset`, async ({
+    browser,
+  }, testInfo) => {
+    await measureRoom(browser, room.levelId, testInfo.project.name === 'mobile');
+  });
+}
+
+async function measureRoom(browser: Browser, levelId: string | null, mobile: boolean) {
+  test.setTimeout(150_000);
   const host = await openWithQuality(browser, 'Zośka', mobile, true);
   const guests = await Promise.all(
     ['Łukasz', 'Ola', 'Kamil'].map((name) => openWithQuality(browser, name, mobile, false)),
   );
   const code = await createRoom(host);
+  if (levelId !== null) {
+    // Before the guests join: choosing a level clears their ready ticks.
+    const tile = host.page.getByTestId(`level-tile-${levelId}`);
+    await tile.click();
+    // The radio follows the server's room state.
+    await expect(tile.getByRole('radio')).toBeChecked();
+  }
   for (const guest of guests) {
     await guest.page.getByLabel('Kod pokoju').fill(code);
     await guest.page.getByRole('button', { name: 'Dołącz' }).click();
@@ -102,4 +133,6 @@ test('4 players and 7 folders stay inside the render budget on the high preset',
   const cut = await readCounters(host.page);
   expect(cut.drawCalls).toBeLessThanOrEqual(full.drawCalls);
   expect(cut.triangles).toBeLessThanOrEqual(full.triangles);
-});
+  // The numbers docs/performance.md records (`--reporter=list` prints them).
+  console.log(`perf ${levelId ?? 'default'} ${mobile ? 'mobile' : 'desktop'}`, { full, cut });
+}

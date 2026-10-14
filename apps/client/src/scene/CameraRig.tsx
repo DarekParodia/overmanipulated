@@ -1,27 +1,29 @@
 // Angled top-down camera. Fits the whole newsroom when tiles would be big enough; on small
 // screens it follows the local player at a readable zoom, clamped to the room and framed under
-// the HUD band (scene/camera-framing.ts). Applies shake and the hit punch.
+// the HUD band (scene/camera-framing.ts). Applies the GameView's shake and hit punch, fed by the
+// view's own feedback (S7-85).
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import { type PerspectiveCamera, Vector3 } from 'three';
-import { addPunch, createPunch, stepPunch } from '../fx/camera/punch.ts';
-import { addTrauma, createShake, stepShake } from '../fx/camera/shake.ts';
-import { feedback } from '../fx/feedback.ts';
+import { stepPunch } from '../fx/camera/punch.ts';
+import { stepShake } from '../fx/camera/shake.ts';
+import { hitCamera, settleCamera } from '../fx/camera/view-camera.ts';
 import { fxTimeScale } from '../fx/time-scale.ts';
 import { useHudBand } from '../hud/hud-band.ts';
-import { runtime } from '../net/session.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { computeFraming, placeCamera, setUpLens } from './camera-framing.ts';
-import { renderState } from './render-state.ts';
 
 const FOLLOW_SMOOTHING = 6;
 
 export function CameraRig() {
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const size = useThree((s) => s.size);
-  const shake = useMemo(createShake, []);
-  const punch = useMemo(createPunch, []);
-  const focus = useRef(new Vector3(runtime.map.width / 2, 0, runtime.map.height / 2));
+  const view = useGameView();
+  const focus = useRef(new Vector3(view.runtime.map.width / 2, 0, view.runtime.map.height / 2));
   const tmp = useMemo(() => new Vector3(), []);
+
+  // A rig starts calm, whatever the view's camera went through before it mounted.
+  useEffect(() => settleCamera(view.camera), [view]);
 
   useEffect(() => {
     setUpLens(camera);
@@ -31,27 +33,25 @@ export function CameraRig() {
 
   useEffect(
     () =>
-      feedback.connect({
-        addTrauma: (amount) => {
-          addTrauma(shake, amount);
-          addPunch(punch, amount);
-        },
+      view.feedback.connect({
+        addTrauma: (amount) => hitCamera(view.camera, amount),
         screenX: (position) => {
           tmp.set(position.x, 0.5, position.y).project(camera);
           return tmp.x;
         },
       }),
-    [camera, shake, punch, tmp],
+    [view, camera, tmp],
   );
 
   useFrame((_, delta) => {
     const framing = computeFraming({
       width: size.width,
       height: size.height,
-      mapW: runtime.map.width,
-      mapH: runtime.map.height,
-      local: renderState.local,
-      topInsetPx: useHudBand.getState().px,
+      mapW: view.runtime.map.width,
+      mapH: view.runtime.map.height,
+      local: view.render.local,
+      // The intro's stage has no HUD over it, whatever screen the dialog opened on (S7-101).
+      topInsetPx: view.kind === 'intro' ? 0 : useHudBand.getState().px,
     });
     const k = 1 - Math.exp(-FOLLOW_SMOOTHING * delta);
     focus.current.lerp(tmp.set(framing.target.x, 0, framing.target.z), k);
@@ -62,8 +62,8 @@ export function CameraRig() {
       focus.current,
       framing,
       size,
-      stepPunch(punch, fxDelta),
-      stepShake(shake, fxDelta),
+      stepPunch(view.camera.punch, fxDelta),
+      stepShake(view.camera.shake, fxDelta),
     );
   });
 

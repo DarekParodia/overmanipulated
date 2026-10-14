@@ -14,21 +14,30 @@ import {
   parseServerMessage,
   RECONNECT_GRACE_MS,
   type Role,
+  type RoomMode,
   type RoomStateMessage,
+  type RoomVisibility,
   type ServerMessage,
   type TeamIndex,
 } from '@redakcja/shared';
-import { emitCue } from '../fx/feedback.ts';
+import { useEvents } from '../events/event-store.ts';
+import { emitCue, feedback } from '../fx/feedback.ts';
+import { useGuidance } from '../guidance/store.ts';
+import { playerBubbles } from '../pings/bubble-store.ts';
+import { renderState } from '../scene/render-state.ts';
 import { useRetryMemory } from '../stations/minigames/retry-memory.ts';
 import { selfKind, selfTeam, useApp } from '../store/app.ts';
 import { clientId } from '../store/client-id.ts';
 import { useProfile } from '../store/profile.ts';
 import { useProgress } from '../store/progress.ts';
 import { readStored, writeStored } from '../store/safe-storage.ts';
+import { useSettings } from '../store/settings.ts';
 import { playerColor } from '../ui/tokens.ts';
 import { reconnectDelayMs } from './backoff.ts';
-import { handleGameEvent } from './game-events.ts';
+import { type GameplayEvent, playerEvents, routeViewEvent } from './game-events.ts';
 import { useGame } from './game-store.ts';
+import { createGameView } from './game-view.ts';
+import { joinedSpectators } from './room-diff.ts';
 import { createRuntime } from './runtime.ts';
 import { useSpectate } from './spectate-store.ts';
 
@@ -72,6 +81,29 @@ export const runtime = createRuntime(
   (message) => send(message),
   (command) => send({ type: 'command', command }),
 );
+
+/**
+ * The local player's GameView (S7-85): this session's runtime and the module-level stores the
+ * HUD reads too. The scene renders it whenever no other view is provided.
+ */
+export const playerView = createGameView({
+  kind: 'player',
+  team: 0,
+  runtime,
+  subjectId: () => useApp.getState().playerId,
+  store: useGame,
+  events: useEvents,
+  bubbles: playerBubbles,
+  guidance: useGuidance,
+  render: renderState,
+  feedback,
+  bus: playerEvents,
+});
+
+/** Delivers a gameplay event to the player's view (listeners, then its cue). */
+export function handleGameEvent(event: GameplayEvent): void {
+  routeViewEvent(playerView, event);
+}
 
 function send(message: ClientMessage): void {
   if (socket?.readyState === WebSocket.OPEN) {
@@ -179,6 +211,14 @@ function handleMessage(message: ServerMessage): void {
         if (message.players.some((p) => !before.has(p.id))) {
           emitCue('player.join');
         }
+      }
+      // Someone started watching (S7-86): announced in the lobby and, with a toast, in the game.
+      // A spectator away from the lobby hears nothing (the Widownia's audio policy is S7-90's).
+      if (
+        joinedSpectators(previous, message, app.playerId).length > 0 &&
+        (message.phase === 'lobby' || selfKind(message, app.playerId) === 'player')
+      ) {
+        emitCue('room.spectatorJoined');
       }
       return;
     }
@@ -437,6 +477,40 @@ export function setPaused(paused: boolean): void {
   lobby({ kind: 'setPaused', paused });
 }
 
+/** Host, in the lobby (S7-86): Razem or Na punkty; the server deals the newsrooms anew. */
+export function setMode(mode: RoomMode): void {
+  lobby({ kind: 'setMode', mode });
+}
+
+/** Na punkty, lobby or results: move to a newsroom (the host may move another player). */
+export function setTeam(team: TeamIndex, playerId?: string): void {
+  lobby(playerId === undefined ? { kind: 'setTeam', team } : { kind: 'setTeam', team, playerId });
+}
+
+/** Lobby or results: watch from the Widownia, or take a seat again (the host may move others). */
+export function setSpectator(spectator: boolean, playerId?: string): void {
+  lobby(
+    playerId === undefined
+      ? { kind: 'setSpectator', spectator }
+      : { kind: 'setSpectator', spectator, playerId },
+  );
+}
+
+/** Host: whether spectators may join this room (the Widownia; closed by default). */
+export function setSpectatorsAllowed(allowed: boolean): void {
+  lobby({ kind: 'setSpectatorsAllowed', allowed });
+}
+
+/** Host: private (by code) or public (in the room browser, when the server offers one). */
+export function setVisibility(visibility: RoomVisibility): void {
+  lobby({ kind: 'setVisibility', visibility });
+}
+
+/** Host: names the room, or clears the name with null. */
+export function setRoomName(name: string | null): void {
+  lobby({ kind: 'setRoomName', name });
+}
+
 /** Sends a player decision (minigame result, verdict, ping, …); applied on the next tick. */
 export function sendCommand(command: PlayerCommand): void {
   send({ type: 'command', command });
@@ -467,4 +541,12 @@ export const receiveForTest = handleMessage;
 // the server sends one, and send lobby actions from the console or a scripted playtest.
 if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('debug')) {
   (window as unknown as { __session?: unknown }).__session = { receive: handleMessage, lobby };
+  // Fire events and cues from the console or end-to-end tests.
+  (window as unknown as { __fx?: unknown }).__fx = {
+    handleGameEvent,
+    emitCue,
+    useGame,
+    useApp,
+    useSettings,
+  };
 }

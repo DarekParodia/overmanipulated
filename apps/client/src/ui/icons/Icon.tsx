@@ -237,6 +237,12 @@ const icons = {
   ],
   /** Question mark: "not sure". */
   question: [{ d: 'M8.5 9a3.5 3.5 0 1 1 5.2 3c-1.2.7-1.7 1.3-1.7 2.5' }, { d: 'M12 18.5h.01' }],
+  // --- S7-88 room browser ------------------------------------------------------------------
+  /** A plain magnifier on a handle: the room browser's search field (not the Lupa station). */
+  search: [
+    { d: 'M3.5 10a6.5 6.5 0 1 0 13 0a6.5 6.5 0 1 0-13 0Z', fill: 'tint' },
+    { d: 'M15 15l5.5 5.5' },
+  ],
   // --- Endless mode (S4-11) ----------------------------------------------------------------
   /** Endless mode: a lying eight. */
   infinity: [
@@ -323,6 +329,16 @@ const icons = {
   eye: [
     { d: 'M2.5 12c2.5-4.3 5.7-6.5 9.5-6.5s7 2.2 9.5 6.5c-2.5 4.3-5.7 6.5-9.5 6.5S5 16.3 2.5 12Z' },
     { d: 'M9 12a3 3 0 1 0 6 0a3 3 0 1 0-6 0Z', fill: 'tint' },
+  ],
+  // --- S7-86 lobby: teams and member options -------------------------------------------------
+  /** Two arrows passing each other: move to the other newsroom („Przejdź tutaj”). */
+  swap: [{ d: 'M4 8.5h14.5M15 5l3.5 3.5L15 12' }, { d: 'M20 15.5H5.5M9 12l-3.5 3.5L9 19' }],
+  /** Three dots: more options for a member (host manage sheet, S7-87). */
+  more: [
+    {
+      d: 'M4 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0ZM10 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0ZM16 12a2 2 0 1 0 4 0a2 2 0 1 0-4 0Z',
+      fill: 'solid',
+    },
   ],
 } satisfies Record<string, readonly IconPart[]>;
 

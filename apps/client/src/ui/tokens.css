@@ -42,6 +42,13 @@
   --player-2: #2ec4b6;
   --player-3: #e86fc6;
 
+  /* Versus newsrooms (S7-86): a navy shield for Kurier, a white seal for Głos. Fill and ink
+     swap, so the two read apart without a new hue (the meaning colours stay free). */
+  --team-0: var(--outline);
+  --team-0-ink: var(--surface);
+  --team-1: var(--surface);
+  --team-1-ink: var(--outline);
+
   /* Translucent outline for scrims */
   --outline-a20: rgb(30 42 74 / 0.2);
   --outline-a50: rgb(30 42 74 / 0.5);

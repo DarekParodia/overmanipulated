@@ -1,5 +1,6 @@
 // One player in the lobby row: avatar circle in the player's colour, name, role (icon + name)
-// and a big state chip — ✓ Gotowy / Czeka for guests, Gospodarz for the host.
+// and a big state chip — ✓ Gotowy / Czeka for guests, Gospodarz for the host. In the newsroom
+// columns of Na punkty (S7-86) the card is a compact row: avatar, name and role icon, state chip.
 import type { LobbyPlayer } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 import { Icon } from '../../ui/icons/Icon.tsx';
@@ -11,13 +12,17 @@ export type PlayerCardProps = {
   player: LobbyPlayer;
   isMe: boolean;
   isHost: boolean;
+  /** One row instead of a tall card (the two newsroom columns, S7-86). */
+  compact?: boolean;
 };
 
-export function PlayerCard({ player, isMe, isHost }: PlayerCardProps) {
+export function PlayerCard({ player, isMe, isHost, compact = false }: PlayerCardProps) {
   const initial = player.nickname.trim().charAt(0).toLocaleUpperCase('pl-PL');
   return (
     <li
-      className={`${styles.card} ${isMe ? styles.me : ''} ${player.connected ? '' : styles.away}`}
+      className={`${styles.card} ${compact ? styles.compact : ''} ${isMe ? styles.me : ''} ${player.connected ? '' : styles.away}`}
+      data-testid="player-card"
+      data-player={player.nickname}
     >
       <span
         className={styles.avatar}

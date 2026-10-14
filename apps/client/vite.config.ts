@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
@@ -36,6 +36,11 @@ export const APP_DEFINES = {
   ),
   __APP_COPYRIGHT__: JSON.stringify(copyright),
   __APP_AUTHORS__: JSON.stringify(authorsFrom(copyright)),
+  // The intro voice is optional (S7-100): without its sprite the build never asks for it, so a
+  // missing recording costs no request and no 404 in the console (S7-101).
+  __INTRO_VOICE__: JSON.stringify(
+    existsSync(new URL('./public/assets/voice/intro.json', import.meta.url)),
+  ),
 };
 
 export default defineConfig({

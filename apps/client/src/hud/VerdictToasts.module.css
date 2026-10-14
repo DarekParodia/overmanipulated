@@ -93,6 +93,12 @@
   background: var(--red);
 }
 
+/* News that is neither good nor bad (a new spectator, S7-86): blue = information. */
+.info .mark {
+  background: var(--blue);
+  color: var(--text-on-dark);
+}
+
 .title,
 .delta {
   padding-top: 0.12em;

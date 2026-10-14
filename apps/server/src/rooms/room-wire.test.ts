@@ -1,6 +1,7 @@
 // Protocol 7 (S7-77) on the existing registry: every roomState carries a new room's defaults,
-// the lobby actions S7-81..S7-82 serve change nothing yet (setTeam does nothing in co-op;
-// setMode is covered by versus.test.ts since S7-80), and spectator joins are refused until S7-81.
+// setTeam does nothing in co-op, and the spectator join gates. setMode is covered by
+// versus.test.ts (S7-80), spectators by spectators.test.ts (S7-81), and setVisibility,
+// setRoomName, kick and transferHost by lobby-admin.test.ts (S7-82).
 import { beforeEach, describe, expect, it } from 'bun:test';
 import {
   DEFAULT_DIFFICULTY,
@@ -74,18 +75,13 @@ describe('protocol 7 room fields (S7-77)', () => {
     });
   });
 
-  it('leaves the room unchanged on the room actions until they are served', () => {
+  it('leaves a co-op room unchanged on setTeam', () => {
     const host = join('Ala');
     const guest = join('Bartek', { roomCode: codeOf(host) });
     const guestId = guest.last('welcome')?.playerId ?? '';
     const actions: LobbyAction[] = [
       { kind: 'setTeam', team: 1 },
-      { kind: 'setSpectator', spectator: true },
-      { kind: 'setVisibility', visibility: 'public' },
-      { kind: 'setRoomName', name: '3B piątek' },
-      { kind: 'setSpectatorsAllowed', allowed: true },
-      { kind: 'kick', playerId: guestId },
-      { kind: 'transferHost', playerId: guestId },
+      { kind: 'setTeam', team: 1, playerId: guestId },
     ];
     const before = host.received.length;
     for (const action of actions) {
@@ -93,6 +89,7 @@ describe('protocol 7 room fields (S7-77)', () => {
     }
     expect(host.received).toHaveLength(before);
     expect(guest.closed).toBeNull();
+    expect(registry.inspect(codeOf(host))?.players.map((p) => p.team)).toEqual([0, 0]);
     expect(registry.inspect(codeOf(host))).toMatchObject({
       mode: 'coop',
       visibility: 'private',
@@ -112,11 +109,11 @@ describe('protocol 7 room fields (S7-77)', () => {
     );
   });
 
-  it('answers featureDisabled with the spectators flag off, and to a spectator-created room', () => {
-    expect(join('Pani', { as: 'spectator' }).last('error')?.code).toBe('featureDisabled');
-    expect(registry.roomCount).toBe(0);
+  it('answers featureDisabled with the spectators flag off, also when creating a room', () => {
     const host = join('Ala');
     spectatorsFlag = false;
+    expect(join('Pani', { as: 'spectator' }).last('error')?.code).toBe('featureDisabled');
+    expect(registry.roomCount).toBe(1);
     const watcher = join('Widz', { roomCode: codeOf(host), as: 'spectator' });
     expect(watcher.last('error')?.code).toBe('featureDisabled');
   });

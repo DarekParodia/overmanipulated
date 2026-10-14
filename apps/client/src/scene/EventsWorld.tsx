@@ -20,10 +20,8 @@ import {
   Object3D,
   Vector3,
 } from 'three';
-import { emitCue } from '../fx/feedback.ts';
 import { fxTimeScale } from '../fx/time-scale.ts';
-import { useGame } from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
+import { useGameView } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { colors } from '../ui/tokens.ts';
 import { surfaceHeight } from './entities.ts';
@@ -50,6 +48,7 @@ export function EventsWorld() {
 }
 
 function OutageCovers() {
+  const view = useGameView();
   const covers = useRef<(Group | null)[]>([]);
   const sparkClock = useRef(new Map<string, number>());
   const material = useMemo(
@@ -58,10 +57,10 @@ function OutageCovers() {
   );
 
   useFrame((_, delta) => {
-    const { stations } = useGame.getState();
+    const { stations } = view.store.getState();
     const down: { station: (typeof stations)[number]; fixture: Fixture }[] = [];
     for (const station of stations) {
-      const fixture = station.outageMs > 0 ? fixtureById(runtime.map, station.id) : undefined;
+      const fixture = station.outageMs > 0 ? fixtureById(view.runtime.map, station.id) : undefined;
       if (fixture) {
         down.push({ station, fixture });
       }
@@ -93,7 +92,7 @@ function OutageCovers() {
       const clock = (clocks.get(station.id) ?? 0) - step;
       if (clock <= 0) {
         const center = tileCenter(fixture.col, fixture.row);
-        emitCue('event.outage.spark', { position: center, fixtureId: station.id });
+        view.feedback.emit('event.outage.spark', { position: center, fixtureId: station.id });
         clocks.set(station.id, (EVENT_OUTAGE_SPARK_EVERY_S + Math.random() * 0.6) * slow);
       } else {
         clocks.set(station.id, clock);
@@ -123,6 +122,7 @@ function OutageCovers() {
 }
 
 function CorrectionTrails() {
+  const view = useGameView();
   const mesh = useRef<InstancedMesh>(null);
   const scene = useThree((s) => s.scene);
   const geometry = useMemo(() => new CylinderGeometry(DOT_RADIUS, DOT_RADIUS, 0.03, 10), []);
@@ -141,8 +141,8 @@ function CorrectionTrails() {
     if (!instanced) {
       return;
     }
-    const { folders } = useGame.getState();
-    const desks = runtime.map.fixtures.filter((f) => f.kind === 'desk');
+    const { folders } = view.store.getState();
+    const desks = view.runtime.map.fixtures.filter((f) => f.kind === 'desk');
     const march = useSettings.getState().reducedMotion ? 0 : (clock.elapsedTime * MARCH_SPEED) % 1;
     let n = 0;
     let trails = 0;
@@ -152,7 +152,7 @@ function CorrectionTrails() {
       }
       // A folder already on a desk needs no trail.
       if (folder.location.kind === 'fixture') {
-        const at = fixtureById(runtime.map, folder.location.fixtureId);
+        const at = fixtureById(view.runtime.map, folder.location.fixtureId);
         if (at?.kind === 'desk') {
           continue;
         }

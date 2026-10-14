@@ -1,4 +1,4 @@
-# Balance (S6-01, S7-35, S7-46)
+# Balance (S6-01, S7-35, S7-46, S7-66)
 
 Status: **bot simulations only, not confirmed by humans.** Bots are not students. The numbers
 below say how the levels behave for the bot models described here; the real playtest data (S3-09
@@ -9,8 +9,10 @@ The current numbers are the **S7-35 pass** (Stage 7, M2): every campaign level a
 four difficulties, after the station bag (S7-20..S7-22), multi-stamp folders (S7-18), the AI
 scanner as a hint only (S7-03) and the l0–l4 bag content (S7-27..S7-33). The **S7-46 pass** (M3)
 adds the role abilities to the bots and the role presets; its results are in "Abilities (S7-46)"
-below and every cooldown stays at 60 s. The S6-01 pass (authored schedules, Normal only) is
-summarised at the end.
+below and every cooldown stays at 60 s. The **S7-66 pass** (M4) measures l5, l6 and endless with
+the four new stations, retunes the l6 and l2 deadlines and re-applies the duplicate-station rule;
+see "M4 pass (S7-66)" below, which supersedes the l2, l5, l6 and endless rows above it. The
+S6-01 pass (authored schedules, Normal only) is summarised at the end.
 
 ## Method
 
@@ -372,19 +374,140 @@ easy,normal,hard,expert --crew-sizes 3 --seeds 24 --md` (1152 runs, no watchdog 
 failing check, the l6 win-rate ladder, is the authored l6 and S7-63's). S7-66 re-runs the whole
 matrix for M4.
 
+## M4 pass (S7-66)
+
+Measured on the merged M4 state: l5 (S7-60) and l6 (S7-63) on the bag in their 24×14 rooms,
+endless with all ten stations (S7-64), bots pressing abilities (`--roles mixed`). Two matrices:
+l0–l6 and endless on all four difficulties with crews of three and four (12 seeds per campaign
+level, 6 per endless crew, 2160 runs, about 7 min on 4 workers), and l2, l5, l6 and endless with
+crews of three at **24 seeds** (8 per endless crew, 1280 runs) for the table below. Tuning sweeps
+ran on l6 (24 seeds, crews of three, 6 variants) and l2 (24 seeds, crews of three and four,
+4 variants). No bot watchdog fired in any run.
+
+### Findings before the changes
+
+- **l6 Expert:** the average crew of three won 38 % of 24 runs (42 % at 12 seeds; target ≥ 50 %;
+  the authored schedule had 63 %). Expert deals 18 folders with 41 s deadlines (55 × 0.75) on the
+  24×14 map, so 45 % of folders expired. Normal was fine (50 % of max).
+- **l2 three stars:** the average crew reached 3 stars on Normal in 58 % (×3) and 75 % (×4) of
+  12 runs with abilities (S7-46 had 40 / 53 % at 30 seeds); the intent is "3 stars mostly experts"
+  (the l1 check allows the average crew at most 30 %). The expert crew also scored 97 % of max
+  there, the edge of "not trivially maxed".
+- l5 needed nothing: every check passed (Normal 51 % of max, Expert average ×3 wins 100 %).
+
+### Changes (data only)
+
+1. **l6 Atak bag deadlines** 55 / 55 / 40 → **58 / 58 / 43 s** (normal / important / urgent);
+   `gapS` 27 and `lastSpawnS` 382 stay (the last slot plus a three-proof folder still ends by
+   382 + 58 + 40 = 480 s). Sweep, average crew of three, 24 seeds, win % / score share on Normal
+   and Expert:
+
+   | l6 bag | Normal | Expert |
+   | --- | --- | --- |
+   | 55 / 55 / 40, `gapS` 27 (S7-63) | 100 / 50 | 38 / 20 |
+   | `gapS` 29 | 100 / 48 | 42 / 20 |
+   | 55 / 60 / 45 | 100 / 53 | 38 / 20 |
+   | **58 / 58 / 43 (kept)** | 100 / 52 | 67 / 28 |
+   | 60 / 60 / 45 | 100 / 55 | 67 / 28 |
+   | 60 / 60 / 45, `gapS` 28 | 100 / 56 | 67 / 28 |
+
+   Fewer folders (a wider gap) do not help: Expert's average crew loses on expired urgent and
+   important folders, so only the deadline moves it. 58 s is the smallest step that clears the
+   target; 60 s would make l6 (55 %) easier than l5 (51 %) on Normal.
+2. **l2 Wybory bag deadlines** 55 / 60 / 45 → **50 / 55 / 40 s**, the l1 values; `gapS` and the
+   star shares stay. Sweep, average crews, 24 seeds, 3-star share on Normal (×3 / ×4):
+   `starShares` three 0.85: 21 / 42 %; `gapS` 22: 46 / 46 %; **deadlines 50 / 55 / 40: 4 / 33 %**;
+   both: 0 / 17 %. The deadline is the lever that keeps 2 stars in reach (average ×3 2+ stars
+   91 %) while the speed bonus stops paying for 3 stars; the expert crew drops from 97 % to 94 %
+   of max. Rookies on Easy still win 88 %.
+3. **No duplicate station** (user decision 2, re-applied with ten stations): the busiest station
+   in l5, l6 or endless is 31 % of the level (endless Kartoteka, Normal and Expert ×4), far below
+   `DOMINANT_BUSY_SHARE` 50 %. The spreads of 2.4–3.7 come from the hint-only AI scanner (5–12 %);
+   without it the l6 spread on Normal is 1.7–2.0 (Lupa 9–10 %, archive and registry 15–18 %) and
+   the endless one 1.5–1.7. Anywhere in the matrix the busiest is 46 % (l1 Kartoteka on Expert
+   ×4, spread 1.0 over its two stations), not dominant either.
+4. **Kept:** l5's bag, `DIFFICULTY`, `STAR_SHARES`, `BAG_FLEX_CHANCE`, every cooldown (60 s) and
+   the endless curve.
+
+### Results (S7-66, crews of three, 24 seeds)
+
+Per cell: win % / 2+ stars % / 3 stars % / score as % of the run's best. Thresholds are the mean
+over the dealt runs. Folders by difficulty (easy / normal / hard / expert): l2 12 / 15 / 16 / 18,
+l5 13 / 15 / 17 / 19 with both boss calls, l6 12 / 15 / 16 / 18 bag slots plus the event folders
+(bot raids of 4 and 5, two corrections, one boss call).
+
+| Level | Difficulty | Stars at | Rookie ×3 | Average ×3 | Expert ×3 | Mixed ×3 |
+| --- | --- | --- | --- | --- | --- | --- |
+| l2 | easy | 165 / 240 of 300 | 88 / 0 / 0 / 25 | 100 / 100 / 71 / 83 | 100 / 100 / 100 / 98 | 100 / 79 / 8 / 64 |
+| l2 | normal | 206 / 303 of 378 | 67 / 0 / 0 / 4 | 100 / 91 / 4 / 68 | 100 / 100 / 100 / 94 | 100 / 17 / 0 / 43 |
+| l2 | hard | 222 / 324 of 404 | 17 / 0 / 0 / -10 | 100 / 67 / 0 / 57 | 100 / 100 / 79 / 86 | 96 / 0 / 0 / 32 |
+| l2 | expert | 250 / 360 of 450 | 0 / 0 / 0 / -21 | 96 / 13 / 0 / 41 | 100 / 100 / 67 / 83 | 96 / 0 / 0 / 18 |
+| l5 | easy | 190 / 276 of 345 | 96 / 0 / 0 / 16 | 100 / 88 / 21 / 69 | 100 / 100 / 92 / 91 | 100 / 29 / 0 / 51 |
+| l5 | normal | 220 / 320 of 400 | 46 / 0 / 0 / -1 | 100 / 50 / 0 / 51 | 100 / 100 / 92 / 88 | 100 / 0 / 0 / 38 |
+| l5 | hard | 248 / 361 of 452 | 8 / 0 / 0 / -12 | 100 / 29 / 0 / 41 | 100 / 100 / 62 / 82 | 100 / 8 / 0 / 35 |
+| l5 | expert | 280 / 406 of 508 | 0 / 0 / 0 / -19 | 96 / 0 / 0 / 27 | 100 / 100 / 58 / 79 | 100 / 0 / 0 / 25 |
+| l6 | easy | 203 / 296 of 370 | 100 / 0 / 0 / 19 | 100 / 84 / 42 / 71 | 100 / 100 / 100 / 94 | 100 / 58 / 4 / 58 |
+| l6 | normal | 248 / 360 of 450 | 38 / 0 / 0 / 0 | 100 / 33 / 4 / 52 | 100 / 100 / 92 / 91 | 100 / 33 / 0 / 50 |
+| l6 | hard | 261 / 381 of 476 | 0 / 0 / 0 / -12 | 96 / 17 / 0 / 39 | 100 / 100 / 96 / 87 | 79 / 0 / 0 / 32 |
+| l6 | expert | 291 / 422 of 528 | 0 / 0 / 0 / -13 | 67 / 0 / 0 / 28 | 100 / 100 / 54 / 79 | 42 / 0 / 0 / 23 |
+
+Average crew of four on Normal (12 seeds): l2 100 / 91 / 33 / 72, l5 100 / 25 / 0 / 51, l6
+100 / 33 / 0 / 54.
+
+Endless with ten stations, median survival in minutes (p10–p90), 8 seeds per crew:
+
+| Difficulty | Rookie ×3 | Average ×3 | Expert ×3 | Mixed ×3 |
+| --- | --- | --- | --- | --- |
+| easy | 9.2 (8.1–9.7) | 16.1 (15.2–17.1) | 20.0, 100 % capped | 20.0 (17.2–20.0), 63 % capped |
+| normal | 5.5 (4.6–6.1) | 8.5 (6.1–9.0) | 20.0 (15.3–20.0), 50 % capped | 10.0 (8.5–11.0) |
+| hard | 4.8 (3.9–4.8) | 7.5 (5.5–7.7) | 13.0 (11.8–13.9) | 7.7 (6.9–8.9) |
+| expert | 3.5 (2.8–3.6) | 5.1 (3.9–5.6) | 9.7 (8.6–10.0) | 5.5 (4.7–5.6) |
+
+The average crew of three still lasts 8.5 min on Normal (the S7-64 quick check said the same);
+crews of four 10.5 min (6 seeds). Experts now reach the 20 min cap on Normal in half the runs (S7-35:
+13 %, before abilities): with ten stations and Ekspertyza taking effect 3.8–4.8 times a run the load per
+station falls (busiest 31 %). Endless is a score chase for experts, so the cap is left alone.
+
+Station load on Normal, average crew (share of the level each station is busy; the AI scanner is
+hint-only):
+
+| Room | Crew | Busy shares | Spread |
+| --- | --- | --- | --- |
+| l5 (7 stations) | ×3 | Lupa 15, archive 14, registry 18, phone 17, AI 7, Stenogram 15, Metadane 9 | 2.4 |
+| l6 (8 stations) | ×3 | Lupa 10, archive 17, registry 15, phone 14, AI 5, data 14, Mapa 12, Inne media 14 | 3.7 |
+| l6 (8 stations) | ×4 | Lupa 9, archive 18, registry 18, phone 12, AI 5, data 14, Mapa 11, Inne media 15 | 3.5 |
+| endless (10) | ×3 | Lupa 17, archive 20, registry 23, phone 16, AI 8, data 16, Mapa 16, Stenogram 24, Inne media 19, Metadane 17 | 2.9 |
+| endless (10) | ×4 | Lupa 23, archive 27, registry 31, phone 27, AI 12, data 18, Mapa 27, Stenogram 26, Inne media 18, Metadane 18 | 2.6 |
+
+### Intent checks (S7-66 matrix)
+
+All 36 checks pass on the 12-seed matrix of every level and difficulty, and every check of the
+24-seed run: the ladder on l0–l6 and endless, the four per-difficulty targets (Expert: average ×3
+wins l6 58 % at 12 seeds, 67 % at 24), L1 3 stars 0 / 17 / 100 % for rookies / average / experts,
+difficulty rises 80 > 68 > 61 > 58 > 51 > 51 % (l1–l6; l5 and l6 equal within noise), no level
+trivially maxed (experts 88–96 % of max), no dominant station (busiest 35 %, the l1 Kartoteka on
+Normal), endless 8.5 min.
+
+Re-run: `bun run balance --levels l0-greybox,l1-burza,l2-wybory,l3-afera,l4-zdrowie,l5-deepfake,l6-atak,endless
+--difficulty easy,normal,hard,expert --crew-sizes 3,4 --seeds 12 --endless-seeds 6 --md` and
+`bun run balance --levels l2-wybory,l5-deepfake,l6-atak,endless --difficulty easy,normal,hard,expert
+--crew-sizes 3 --seeds 24 --endless-seeds 8 --md`.
+
 ## Open points for the playtests
 
 - Does a first-time crew really win level 1 (the rookie model says 92 %), and the tutorial (88 %)?
   Compare with `results-log.md`.
 - Is Easy too easy? Average bots reach 3 stars on Easy in 25–71 % of runs and last 16.6 min in
   endless (Normal 8.5). It is meant for a first lesson; watch whether classes stay on it.
-- Expert is meant to be harsh: rookies never win it, experts get 3 stars in 4–83 % (l5 4 %).
+- Expert is meant to be harsh: rookies never win it, experts get 3 stars in 42–83 % (S7-66).
+- Levels 5 and 6 in the 24×14 room: do real crews lose more time walking than the bots (who never
+  bump into each other)? The l6 Expert win rate of the average bots (67 %) is close to its floor.
 - Crew size: see the limits above; bigger crews may need more folders.
 - Time to first verdict: bots need 22–27 s on level 1 (rookies 53 s). If humans need much longer,
   the 4 s first spawn can feel like a pile-up.
 - Abilities: do students press them at all, and at the right moment? The bots arm Ekspertyza and
   Druga szansa as soon as they can. Watch Podaj teczkę (not modelled) and whether the average crew
-  really gets 3 stars on level 2 as often as the bots (40–53 %).
+  gets 3 stars on level 2 (bots after S7-66: 4 % ×3, 33 % ×4).
 - Replace the model numbers in `tools/balance/models.ts` with measured values (minigame durations,
   failure rates, reading time) and re-run.
 

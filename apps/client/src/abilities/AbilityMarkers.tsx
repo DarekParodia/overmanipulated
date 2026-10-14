@@ -7,17 +7,14 @@
 //   would reach now.
 // Anchors follow the rendered player positions every frame. The floor ring's slow pulse is off
 // under reduced motion and no-flash.
-import { Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { abilityOf, type Role } from '@redakcja/shared';
 import { useMemo, useRef } from 'react';
 import type { Group } from 'three';
 import { useLevelClock } from '../hud/use-level-clock.ts';
-import { useGame } from '../net/game-store.ts';
-import { runtime } from '../net/session.ts';
+import { useGameView, useViewGame, useViewRoster } from '../net/view-context.tsx';
 import { CHARACTER_HEIGHT } from '../scene/character/rig.ts';
-import { renderState } from '../scene/render-state.ts';
-import { useApp } from '../store/app.ts';
+import { ViewHtml } from '../scene/ViewHtml.tsx';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { ProgressRing } from '../ui/ProgressRing.tsx';
@@ -35,10 +32,11 @@ const BODY_MARKER_HEIGHT = CHARACTER_HEIGHT * 0.35;
 const FLOOR_RING_HEIGHT = 0.02;
 
 export function AbilityMarkers() {
-  const crew = useGame((s) => s.crew);
-  const players = useApp((s) => s.room?.players);
-  const { elapsedMs } = useLevelClock();
-  const local = useLocalAbility(runtime);
+  const view = useGameView();
+  const crew = useViewGame((s) => s.crew);
+  const players = useViewRoster();
+  const { elapsedMs } = useLevelClock(view.store);
+  const local = useLocalAbility(view.runtime, view.store);
   const roles = useMemo(
     () => new Map<string, Role | null>((players ?? []).map((p) => [p.id, p.role])),
     [players],
@@ -66,11 +64,12 @@ export function AbilityMarkers() {
 }
 
 function MarkerAnchor({ marker, nickname }: { marker: AbilityMarker; nickname: string }) {
+  const { render } = useGameView();
   const anchor = useRef<Group>(null);
-  const start = renderState.players.get(marker.playerId);
+  const start = render.players.get(marker.playerId);
 
   useFrame(() => {
-    const player = renderState.players.get(marker.playerId);
+    const player = render.players.get(marker.playerId);
     const group = anchor.current;
     if (group && player) {
       group.position.set(player.x, 0, player.y);
@@ -84,14 +83,14 @@ function MarkerAnchor({ marker, nickname }: { marker: AbilityMarker; nickname: s
       name={`ability-marker:${marker.kind}:${marker.playerId}`}
       position={[start?.x ?? 0, 0, start?.y ?? 0]}
     >
-      <Html
+      <ViewHtml
         position={[0, floor ? FLOOR_RING_HEIGHT : BODY_MARKER_HEIGHT, 0]}
         center
         zIndexRange={[10, 1]}
         className={styles.wrap}
       >
         <MarkerBody marker={marker} nickname={nickname} />
-      </Html>
+      </ViewHtml>
     </group>
   );
 }

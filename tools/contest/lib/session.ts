@@ -59,6 +59,31 @@ export async function openPlayer(
   return { page, context, nickname, touch: options.hasTouch === true };
 }
 
+/** Viewport of a player who only has to be in the room (never photographed or recorded). */
+const EXTRA_VIEWPORT = { width: 480, height: 270 };
+
+/**
+ * Opens a player who only fills a seat: a small canvas on the cheapest preset. Pass a browser
+ * other than the photographed player's. Chromium runs every page's WebGL in one GPU process, so
+ * under software GL the scenes of all pages in a browser compile and draw on one queue: four
+ * full-size players starting a level at once froze each page's main thread for 15–40 s (the
+ * 'HUD within 30 s' timeout of Room A), while a page alone in its browser waits about 5 s.
+ */
+export async function openExtraPlayer(
+  browser: Browser,
+  baseUrl: string,
+  nickname: string,
+  profile: Profile = {},
+): Promise<Player> {
+  return openPlayer(
+    browser,
+    baseUrl,
+    nickname,
+    { viewport: EXTRA_VIEWPORT },
+    { ...profile, settings: { ...profile.settings, quality: 'low' } },
+  );
+}
+
 export async function createRoom(host: Player): Promise<string> {
   await host.page.getByRole('button', { name: 'Otwórz pokój' }).click();
   const code = host.page.getByTestId('room-code');
@@ -113,13 +138,16 @@ export async function startAndBrief(host: Player, others: Player[]): Promise<voi
   }
 }
 
+/** How long a page may take from „Gotowy!” to its HUD (scene compile under software GL). */
+const HUD_TIMEOUT_MS = 60_000;
+
 export async function confirmBriefing(players: Player[]): Promise<void> {
   for (const player of players) {
     await player.page.getByRole('button', { name: 'Gotowy!' }).click();
   }
-  for (const player of players) {
-    await player.page.getByTestId('hud').waitFor({ timeout: 30_000 });
-  }
+  await Promise.all(
+    players.map((player) => player.page.getByTestId('hud').waitFor({ timeout: HUD_TIMEOUT_MS })),
+  );
 }
 
 // --- Game state through the debug hook ----------------------------------------------------

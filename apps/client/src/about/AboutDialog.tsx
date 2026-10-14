@@ -12,7 +12,7 @@ import { Segmented } from '../endless/Leaderboard.tsx';
 import { emitCue } from '../fx/feedback.ts';
 import { handleMenuIntent } from '../input/menu-nav.ts';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
-import { loadVoiceSprite, type VoiceSprite } from '../intro/voice-sprite.ts';
+import { loadShippedVoiceSprite, type VoiceSprite } from '../intro/voice-sprite.ts';
 import { PRIVACY_PATH } from '../screens/menu/MenuFooter.tsx';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
@@ -254,7 +254,7 @@ function CreditsTab() {
 
   useEffect(() => {
     let live = true;
-    void loadVoiceSprite().then((sprite) => {
+    void loadShippedVoiceSprite().then((sprite) => {
       if (live) {
         setVoice(sprite);
       }

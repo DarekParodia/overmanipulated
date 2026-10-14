@@ -95,6 +95,8 @@ export function carryAnchor(left: Vec3, right: Vec3, out: Vec3): Vec3 {
   return out;
 }
 
-/** Carried-folder anchors published by the avatars for the folder layer (world tiles / height). */
+/**
+ * Carried-folder anchor published by an avatar for the folder layer (world tiles / height), per
+ * player in its GameView's render state (`hands`, scene/render-state.ts).
+ */
 export type HandAnchor = { x: number; y: number; height: number };
-export const handAnchors = new Map<string, HandAnchor>();

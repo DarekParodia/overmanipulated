@@ -51,7 +51,11 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
   - `GET /health`: liveness, plus a DB check.
   - `GET /ws`: WebSocket upgrade for the game protocol.
   - `/api/*`: REST endpoints (leaderboard, content preview for the supervisor, room stats, and
-    `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`).
+    `GET /api/config`: the public config for the request's host, see `apps/server/src/public-config.ts`;
+    `GET /api/rooms`: the room browser's list of public rooms, 404 while the `roomBrowser` flag is
+    off; `registry.listRooms` filters a summary list it rebuilds at most every `ROOM_LIST_CACHE_MS`,
+    see `apps/server/src/rooms/room-list.ts`, and the route limits each address to
+    `ROOM_LIST_PER_MINUTE_PER_IP`).
     An unknown `/api/*` path is a JSON 404, never HTML.
   - Mounted last (`routes/shell.ts`): `/`, SPA paths and `/index.html` render the **HTML shell**
     from the built client `index.html` (`shell/`): a per-request CSP nonce replaces Vite's
@@ -84,6 +88,22 @@ Dependencies point only downwards. `shared` never imports from apps or from `con
 - Fixed **20 Hz** tick loop per active room: drain queued inputs per team → build one `SimContext`
   → `step` every team in lockstep → publish each team's events and snapshot (`publishTeam`
   encodes once for the team and spectator topics). Empty rooms are destroyed.
+- **Spectators** (Widownia, Stage 7): a room member of kind `spectator` joins in any phase while
+  the `spectators` flag is on and the host opened the Widownia (`spectatorsAllowed`, off unless a
+  spectator created the room), up to 8. Spectators never hold a player gate (ready, briefing,
+  votes, pause) and their input is dropped. The spectator topic gets every 2nd snapshot of each
+  team (10 Hz), `matchStats` every 20 ticks and every team event as a `spectatorEvent`, published
+  only while a spectator is connected; a joining spectator is synced with the current snapshots,
+  stats and (at the results) level ends. In versus the server-side embargo
+  (`spectator-embargo.ts`) masks a verdict or expiry until both newsrooms closed its `spawnKey`
+  or the level ended, and `matchStats` counts only what the Widownia was shown.
+- **Lobby administration** (Stage 7, host only, any phase): `setVisibility` (rooms are private;
+  public needs the `roomBrowser` flag), `setRoomName` (the shared name filter answers
+  `invalidName`), `transferHost` (to a connected member, never self) and `kick` (never self):
+  the target gets `error kicked`, leaves for good (its token is dropped) and its socket closes
+  with `CLOSE_KICKED` (4002). The room remembers the target's browser `clientId` for
+  `KICK_REJOIN_COOLDOWN_MS` (10 min, `limits.ts`) and answers its joins with `kickCooldown`;
+  there is no IP ban, because a class shares one address.
 - **Run lifecycle** (Stage 7): the lobby holds the selected level as `getLevel` serves it and the
   room's difficulty (host only, lobby only). Every briefing, replays included, deals the run with
   `prepareRun` from a fresh **run seed** (never sent to clients) and the room's difficulty;
@@ -195,6 +215,28 @@ apps/server/drizzle/   generated SQL migrations (committed)
   [`platforms.md`](platforms.md).
 - Particles, tweens, camera shake and audio live in `apps/client/src/fx/` and are triggered only
   through feedback cues; they never touch the simulation. See [`game-feel.md`](game-feel.md).
+- **GameView** (`net/game-view.ts`, S7-85): everything one rendered newsroom reads and writes —
+  runtime (map, players), game store, event store, ping bubbles, guidance, render state, particle
+  pool, camera shake, feedback and its gameplay-event listeners. Scene files (`scene/`, the
+  ability markers) get it with `useGameView()` / `useViewGame()` (`net/view-context.tsx`) and
+  never import `runtime`, `renderState`, `feedback`/`emitCue` or a module-level store from
+  `net/`, `events/`, `pings/` or `guidance/` (checked in `net/game-view.test.ts`). Without a
+  provider the view is the local player's `playerView` (`net/session.ts`), built from those
+  module-level stores, so the HUD and play need no setup. Separate React roots do not inherit
+  context: `useOverlay` and `ViewHtml` (drei `Html`) re-provide the view, and every `<Canvas>`
+  renders its own `GameViewProvider`. `GameCanvas({ view, primary, viewKey })`: only the primary
+  canvas detects the preset, adapts quality and installs the debug hooks; each canvas reports its
+  renderer counters under `perfStats.views[viewKey]` and the overlay shows the sum. A spectator
+  view (`createWatchView`; the spectate store holds one per team) samples
+  `SPECTATOR_INTERPOLATION_DELAY_MS` (250 ms) behind and has guidance off; a cue with `silent`
+  keeps everything but its sound and loops. The intro's view (`kind: 'intro'`,
+  `intro/intro-view.ts`, S7-101) runs the shared `step` locally on a mini layout
+  (`intro/intro-sim.ts`) at the scene time its player reads, with its own `roster` (the scripted
+  reporter) and `levelId` (the training theme); scene files read players with
+  `useViewRoster()` / `viewRoster(view)` and the theme with `viewLevelId(view)`, which fall back
+  to the room. Nothing connects audio, haptics or captions to a view's feedback but the player's,
+  so the intro's cues are particles and animation only. „In-engine” means exactly this: rendered
+  live by the game's own sim and renderer, never a video file.
 - Models are glTF (`.glb`), optimised with gltf-transform, stored in `apps/client/public/assets/`.
   Base assets from Kenney (CC0) or self-made; record the source and licence of every asset in
   `apps/client/public/assets/CREDITS.md`.
