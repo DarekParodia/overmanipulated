@@ -10,6 +10,7 @@ import {
 import {
   closePlayers,
   DESKTOP,
+  hideScene,
   joinRoom,
   openPlayer,
   PHONE,
@@ -79,7 +80,7 @@ test('endless starts with all ten stations in two tabs', async ({ browser }, tes
   await host.page.getByRole('button', { name: 'Do składu!' }).click();
   // Software WebGL on a loaded machine starves two tabs; the checks below need no scene.
   for (const player of [host, guest]) {
-    await player.page.addStyleTag({ content: 'canvas { display: none !important; }' });
+    await hideScene(player.page);
   }
 
   // Reading order: the back wall I A R Q E, then the front row P S L G X.

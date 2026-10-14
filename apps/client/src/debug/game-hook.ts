@@ -7,7 +7,12 @@
 // - `setState()` / `getState()` reach the game store directly; `emit()` replays a gameplay event
 //   as if it came from the server; `send()` sends a real command to the server;
 //   `map()` / `localPlayerId()` describe this client.
+// - `pauseScene()` stops drawing the 3D scene for good (the frame loop, input and snapshots run
+//   on). For end-to-end tests of 2D overlays on software WebGL: a hidden canvas that still draws
+//   gives the GPU process no back-pressure, so it queues frames it cannot draw and every later
+//   browser context waits for that backlog (tens of seconds under load).
 import type { Desk, Folder, NextFolder, PlayerCommand, Station, TileMap } from '@redakcja/shared';
+import type { WebGLRenderer } from 'three';
 import type { GameplayEvent } from '../net/game-events.ts';
 import { type GameStore, useGame } from '../net/game-store.ts';
 import { handleGameEvent, runtime, sendCommand } from '../net/session.ts';
@@ -35,9 +40,29 @@ export type GameHook = {
   emit(event: GameplayEvent): void;
   /** Sends a player command to the server, e.g. a minigame result in scripted playtests. */
   send(command: PlayerCommand): void;
+  /** Stops drawing the 3D scene until the page reloads; everything else runs on. */
+  pauseScene(): void;
 };
 
 let installed = false;
+/** The primary canvas's renderer (`registerSceneRenderer`), for `pauseScene()`. */
+let sceneRenderer: WebGLRenderer | null = null;
+let scenePaused = false;
+
+function stopDrawing(): void {
+  if (scenePaused && sceneRenderer) {
+    sceneRenderer.render = () => {};
+  }
+}
+
+/**
+ * Called by the primary game canvas under ?debug, so the hook can pause its drawing (also when
+ * `pauseScene()` came first: the hook installs with the station layer, maybe before the canvas).
+ */
+export function registerSceneRenderer(renderer: WebGLRenderer): void {
+  sceneRenderer = renderer;
+  stopDrawing();
+}
 
 export function installGameHook(): void {
   if (installed || typeof window === 'undefined') {
@@ -90,6 +115,10 @@ export function installGameHook(): void {
     },
     emit: handleGameEvent,
     send: sendCommand,
+    pauseScene() {
+      scenePaused = true;
+      stopDrawing();
+    },
   };
   (window as unknown as { __game?: GameHook }).__game = hook;
 }

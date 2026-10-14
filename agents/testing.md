@@ -53,3 +53,23 @@ new phone-layout checks there rather than overriding the viewport per test.
 
 The e2e tests read avatar positions from the scene exposed as `window.__scene` when the page is
 opened with `?debug`; avatar groups are named `player:<nickname>`.
+
+Software WebGL (every sandbox and CI runner) draws the newsroom at a few frames per second, and
+much slower under load. Rules that keep the specs green at load 30+:
+
+- A spec that checks 2D overlays or the HUD and needs no scene calls `hideScene(page)`
+  (`e2e/helpers.ts`): it stops drawing through the `?debug` hook (`__game.pauseScene()`) and hides
+  the canvas. Never hide the canvas with CSS alone: a hidden canvas that still draws gives the GPU
+  process no back-pressure, it queues frames it cannot draw, and the next test's
+  `browser.newContext()` waits for that backlog (up to a minute).
+- Wait for readiness, not for a fixed time: the HUD after „Do składu!” with
+  `GAME_READY_TIMEOUT_MS` (the game gate's 20 s give-up plus slack), a move with
+  `moveRightUntil(player, () => expect…)` (the client samples input once per rendered frame, so a
+  short fixed hold can move nobody), a minigame clock relative to the page time measured around
+  the step (`performance.now()`), never against a fixed number of seconds.
+- Size a test's timeout to its flow: `test.slow()` for two or more tabs that render the scene.
+
+`PW_CHROMIUM_PATH` must point at the Chromium executable (the sandbox's
+`/opt/pw-browsers/chromium` is a link to `chromium-1194/chrome-linux/chrome`); without it
+Playwright uses its own download and fails with "Executable doesn't exist" until
+`bunx playwright install chromium` ran.

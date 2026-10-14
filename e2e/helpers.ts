@@ -12,6 +12,13 @@ export const PHONE: BrowserContextOptions = { ...devices['Pixel 7 landscape'] };
 
 export type Player = { page: Page; nickname: string; touch: boolean };
 
+/**
+ * How long a tab may take from „Do składu!” to the HUD: the game gate starts the level after
+ * at most 20 s whatever is still loading (`GIVE_UP_MS`), plus 10 s for the lazy game chunk and
+ * the first frames of software WebGL on a loaded machine.
+ */
+export const GAME_READY_TIMEOUT_MS = 30_000;
+
 const openContexts: BrowserContext[] = [];
 
 /** Hosts of Google's ad, consent and ad-measurement requests. */
@@ -175,14 +182,15 @@ export async function avatarPositions(
   });
 }
 
-/** Moves right for `ms` with the keyboard, or by dragging the touch joystick on touch devices. */
-export async function moveRight(player: Player, ms: number): Promise<void> {
+/**
+ * Starts moving right with the keyboard, or by dragging the touch joystick on touch devices, and
+ * returns the function that lets go.
+ */
+async function pressRight(player: Player): Promise<() => Promise<void>> {
   const { page } = player;
   if (!player.touch) {
     await page.keyboard.down('KeyD');
-    await page.waitForTimeout(ms);
-    await page.keyboard.up('KeyD');
-    return;
+    return () => page.keyboard.up('KeyD');
   }
   const zone = await page.getByTestId('touch-joystick').boundingBox();
   if (!zone) {
@@ -201,6 +209,47 @@ export async function moveRight(player: Player, ms: number): Promise<void> {
       touchPoints: [{ x: x + i * 10, y, id: 1 }],
     });
   }
-  await page.waitForTimeout(ms);
-  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  return async () => {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  };
+}
+
+/** Moves right for `ms` with the keyboard, or by dragging the touch joystick on touch devices. */
+export async function moveRight(player: Player, ms: number): Promise<void> {
+  const release = await pressRight(player);
+  await player.page.waitForTimeout(ms);
+  await release();
+}
+
+/**
+ * Holds „right” until `arrived` resolves (an `expect` that the move was seen), then lets go.
+ * The client samples input once per rendered frame, and software WebGL under load renders a
+ * frame every second or so: a fixed short hold can end between two frames and move nobody.
+ */
+export async function moveRightUntil(
+  player: Player,
+  arrived: () => Promise<unknown>,
+): Promise<void> {
+  const release = await pressRight(player);
+  try {
+    await arrived();
+  } finally {
+    await release();
+  }
+}
+
+/**
+ * Stops drawing the 3D scene and hides the canvas, for checks of the 2D overlays and HUD only:
+ * software WebGL draws the newsroom at a few frames per second and leaves the overlay clocks
+ * too little real time. Hiding the canvas alone is not enough: a hidden canvas that still draws
+ * gives the GPU process no back-pressure, so it queues frames it cannot draw, and the next
+ * test's `browser.newContext()` waits for that backlog (up to a minute under load).
+ */
+export async function hideScene(page: Page): Promise<void> {
+  // The ?debug hook appears with the game screen (lazy chunk); a call from the lobby waits.
+  await page.waitForFunction(() => '__game' in window);
+  await page.evaluate(() =>
+    (window as unknown as { __game: { pauseScene(): void } }).__game.pauseScene(),
+  );
+  await page.addStyleTag({ content: 'canvas { display: none !important; }' });
 }

@@ -8,7 +8,7 @@ import { Canvas } from '@react-three/fiber';
 import { useEffect } from 'react';
 import { NoToneMapping, SRGBColorSpace } from 'three';
 import { AbilityMarkers } from '../abilities/AbilityMarkers.tsx';
-import { installGameHook } from '../debug/game-hook.ts';
+import { installGameHook, registerSceneRenderer } from '../debug/game-hook.ts';
 import { perfStats } from '../debug/perf-stats.ts';
 import type { GameView } from '../net/game-view.ts';
 import { GameViewProvider, useGameView } from '../net/view-context.tsx';
@@ -127,6 +127,7 @@ export function GameCanvas({ view: given, primary = true, viewKey = 'main' }: Ga
           (window as unknown as { __scene?: unknown; __quality?: unknown }).__scene = scene;
           (window as unknown as { __quality?: unknown }).__quality = useQuality;
           installGameHook();
+          registerSceneRenderer(gl);
         }
         const name = gpuName(gl.getContext());
         perfStats.gpu = name;
