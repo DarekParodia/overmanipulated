@@ -190,19 +190,20 @@ export function locationLabel(
   }
 }
 
-export type ToastTone = 'good' | 'caution' | 'bad';
+/** `info` (blue) is news that is neither good nor bad: a new spectator (S7-86). */
+export type ToastTone = 'good' | 'caution' | 'bad' | 'info';
 
 export type ToastSlip = {
   id: string;
   title: string;
-  /** Story headline, read out by screen readers only. */
+  /** Story headline (a spectator's nickname), read out by screen readers only. */
   headline: string;
   /** Score delta, or null when the event carries none worth showing. */
   scoreDelta: number | null;
   credibilityDelta: number;
   tone: ToastTone;
-  /** Outcome shape (tick, cross, hourglass) so it never depends on colour alone. */
-  mark: 'publish' | 'reject' | 'expired';
+  /** Outcome shape (tick, cross, hourglass; an eye for a spectator) so it never depends on colour alone. */
+  mark: 'publish' | 'reject' | 'expired' | 'eye';
 };
 
 const TONE: Record<FolderOutcome, ToastTone> = {
@@ -265,6 +266,22 @@ export function expiredToast(
     credibilityDelta: penalized ? scalePenalty(CREDIBILITY_DELTAS.expired, penaltyFactor) : 0,
     tone: 'bad',
     mark: 'expired',
+  };
+}
+
+/** Someone started watching from the Widownia (S7-86): „Widz dołączył”, no points. */
+export function spectatorToast(
+  spectator: { id: string; nickname: string },
+  serial: number,
+): ToastSlip {
+  return {
+    id: `spectator:${spectator.id}:${serial}`,
+    title: pl.lobbyRoom.spectatorJoined,
+    headline: spectator.nickname,
+    scoreDelta: null,
+    credibilityDelta: 0,
+    tone: 'info',
+    mark: 'eye',
   };
 }
 

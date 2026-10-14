@@ -126,6 +126,13 @@
   grid-column: 1 / -1;
 }
 
+/* Round over: every result in one row under the banner, so nothing scrolls at 1280×720. */
+.over .results {
+  grid-auto-flow: column;
+  grid-template-columns: none;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
 /* Four results sit in one row: on roomy screens put them under the photo, full width. */
 @media (min-height: 30.01rem) {
   .table[data-columns="4"] {
@@ -133,7 +140,9 @@
   }
 
   .table[data-columns="4"] .submitted {
-    grid-template-columns: minmax(0, 24rem) auto;
+    /* The photo is capped by the window height too, so the row of results and the key hints
+       still fit at 1280×720 (34 rem: the panel's chrome, the task, the results and the hints). */
+    grid-template-columns: minmax(0, min(24rem, calc((100dvh - 34rem) * 4 / 3))) auto;
     align-items: end;
   }
 
@@ -329,15 +338,17 @@
     grid-row: 3;
   }
 
-  /* Round over: the banner across the top, the results under it. */
   .table > [role="status"] {
     grid-column: 1 / -1;
     grid-row: 2;
   }
 
+  /* Round over: the banner across the top, the results in one row of small cards under it. */
   .over .results {
     grid-column: 1 / -1;
     grid-row: 3;
+    grid-auto-columns: 5rem;
+    max-width: none;
   }
 
   .caption {

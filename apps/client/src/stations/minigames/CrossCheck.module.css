@@ -3,7 +3,7 @@
  * white answer buttons. No yellow: a yellow answer would hint at the solution (design-rules
  * §1.1), and no green/red on the answers. Cards are not interactive. After the round the cards
  * that count lift, copies get a red „kopia” stamp and satire / anonymous cards fade (dashed).
- * On short phones the claim takes the free sixth cell next to the second row of cards.
+ * On wide panels the claim takes the free sixth cell next to the second row of cards.
  */
 .root {
   container-type: inline-size;
@@ -63,18 +63,22 @@
   list-style: none;
 }
 
+/* Wide: three cards, then two cards with the folder's claim in the free sixth cell, so the
+   round fits 1280×720 even when outlet names wrap. */
 @container (min-width: 34rem) {
+  .board {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .cards {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    display: contents;
   }
 
-  .card {
-    grid-column: span 2;
-  }
-
-  /* The second row (two cards) sits centred under the first three. */
-  .card:nth-child(4) {
-    grid-column: 2 / span 2;
+  .claim {
+    grid-row: 2;
+    grid-column: 3;
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -354,11 +358,6 @@
   .card {
     gap: 2px;
     padding: 2px var(--space-1);
-  }
-
-  /* Undo the centred second row: the claim takes the free cell instead. */
-  .card:nth-child(n) {
-    grid-column: auto;
   }
 
   .card[data-reveal="counts"] {

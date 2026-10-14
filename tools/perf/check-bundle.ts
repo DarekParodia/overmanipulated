@@ -7,8 +7,8 @@
 //   game   what the first match adds: the lazy game chunk graph, its CSS, the SFX sprite and the
 //          level music layers.
 //   extras the lazy dialogs a first session may open on top (S7-96): „Jak grać”, the intro and its
-//          voice, „O grze” and the profile. Their chunks come from `EXTRAS_SOURCES`; whatever the
-//          menu or the game already loaded is not counted again.
+//          voice, „O grze”, the profile and the room browser. Their chunks come from
+//          `EXTRAS_SOURCES`; whatever the menu or the game already loaded is not counted again.
 //
 // Text files (js, css, html, json, svg) are measured gzip-compressed and brotli-compressed, as
 // Caddy serves them (`encode zstd gzip`); fonts and audio are already compressed and counted raw.
@@ -31,7 +31,7 @@ export const BUDGET = {
   menuCodeMax: 340 * KB,
   /** Guard: everything the first match adds to the menu load, gzip. */
   gameMax: 1.6 * MB,
-  /** Guard: the lazy extras (help, intro with its voice, about, profile), gzip. */
+  /** Guard: the lazy extras (help, intro with its voice, about, profile, room browser), gzip. */
   extrasMax: 1 * MB,
 } as const;
 
@@ -39,7 +39,13 @@ export const BUDGET = {
  * Source folders (Vite manifest keys) of the lazy extras. A dynamic import of the entry from one
  * of them is the extras route, not the game route.
  */
-export const EXTRAS_SOURCES = ['src/intro/', 'src/howto/', 'src/about/', 'src/profile/'] as const;
+export const EXTRAS_SOURCES = [
+  'src/intro/',
+  'src/howto/',
+  'src/about/',
+  'src/profile/',
+  'src/rooms/',
+] as const;
 
 export function isExtrasKey(key: string): boolean {
   return EXTRAS_SOURCES.some((prefix) => key.startsWith(prefix));
@@ -400,7 +406,7 @@ if (import.meta.main) {
   console.log();
   console.log(table('GAME (added by the first match)', report.game));
   console.log();
-  console.log(table('EXTRAS (help, intro, about, profile)', report.extras));
+  console.log(table('EXTRAS (help, intro, about, profile, rooms)', report.extras));
   console.log();
   console.log(
     `first load total (${report.total.audioFormat} audio): ${kb(report.total.raw)} raw, ${kb(report.total.gzip)} gzip, ${kb(report.total.brotli)} brotli (limit ${kb(BUDGET.firstLoadMax)})`,

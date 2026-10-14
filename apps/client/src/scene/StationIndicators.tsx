@@ -11,8 +11,7 @@ import type { Fixture, Station, TileMap } from '@redakcja/shared';
 import { useMemo } from 'react';
 import { Vector3 } from 'three';
 import type { GameView } from '../net/game-view.ts';
-import { useGameView } from '../net/view-context.tsx';
-import { useApp } from '../store/app.ts';
+import { useGameView, viewRoster } from '../net/view-context.tsx';
 import { useSettings } from '../store/settings.ts';
 import { pl } from '../strings/pl.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
@@ -369,7 +368,7 @@ export function StationIndicators() {
   useOverlay(styles.layer ?? '', badges);
 
   useFrame(({ camera, size }, delta) => {
-    const players = useApp.getState().room?.players;
+    const players = viewRoster(view);
     for (const handle of handles) {
       const anchor = handle.anchor;
       if (!anchor) {

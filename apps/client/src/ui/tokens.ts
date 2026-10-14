@@ -64,19 +64,19 @@ export function playerColor(index: number): string {
   return playerColors[index % playerColors.length] ?? colors.outline;
 }
 
-/** CSS custom property name for a player's colour, for DOM UI. */
-export function playerColorVar(index: number): string {
-  return `var(--player-${index % playerColors.length})`;
-}
-
-/** Versus newsroom identity (S7-89), mirroring `--team-N` / `--team-N-ink` in tokens.css. */
+/** Versus newsrooms (S7-86), mirroring `--team-N` / `--team-N-ink`: Kurier navy, Głos white. */
 export const teamColors = [
   { fill: colors.outline, ink: colors.surface },
   { fill: colors.surface, ink: colors.outline },
 ] as const;
 
-/** CSS custom properties for a newsroom's badge fill and letter, for DOM UI. */
+/** CSS custom properties of a newsroom's badge fill and its letter, for DOM UI. */
 export function teamColorVars(team: number): { fill: string; ink: string } {
   const index = team % teamColors.length;
   return { fill: `var(--team-${index})`, ink: `var(--team-${index}-ink)` };
+}
+
+/** CSS custom property name for a player's colour, for DOM UI. */
+export function playerColorVar(index: number): string {
+  return `var(--player-${index % playerColors.length})`;
 }

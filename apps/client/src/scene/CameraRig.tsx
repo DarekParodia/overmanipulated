@@ -50,7 +50,8 @@ export function CameraRig() {
       mapW: view.runtime.map.width,
       mapH: view.runtime.map.height,
       local: view.render.local,
-      topInsetPx: useHudBand.getState().px,
+      // The intro's stage has no HUD over it, whatever screen the dialog opened on (S7-101).
+      topInsetPx: view.kind === 'intro' ? 0 : useHudBand.getState().px,
     });
     const k = 1 - Math.exp(-FOLLOW_SMOOTHING * delta);
     focus.current.lerp(tmp.set(framing.target.x, 0, framing.target.z), k);

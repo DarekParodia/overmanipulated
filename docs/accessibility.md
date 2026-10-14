@@ -27,6 +27,16 @@ information: deadline warning and ticks ("Termin blisko"), last seconds, pings, 
   long number widens the pill rather than clipping it, and the folder queue moves along.
 - When sound is muted and captions are off, a one-time "Włącz napisy" chip offers them.
 
+### Intro subtitles (S7-101)
+
+The intro (`intro/IntroPlayer.tsx`) shows its narrator's line in an always-on subtitle bar, one
+sentence at a time (`subtitleChunks`), whatever the captions setting: the voice is optional, and
+without it (not recorded yet, muted, Lektor at 0, audio still locked) every scene lasts its
+reading time (400 ms per word, 2.5–12 s). The bar is a polite live region, at most two lines at
+640×360. Voice lines are never cues, so they have no caption chip. Pauza holds the scene and its
+subtitle; Wstecz replays the previous one. Reduced motion: the scenes and callouts only fade;
+no-flash: nothing in the player blinks.
+
 ## Colour blindness
 
 `a11y/colorblind.ts` simulates protanopia, deuteranopia and tritanopia (Machado 2009) and measures

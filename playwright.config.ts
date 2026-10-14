@@ -40,7 +40,7 @@ export default defineConfig({
       // The smallest supported phone (S7-12): the phone layout checks at 640×360, the role
       // ability button there (S7-47) and the versus rival chip and results (S7-89).
       name: 'phone-small',
-      testMatch: /(phone-layout|abilities|versus)\.spec\.ts/,
+      testMatch: /(phone-layout|abilities|versus-hud)\.spec\.ts/,
       use: {
         ...devices['Pixel 7 landscape'],
         viewport: { width: 640, height: 360 },
@@ -53,11 +53,13 @@ export default defineConfig({
       command: 'bun apps/server/src/index.ts',
       url: `http://localhost:${serverPort}/health`,
       // A short briefing keeps the start-to-HUD tests quick even without pressing "Gotowy!".
+      // e2e/server-config.json turns the room browser on (off by default, S7-88).
       env: {
         PORT: serverPort,
         DATABASE_PATH: ':memory:',
         LOG_LEVEL: 'silent',
         BRIEFING_MS: '1500',
+        CONFIG_PATH: 'e2e/server-config.json',
       },
       reuseExistingServer: !process.env.CI,
     },

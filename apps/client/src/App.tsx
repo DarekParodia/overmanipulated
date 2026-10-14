@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { startCaptions } from './a11y/caption-store.ts';
 import { AboutHost } from './about/AboutHost.tsx';
 import { useAdRequestPause } from './ads/use-ad-pause.ts';
@@ -15,15 +15,21 @@ import { startPreload } from './loading/preload.ts';
 import { startProfileTracking } from './net/profile-tracking.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
 import { ProfileHost } from './profile/ProfileHost.tsx';
+import { RoomBrowserHost } from './rooms/RoomBrowserHost.tsx';
 import { Briefing } from './screens/Briefing.tsx';
 import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
 import { SettingsPanel } from './screens/SettingsPanel.tsx';
-import { Styleguide } from './screens/Styleguide.tsx';
 import { SpectateSummary } from './spectate/SpectateSummary.tsx';
 import { useApp } from './store/app.ts';
 import { usePublicConfig } from './store/public-config.ts';
 import { applySettingsToDocument, useSettings } from './store/settings.ts';
+
+// The design reference page (`?styleguide`) draws every minigame: a lazy chunk, so none of it
+// rides along with the main menu (S7-101 keeps the menu code well under its 340 KB guard).
+const Styleguide = lazy(() =>
+  import('./screens/Styleguide.tsx').then((module) => ({ default: module.Styleguide })),
+);
 
 export function App() {
   const screen = useApp((s) => s.screen);
@@ -72,8 +78,13 @@ export function App() {
       {screen === 'briefing' && <Briefing />}
       {screen === 'game' && <GameGate />}
       {screen === 'spectate' && <SpectateSummary />}
-      {screen === 'styleguide' && <Styleguide />}
+      {screen === 'styleguide' && (
+        <Suspense fallback={null}>
+          <Styleguide />
+        </Suspense>
+      )}
       <SettingsPanel />
+      <RoomBrowserHost />
       <EncyclopediaScreen />
       {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
       <HowToPlayHost />

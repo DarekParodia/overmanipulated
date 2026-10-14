@@ -82,6 +82,16 @@ describe('caption table', () => {
     expect(captionTable['game.paused']).toEqual({ skip: 'visual-elsewhere' });
   });
 
+  it('captions a new spectator and leaves the lobby switches to the screen (S7-86)', () => {
+    expect(captionFor('room.spectatorJoined', false)).toEqual({
+      icon: 'eye',
+      text: 'Nowy widz',
+      tone: 'info',
+    });
+    expect(captionTable['lobby.modeSwitch']).toEqual({ skip: 'visual-elsewhere' });
+    expect(captionTable['lobby.teamSwitch']).toEqual({ skip: 'visual-elsewhere' });
+  });
+
   it('keeps muted-by-design decorative cues out of the stack', () => {
     expect(captionFor('ambience.phone', false)).toBeNull();
     expect(captionFor('player.step', false)).toBeNull();

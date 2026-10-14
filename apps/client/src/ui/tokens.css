@@ -42,7 +42,8 @@
   --player-2: #2ec4b6;
   --player-3: #e86fc6;
 
-  /* Versus newsroom identity (S7-89): Kurier a navy masthead, Głos a white seal (shape too). */
+  /* Versus newsrooms (S7-86): a navy shield for Kurier, a white seal for Głos. Fill and ink
+     swap, so the two read apart without a new hue (the meaning colours stay free). */
   --team-0: var(--outline);
   --team-0-ink: var(--surface);
   --team-1: var(--surface);

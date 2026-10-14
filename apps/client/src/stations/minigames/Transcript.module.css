@@ -19,20 +19,22 @@
   gap: var(--space-3);
 }
 
-/* Wide / landscape: clip left, record right, answers under the record. */
+/*
+ * Wide / landscape: the clip is a strip across the top with the answers beside it, and the record
+ * takes the full width, so its 2×2 lines stay two or three rows long and the two judge buttons
+ * fit next to the clip down to 1280×720.
+ */
 @container (min-width: 34rem) {
   .body {
-    grid-template-columns: minmax(8rem, 13rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
-      "clip record"
-      "clip foot";
-    grid-template-rows: auto 1fr;
-    align-items: start;
+      "clip foot"
+      "record record";
+    align-items: stretch;
   }
 
   .clip {
     grid-area: clip;
-    align-self: stretch;
   }
 
   .record {
@@ -41,6 +43,16 @@
 
   .foot {
     grid-area: foot;
+    align-content: center;
+    grid-template-columns: auto auto;
+  }
+
+  /* Judging: the two wide judge buttons go under the record, the clip keeps the full width. */
+  .root[data-phase="judge"] .body {
+    grid-template-areas:
+      "clip clip"
+      "record record"
+      "foot foot";
   }
 }
 
@@ -304,25 +316,17 @@
 }
 
 /*
- * Short landscape phones (640×360): the clip becomes a strip across the top with the answers
- * beside it (its „Cytat w teczce” title goes, the quote marks say it), and the record takes the
- * full width without its sheet frame, so its 2×2 lines wrap to two or three rows and the record,
- * the answers and the key hints fit without scrolling.
+ * Short landscape phones (640×360): the clip strip loses its „Cytat w teczce” title (the quote
+ * marks say it) and the record its sheet frame, so the record, the answers and the key hints fit
+ * without scrolling.
  */
 @media (max-height: 430px) {
+  /* Judging, too, the buttons stay beside the clip: there is no room for a third row. */
   @container (min-width: 34rem) {
-    .body {
-      grid-template-columns: minmax(0, 1fr) auto;
+    .root[data-phase="judge"] .body {
       grid-template-areas:
         "clip foot"
         "record record";
-      grid-template-rows: auto auto;
-      align-items: stretch;
-    }
-
-    .foot {
-      align-content: center;
-      grid-template-columns: auto auto;
     }
   }
 
