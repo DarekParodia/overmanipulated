@@ -4,11 +4,14 @@
 // the points two and three stars take, and the share rule behind them. The card spins in and
 // slaps onto the desk (a fade under reduced motion); any tap or key skips the intro. One main
 // action: the yellow "Gotowy!". Spectators (S7-84) read the same card without it: "Oglądasz".
+// The stations new today are chips that open their help card in „Jak grać” (S7-97), which
+// closes by itself when the level starts.
 import { getLevel, LEVELS } from '@redakcja/content';
 import { BRIEFING_DURATION_MS, ENDLESS_LEVEL_ID, type StationKind } from '@redakcja/shared';
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { requestMusic } from '../fx/audio/music.ts';
 import { emitCue } from '../fx/feedback.ts';
+import { useHowTo } from '../howto/store.ts';
 import { useInputCapture, useNavIntent } from '../input/ui-nav.ts';
 import { skipBriefing } from '../net/session.ts';
 import { selfKind, useApp } from '../store/app.ts';
@@ -111,6 +114,10 @@ export function Briefing() {
   });
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
+      // „Jak grać” over the briefing (a station chip) keeps its keys.
+      if (useHowTo.getState().open) {
+        return;
+      }
       if (intro) {
         event.preventDefault();
         finishIntro();
@@ -281,9 +288,25 @@ export function Briefing() {
             </h2>
             <ul className={styles.chips}>
               {fresh.map((station) => (
-                <li key={station} className={styles.chip}>
-                  <Icon name={station} size={26} />
-                  {pl.vocab.stations[station]}
+                <li key={station}>
+                  <button
+                    type="button"
+                    className={`${styles.chip} ${styles.chipButton}`}
+                    aria-label={pl.stationHelp.openLabel(pl.vocab.stations[station])}
+                    data-testid={`briefing-station-${station}`}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={() => {
+                      emitCue('ui.click');
+                      finishIntro();
+                      useHowTo.getState().show('stations', { station });
+                    }}
+                  >
+                    <Icon name={station} size={26} />
+                    {pl.vocab.stations[station]}
+                    <span className={styles.chipHelp} aria-hidden="true">
+                      <Icon name="question" size={18} />
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>

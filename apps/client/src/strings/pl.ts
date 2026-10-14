@@ -117,6 +117,8 @@ export const pl = {
     live: 'Gra trwa dalej',
     resume: 'Wróć do gry',
     settings: 'Ustawienia',
+    /** S7-97: „Jak grać” on its stations tab, practice off. */
+    stationHelp: 'Pomoc: stanowiska',
     fullscreen: 'Pełny ekran',
     exitFullscreen: 'Zamknij pełny ekran',
     leave: 'Wyjdź z redakcji',
@@ -2147,6 +2149,18 @@ export const pl = {
     stationsLead: 'Wybierz stanowisko i zobacz, jak działa.',
     /** Gamepad only: the north button walks the tabs, as in the settings. */
     padHint: 'Y zmienia dział',
+    /** S7-97: a station card's yellow action, a practice round with no server and no score. */
+    practice: 'Wypróbuj',
+    /** The practice round's header chip: nothing counts here. */
+    practiceTag: 'Ćwiczenie',
+    /** The practice round's close button: back to the station's card. */
+    practiceExit: 'Wróć do opisu',
+    practiceDone: 'Udało się!',
+    practiceFailed: 'Nie tym razem',
+    again: 'Jeszcze raz',
+    back: 'Wróć',
+    /** Opened from the in-game menu: practice waits until the level is over. */
+    practiceInGame: 'Ćwiczenia po wydaniu',
   },
   // --- S7-103 „O grze”: authors, licence, privacy, version; asset credits; libraries. ---
   about: {
