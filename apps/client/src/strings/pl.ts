@@ -75,6 +75,8 @@ export const pl = {
     motdClose: 'Zamknij komunikat',
     /** Footer link (S7-74): reopens Google's ad consent message. */
     adConsent: 'Zgody reklamowe',
+    /** Footer link (S7-75): the privacy note at /prywatnosc, in the same tab. */
+    privacy: 'Prywatność',
   },
   /** Ads (S7-73): the frame's label, also its name for screen readers. */
   ads: {
