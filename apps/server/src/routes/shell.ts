@@ -80,7 +80,7 @@ export function createShellRoutes(deps: ShellDeps) {
       const config = deps.config();
       const html = renderPrivacyPage(shell.privacyMarkdown, {
         vars: privacyVars(config),
-        flags: privacyFlags(publicConfigFor(c, config).ads),
+        flags: privacyFlags(publicConfigFor(c, config)),
       });
       // The page never shows ads, so it always gets the base policy; no-cache (not no-store, as
       // there is no nonce) so a config reload shows on the next visit.

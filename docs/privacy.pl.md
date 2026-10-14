@@ -16,26 +16,31 @@ zbierać jak najmniej danych: **bez kont, bez e-maili, bez śledzenia.**
   strony.
 - Wyniki w trybie bez końca (tablica wyników) są przechowywane **90 dni**, potem usuwane
   automatycznie.
+- Każdy pokój jest **prywatny**: wchodzi się do niego tylko z kodem. Mecz mogą oglądać widzowie
+  tylko wtedy, gdy gospodarz otworzy Widownię, a gracze zawsze widzą, że ktoś dołączył.
 
 <!-- no-ads -->
 **Pod tym adresem nie ma reklam.** Gra nie używa ciasteczek ani zewnętrznych usług.
 <!-- /no-ads -->
 <!-- ads -->
 **Pod tym adresem gra pokazuje reklamy Google** (opis niżej, w części „Reklamy”). To jedyna
-zewnętrzna usługa w grze. W trakcie rozgrywki reklam nie ma nigdy.
+zewnętrzna usługa w grze. Gracz nie widzi reklam w trakcie rozgrywki nigdy.
 <!-- /ads -->
 
 ## Jakie dane trafiają na serwer
 
 | Dane | Po co | Jak długo |
 | --- | --- | --- |
-| Pseudonim gracza | Pokazanie go w pokoju, na biurku i w tablicy wyników | Tylko na czas rozgrywki. Do bazy trafia wyłącznie po zakończeniu przebiegu w trybie bez końca (patrz niżej) |
+| Pseudonim gracza | Pokazanie go w pokoju (graczom i widzom), na biurku i w tablicy wyników; podpis gospodarza pokoju publicznego także na liście pokoi | Tylko na czas rozgrywki. Do bazy trafia wyłącznie po zakończeniu przebiegu w trybie bez końca w trybie „Razem” (patrz niżej) |
+| Nazwa pokoju (nieobowiązkowa, nadaje ją gospodarz) | Pokazanie jej w poczekalni, a pokoju publicznego także na liście pokoi | Tylko w pamięci serwera, do zamknięcia pokoju; **nie jest zapisywana** w bazie ani w logach |
+| Ustawienia i skład pokoju: tryb gry, pokój prywatny lub publiczny, otwarta Widownia, kto gra w której redakcji, kto ogląda | Działanie pokoju | Tylko w pamięci serwera, do zamknięcia pokoju |
+| Statystyki meczu: liczba werdyktów (trafnych i chybionych), pieczątek, nieudanych zadań i użytych zdolności każdego gracza | Statystyki dla widzów w trakcie meczu i ekran wyników | Tylko w pamięci serwera, do zamknięcia pokoju; **nie są zapisywane** w bazie |
 | Wynik drużyny w trybie bez końca: kod pokoju, pseudonimy graczy, liczba punktów, poziom trudności, czas przetrwania, data | Tablica wyników (globalna i klasowa, osobna dla każdego poziomu trudności) | **90 dni**, potem automatyczne usunięcie (sprawdzane co godzinę) |
 | Głosy „Wpadka dnia” po omówieniu poziomu: który poziom i która wiadomość zmyliła | Statystyki dla nauczyciela. Głos nie jest powiązany z pseudonimem | **90 dni** |
 | Stan gry w trakcie poziomu (pozycje, teczki, punkty) | Działanie rozgrywki | Tylko w pamięci serwera. Znika po zamknięciu pokoju, nigdy nie trafia do bazy |
 | Wybrany kolor i dodatek postaci (z profilu) | Pokazanie postaci innym graczom w pokoju | Tylko w pamięci serwera, do zamknięcia pokoju; **nie jest zapisywany** w bazie ani w logach |
-| Losowy identyfikator przeglądarki (ciąg przypadkowych znaków, bez danych o graczu) | Gdy gospodarz usunie kogoś z pokoju, ta sama przeglądarka nie wróci do tego pokoju przez 10 minut | Tylko w pamięci serwera, najdłużej do zamknięcia pokoju; **nie jest zapisywany** w bazie ani w logach |
-| Adres IP | Ochrona serwera przed nadużyciami (limit prób dołączania do pokoi i zakładania nowych) | Tylko chwilowo w pamięci serwera; **nie jest zapisywany** w bazie ani w logach |
+| Losowy identyfikator przeglądarki (ciąg przypadkowych znaków, bez danych o graczu) | Gdy gospodarz usunie kogoś z pokoju, ta sama przeglądarka nie wróci do tego pokoju przez 10 minut | Serwer zna go tylko w czasie połączenia z pokojem; identyfikator osoby usuniętej pamięta 10 minut, najdłużej do zamknięcia pokoju. **Nie jest zapisywany** w bazie ani w logach |
+| Adres IP | Ochrona serwera przed nadużyciami (limit prób dołączania do pokoi, zakładania nowych i pobierania listy pokoi) | Tylko chwilowo w pamięci serwera; **nie jest zapisywany** w bazie ani w logach |
 
 Serwer pośredniczący przed grą przekazuje jej prawdziwy adres IP gracza, żeby limity
 dotyczyły jednej sieci, a nie wszystkich graczy naraz. Adres służy tylko do liczenia prób
@@ -46,6 +51,36 @@ zdarzeń (np. „pokój utworzony”), ale nie zawierają pseudonimów.
 Pseudonimy w tablicy wyników są widoczne dla wszystkich, którzy ją otworzą (tablica globalna
 pokazuje wyniki z wielu klas). Dlatego pseudonim nie powinien zdradzać tożsamości.
 
+## Pokoje, lista pokoi i Widownia
+
+Każdy pokój jest **prywatny**: dołącza się do niego tylko z czteroliterowym kodem, który
+gospodarz podaje swojej grupie.
+
+<!-- no-room-browser -->
+Na tym serwerze **lista publicznych pokoi jest wyłączona**, więc żadnego pokoju nie widać
+z zewnątrz.
+<!-- /no-room-browser -->
+<!-- room-browser -->
+Na tym serwerze działa **lista publicznych pokoi**. Gospodarz może oznaczyć swój pokój jako
+publiczny. Wtedy każdy, kto otworzy grę, widzi na liście: kod pokoju, nazwę pokoju, podpis
+gospodarza, poziom, tryb gry, poziom trudności, liczbę graczy i widzów, czy trwa gra i od ilu
+minut pokój jest otwarty. Podpisów pozostałych graczy lista nie pokazuje. Z listy można dołączyć
+do pokoju albo go oglądać, tak jak z kodem. Pokój znika z listy, gdy gospodarz z powrotem
+zmieni go na prywatny albo gdy nikt w nim nie jest połączony.
+<!-- /room-browser -->
+
+- **Filtr nazw.** Nazwy pokoi i podpisy gospodarzy na liście pokoi przechodzą przez filtr
+  wulgaryzmów: niedozwolonej nazwy nie da się ustawić, a niedozwolony podpis lista zastępuje
+  gwiazdkami.
+- **Widownia.** Gospodarz może otworzyć Widownię (domyślnie jest zamknięta): wtedy do 8 osób
+  z kodem pokoju może oglądać grę bez grania. Gospodarz może też sam oglądać, np. z projektora.
+  Widzowie widzą podpisy graczy, ich postacie i pracę w redakcji, ich statystyki w trakcie
+  meczu i wyniki po meczu. Gracze zawsze wiedzą, że ktoś ogląda: wejście widza ogłasza
+  komunikat „Widz dołączył”, a poczekalnia pokazuje listę widzów z ich podpisami.
+- **Usunięcie z pokoju.** Gospodarz może usunąć gracza albo widza. Serwer pamięta wtedy losowy
+  identyfikator jego przeglądarki przez 10 minut, tylko dla tego pokoju i tylko w pamięci.
+  Gra nie blokuje adresów IP, bo cała klasa ma zwykle jeden adres.
+
 Administrator może pokazać w menu głównym **komunikat redakcji** (np. o przerwie
 technicznej). Komunikat jest taki sam dla wszystkich i nie zbiera żadnych danych.
 
@@ -53,8 +88,9 @@ technicznej). Komunikat jest taki sam dla wszystkich i nie zbiera żadnych danyc
 ## Reklamy
 
 - Reklamy Google AdSense pojawiają się tylko w **menu głównym, w lobby i na ekranie wyników**,
-  w osobnej ramce z napisem „Reklama”, z dala od przycisków gry. **Nigdy w trakcie gry**,
-  w odprawie, przy stanowiskach ani w oknach dialogowych i **nigdy na telefonach**.
+  a u widzów w panelu statystyk i w wynikach meczu, zawsze w osobnej ramce z napisem „Reklama”,
+  z dala od przycisków gry. **Nigdy w trakcie gry** gracza, w odprawie, przy stanowiskach, obok
+  podglądu redakcji ani w innych oknach dialogowych i **nigdy na telefonach**.
 - Skrypt reklam wczytuje się dopiero na ekranie z reklamą. Na telefonie i na małym ekranie
   gra nie łączy się z Google wcale.
 - Bloker reklam nie przeszkadza w grze.

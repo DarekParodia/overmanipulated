@@ -42,6 +42,12 @@ Reklamy mogą używać ciasteczek.
 <!-- no-ads -->
 Na tej stronie nie ma reklam.
 <!-- /no-ads -->
+<!-- room-browser -->
+Lista publicznych pokoi działa.
+<!-- /room-browser -->
+<!-- no-room-browser -->
+Lista publicznych pokoi jest wyłączona.
+<!-- /no-room-browser -->
 `;
 
 const SHELL: ShellAssets = {
@@ -345,6 +351,21 @@ describe('/prywatnosc', () => {
     const html = await (await get('/prywatnosc', ADS_HOST)).text();
     expect(html).not.toContain('data-block="ads"');
     expect(html).toContain('data-block="no-ads"');
+  });
+
+  it('names the public room list only while the roomBrowser flag is on (S7-93)', async () => {
+    const { get, swap } = setup({});
+    const off = await (await get('/prywatnosc')).text();
+    expect(off).toContain(
+      '<div data-block="no-room-browser"><p>Lista publicznych pokoi jest wyłączona.</p></div>',
+    );
+    expect(off).not.toContain('data-block="room-browser"');
+    swap({ features: { roomBrowser: true } });
+    const on = await (await get('/prywatnosc')).text();
+    expect(on).toContain(
+      '<div data-block="room-browser"><p>Lista publicznych pokoi działa.</p></div>',
+    );
+    expect(on).not.toContain('no-room-browser');
   });
 
   it('escapes markup in operator values', async () => {

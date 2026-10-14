@@ -1522,7 +1522,7 @@ export function createRoomRegistry(options: RegistryOptions) {
     resetReady(room);
     log.info('briefing started', {
       room: room.code,
-      level: room.level.id,
+      levelId: room.level.id,
       difficulty: room.difficulty,
     });
     broadcastRoomState(room);
@@ -1602,7 +1602,7 @@ export function createRoomRegistry(options: RegistryOptions) {
       m.commandQueue = [];
       m.ready = false;
     }
-    log.info('game started', { room: room.code, level: room.level.id });
+    log.info('game started', { room: room.code, levelId: room.level.id });
     broadcast(room, {
       type: 'event',
       tick: room.teams[0].game.tick,
@@ -1994,7 +1994,7 @@ export function createRoomRegistry(options: RegistryOptions) {
     room.phase = 'results';
     log.info('level ended', {
       room: room.code,
-      level: room.level.id,
+      levelId: room.level.id,
       ...outcome,
       ...(result ? { winnerTeam: result.winnerTeam, reason: result.reason } : {}),
     });

@@ -38,6 +38,8 @@ stopped, `/` answered 503 with the menu, and the browser console showed no CSP v
   `docker-compose.yml`: server 384 MB / 1 CPU, web 128 MB / 0.5 CPU).
 - An external TLS reverse proxy for the public domain that forwards to port 8080 (WebSocket
   upgrades and the original `Host` header included). Port 8080 is reachable only from it.
+- Uplink: the game sends snapshots 20 times a second, so bandwidth, not CPU, limits how many
+  rooms one server holds; see "Rooms, versus and spectators: sizing" for the per-room figures.
 
 ## First deploy
 
@@ -135,9 +137,9 @@ main-menu visit (at most once a minute) or reload; a running match never changes
 | `site.operator.name` | unset | yes, next `/prywatnosc` | Who runs this server (≤ 120 characters), named in the privacy note. Unset: the note shows „[do uzupełnienia…]” |
 | `site.operator.contact` | unset | yes, next `/prywatnosc` | Contact for privacy questions (≤ 200 characters), e.g. an e-mail address |
 | `site.operator.hosting` | unset | yes, next `/prywatnosc` | Where the server runs (≤ 200 characters), e.g. the hosting company and country |
-| `features.roomBrowser` | `false` | yes, next menu visit | Public room list (`GET /api/rooms`, 404 while off; public rooms only, cached 2 s, 600 requests a minute per address). Off by default: rooms of minors are never listed publicly unless the operator opts in |
-| `features.versus` | `true` | yes, next menu visit / new room | „Na punkty” (versus) mode. Gates entry points only: a running match keeps going |
-| `features.spectators` | `true` | yes, next join | Spectator joins (the host still opens the Widownia per room) |
+| `features.roomBrowser` | `false` | yes, next menu visit | Public room list (`GET /api/rooms`, 404 while off; public rooms only, cached 2 s, 600 requests a minute per address) and the host's „Publiczny” switch. Off by default: rooms of minors are never listed publicly unless the operator opts in. `/prywatnosc` says whether this server lists rooms and what the list shows |
+| `features.versus` | `true` | yes, next menu visit / new room | „Na punkty” (versus) mode: two newsrooms of up to 4 on the same run. Gates entry points only: a running match keeps going |
+| `features.spectators` | `true` | yes, next join | Spectator joins (the host still opens the Widownia per room; it starts closed), up to 8 per room. Off: „Oglądaj” disappears and spectator joins get `featureDisabled` |
 | `features.intro` | `true` | yes, next menu visit | The intro: its Wprowadzenie tab in „Jak grać” (off: the dialog opens on Stanowiska), „Obejrzyj wprowadzenie” in the settings, and its autoplay in a new training room |
 | `motd` | `null` | yes, next menu visit | Message of the day in the main menu; `null` for none |
 | `motd.id` | required | yes | Stable id (`A–Z a–z 0–9 . _ -`, 1–40). Players who closed the message do not see it again until the id changes |
@@ -151,7 +153,7 @@ main-menu visit (at most once a minute) or reload; a running match never changes
 | `ads.verification` | `false` | yes, next page | Put AdSense's `google-adsense-account` meta tag on `ads.domains` pages while ads are still off (site verification). Needs `ads.client` |
 | `ads.mode` | `"limited"` | yes, next page | `limited` (Google's limited ads: no cookies, no local storage, no personalisation) or `nonPersonalized` (may use cookies, adults only). Only `limited` is accepted while `ageTreatment` is `teen` or `child`, even with ads off |
 | `ads.client` | unset | yes, next page | AdSense publisher id, `ca-pub-` and 10–20 digits |
-| `ads.slots` | `{}` | yes, next page | Ad unit id (6–20 digits) per placement: `menu` (160×600), `lobby` (728×90), `results` (160×600), `spectator` (728×90). A placement without a unit shows nothing |
+| `ads.slots` | `{}` | yes, next page | Ad unit id (6–20 digits) per placement: `menu` (160×600), `lobby` (728×90), `results` (160×600), `spectator` (300×250: the spectator's stats sheet and match results, from 1280×900). A placement without a unit shows nothing |
 | `ads.domains` | `[]` | yes, next page | Hosts that show ads (≤ 16, exact, no port: `bronsie.drkp.dev` never matches `drkp.dev` or `x.bronsie.drkp.dev`). Every other host gets no ads, the base CSP and the ad-free privacy text: a school can get an ad-free address |
 | `ads.ageTreatment` | `"teen"` | yes, next page | Age tag on every ad request: `child`, `teen` or `unspecified` (adults only) |
 | `ads.signOff.by` | required | yes | Who signed off ads for this audience (supervisor or legal; ≤ 120 characters) |
@@ -247,9 +249,35 @@ numbers are generous: they stop scripts, not students.
 | Joins (create or join) per IP | 120 per minute | `invalidMessage` error ("too many requests") |
 | New rooms per IP | 20 per minute | `invalidMessage` error |
 | Room-list requests (`GET /api/rooms`) per IP | 600 per minute; the list itself is rebuilt at most every 2 s | HTTP 429 `{"error":"too many requests"}` |
-| Rooms alive at once | 300 | `roomFull` ("server is busy") for new rooms |
-| Players per room | 4 | `roomFull` |
+| Rooms alive at once | 300 (`rooms.maxRooms` in config.json) | `roomFull` ("server is busy") for new rooms |
+| Players per room | 4 in „Razem”; 8 in „Na punkty” (4 per newsroom) | `roomFull`; `teamFull` when moving into a full newsroom |
+| Player joins during a versus match | none in the briefing or while playing (co-op joins by code at any time) | `matchInProgress` |
+| Spectators per room | 8, only while the host has opened the Widownia | `spectatorsFull`, `spectatorsOff` |
+| Rejoin after a kick | 10 minutes, per browser `clientId`, per room (no IP ban) | `kickCooldown` |
+| Room name | 1–24 characters, no control characters, the shared blocklist | `invalidName` |
+| Public rooms per room-list response | 50 | the rest is counted in `total` |
 | Every message | validated with Zod | `invalidMessage` |
+
+## Rooms, versus and spectators: sizing
+
+Measured with `bun run perf:server` (`docs/performance.md`, "Versus and spectators (S7-92)"):
+a tick of 150 full versus rooms takes 6–10 ms of the 50 ms budget, and 20 ms at the 300-room cap,
+so CPU is not the limit. **Egress is.** What one room sends:
+
+| Room | Egress |
+| --- | --- |
+| „Razem”, 4 players (level 1 / endless) | 0.12 / 0.21 MB/s |
+| „Na punkty”, 4 v 4 (level 1 / endless) | 0.26 / 0.45 MB/s |
+| „Na punkty”, 4 v 4 with 8 spectators | 0.54 / 0.90 MB/s |
+| One spectator of a versus match | 0.03 / 0.06 MB/s |
+
+Nothing goes to a room's spectator channel while nobody watches. Size `rooms.maxRooms` by the
+uplink, not by CPU: divide the uplink in MB/s by the heaviest room you expect. On 100 Mbit/s
+(about 12 MB/s) that is about 13 full versus rooms with a full Widownia, 27 without spectators or
+57 co-op endless rooms; a lesson of 30 students is at most 8 rooms (about 1–2 MB/s). The default
+of 300 fits a server whose rooms are mostly idle lobbies; lower it when many classes play at
+once on a small uplink, since a full server answers „server is busy” to new rooms instead of
+slowing every running match down.
 
 ## Client address
 
@@ -309,7 +337,7 @@ in production, in this order (the example uses the game at `bronsie.drkp.dev`):
    formats (anchor, vignette, side rail) and the optimisation of existing ad units. The client
    never asks for them, but switched on in AdSense they could cover controls during play.
 7. **Ad units.** Create fixed-size display units (not responsive): 160×600 for `menu` and
-   `results`, 728×90 for `lobby` and `spectator`. Copy their ids into `ads.slots`.
+   `results`, 728×90 for `lobby`, 300×250 for `spectator`. Copy their ids into `ads.slots`.
 8. **Config.** Set `ads.client`, `ads.slots`, `ads.domains: ["bronsie.drkp.dev"]`,
    `ads.mode: "limited"`, `ads.ageTreatment: "teen"` (or `"child"`; `"unspecified"` and
    `nonPersonalized` only for an adults-only deployment), `ads.signOff` and `ads.enabled: true`.
@@ -412,7 +440,10 @@ privacy page, not the shell: no script, never the ads CSP, its ads section shown
 create room, second socket joins by code, the host picks Fotoedytor, ready, start, skip the
 briefing, receive live snapshots that acknowledge the input, then press the role ability
 (`useAbility`) and see Ekspertyza armed in the `ability` event and in `snapshot.crew` (roles
-and abilities, M3). It prints PASS/WARN/FAIL per step and exits 1 on any
+and abilities, M3), then the Widownia (M6): the host opens it, a third socket joins as a
+spectator and gets the sync (team 0's snapshot and `matchStats`), and the players' roomState
+lists it (skipped, as a pass, when `/api/config` has `features.spectators` off). It prints
+PASS/WARN/FAIL per step and exits 1 on any
 failure. A static fallback page instead of the server-rendered shell is a warning ("static
 fallback?"): the game server is down or the catch-all does not reach it. The script is covered
 by `tools/smoke/smoke.test.ts`, which runs it against a local server with ads off and with ads on
@@ -466,7 +497,8 @@ date and tester. The matrix comes from `agents/platforms.md`.
 | iPhone (11 or newer), landscape | Safari iOS 17+ | | | | | | | | | |
 | Tablet (iPad or Android), landscape | Safari / Chrome | | | | | | | | | |
 | Mixed room: 2 laptops + 2 phones | any | | | | | | | | | |
-| Ads on (only if enabled): laptop ≥ 1180×680 + a phone | Chrome / any | | | | | | | | | Ads only in menu, lobby, results (by viewport); none in play or on the phone |
+| „Na punkty” 2 v 2 + a spectator on the projector laptop and one on a phone | any | | | | | | | | | Both newsrooms side by side on the laptop, one at a time on the phone; „Widz dołączył” shows for the players |
+| Ads on (only if enabled): laptop ≥ 1180×680 + a phone | Chrome / any | | | | | | | | | Ads only in menu, lobby, results and a spectator's stats sheet / match results (by viewport); none in play or on the phone |
 
 Targets: 60 FPS on the laptop and never below 30 FPS on the mid-range phone for the whole
 level; text readable at 640×360; no console errors; sound unlocks after the first tap on iOS.
@@ -496,7 +528,10 @@ level; text readable at 640×360; no console errors; sound unlocks after the fir
 3. `docker compose logs --since 1h server | tail` shows no errors; `docker stats --no-stream`
    shows memory far below the limits.
 4. Have the room-code flow ready: the teacher opens the room and shows the 4-letter code on
-   the projector. Backup plan: a mobile hotspot, and a second room on another laptop.
+   the projector. To watch a „Na punkty” match from the projector, the teacher stays host and
+   presses „Na widownię” (and ticks „Widownia otwarta” if students should watch too). Rooms are
+   private unless `features.roomBrowser` is on and the host marks one public. Backup plan: a
+   mobile hotspot, and a second room on another laptop.
 
 **During class**
 
@@ -505,8 +540,11 @@ level; text readable at 640×360; no console errors; sound unlocks after the fir
 2. Health at a glance: `curl -s https://<domain>/api/health` → `rooms` is the number of open
    rooms.
 3. A student cannot join: check the code (4 letters, no `0/O`), the room is not full (4
-   players), and the student is on the right domain. A dropped student reconnects with the
-   same page within 60 s and keeps the place.
+   players in „Razem”, 4 per newsroom in „Na punkty”, 8 spectators), a „Na punkty” match is not
+   running (players join in the lobby or after the match; „Oglądaj” works meanwhile), and the
+   student is on the right domain. A student the host removed cannot rejoin that room from the
+   same browser for 10 minutes („Gospodarz niedawno cię usunął”). A dropped student reconnects
+   with the same page within 60 s and keeps the place.
 4. If something is really wrong: do **not** restart mid-lesson unless the server is unhealthy;
    a restart ends all running rooms.
 

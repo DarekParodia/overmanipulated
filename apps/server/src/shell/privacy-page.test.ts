@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { type PublicAds, parseMarkdownLite } from '@redakcja/shared';
+import { DEFAULT_FEATURE_FLAGS, type PublicAds, parseMarkdownLite } from '@redakcja/shared';
 import { parseConfigValue } from '../config.ts';
 import { DEFAULT_PRIVACY_MD_PATH } from '../paths.ts';
 import { blocksHtml, privacyFlags, privacyVars, renderPrivacyPage } from './privacy-page.ts';
@@ -17,32 +17,52 @@ const LIMITED_TEEN: PublicAds = {
 };
 const ADULTS: PublicAds = { ...LIMITED_TEEN, mode: 'nonPersonalized', ageTreatment: 'unspecified' };
 
-function page(ads: PublicAds, vars: Record<string, string | undefined> = {}): string {
-  return renderPrivacyPage(NOTE, { vars, flags: privacyFlags(ads) });
+const ROOM_BROWSER_ON = { ...DEFAULT_FEATURE_FLAGS, roomBrowser: true };
+
+function page(
+  ads: PublicAds,
+  vars: Record<string, string | undefined> = {},
+  features = DEFAULT_FEATURE_FLAGS,
+): string {
+  return renderPrivacyPage(NOTE, { vars, flags: privacyFlags({ ads, features }) });
 }
 
 describe('privacyFlags', () => {
   it('maps the public ads decision to the note blocks', () => {
-    expect(privacyFlags(ADS_OFF)).toEqual({
+    const features = DEFAULT_FEATURE_FLAGS;
+    expect(privacyFlags({ ads: ADS_OFF, features })).toEqual({
       ads: false,
       'no-ads': true,
       'ads-limited': false,
       'ads-minors': false,
       'ads-cookies': false,
+      'room-browser': false,
+      'no-room-browser': true,
     });
-    expect(privacyFlags(LIMITED_TEEN)).toEqual({
+    expect(privacyFlags({ ads: LIMITED_TEEN, features })).toEqual({
       ads: true,
       'no-ads': false,
       'ads-limited': true,
       'ads-minors': true,
       'ads-cookies': false,
+      'room-browser': false,
+      'no-room-browser': true,
     });
-    expect(privacyFlags(ADULTS)).toEqual({
+    expect(privacyFlags({ ads: ADULTS, features })).toEqual({
       ads: true,
       'no-ads': false,
       'ads-limited': false,
       'ads-minors': false,
       'ads-cookies': true,
+      'room-browser': false,
+      'no-room-browser': true,
+    });
+  });
+
+  it('maps the room-browser flag to its blocks (S7-93)', () => {
+    expect(privacyFlags({ ads: ADS_OFF, features: ROOM_BROWSER_ON })).toMatchObject({
+      'room-browser': true,
+      'no-room-browser': false,
     });
   });
 });
@@ -120,6 +140,30 @@ describe('the privacy note (docs/privacy.pl.md)', () => {
     expect(html).toContain('<div data-block="ads-cookies">');
     expect(html).not.toContain('data-block="ads-limited"');
     expect(html).not.toContain('data-block="ads-minors"');
+  });
+
+  it('describes private rooms, the Widownia and the kick cooldown on every server (S7-93)', () => {
+    const html = page(ADS_OFF);
+    expect(html).toContain('<h2>Pokoje, lista pokoi i Widownia</h2>');
+    expect(html).toContain('Każdy pokój jest <strong>prywatny</strong>');
+    expect(html).toContain('<strong>Widownia.</strong> Gospodarz może otworzyć Widownię');
+    expect(html).toContain('przez 10 minut, tylko dla tego pokoju i tylko w pamięci');
+    expect(html).toContain('Gra nie blokuje adresów IP');
+  });
+
+  it('says what the public room list shows only where the server has one (S7-93)', () => {
+    const off = page(ADS_OFF);
+    expect(off).toContain('<div data-block="no-room-browser">');
+    expect(off).toContain('<strong>lista publicznych pokoi jest wyłączona</strong>');
+    expect(off).not.toContain('data-block="room-browser"');
+
+    const on = page(ADS_OFF, {}, ROOM_BROWSER_ON);
+    expect(on).toContain('<div data-block="room-browser">');
+    expect(on).not.toContain('no-room-browser');
+    expect(on).toContain(
+      'kod pokoju, nazwę pokoju, podpis gospodarza, poziom, tryb gry, poziom trudności, liczbę graczy i widzów',
+    );
+    expect(on).toContain('Podpisów pozostałych graczy lista nie pokazuje.');
   });
 
   it('fills the operator lines, with visible placeholders until they are set', () => {

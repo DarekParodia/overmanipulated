@@ -1,12 +1,30 @@
 // Keeps docs/deploy.md and .env.example in step with the code (S7-76): every config.json key has
 // exactly one row in the "config.json" table with its real default and a hot-reload entry, and
 // every environment variable the server or compose reads has a row in "Environment variables"
-// and a line in .env.example.
+// and a line in .env.example. The abuse-limits table states the shipped constants (S7-93).
 import { describe, expect, it } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { serverConfigJsonSchema } from '../../apps/server/src/config.ts';
 import { envSchema } from '../../apps/server/src/env.ts';
+import {
+  JOINS_PER_MINUTE_PER_IP,
+  KICK_REJOIN_COOLDOWN_MS,
+  MAX_ROOMS,
+  ROOM_LIST_CACHE_MS,
+  ROOM_LIST_PER_MINUTE_PER_IP,
+  ROOMS_PER_MINUTE_PER_IP,
+  WS_MESSAGE_BURST,
+  WS_MESSAGES_PER_SECOND,
+} from '../../apps/server/src/limits.ts';
+import {
+  MAX_CLIENT_MESSAGE_BYTES,
+  MAX_ROOM_PLAYERS,
+  MAX_SPECTATORS,
+  MAX_TEAM_PLAYERS,
+  ROOM_LIST_MAX,
+  ROOM_NAME_MAX_LENGTH,
+} from '../../packages/shared/src/constants.ts';
 
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
 const DEPLOY_MD = read('../../docs/deploy.md');
@@ -17,8 +35,11 @@ const OTHER_ENV = ['LOG_LEVEL', 'TRUSTED_PROXIES'];
 
 type Row = { key: string; cells: string[] };
 
-/** Rows of the first table under the heading `heading` (exact line), keyed by the first cell. */
-function tableRows(heading: string): Row[] {
+/**
+ * Rows of the first table under the heading `heading` (exact line), keyed by the first cell: its
+ * `code` text, or (with `plainKeys`) the whole cell. Rows without a key are skipped.
+ */
+function tableRows(heading: string, plainKeys = false): Row[] {
   const lines = DEPLOY_MD.split('\n');
   const start = lines.indexOf(heading);
   if (start < 0) throw new Error(`heading "${heading}" not found in docs/deploy.md`);
@@ -36,8 +57,10 @@ function tableRows(heading: string): Row[] {
       .slice(1, -1)
       .split(/(?<!\\)\|/)
       .map((cell) => cell.trim());
-    const key = /^`([^`]+)`$/.exec(cells[0] ?? '')?.[1];
-    if (key !== undefined) rows.push({ key, cells: cells.slice(1) });
+    const key = plainKeys ? cells[0] : /^`([^`]+)`$/.exec(cells[0] ?? '')?.[1];
+    if (key !== undefined && key !== '' && !/^-+$/.test(key)) {
+      rows.push({ key, cells: cells.slice(1) });
+    }
   }
   return rows;
 }
@@ -79,6 +102,7 @@ function configKeys(node: unknown, path: string, required: boolean, out: Leaf[])
 const CONFIG_KEYS = configKeys(serverConfigJsonSchema(), '', false, []);
 const CONFIG_ROWS = tableRows('### config.json');
 const ENV_ROWS = tableRows('### Environment variables');
+const LIMIT_ROWS = tableRows('## Abuse limits in the game server', true);
 
 /** What the Default column must say for a key. */
 function documentedDefault(leaf: Leaf): string {
@@ -160,5 +184,37 @@ describe('docs/deploy.md environment table and .env.example', () => {
     expect(ENV_ROWS.find((row) => row.key === 'TRUSTED_PROXIES')?.cells[1]).toBe(
       '`private_ranges`',
     );
+  });
+});
+
+describe('docs/deploy.md abuse limits', () => {
+  /** The Value cell of the row named `limit`. */
+  const limitValue = (limit: string) => LIMIT_ROWS.find((row) => row.key === limit)?.cells[0];
+
+  it('states the shipped numbers', () => {
+    expect(limitValue('WebSocket message size')).toStartWith(`${MAX_CLIENT_MESSAGE_BYTES} bytes`);
+    expect(limitValue('Message rate per socket')).toStartWith(
+      `${WS_MESSAGES_PER_SECOND}/s sustained, burst ${WS_MESSAGE_BURST}`,
+    );
+    expect(limitValue('Joins (create or join) per IP')).toBe(
+      `${JOINS_PER_MINUTE_PER_IP} per minute`,
+    );
+    expect(limitValue('New rooms per IP')).toBe(`${ROOMS_PER_MINUTE_PER_IP} per minute`);
+    expect(limitValue('Room-list requests (`GET /api/rooms`) per IP')).toBe(
+      `${ROOM_LIST_PER_MINUTE_PER_IP} per minute; the list itself is rebuilt at most every ${ROOM_LIST_CACHE_MS / 1000} s`,
+    );
+    expect(limitValue('Rooms alive at once')).toStartWith(`${MAX_ROOMS} `);
+  });
+
+  it('states the room, versus and spectator caps (S7-93)', () => {
+    expect(limitValue('Players per room')).toBe(
+      `${MAX_TEAM_PLAYERS} in „Razem”; ${MAX_ROOM_PLAYERS} in „Na punkty” (${MAX_TEAM_PLAYERS} per newsroom)`,
+    );
+    expect(limitValue('Spectators per room')).toStartWith(`${MAX_SPECTATORS}, `);
+    expect(limitValue('Rejoin after a kick')).toStartWith(
+      `${KICK_REJOIN_COOLDOWN_MS / 60_000} minutes, per browser \`clientId\``,
+    );
+    expect(limitValue('Room name')).toStartWith(`1–${ROOM_NAME_MAX_LENGTH} characters`);
+    expect(limitValue('Public rooms per room-list response')).toBe(`${ROOM_LIST_MAX}`);
   });
 });

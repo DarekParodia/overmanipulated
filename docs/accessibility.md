@@ -26,8 +26,9 @@ information: deadline warning and ticks ("Termin blisko"), last seconds, pings, 
   640×360, band about 64 px), so the captions start right under it; the numbers stay 30 px. A
   long number widens the pill rather than clipping it, and the folder queue moves along.
 - When sound is muted and captions are off, a one-time "Włącz napisy" chip offers them.
-- The spectate screen (S7-90) shows no captions: a watched newsroom's cues live on its own view's
-  feedback, which the caption stack does not listen to. A spectator hears only
+- **Spectators get the feed instead of captions** (S7-90/S7-91). The spectate screen shows no
+  caption chips: a watched newsroom's cues live on its own view's feedback, which the caption
+  stack does not listen to. A spectator hears only
   `SPECTATOR_AUDIBLE_CUES` (verdict outcomes, expiries, event starts, raids, abilities), and the
   spectator event feed (S7-91, „Na żywo”, an `aria-live` list) is the visual twin of each of them,
   with an icon and a tone stripe next to the words. No haptics either. Following a player is
@@ -84,6 +85,28 @@ Findings and fixes:
   `ui/PlayerMark.tsx`) shown on name tags, ping bubbles and debrief vote dots. Lobby cards and the
   briefing already carry the initial and the nickname.
 - Navy text on every meaning fill reaches at least 3:1 (large, bold UI text).
+
+## Team identity (versus)
+
+The two „Na punkty” newsrooms never rely on colour (S7-86, S7-89, `ui/TeamBadge.tsx`):
+
+- **Kurier** is a navy shield with a white „K”; **Głos** is a white scalloped seal with a navy
+  outline and a navy „G”. They differ by shape, letter and luminance (fill and ink swap), and
+  `--team-0` / `--team-1` reuse the outline and surface tokens, so no new hue competes with the
+  meaning colours or `--player-0..3`. No colour-blind pair is needed: both fills are the palette's
+  darkest and lightest values, whatever the deficiency.
+- The badge is never alone: the lobby columns, the rival chip on desktop, the spectator plates,
+  the scoreboard and the results write the newsroom's name next to it. Where space is short (the
+  phone pill's rival segment, the phone scoreboard), the badge's letter carries the name and the
+  element's accessible name says it („Rywale – Głos: 195 pkt. Prowadzicie”).
+- Who leads is an arrow (up or down, none when tied) in a small disc and a word in the
+  accessible name and the caption („Prowadzicie!”, „Rywale prowadzą”), not the disc's green or
+  orange alone. The winner on the results gets a crown and „Zwycięzcy” / „Wygrywa Kurier!”.
+- In versus each row of the spectators' feed starts with its newsroom's badge, and a masked row
+  also names it („Kurier: werdykt”); the followed player is marked by the blue selection ring
+  plus the FollowCard's „Śledzisz: …”.
+- Players always learn that they are watched, with the sound off too: „Widz dołączył” is a toast
+  in the game and „Nowy widz” a caption (`room.spectatorJoined`).
 
 ## Text scaling
 

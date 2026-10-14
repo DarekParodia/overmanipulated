@@ -72,7 +72,17 @@ Ekspertyzę i Drugą szansę można uzbroić z wyprzedzeniem: zadziałają przy 
 
 Pełna ściąga jest w **Ustawienia → Sterowanie**. Na telefonie gra działa tylko poziomo. Ustawienia dostępności: mniej ruchu, bez migania, napisy do dźwięków, sterowanie dla leworęcznych.
 
+## Na punkty i Widownia (opcjonalnie)
+
+Gra jest przede wszystkim kooperacyjna. Dwa dodatki pozwalają jednak zagrać całą klasą:
+
+- **Na punkty.** Gospodarz przełącza w poczekalni „Tryb gry” na „Na punkty”. Gracze dzielą się na dwie redakcje, **Kurier** (granatowa tarcza z literą K) i **Głos** (biała pieczęć z literą G), po 1–4 osoby. Obie grają ten sam poziom z tym samym rozdaniem teczek, każda w swojej sali. Żeton pod punktami pokazuje wynik rywali. Wygrywa więcej punktów, a redakcja, której Wiarygodność spadnie do zera albo która opuści mecz, przegrywa od razu. Równe punkty to remis. Pojedynek w trybie bez końca trwa 10 minut. Pojedynek nie zapisuje gwiazdek ani tablicy wyników. W Kolegium przy każdej teczce widać werdykt własny i werdykt rywali. W trakcie meczu nowi gracze nie dołączają: mogą oglądać.
+- **Widownia.** Gospodarz zaznacza w poczekalni „Widownia otwarta”. Kto ma kod, wpisuje go w menu i wybiera oko obok „Dołącz” („Oglądaj pokój o tym kodzie”); w pokoju jest do 8 miejsc dla widzów. Gracze widzą komunikat „Widz dołączył”. Widz widzi obie redakcje obok siebie (telefon: jedną, przełączaną stuknięciem), tablicę wyników, relację „Na żywo” i statystyki graczy; strzałki ← / → (pad: krzyżak albo RB, dotyk: znaczek gracza na tabliczce redakcji) włączają śledzenie gracza, Esc (pad: B) je kończy, a Q (pad: Y, dotyk: „Statystyki”) otwiera statystyki. W pojedynku widz poznaje wynik werdyktu dopiero wtedy, gdy obie redakcje zamkną tę samą teczkę, więc nie może podpowiadać.
+- **Szybka próba w jednej przeglądarce:** karta 1 otwiera pokój i wybiera „Na punkty”, karta 2 dołącza kodem (trafia do Głosu), gospodarz zaznacza „Widownia otwarta”, karta 3 wpisuje kod i wybiera oko. Gospodarz klika „Do składu!”.
+- **Publiczne pokoje.** Pokój jest zawsze prywatny (tylko z kodem). Lista publicznych pokoi w menu jest domyślnie wyłączona; pojawia się tylko, gdy włączy ją operator serwera. Wtedy gospodarz może oznaczyć pokój jako publiczny i nadać mu nazwę.
+
 ## Dla prowadzącego
 
 - Poziom trwa 6–8 minut, sesja z omówieniem 30–40 minut (jedna lekcja).
+- Nauczyciel może prowadzić mecz z projektora: otwiera pokój, przełącza się „Na widownię” i oddaje miejsca przy biurkach uczniom (gospodarzem pozostaje i to on startuje). W opcjach gracza może kogoś przenieść, przekazać rolę gospodarza albo usunąć osobę z pokoju (ta przeglądarka nie wróci do pokoju przez 10 minut).
 - Materiały do druku i prezentacji: [karty ról](cards/role-cards.html), [przykładowe teczki](cards/folders.html), [plany redakcji](maps/l1-burza.png), [zrzuty ekranu](screenshots/README.md), [nagranie](gameplay.webm).

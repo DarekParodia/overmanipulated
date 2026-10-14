@@ -6,7 +6,7 @@ import {
   type MdBlock,
   type MdInline,
   markdownTitle,
-  type PublicAds,
+  type PublicConfig,
   parseMarkdownLite,
 } from '@redakcja/shared';
 import type { ServerConfig } from '../config.ts';
@@ -15,20 +15,26 @@ import { escapeAttribute } from './render-shell.ts';
 const escapeText = escapeAttribute;
 
 /**
- * Which conditional blocks of the privacy note show, from the ads decision for the request host
- * (the same one the HTML shell and `/api/config` make):
+ * Which conditional blocks of the privacy note show, from the public config for the request host
+ * (the same one the HTML shell and `/api/config` serve):
  * - `ads` / `no-ads`: ads run on this address or not;
  * - `ads-limited`: limited ads (no ad cookies or local storage; the only mode for minors);
  * - `ads-minors`: requests carry an age tag (child or teen treatment);
- * - `ads-cookies`: non-personalised ads, which may use cookies (adult audiences only).
+ * - `ads-cookies`: non-personalised ads, which may use cookies (adult audiences only);
+ * - `room-browser` / `no-room-browser`: this server lists public rooms or not (S7-93).
  */
-export function privacyFlags(ads: PublicAds): Record<string, boolean> {
+export function privacyFlags({
+  ads,
+  features,
+}: Pick<PublicConfig, 'ads' | 'features'>): Record<string, boolean> {
   return {
     ads: ads.enabled,
     'no-ads': !ads.enabled,
     'ads-limited': ads.enabled && ads.mode === 'limited',
     'ads-minors': ads.enabled && ads.ageTreatment !== 'unspecified',
     'ads-cookies': ads.enabled && ads.mode === 'nonPersonalized',
+    'room-browser': features.roomBrowser,
+    'no-room-browser': !features.roomBrowser,
   };
 }
 
