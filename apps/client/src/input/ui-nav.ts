@@ -9,12 +9,22 @@ import { firstGamepad } from './gamepad-access.ts';
 /**
  * `ability` is the role ability key (R / RB, S7-39): overlays that offer an ability use it
  * (Ekspertyza, the desk's Przedłużenie); everything else ignores it or passes it on.
+ * `help` opens the station help card in a station overlay (H / Select, S7-95).
  */
-export type NavIntent = 'up' | 'down' | 'left' | 'right' | 'confirm' | 'back' | 'alt' | 'ability';
+export type NavIntent =
+  | 'up'
+  | 'down'
+  | 'left'
+  | 'right'
+  | 'confirm'
+  | 'back'
+  | 'alt'
+  | 'ability'
+  | 'help';
 
 /**
  * Physical key → intent. WASD and arrows navigate; Space/Enter/E confirm; Esc/Backspace back;
- * Q/Tab alt; R is the role ability.
+ * Q/Tab alt; R is the role ability; H opens the station help.
  */
 export const NAV_KEYS: Readonly<Record<string, NavIntent>> = {
   ArrowUp: 'up',
@@ -34,11 +44,12 @@ export const NAV_KEYS: Readonly<Record<string, NavIntent>> = {
   KeyQ: 'alt',
   Tab: 'alt',
   KeyR: 'ability',
+  KeyH: 'help',
 };
 
 /**
  * Gamepad: d-pad / left stick navigate, south confirms, east backs out, north is `alt`, RB is
- * the role ability.
+ * the role ability, Select is the station help.
  */
 const PAD_EAST = 1;
 const STICK_THRESHOLD = 0.6;
@@ -126,6 +137,7 @@ function padIntents(): Set<NavIntent> {
   if (pressed(PAD_EAST)) intents.add('back');
   if (pressed(PAD.north)) intents.add('alt');
   if (pressed(PAD.rb)) intents.add('ability');
+  if (pressed(PAD.select)) intents.add('help');
   return intents;
 }
 

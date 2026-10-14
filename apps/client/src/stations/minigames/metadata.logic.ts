@@ -93,6 +93,42 @@ export function metadataOutcome(
   return roll < weights.consistent + weights.contradiction ? 'contradiction' : 'stripped';
 }
 
+/**
+ * The field a technique's file gives away, when the technique implies one (keys are technique
+ * ids and their aliases from `techniques.json`): an old photo under a new caption carries its old
+ * date; a generated image was never shot by any device; a deepfake video was put together in a
+ * video editor (S7-59). So the puzzle agrees with the Metadane stamp of such a story, which names
+ * that field.
+ */
+export const TECHNIQUE_FIELD: Readonly<Record<string, MetadataField>> = {
+  'stare-zdjecie-nowy-podpis': 'taken',
+  'zdjecie-w-zlym-czasie': 'taken',
+  'obraz-wygenerowany-ai': 'device',
+  'deepfake-wideo': 'software',
+};
+
+/**
+ * Fields a real file (any story that is not false) may contradict: a wrong time or place in the
+ * description. Never a generator or a photomontage, which would brand an authentic file a fake.
+ */
+export const REAL_FILE_FIELDS: readonly MetadataField[] = ['taken', 'place'];
+
+/**
+ * The contradicting field of a `contradiction` puzzle: the technique's own field when it has
+ * one (no RNG draw); otherwise seeded, over every field for a false story and over
+ * `REAL_FILE_FIELDS` for a real file.
+ */
+export function contradictionField(
+  story: Pick<Story, 'truth' | 'technique'>,
+  rng: Rng,
+): MetadataField {
+  const field = TECHNIQUE_FIELD[story.technique];
+  if (field) {
+    return field;
+  }
+  return pick(rng, story.truth === 'false' ? METADATA_FIELD_IDS : REAL_FILE_FIELDS);
+}
+
 function contradictingValue(
   rng: Rng,
   field: MetadataField,
@@ -114,7 +150,7 @@ function contradictingValue(
 /** Same seed, story and stamp → same puzzle. */
 export function generatePuzzle(
   seed: number,
-  story: Pick<Story, 'headline' | 'truth' | 'type'>,
+  story: Pick<Story, 'headline' | 'truth' | 'type' | 'technique'>,
   stamp: Pick<Stamp, 'relevance' | 'text'> | undefined,
 ): MetadataPuzzle {
   const rng = createRng(seed ^ SEED_SALT ^ hashText(`${story.headline}|${stamp?.text ?? ''}`));
@@ -148,7 +184,7 @@ export function generatePuzzle(
   if (outcome === 'consistent') {
     return { mediaKind, claim, file, outcome, contradiction: null };
   }
-  const contradiction = pick(rng, METADATA_FIELD_IDS);
+  const contradiction = contradictionField(story, rng);
   file[contradiction] = contradictingValue(rng, contradiction, mediaKind, time);
   return { mediaKind, claim, file, outcome, contradiction };
 }

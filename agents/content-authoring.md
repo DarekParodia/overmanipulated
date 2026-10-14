@@ -82,6 +82,11 @@ has no `stars`). Event stories always stay in `events`, never in the pool.
   and multi-stamp stories come from slot `BAG_MULTI_STAMP_MIN_SLOT` on, whenever the pool allows.
 - **Coverage.** The pool must give every slot a distinct story on every difficulty, for every
   way the last partial round can fall; the validator names the station that runs short.
+- **Balance after a pool or timing change.** Changing `gapS`, `lastSpawnS`, `deadlineS` or
+  `starShares` changes every difficulty's folder count and thresholds: re-run `bun run balance`
+  for that level on all four difficulties (`--levels <id> --difficulty easy,normal,hard,expert
+  --crew-sizes 3` is a quick pass) and keep the intent checks in `docs/balance.md` green. Keep
+  `lastSpawnS` + the longest `deadlineS` within `durationS`, so no Normal folder is cut short.
 - **Endless** deals the same way from every campaign level's stories (schedule or pool, the
   greybox left out): shuffled rounds over the endless stations that decide a story, and each slot
   draws from its station's *deck* (the stories that station decides; a flex story sits in several
@@ -98,6 +103,44 @@ has no `stars`). Event stories always stay in `events`, never in the pool.
 - Keep folder text short — players read it while running. Headline ≤ 80 chars, body ≤ 200 chars.
 - Aim for a mix per level: roughly 30–40% true, the rest spread across the level's techniques.
 - Target volume: ~15 stories per campaign level, ~120 total including the endless-mode pool.
+
+### Stamps for the Stage 7 stations
+
+A story in a level with one of these stations needs a stamp for it like any other station. The
+stamp's relevance also picks the minigame's puzzle (`problemFromStamp` in
+`apps/client/src/stations/minigames/evidence.ts`), so the text must agree with what the player
+just saw. None of the four stations is hint-only.
+
+- **Stenogram** (`transcript`) is decisive only for `quote` and `recording` stories: a decisive
+  stamp quotes or describes the full record (a cut on a misleading story, an invented quote on a
+  false one, the same words on a true one). On other story types, or when there is no record to
+  compare with, write an `irrelevant` stamp such as „Brak wypowiedzi do porównania.” A
+  `misleading` stamp on a true story reports the cut the puzzle shows, which looks suspicious
+  but proves nothing about the story („Klip skrócono o pytania dziennikarzy.”); on an untrue
+  story it says the words match a record (the puzzle shows a fair cut).
+- **Metadane** (`metadata`): an `irrelevant` stamp *means* the metadata was stripped, and its
+  text says so: „Serwis usunął metadane – nic z nich nie wynika.” A decisive stamp on an untrue
+  story shows the field that contradicts the description. The puzzle takes that field from the
+  story's technique when it implies one (`TECHNIQUE_FIELD` in `metadata.logic.ts`: an old photo
+  under a new caption → the date, an AI image → the device, a deepfake video → the editing
+  program) and from the seed otherwise, so name a field only when the technique fixes it („Dane
+  pliku: zdjęcie zrobiono lata temu…”) and otherwise say only that the data contradict the
+  description; never quote an exact date or device, the puzzle draws them from its own pools. A
+  real file (any story that is not `false`) only ever contradicts on time or place, never as
+  „generated” or „photomontage”. A decisive stamp may be the only proof of a true story only
+  when the claim is about the time, place or device of the shot. A `misleading` stamp gives a
+  harmless reason for a wrong time or place on a true story, or says the data match on an
+  untrue one (metadata are easy to edit).
+- **Mapa** (`geolocation`) is decisive only for photos and video with a place claim.
+- **Inne media** (`crossCheck`): `irrelevant` and `misleading` stamps read as „no independent
+  coverage”, e.g. „Nikt jeszcze o tym nie pisze.” or „Trzy portale to powtarzają – same kopie
+  wpisu.”
+- A decisive stamp from any of them belongs in `justifyingStamps` (the validator warns
+  otherwise), so add one only where the station really settles the story.
+- Encyclopedia cards (`techniques/techniques.json`) list at most 4 stations, most useful first,
+  and the `detect` text names each Stage 7 station it lists (S7-65). A new technique id for an
+  existing trick goes into that card's `aliases` (e.g. `zdjecie-z-innego-miejsca` on
+  `stare-zdjecie-nowy-podpis`), not onto a new card.
 
 ## Automated checks (`bun run validate:content`)
 

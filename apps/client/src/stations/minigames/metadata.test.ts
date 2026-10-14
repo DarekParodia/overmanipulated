@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'bun:test';
+import { STORIES, TECHNIQUES } from '@redakcja/content';
 import { createRng, METADATA_FIELDS, METADATA_MAX_MISTAKES } from '@redakcja/shared';
 import { pl } from '../../strings/pl.ts';
 import {
   type Action,
   answerChoice,
   CHOICES,
+  contradictionField,
   type GameState,
   generatePuzzle,
   initialState,
@@ -12,8 +14,10 @@ import {
   METADATA_FIELD_IDS,
   type MetadataPuzzle,
   metadataOutcome,
+  REAL_FILE_FIELDS,
   reasonKey,
   reduce,
+  TECHNIQUE_FIELD,
 } from './metadata.logic.ts';
 
 const t = pl.minigames.metadata;
@@ -21,14 +25,17 @@ const t = pl.minigames.metadata;
 const OLD_TIMES: readonly string[] = t.times.map((x) => x.old);
 const FILE_TIMES: readonly string[] = t.times.map((x) => x.file);
 const EDITED_PHOTO: readonly string[] = t.software.photo.edited;
+const EDITED_RECORDING: readonly string[] = t.software.recording.edited;
 const OTHER_TOWNS: readonly string[] = t.otherTowns;
 const story = (
   truth: 'true' | 'false' | 'misleading',
   type: 'photo' | 'recording' | 'post' = 'photo',
+  technique = 'none',
 ) => ({
   headline: 'Pożar w porcie',
   truth,
   type,
+  technique,
 });
 const stamp = (relevance: 'decisive' | 'misleading' | 'irrelevant') => ({
   relevance,
@@ -154,6 +161,106 @@ describe('generatePuzzle', () => {
       expect(FILE_TIMES).toContain(p.file.taken ?? '');
       expect(p.file.software).toBe(t.software.photo.clean);
       expect(answerChoice(p)).toBe('matches');
+    }
+  });
+
+  it('never brands a real file a fake: only its time or place contradicts', () => {
+    expect(REAL_FILE_FIELDS).toEqual(['taken', 'place']);
+    for (const [truth, relevance] of [
+      ['true', 'misleading'],
+      ['misleading', 'decisive'],
+    ] as const) {
+      const fieldsSeen = new Set<string>();
+      for (let seed = 0; seed < 200; seed++) {
+        const p = generatePuzzle(seed, story(truth), stamp(relevance));
+        expect(p.outcome).toBe('contradiction');
+        fieldsSeen.add(p.contradiction ?? 'none');
+        expect(p.file.device).not.toBe('brak – plik wygenerowany');
+        expect(p.file.software).toBe(t.software.photo.clean);
+      }
+      expect([...fieldsSeen].sort()).toEqual(['place', 'taken']);
+    }
+  });
+
+  it('shows the field the technique gives away, whatever the seed', () => {
+    expect(TECHNIQUE_FIELD).toEqual({
+      'stare-zdjecie-nowy-podpis': 'taken',
+      'zdjecie-w-zlym-czasie': 'taken',
+      'obraz-wygenerowany-ai': 'device',
+      'deepfake-wideo': 'software',
+    });
+    for (let seed = 0; seed < 50; seed++) {
+      const old = generatePuzzle(
+        seed,
+        story('misleading', 'photo', 'stare-zdjecie-nowy-podpis'),
+        stamp('decisive'),
+      );
+      expect(old.contradiction).toBe('taken');
+      expect(OLD_TIMES).toContain(old.file.taken ?? '');
+      const generated = generatePuzzle(
+        seed,
+        story('false', 'photo', 'obraz-wygenerowany-ai'),
+        stamp('decisive'),
+      );
+      expect(generated.contradiction).toBe('device');
+      expect(generated.file.device).toBe('brak – plik wygenerowany');
+      // A deepfake video went through a video editor (S7-59).
+      const deepfake = generatePuzzle(
+        seed,
+        story('false', 'recording', 'deepfake-wideo'),
+        stamp('decisive'),
+      );
+      expect(deepfake.contradiction).toBe('software');
+      expect(EDITED_RECORDING).toContain(deepfake.file.software ?? '');
+    }
+    // A technique field needs no draw: the RNG is untouched.
+    const rng = createRng(5);
+    expect(contradictionField({ truth: 'false', technique: 'obraz-wygenerowany-ai' }, rng)).toBe(
+      'device',
+    );
+    expect(rng.next()).toBe(createRng(5).next());
+  });
+
+  it('maps only techniques that exist (ids or aliases)', () => {
+    const known = new Set(TECHNIQUES.flatMap((card) => [card.id, ...card.aliases]));
+    for (const technique of Object.keys(TECHNIQUE_FIELD)) {
+      expect({ technique, known: known.has(technique) }).toEqual({ technique, known: true });
+    }
+  });
+
+  it('gives every authored Metadane stamp the puzzle its text describes (S7-57)', () => {
+    const authored = STORIES.flatMap((s) =>
+      s.stamps.filter((x) => x.station === 'metadata').map((x) => ({ story: s, stamp: x })),
+    );
+    expect(authored.length).toBeGreaterThan(0);
+    for (const { story: s, stamp: x } of authored) {
+      for (let seed = 0; seed < 20; seed++) {
+        const p = generatePuzzle(seed, s, x);
+        if (x.relevance === 'irrelevant') {
+          expect({ id: x.id, outcome: p.outcome }).toEqual({ id: x.id, outcome: 'stripped' });
+        }
+        if (s.truth !== 'false') {
+          expect({ id: x.id, device: p.file.device }).not.toEqual({
+            id: x.id,
+            device: 'brak – plik wygenerowany',
+          });
+        }
+      }
+    }
+    const field = (id: string) => {
+      const found = authored.find(({ stamp: x }) => x.id === id);
+      if (!found) throw new Error(`${id} missing`);
+      return generatePuzzle(1, found.story, found.stamp).contradiction;
+    };
+    expect(field('l5-zdjecie-sprzed-lat-metadata')).toBe('taken');
+    expect(field('l5-burmistrz-na-jachcie-metadata')).toBe('device');
+    // S7-59: the new Metadane-pinned stories.
+    expect(field('l5-film-z-montazu-metadata')).toBe('software');
+    expect(field('l5-drzemka-na-sesji-metadata')).toBe('taken');
+    const reader = authored.find(({ stamp: x }) => x.id === 'l5-zdjecie-czytelnika-metadata');
+    if (!reader) throw new Error('l5-zdjecie-czytelnika-metadata missing');
+    for (let seed = 0; seed < 20; seed++) {
+      expect(generatePuzzle(seed, reader.story, reader.stamp).outcome).toBe('consistent');
     }
   });
 

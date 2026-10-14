@@ -247,7 +247,7 @@ describe('ticks and snapshots', () => {
   });
 
   it('resolves useAbility next tick and reports the cooldown in crew (S7-37)', () => {
-    // A fixed run seed: this run deals an important story first (90 s on Normal).
+    // A fixed run seed: this run deals an important story first (75 s on Normal).
     registry = createRoomRegistry({ hub: fake.hub, now: () => time, random: () => 0.9 });
     const host = join('Ala');
     const hostId = welcomeOf(host).playerId;
@@ -262,7 +262,7 @@ describe('ticks and snapshots', () => {
     const before = host.last('snapshot');
     expect(before?.elapsedMs).toBe(3000);
     expect(before?.folders.map((f) => [f.id, f.spawnedAtMs, f.deadlineMs])).toEqual([
-      ['f1', 3000, 93_000],
+      ['f1', 3000, 78_000],
     ]);
     registry.handleMessage(host, { type: 'command', command: { kind: 'useAbility' } });
     registry.tick();
@@ -275,7 +275,7 @@ describe('ticks and snapshots', () => {
       addedMs: 20_000,
     });
     const after = host.last('snapshot');
-    expect(after?.folders[0]).toMatchObject({ id: 'f1', deadlineMs: 113_000, extendedMs: 20_000 });
+    expect(after?.folders[0]).toMatchObject({ id: 'f1', deadlineMs: 98_000, extendedMs: 20_000 });
     expect(after?.crew[0]).toMatchObject({
       id: hostId,
       abilityReadyAtMs: (after?.elapsedMs ?? 0) + 60_000,
@@ -285,14 +285,14 @@ describe('ticks and snapshots', () => {
     registry.handleMessage(host, { type: 'command', command: { kind: 'useAbility' } });
     registry.tick();
     expect(abilityEvents()).toHaveLength(1);
-    expect(host.last('snapshot')?.folders[0]?.deadlineMs).toBe(113_000);
+    expect(host.last('snapshot')?.folders[0]?.deadlineMs).toBe(98_000);
   });
 
   it('announces the next scheduled folder in every snapshot, from the first one on', () => {
     const { guest } = startedRoom();
-    // The default level, l0-greybox, deals its first folder at 3 s and the second at 21 s.
+    // The default level, l0-greybox, deals its first folder at 3 s and the second at 25 s.
     const firstTwo = getLevel(DEFAULT_LEVEL_ID)?.schedule.slice(0, 2);
-    expect(firstTwo?.map((entry) => entry.atS)).toEqual([3, 21]);
+    expect(firstTwo?.map((entry) => entry.atS)).toEqual([3, 25]);
     registry.tick();
     expect(guest.all('snapshot')).toHaveLength(1);
     expect(guest.last('snapshot')).toMatchObject({
@@ -305,7 +305,7 @@ describe('ticks and snapshots', () => {
     }
     expect(guest.last('snapshot')?.folders).toHaveLength(1);
     expect(guest.last('snapshot')).toMatchObject({
-      nextFolder: { atMs: 21_000, sinceMs: 3000 },
+      nextFolder: { atMs: 25_000, sinceMs: 3000 },
       conveyorFull: false,
     });
   });

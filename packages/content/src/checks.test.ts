@@ -221,9 +221,9 @@ describe('greybox content (S7-27: a station bag)', () => {
     expect(file.schedule).toBeUndefined();
     expect(file.bag).toMatchObject({
       firstAtS: 3,
-      gapS: 18,
-      lastSpawnS: 175,
-      deadlineS: { normal: 75, important: 90, urgent: 50 },
+      gapS: 22,
+      lastSpawnS: 165,
+      deadlineS: { normal: 75, important: 75, urgent: 50 },
       starShares: { two: 0.5, three: 0.8 },
     });
     expect(pool).toHaveLength(17);
@@ -250,8 +250,8 @@ describe('greybox content (S7-27: a station bag)', () => {
     }
   });
 
-  it('pins at least ⌈10 Normal folders / 3 stations⌉ = 4 stories to every station', () => {
-    expect(bagSlotTimes(bagOfFile(file), 'normal')).toHaveLength(10);
+  it('pins at least ⌈8 Normal folders / 3 stations⌉ = 3 stories to every station', () => {
+    expect(bagSlotTimes(bagOfFile(file), 'normal')).toHaveLength(8);
     expect(Object.fromEntries(pinnedCounts(pool, stations))).toEqual({
       imageSearch: 4,
       archive: 4,
@@ -259,14 +259,14 @@ describe('greybox content (S7-27: a station bag)', () => {
     });
   });
 
-  it('deals 8 / 10 / 11 / 12 distinct folders on easy / normal / hard / expert', () => {
+  it('deals 7 / 8 / 9 / 10 distinct folders on easy / normal / hard / expert', () => {
     const counts = DIFFICULTIES.map((difficulty) => {
       const run = generateBagLevel(file, STORIES, 7, difficulty);
       const ids = run.schedule.map((spawn) => spawn.storyId);
       expect(new Set(ids).size).toBe(ids.length);
       return ids.length;
     });
-    expect(counts).toEqual([8, 10, 11, 12]);
+    expect(counts).toEqual([7, 8, 9, 10]);
   });
 
   it('opens the preview with single-proof, non-urgent folders and stars at 50% / 80%', () => {
@@ -274,13 +274,13 @@ describe('greybox content (S7-27: a station bag)', () => {
     if (!level) {
       throw new Error('greybox level missing');
     }
-    expect(level.schedule.slice(0, 2).map((spawn) => spawn.atS)).toEqual([3, 21]);
+    expect(level.schedule.slice(0, 2).map((spawn) => spawn.atS)).toEqual([3, 25]);
     for (const spawn of level.schedule.slice(0, BAG_OPENING_SLOTS)) {
       expect(pool.find((s) => s.id === spawn.storyId)?.priority).not.toBe('urgent');
     }
     const max = maxLevelScore(level, new Map(STORIES.map((s) => [s.id, s])));
     expect(level.stars).toEqual(starThresholds(max, { two: 0.5, three: 0.8 }));
-    expect({ max, stars: level.stars }).toEqual({ max: 240, stars: { two: 120, three: 190 } });
+    expect({ max, stars: level.stars }).toEqual({ max: 180, stars: { two: 90, three: 145 } });
   });
 });
 
@@ -311,9 +311,9 @@ describe('level 1 content', () => {
     expect(file.bag).toEqual({
       pool: file.bag?.pool ?? [],
       firstAtS: 4,
-      gapS: 22,
+      gapS: 20,
       lastSpawnS: 312,
-      deadlineS: { normal: 55, important: 60, urgent: 40 },
+      deadlineS: { normal: 50, important: 55, urgent: 40 },
       starShares: { two: 0.55, three: 0.85 },
     });
     expect(pool).toHaveLength(20);
@@ -354,12 +354,12 @@ describe('level 1 content', () => {
     );
   });
 
-  it('passes the bag checks with no issue: 12, 15, 16 and 18 folders by difficulty', () => {
+  it('passes the bag checks with no issue: 13, 16, 18 and 20 folders by difficulty', () => {
     const bag = file.bag;
     if (!bag) {
       throw new Error('level 1 has no bag');
     }
-    expect(DIFFICULTIES.map((d) => bagSlotTimes(bag, d).length)).toEqual([12, 15, 16, 18]);
+    expect(DIFFICULTIES.map((d) => bagSlotTimes(bag, d).length)).toEqual([13, 16, 18, 20]);
     const issues: string[] = [];
     checkBag({ ...file, bag }, byId, (path, severity, message) =>
       issues.push(`${severity} ${path.join('.')}: ${message}`),
@@ -649,22 +649,27 @@ describe('validate CLI', () => {
   it('passes on the real content', () => {
     const result = run();
     const out = result.stdout.toString();
-    // Decisive stamps that do not justify (S7-21 warning); S7-33 cleaned up l4, S7-58 cleans l6.
+    // Decisive stamps that do not justify (S7-21 warning): S7-33 cleaned up l4, S7-58 cleaned l6.
     const decisiveNotJustifying = [...out.matchAll(/decisive stamp "([^"]+)" does not justify/g)];
-    expect(decisiveNotJustifying.map((match) => match[1])).toEqual([
-      'l6-frekwencja-w-poludnie-archive',
-    ]);
+    expect(decisiveNotJustifying.map((match) => match[1])).toEqual([]);
     // New stories wait for their level's bag pool: since S7-31 and S7-33 every l3 and l4 story
     // is in its level's pool.
     const notScheduled = [...out.matchAll(/story "([^"]+)" is not scheduled in any level/g)];
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l4-'))).toEqual([]);
     expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l3-'))).toEqual([]);
-    // l0's last Normal slot window (175 s + 90 s) runs past its 240 s; the generator clamps it.
+    // The S7-59 stories wait for the l5 bag pool (S7-60).
+    expect(notScheduled.map((match) => match[1]).filter((id) => id?.startsWith('l5-'))).toEqual([
+      'l5-cytat-z-sesji',
+      'l5-wywiad-skrocony',
+      'l5-zdjecie-czytelnika',
+      'l5-film-z-montazu',
+      'l5-drzemka-na-sesji',
+      'l5-burmistrz-morsuje',
+      'l5-falszywy-profil-urzedu',
+    ]);
+    // Every bag's last slot window fits its level (S7-35 moved l0 to 165 s + 75 s = 240 s).
     const deadlineFit = [...out.matchAll(/warning (levels\/\S+) bag\.lastSpawnS: /g)];
-    expect(deadlineFit.map((match) => match[1])).toEqual(['levels/l0-greybox.json']);
-    expect(out).toContain(
-      'warning levels/l0-greybox.json bag.lastSpawnS: a folder at 175 s needs up to 90 s, past the level end at 240 s; late folders get less time',
-    );
+    expect(deadlineFit).toEqual([]);
     const warnings = decisiveNotJustifying.length + notScheduled.length + deadlineFit.length;
     expect(out).toContain(`0 error(s), ${warnings} warning(s)`);
     expect(result.exitCode).toBe(0);

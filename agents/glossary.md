@@ -67,6 +67,8 @@ Use these names in code, schemas, file names and docs. Player-facing text stays 
 | Skalowanie terminów | `scaledDeadlineS`, `applyDifficulty` | Deadline × `deadlineFactor`, rounded to whole seconds (Normal unchanged); `applyDifficulty` scales a fixed schedule's deadlines only |
 | Historie poziomu | `levelStoryIds` | The pool of a bag level, otherwise the scheduled ids; never event stories |
 | Talia stanowiska (tryb nieskończony) | station deck (`endlessDecks`) | Endless stories one station can decide; each endless slot draws from its station's deck with `bagDrawer`; should hold at least `ENDLESS_MIN_DECK` (validator warning) |
+| Obciążenie stanowisk | station load (`stationBusyShare`, `loadSpread` in `tools/balance`) | Balance harness: share of level time each station holds a folder or an operator, and the busiest / least busy ratio (the M2 exit measure) |
+| Stanowisko dominujące | dominant station (`dominantStation`, `DOMINANT_BUSY_SHARE`, `DOMINANT_SPREAD`) | Balance harness: a station busy over half the level and over twice the least busy one for an average crew of 3 or 4; the duplicate-station rule (S7-35) adds a second copy only for such a station |
 | Najlepszy możliwy wynik | `maxScore` | Score of a perfect team on the level, sent with `levelEnd` |
 | Za co punkty (podsumowanie punktów) | `resultTotals` (`TotalsRow`) | Results-screen totals: outcome rows with base points and credibility (`correct`, `correction`, `weakProof`, `wrong`, `expired`, `unfinished`), bonus rows (`speed`, `proofs` = multi-stamp, `bossCall`), and an `other` row („Inne”) for results the server capped; Σ rows = Σ `scoreDelta` |
 | Do następnej gwiazdki | `starProgress` (`StarProgress`) | Next star and missing points of a won level, plus thresholds as shares of `maxScore` |
@@ -163,6 +165,12 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Wszechstronny | `generalist` | Every station 20% faster (`workFactor` 0.8) | Druga szansa |
 | Ratownik | `rescuer` | Koło ratunkowe: once per level (`rescuesPerLevel` 1) | Podaj teczkę |
 
+| Polish | English | Notes |
+| --- | --- | --- |
+| Premia (roli) | passive (`RoleSummary.passive`, `pl.lobbyRoles.passiveLabel`) | A role's always-on bonus; „Bez premii” for a role without one or without a role |
+| Przepustki ról | role passes (`RolePasses`, `data-testid="role-pass-<role>"`) | The lobby's 7 native radios (6 roles + „Bez roli”), with the marks of the teammates who picked each (`role-pass-dots`) |
+| Panel roli | role detail panel (`data-testid="role-detail"`, `roleSummary`, `roleSummaryNote`) | Under the passes: the checked (or hovered / pad-focused) role's passive with its stations on the level, the ability with the device's key and cooldown, and „Ta premia / Ta zdolność nie działa na tym poziomie.” when a perk does nothing there |
+
 ## Abilities (`Ability`, Stage 7)
 
 | Polish | English | Notes |
@@ -224,6 +232,7 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Skalowanie kar | `scalePenalty` (`penaltyFactor`) | Wrong-verdict, expiry and correction penalties × the factor, halves rounded away from zero; rewards are never scaled |
 | Utrata / odzysk przy sprostowaniu | `correctionLoss` / `correctionRecover` | Credibility a correction costs (scaled) and the share of it a filed correction gives back |
 | Limit czasu minigry | `minigameTimeLimitMs` | Time for one minigame attempt; running out is a failure |
+| Drabinka trudności | difficulty ladder (`monotonicChecks`, `difficultyChecks`, `DIFFICULTY_TARGETS` in `tools/balance/report.ts`) | Balance checks: the average crew of 3 never wins more, scores a larger share or (endless) lasts longer on a harder difficulty; per-difficulty targets in docs/balance.md |
 | Zasady rundy minigry | round rules (`roundRules`, `RoundRules`) | What the room's difficulty gives one minigame round on the client: `difficulty` (for the mistake limit), `timeLimitMs` and `revealOnFail`; passed in `MinigameProps` |
 | Pokazanie odpowiedzi po porażce | answer reveal (`revealOnFail`, `revealsOnFail`) | A failed round shows the right answer (cell, result, card or reading); off on Ekspert and at stations that keep their card (`MINIGAME_STABLE_SEED_STATIONS`) |
 | Podpowiedzi (efektywne) | effective hints (`effectiveHints`, `useEffectiveHints`) | The „co dalej” hints the game shows: the player setting AND `DIFFICULTY[d].hints`, so none on Ekspert; drives the hint bubble, scene markers and the evidence badge; the tutorial is unaffected |
@@ -259,6 +268,17 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Audio bus | `AudioBus`: `music` / `sfx` / `ui` / `voice` | Each bus has its own volume slider; effective volume is `busVolume(settings, bus)` (`fx/audio/mix.ts`) |
 | Lektor (intro voiceover) | `voice` bus, `voiceVolume`, `fx/audio/voice.ts` (`loadVoice`, `playVoice`, `voiceStatus`) | Narrator lines of the intro; its own slider 'Lektor'; dips the music to `DUCK_TUNING.voiceDepth` (0.3); silent and skipped when muted, not loaded or locked |
 | Music duck | `Ducker`, `musicDucker`, `DUCK_TUNING` (`fx/audio/duck.ts`) | Short dip of the music bus under a stinger (`depth` 0.45) or a voice line (`voiceDepth` 0.3); the lowest active depth wins |
+| Wprowadzenie (intro) | `intro` (`apps/client/src/intro/`, `pl.intro`) | The narrated walk-through of the game (60–90 s): autoplays once per browser in the training lobby, replayable from „Jak grać?” and the settings |
+| Scena wprowadzenia | intro scene (`IntroScene`, `INTRO_SCENES`, `IntroSceneId`) | One of 11 steps (`welcome` … `end`); its stage is UI-kit art (`kit`) or the live sim (`engine`) |
+| Klip lektora | intro clip (`IntroClip`, `INTRO_CLIPS`, `IntroClipId`) | One narrator line: 8 shared plus 3 × 3 device variants (`pickup.touch`) = 17; the id keys the voice sprite and the line export |
+| Ścieżka sterowania sceny | scripted input track (`IntroTrackId`) | The inputs that drive the local sim in a gameplay scene: `conveyorArrivals`, `pickUpFolder`, `holdWork`, `earnStamp`, `citeAndVerdict` |
+| Napisy lektora | subtitles (`subtitleChunks`, `SubtitleChunk`) | Always on; one sentence per chunk, timed by its share of characters, at most 2 lines at 640×360 (`INTRO_SUBTITLE_LINE_CHARS`) |
+| Czas bez głosu | fallback timing (`fallbackMs`, `sceneDurationMs`, `introReducer`) | A scene without a voice lasts 400 ms per word, 2.5–12 s; with a voice it moves on 450 ms after the clip ends (at the latest the clip + 1.5 s) |
+| Wprowadzenie obejrzane | intro seen flag (`redakcja.intro.seen.v1`, `introSeen`, `markIntroSeen`, `shouldAutoplayIntro`) | Set on finishing or skipping; the game starting mid-intro does not set it |
+| Tekst dla lektora | TTS text (`ttsText`, `PRONOUNCE`, `tools/audio/intro-lines.ts`) | A subtitle as the voice says it: plain spaces, no quotes, key names respelled („klawiszem er”) |
+| Sprite lektora | voice sprite (`VoiceSprite`, `voiceSpriteSchema`, `loadVoiceSprite`, `loadIntroVoice`; `intro/voice-sprite.ts`) | `/assets/voice/intro.json` beside `intro.{webm,mp3}`: per clip `startMs`, `durationMs`, `textSha1`; written by `tools/audio/synth_voice.py`; optional (no sprite → subtitles and fallback timing) |
+| Licencja głosu | voice licence (`VOICE_LICENCES`) | `CC0-1.0`, `CC-BY-4.0`, `MIT` or `self-recorded-CC0` (a volunteer recording released under CC0); nothing non-commercial can ship |
+| Nagranie lektora | voice recording (`synth_voice.py --recordings DIR`) | One take per clip, `DIR/<clipId>.wav`, released under CC0 by the volunteer; replaces TTS with one command |
 
 ## Server config and ads (Stage 7)
 
@@ -280,11 +300,30 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Magazyn konfiguracji | `ConfigStore` (`createConfigStore`, `staticConfigStore`) | Holds the running config; reloads on file changes (`fs.watch` on the directory, 250 ms debounce) and on `SIGHUP`; `revision` +1 per reload that changed a value; `source` `file` / `defaults` |
 | Zgoda na reklamy | `ads.signOff` (`{by, date}`) | Supervisor or legal sign-off recorded in config.json; `ads.enabled: true` is refused without it, also when forced by `ADS_ENABLED` |
 | Ustawienia pokoi | `RoomSettings` (`RegistryOptions.settings()`, `roomSettings`) | `maxRooms`, `defaultDifficulty` and the feature flags, read by the registry at every room creation, so a reload applies to the next room |
+| Tryb pokoju (Razem / Na punkty) | `roomMode` (`coop` / `versus`, `RoomMode`, lobby action `setMode`) | Razem: one shared newsroom. Na punkty: two newsrooms play the same run side by side; on `roomState.mode`, a new room is co-op (S7-77) |
+| Redakcja w pojedynku (Kurier / Głos) | team (`teamIndex` 0 / 1, `TeamIndex`, `MAX_TEAMS`, lobby action `setTeam`) | One newsroom (one sim) of a room, up to `MAX_TEAM_PLAYERS` (4) players; co-op has team 0 only. On `roomState.players[].team`, `snapshot.team`, `event.team`, `levelEnd.team` |
+| Gracz / widz | member kind (`memberKind`: `player` / `spectator`, `join.as`, lobby action `setSpectator`) | A room member plays in a team or watches; one reconnect token is exactly one member kind. `MAX_ROOM_PLAYERS` (8) players plus `MAX_SPECTATORS` (8) spectators per room |
+| Widownia | `spectatorsAllowed` (lobby action `setSpectatorsAllowed`), `roomState.spectators` (`LobbySpectator`) | The room's spectator seats; off by default, the host opens them. A spectator join to a closed Widownia gets `spectatorsOff` |
+| Pokój prywatny / publiczny | `roomVisibility` (`private` / `public`, lobby action `setVisibility`) | Private rooms are reached by code only (default); public ones are listed in the room browser when the `roomBrowser` flag is on |
+| Nazwa pokoju | `roomName` (`roomNameSchema`, lobby action `setRoomName`) | Optional host-given name: trimmed, 1..`ROOM_NAME_MAX_LENGTH` (24), no control characters; the server's name filter answers `invalidName` |
+| Identyfikator przeglądarki | `clientId` (`clientIdSchema`, `join.clientId`) | Opaque random id (16..64 characters) a browser keeps in localStorage and sends on join, so a kick cooldown follows the browser rather than a class-shared IP |
+| Wynik redakcji | team score (`teamScoreSchema`, `TeamScore`, `snapshot.scoreboard`) | One newsroom's `{team, score, credibility, resolved, expired, connected}`; versus snapshots carry both, for the rival chip and the spectator scoreboard |
+| Embargo na werdykty (widownia) | spectator embargo (`spectatorEvent`, `verdictMasked`, `verdictRevealed`; pure rules in `spectator-embargo.ts`: `SpectatorEmbargo`, `createEmbargo`, `openSpawnKey`, `closeSpawnKey`, `maskForSpectators`, `release`, `releaseAll`, `HeldResult`) | In versus a spectator sees a closed folder as `verdictMasked` (who, which `spawnKey`, verdict or expiry; never the verdict, outcome, reason or points) until both newsrooms closed that key or the level ended, then `verdictRevealed` with the result. Players never receive `spectatorEvent`. In co-op every event passes through |
+| Statystyki meczu | match stats (`playerStatsSchema`, `PlayerStats`, `matchStats`, `levelEnd.stats`; `match-stats.ts`: `emptyPlayerStats`, `applyStatsEvent`, `teamScoreOf`) | Per player: verdicts, correct, wrong, stamps, minigame fails, abilities (stage `done`); sent to spectators at 1 Hz (`SPECTATOR_STATS_INTERVAL_TICKS`) and in `levelEnd`. `applyStatsEvent` is the only accumulator |
+| Wynik pojedynku | versus summary (`versusSummarySchema`, `VersusSummary`, `levelEnd.versus`, `versusEndReason`) | `{winnerTeam (null on a draw), reason: score / credibility / forfeit / draw, teams, rivalResults}`; `rivalResults` pair with the team's own results by `spawnKey` |
+| Rozstrzygnięcie pojedynku | `versusOutcome` (`TeamStanding`, `VersusResult`, `byScore`), `matchDurationMs` (`versus.ts`) | A newsroom with credibility 0 or a forfeit is out; the last one in wins (`forfeit` / `credibility`); all out on one tick or time up → higher score (`score`), equal top scores → `draw`. Endless versus lasts `VERSUS.endlessDurationS` (600 s) |
+| Filtr nazw | name filter (`isAcceptableName`, `maskName`, `NAME_MASK_CHAR`, `name-filter.ts`) | Small Polish blocklist for room names (`invalidName`) and host nicknames in the room browser (masked to `*`); matched after `foldSearch` with look-alike digits, repeated letters and split letters folded |
+| Lista pokojów | room browser list (`roomSummarySchema`, `RoomSummary`, `roomListQuerySchema`, `roomListResponseSchema`, `roomListStatusSchema`: `any` / `open` / `inGame`, `rooms.ts`) | What `GET /api/rooms` returns for a public room: code, name, masked host nickname, level, mode, difficulty, counts and seats, `canJoinAsPlayer`, `canSpectate`, `createdAt` |
+| Wyszukiwanie bez ogonków | `foldSearch` | Lower case, diacritics stripped (`ł` → `l`), whitespace collapsed: `foldSearch('Łukasz Żółć') === 'lukasz zolc'`; the room-browser search and the name filter use it |
+| Minimalny czas rozwiązania | `MINIGAME_MIN_SOLVE_MS` | Versus only: a minigame success reported sooner after the minigame opened counts as a failure (anti-cheat, enforced from S7-80) |
 | Ładowarka reklam | `ensureAdSense`, `AdLoaderState` (`idle` / `loading` / `ready` / `blocked`), `useAdLoader` (`apps/client/src/ads/adsense.ts`) | Injects Google's script once, when the first `AdSlot` mounts; the request flags (`AD_QUEUE_FLAGS`) are on the queue first. An error or `ADS_LOAD_TIMEOUT_MS` without a load means `blocked`: no ads, no message |
 | Ramka reklamy | `AdSlot` (`placement`) | The white "Reklama" frame around one fixed-size unit (`AD_PLACEMENTS`); renders nothing on phones, with ads off, without a unit for the placement or when the loader is blocked. No cue, never focusable |
 | Ekran reklamowy | `adEligible({screen, levelEnded, spectating})`, `AD_ELIGIBLE_SCREENS` | Main menu, lobby, results of a finished level, spectator view; nowhere else |
 | Wstrzymanie reklam | `useAdRequestPause`, `setAdRequestsPaused` (`pauseAdRequests`) | Pause guard mounted in `App`: ad requests are paused on every screen that is not an ad screen |
 | Odstęp od reklamy | `--space-ad-gap` (9.5rem), `AD_MIN_GAP_PX` (150) | Clear space between an ad and any control (AdSense game-page guidance) |
 | Znacznik wieku zgody | `data-tag-for-under-age-of-consent` (TFUA), `data-tag-for-age-treatment` (TFAT) | Per-unit tags from `adRequestAttributes`: TFUA in `limited` mode (Google serves limited ads), TFAT `1` child / `2` teen |
+| Zgody reklamowe | `adConsent` (`pl.menu.adConsent`, `openConsentSettings`) | The footer link that reopens Google's consent message (`googlefc.showRevocationMessage`), required by AdSense; shown only while the ad loader is `ready` |
+| Stopka menu | `MenuFooter` (`screens/menu/MenuFooter.tsx`) | Row of minor ghost-button links under the main-menu card, never yellow; renders nothing while it has no link |
+| Strażnik reklam (e2e) | ad guard (`guardAdRequests`, `trackContext(context, { ads })` in `e2e/helpers.ts`) | Every e2e context without an ads config fails its test (in `closePlayers`) if it sends a request to a Google ad host; `openPlayer` and `trackContext` apply it, `guardAdRequests(page.context())` covers Playwright's own `page` fixture; only `ads.spec.ts` opts out |
 
 Missing a term? Add it here in the same commit that introduces it.

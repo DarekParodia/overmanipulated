@@ -38,6 +38,18 @@
         "station": "archive",
         "text": "W archiwum uchwał brak projektu podwyżki podatku od psów.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-nagranie-podatek-transcript",
+        "station": "transcript",
+        "text": "Nagranie bez źródła i daty – nie ma pełnego zapisu, z którym można je porównać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-nagranie-podatek-metadata",
+        "station": "metadata",
+        "text": "Komunikator usunął metadane pliku – nic z nich nie wynika.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l5-nagranie-podatek-phone", "l5-nagranie-podatek-scanner"],
@@ -89,6 +101,18 @@
         "station": "archive",
         "text": "Transmisja z rynku zapisana w archiwum telewizji lokalnej. Przemowa zgadza się słowo w słowo.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l5-przemowa-na-rynku-transcript",
+        "station": "transcript",
+        "text": "Film ucina początek i koniec przemowy. Brakuje kilku zdań powitania.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-przemowa-na-rynku-metadata",
+        "station": "metadata",
+        "text": "Dane pliku nie pasują do opisu. Telefon mieszkańca miał źle ustawiony zegar i GPS.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l5-przemowa-na-rynku-archive"],
@@ -139,6 +163,18 @@
         "id": "l5-glosowka-przelew-archive",
         "station": "archive",
         "text": "W rejestrze fundacji brak organizacji o takiej nazwie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-przelew-transcript",
+        "station": "transcript",
+        "text": "Brak publicznej wypowiedzi do porównania – to prywatna wiadomość.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-przelew-metadata",
+        "station": "metadata",
+        "text": "Komunikator usunął metadane głosówki – nic z nich nie wynika.",
         "relevance": "irrelevant"
       }
     ],
@@ -191,6 +227,18 @@
         "station": "archive",
         "text": "Archiwum sesji ma pełny zapis w normalnym tempie. Burmistrz mówił spokojnie.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l5-wolne-tempo-transcript",
+        "station": "transcript",
+        "text": "Stenogram sesji: słowa w klipie zgadzają się z zapisem co do joty.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-wolne-tempo-metadata",
+        "station": "metadata",
+        "text": "Profil usunął metadane klipu – nic z nich nie wynika.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l5-wolne-tempo-image", "l5-wolne-tempo-archive"],
@@ -240,16 +288,28 @@
       {
         "id": "l5-wyciety-cytat-archive",
         "station": "archive",
-        "text": "Pełny zapis: „Nie obchodzą mnie plotki – obchodzą mnie problemy mieszkańców”.",
+        "text": "Archiwum prasy: relacje z wystąpienia opisują inne tematy. Tego zdania nikt nie cytuje.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wyciety-cytat-transcript",
+        "station": "transcript",
+        "text": "Stenogram: „Nie obchodzą mnie plotki – obchodzą mnie problemy mieszkańców”. Zdanie ucięto.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l5-wyciety-cytat-metadata",
+        "station": "metadata",
+        "text": "Serwis usunął metadane klipu – nic z nich nie wynika.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l5-wyciety-cytat-archive"],
+    "justifyingStamps": ["l5-wyciety-cytat-transcript"],
     "technique": "tania-podrobka-wyciecie",
     "debrief": {
       "what": "Prawdziwa wypowiedź, ale wycięta tak, że znaczy coś odwrotnego.",
       "technique": "Tania podróbka przez wycięcie: zdanie jest autentyczne, brakuje kontekstu. Nie trzeba żadnej sztucznej inteligencji.",
-      "tool": "Archiwum: pełny zapis wystąpienia. Skaner AI uznał głos za prawdziwy – i słusznie, ale to nie rozstrzyga sprawy.",
+      "tool": "Stenogram: pełny zapis wystąpienia pokazał, że zdanie ucięto w połowie. Skaner AI uznał głos za prawdziwy – i słusznie, ale to nie rozstrzyga sprawy.",
       "realWorld": "Cytaty urwane w połowie zdania to klasyczna manipulacja. Zawsze szukaj pełnej wersji wypowiedzi."
     },
     "reviewed": false
@@ -293,14 +353,30 @@
         "station": "archive",
         "text": "W archiwum zdjęć urzędu brak takiej sesji.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-na-jachcie-transcript",
+        "station": "transcript",
+        "text": "Brak wypowiedzi do porównania – to samo zdjęcie z podpisem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-na-jachcie-metadata",
+        "station": "metadata",
+        "text": "Dane pliku: obrazu nie zrobił żaden aparat – zapisał go generator grafiki.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l5-burmistrz-na-jachcie-source", "l5-burmistrz-na-jachcie-scanner"],
+    "justifyingStamps": [
+      "l5-burmistrz-na-jachcie-source",
+      "l5-burmistrz-na-jachcie-metadata",
+      "l5-burmistrz-na-jachcie-scanner"
+    ],
     "technique": "obraz-wygenerowany-ai",
     "debrief": {
       "what": "Obraz wygenerowany przez program. Na zdjęciu widać dziwne dłonie i zniekształcone napisy na burcie.",
       "technique": "Obraz AI: realistyczna scena, której nigdy nie było. Zwróć uwagę na dłonie, napisy, tło i brak źródła.",
-      "tool": "Kartoteka źródeł: świeże, puste konto bez historii. Skaner AI tylko potwierdził to przeczucie.",
+      "tool": "Kartoteka źródeł: świeże, puste konto bez historii. Metadane: plik nie pochodzi z aparatu, zapisał go generator. Skaner AI tylko potwierdził to przeczucie.",
       "realWorld": "Wygenerowane „zdjęcia” polityków w kompromitujących sytuacjach pojawiają się przy każdej kampanii. Pytanie: kto je zrobił i gdzie?"
     },
     "reviewed": false
@@ -344,6 +420,18 @@
         "station": "archive",
         "text": "Archiwum zdjęć lokalnych ma podobne ujęcia z próbnego przejazdu.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-przecinanie-wstegi-transcript",
+        "station": "transcript",
+        "text": "Brak wypowiedzi do porównania – zdjęcie nie ma cytatu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-przecinanie-wstegi-metadata",
+        "station": "metadata",
+        "text": "Data albo miejsce w danych zdjęcia nie pasują do opisu – aparat autorki był źle ustawiony.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l5-przecinanie-wstegi-image"],
@@ -394,6 +482,18 @@
         "id": "l5-wideo-ewakuacja-archive",
         "station": "archive",
         "text": "W archiwum komunikatów brak takiej decyzji.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wideo-ewakuacja-transcript",
+        "station": "transcript",
+        "text": "Film bez podanego źródła – nie ma pełnego zapisu do porównania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wideo-ewakuacja-metadata",
+        "station": "metadata",
+        "text": "Konto usunęło metadane filmu – nic z nich nie wynika.",
         "relevance": "irrelevant"
       }
     ],
@@ -446,6 +546,18 @@
         "station": "archive",
         "text": "Uchwała budżetowa zgadza się z kwotą z nagrania.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-komunikat-budzet-transcript",
+        "station": "transcript",
+        "text": "Nagranie skrócono: w zapisie urzędu jest jeszcze zdanie o przetargu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-komunikat-budzet-metadata",
+        "station": "metadata",
+        "text": "Profil usunął metadane nagrania – nic z nich nie wynika.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l5-komunikat-budzet-source"],
@@ -497,14 +609,30 @@
         "station": "archive",
         "text": "Archiwum fotografii: ujęcie z otwarcia hali, publikowane w prasie lokalnej.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l5-zdjecie-sprzed-lat-transcript",
+        "station": "transcript",
+        "text": "Brak wypowiedzi do porównania – zdjęcie nie ma cytatu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-zdjecie-sprzed-lat-metadata",
+        "station": "metadata",
+        "text": "Dane pliku: zdjęcie zrobiono lata temu, a nie wczoraj.",
+        "relevance": "decisive"
       }
     ],
-    "justifyingStamps": ["l5-zdjecie-sprzed-lat-image", "l5-zdjecie-sprzed-lat-archive"],
+    "justifyingStamps": [
+      "l5-zdjecie-sprzed-lat-image",
+      "l5-zdjecie-sprzed-lat-archive",
+      "l5-zdjecie-sprzed-lat-metadata"
+    ],
     "technique": "stare-zdjecie-nowy-podpis",
     "debrief": {
       "what": "Autentyczne zdjęcie sprzed lat, ale z fałszywym podpisem sugerującym tajną umowę.",
       "technique": "Stare zdjęcie z nowym podpisem: obraz jest prawdziwy, kłamstwo siedzi w opisie.",
-      "tool": "Lupa obrazu i Archiwum: starsze publikacje tego zdjęcia. Skaner AI przy prawdziwym zdjęciu milczy.",
+      "tool": "Lupa obrazu, Archiwum i Metadane: starsze publikacje i data wykonania sprzed lat. Skaner AI przy prawdziwym zdjęciu milczy.",
       "realWorld": "Prawdziwe zdjęcia z nowym podpisem to jedna z najczęstszych metod dezinformacji. Sprawdź datę i miejsce."
     },
     "reviewed": false
@@ -548,6 +676,18 @@
         "station": "archive",
         "text": "Protokoły rady: radna zawsze głosowała zgodnie ze swoim klubem.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-radnej-transcript",
+        "station": "transcript",
+        "text": "Rozmowa prywatna – brak oficjalnego zapisu do porównania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-glosowka-radnej-metadata",
+        "station": "metadata",
+        "text": "Dane pliku zgadzają się z opisem, bez śladów montażu. Sklonowany głos też tak wygląda.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l5-glosowka-radnej-phone"],
@@ -598,6 +738,18 @@
         "id": "l5-parodia-rap-archive",
         "station": "archive",
         "text": "W archiwum brak takiego wystąpienia burmistrza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-parodia-rap-transcript",
+        "station": "transcript",
+        "text": "Rapu nie ma w żadnym oficjalnym zapisie – nie ma czego porównać.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-parodia-rap-metadata",
+        "station": "metadata",
+        "text": "Serwis usunął metadane filmu – nic z nich nie wynika.",
         "relevance": "irrelevant"
       }
     ],
@@ -650,6 +802,18 @@
         "station": "archive",
         "text": "Plan rynku: mieści 1200 osób. Zdjęcia lokalnej prasy z wiecu pokazują niewielką grupę.",
         "relevance": "decisive"
+      },
+      {
+        "id": "l5-tlum-na-wiecu-transcript",
+        "station": "transcript",
+        "text": "Brak wypowiedzi do porównania – zdjęcie tłumu bez cytatu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-tlum-na-wiecu-metadata",
+        "station": "metadata",
+        "text": "Dane pliku: data i miejsce zgadzają się z wiecem. Takie dane łatwo wpisać ręcznie.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l5-tlum-na-wiecu-archive"],
@@ -701,14 +865,26 @@
         "station": "archive",
         "text": "Plan inwestycji zgadza się z terminem września.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-radio-transcript",
+        "station": "transcript",
+        "text": "Pełny zapis audycji: słowa o Lipowej padły w całości, bez cięć.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-wywiad-radio-metadata",
+        "station": "metadata",
+        "text": "Serwis usunął metadane fragmentu – nic z nich nie wynika.",
+        "relevance": "irrelevant"
       }
     ],
-    "justifyingStamps": ["l5-wywiad-radio-phone"],
+    "justifyingStamps": ["l5-wywiad-radio-phone", "l5-wywiad-radio-transcript"],
     "technique": "none",
     "debrief": {
       "what": "Prawdziwy fragment wywiadu radiowego, potwierdzony przez redakcję.",
       "technique": "Brak manipulacji. Prawdziwe zapowiedzi też trzeba szybko publikować.",
-      "tool": "Telefon: redaktor prowadzący potwierdził wywiad. Skaner AI nic nie wykrył, ale to nie dowód.",
+      "tool": "Telefon albo Stenogram: redaktor potwierdził wywiad, a pełny zapis audycji zgadza się z fragmentem. Skaner AI nic nie wykrył, ale to nie dowód.",
       "realWorld": "Najprostszy sposób na sprawdzenie nagrania z audycji: zapytać redakcję, która ją nadała."
     },
     "reviewed": false
@@ -751,6 +927,18 @@
         "id": "l5-wideo-obietnica-archive",
         "station": "archive",
         "text": "Uchwała w przygotowaniu zgodnie z zapowiedzią.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wideo-obietnica-transcript",
+        "station": "transcript",
+        "text": "Klip skrócono o pytania dziennikarzy. Pełny zapis konferencji jest dłuższy.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-wideo-obietnica-metadata",
+        "station": "metadata",
+        "text": "Strona urzędu usunęła metadane wideo – nic z nich nie wynika.",
         "relevance": "irrelevant"
       }
     ],
@@ -803,6 +991,18 @@
         "station": "archive",
         "text": "Zgoda na użytkowanie obwodnicy jest w rejestrze decyzji.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-obwodnica-transcript",
+        "station": "transcript",
+        "text": "Brak cytatu do porównania – wideo to zaproszenie na otwarcie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-obwodnica-metadata",
+        "station": "metadata",
+        "text": "Profil usunął metadane wideo – nic z nich nie wynika.",
+        "relevance": "irrelevant"
       }
     ],
     "justifyingStamps": ["l5-boss-obwodnica-source"],
@@ -854,6 +1054,18 @@
         "station": "archive",
         "text": "W rejestrze zarządzeń brak dymisji komendanta.",
         "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-dymisja-transcript",
+        "station": "transcript",
+        "text": "Brak oficjalnego wystąpienia – nie ma zapisu do porównania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-boss-dymisja-metadata",
+        "station": "metadata",
+        "text": "Dane pliku zgadzają się z opisem, bez obróbki. Takie dane łatwo wpisać ręcznie.",
+        "relevance": "misleading"
       }
     ],
     "justifyingStamps": ["l5-boss-dymisja-phone", "l5-boss-dymisja-scanner"],
@@ -863,6 +1075,447 @@
       "technique": "Deepfake audio z presją czasu: „publikujcie natychmiast” to dokładnie to, na co liczą twórcy fałszywek.",
       "tool": "Telefon: komendant i urząd zaprzeczyli. Skaner AI tylko wsparł podejrzenie.",
       "realWorld": "Nacisk szefa lub tłumu na pośpiech to sygnał do ostrożności, nie do rezygnacji ze sprawdzenia."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-cytat-z-sesji",
+    "type": "quote",
+    "priority": "important",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Burmistrz na sesji: „Bibliotekę zamkniemy, bo i tak nikt nie czyta”",
+    "body": "Grafika z cytatem i zdjęciem burmistrza Wrzoska. Podpis: „Powiedział to wczoraj na sesji rady”. Udostępniło ją kilka grup.",
+    "source": "Grafika na profilu „Brzegi Mówią Dość”",
+    "stamps": [
+      {
+        "id": "l5-cytat-z-sesji-image",
+        "station": "imageSearch",
+        "text": "Zdjęcie na grafice to oficjalny portret z ratusza. O cytacie nic nie mówi.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-cytat-z-sesji-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 4% – zdjęcie prawdziwe. Skaner nie sprawdza, czy ktoś to powiedział.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-cytat-z-sesji-source",
+        "station": "sourceRegistry",
+        "text": "Profil stowarzyszenia mieszkańców, działa od 4 lat pod tą samą nazwą.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-cytat-z-sesji-phone",
+        "station": "phone",
+        "text": "Biuro burmistrza: odpowiemy na pytania jutro rano.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-cytat-z-sesji-archive",
+        "station": "archive",
+        "text": "W archiwum brak relacji z wczorajszej sesji – prasa jeszcze jej nie opisała.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-cytat-z-sesji-transcript",
+        "station": "transcript",
+        "text": "Stenogram sesji: tego zdania nikt nie wypowiedział. O bibliotece w ogóle nie mówiono.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-cytat-z-sesji-metadata",
+        "station": "metadata",
+        "text": "Serwis usunął metadane grafiki – nic z nich nie wynika.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-cytat-z-sesji-transcript"],
+    "technique": "zmyslony-cytat",
+    "debrief": {
+      "what": "Zmyślony cytat. Na sesji burmistrz w ogóle nie mówił o bibliotece – zdanie dopisano do jego zdjęcia.",
+      "technique": "Zmyślony cytat: wystarczy prawdziwe zdjęcie i zdanie w cudzysłowie. Grafika wygląda jak relacja z sesji, choć nikt tego nie powiedział.",
+      "tool": "Stenogram: pełny zapis sesji nie zawiera tego zdania. Skaner AI uznał zdjęcie za prawdziwe – i słusznie, ale cytat to osobna sprawa.",
+      "realWorld": "Grafiki z cytatem polityka krążą szybciej niż sprostowania. Szukaj zapisu wypowiedzi: stenogramu, nagrania albo protokołu."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-wywiad-skrocony",
+    "type": "recording",
+    "priority": "important",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Burmistrz w wywiadzie: „Nowego basenu nie będzie”",
+    "body": "Kilkusekundowy fragment wywiadu dla telewizji lokalnej. Burmistrz Wrzosek mówi: „Nowego basenu nie będzie”. Komentarze: „znowu obiecywał i nic”.",
+    "source": "Konto „Brzeski Obserwator”",
+    "stamps": [
+      {
+        "id": "l5-wywiad-skrocony-image",
+        "station": "imageSearch",
+        "text": "Kadry pochodzą z wywiadu telewizji lokalnej. Brak wcześniejszych kopii klipu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-skrocony-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 5% – głos i obraz prawdziwe. Skaner nie widzi, co wycięto.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-wywiad-skrocony-source",
+        "station": "sourceRegistry",
+        "text": "Konto prywatne, aktywne od 2 lat, zwykle udostępnia lokalne filmy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-skrocony-phone",
+        "station": "phone",
+        "text": "Rzecznik urzędu: burmistrz jest na urlopie, komentarz w poniedziałek.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-skrocony-archive",
+        "station": "archive",
+        "text": "W archiwum telewizji wywiadu jeszcze nie ma – trafi tam za tydzień.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-wywiad-skrocony-transcript",
+        "station": "transcript",
+        "text": "Stenogram wywiadu: „Nowego basenu nie będzie w tym roku – budowa ruszy wiosną”. Końcówkę ucięto.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-wywiad-skrocony-metadata",
+        "station": "metadata",
+        "text": "Konto usunęło metadane klipu – nic z nich nie wynika.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-wywiad-skrocony-transcript"],
+    "technique": "tania-podrobka-wyciecie",
+    "debrief": {
+      "what": "Prawdziwy fragment wywiadu, ale ucięty w pół zdania. Burmistrz zapowiedział budowę basenu od wiosny.",
+      "technique": "Tania podróbka przez wycięcie: każde słowo jest prawdziwe, ale brak końca zdania odwraca jego sens.",
+      "tool": "Stenogram: pełny zapis wywiadu pokazał, co padło dalej. Skaner AI słusznie uznał nagranie za prawdziwe – cięcia nie wykrywa.",
+      "realWorld": "Krótkie fragmenty wywiadów łatwo przyciąć do tezy. Zanim udostępnisz klip, znajdź całą rozmowę."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-zdjecie-czytelnika",
+    "type": "photo",
+    "priority": "important",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Czytelnik: foki wypoczywają na miejskiej plaży",
+    "body": "Czytelnik przysłał zdjęcie dwóch fok wylegujących się na plaży w Nowych Brzegach. Komentarze: „to fotomontaż albo AI”.",
+    "source": "Zdjęcie czytelnika przesłane do redakcji",
+    "stamps": [
+      {
+        "id": "l5-zdjecie-czytelnika-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii tego zdjęcia w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-zdjecie-czytelnika-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 68% – możliwa ingerencja. Wynik zawyżony przez zoom w telefonie.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-zdjecie-czytelnika-source",
+        "station": "sourceRegistry",
+        "text": "Konto czytelnika założone w zeszłym tygodniu. To jego pierwsze zdjęcie.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-zdjecie-czytelnika-phone",
+        "station": "phone",
+        "text": "Kapitanat portu: nikt nie zgłaszał fok, ale nikt też nie zaprzecza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-zdjecie-czytelnika-archive",
+        "station": "archive",
+        "text": "Archiwum: od lat żadnej wzmianki o fokach w mieście. To byłby pierwszy taki przypadek.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-zdjecie-czytelnika-transcript",
+        "station": "transcript",
+        "text": "Brak wypowiedzi do porównania – zdjęcie nie ma cytatu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-zdjecie-czytelnika-metadata",
+        "station": "metadata",
+        "text": "Dane pliku: czas, miejsce i urządzenie zgadzają się z opisem. Bez obróbki.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-zdjecie-czytelnika-metadata"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie czytelnika. Foki od czasu do czasu odpoczywają na plażach nad morzem.",
+      "technique": "Brak manipulacji. Niezwykłe nie znaczy fałszywe – skaner i komentujący pomylili rzadki widok z montażem.",
+      "tool": "Metadane: czas, miejsce i urządzenie w danych pliku zgadzają się z opisem czytelnika, bez śladów obróbki. Skaner AI to tylko wskazówka.",
+      "realWorld": "Zdjęcia od czytelników to cenne źródło. Dane pliku pomagają sprawdzić, kiedy i gdzie je zrobiono – o ile serwis ich nie usunął."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-film-z-montazu",
+    "type": "recording",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Wideo: burmistrz zamyka most na Brzeżance od jutra",
+    "body": "Nagranie z gabinetu: burmistrz Wrzosek mówi, że most na Brzeżance zostanie jutro zamknięty na pół roku. Film ma tysiące udostępnień.",
+    "source": "Konto „Info Brzegi 24”",
+    "stamps": [
+      {
+        "id": "l5-film-z-montazu-image",
+        "station": "imageSearch",
+        "text": "Tło pasuje do gabinetu burmistrza z oficjalnych zdjęć urzędu.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-film-z-montazu-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 12% – raczej prawdziwe. Nowe programy do podmiany twarzy oszukują skaner.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-film-z-montazu-source",
+        "station": "sourceRegistry",
+        "text": "Konto z 2-letnią historią, zwykle udostępnia lokalne ogłoszenia.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-film-z-montazu-phone",
+        "station": "phone",
+        "text": "Zarząd dróg nie odbiera. Sekretariat prosi o telefon po południu.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-film-z-montazu-archive",
+        "station": "archive",
+        "text": "W archiwum brak uchwały o moście, ale uchwały trafiają tam z opóźnieniem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-film-z-montazu-transcript",
+        "station": "transcript",
+        "text": "Film bez podanego źródła – nie ma pełnego zapisu do porównania.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-film-z-montazu-metadata",
+        "station": "metadata",
+        "text": "Dane pliku: film obrabiano w programie do montażu, a opis mówi: bez montażu.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-film-z-montazu-metadata"],
+    "technique": "deepfake-wideo",
+    "debrief": {
+      "what": "Deepfake: twarz i głos burmistrza podłożono pod nagranie innej osoby. Most działa normalnie.",
+      "technique": "Deepfake wideo: program podmienia twarz i głos. Gotowy film i tak trzeba złożyć w programie do montażu – to zostaje w danych pliku.",
+      "tool": "Metadane: plik przeszedł przez program do montażu, choć miał być nagraniem prosto z gabinetu. Skaner AI dał się oszukać – to tylko wskazówka.",
+      "realWorld": "Fałszywe nagrania polityków ogłaszających utrudnienia mają wywołać chaos. Sprawdzaj dane pliku i oficjalne kanały."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-drzemka-na-sesji",
+    "type": "photo",
+    "priority": "normal",
+    "truth": "misleading",
+    "correctVerdict": "publishWithContext",
+    "headline": "Burmistrz zasnął na wczorajszej sesji rady?",
+    "body": "Zdjęcie: burmistrz Wrzosek z zamkniętymi oczami przy stole prezydium. Podpis: „Tak dla nas pracuje – wczoraj na sesji”.",
+    "source": "Profil „Rada pod Lupą”",
+    "stamps": [
+      {
+        "id": "l5-drzemka-na-sesji-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii – zdjęcie trafiło do sieci pierwszy raz.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-drzemka-na-sesji-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 2% – prawdziwe zdjęcie. O dacie wykonania nic nie mówi.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-drzemka-na-sesji-source",
+        "station": "sourceRegistry",
+        "text": "Profil obserwatorów rady, prowadzony od 6 lat pod nazwiskami autorów.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-drzemka-na-sesji-phone",
+        "station": "phone",
+        "text": "Biuro rady: burmistrz był na sesji do końca. Zdjęcia nie komentuje.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-drzemka-na-sesji-archive",
+        "station": "archive",
+        "text": "Archiwum nie ma zdjęć z wczorajszej sesji – fotoreporter nie przyszedł.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-drzemka-na-sesji-transcript",
+        "station": "transcript",
+        "text": "Zdjęcie bez cytatu – nie ma czego porównać ze stenogramem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-drzemka-na-sesji-metadata",
+        "station": "metadata",
+        "text": "Dane pliku: zdjęcie zrobiono lata temu, a nie na wczorajszej sesji.",
+        "relevance": "decisive"
+      }
+    ],
+    "justifyingStamps": ["l5-drzemka-na-sesji-metadata"],
+    "technique": "zdjecie-w-zlym-czasie",
+    "debrief": {
+      "what": "Prawdziwe zdjęcie, ale sprzed lat – z nocnej sesji budżetowej, gdy Wrzosek był jeszcze radnym. Wczorajszych obrad nie przespał.",
+      "technique": "Zdjęcie w złym czasie: kadr jest autentyczny, fałszywa jest data w podpisie. Stara chwila zmęczenia udaje świeży skandal.",
+      "tool": "Metadane: data wykonania w danych pliku jest sprzed lat, a nie z wczoraj. Skaner AI słusznie uznał zdjęcie za prawdziwe – o dacie nic nie wie.",
+      "realWorld": "Stare zdjęcia z nowym podpisem wracają przy każdym politycznym sporze. Sprawdź, kiedy naprawdę zrobiono zdjęcie."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-burmistrz-morsuje",
+    "type": "recording",
+    "priority": "normal",
+    "truth": "true",
+    "correctVerdict": "publish",
+    "headline": "Burmistrz morsuje w Brzeżance – nagranie hitem sieci",
+    "body": "Film z niedzieli: burmistrz Wrzosek wbiega do lodowatej rzeki z klubem morsów. Setki komentarzy: „to na pewno deepfake”.",
+    "source": "Film mieszkanki na grupie Nowe Brzegi Info",
+    "stamps": [
+      {
+        "id": "l5-burmistrz-morsuje-image",
+        "station": "imageSearch",
+        "text": "Brak wcześniejszych kopii tego filmu w sieci.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-morsuje-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 79% – możliwy deepfake. Wynik zawyżony przez parę i chlapiącą wodę.",
+        "relevance": "misleading"
+      },
+      {
+        "id": "l5-burmistrz-morsuje-source",
+        "station": "sourceRegistry",
+        "text": "Konto mieszkanki z 5-letnią historią, często relacjonuje miejskie imprezy.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-morsuje-phone",
+        "station": "phone",
+        "text": "Urząd nie komentuje prywatnych zajęć burmistrza.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-morsuje-archive",
+        "station": "archive",
+        "text": "Archiwum telewizji lokalnej: niedzielny reportaż z morsowania pokazuje ten sam moment.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-burmistrz-morsuje-transcript",
+        "station": "transcript",
+        "text": "Na filmie słychać tylko piski i śmiech – nie ma czego porównać ze stenogramem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-burmistrz-morsuje-metadata",
+        "station": "metadata",
+        "text": "Serwis usunął metadane filmu – nic z nich nie wynika.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-burmistrz-morsuje-archive"],
+    "technique": "none",
+    "debrief": {
+      "what": "Prawdziwe nagranie: burmistrz naprawdę morsował z klubem na plaży miejskiej. Telewizja lokalna nadała reportaż z tego wydarzenia.",
+      "technique": "Brak manipulacji. Fałszywy alarm: para, chlapanie i ruch kamery zmyliły skaner, a zaskakujący widok – komentujących.",
+      "tool": "Archiwum: reportaż telewizji lokalnej pokazuje ten sam moment. Skaner AI to tylko wskazówka z marginesem błędu.",
+      "realWorld": "Okrzyk „deepfake!” pada też przy prawdziwych nagraniach. Tak da się podważyć każdy niewygodny film – dlatego liczą się niezależne źródła."
+    },
+    "reviewed": false
+  },
+  {
+    "id": "l5-falszywy-profil-urzedu",
+    "type": "post",
+    "priority": "urgent",
+    "truth": "false",
+    "correctVerdict": "reject",
+    "headline": "Urząd rozdaje bony po 500 zł – wystarczy podać PESEL",
+    "body": "Profil z herbem miasta i wideo burmistrza: „Każdy mieszkaniec dostanie bon 500 zł. Zarejestruj się tylko dziś przez link i podaj PESEL”.",
+    "source": "Profil „Urząd Miasta Nowe Brzegi – Oficjalnie”",
+    "stamps": [
+      {
+        "id": "l5-falszywy-profil-urzedu-image",
+        "station": "imageSearch",
+        "text": "Herb i zdjęcia pochodzą ze strony urzędu – nic nowego.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-falszywy-profil-urzedu-scanner",
+        "station": "aiScanner",
+        "text": "Skaner AI: 47% – wynik niejasny. Wideo jest bardzo krótkie.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-falszywy-profil-urzedu-source",
+        "station": "sourceRegistry",
+        "text": "Profil założony 3 dni temu, ma tylko ten wpis. Prawdziwy profil urzędu działa od 9 lat.",
+        "relevance": "decisive"
+      },
+      {
+        "id": "l5-falszywy-profil-urzedu-phone",
+        "station": "phone",
+        "text": "Infolinia urzędu jest zajęta. Spróbuj za godzinę.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-falszywy-profil-urzedu-archive",
+        "station": "archive",
+        "text": "W archiwum uchwał brak programu bonów, ale nowe uchwały trafiają tam z opóźnieniem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-falszywy-profil-urzedu-transcript",
+        "station": "transcript",
+        "text": "Brak wypowiedzi do porównania – to wpis z linkiem.",
+        "relevance": "irrelevant"
+      },
+      {
+        "id": "l5-falszywy-profil-urzedu-metadata",
+        "station": "metadata",
+        "text": "Serwis usunął metadane wideo – nic z nich nie wynika.",
+        "relevance": "irrelevant"
+      }
+    ],
+    "justifyingStamps": ["l5-falszywy-profil-urzedu-source"],
+    "technique": "podszywanie-sie-pod-instytucje",
+    "debrief": {
+      "what": "Fałszywy profil podszywający się pod urząd. Link prowadził do strony wyłudzającej dane osobowe.",
+      "technique": "Podszywanie się pod instytucję: herb, znajoma nazwa i twarz burmistrza usypiają czujność. Pośpiech („tylko dziś”) ma przeszkodzić w sprawdzeniu.",
+      "tool": "Kartoteka źródeł: profil ma 3 dni i jeden wpis, a prawdziwy profil urzędu działa od lat pod inną nazwą.",
+      "realWorld": "Fałszywe profile urzędów i firm wyłudzają dane, obiecując bony i zwroty. Sprawdź, od kiedy działa konto i dokąd prowadzi link."
     },
     "reviewed": false
   }
