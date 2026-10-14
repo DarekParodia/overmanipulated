@@ -21,6 +21,7 @@ import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
+import type { Accessory } from '../store/profile-model.ts';
 import { listPl, pluralPl } from './plural.ts';
 
 /**
@@ -2177,6 +2178,47 @@ export const pl = {
     librariesLead: 'Gra powstała dzięki otwartemu oprogramowaniu. Dziękujemy jego autorom!',
     libraryColumns: { name: 'Biblioteka', licence: 'Licencja' },
     sides: { client: 'W przeglądarce', server: 'Na serwerze gry' },
+  },
+  // --- S7-104 Profil: this browser's statistics and the preferred look. ---
+  profile: {
+    /** The main-menu footer link. */
+    open: 'Profil',
+    title: 'Profil',
+    close: 'Gotowe',
+    lookTitle: 'Wygląd',
+    noNickname: 'Bez podpisu',
+    previewLabel: (nickname: string) => `Podgląd: ${nickname}`,
+    colorLabel: 'Kolor gracza',
+    /** Colour name and its shape (S5-05), so the choice never rests on colour alone. */
+    colors: ['Pomarańczowy, koło', 'Niebieski, kwadrat', 'Morski, trójkąt', 'Różowy, romb'],
+    accessoryLabel: 'Dodatek',
+    accessories: {
+      none: 'Bez dodatku',
+      scarf: 'Szalik',
+      bowTie: 'Muszka',
+      pressCard: 'Legitymacja prasowa',
+    } satisfies Record<Accessory, string>,
+    statsTitle: 'Statystyki',
+    stats: {
+      levels: 'Rozegrane wydania',
+      wins: 'Wygrane',
+      accuracy: 'Trafne werdykty',
+      favouriteRole: 'Ulubiona rola',
+      stamps: 'Zebrane pieczątki',
+      minigameFails: 'Nieudane zadania',
+    },
+    percent: (n: number) => `${n}\u00a0%`,
+    /** No verdict or no finished level with a role yet. */
+    none: '–',
+    starsTitle: 'Gwiazdki',
+    starsOf: (stars: number, max: number) => `${stars} z\u00a0${max}`,
+    starsLabel: (difficulty: string, stars: number, max: number) =>
+      `${difficulty}: ${stars} z\u00a0${max} ${pluralPl(max, 'gwiazdki', 'gwiazdek', 'gwiazdek')}`,
+    localOnly: 'Zapisane tylko w tej przeglądarce.',
+    clear: 'Wyczyść statystyki',
+    clearConfirm: 'Na pewno? Wyczyść',
+    clearCancel: 'Anuluj',
+    cleared: 'Statystyki wyczyszczone.',
   },
   // --- S5-04 technique encyclopedia: collectible cards with the tricks met in the Kolegium. ---
   encyclopedia: {

@@ -12,6 +12,7 @@ import { useHowTo } from '../howto/store.ts';
 import { fetchHealth, type HealthStatus } from '../net/api.ts';
 import { joinRoom } from '../net/session.ts';
 import { useApp } from '../store/app.ts';
+import { useProfile } from '../store/profile.ts';
 import { useFeature, usePublicConfig } from '../store/public-config.ts';
 import { pl } from '../strings/pl.ts';
 import { Button } from '../ui/Button.tsx';
@@ -178,6 +179,16 @@ export function MainMenu() {
 
       <MenuFooter
         className={styles.footer}
+        profile={
+          <Button
+            variant="ghost"
+            icon={<Icon name="trophy" size={22} />}
+            data-testid="open-profile"
+            onClick={() => useProfile.getState().show()}
+          >
+            {pl.profile.open}
+          </Button>
+        }
         about={
           <Button
             variant="ghost"
