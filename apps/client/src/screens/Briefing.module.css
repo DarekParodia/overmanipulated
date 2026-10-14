@@ -242,6 +242,60 @@
   margin-top: -0.1em;
 }
 
+/* A station new today (S7-97): a chip that opens its help card, a full touch target with a
+   small purple (help) '?'. */
+.chipButton {
+  min-height: var(--touch-target);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-fast) var(--ease-bounce),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.chipButton:hover,
+.chipButton:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--pop-lg);
+}
+
+.chipButton:active {
+  transform: translateY(2px);
+  box-shadow: var(--pop-pressed);
+}
+
+.chipButton:focus-visible {
+  outline: 4px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.chipHelp {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--outline);
+  border-radius: var(--radius-pill);
+  background: var(--purple);
+  color: var(--text-on-dark);
+}
+
+.chipHelp svg {
+  margin-top: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipButton {
+    transition: none;
+  }
+}
+
+:global(:root[data-reduced-motion="true"]) .chipButton {
+  transition: none;
+}
+
 /* The dealt run under the topic, above the masthead rule (phones: beside the title). */
 .run {
   grid-area: run;

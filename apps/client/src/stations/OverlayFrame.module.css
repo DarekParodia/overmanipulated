@@ -276,6 +276,16 @@
   }
 }
 
+/* Inside another panel (the „Jak grać” practice round, S7-97): fill it, no slide-in. Last, so
+   it wins over the phone block above. */
+.embedded {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: 100%;
+  animation: none;
+}
+
 @keyframes rise {
   from {
     opacity: 0;

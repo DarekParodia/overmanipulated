@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'bun:test';
-import { HOW_TO_TABS, nextHowToTab, useHowTo } from './store.ts';
+import { canPractice, HOW_TO_TABS, nextHowToTab, useHowTo } from './store.ts';
 
 describe('how-to tabs', () => {
   it('has the three tabs in order', () => {
@@ -63,5 +63,48 @@ describe('how-to store', () => {
     useHowTo.getState().show('controls');
     useHowTo.getState().hide();
     expect(useHowTo.getState().open).toBe(false);
+  });
+
+  it('starts practice from a station card and leaves it with the card', () => {
+    useHowTo.getState().show('stations', { station: 'archive' });
+    useHowTo.getState().setPractice('playing');
+    expect(useHowTo.getState().practice).toBe('playing');
+    useHowTo.getState().setPractice('result');
+    expect(useHowTo.getState().practice).toBe('result');
+    useHowTo.getState().setStation(null);
+    expect(useHowTo.getState()).toMatchObject({ station: null, practice: 'off' });
+  });
+
+  it('never starts practice in a match or without a card', () => {
+    useHowTo.getState().show('stations', { station: 'phone', practiceAllowed: false });
+    useHowTo.getState().setPractice('playing');
+    expect(useHowTo.getState().practice).toBe('off');
+    useHowTo.getState().show('stations');
+    useHowTo.getState().setPractice('playing');
+    expect(useHowTo.getState().practice).toBe('off');
+  });
+
+  it('a tab switch, a new show or hiding ends the practice round', () => {
+    useHowTo.getState().show('stations', { station: 'metadata' });
+    useHowTo.getState().setPractice('playing');
+    useHowTo.getState().setTab('controls');
+    expect(useHowTo.getState().practice).toBe('off');
+    useHowTo.getState().show('stations', { station: 'metadata' });
+    useHowTo.getState().setPractice('playing');
+    useHowTo.getState().hide();
+    expect(useHowTo.getState().practice).toBe('off');
+    useHowTo.getState().show('stations', { station: 'metadata' });
+    expect(useHowTo.getState().practice).toBe('off');
+  });
+});
+
+describe('canPractice', () => {
+  it('needs the stations tab, a card and practice allowed', () => {
+    expect(canPractice({ tab: 'stations', station: 'archive', practiceAllowed: true })).toBe(true);
+    expect(canPractice({ tab: 'stations', station: 'archive', practiceAllowed: false })).toBe(
+      false,
+    );
+    expect(canPractice({ tab: 'stations', station: null, practiceAllowed: true })).toBe(false);
+    expect(canPractice({ tab: 'intro', station: 'archive', practiceAllowed: true })).toBe(false);
   });
 });

@@ -208,7 +208,7 @@ Gra wygląda jak makieta redakcji widziana z góry pod kątem: 3D w stylu low-po
 | Stół redakcyjny | Teczka z pieczątkami, trzy przyciski werdyktu, wskazanie uzasadniającej pieczątki |
 | Kolegium redakcyjne | Lista zgłoszeń z poziomu, wyjaśnienia, głosowanie na „wpadkę dnia”, gwiazdki |
 | Encyklopedia technik | Odblokowywane karty technik manipulacji i narzędzi weryfikacji, z przykładami z gry |
-| Jak grać | Okno pomocy z trzema działami: Wprowadzenie, Stanowiska (jak działa każde z dziesięciu), Sterowanie; otwierane z menu głównego, lobby i ustawień |
+| Jak grać | Okno pomocy z trzema działami: Wprowadzenie, Stanowiska (jak działa każde z dziesięciu, z przyciskiem „Wypróbuj” – ćwiczenie bez punktów i bez serwera), Sterowanie; otwierane z menu głównego, lobby, ustawień, kafelków „Nowe dziś” na odprawie i z menu w grze („Pomoc: stanowiska”, tam bez ćwiczeń) |
 
 ### Materiały do zgłoszenia konkursowego
 

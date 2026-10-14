@@ -210,10 +210,43 @@
 .card {
   display: grid;
   justify-items: center;
+  gap: var(--space-3);
+}
+
+/* In a match (the in-game menu): no practice, said in words with a lock, never colour alone. */
+.practiceOff {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--surface-soft);
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* --- Wypróbuj (S7-97) ------------------------------------------------------------------------ */
+
+/* The practice round: the station frame fills the dialog, at a match overlay's width. */
+.dialog[data-practice] {
+  width: min(46rem, calc(100vw - 2 * var(--space-4)));
+}
+
+.practiceSheet {
+  display: flex;
+  height: min(42rem, calc(100dvh - 2 * var(--space-4)));
+}
+
+.dialog[open] .practiceSheet {
+  animation: sheet-in var(--motion-base) var(--ease-bounce) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dialog[open] .sheet {
+  .dialog[open] .sheet,
+  .dialog[open] .practiceSheet {
     animation: none;
   }
   .tile {
@@ -221,7 +254,8 @@
   }
 }
 
-:global(html[data-reduced-motion="true"]) .dialog[open] .sheet {
+:global(html[data-reduced-motion="true"]) .dialog[open] .sheet,
+:global(html[data-reduced-motion="true"]) .dialog[open] .practiceSheet {
   animation: none;
 }
 
@@ -276,10 +310,27 @@
     min-height: 4.5rem;
     padding: var(--space-2) var(--space-1);
   }
+  .card {
+    gap: var(--space-2);
+  }
+  .practiceOff {
+    font-size: var(--text-sm);
+  }
+  .dialog[data-practice] {
+    width: 100vw;
+  }
+  .practiceSheet {
+    height: 100dvh;
+    padding: max(var(--space-2), env(safe-area-inset-top))
+      max(var(--space-2), env(safe-area-inset-right))
+      max(var(--space-2), env(safe-area-inset-bottom))
+      max(var(--space-2), env(safe-area-inset-left));
+  }
 }
 
 @media (max-width: 640px) and (orientation: portrait) {
-  .dialog {
+  .dialog,
+  .dialog[data-practice] {
     width: 100vw;
     height: 100dvh;
     max-height: none;
@@ -289,5 +340,9 @@
     height: 100dvh;
     border-radius: 0;
     padding: var(--space-4);
+  }
+  .practiceSheet {
+    height: 100dvh;
+    padding: var(--space-2);
   }
 }

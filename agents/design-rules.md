@@ -68,7 +68,7 @@ All colours come from `apps/client/src/ui/tokens.css` (DOM) and `tokens.ts` (thr
 | `--red` | false / reject / wrong / danger | Reject, errors, deadline < 10 s, credibility low |
 | `--orange` | context / warning | Publish with context, "important" priority |
 | `--blue` | information / selection / focus | focus ring, selected item, "normal" priority |
-| `--purple` | help | tutorial, hint bubbles and the station help card only |
+| `--purple` | help | tutorial, hint bubbles, the station help card and its ways in („Jak grać”, the briefing chips' '?', the practice round's „Ćwiczenie” chip, S7-97) only |
 | `--sky` | background | behind menus |
 | `--surface` / `--outline` / `--text` | neutral | panels, outlines, text |
 | `--player-0..3` | player identity | avatars, name tags, ping bubbles — nothing else |
