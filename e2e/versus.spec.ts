@@ -44,8 +44,14 @@ async function open(browser: Browser, nickname: string, testInfo: TestInfo): Pro
   const context = await browser.newContext(options);
   trackContext(context);
   await context.addInitScript(() => {
-    localStorage.setItem('redakcja.tutorial.done', '1');
-    localStorage.setItem('redakcja.settings.v1', JSON.stringify({ reducedMotion: true }));
+    // Init scripts also run in opaque-origin frames (about:blank, sandboxed), where touching
+    // localStorage throws; only the game's own document needs the settings.
+    try {
+      localStorage.setItem('redakcja.tutorial.done', '1');
+      localStorage.setItem('redakcja.settings.v1', JSON.stringify({ reducedMotion: true }));
+    } catch {
+      // Not the game's document.
+    }
   });
   const page = await context.newPage();
   page.on('pageerror', (error) => {
