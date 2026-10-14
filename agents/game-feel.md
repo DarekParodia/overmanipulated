@@ -99,7 +99,7 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `ability.secondChance` | `ability` secondChance `done` (Druga szansa: lockout gone, minigame reopens) | the presser's `abilityPower` fist pump | power-up (`evback`, quiet) | sparks ×6 | light tick | ● |
 | `ability.pass` | `ability` passFolder `done` (Podaj teczkę) | the folder flies from the passer's hands to the receiver's in a 450 ms arc (`ABILITY.passFolder.flightMs`, 1.2 tiles high; it snaps under reduced motion); the passer plays `abilityThrow`, the receiver reaches out; before the press the local Ratownik sees a dashed blue ring on the floor under the teammate the press would reach (static under reduced motion and no-flash) | paper whoosh (`abthrow`) | paper flutter ×3 | light tick | ● |
 | `role.rescue` | `folderRescued` (Koło ratunkowe: a folder at its deadline in a Ratownik's hands gets +20 s) | `hop`, `cardHop` | rising arpeggio (`evclear`) | star burst | small shake, success buzz | ●● |
-| `ui.click` / `ui.hover` / `ui.back` | menus; `ui.click` also when the host picks a difficulty (the chip turns blue) and, for guests, when the host changes it (their „Poziom: …” chip pops, S7-25), and on the leaderboard dialog's room/global and difficulty tabs (S7-26); the station help card opens with `ui.click` ('?', H / Select) and closes with `ui.click` („Rozumiem”, Enter / A) or `ui.back` (Esc / B, S7-95); the card pops in (still under reduced motion) | button press | click / tick | — | light tick (mobile) | ● |
+| `ui.click` / `ui.hover` / `ui.back` | menus; `ui.click` also when the host picks a difficulty (the chip turns blue) and, for guests, when the host changes it (their „Poziom: …” chip pops, S7-25), and on the leaderboard dialog's room/global and difficulty tabs (S7-26); the station help card opens with `ui.click` ('?', H / Select) and closes with `ui.click` („Rozumiem”, Enter / A) or `ui.back` (Esc / B, S7-95); the room browser („Publiczne pokoje”, S7-88) opens with `ui.click`, picking a room row plays `ui.click`, Esc and ✗ close it with `ui.back`; a join then plays the lobby's own cues; the card pops in (still under reduced motion) | button press | click / tick | — | light tick (mobile) | ● |
 | `station.open` / `minigame.success` / `minigame.fail` (practice) | „Wypróbuj” practice round in „Jak grać” (S7-97): a round starts / the minigame is solved / failed or ran out of time; no new cue ids, the match's own ones, client-only (nothing is sent) | the station frame fills the dialog; the outcome banner pops („Udało się!” / „Nie tym razem”, still under reduced motion) | paper slide / click / fail blips | — (DOM dialog, no world position; caption skipped: the banner says it) | light tick / tick / error | ● |
 | `game.paused` | `paused` rising edge (`fx/gameplay-feedback.ts`): a solo player opened the in-game menu and the server holds the level (S7-10) | the menu sheet slides in (scale-pop on desktop, slide from the right on phones; none under reduced motion) with the „Pauza” chip; the level clock stops; deadline ticks and work loops stop | soft paper slide (`slide`, ui bus, 0.6) | — (DOM sheet; caption skipped: the chip says it) | light tick | ● |
 | `sourceRegistry.circle` / `uncircle` | field circled / circle taken back (Kartoteka źródeł) | red pencil ellipse draws on / is erased | pencil tick | — (DOM overlay, no world position) | light tick | ● |
@@ -118,6 +118,9 @@ Severity: ● subtle · ●● medium · ●●● strong. Placeholder assets ar
 | `debrief.star` / `debrief.mark` | results reveal: each earned star, then each Kolegium card's outcome mark (skippable by any tap/key; off with reduced motion) | star pop / mark slams on like a stamp | chime / stamp thud | — (DOM) | tick | ●● / ● |
 | `debrief.row` | results reveal: each row of the „Za co punkty” totals table, after the stars and the progress line (skippable by any tap/key; off with reduced motion) | row slides in, its points count up from 0 (`useRolledNumber`) | soft tick (`tick`, ui bus) | — (DOM) | tick | ● |
 | `debrief.vote` | blunder-of-the-day vote | button and voter dot pop | soft paper place | — (DOM) | tick | ● |
+| `lobby.modeSwitch` | the host switches Razem / Na punkty: the roomState `mode` changed (everyone hears it, the host's press included; S7-86) | the guests' mode chip pops; the roster becomes two newsroom columns or one row | paper slide (`slide`, ui bus, 0.8) | — (DOM) | light tick | ● |
+| `lobby.teamSwitch` | a player moved to the other newsroom: a `players[].team` changed without a mode switch (S7-86) | the player's card pops into its new column (static under reduced motion) | paper slide (`slide`, ui bus, 0.7, jitter) | — (DOM) | light tick | ● |
+| `room.spectatorJoined` | someone new is in `roomState.spectators` (a join or a move to the Widownia; never the local member; a spectator away from the lobby hears nothing; S7-86) | lobby: a new eye chip pops into the Widownia strip; in game: a blue „Widz dołączył” toast with an eye in the verdict-toast stack | soft join chime (`join`, ui bus, 0.5) | — (DOM) | — | ● |
 
 Add a row here when you add a cue, in the same commit.
 
@@ -141,6 +144,16 @@ for testing feedback by hand. Each GameView (S7-85) has its own dispatcher: even
 the player's view uses the global `feedback` that audio, haptics and captions are connected to.
 `CueContext.silent` mutes a cue's sound and loops only (particles, shake, animation and the
 caption still run), for views that must not be heard.
+
+**Spectators (S7-90).** A watched newsroom's events (`spectatorEvent`) go to its own view
+(`routeViewEvent(view, event, isSpectatorAudible)`). Only `SPECTATOR_AUDIBLE_CUES`
+(`spectate/spectate-audio.ts`: verdict outcomes, `folder.expired`, `event.*.start`,
+`event.raidResolved`, the ability cues that land and `role.rescue`) keep their sound; every other
+cue plays silently. Sounds play at `SPECTATOR_SFX_GAIN` (0.6) of the player's volume, panned
+`TEAM_PAN` (Kurier −0.5, Głos +0.5) while both newsrooms are on screen and centred when one is;
+a newsroom off screen is not heard. No haptics, no camera shake, no hit-stop and no captions
+(the event feed of S7-91 is the visual twin of every audible cue). The masked and revealed
+results of the versus embargo play no cue.
 
 ## Music
 

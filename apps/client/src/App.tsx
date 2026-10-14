@@ -15,11 +15,11 @@ import { startPreload } from './loading/preload.ts';
 import { startProfileTracking } from './net/profile-tracking.ts';
 import { handleVisibilityReturn, resumeIfPossible } from './net/session.ts';
 import { ProfileHost } from './profile/ProfileHost.tsx';
+import { RoomBrowserHost } from './rooms/RoomBrowserHost.tsx';
 import { Briefing } from './screens/Briefing.tsx';
 import { Lobby } from './screens/Lobby.tsx';
 import { MainMenu } from './screens/MainMenu.tsx';
 import { SettingsPanel } from './screens/SettingsPanel.tsx';
-import { SpectateSummary } from './spectate/SpectateSummary.tsx';
 import { useApp } from './store/app.ts';
 import { usePublicConfig } from './store/public-config.ts';
 import { applySettingsToDocument, useSettings } from './store/settings.ts';
@@ -76,13 +76,14 @@ export function App() {
       {screen === 'lobby' && <Lobby />}
       {screen === 'briefing' && <Briefing />}
       {screen === 'game' && <GameGate />}
-      {screen === 'spectate' && <SpectateSummary />}
+      {screen === 'spectate' && <GameGate which="spectate" />}
       {screen === 'styleguide' && (
         <Suspense fallback={null}>
           <Styleguide />
         </Suspense>
       )}
       <SettingsPanel />
+      <RoomBrowserHost />
       <EncyclopediaScreen />
       {/* After the settings: opened from them, „Jak grać” must be the top dialog. */}
       <HowToPlayHost />

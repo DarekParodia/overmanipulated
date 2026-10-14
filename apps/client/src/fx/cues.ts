@@ -426,6 +426,22 @@ export const cues = {
     sound: { ids: ['stamp'], bus: 'ui', volume: 0.6, rateJitter: 0.05 },
     haptic: 'tick',
   },
+  // S7-86 lobby room settings: the host switches the mode, a player changes newsroom (the cards
+  // pop into their new column), someone starts watching (lobby, and a toast in the game).
+  'lobby.modeSwitch': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.8 },
+    haptic: 'tick',
+  },
+  'lobby.teamSwitch': {
+    severity: 1,
+    sound: { ids: ['slide'], bus: 'ui', volume: 0.7, rateJitter: 0.05 },
+    haptic: 'tick',
+  },
+  'room.spectatorJoined': {
+    severity: 1,
+    sound: { ids: ['join'], bus: 'ui', volume: 0.5 },
+  },
   // S3-03 briefing: the newspaper card whooshes in and slaps onto the desk; "Gotowy!" stamps.
   'briefing.intro': {
     severity: 1,

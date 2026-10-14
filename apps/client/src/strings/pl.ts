@@ -12,6 +12,8 @@ import type {
   PingKind,
   Priority,
   Role,
+  RoomMode,
+  RoomVisibility,
   StationKind,
   StoryType,
   Verdict,
@@ -19,6 +21,7 @@ import type {
 import { ABILITY } from '@redakcja/shared';
 import type { ProofStatus } from '../debrief/debrief-model.ts';
 import type { TotalsRowId } from '../debrief/results-model.ts';
+import type { RoomListProblem } from '../rooms/room-list-model.ts';
 import type { GeoOutcome, Landmark } from '../stations/minigames/geolocation.logic.ts';
 import type { InputDevice as Device } from '../store/app.ts';
 import type { Accessory } from '../store/profile-model.ts';
@@ -78,6 +81,11 @@ export const pl = {
     adConsent: 'Zgody reklamowe',
     /** Offered next to `matchInProgress` (S7-84): watch the same room from the Widownia. */
     watchAction: 'Oglądaj',
+    /** `matchInProgress` when „Oglądaj” is offered next to it (S7-86). */
+    matchInProgressWatch: 'Pojedynek trwa. Możesz go oglądać.',
+    /** Room browser (S7-88): the entry under the join row, and the eye next to „Dołącz”. */
+    browseRooms: 'Publiczne pokoje',
+    watchByCode: 'Oglądaj pokój o tym kodzie',
     /** Footer link (S7-75): the privacy note at /prywatnosc, in the same tab. */
     privacy: 'Prywatność',
   },
@@ -165,7 +173,8 @@ export const pl = {
     teamFull: 'Ta redakcja ma już komplet.',
     spectatorsFull: 'Na widowni nie ma już miejsc.',
     spectatorsOff: 'Ta redakcja nie wpuszcza widowni.',
-    matchInProgress: 'Pojedynek trwa. Możesz go oglądać.',
+    /** Without „Oglądaj” (spectators off): nothing to offer, so no promise (S7-86). */
+    matchInProgress: 'Pojedynek już trwa. Dołącz po meczu.',
     teamEmpty: 'Każda redakcja potrzebuje gracza.',
     kicked: 'Gospodarz usunął cię z pokoju.',
     kickCooldown: 'Gospodarz niedawno cię usunął. Wróć później.',
@@ -301,6 +310,16 @@ export const pl = {
   vocab: {
     /** Versus newsrooms by team index (S7-84): 0 Kurier, 1 Głos. */
     teams: ['Kurier', 'Głos'],
+    /** Room modes (S7-86): one shared newsroom, or two newsrooms for points. */
+    modes: {
+      coop: 'Razem',
+      versus: 'Na punkty',
+    } satisfies Record<RoomMode, string>,
+    /** Room visibility (S7-86): reached by code only, or listed in the room browser. */
+    visibility: {
+      private: 'Prywatny',
+      public: 'Publiczny',
+    } satisfies Record<RoomVisibility, string>,
     storyTypes: {
       photo: 'Zdjęcie',
       quote: 'Cytat',
@@ -420,6 +439,45 @@ export const pl = {
     startOffline: 'Brak połączenia z serwerem.',
     startWaiting: (names: readonly string[]) => `Czekamy na: ${names.join(', ')}.`,
     allReady: 'Wszyscy gotowi!',
+  },
+  /**
+   * Lobby room settings (S7-86): name, visibility, mode, the two newsroom columns and the
+   * Widownia strip.
+   */
+  lobbyRoom: {
+    settingsTitle: 'Pokój',
+    nameLabel: 'Nazwa pokoju',
+    namePlaceholder: 'np. 3B – piątek',
+    /** A room without a name shows its host. */
+    noName: (host: string) => `Pokój: ${host}`,
+    visibilityLabel: 'Widoczność pokoju',
+    visibilityHints: {
+      private: 'Wejście tylko z\u00a0kodem',
+      public: 'Pokój widać na liście',
+    } satisfies Record<RoomVisibility, string>,
+    modeLabel: 'Tryb gry',
+    modeHints: {
+      coop: 'Jedna redakcja, wspólny wynik',
+      versus: 'Dwie redakcje, wygrywa więcej punktów',
+    } satisfies Record<RoomMode, string>,
+    /** A newsroom column's head: its players out of its seats. */
+    teamCount: (n: number, max: number) => `${n}\u00a0z\u00a0${max}`,
+    joinTeam: 'Przejdź tutaj',
+    uneven: 'Drużyny są nierówne',
+    spectatorsTitle: (n: number, max: number) => `Widownia: ${n}\u00a0z\u00a0${max}`,
+    /** The host's switch: may spectators join this room. */
+    spectatorsAllowed: 'Widownia otwarta',
+    spectatorsClosed: 'Widownia zamknięta',
+    noSpectators: 'Nikt nie ogląda',
+    toSpectators: 'Na widownię',
+    toPlayers: 'Do gry',
+    spectatorWaiting: 'Oglądasz. Gospodarz zaraz zaczyna.',
+    spectatorFull: 'Brak wolnych miejsc przy biurkach.',
+    /** Start gate (the server answers `teamEmpty`): a newsroom has no connected player. */
+    startTeamEmpty: (team: string) => `${team}: brak graczy.`,
+    startNoPlayers: 'Nikt nie siedzi przy biurku.',
+    /** In-game toast when someone starts watching (S7-86). */
+    spectatorJoined: 'Widz dołączył',
   },
   /** Difficulty picker in the lobby and its chips (S7-25). */
   difficulty: {
@@ -2111,6 +2169,8 @@ export const pl = {
     suggestAction: 'Włącz napisy',
     suggestDismiss: 'Zamknij podpowiedź',
     captions: {
+      /** S7-86: someone started watching from the Widownia. */
+      spectatorJoined: 'Nowy widz',
       newFolder: 'Nowa teczka',
       deadlineNear: 'Termin blisko',
       folderLost: 'Teczka przepadła',
@@ -2146,20 +2206,87 @@ export const pl = {
       abilityReady: 'Zdolność gotowa',
     },
   },
+  /** Room browser (S7-88): the public rooms, opened from the main menu when the flag is on. */
+  rooms: {
+    title: 'Publiczne pokoje',
+    close: 'Zamknij listę pokoi',
+    searchLabel: 'Szukaj pokoju',
+    searchPlaceholder: 'Kod, nazwa lub gospodarz',
+    /** The phone toggle that shows the filters; `n` filters narrow the list. */
+    filters: (n: number) => (n > 0 ? `Filtry (${n})` : 'Filtry'),
+    filterLabels: { mode: 'Tryb gry', status: 'Stan pokoju', difficulty: 'Poziom trudności' },
+    any: 'Wszystkie',
+    modes: { coop: 'Razem', versus: 'Na punkty' } satisfies Record<RoomMode, string>,
+    statuses: { open: 'Czekają', inGame: 'W grze' },
+    /** A room without a name is called after its host. */
+    untitled: (host: string) => `Pokój: ${host}`,
+    host: (host: string) => `Gospodarz: ${host}`,
+    code: (code: string) => `Kod ${code}`,
+    players: (players: number, max: number) => `${players}/${max}`,
+    playersLabel: (players: number, max: number) => `Gracze: ${players} z ${max}`,
+    spectatorsLabel: (spectators: number) => `Widzowie: ${spectators}`,
+    spectatorsClosed: 'Widownia zamknięta',
+    inGame: 'W grze',
+    full: 'Komplet',
+    age: (minutes: number) => (minutes < 1 ? 'Nowy' : `${minutes} min`),
+    ageLabel: (minutes: number) =>
+      minutes < 1 ? 'Otwarty przed chwilą' : `Otwarty ${minutes} min temu`,
+    join: 'Dołącz',
+    watch: 'Oglądaj',
+    loading: 'Szukam pokoi…',
+    empty: 'Nie ma teraz publicznych pokoi.',
+    emptyHint: 'Otwórz własny albo dołącz kodem.',
+    filteredEmpty: 'Nic tu nie pasuje.',
+    clearFilters: 'Pokaż wszystkie',
+    /** Shown when the server found more rooms than it sends. */
+    more: (shown: number, total: number) => `Widać ${shown} z ${total}. Zawęź szukanie.`,
+    problems: {
+      offline: 'Brak połączenia z serwerem.',
+      busy: 'Za dużo zapytań. Zaraz spróbuję znowu.',
+      unavailable: 'Lista pokoi jest teraz wyłączona.',
+      failed: 'Nie udało się pobrać listy.',
+    } satisfies Record<RoomListProblem, string>,
+    retry: 'Spróbuj jeszcze raz',
+    pick: 'Wybierz pokój z listy.',
+    /** The picked room has no free seat and no open Widownia. */
+    noSeat: 'Brak wolnych miejsc.',
+  },
   /**
-   * Spectators (S7-84): the read-only briefing and the watch screen's first cut; the full spectate
-   * screen (S7-90/91) builds on these.
+   * Spectators: the read-only briefing (S7-84) and the spectate screen (S7-90): one view per
+   * newsroom, the top-bar scoreboard and the team plates. During play: at most 8 words per line.
    */
   spectate: {
     title: 'Widownia',
     watching: 'Oglądasz',
     waiting: 'Czekamy na pierwszy obraz…',
     leave: 'Wyjdź',
-    /** One newsroom's line on the watch screen: name, points and credibility. */
+    /** One newsroom's line on the scoreboard (screen readers): name, points and credibility. */
     teamLine: (team: string, score: number, credibility: number) =>
       `${team}: ${score} pkt, wiarygodność ${credibility}`,
     /** The single newsroom of a co-op match. */
     coopTeam: 'Redakcja',
+    /** The top bar (screen readers). */
+    scoreboardLabel: 'Wynik meczu',
+    /** The crown on the newsroom ahead. */
+    leader: 'Prowadzi',
+    clockLabel: (clock: string) => `Czas: ${clock}`,
+    /** Co-op scoreboard: folders closed with a verdict and folders that ran out of time. */
+    resolved: (count: number) => `Zamknięte teczki: ${count}`,
+    expired: (count: number) => `Przeterminowane teczki: ${count}`,
+    /** The results phase, before the spectator results (S7-91). */
+    matchOver: 'Koniec meczu',
+    /** The views region (screen readers). */
+    viewsLabel: 'Podgląd redakcji',
+    /** One-view layout: the score segment that shows its newsroom (phones). */
+    showTeam: (team: string) => `Pokaż redakcję ${team}`,
+    /** Split layout: the team plate focuses its newsroom, and a second tap brings both back. */
+    focusTeam: (team: string) => `Tylko redakcja ${team}`,
+    bothTeams: 'Pokaż obie redakcje',
+    /** The keys of the spectate screen, keyboard and gamepad only (≤ 8 words). */
+    hints: {
+      keyboard: { split: 'Spacja – widok · 1, 2 – redakcja', single: 'Spacja – druga redakcja' },
+      gamepad: { split: 'A – widok · B – obie redakcje', single: 'A – druga redakcja' },
+    },
   },
   // --- S7-96 „Jak grać”: the help dialog with the intro, the stations and the controls. ---
   howTo: {

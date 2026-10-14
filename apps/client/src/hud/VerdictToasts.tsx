@@ -1,16 +1,25 @@
 // Verdict feedback: a big, short toast under the folder queue for every verdict and expired
 // folder ("Dobrze! +30", "Fałszywka w druku! −20", "Teczka przepadła −5"; titles by reason from
 // `pl.outcome`), colour plus an outcome icon. At most two at once, newest on top; each
-// disappears on its own.
+// disappears on its own. A new spectator gets one too („Widz dołączył”, S7-86), from the
+// roomState spectator diff the session's cue comes from.
 import { DIFFICULTY } from '@redakcja/shared';
 import { useEffect, useRef, useState } from 'react';
 import { onGameEvent } from '../net/game-events.ts';
+import { joinedSpectators } from '../net/room-diff.ts';
 import { useApp } from '../store/app.ts';
 import { pl } from '../strings/pl.ts';
 import { typeset } from '../strings/typography.ts';
 import { Icon } from '../ui/icons/Icon.tsx';
 import { HudGlyph } from './HudGlyph.tsx';
-import { expiredToast, formatDelta, pushToast, type ToastSlip, verdictToast } from './hud-model.ts';
+import {
+  expiredToast,
+  formatDelta,
+  pushToast,
+  spectatorToast,
+  type ToastSlip,
+  verdictToast,
+} from './hud-model.ts';
 import { hudStory } from './story-lookup.ts';
 import styles from './VerdictToasts.module.css';
 
@@ -51,8 +60,17 @@ export function VerdictToasts() {
         add(expiredToast(event, hudStory(event.storyId), serial.current++, penaltyFactor));
       }
     });
+    const unsubscribeRoom = useApp.subscribe((state, previous) => {
+      if (state.room === previous.room || state.room === null) {
+        return;
+      }
+      for (const spectator of joinedSpectators(previous.room, state.room, state.playerId)) {
+        add(spectatorToast(spectator, serial.current++));
+      }
+    });
     return () => {
       unsubscribe();
+      unsubscribeRoom();
       for (const handle of pending.values()) {
         window.clearTimeout(handle);
       }

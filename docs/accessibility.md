@@ -26,6 +26,10 @@ information: deadline warning and ticks ("Termin blisko"), last seconds, pings, 
   640×360, band about 64 px), so the captions start right under it; the numbers stay 30 px. A
   long number widens the pill rather than clipping it, and the folder queue moves along.
 - When sound is muted and captions are off, a one-time "Włącz napisy" chip offers them.
+- The spectate screen (S7-90) shows no captions: a watched newsroom's cues live on its own view's
+  feedback, which the caption stack does not listen to. A spectator hears only
+  `SPECTATOR_AUDIBLE_CUES` (verdict outcomes, expiries, event starts, raids, abilities), and the
+  spectator event feed (S7-91) is the visual twin of each of them. No haptics either.
 
 ### Intro subtitles (S7-101)
 

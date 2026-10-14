@@ -2,7 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import { ENDLESS_LAYOUT, LEVELS } from '@redakcja/content';
 import { type Fixture, parseLayout, type TileMap } from '@redakcja/shared';
 import { PerspectiveCamera, Vector3 } from 'three';
-import { computeFraming, type Framing, placeCamera, setUpLens } from './camera-framing.ts';
+import {
+  computeFraming,
+  type Framing,
+  placeCamera,
+  SPECTATOR_FIT_BACK_ROOM,
+  setUpLens,
+} from './camera-framing.ts';
 import { SIGN_ABOVE, surfaceHeight } from './entities.ts';
 
 /** The phone HUD band the one-row pill and the folder queue make (S7-11). */
@@ -305,6 +311,17 @@ describe('computeFraming', () => {
         expect({ id: station.id, onScreen }).toEqual({ id: station.id, onScreen: true });
       }
     }
+  });
+
+  test('a spectator view keeps less room behind the newsroom (S7-90)', () => {
+    const input = { width: 1366, height: 600, mapW: 20, mapH: 12, local: null, topInsetPx: 0 };
+    expect(computeFraming(input).visibleDepth).toBe(17);
+    expect(computeFraming({ ...input, backRoom: SPECTATOR_FIT_BACK_ROOM })).toEqual({
+      follow: false,
+      target: { x: 10, z: 5.1 },
+      visibleDepth: 15,
+      viewOffsetY: 0,
+    });
   });
 
   test('before the local player is known the room is fitted', () => {

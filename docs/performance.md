@@ -24,7 +24,8 @@ below 30), at most 100k triangles, about 150 draw calls on desktop and 100 on ph
 - **Game route** (added by the first match): the lazy `GameScreen` chunk (three.js, the scene, the
   stations), its CSS, the SFX sprite and the two level music layers.
 - **Extras route** (S7-96, what a first session may open on top): the lazy dialogs whose manifest
-  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`),
+  keys start with `EXTRAS_SOURCES` (`src/intro/`, `src/howto/`, `src/about/`, `src/profile/`,
+  `src/rooms/` for the room browser, S7-88),
   the chunks they import and load later, and the intro voice in `assets/voice` (one audio format
   plus its sprite json). Chunks the menu or the game route already counted are not counted
   again, and the extras never count as game, so a new lazy dialog does not eat `gameMax`.
@@ -86,6 +87,7 @@ components per station kind with `React.lazy`.
 | --- | --- | --- | --- |
 | S7-56 (all ten minigames) | 814 KB | 51 % | 301 KB |
 | S7-66 (M4 done: abilities, ten stations, endless room) | 822 KB | 51 % | 303 KB |
+| S7-90 (spectate screen I: views, layout, scoreboard; the lazy styleguide counts here since S7-101) | 868 KB | 53 % | 305 KB |
 
 Real transfer in headless Chromium (webm audio, brotli estimate, whole flow menu, lobby, briefing,
 match): menu 434 KB, everything 1.7 MB brotli. The 10 MB limit is met about seven times over.
@@ -210,6 +212,23 @@ Only the primary canvas measures frame time and walks the adaptive-quality ladde
 refactor itself was measured on the l1 room (solo host, 1366x768, fixed high preset, 7 injected
 floor folders, SwiftShader): 50–51 draw calls before and after, and the same list of visible meshes;
 triangles (23.1–24.4k) differ between runs only by the folder prop of the injected story type.
+
+**Spectate screen (S7-90).** A spectator watches a versus match in two canvases side by side on
+a desktop (`spectate/spectate-layout.ts`), so each spectator canvas is capped by
+`spectatorProfile` (`scene/quality.ts`): at most the medium preset, DPR 1.5, no shadows and no
+motes, whatever the device or the settings ask for. Phones always get one canvas (a second WebGL
+context is too heavy for them); switching teams there remounts the scene in the same context
+instead of creating a new one. Measured in `e2e/spectate.spec.ts` (l0 room, one player per
+newsroom, the spectator's page set to high and capped, SwiftShader):
+
+| Spectator | Canvases | Draw calls | Triangles | Budget used |
+| --- | --- | --- | --- | --- |
+| Desktop 1366×768, side by side | 2 | 62 | 25.1k | 41 % of 150 calls, 25 % of 100k triangles |
+| Phone (Pixel 7 landscape), one view | 1 | 29 | 12.3k | 29 % of 100 calls |
+| Phone 640×360, one view | 1 | 28 | 12.6k | 28 % of 100 calls |
+
+Two canvases cost twice the per-view draw calls (about 30 each on the capped preset), which
+leaves room for 4 + 4 players and a busy belt in each newsroom; S7-92 adds the 4 v 4 perf case.
 
 ### The 24×14 rooms (S7-66)
 

@@ -72,11 +72,18 @@ const withExtras: Manifest = {
 };
 
 describe('extras route', () => {
-  it('knows the four extras folders and the 1 MB guard', () => {
-    expect(EXTRAS_SOURCES).toEqual(['src/intro/', 'src/howto/', 'src/about/', 'src/profile/']);
+  it('knows the five extras folders and the 1 MB guard', () => {
+    expect(EXTRAS_SOURCES).toEqual([
+      'src/intro/',
+      'src/howto/',
+      'src/about/',
+      'src/profile/',
+      'src/rooms/',
+    ]);
     expect(BUDGET.extrasMax).toBe(1024 * 1024);
     expect(isExtrasKey('src/howto/HowToPlayDialog.tsx')).toBe(true);
     expect(isExtrasKey('src/profile/ProfileDialog.tsx')).toBe(true);
+    expect(isExtrasKey('src/rooms/RoomBrowserDialog.tsx')).toBe(true);
     expect(isExtrasKey('src/screens/GameScreen.tsx')).toBe(false);
     expect(isExtrasKey('_kit-abc.js')).toBe(false);
   });
