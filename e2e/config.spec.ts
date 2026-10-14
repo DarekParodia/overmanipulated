@@ -1,5 +1,5 @@
 import { type BrowserContextOptions, expect, type Page, test } from '@playwright/test';
-import { closePlayers, DESKTOP, PHONE, trackContext } from './helpers.ts';
+import { closePlayers, DESKTOP, guardAdRequests, PHONE, trackContext } from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -111,7 +111,11 @@ test('the message of the day shows, stays closed and returns with a new id', asy
 });
 
 test('without a message there is no banner', async ({ page }) => {
+  guardAdRequests(page.context());
   await serveMotd(page, null);
   await openMenu(page, false);
   await expect(page.getByTestId('motd')).toHaveCount(0);
+  // Ads off (S7-74): no ad frame and no consent link either.
+  await expect(page.locator('[data-ad-placement]')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Zgody reklamowe' })).toHaveCount(0);
 });

@@ -1,8 +1,11 @@
 // A balance bot: plays one crew member through the real simulation by producing the same
 // per-tick inputs and commands a client would send (move, interact, hold work, minigame result,
-// verdict). It sees only the game state, never the sim's RNG. Skill is a SkillProfile; the
-// models are assumptions, see models.ts and docs/balance.md.
+// verdict, role ability). It sees only the game state, never the sim's RNG. Skill is a
+// SkillProfile; the models are assumptions, see models.ts and docs/balance.md.
 import {
+  ABILITY,
+  type Ability,
+  type AbilityPreview,
   abilityEnvOf,
   abilityOf,
   abilityPreview,
@@ -60,7 +63,9 @@ type Phase =
   | 'collect'
   | 'collectVerify'
   | 'deskWait'
-  | 'think';
+  | 'think'
+  /** Telefon z terenu is dialling: the bot holds the folder and waits for the phone stamp. */
+  | 'calling';
 
 type Target = { fixtureId: string; station: StationKind | null };
 
@@ -88,6 +93,8 @@ const WORK_WATCHDOG_MS = 45_000;
 const DESK_WATCHDOG_MS = 20_000;
 const WAIT_FOR_STATION_MS = 6000;
 const EMERGENCY_MS = 5000;
+/** A field call that has not ended this long after its call time counts as a stall. */
+const CALL_GRACE_MS = 1000;
 const RANK_BONUS_MS = { normal: 0, important: 10_000, urgent: 20_000 } as const;
 
 export class Bot {
@@ -109,16 +116,22 @@ export class Bot {
   private readonly wanted = new Map<string, boolean>();
   private readonly rng: Rng;
   private readonly abilityUser: boolean;
+  /** Watchdogs that fired: the bot gave up waiting at a station, a desk or a field call. */
+  stalls = 0;
 
+  /** `pressAbilities` false: the bot never presses its ability (`--no-abilities`). */
   constructor(
     readonly playerId: string,
     private readonly profile: SkillProfile,
     private readonly team: Team,
     seed: number,
     private readonly difficulty: Difficulty,
+    pressAbilities = true,
   ) {
     this.rng = createRng(seed);
-    this.abilityUser = this.rng.next() < profile.usesAbility;
+    // Drawn either way, so switching presses off leaves every other draw of the run unchanged.
+    const roll = this.rng.next();
+    this.abilityUser = pressAbilities && roll < profile.usesAbility;
   }
 
   /** The next input and commands, given the state after the previous tick. */
@@ -193,6 +206,11 @@ export class Bot {
           return;
         }
         this.waitSinceMs = null;
+        if (plan.station === 'phone' && this.callsInstead(state, ctx, folder)) {
+          out.commands.push({ kind: 'useAbility' });
+          this.enter('calling', now);
+          return;
+        }
         this.setTarget(plan);
         this.attempts = 0;
         this.enter('walk', now);
@@ -236,7 +254,18 @@ export class Bot {
           return;
         }
         out.work = true;
-        if (station.outageMs > 0 || now - this.phaseSinceMs > WORK_WATCHDOG_MS) {
+        if (station.operatorId !== this.playerId && this.stampLanded(state, ctx, station.kind)) {
+          // An armed Ekspertyza (or a press in the minigame) stamped the folder: no minigame.
+          this.mem(state, ctx)?.visited.add(station.kind);
+          out.work = false;
+          this.enter('collect', now);
+          return;
+        }
+        const stalled = now - this.phaseSinceMs > WORK_WATCHDOG_MS;
+        if (station.outageMs > 0 || stalled) {
+          if (stalled && station.outageMs <= 0) {
+            this.stalls++;
+          }
           out.work = false;
           this.enter('collect', now);
           return;
@@ -310,6 +339,7 @@ export class Bot {
           this.verdictAtMs = now + this.thinkMs(state);
           this.enter('think', now);
         } else if (now - this.phaseSinceMs > DESK_WATCHDOG_MS) {
+          this.stalls++;
           out.work = false;
           this.enter('collect', now);
         }
@@ -333,6 +363,22 @@ export class Bot {
         out.work = false;
         // The folder disappears next tick; the bot is free again after a reaction delay.
         this.reset(now);
+        return;
+      }
+      case 'calling': {
+        // Standing still with the folder in hand; the call ends with the phone stamp.
+        const preview = abilityPreview(state, this.playerId, abilityEnvOf(ctx));
+        const timedOut = now - this.phaseSinceMs > ABILITY.fieldCall.callMs + CALL_GRACE_MS;
+        if (preview.kind === 'calling' && !timedOut) {
+          return;
+        }
+        if (timedOut) {
+          this.stalls++;
+        }
+        // The phone is done for this folder either way, so the bot never dials twice.
+        this.mem(state, ctx)?.visited.add('phone');
+        this.enter('decide', now);
+        this.stepPhase(state, ctx, out);
         return;
       }
     }
@@ -604,25 +650,58 @@ export class Bot {
   }
 
   /**
-   * Presses the role ability when the shared preview says it acts now, as a client would. Only
-   * Przedłużenie has a policy so far: the managing editor saves a claimed folder that is about to
-   * expire when the preview targets it (S7-46 adds the other abilities).
+   * Presses the role ability when the shared preview says a press does something useful, as a
+   * client would (S7-46). Przedłużenie saves a claimed folder that is about to expire; Ekspertyza
+   * and Druga szansa are armed whenever the preview offers `arm`, or pressed `now` at the bot's
+   * own station. Telefon z terenu is pressed from the `decide` phase instead of walking to the
+   * phone (`callsInstead`). Podaj teczkę is not modelled (docs/balance.md).
    */
   private maybeUseAbility(state: GameState, ctx: SimContext, out: BotOutput): void {
     const ability = abilityOf(state.crew[this.playerId]?.role ?? null);
-    if (!this.abilityUser || ability !== 'extendDeadline') {
+    if (!this.abilityUser || ability === null) {
       return;
     }
     const preview = abilityPreview(state, this.playerId, abilityEnvOf(ctx));
-    const folder =
-      preview.kind === 'now' && preview.folderId ? state.folders[preview.folderId] : undefined;
     if (
-      folder &&
-      this.team.claims.has(folder.id) &&
-      folder.deadlineMs - state.elapsedMs < EMERGENCY_MS
+      abilityPolicy(ability, preview, this.ownTarget(), (folderId) => this.urgent(state, folderId))
     ) {
       out.commands.push({ kind: 'useAbility' });
     }
+  }
+
+  /** The bot's own station and folder, for a `now` press of Ekspertyza or Druga szansa. */
+  private ownTarget(): { stationId: string; folderId: string } | null {
+    return this.target?.station && this.folderId
+      ? { stationId: this.target.fixtureId, folderId: this.folderId }
+      : null;
+  }
+
+  /** A folder the team works on with less than EMERGENCY_MS left (Przedłużenie). */
+  private urgent(state: GameState, folderId: string): boolean {
+    const folder = state.folders[folderId];
+    return (
+      folder !== undefined &&
+      this.team.claims.has(folder.id) &&
+      folder.deadlineMs - state.elapsedMs < EMERGENCY_MS
+    );
+  }
+
+  /** Telefon z terenu instead of the phone station: the preview offers the call for this folder. */
+  private callsInstead(state: GameState, ctx: SimContext, folder: Folder): boolean {
+    if (!this.abilityUser || abilityOf(state.crew[this.playerId]?.role ?? null) !== 'fieldCall') {
+      return false;
+    }
+    const preview = abilityPreview(state, this.playerId, abilityEnvOf(ctx));
+    return preview.kind === 'now' && preview.folderId === folder.id;
+  }
+
+  /** Whether the bot's folder already holds the stamp of a station kind. */
+  private stampLanded(state: GameState, ctx: SimContext, kind: StationKind): boolean {
+    const folder = this.folder(state);
+    const stampId = folder
+      ? ctx.stories[folder.storyId]?.stamps.find((stamp) => stamp.station === kind)?.id
+      : undefined;
+    return folder !== undefined && stampId !== undefined && folder.stamps.includes(stampId);
   }
 
   // --- Helpers ------------------------------------------------------------------------------
@@ -697,6 +776,35 @@ export class Bot {
     const magnitude = Math.min(this.profile.walkFactor, length / stepTiles);
     out.move = { x: (dx / length) * magnitude, y: (dy / length) * magnitude };
     return false;
+  }
+}
+
+/**
+ * Whether a bot presses its ability for a preview (S7-46): Przedłużenie when the `now` target is
+ * urgent; Ekspertyza and Druga szansa on `arm`, or `now` at the bot's own station and folder.
+ * Telefon z terenu is pressed from the plan (`Bot.callsInstead`), Podaj teczkę never.
+ */
+export function abilityPolicy(
+  ability: Ability,
+  preview: AbilityPreview,
+  own: { stationId: string; folderId: string } | null,
+  urgent: (folderId: string) => boolean,
+): boolean {
+  switch (ability) {
+    case 'extendDeadline':
+      return preview.kind === 'now' && preview.folderId !== undefined && urgent(preview.folderId);
+    case 'expertise':
+    case 'secondChance':
+      return (
+        preview.kind === 'arm' ||
+        (preview.kind === 'now' &&
+          own !== null &&
+          preview.stationId === own.stationId &&
+          preview.folderId === own.folderId)
+      );
+    case 'fieldCall':
+    case 'passFolder':
+      return false;
   }
 }
 

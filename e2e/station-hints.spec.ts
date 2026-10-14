@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { closePlayers, createRoom, DESKTOP, openPlayer, PHONE } from './helpers.ts';
+import {
+  closePlayers,
+  createRoom,
+  DESKTOP,
+  openPlayer,
+  PHONE,
+  skipStationHelp,
+} from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -37,6 +44,7 @@ test('every minigame shows key hints for the device in use', async ({ browser },
   const options = touch ? { ...PHONE, viewport: { width: 640, height: 360 } } : DESKTOP;
   const player = await openPlayer(browser, 'Zośka', options);
   const { page } = player;
+  await skipStationHelp(page);
   await createRoom(player);
   await page.getByRole('button', { name: 'Do składu!' }).click();
   await expect(page.getByTestId('hud')).toBeVisible();

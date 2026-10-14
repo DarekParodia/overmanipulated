@@ -146,7 +146,7 @@ Gra ma kampanię z 6 poziomów i tryb nieskończony. Akcja toczy się w fikcyjny
 | 3. Afera w szkole | Viral o dyrektorze liceum | Telefon do źródła, zdarzenie „To już wszędzie jest!” | Plotka bez źródła, screen bez linku, presja społeczna |
 | 4. Zdrowie | Nowy suplement i „cudowne badanie” | Biblioteka danych | Zmanipulowana statystyka, fałszywy ekspert, korelacja jako przyczyna |
 | 5. Głęboka podróbka | Nagranie burmistrza | Skaner AI, Stenogram, Metadane, zdarzenie „Telefon od szefa”; większa sala (24×14) | Deepfake audio i wideo, obraz z AI, wycięty cytat |
-| 6. Atak | Skoordynowana kampania przed referendum | Nalot botów, sprostowania | Sieć botów, astroturfing, hashtag tworzony sztucznie |
+| 6. Atak | Skoordynowana kampania przed referendum | Nalot botów, sprostowania, Mapa, Inne media; większa sala (24×14) | Sieć botów, astroturfing, hashtag tworzony sztucznie |
 
 Przed kampanią jest poziom 0 „Makieta”: próbny dyżur z samouczkiem.
 

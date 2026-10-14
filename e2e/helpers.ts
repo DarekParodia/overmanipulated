@@ -14,14 +14,77 @@ export type Player = { page: Page; nickname: string; touch: boolean };
 
 const openContexts: BrowserContext[] = [];
 
-/** Closes every context opened by `openPlayer`; idle scenes would otherwise keep rendering. */
-export async function closePlayers(): Promise<void> {
-  await Promise.all(openContexts.splice(0).map((context) => context.close()));
+/** Hosts of Google's ad, consent and ad-measurement requests. */
+const AD_HOST =
+  /(^|\.)(googlesyndication\.com|doubleclick\.net|googleadservices\.com|adtrafficquality\.google|fundingchoicesmessages\.google\.com)$/;
+
+/** Contexts under the ad guard since the last `closePlayers`, with the ad requests each made. */
+const adRequests = new Map<BrowserContext, string[]>();
+
+/**
+ * Ad guard (S7-74): with no ads config (every spec but ads.spec) the game must not ask Google
+ * for anything. Records each such request; `closePlayers` fails the test if there was one.
+ * `trackContext` and `openPlayer` apply it; call it directly for Playwright's own `page` fixture.
+ */
+export function guardAdRequests(context: BrowserContext): void {
+  const seen: string[] = [];
+  adRequests.set(context, seen);
+  context.on('request', (request) => {
+    if (AD_HOST.test(new URL(request.url()).hostname)) {
+      seen.push(request.url());
+    }
+  });
 }
 
-/** Registers a context opened by a spec itself, so `closePlayers` disposes of it too. */
-export function trackContext(context: BrowserContext): void {
+/**
+ * Closes every context opened by `openPlayer`; idle scenes would otherwise keep rendering. Then
+ * fails if a context without ads asked Google for an ad.
+ */
+export async function closePlayers(): Promise<void> {
+  await Promise.all(openContexts.splice(0).map((context) => context.close()));
+  const leaked = [...adRequests.values()].flat();
+  adRequests.clear();
+  if (leaked.length > 0) {
+    throw new Error(`Ad requests without an ads config: ${leaked.join(', ')}`);
+  }
+}
+
+/** Every station kind (`stationKindSchema` in packages/shared; e2e cannot import workspaces). */
+const STATION_KINDS = [
+  'imageSearch',
+  'archive',
+  'sourceRegistry',
+  'phone',
+  'aiScanner',
+  'dataLibrary',
+  'geolocation',
+  'transcript',
+  'crossCheck',
+  'metadata',
+] as const;
+
+/**
+ * Marks every station's help card as seen in this page's browser (S7-95), so a station overlay
+ * opens straight on its minigame. Call after the page loaded the game's origin.
+ */
+export async function skipStationHelp(page: Page): Promise<void> {
+  await page.evaluate((kinds) => {
+    localStorage.setItem('redakcja.stationHelp.v1', JSON.stringify(kinds));
+  }, STATION_KINDS);
+}
+
+/**
+ * Registers a context opened by a spec itself, so `closePlayers` disposes of it too. Unless the
+ * spec serves an ads config (`ads: true`), the context must make no ad request.
+ */
+export function trackContext(
+  context: BrowserContext,
+  { ads = false }: { ads?: boolean } = {},
+): void {
   openContexts.push(context);
+  if (!ads) {
+    guardAdRequests(context);
+  }
 }
 
 export async function openPlayer(
@@ -30,7 +93,7 @@ export async function openPlayer(
   options: BrowserContextOptions,
 ): Promise<Player> {
   const context = await browser.newContext(options);
-  openContexts.push(context);
+  trackContext(context);
   const page = await context.newPage();
   page.on('pageerror', (error) => {
     throw error;

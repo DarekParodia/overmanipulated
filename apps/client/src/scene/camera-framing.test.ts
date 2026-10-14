@@ -180,6 +180,29 @@ describe('computeFraming', () => {
     }
   });
 
+  test('the 24x14 l6 room (S7-58) is fitted on desktop and followed on a phone', () => {
+    const level = LEVELS.find((candidate) => candidate.id === 'l6-atak');
+    const map = parseLayout(level?.layout ?? []);
+    expect([map.width, map.height]).toEqual([24, 14]);
+    const input = { mapW: map.width, mapH: map.height, local: { x: 3, y: 2.5 }, topInsetPx: BAND };
+    // 1280/25.5 and 720/(19·sin 58°) both give at least the 40 px minimum tile: no follow.
+    for (const [width, height] of [
+      [1280, 720],
+      [1366, 768],
+    ] as const) {
+      expect(computeFraming({ width, height, ...input })).toEqual({
+        follow: false,
+        target: { x: 12, z: 6.1 },
+        visibleDepth: 19,
+        viewOffsetY: 0,
+      });
+    }
+    const phone = computeFraming({ width: 640, height: 360, ...input });
+    expect(phone.follow).toBe(true);
+    expect(phone.viewOffsetY).toBe(-32);
+    expect(phone.target).toEqual({ x: 6.5, z: 2.5 });
+  });
+
   test('the 24×14 level-5 room fits a 1280×720 desktop and is followed on phones (S7-57)', () => {
     const level = LEVELS.find((l) => l.id === 'l5-deepfake');
     const map = parseLayout(level?.layout ?? []);
