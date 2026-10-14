@@ -76,12 +76,14 @@ type Hook = {
 };
 
 // S7-15: the key hints under every minigame follow the device in use; on touch they name the
-// gesture or button. Phones are checked at the smallest supported landscape size, 640×360.
+// gesture or button. Checked at the smallest supported sizes: 640×360 phones, 1280×720 desktops.
 test('every minigame shows key hints for the device in use', async ({ browser }, testInfo) => {
   // Ten overlays and ten screenshots of a software-rendered WebGL page.
   test.slow();
   const touch = testInfo.project.name !== 'desktop';
-  const options = touch ? { ...PHONE, viewport: { width: 640, height: 360 } } : DESKTOP;
+  const options = touch
+    ? { ...PHONE, viewport: { width: 640, height: 360 } }
+    : { ...DESKTOP, viewport: { width: 1280, height: 720 } };
   const player = await openPlayer(browser, 'Zośka', options);
   const { page } = player;
   await skipStationHelp(page);
@@ -148,13 +150,12 @@ test('every minigame shows key hints for the device in use', async ({ browser },
     }
     const hints = overlay.getByTestId('key-hints');
     await expect(hints).toHaveAttribute('data-device', touch ? 'touch' : 'keyboard');
-    if (touch) {
-      // Short-phone layouts (Backlog → S7-15, S7-56): at 640×360 the overlay body does not
-      // scroll, and every button and the hint row lie inside the body and the viewport.
-      expect(await misfits(overlay), `${kind} at 640×360`).toEqual([]);
-    }
-    // On desktop Kartoteka's hints still sit below the fold at 1366×768 (Backlog).
-    await hints.scrollIntoViewIfNeeded();
+    // At the smallest supported sizes (640×360 touch, 1280×720 desktop) the overlay body does
+    // not scroll, and every button and the hint row lie inside the body and the viewport.
+    expect(
+      await misfits(overlay),
+      `${kind} at ${options.viewport?.width}×${options.viewport?.height}`,
+    ).toEqual([]);
     await expect(hints.locator('li').first()).toBeInViewport({ ratio: 0.9 });
     await page.screenshot({
       path: testInfo.outputPath(`${kind}.png`),
