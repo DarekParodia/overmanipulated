@@ -88,7 +88,7 @@ describe('docs/voice-recording.pl.md', () => {
 
   it('gives the generator command with the CC0 licence and a credit', () => {
     expect(doc).toContain(
-      "python3 tools/audio/synth_voice.py --recordings <folder> --voice <etykieta> --licence self-recorded-CC0 --credit '<imię i nazwisko lub pseudonim>'",
+      "python3 tools/audio/synth_voice.py --recordings <folder> --licence self-recorded-CC0 --credit '<imię i nazwisko lub pseudonim>'",
     );
   });
 });

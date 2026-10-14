@@ -12,10 +12,11 @@ textSha1}}), gets one take per clip, post-processes every take the same way, joi
 
 Takes come from one of two sources:
 
-  --recordings DIR --voice LABEL [--licence self-recorded-CC0] [--credit NAME]
+  --recordings DIR [--voice LABEL] [--licence self-recorded-CC0] [--credit NAME]
       A volunteer's recordings, DIR/<clipId>.wav (any rate, mono or stereo), released under CC0.
-      Licence `self-recorded-CC0`. This is the shipping path (user decision 2026-10-13); the
-      volunteer's guide, clip table and consent form are in docs/voice-recording.pl.md.
+      Licence `self-recorded-CC0`; LABEL, stored in the sprite, defaults to RECORDING_LABEL
+      (`ochotnik-1`). This is the shipping path (user decision 2026-10-13); the volunteer's
+      guide, clip table and consent form are in docs/voice-recording.pl.md.
 
   --voice NAME                      a Piper voice from VOICES (downloaded, SHA-256 pinned)
   --model PATH --voice LABEL --licence L [--credit TEXT]
@@ -31,7 +32,7 @@ fades, normalise to -20 dBFS RMS over the audible part with the peak held at or 
 Fails (writing nothing) when either audio file would exceed VOICE_MAX_BYTES.
 
 Usage:
-  python3 tools/audio/synth_voice.py --recordings ~/takes --voice ochotnik-1 --licence self-recorded-CC0 --credit 'Name'
+  python3 tools/audio/synth_voice.py --recordings ~/takes --licence self-recorded-CC0 --credit 'Name'
   python3 tools/audio/synth_voice.py --model pl_PL-x.onnx --voice pl_PL-x --licence CC0-1.0
   [--out DIR] writes the three files to DIR instead (for a trial run)
   [--lines FILE] reads the line export from FILE instead of running bun
@@ -54,6 +55,9 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT_DIR = ROOT / "apps/client/public/assets/voice"
+# The sprite's `voice` label for a recording when --voice is not given: neutral, never a name
+# (the volunteer's chosen credit goes to --credit).
+RECORDING_LABEL = "ochotnik-1"
 CACHE = Path.home() / ".cache/redakcja/piper"
 
 # Must match apps/client/src/intro/voice-sprite.ts (voice-sync.test.ts checks both literals).
@@ -285,6 +289,8 @@ def parse_args(argv):
     parser.add_argument("--out", metavar="DIR", help=f"output directory (default {OUT_DIR.relative_to(ROOT)})")
     parser.add_argument("--lines", metavar="FILE", help="line export json instead of running bun")
     args = parser.parse_args(argv)
+    if args.recordings and not args.voice:
+        args.voice = RECORDING_LABEL
     if not args.voice:
         parser.error("--voice is required (a VOICES name, or a label for --model / --recordings)")
     if args.recordings and args.licence not in (None, "self-recorded-CC0"):

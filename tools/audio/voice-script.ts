@@ -38,7 +38,7 @@ function cell(text: string): string {
 
 /** How to say the key names of one subtitle, from `PRONOUNCE`; „—” when nothing needs a hint. */
 export function pronunciationHints(subtitle: string): string {
-  const plain = subtitle.replace(/[  ]/g, ' ');
+  const plain = subtitle.replace(/[\u00a0\u202f]/g, ' ');
   const hints = PRONOUNCE.filter(([phrase]) => plain.includes(phrase)).map(
     ([phrase, spoken]) => `„${phrase}” czytaj „${spoken}”`,
   );

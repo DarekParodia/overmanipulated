@@ -28,8 +28,9 @@ i jaką zgodę zebrać) oraz dla opiekuna projektu (jak zamienić nagrania na pl
 
 ## Co nagrać
 
-Czytaj **dokładnie** tekst z kolumny „Tekst”: te same słowa w tej samej kolejności. Gra sprawdza,
-czy nagranie pasuje do napisów, i po każdej zmianie tekstu wskaże plik do ponownego nagrania.
+Czytaj **dokładnie** tekst z kolumny „Tekst”: te same słowa w tej samej kolejności. Głos ma
+pasować do napisów; testy projektu pamiętają, z jakiego tekstu powstał każdy plik, i po każdej
+zmianie tekstu wskażą plik do ponownego nagrania.
 
 - Słowa w cudzysłowie („Podnieś”, „Pracuj”, „Następna teczka”) to napisy na przyciskach i kartach.
   Czytaj je zwyczajnie, bez słowa „cudzysłów”, najwyżej z lekkim akcentem.
@@ -139,15 +140,15 @@ jednej kwestii). Usuwa je po wycofaniu zgody albo po wymianie głosu.
 Wymagania: Python 3 z `numpy`, `ffmpeg` (z `libopus` i `libmp3lame`) oraz `bun`.
 
 ```sh
-python3 tools/audio/synth_voice.py --recordings <folder> --voice <etykieta> --licence self-recorded-CC0 --credit '<imię i nazwisko lub pseudonim>'
+python3 tools/audio/synth_voice.py --recordings <folder> --licence self-recorded-CC0 --credit '<imię i nazwisko lub pseudonim>'
 python3 tools/audio/measure.py
 bun test apps/client/src/intro tools/audio
 ```
 
 - `--recordings <folder>`: folder z 17 plikami `<id klipu>.wav`. Brak któregoś pliku przerywa
   pracę i wypisuje brakujące nazwy.
-- `--voice <etykieta>`: neutralna etykieta zapisywana w `intro.json`, np. `ochotnik-1`. Nigdy
-  nazwisko ochotnika, który chce być anonimowy.
+- `--voice <etykieta>` (opcjonalnie): neutralna etykieta zapisywana w `intro.json`, domyślnie
+  `ochotnik-1`. Nigdy imię, nazwisko ani pseudonim ochotnika (te trafiają tylko do `--credit`).
 - `--credit '…'`: podpis dokładnie taki, jak w formularzu. Dla ochotnika, który wybrał
   anonimowość: `--credit 'anonimowy ochotnik'`.
 - `--licence self-recorded-CC0`: jedyna licencja nagrań ochotnika (narzędzie odrzuca inną).

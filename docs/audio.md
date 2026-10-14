@@ -138,12 +138,13 @@ fails while it is stale. Once the takes are in, run the generator and commit the
 together with the CREDITS row:
 
 ```
-python3 tools/audio/synth_voice.py --recordings DIR --voice LABEL --licence self-recorded-CC0 --credit 'NAME'
+python3 tools/audio/synth_voice.py --recordings DIR --licence self-recorded-CC0 --credit 'NAME'
 python3 tools/audio/measure.py && bun test apps/client/src/intro tools/audio
 ```
 
 `DIR/<clipId>.wav` holds one take per clip (17: the ids `bun tools/audio/intro-lines.ts` prints).
-`LABEL` is stored in `intro.json`, so it is neutral (`ochotnik-1`); `NAME` is the credit the
+The sprite's `voice` label defaults to the neutral `ochotnik-1` (`--voice LABEL` overrides it;
+never the volunteer's name); `NAME` is the credit the
 volunteer chose on the form (`anonimowy ochotnik` when anonymous). The raw WAVs and the signed
 form never go into the repository. `--model PATH --voice LABEL --licence L [--credit TEXT]` uses
 an offline Piper voice instead (`pip install piper-tts==1.8.0`), and `--voice NAME` downloads one
