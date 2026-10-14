@@ -213,14 +213,16 @@ export const ROLE_PERKS = {
  * - fieldCall.callMs: how long Telefon z terenu dials before the phone stamp lands;
  * - extendDeadline.addMs: time Przedłużenie adds to a folder (a botRaid wave moves together);
  * - secondChance.rangeTiles: how far a locked station may be for an immediate Druga szansa;
- * - passFolder.rangeTiles: how far Podaj teczkę reaches a free teammate.
+ * - passFolder.rangeTiles: how far Podaj teczkę reaches a free teammate;
+ * - passFolder.flightMs: how long the client draws the folder's arc to the receiver (cosmetic: the
+ *   folder is in the receiver's hands at once in the simulation).
  */
 export const ABILITY = {
   expertise: { cooldownMs: 60_000 },
   fieldCall: { cooldownMs: 60_000, callMs: 6000 },
   extendDeadline: { cooldownMs: 60_000, addMs: 20_000 },
   secondChance: { cooldownMs: 60_000, rangeTiles: 2.5 },
-  passFolder: { cooldownMs: 60_000, rangeTiles: 6 },
+  passFolder: { cooldownMs: 60_000, rangeTiles: 6, flightMs: 450 },
 } as const satisfies Record<Ability, { cooldownMs: number } & Record<string, number>>;
 
 /** Koło ratunkowe: time added to a folder that reaches its deadline in a Ratownik's hands. */

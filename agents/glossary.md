@@ -185,6 +185,9 @@ passive, `ability` the active one (R / RB / the fourth touch button).
 | Cel zdolności | ability target (`AbilityTarget`, `abilityTargetFolder`, `abilityTargetName`, `data-ability-target`) | What a ready press would act on: the folder card gets a dashed blue outline, a teammate or station is named on the chip |
 | Pierścień postępu | progress ring (`ui/ProgressRing`, `RingTone`) | The round fill shared by the work prompt and the ability chip / button |
 | Źródło pieczątki | stamp source (`stampSourceSchema`, `stampApplied.via`) | `minigame`, `expertise` or `fieldCall` |
+| Znacznik zdolności | ability marker (`abilities/AbilityMarkers.tsx`, `abilityMarkers`, `AbilityMarker`, `data-testid="ability-marker"`) | World marker beside a player (hip height, clear of the name tag): `armed` (blue ring with the ability icon) or `call` (phone in a draining orange ring); `passTarget` is the dashed floor ring under the teammate the local Ratownik's Podaj teczkę would reach (S7-42) |
+| Lot teczki | pass arc (`passArcPoint`, `PASS_ARC_LIFT`, `ABILITY.passFolder.flightMs`) | The cosmetic 450 ms arc of a folder handed over with Podaj teczkę; in the simulation it is in the receiver's hands at once |
+| Reakcja na zdolność | ability reaction (`abilityReaction`, `ABILITY_CLIPS`: `abilityPower`, `abilityThrow`, `abilityCall`; `stopUpper`) | The upper-body clip an avatar plays for its own ability event (and the receiver's catch) |
 
 ## Station families (`StationFamily`, Stage 7)
 
