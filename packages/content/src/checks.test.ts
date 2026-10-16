@@ -680,6 +680,9 @@ describe('validate CLI', () => {
     expect(deadlineFit).toEqual([]);
     const warnings = decisiveNotJustifying.length + notScheduled.length + deadlineFit.length;
     expect(out).toContain(`0 error(s), ${warnings} warning(s)`);
+    // The reviewed count is printed for the whole content and for each story file.
+    expect(out).toMatch(/^Stories reviewed: \d+ of \d+$/m);
+    expect(out).toMatch(/^ {2}stories\/l0-greybox\.json: \d+ of \d+$/m);
     expect(result.exitCode).toBe(0);
   });
 
@@ -739,6 +742,62 @@ describe('validate CLI', () => {
     ]) {
       expect(out).toContain(line);
     }
+  });
+
+  /**
+   * Runs `check` on a content root holding the greybox level and its stories, every story marked
+   * `reviewed` as given. The root is removed afterwards, even when writing it fails.
+   */
+  const withReviewRoot = (reviewed: boolean, check: (dir: string, count: number) => void): void => {
+    const dir = mkdtempSync(join(tmpdir(), 'content-review-'));
+    try {
+      const content = realContent();
+      mkdirSync(join(dir, 'levels'));
+      mkdirSync(join(dir, 'stories'));
+      writeFileSync(join(dir, 'levels/l0-greybox.json'), JSON.stringify(content.level));
+      writeFileSync(
+        join(dir, 'stories/l0-greybox.json'),
+        JSON.stringify(content.stories.map((story) => ({ ...story, reviewed }))),
+      );
+      check(dir, content.stories.length);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  };
+
+  it('exits 0 with unreviewed stories by default and 1 with --require-reviewed', () => {
+    withReviewRoot(false, (dir, count) => {
+      const plain = run(dir);
+      expect(plain.stdout.toString()).toContain(`Stories reviewed: 0 of ${count}`);
+      expect(plain.exitCode).toBe(0);
+
+      const gated = run(dir, '--require-reviewed');
+      expect(gated.stdout.toString()).toContain(
+        `error   stories/l0-greybox.json: ${count} of ${count} stories not reviewed`,
+      );
+      expect(gated.exitCode).toBe(1);
+    });
+  });
+
+  it('exits 0 with --require-reviewed once every story is reviewed', () => {
+    withReviewRoot(true, (dir, count) => {
+      const result = run(dir, '--require-reviewed');
+      expect(result.stdout.toString()).toContain(`Stories reviewed: ${count} of ${count}`);
+      expect(result.exitCode).toBe(0);
+    });
+  });
+
+  it('rejects a misspelt option instead of silently skipping the review gate', () => {
+    const misspelt = run('--require-reviewd');
+    expect(misspelt.stderr.toString()).toContain("Unknown option '--require-reviewd'");
+    expect(misspelt.exitCode).toBe(1);
+
+    // A single dash next to an explicit root must fail too, not run ungated.
+    withReviewRoot(false, (dir) => {
+      const singleDash = run(dir, '-require-reviewed');
+      expect(singleDash.stderr.toString()).toContain('Unknown option');
+      expect(singleDash.exitCode).toBe(1);
+    });
   });
 });
 
