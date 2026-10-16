@@ -165,6 +165,11 @@ export const pl = {
     reconnecting: 'Łączymy ponownie…',
     offline: 'Brak połączenia',
   },
+  /** The page's last-resort screen when rendering failed (errors/ErrorBoundary.tsx). */
+  errorFallback: {
+    line: 'Coś się zepsuło w redakcji.',
+    reload: 'Odśwież',
+  },
   errors: {
     invalidMessage: 'Coś poszło nie tak w łączności. Spróbuj jeszcze raz.',
     protocolMismatch: 'Masz starą wersję gry. Odśwież stronę.',
@@ -302,6 +307,28 @@ export const pl = {
       pings: 'Sygnały',
       techniques: 'Techniki manipulacji',
       ui: 'Interfejs',
+    },
+    /** Sample labels on the specimens above: the page shows the system, so it keeps its own copy. */
+    samples: {
+      typeSample: 'Zażółć gęślą jaźń',
+      bodySample: 'Nunito, tekst ciągły: cytat "w kontekście" - z sierotkami i datą',
+      start: 'Do składu!',
+      openRoom: 'Otwórz pokój',
+      join: 'Dołącz',
+      unavailable: 'Niedostępne',
+      publish: 'Publikuj',
+      publishWithContext: 'Z kontekstem',
+      reject: 'Odrzuć',
+      settings: 'Ustawienia',
+      leave: 'Wyjdź',
+      skip: 'Pomiń',
+      bylineLabel: 'Twój podpis',
+      bylinePlaceholder: 'np. Zośka',
+      roomCodeLabel: 'Kod pokoju',
+      fieldWithError: 'Z błędem',
+      fieldError: 'Nie ma redakcji z takim kodem.',
+      reduceMotion: 'Mniej ruchu',
+      effects: 'Efekty',
     },
   },
   /** Final verdict stamp lettering (ui/VerdictStamp.tsx); short words, shown in capitals. */
