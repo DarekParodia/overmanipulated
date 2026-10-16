@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, spyOn } from 'bun:test';
 import {
   DEFAULT_DIFFICULTY,
   DEFAULT_FEATURE_FLAGS,
@@ -16,6 +16,8 @@ import { DEFAULT_SERVER_CONFIG, staticConfigStore } from '../config.ts';
 import { openDatabase } from '../db/client.ts';
 import { recordBlunderVote } from '../db/queries/blunder-votes.ts';
 import { insertLeaderboardEntry } from '../db/queries/leaderboard.ts';
+import { CLIENT_ERROR_BODY_MAX_BYTES, CLIENT_ERROR_REPORTS_PER_MINUTE_PER_IP } from '../limits.ts';
+import { log } from '../log.ts';
 import { createRoomRegistry } from '../rooms/registry.ts';
 
 function setup() {
@@ -505,5 +507,107 @@ describe('GET /api/rooms', () => {
     // The bucket refills 10 a second.
     browser.harness.clock.time += 100;
     expect((await browser.list('', '198.51.100.1')).total).toBe(1);
+  });
+});
+
+describe('POST /api/client-errors', () => {
+  const report = { message: 'Cannot read properties of undefined', source: 'boundary', path: '/' };
+
+  /**
+   * An app on a fixed clock, so the per-address budget does not refill while a test runs. The
+   * logger is spied per test: the test preload silences it.
+   */
+  function reporting() {
+    const app = createApp({
+      db: openDatabase(':memory:'),
+      registry: createRoomRegistry({ hub: createFakeHub().hub }),
+      devLatencyMs: 0,
+      now: () => 0,
+    });
+    const send = (body: unknown, ip = '10.0.0.1') =>
+      app.request('/api/client-errors', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-real-ip': ip },
+        body: typeof body === 'string' ? body : JSON.stringify(body),
+      });
+    return { send };
+  }
+
+  it('answers 204 to a valid report and logs what it says, never the address', async () => {
+    const { send } = reporting();
+    const warn = spyOn(log, 'warn').mockImplementation(() => {});
+    try {
+      const full = { ...report, stack: 'Error: boom\n    at App', build: '0.0.0+1a2b3c4' };
+      const res = await send(full, '203.0.113.9');
+      expect(res.status).toBe(204);
+      expect(await res.text()).toBe('');
+      expect(warn.mock.calls).toEqual([
+        [
+          'client error',
+          {
+            source: 'boundary',
+            path: '/',
+            build: '0.0.0+1a2b3c4',
+            error: 'Cannot read properties of undefined',
+            stack: 'Error: boom\n    at App',
+          },
+        ],
+      ]);
+      expect(JSON.stringify(warn.mock.calls)).not.toContain('203.0.113.9');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('cuts the logged message to 200 characters and the stack to 500', async () => {
+    const { send } = reporting();
+    const warn = spyOn(log, 'warn').mockImplementation(() => {});
+    try {
+      const long = { ...report, message: 'x'.repeat(500), stack: 'y'.repeat(2000) };
+      expect((await send(long)).status).toBe(204);
+      expect(warn.mock.calls).toEqual([
+        [
+          'client error',
+          {
+            source: 'boundary',
+            path: '/',
+            error: 'x'.repeat(200),
+            stack: 'y'.repeat(500),
+          },
+        ],
+      ]);
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('answers 400 to a report that does not match the schema', async () => {
+    const { send } = reporting();
+    expect((await send({ ...report, source: 'console' })).status).toBe(400);
+    expect((await send({ source: 'window', path: '/' })).status).toBe(400);
+    expect((await send({ ...report, path: '/?room=ABCD' })).status).toBe(400);
+    expect((await send('{ not json')).status).toBe(400);
+  });
+
+  it('answers 413 to a body over the size limit', async () => {
+    const { send } = reporting();
+    const res = await send({ ...report, stack: 'x'.repeat(CLIENT_ERROR_BODY_MAX_BYTES) });
+    expect(res.status).toBe(413);
+  });
+
+  it('answers 429 past the per-address budget, while another address still gets 204', async () => {
+    const { send } = reporting();
+    const warn = spyOn(log, 'warn').mockImplementation(() => {});
+    try {
+      for (let i = 0; i < CLIENT_ERROR_REPORTS_PER_MINUTE_PER_IP; i++) {
+        expect((await send(report, '198.51.100.7')).status).toBe(204);
+      }
+      const limited = await send(report, '198.51.100.7');
+      expect(limited.status).toBe(429);
+      expect(await limited.json()).toEqual({ error: 'too many requests' });
+      expect((await send(report, '198.51.100.8')).status).toBe(204);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

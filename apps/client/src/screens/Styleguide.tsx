@@ -216,13 +216,12 @@ export function Styleguide() {
               className={styles.display}
               style={{ fontSize: `var(--text-${size})`, lineHeight: 'var(--leading-snug)' }}
             >
-              Zażółć gęślą jaźń
+              {s.samples.typeSample}
             </span>
           </p>
         ))}
         <p>
-          {typeset('Nunito, tekst ciągły: cytat "w kontekście" - z sierotkami i datą')} ·{' '}
-          <span className="tabular">{formatNumber(12345)}</span>
+          {typeset(s.samples.bodySample)} · <span className="tabular">{formatNumber(12345)}</span>
         </p>
       </section>
 
@@ -230,29 +229,29 @@ export function Styleguide() {
         <h2>{s.buttons}</h2>
         <div className={styles.row}>
           <Button variant="primary" big>
-            Do składu!
+            {s.samples.start}
           </Button>
-          <Button variant="primary">Otwórz pokój</Button>
-          <Button>Dołącz</Button>
+          <Button variant="primary">{s.samples.openRoom}</Button>
+          <Button>{s.samples.join}</Button>
           <Button variant="secondary" disabled>
-            Niedostępne
+            {s.samples.unavailable}
           </Button>
         </div>
         <div className={styles.row}>
           <Button variant="green" icon={<Icon name="publish" />}>
-            Publikuj
+            {s.samples.publish}
           </Button>
           <Button variant="orange" icon={<Icon name="publishWithContext" />}>
-            Z kontekstem
+            {s.samples.publishWithContext}
           </Button>
           <Button variant="red" icon={<Icon name="reject" />}>
-            Odrzuć
+            {s.samples.reject}
           </Button>
-          <Button icon={<Icon name="settings" label="Ustawienia" />} />
+          <Button icon={<Icon name="settings" label={s.samples.settings} />} />
           <Button back icon={<Icon name="leave" />}>
-            Wyjdź
+            {s.samples.leave}
           </Button>
-          <Button variant="ghost">Pomiń</Button>
+          <Button variant="ghost">{s.samples.skip}</Button>
         </div>
       </section>
 
@@ -267,11 +266,11 @@ export function Styleguide() {
 
         <section className={`panel ${styles.section}`}>
           <h2>{s.inputs}</h2>
-          <Field label="Twój podpis" placeholder="np. Zośka" />
-          <Field label="Kod pokoju" large defaultValue="KRWN" />
-          <Field label="Z błędem" defaultValue="x" error="Nie ma redakcji z takim kodem." />
-          <Checkbox label="Mniej ruchu" checked={checked} onChange={setChecked} />
-          <Slider label="Efekty" value={volume} onChange={setVolume} />
+          <Field label={s.samples.bylineLabel} placeholder={s.samples.bylinePlaceholder} />
+          <Field label={s.samples.roomCodeLabel} large defaultValue="KRWN" />
+          <Field label={s.samples.fieldWithError} defaultValue="x" error={s.samples.fieldError} />
+          <Checkbox label={s.samples.reduceMotion} checked={checked} onChange={setChecked} />
+          <Slider label={s.samples.effects} value={volume} onChange={setVolume} />
         </section>
       </div>
 

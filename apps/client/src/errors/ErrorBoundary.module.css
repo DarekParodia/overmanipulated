@@ -1,0 +1,49 @@
+/* The error fallback: one white panel on the sky background, drawn with tokens only. It pops in
+   with the usual bounce, and not at all when the player asked for less motion. */
+.screen {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--sky);
+}
+
+.panel {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-5);
+  width: min(100%, 26rem);
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+  animation: errorPop var(--motion-base) var(--ease-bounce);
+}
+
+.line {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: var(--leading-snug);
+}
+
+@keyframes errorPop {
+  from {
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .panel {
+  animation: none;
+}

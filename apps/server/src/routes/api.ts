@@ -1,6 +1,7 @@
 // REST routes under /api. Chained so `AppType` carries full types for the client's hc client.
 import { zValidator } from '@hono/zod-validator';
 import {
+  clientErrorReportSchema,
   type LeaderboardResponse,
   leaderboardQuerySchema,
   levelIdSchema,
@@ -11,6 +12,7 @@ import {
   roomListQuerySchema,
 } from '@redakcja/shared';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { createMiddleware } from 'hono/factory';
 import { z } from 'zod';
 import { clientAddress } from '../client-address.ts';
@@ -18,7 +20,16 @@ import { type ConfigMeta, DEFAULT_SERVER_CONFIG, type ServerConfig } from '../co
 import { type Db, isDatabaseHealthy } from '../db/client.ts';
 import { getBlunderTallies } from '../db/queries/blunder-votes.ts';
 import { getTopEntries } from '../db/queries/leaderboard.ts';
-import { ROOM_LIST_PER_MINUTE_PER_IP, ROOM_LIST_PRUNE_EVERY } from '../limits.ts';
+import {
+  CLIENT_ERROR_BODY_MAX_BYTES,
+  CLIENT_ERROR_LOG_MESSAGE_CHARS,
+  CLIENT_ERROR_LOG_STACK_CHARS,
+  CLIENT_ERROR_PRUNE_EVERY,
+  CLIENT_ERROR_REPORTS_PER_MINUTE_PER_IP,
+  ROOM_LIST_PER_MINUTE_PER_IP,
+  ROOM_LIST_PRUNE_EVERY,
+} from '../limits.ts';
+import { log } from '../log.ts';
 import { toPublicConfig } from '../public-config.ts';
 import { createRateLimiter } from '../rate-limit.ts';
 import type { RoomRegistry } from '../rooms/registry.ts';
@@ -57,14 +68,41 @@ export function healthStatus(deps: ApiDeps) {
   };
 }
 
+/**
+ * A per-address request budget as a middleware: a token bucket (`createRateLimiter`) refilled
+ * evenly over a minute, 429 past its burst. Every `pruneEvery` requests the idle addresses are
+ * forgotten (no timer), so the map stays small.
+ */
+function addressBudget(options: {
+  perMinute: number;
+  pruneEvery: number;
+  now?: (() => number) | undefined;
+}) {
+  const limiter = createRateLimiter({
+    capacity: options.perMinute,
+    refillPerSecond: options.perMinute / 60,
+    ...(options.now ? { now: options.now } : {}),
+  });
+  let requests = 0;
+  return createMiddleware(async (c, next) => {
+    requests += 1;
+    if (requests % options.pruneEvery === 0) {
+      limiter.prune();
+    }
+    if (!limiter.take(clientAddress(c))) {
+      return c.json({ error: 'too many requests' }, 429);
+    }
+    await next();
+  });
+}
+
 export function createApiRoutes(deps: ApiDeps) {
   const config = () => deps.config?.() ?? DEFAULT_SERVER_CONFIG;
-  const roomListRequests = createRateLimiter({
-    capacity: ROOM_LIST_PER_MINUTE_PER_IP,
-    refillPerSecond: ROOM_LIST_PER_MINUTE_PER_IP / 60,
-    ...(deps.now ? { now: deps.now } : {}),
+  const roomListBudget = addressBudget({
+    perMinute: ROOM_LIST_PER_MINUTE_PER_IP,
+    pruneEvery: ROOM_LIST_PRUNE_EVERY,
+    now: deps.now,
   });
-  let roomListRequestCount = 0;
   /**
    * The room browser's gate (S7-83): 404 while the `roomBrowser` flag is off (no address is even
    * counted then), 429 past the per-address budget. Runs before the query is validated.
@@ -73,14 +111,13 @@ export function createApiRoutes(deps: ApiDeps) {
     if (!config().features.roomBrowser) {
       return c.json({ error: 'not found' }, 404);
     }
-    roomListRequestCount += 1;
-    if (roomListRequestCount % ROOM_LIST_PRUNE_EVERY === 0) {
-      roomListRequests.prune();
-    }
-    if (!roomListRequests.take(clientAddress(c))) {
-      return c.json({ error: 'too many requests' }, 429);
-    }
-    await next();
+    return roomListBudget(c, next);
+  });
+  /** The client-error budget per address: 429 past it, before the body is read. */
+  const clientErrorGate = addressBudget({
+    perMinute: CLIENT_ERROR_REPORTS_PER_MINUTE_PER_IP,
+    pruneEvery: CLIENT_ERROR_PRUNE_EVERY,
+    now: deps.now,
   });
 
   return (
@@ -132,5 +169,31 @@ export function createApiRoutes(deps: ApiDeps) {
         const { levelId } = c.req.valid('query');
         return c.json({ levelId, stories: getBlunderTallies(deps.db, levelId) });
       })
+      // A browser's own error report (error boundary, uncaught error), kept in the server log only.
+      // The request's address is never written; the browser's text is cut to a fixed length. The
+      // text is the error's own message, so it can say anything that error said; it is not
+      // checked, only bounded.
+      .post(
+        '/client-errors',
+        clientErrorGate,
+        bodyLimit({
+          maxSize: CLIENT_ERROR_BODY_MAX_BYTES,
+          onError: (c) => c.json({ error: 'payload too large' }, 413),
+        }),
+        zValidator('json', clientErrorReportSchema),
+        (c) => {
+          const report = c.req.valid('json');
+          // The logger keeps its own `message` key (it would drop a field of that name), so the
+          // error's text goes under `error`.
+          log.warn('client error', {
+            source: report.source,
+            path: report.path,
+            build: report.build,
+            error: report.message.slice(0, CLIENT_ERROR_LOG_MESSAGE_CHARS),
+            stack: report.stack?.slice(0, CLIENT_ERROR_LOG_STACK_CHARS),
+          });
+          return c.body(null, 204);
+        },
+      )
   );
 }
