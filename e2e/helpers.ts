@@ -4,6 +4,7 @@ import {
   type BrowserContextOptions,
   devices,
   expect,
+  type Locator,
   type Page,
 } from '@playwright/test';
 
@@ -252,4 +253,19 @@ export async function hideScene(page: Page): Promise<void> {
     (window as unknown as { __game: { pauseScene(): void } }).__game.pauseScene(),
   );
   await page.addStyleTag({ content: 'canvas { display: none !important; }' });
+}
+
+/**
+ * Waits until the element's own entrance animation (a pop or a rise) has finished. Bounding boxes
+ * include transforms, so a box read while it runs is not the laid-out one: the message of the day
+ * starts at 80% scale and the station overlay 24 px lower. Only the element's own animations: an
+ * infinite one (the urgent clock's wobble) on a child never ends and is not waited for.
+ */
+export async function settleAnimations(locator: Locator): Promise<void> {
+  await locator.evaluate(async (element) => {
+    const finite = element
+      .getAnimations()
+      .filter((animation) => animation.effect?.getComputedTiming().endTime !== Infinity);
+    await Promise.allSettled(finite.map((animation) => animation.finished));
+  });
 }

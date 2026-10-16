@@ -7,6 +7,7 @@ import {
   hideScene,
   openPlayer,
   PHONE,
+  settleAnimations,
   skipStationHelp,
 } from './helpers.ts';
 
@@ -135,6 +136,8 @@ test('every minigame shows key hints for the device in use', async ({ browser },
     );
     const overlay = page.getByTestId('station-overlay');
     await expect(overlay.getByTestId(root)).toBeVisible();
+    // The overlay rises 24 px into place on phones; measure the settled layout, not a frame of it.
+    await settleAnimations(overlay);
     if (kind === 'geolocation') {
       // S7-55: the twelve districts and „Nie ma na mapie” are big enough to tap (≥ 48 px) even at
       // 640×360. One round trip: under load the 20 s minigame clock keeps running.
