@@ -8,6 +8,7 @@ difficulty levels and an animated intro.
 - Design document (Polish): [`docs/design-document.pl.md`](docs/design-document.pl.md)
 - Implementation plan: [`docs/implementation-plan.md`](docs/implementation-plan.md)
 - Contributor / agent rules: [`AGENTS.md`](AGENTS.md)
+- Project analysis, 2026-10-16: [`docs/analysis/project-analysis-2026-10.md`](docs/analysis/project-analysis-2026-10.md)
 
 ## Quick start
 
