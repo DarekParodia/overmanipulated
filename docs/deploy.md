@@ -421,6 +421,44 @@ docker compose up -d server
 - **Debugging with access logs:** add `log` inside the site block of the `Caddyfile`, run
   `docker compose up -d --build web`, and remove it again afterwards (it records IP addresses).
 
+## Known limits
+
+What a class should expect from this server.
+
+- **A restart ends every live room.** Rooms, their games, the reconnect tokens, the kick cooldowns
+  and the room-list cache are held in memory (`apps/server/src/rooms/registry.ts`), and the rate
+  limiters (`apps/server/src/rate-limit.ts`) reset too. After a restart a dropped player cannot
+  reconnect and must create or join a room again. The leaderboard and the blunder-of-the-day votes
+  are in SQLite (`apps/server/src/db/schema.ts`, the file at `DATABASE_PATH`), so they survive a
+  restart; both are kept 90 days ("Data, backups and retention"). An endless run is written to the
+  leaderboard when the level ends on the server, so a run cut short by a restart is not saved.
+- **One process, no scaling out.** One server holds all the rooms, and Caddy proxies to that single
+  `server:3000`. Do not run a second instance or replicas: rooms would be split between them. The
+  room cap is `rooms.maxRooms` in `config.json`, which defaults to `MAX_ROOMS` (300, in
+  `apps/server/src/limits.ts`). A full server answers „server is busy” to new rooms.
+- **A kick is not a ban.** A player the host removes cannot rejoin that room from the same browser
+  for 10 minutes (`KICK_REJOIN_COOLDOWN_MS` in `apps/server/src/limits.ts`). The browser is identified
+  by a random `clientId` that the shipped client keeps in localStorage under `redakcja.clientId`
+  (`apps/client/src/store/client-id.ts`) and sends on every join. Clearing the site's data, using
+  another browser or device, or a private window gives a new id and so lifts the cooldown. Where
+  storage is blocked the id lasts only until the page reloads. A join without a `clientId` (an old
+  client or a script) is not checked against the cooldown at all. This is on purpose: a whole class
+  shares one school address, so the per-address limits only stop scripts, not students. That holds
+  only when the proxy is trusted correctly (`TRUSTED_PROXIES`, see "Client address"); with a wrong
+  setting every player shares the proxy's address, and a busy lesson can hit "too many requests".
+
+**Before a lesson:**
+
+1. `curl -s https://<domain>/health` shows `"status":"ok"`. `"degraded"` (HTTP 503) means the
+   database check failed. No JSON at all means the server is down: fix it before class, and check
+   `docker compose ps` (both services should be healthy).
+2. Do not restart or redeploy during the lesson: a restart ends every running room (see above).
+3. Review state: `bun run validate:content` checks the content files but does not report review
+   state. Count the stories still unreviewed with
+   `grep -rho '"reviewed": *false' packages/content/stories | wc -l`. The count is 0 once the
+   supervisor's sign-off is applied with `bun run review:apply -- <filled.csv> --write` (the steps
+   are in "Stage 7 release checklist", item 2).
+
 ## Smoke test
 
 ```sh
