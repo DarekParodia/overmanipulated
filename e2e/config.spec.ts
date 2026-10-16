@@ -1,5 +1,12 @@
 import { type BrowserContextOptions, expect, type Page, test } from '@playwright/test';
-import { closePlayers, DESKTOP, guardAdRequests, PHONE, trackContext } from './helpers.ts';
+import {
+  closePlayers,
+  DESKTOP,
+  guardAdRequests,
+  PHONE,
+  settleAnimations,
+  trackContext,
+} from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -62,6 +69,8 @@ test('the message of the day shows, stays closed and returns with a new id', asy
 
   const banner = page.getByRole('status', { name: 'Komunikat redakcji' });
   await expect(banner).toBeVisible();
+  // The banner pops in from 80% scale; the boxes below include transforms, so wait for it.
+  await settleAnimations(banner);
   await expect(banner).toHaveAttribute('data-tone', 'info');
   // Typeset: the spaced hyphen became an en dash.
   await expect(banner).toContainText('przerwę techniczną – zagrajcie');
