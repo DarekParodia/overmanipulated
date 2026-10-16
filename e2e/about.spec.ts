@@ -83,6 +83,9 @@ test('„O grze” shows authors, version, credits and libraries', async ({ brow
   // scrolls the focused panel, Esc closes.
   if (!touch) {
     await page.getByTestId('open-about').focus();
+    // Enter acts on the element that has DOM focus (a control elsewhere would take it otherwise),
+    // so wait until the focus has landed before the key goes out.
+    await expect(page.getByTestId('open-about')).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(dialog.getByTestId('about-tab-game')).toBeFocused();
     await page.keyboard.press('Tab');
