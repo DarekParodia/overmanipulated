@@ -125,12 +125,14 @@ test('each newsroom sees the rival chip and only its own players', async ({
     expect(chip.y).toBeGreaterThanOrEqual(pill.y);
     expect(chip.y + chip.height).toBeLessThanOrEqual(pill.y + pill.height + 1);
     expect(chip.x + chip.width).toBeLessThanOrEqual(pill.x + pill.width + 1);
-    const band = await host.page.evaluate(() => {
-      const main = document.querySelector('main');
-      return main ? Number.parseFloat(main.style.getPropertyValue('--hud-band')) || 0 : 0;
-    });
-    expect(band).toBeGreaterThan(0);
-    expect(band).toBeLessThanOrEqual(72);
+    // The band is published a frame after the chip mounts: wait for it, then check it.
+    const hudBand = () =>
+      host.page.evaluate(() => {
+        const main = document.querySelector('main');
+        return main ? Number.parseFloat(main.style.getPropertyValue('--hud-band')) || 0 : 0;
+      });
+    await expect.poll(hudBand).toBeGreaterThan(0);
+    expect(await hudBand()).toBeLessThanOrEqual(72);
   }
   await host.page.addStyleTag({ content: HIDE_PERF });
   await host.page.screenshot({ path: testInfo.outputPath('versus-hud.png'), scale: 'css' });

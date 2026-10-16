@@ -77,20 +77,27 @@ const CAPTIONS = 'section[aria-label="Napisy dźwięków"]';
  */
 const SUBPIXEL = 1;
 
-/** Pill, queue and menu button sit inside the band; captions start under it. */
+/**
+ * Pill, queue and menu button sit inside the band; captions start under it. The band is published
+ * a frame after a HUD change (a folder card arriving grows the queue), so the band and the boxes
+ * are read together and retried until they agree: a band that never catches up still fails.
+ */
 async function expectBand(page: Page): Promise<number> {
-  await expect.poll(() => band(page)).toBeGreaterThan(0);
-  const px = await band(page);
-  const pill = await box(page, PILL);
-  const queue = await box(page, QUEUE);
-  const menu = await box(page, MENU);
-  expect(pill.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
-  expect(queue.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
-  expect(menu.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
-  expect(overlaps(queue, pill)).toBe(false);
-  expect(overlaps(queue, menu)).toBe(false);
-  const captions = await box(page, CAPTIONS);
-  expect(captions.top).toBeGreaterThanOrEqual(px);
+  let px = 0;
+  await expect(async () => {
+    px = await band(page);
+    expect(px).toBeGreaterThan(0);
+    const pill = await box(page, PILL);
+    const queue = await box(page, QUEUE);
+    const menu = await box(page, MENU);
+    expect(pill.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
+    expect(queue.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
+    expect(menu.bottom).toBeLessThanOrEqual(px + SUBPIXEL);
+    expect(overlaps(queue, pill)).toBe(false);
+    expect(overlaps(queue, menu)).toBe(false);
+    const captions = await box(page, CAPTIONS);
+    expect(captions.top).toBeGreaterThanOrEqual(px);
+  }).toPass({ timeout: 10_000 });
   return px;
 }
 
