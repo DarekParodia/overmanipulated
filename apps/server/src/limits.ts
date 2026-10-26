@@ -33,6 +33,27 @@ export const ROOM_LIST_CACHE_MS = 2000;
 /** The room-list limiter forgets idle addresses once every this many requests (no timer). */
 export const ROOM_LIST_PRUNE_EVERY = 256;
 
+// --- Client error reports, POST /api/client-errors ----------------------------------------
+
+/**
+ * Client error reports per IP per minute (token bucket, as the room list). A school shares one
+ * address: a broken build can fail for 35 students at once, each with a few distinct errors. The
+ * browser already sends a repeated message once a minute, so this counts distinct ones.
+ */
+export const CLIENT_ERROR_REPORTS_PER_MINUTE_PER_IP = 300;
+/** The client-error limiter forgets idle addresses once every this many reports (no timer). */
+export const CLIENT_ERROR_PRUNE_EVERY = 256;
+/**
+ * Largest request body this server reads for a report. A report at the schema's limits is about
+ * 17 KB with every character escaped as `\u00XX` (6 bytes), so anything larger is refused before
+ * it is parsed. In production Caddy refuses bodies over 8 KB on all of /api before this runs
+ * (Caddyfile `request_body`); a typical report is a few hundred bytes to a few KB.
+ */
+export const CLIENT_ERROR_BODY_MAX_BYTES = 32 * 1024;
+/** Characters of a report's message and of its stack written to the server log. */
+export const CLIENT_ERROR_LOG_MESSAGE_CHARS = 200;
+export const CLIENT_ERROR_LOG_STACK_CHARS = 500;
+
 // --- config.json (S7-68) -------------------------------------------------------------------
 
 /** Highest `rooms.maxRooms` config.json may set; a typo of an extra zero stays bounded. */

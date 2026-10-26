@@ -1,4 +1,5 @@
 // Shared game logic used by both client and server: simulation, protocol, constants.
+export * from './client-errors.ts';
 export * from './constants.ts';
 export * from './csp-nonce.ts';
 export * from './difficulty.ts';
