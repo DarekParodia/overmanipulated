@@ -109,8 +109,9 @@ feedback.
   buttons / touch icons); sent to server at tick rate with sequence numbers.
   *Done when:* pure mapping functions tested (incl. joystick dead zone and normalisation); gamepad
   works in Chrome; touch controls work on a real Android phone and iOS Safari.
-  *Status:* implemented and verified in mobile emulation; **real-device check pending (needs a
-  human with an Android phone, an iPhone and a gamepad).**
+  *Status:* implemented: keyboard, Gamepad API (radial dead zone), touch joystick and action buttons,
+  device auto-detection. Verified in mobile emulation. **Real-device check pending (needs a human with
+  an Android phone, an iPhone and a gamepad in Chrome).**
 
 - [x] **S1-09 — Prediction and interpolation.**
   *Depends on:* S1-04, S1-06, S1-07, S1-08
@@ -310,7 +311,15 @@ and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts
   level timer last 30 s (music tempo up), level win/lose stingers.
   *Done when:* every listed event has its cue; reduced motion tested; particle budget held during
   a busy level.
-  *Status:* every gameplay event has a positioned cue (sound, particles, shake, haptics, hit-stop) in `fx/event-cues.ts`; the named animation triggers (`hop`, `crumple`, `scorePop`, `credibilityCrack`, …) are emitted but not yet consumed by the folder/avatar/HUD components.
+  *Status:* every gameplay event has a positioned cue (sound, particles, shake, haptics, hit-stop)
+  except a teammate's ability arm or disarm, which has none by design. The event-to-cue mapping is in
+  `fx/event-cues.ts`, positions come from `net/game-events.ts`, and the layers are in `fx/cues.ts`.
+  Reduced-motion behaviour has tests. Folder, avatar and HUD components listen for `slideIn`, `hop`,
+  `place`, `stampSlam`, `tremble`, `crumple`, `scorePop`, `credibilityCrack`, `timerPulse`, `cheer`
+  and `slump`. **Still pending: a check of the seven trigger names that cues emit with no listener
+  (`workStart`, `workStop`, `squash`, `pingPop`, `deskOpen`, `deskClose`, `eventAnnounce`), to see
+  whether their feedback is missing or already carried by state, CSS or event banners; and the
+  particle budget check during a busy level, which is not recorded.**
 
 - [~] **S2-13 — Music v1.**
   *Depends on:* S1-15
@@ -330,10 +339,10 @@ and client plumbing (`net/game-store.ts`, `net/game-events.ts`, `input/ui-nav.ts
   *Scope:* quick signals ("Potrzebuję Archiwum!", "Fałszywka!", "Biorę to") shown above players.
   *Done when:* pings broadcast and display for ~2 s.
 
-*Stage 2 status:* all tasks landed; a scripted two-player playtest (desktop + phone) plays a
-folder from the conveyor through a station and the desk to the results screen. Still open:
-the exit playtest with 3–4 real people on mixed devices, S2-12 animation listeners, S2-13
-listening pass.
+*Stage 2 status:* all tasks landed except S2-12 and S2-13, which stay `[~]`. A scripted two-player
+playtest (desktop + phone) plays a folder from the conveyor through a station and the desk to the
+results screen. Still open: the exit playtest with 3–4 real people on mixed devices, the S2-12
+check of trigger names without a listener, S2-13 listening pass.
 
 **Stage 2 exit:** greybox level with 5+ test stories played start to finish by 3–4 people on a
 mix of laptops and phones, with full core feedback (animations, sounds, particles).
