@@ -1,10 +1,10 @@
 // Portrait phones (the `portrait` project, 360×640, and `portrait-tall`, 390×844): gameplay
-// needs landscape and shows the rotate prompt, but the main menu, its dialogs, the lobby and the
-// results page work held upright. Nothing may widen the page or sit off its sides (a sideways
+// needs landscape and shows the rotate prompt, but the main menu, its dialogs, the lobby, the
+// results page and the spectate screen work held upright. Nothing may widen the page or sit off its sides (a sideways
 // scroller like the level path aside), touch targets stay 44 px, and the lobby's main action and
 // the results' buttons are on screen without scrolling.
 import { type BrowserContextOptions, devices, expect, type Page, test } from '@playwright/test';
-import { closePlayers, createRoom, openPlayer, type Player } from './helpers.ts';
+import { closePlayers, createRoom, joinRoom, openPlayer, type Player } from './helpers.ts';
 
 test.afterEach(closePlayers);
 
@@ -162,4 +162,35 @@ test('gameplay asks to rotate, the results page works upright', async ({ browser
   expect(await layoutProblems(page), 'results').toEqual([]);
   await expectOnScreen(page, 'Wróć do redakcji');
   await expectOnScreen(page, 'Wyjdź z redakcji');
+});
+
+test('a spectator watches upright: the lobby, the bar and the footer fit', async ({
+  browser,
+}, testInfo) => {
+  test.setTimeout(120_000);
+  const host = await openPlayer(browser, 'Zośka', { viewport: { width: 1280, height: 720 } });
+  const watcher = await open(browser, testInfo.project.use.viewport ?? undefined);
+  const lobby = (page: Page, action: object) =>
+    page.evaluate((a) => {
+      (window as unknown as { __session: { lobby(a: unknown): void } }).__session.lobby(a);
+    }, action);
+  const code = await createRoom(host);
+  await lobby(host.page, { kind: 'setSpectatorsAllowed', allowed: true });
+  await joinRoom(watcher, code, { ready: false });
+  await lobby(watcher.page, { kind: 'setSpectator', spectator: true });
+  await expect(host.page.getByRole('button', { name: 'Do składu!' })).toBeEnabled();
+  // A guest's level card stays compact in the sticky action bar.
+  expect(await layoutProblems(watcher.page), 'spectator lobby').toEqual([]);
+
+  await host.page.getByRole('button', { name: 'Do składu!' }).click();
+  const screen = watcher.page.getByTestId('spectate-screen');
+  await expect(screen).toBeVisible({ timeout: 40_000 });
+  // Watching is not playing: no rotate prompt.
+  await expect(watcher.page.getByText('Obróć telefon poziomo')).toHaveCount(0);
+  expect(await layoutProblems(watcher.page), 'spectate screen').toEqual([]);
+  // The score and the clock in the top bar do not overlap.
+  const score = await watcher.page.getByTestId('spectate-score-0').boundingBox();
+  const clock = await watcher.page.getByRole('timer').boundingBox();
+  expect(score && clock && score.x + score.width).toBeLessThanOrEqual((clock?.x ?? 0) + 1);
+  await expectOnScreen(watcher.page, 'Wyjdź');
 });

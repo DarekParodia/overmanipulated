@@ -13,8 +13,8 @@ both from the first commit.
 | Tablet | Same as phone | 1024×768 | 60 FPS |
 
 Gameplay requires **landscape** on phones and tablets (a rotate prompt covers it when held
-upright); the main menu, its dialogs, the lobby, the briefing and the results page also work in
-portrait down to 360×640 (`e2e/portrait-layout.spec.ts`).
+upright); the main menu, its dialogs, the lobby, the briefing, the results page and the
+spectate screen also work in portrait down to 360×640 (`e2e/portrait-layout.spec.ts`).
 Mixed groups (some on laptops, some on phones) in one room are the normal case.
 
 ## Input

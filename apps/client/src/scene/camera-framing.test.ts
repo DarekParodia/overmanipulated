@@ -13,6 +13,11 @@ import { SIGN_ABOVE, surfaceHeight } from './entities.ts';
 
 /** The phone HUD band the one-row pill and the folder queue make (S7-11). */
 const BAND = 64;
+/**
+ * A station sign on a short screen, foot to top in CSS px: the 46 px badge over the name label
+ * (StationIndicators.module.css, measured at 640×360).
+ */
+const SIGN_PX = 74;
 const NO_SHAKE = { x: 0, y: 0, roll: 0 };
 
 const MAPS: readonly (readonly [string, TileMap])[] = [
@@ -66,7 +71,7 @@ describe('computeFraming', () => {
     [640, 360],
     [863, 360],
   ] as const) {
-    test(`at ${width}x${height} with the player at the belt, belt and signs clear the band`, () => {
+    test(`at ${width}x${height} with the player at the belt, belt and whole signs clear the band`, () => {
       for (const [id, map] of MAPS) {
         const first = conveyors(map)[0];
         if (!first) {
@@ -89,8 +94,12 @@ describe('computeFraming', () => {
           expect(y).toBeGreaterThanOrEqual(BAND + 4);
           expect(y).toBeLessThanOrEqual(height);
         }
+        // The whole sign, badge included, stands under the band: its badge shows the station's
+        // state (progress ring, busy), which the player needs while working on the back row.
         for (const sign of backRowSigns(map)) {
-          expect(screenY(camera, height, sign.x, sign.y, sign.z)).toBeGreaterThanOrEqual(BAND);
+          expect(screenY(camera, height, sign.x, sign.y, sign.z) - SIGN_PX).toBeGreaterThanOrEqual(
+            BAND,
+          );
         }
       }
     });

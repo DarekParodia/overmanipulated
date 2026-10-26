@@ -635,6 +635,14 @@ landscape only (user decision, 2026-10-26); everything around it works upright.
   prompt leaves once the level ends), station overlay two thirds wide at 1024–1280 px so every
   minigame fits a landscape tablet. New Playwright projects `portrait` (360×640),
   `portrait-tall` (390×844) and `tablet` (1024×768).
+- [x] **S8-02 — Portrait spectating and the last orientation fixes.** *Depends on:* S8-01.
+  The spectate screen held upright: the top bar's score no longer runs under the clock (smaller
+  figures under 420 px, each side as wide as it needs), the event feed gets its own row above
+  „Statystyki” and „Wyjdź”, a guest's or spectator's level card in the lobby is a compact
+  name-over-chips card, and the lobby action bar's column may shrink (a spectator's waiting line
+  widened the page by 2 px). The framing test now checks whole station signs, badge included,
+  stand under the phone HUD band while the player works at the back row. `portrait-layout.spec`
+  covers spectating.
 
 ---
 

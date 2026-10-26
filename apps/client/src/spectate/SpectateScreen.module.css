@@ -415,6 +415,55 @@
   }
 }
 
+/* Portrait phones (≤ 420 px): a score with its badge, points and credibility is wider than a
+   third of the bar, and the credibility ran under the clock; the figures and the clock shrink
+   and each side may take what it needs, so nothing overlaps. */
+@media (max-width: 420px) {
+  .topBar {
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    gap: var(--space-1);
+  }
+
+  .points,
+  .credibility,
+  .count,
+  .clock {
+    font-size: var(--text-md);
+  }
+
+  .points svg,
+  .credibility svg,
+  .count svg,
+  .clock svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .clock {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .counts {
+    gap: var(--space-2);
+  }
+}
+
+/* Portrait phones: „Statystyki” and „Wyjdź” fill the width, so the feed gets a row of its own
+   above them instead of being squeezed under them. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .footer {
+    flex-wrap: wrap;
+  }
+
+  .footerLeft {
+    flex-basis: 100%;
+  }
+
+  .footer .footerLeft > * {
+    width: 100%;
+  }
+}
+
 /* Touch screens: every plate control is a 48 px target. */
 @media (pointer: coarse) {
   .plateHead,

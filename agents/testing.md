@@ -55,8 +55,8 @@ overriding the viewport per test; other specs that must hold at 640×360 open th
 that size on the touch projects (most specs do, e.g. `intro`, `how-to-play`, `about`, `profile`).
 
 Two more device groups run only their own specs: `portrait` (Pixel 7 upright at 360×640) and
-`portrait-tall` (390×844) run `portrait-layout.spec.ts` (menu, its dialogs, lobby and results fit
-upright; gameplay shows the rotate prompt), and `tablet` (1024×768 touch, landscape) runs
+`portrait-tall` (390×844) run `portrait-layout.spec.ts` (menu, its dialogs, lobby, results and
+the spectate screen fit upright; gameplay shows the rotate prompt), and `tablet` (1024×768 touch, landscape) runs
 `station-hints.spec.ts`, where the station overlay is narrower than on a desktop. Put new
 portrait checks in `portrait-layout.spec.ts`.
 

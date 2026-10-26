@@ -305,9 +305,25 @@
    one row, the title and chips left to the details sheet, so the sticky action bar stays short
    and nothing widens the page. */
 @media (max-width: 600px) and (orientation: portrait) {
+  /* A guest's card: the level's name over its chips in one wrapping row (the „Szczegóły” sheet
+     says who picks the level). */
   .card {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "title"
+      "chips";
     padding: var(--space-2) var(--space-3);
     column-gap: var(--space-3);
+  }
+  .kicker,
+  .hostOnly {
+    display: none;
+  }
+  .title {
+    font-size: var(--text-lg);
+  }
+  .chip {
+    font-size: var(--text-sm);
   }
   .map {
     grid-template-columns: minmax(0, 1fr) auto;
