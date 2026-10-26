@@ -35,11 +35,12 @@ export default defineConfig({
     {
       name: 'desktop',
       // Phone-only checks (S7-12).
-      testIgnore: /phone-layout\.spec\.ts/,
+      testIgnore: /(phone-layout|portrait-layout)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1366, height: 768 }, launchOptions },
     },
     {
       name: 'mobile',
+      testIgnore: /portrait-layout\.spec\.ts/,
       use: {
         ...devices['Pixel 7 landscape'],
         launchOptions,
@@ -55,6 +56,27 @@ export default defineConfig({
       use: {
         ...devices['Pixel 7 landscape'],
         viewport: { width: 640, height: 360 },
+        launchOptions,
+      },
+    },
+    {
+      // Portrait phones: menus, dialogs, lobby and results work upright; gameplay asks to rotate.
+      name: 'portrait',
+      testMatch: /portrait-layout\.spec\.ts/,
+      use: { ...devices['Pixel 7'], viewport: { width: 360, height: 640 }, launchOptions },
+    },
+    {
+      name: 'portrait-tall',
+      testMatch: /portrait-layout\.spec\.ts/,
+      use: { ...devices['Pixel 7'], viewport: { width: 390, height: 844 }, launchOptions },
+    },
+    {
+      // Tablets in landscape: every minigame fits the station overlay without scrolling.
+      name: 'tablet',
+      testMatch: /station-hints\.spec\.ts/,
+      use: {
+        ...devices['Pixel 7 landscape'],
+        viewport: { width: 1024, height: 768 },
         launchOptions,
       },
     },

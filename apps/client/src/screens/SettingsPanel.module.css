@@ -435,3 +435,19 @@
     display: inline;
   }
 }
+
+/* Small portrait phones (360–480 px): five tabs plus the chosen one's word must fit without the
+   row scrolling a tab out of sight, so the gaps, paddings and the word shrink; every tab stays
+   a 48 px target. */
+@media (max-width: 480px) and (orientation: portrait) {
+  .rail {
+    gap: var(--space-1);
+  }
+  .tab {
+    flex: 1 1 auto;
+    min-width: var(--touch-target);
+    gap: var(--space-1);
+    padding-inline: var(--space-2);
+    font-size: var(--text-sm);
+  }
+}

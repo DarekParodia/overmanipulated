@@ -1,9 +1,15 @@
 // Shown over gameplay on touch devices held in portrait (gameplay needs landscape): a chunky
-// phone that tips over, the instruction, and one short reason.
+// phone that tips over, the instruction, and one short reason. The results page works in portrait
+// (as the menus and the lobby do), so the prompt goes once the level has ended.
+import { useGame } from '../net/game-store.ts';
 import { pl } from '../strings/pl.ts';
 import styles from './RotatePrompt.module.css';
 
 export function RotatePrompt() {
+  const ended = useGame((s) => s.levelEnd !== null);
+  if (ended) {
+    return null;
+  }
   return (
     <div className={styles.prompt} role="alert">
       <div className={`panel ${styles.card}`}>

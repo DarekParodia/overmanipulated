@@ -114,3 +114,10 @@
     display: none;
   }
 }
+
+/* Portrait phones: four chips are wider than the screen, so they wrap. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .chips {
+    flex-wrap: wrap;
+  }
+}

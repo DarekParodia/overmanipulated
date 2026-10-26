@@ -232,6 +232,15 @@
 
 /* Phones (landscape down to 640×360) and narrow windows: full width, compact header. The
    panel covers the touch controls (input is captured while it is open), never its close. */
+/* Tablets in landscape and small laptop windows (1024–1280 px wide): half the screen is narrower
+   than the ~680 px every minigame layout is drawn for (1366×768's half), and their answers fell
+   below the panel, so the panel takes two thirds; the scene stays visible on the left. */
+@media (max-width: 1280px) and (min-height: 501px) {
+  .frame {
+    width: min(68vw, 46rem);
+  }
+}
+
 @media (max-height: 500px), (max-width: 760px) {
   .frame {
     top: max(var(--space-2), env(safe-area-inset-top));

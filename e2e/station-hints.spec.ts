@@ -79,14 +79,18 @@ type Hook = {
 };
 
 // S7-15: the key hints under every minigame follow the device in use; on touch they name the
-// gesture or button. Checked at the smallest supported sizes: 640×360 phones, 1280×720 desktops.
+// gesture or button. Checked at the smallest supported sizes: 640×360 phones, 1280×720 desktops,
+// and in the `tablet` project at 1024×768 touch, where the overlay is narrower than on desktop.
 test('every minigame shows key hints for the device in use', async ({ browser }, testInfo) => {
   // Ten overlays and ten screenshots of a software-rendered WebGL page.
   test.slow();
   const touch = testInfo.project.name !== 'desktop';
-  const options = touch
-    ? { ...PHONE, viewport: { width: 640, height: 360 } }
-    : { ...DESKTOP, viewport: { width: 1280, height: 720 } };
+  const options =
+    testInfo.project.name === 'tablet'
+      ? { ...PHONE, viewport: { width: 1024, height: 768 } }
+      : touch
+        ? { ...PHONE, viewport: { width: 640, height: 360 } }
+        : { ...DESKTOP, viewport: { width: 1280, height: 720 } };
   const player = await openPlayer(browser, 'Zośka', options);
   const { page } = player;
   await skipStationHelp(page);

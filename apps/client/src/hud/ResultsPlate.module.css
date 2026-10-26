@@ -482,10 +482,13 @@
   }
 }
 
-/* Very narrow (portrait phones): the summary gets its own row under the ribbon. */
+/* Very narrow (portrait phones): the summary gets its own row under the ribbon, the Kolegium
+   page takes the rest of the height, and the footer puts the pager on a row of its own above
+   „Wyjdź z redakcji” and the main action, so nothing is squeezed off the panel. */
 @media (max-width: 560px) {
   .panel {
     grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       "ribbon"
       "summary"
@@ -494,6 +497,17 @@
   }
 
   .summary {
+    justify-content: center;
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+
+  .pager {
+    order: -1;
+    flex-basis: 100%;
     justify-content: center;
   }
 }

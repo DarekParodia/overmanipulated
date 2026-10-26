@@ -68,7 +68,7 @@ export function LevelCard({
       data-testid="level-details-open"
       onClick={onDetails}
     >
-      {pl.levelDetails.open}
+      <span className={styles.detailsLabel}>{pl.levelDetails.open}</span>
     </Button>
   );
   const chips = endless ? (

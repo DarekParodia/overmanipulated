@@ -208,3 +208,28 @@
     min-width: 0;
   }
 }
+
+/* Portrait phones: three tabs („Wprowadzenie”, „Stanowiska”, „Sterowanie”) must fit 360 px
+   without the row scrolling under a cut word, so the icons go (the words stay) and the padding
+   tightens; the 48 px height is kept. */
+@media (max-width: 480px) and (orientation: portrait) {
+  .segmented {
+    gap: 0;
+  }
+  .segment {
+    justify-content: center;
+    min-width: var(--touch-target);
+    gap: 0;
+    padding-inline: var(--space-2);
+    font-size: var(--text-sm);
+  }
+  .segment svg {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) and (orientation: portrait) {
+  .segment {
+    padding-inline: var(--space-1);
+  }
+}

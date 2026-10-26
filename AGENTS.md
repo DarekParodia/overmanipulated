@@ -50,7 +50,7 @@ agents/             Working rules for agents
 | `bun run smoke` | Smoke test of a running stack (shell, headers, `/api/config`, WebSocket), see `docs/deploy.md` |
 | `bun run contest:build` | Contest materials in `docs/contest/` (`-- --screenshots`, `-- --video`, `-- --all`) |
 | `bun run review:export` / `review:apply` | Content review sheet for the supervisor and applying its verdicts |
-| `bun run test:e2e` | Playwright multiplayer tests, projects desktop, mobile and phone-small (640×360); starts server and preview itself |
+| `bun run test:e2e` | Playwright multiplayer tests, projects desktop, mobile, phone-small (640×360), portrait (360×640, 390×844) and tablet (1024×768); starts server and preview itself |
 | `bun run check` | lint + design lint + typecheck + test + validate + perf budget — **must pass before every push** |
 | `docker compose up --build` | Production-like stack (Caddy + server), see `docs/deploy.md` |
 

@@ -12,7 +12,9 @@ both from the first commit.
 | Phone (landscape) | Chrome Android, Safari iOS 17+ | 640×360 CSS px | 60 FPS target, never below 30 FPS on a mid-range phone (reference: ~2021 mid-range Android, iPhone 11) |
 | Tablet | Same as phone | 1024×768 | 60 FPS |
 
-Gameplay requires **landscape** on phones; menus, lobby and debrief also work in portrait.
+Gameplay requires **landscape** on phones and tablets (a rotate prompt covers it when held
+upright); the main menu, its dialogs, the lobby, the briefing and the results page also work in
+portrait down to 360×640 (`e2e/portrait-layout.spec.ts`).
 Mixed groups (some on laptops, some on phones) in one room are the normal case.
 
 ## Input
@@ -54,8 +56,12 @@ game may require a specific device.
 
 - Responsive CSS with container/media queries; units in `rem`/`dvh`/`dvw`; respect
   `env(safe-area-inset-*)` for notches and home indicators.
-- Overlays (stations, desk): half screen on desktop, full-width bottom sheet or full screen on
-  phones; the 3D scene keeps running behind.
+- Overlays (stations, desk): half screen on desktop, two thirds of the screen on tablets and
+  windows 1024–1280 px wide (half is too narrow for the minigames there), full-width bottom sheet
+  or full screen on phones; the 3D scene keeps running behind.
+- Portrait phones (≤ 600 px wide): labelled icon rows (main-menu corner, lobby top actions,
+  „Szczegóły”) turn icon only with the word as accessible name, the lobby's action bar sticks to
+  the bottom edge, tab rows drop their icons, and dialogs become full-screen sheets.
 - Text scaling setting must not break any layout down to 640×360.
 - Station minigames fit a 640×360 landscape phone and a 1280×720 desktop without scrolling, key
   hints included: each minigame has a short-phone layout (`@media (max-height: 430px)`) that puts
