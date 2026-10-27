@@ -2,6 +2,8 @@
 
 | Materiał | Plik |
 | --- | --- |
+| **Wizualizacja do zgłoszenia (2 strony A4)** | [wizualizacja.pdf](wizualizacja.pdf), PNG: [strona 1](wizualizacja-strona-1.png), [strona 2](wizualizacja-strona-2.png) |
+| **Teksty do formularza zgłoszenia** | [zgloszenie.pl.md](zgloszenie.pl.md) |
 | Opis projektu i mapowanie na kryteria | [criteria-mapping.pl.md](criteria-mapping.pl.md) |
 | Jak zagrać (przewodnik dla jury) | [how-to-play.pl.md](how-to-play.pl.md) |
 | Zrzuty ekranu (komputer i telefon) | [screenshots/README.md](screenshots/README.md) |
@@ -15,7 +17,7 @@
 Wszystko powstaje ze skryptów w `tools/contest/` na podstawie danych gry (układ poziomów, treści teczek, stałe ról), więc po zmianach w interfejsie lub treściach wystarczy uruchomić ponownie.
 
 ```
-bun run contest:build                  # plany, karty ról, karty teczek (szybko, bez serwera)
+bun run contest:build                  # plany, karty ról, karty teczek, wizualizacja (szybko, bez serwera)
 bun run contest:build -- --screenshots # zrzuty ekranu (sam uruchamia serwer i podgląd)
 bun run contest:build -- --video       # nagranie gameplay.webm/.mp4 + klatki w storyboard/
 bun run contest:build -- --all         # wszystko

@@ -445,7 +445,7 @@ feedback on desktop and phones; first playtest held.
 
 - [ ] **S6-01 — Balance** station times, deadlines, points and star thresholds from playtest data. _Prepared: bot-based balance done (`bun run balance`, docs/balance.md); needs real playtest data to confirm._
 - [ ] **S6-02 — Content review** — supervisor signs off all stories (`reviewed: true`).
-- [ ] **S6-03 — Contest materials** in `docs/contest/`: screenshots of every screen, labelled _Prepared: generators, maps, role/folder cards, criteria mapping and screenshots done; gameplay video still to record (`bun run contest:build -- --video`)._
+- [ ] **S6-03 — Contest materials** in `docs/contest/`: screenshots of every screen, labelled _Prepared: generators, maps, role/folder cards, criteria mapping, screenshots, gameplay video, the entry form texts (`zgloszenie.pl.md`) and the 2-page A4 visualisation (`wizualizacja.pdf`, `tools/contest/visualization.ts`) done; playtest and content-review notes in the criteria mapping still to fill in._
   newsroom map, role cards, 3–4 sample folders with stamps, 60–90 s gameplay video, criteria
   mapping.
 - [ ] **S6-04 — Production deploy and smoke test** on a school-like network (port 443 only) with _Prepared: stack hardened and smoke-tested locally (`bun run smoke`, docs/deploy.md); real host, domain and school-network test still to do._
