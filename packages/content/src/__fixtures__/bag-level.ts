@@ -48,10 +48,14 @@ function find(stories: readonly Story[], id: string): Story {
   return story;
 }
 
-/** The greybox level as a bag level over `pool`. */
+/**
+ * The greybox level as a bag level over `pool`. The bag is a deep copy: a test that edits its
+ * nested objects (e.g. `deadlineS`) must not change `FIXTURE_BAG` for the test files after it,
+ * which share one process and run in any order.
+ */
 function asBagLevel(level: LevelFile, pool: readonly string[]): LevelFile {
   const { schedule: _schedule, stars: _stars, ...rest } = level;
-  return { ...rest, bag: { ...FIXTURE_BAG, pool: [...pool] } };
+  return { ...rest, bag: { ...structuredClone(FIXTURE_BAG), pool: [...pool] } };
 }
 
 /** 17 stories: the real ten plus image search 4 (one urgent) and archive 3 pinned; 6 true. */
